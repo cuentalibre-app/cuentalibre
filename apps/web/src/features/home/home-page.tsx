@@ -9,11 +9,11 @@ import { periodRange } from "@/lib/format";
 import { CashFlowChart, ProfitChart } from "./charts";
 import { buildHomeData } from "./home-data";
 import { KpiGrid } from "./kpi-grid";
-import { PeriodSelect } from "./period-select";
+import { PeriodSelect } from "@/components/period-select";
 import { RecentInvoices } from "./recent-invoices";
 import { TakeHomeCard } from "./take-home-card";
 import { TaxCalendar } from "./tax-calendar";
-import { usePeriod } from "./use-period";
+import { usePeriod } from "@/lib/use-period";
 
 export function HomePage() {
   const today = useMemo(() => new Date(), []);
