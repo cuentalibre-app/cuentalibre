@@ -26,7 +26,8 @@
   }
 
   ::selection {
-    background-color: var(--color-primary-soft);
+    background-color: var(--color-selection);
+    color: var(--color-foreground);
   }
 }
 

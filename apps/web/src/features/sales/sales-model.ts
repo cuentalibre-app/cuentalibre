@@ -36,6 +36,12 @@ export interface KindConfig {
   /** Label of `dueOn`, or null when the kind has no such date. */
   dueLabel: string | null;
   numberPrefix: string;
+  /** Name of the kind's own numbering series; invoices pick between normal and rectifying series instead. */
+  seriesLabel: string;
+  /** Whether the document can't be saved without a client. */
+  clientRequired: boolean;
+  /** Placeholder of the client select; with an optional client it is also the "no client" choice. */
+  clientPlaceholder: string;
   /** Statuses that can be set by hand, in workflow order. */
   statuses: StatusKey[];
 }
@@ -52,19 +58,25 @@ export const KINDS: Record<SalesKind, KindConfig> = {
     empty: "No hay facturas en este periodo.",
     dueLabel: "Vencimiento",
     numberPrefix: "",
+    seriesLabel: "Facturas normales",
+    clientRequired: true,
+    clientPlaceholder: "Selecciona el cliente",
     statuses: ["pending", "overdue", "paid"],
   },
   draft: {
     title: "Borradores",
-    singular: "Borrador",
-    noun: "el borrador",
+    singular: "Factura borrador",
+    noun: "la factura borrador",
     path: "/ventas/borradores",
     newPath: "/ventas/borradores/nuevo",
-    newLabel: "Nuevo borrador",
-    createLabel: "Guardar borrador",
+    newLabel: "Nueva factura borrador",
+    createLabel: "Crear factura borrador",
     empty: "No hay borradores en este periodo.",
-    dueLabel: "Vencimiento",
-    numberPrefix: "",
+    dueLabel: "Fecha de validez",
+    numberPrefix: "BOR-",
+    seriesLabel: "Facturas borrador",
+    clientRequired: false,
+    clientPlaceholder: "Selecciona el cliente",
     statuses: [],
   },
   quote: {
@@ -76,8 +88,11 @@ export const KINDS: Record<SalesKind, KindConfig> = {
     newLabel: "Nuevo presupuesto",
     createLabel: "Crear presupuesto",
     empty: "No hay presupuestos en este periodo.",
-    dueLabel: "Válido hasta",
+    dueLabel: "Fecha de validez",
     numberPrefix: "P-",
+    seriesLabel: "Presupuestos",
+    clientRequired: false,
+    clientPlaceholder: "Sin datos de cliente",
     statuses: ["created", "sent", "accepted", "rejected", "invoiced"],
   },
   deliveryNote: {
@@ -90,7 +105,10 @@ export const KINDS: Record<SalesKind, KindConfig> = {
     createLabel: "Crear albarán",
     empty: "No hay albaranes en este periodo.",
     dueLabel: null,
-    numberPrefix: "A-",
+    numberPrefix: "AL-",
+    seriesLabel: "Albaranes",
+    clientRequired: true,
+    clientPlaceholder: "Selecciona el cliente",
     statuses: ["created", "sent", "accepted", "rejected", "invoiced"],
   },
 };
@@ -123,13 +141,15 @@ export function documentTotals(doc: Pick<SalesDocument, "lines" | "withholding" 
 const clientsById = new Map(clients.map((c) => [c.id, c]));
 
 export function clientOf(doc: SalesDocument): Client {
+  // Drafts and quotes can be saved without a client
+  if (!doc.clientId) return { id: "", name: "Sin cliente", taxId: "" };
   return clientsById.get(doc.clientId) ?? { id: doc.clientId, name: "Cliente eliminado", taxId: "" };
 }
 
 const SERIES_PREFIX: Record<InvoiceSeries, string> = { normal: "", rectifying: "R-" };
 
 export function nextNumber(kind: SalesKind, series: InvoiceSeries, year: number, docs: SalesDocument[]): string {
-  const prefix = kind === "invoice" || kind === "draft" ? SERIES_PREFIX[series] : KINDS[kind].numberPrefix;
+  const prefix = kind === "invoice" ? SERIES_PREFIX[series] : KINDS[kind].numberPrefix;
   const numbers = docs.filter((d) => d.number !== null).map((d) => d.number!);
   return nextDocumentNumber(prefix, year, numbers);
 }
@@ -285,7 +305,10 @@ export const RENTAL_LOCATIONS: Option<RentalLocation>[] = [
     label:
       "Inmueble con referencia catastral situado en cualquier punto del territorio español, con excepción de la Comunidad Autónoma del País Vasco y Comunidad Foral de Navarra",
   },
-  { value: "basqueCountry", label: "Inmueble con referencia catastral situado en la Comunidad Autónoma del País Vasco" },
+  {
+    value: "basqueCountry",
+    label: "Inmueble con referencia catastral situado en la Comunidad Autónoma del País Vasco",
+  },
   { value: "navarre", label: "Inmueble con referencia catastral situado en la Comunidad Foral de Navarra" },
   {
     value: "noCadastralRef",

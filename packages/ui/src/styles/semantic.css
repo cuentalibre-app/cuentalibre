@@ -20,7 +20,8 @@
   --primary: var(--blue-600);
   --primary-foreground: var(--neutral-0);
   --primary-hover: var(--blue-800);
-  --primary-soft: var(--blue-50); /* selection, highlighted period */
+  --primary-soft: var(--blue-50); /* highlighted period, info notes */
+  --selection: var(--blue-200); /* selected text */
 
   --secondary: var(--neutral-0);
   --secondary-foreground: var(--neutral-950);
@@ -80,20 +81,21 @@
   --primary-foreground: #0e1440;
   --primary-hover: #9aa7f5;
   --primary-soft: #1f2440;
+  --selection: #34407f;
 
   --secondary: #18191c;
   --secondary-foreground: #ededeb;
 
   --muted: #1f2023;
   --muted-strong: #34363a;
-  --muted-foreground: #9a9ea4;
+  --muted-foreground: #a8acb2;
 
-  --accent: #26282b;
+  --accent: #2b2d31;
   --accent-foreground: #ededeb;
 
-  --border: #2a2c30;
-  --input: #3a3d42;
-  --divider: #222427;
+  --border: #35373c;
+  --input: #46494f;
+  --divider: #2b2d31;
   --ring: #7f8ff2;
 
   --success: #5bc08a;
@@ -107,9 +109,9 @@
 
   --sidebar: #161719;
   --sidebar-foreground: #ededeb;
-  --sidebar-accent: #26282b;
+  --sidebar-accent: #2b2d31;
   --sidebar-accent-foreground: #ededeb;
-  --sidebar-border: #2a2c30;
+  --sidebar-border: #35373c;
 
   --chart-income: #7f8ff2;
   --chart-expense: #e8a34a;

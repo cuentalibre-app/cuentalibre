@@ -206,8 +206,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         ) : (
           <>
             {/* Keyed by period so the rows replay their entrance when it changes, like the dashboard */}
-            <DocumentsTable key={periodKey(period)} kind={kind} rows={rows} sort={sort} onSort={setSort} />
-            <DocumentsList key={periodKey(period)} rows={rows} />
+            <DocumentsTable key={`table-${periodKey(period)}`} kind={kind} rows={rows} sort={sort} onSort={setSort} />
+            <DocumentsList key={`list-${periodKey(period)}`} rows={rows} />
           </>
         )}
       </section>
