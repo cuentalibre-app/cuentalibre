@@ -112,7 +112,7 @@ export interface Attachment {
 export interface SalesDocument {
   id: string;
   kind: SalesKind;
-  /** Drafts get their number when they are issued. */
+  /** Drafts are numbered in their own series (BOR-); issuing one gives it an invoice number. Null on older drafts. */
   number: string | null;
   series: InvoiceSeries;
   clientId: string;
@@ -324,14 +324,14 @@ const invoices: SalesDocument[] = [
 const drafts: SalesDocument[] = [
   doc(
     "draft",
-    null,
+    "BOR-2026-0002",
     "c4",
     "2026-10-13",
     [ln("Integración con pasarela de pago", 2_200), ln("Pruebas y puesta en producción", 65, 8)],
     "pending",
     { dueOn: null },
   ),
-  doc("draft", null, "c2", "2026-10-09", [ln("Rediseño de newsletter", 480)], "pending"),
+  doc("draft", "BOR-2026-0001", "c2", "2026-10-09", [ln("Rediseño de newsletter", 480)], "pending"),
 ];
 
 const quotes: SalesDocument[] = [
@@ -366,23 +366,23 @@ const quotes: SalesDocument[] = [
 const deliveryNotes: SalesDocument[] = [
   doc(
     "deliveryNote",
-    "A-2026-0004",
+    "AL-2026-0004",
     "c5",
     "2026-10-06",
     [ln("Cartas impresas", 1.2, 250), ln("Tarjetas de visita", 0.18, 500)],
     "created",
     { withholding: "none" },
   ),
-  doc("deliveryNote", "A-2026-0003", "c3", "2026-09-08", [ln("Catálogos impresos", 3.5, 300)], "invoiced"),
+  doc("deliveryNote", "AL-2026-0003", "c3", "2026-09-08", [ln("Catálogos impresos", 3.5, 300)], "invoiced"),
   doc(
     "deliveryNote",
-    "A-2026-0002",
+    "AL-2026-0002",
     "c3",
     "2026-05-15",
     [ln("Fotografías de producto en alta resolución", 45, 40)],
     "invoiced",
   ),
-  doc("deliveryNote", "A-2026-0001", "c5", "2026-03-04", [ln("Rótulo de escaparate", 320)], "accepted", {
+  doc("deliveryNote", "AL-2026-0001", "c5", "2026-03-04", [ln("Rótulo de escaparate", 320)], "accepted", {
     withholding: "none",
   }),
 ];

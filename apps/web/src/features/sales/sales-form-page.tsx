@@ -77,6 +77,8 @@ import { salesStore } from "./sales-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
 const SETTINGS_PATH = "/configuracion/facturas";
+/** Radix Select can't hold an empty value: this stands for "no client". */
+const NO_CLIENT = "none";
 
 interface LineDraft {
   id: string;
@@ -140,14 +142,13 @@ const emptyLine = (vatRate = 0.21): LineDraft => ({
 function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: boolean, rectify: boolean): FormState {
   const today = toIsoDate(new Date());
   const issuedOn = isCopy || !base ? today : base.issuedOn;
-  const series: InvoiceSeries = rectify ? "rectifying" : (base?.series ?? "normal");
+  // Only invoices have rectifying series; the other kinds have a single series of their own
+  const series: InvoiceSeries = rectify ? "rectifying" : kind === "invoice" ? (base?.series ?? "normal") : "normal";
   const dueOn = KINDS[kind].dueLabel === null ? null : isCopy || !base ? addDays(issuedOn, 30) : base.dueOn;
   const number =
-    kind === "draft"
-      ? ""
-      : base && !isCopy
-        ? (base.number ?? "")
-        : nextNumber(kind, series, Number(issuedOn.slice(0, 4)), salesStore.all());
+    base && !isCopy && base.number
+      ? base.number
+      : nextNumber(kind, series, Number(issuedOn.slice(0, 4)), salesStore.all());
 
   return {
     clientId: base?.clientId ?? "",
@@ -245,8 +246,8 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
   const settings = useInvoiceSettings();
   const [form, setForm] = useState(() => initialState(kind, existing ?? source, !existing, rectify));
   const [errors, setErrors] = useState<Errors>({});
-  const [advanced, setAdvanced] = useState(() =>
-    form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
+  const [advanced, setAdvanced] = useState(
+    () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
   );
   const [reordering, setReordering] = useState(false);
   const [dueTerm, setDueTerm] = useState<number | null | "custom">(() =>
@@ -275,10 +276,8 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
     parseDecimal(form.supplies || "0") ?? 0,
   );
 
-  const numbered = kind !== "draft";
-  const hasSeries = kind === "invoice" || kind === "draft";
   const isInvoice = kind === "invoice";
-  const rectifying = hasSeries && form.series === "rectifying";
+  const rectifying = isInvoice && form.series === "rectifying";
   const client = clients.find((c) => c.id === form.clientId);
   const rectifiable = salesStore
     .all()
@@ -330,9 +329,10 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
 
   function validate(asKind: SalesKind): Errors {
     const next: Errors = {};
-    if (!form.clientId) next.clientId = "Elige un cliente.";
+    if (KINDS[asKind].clientRequired && !form.clientId) next.clientId = "Elige un cliente.";
     if (!form.issuedOn) next.issuedOn = "Indica la fecha.";
-    if (asKind !== "draft") {
+    // Issuing a draft takes the next invoice number, so only the kind's own number is checked
+    if (asKind === kind) {
       if (!form.number.trim()) next.number = "Indica el número.";
       else if (
         salesStore.all().some((d) => d.id !== existing?.id && d.kind === asKind && d.number === form.number.trim())
@@ -367,15 +367,19 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
       }));
     const asInvoice = asKind === "invoice";
     const paid = asInvoice && form.markPaid;
+    const number =
+      asKind === kind
+        ? form.number.trim()
+        : nextNumber(asKind, form.series, Number(form.issuedOn.slice(0, 4)), salesStore.all());
     const doc: SalesDocument = {
       id: existing?.id ?? crypto.randomUUID(),
       kind: asKind,
-      number: asKind === "draft" ? null : form.number.trim(),
+      number,
       series: form.series,
       rectifiesId: rectifying ? form.rectifiesId || undefined : undefined,
       clientId: form.clientId,
       issuedOn: form.issuedOn,
-      dueOn: config.dueLabel === null ? null : form.dueOn,
+      dueOn: KINDS[asKind].dueLabel === null ? null : form.dueOn,
       incomeType: form.incomeType,
       withholding: form.withholding,
       operationType: form.operationType,
@@ -415,7 +419,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
       // No email backend yet: download the PDF and open the mail client to attach it
       void import("./sales-pdf").then((m) => m.downloadDocumentPdf(doc));
       const email = clientOf(doc).email ?? "";
-      window.location.href = `mailto:${email}?subject=${encodeURIComponent(`Factura ${doc.number}`)}`;
+      window.location.href = `mailto:${email}?subject=${encodeURIComponent(`${KINDS[asKind].singular} ${doc.number}`)}`;
     }
     navigate(after === "receipt" ? "/bancos" : `${KINDS[asKind].path}?periodo=${periodKeyOf(doc.issuedOn)}`);
   }
@@ -426,8 +430,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
   };
 
   const primaryLabel = existing ? "Guardar cambios" : config.createLabel;
-  const secondary =
-    kind === "draft" ? { label: "Emitir factura", onClick: () => save("invoice") } : null;
+  const secondary = kind === "draft" ? { label: "Emitir factura", onClick: () => save("invoice") } : null;
 
   const actions = (className?: string) => (
     <div className={cn("flex gap-2.5", className)}>
@@ -436,7 +439,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
           {secondary.label}
         </Button>
       )}
-      {isInvoice && !existing ? (
+      {!existing ? (
         <div className="flex flex-1 lg:flex-none">
           <Button type="submit" className="flex-1 rounded-r-none lg:flex-none">
             {primaryLabel}
@@ -460,10 +463,12 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
                 <Mail aria-hidden="true" />
                 Crear y enviar
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => save(kind, "receipt")}>
-                <Landmark aria-hidden="true" />
-                Crear y generar recibo de cobro
-              </DropdownMenuItem>
+              {isInvoice && (
+                <DropdownMenuItem onSelect={() => save(kind, "receipt")}>
+                  <Landmark aria-hidden="true" />
+                  Crear y generar recibo de cobro
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -502,7 +507,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => navigate(SETTINGS_PATH)}>
                   <Settings aria-hidden="true" />
-                  Configurar factura
+                  Configurar {config.singular.toLowerCase()}
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => navigate("/ayuda")}>
                   <CircleHelp aria-hidden="true" />
@@ -533,16 +538,21 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
             {client && <ClientSummary client={client} />}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Cliente" required error={errors.clientId}>
+              <Field label="Cliente" required={config.clientRequired} error={errors.clientId}>
                 {(fieldProps) => (
-                  <Select value={form.clientId} onValueChange={(v) => set("clientId", v)}>
+                  <Select value={form.clientId} onValueChange={(v) => set("clientId", v === NO_CLIENT ? "" : v)}>
                     <SelectTrigger {...fieldProps} className="w-full font-normal aria-invalid:border-destructive">
                       <span className="min-w-0 flex-1 truncate text-left">
-                        <SelectValue placeholder="Selecciona el cliente" />
+                        <SelectValue placeholder={config.clientPlaceholder} />
                       </span>
                       <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
                     </SelectTrigger>
                     <SelectContent>
+                      {!config.clientRequired && (
+                        <SelectItem value={NO_CLIENT} className="text-muted-foreground">
+                          {config.clientPlaceholder}
+                        </SelectItem>
+                      )}
                       {clients.map((c) => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.name} · <span className="font-mono text-sm">{c.taxId}</span>
@@ -553,58 +563,50 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
                 )}
               </Field>
 
-              {numbered ? (
-                <Field
-                  label="Número"
-                  required
-                  error={errors.number}
-                  help="Número correlativo dentro de la serie. «Obtener número» propone el siguiente libre."
-                  action={
-                    <button
-                      type="button"
-                      onClick={() => set("number", suggestedNumber(form.series))}
-                      className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
-                    >
-                      Obtener número
-                    </button>
-                  }
-                >
-                  {(p) => (
-                    <Input
-                      {...p}
-                      value={form.number}
-                      onChange={(e) => set("number", e.target.value)}
-                      className="font-mono"
-                    />
-                  )}
-                </Field>
-              ) : (
-                <Field label="Número" hint="Se asigna al emitir la factura.">
-                  {(p) => <Input {...p} value="" placeholder="Borrador" disabled />}
-                </Field>
-              )}
+              <Field
+                label="Número"
+                required
+                error={errors.number}
+                help="Número correlativo dentro de la serie. «Obtener número» propone el siguiente libre."
+                action={
+                  <button
+                    type="button"
+                    onClick={() => set("number", suggestedNumber(form.series))}
+                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    Obtener número
+                  </button>
+                }
+              >
+                {(p) => (
+                  <Input
+                    {...p}
+                    value={form.number}
+                    onChange={(e) => set("number", e.target.value)}
+                    className="font-mono"
+                  />
+                )}
+              </Field>
 
-              {hasSeries && (
-                <Field label="Serie" required>
-                  {(p) => (
-                    <GroupedSelect
-                      {...p}
-                      value={form.series}
-                      onChange={changeSeries}
-                      groups={[
-                        ...SERIES_GROUPS,
-                        {
-                          label: "Opciones",
-                          options: [
-                            { value: "new", label: "Crear nueva serie" },
-                            { value: "settings", label: "Configurar series" },
-                          ],
-                        },
-                      ]}
-                    />
-                  )}
-                </Field>
-              )}
+              <Field label="Serie" required>
+                {(p) => (
+                  <GroupedSelect
+                    {...p}
+                    value={form.series}
+                    onChange={changeSeries}
+                    groups={[
+                      ...(isInvoice ? SERIES_GROUPS : [{ options: [{ value: "normal", label: config.seriesLabel }] }]),
+                      {
+                        label: "Opciones",
+                        options: [
+                          { value: "new", label: "Crear nueva serie" },
+                          { value: "settings", label: "Configurar series" },
+                        ],
+                      },
+                    ]}
+                  />
+                )}
+              </Field>
 
               {rectifying && (
                 <Field label="Rectifica la factura" required error={errors.rectifiesId}>
@@ -637,7 +639,11 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
               {config.dueLabel && (
                 <Field
                   label={config.dueLabel}
-                  hint={form.dueOn ? `Vence el ${formatDate(form.dueOn)}` : "Sin fecha de vencimiento"}
+                  hint={
+                    form.dueOn
+                      ? `${isInvoice ? "Vence" : "Válido hasta"} el ${formatDate(form.dueOn)}`
+                      : `Sin ${config.dueLabel.toLowerCase()}`
+                  }
                 >
                   {(p) => (
                     <div className="flex flex-col gap-2">
@@ -671,16 +677,21 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
                 </Field>
               )}
 
-              <Field label="Tipo de ingreso" help="Cuenta del Plan General Contable (grupo 7) en la que se registra el ingreso.">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={form.incomeType}
-                    onChange={(v) => set("incomeType", v as IncomeType)}
-                    groups={[{ label: "Grupo 7: Ventas e ingresos", options: [] }, ...INCOME_TYPE_GROUPS]}
-                  />
-                )}
-              </Field>
+              {isInvoice && (
+                <Field
+                  label="Tipo de ingreso"
+                  help="Cuenta del Plan General Contable (grupo 7) en la que se registra el ingreso."
+                >
+                  {(p) => (
+                    <GroupedSelect
+                      {...p}
+                      value={form.incomeType}
+                      onChange={(v) => set("incomeType", v as IncomeType)}
+                      groups={[{ label: "Grupo 7: Ventas e ingresos", options: [] }, ...INCOME_TYPE_GROUPS]}
+                    />
+                  )}
+                </Field>
+              )}
 
               <Field label="Retención" help="IRPF que el cliente te retiene e ingresa a Hacienda en tu nombre.">
                 {(p) => (
@@ -771,7 +782,11 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
 
           <Section title="Notas" index={3}>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <InvoiceNotes value={form.publicNotes} onChange={(v) => set("publicNotes", v)} />
+              <InvoiceNotes
+                label={`Notas en ${config.noun}`}
+                value={form.publicNotes}
+                onChange={(v) => set("publicNotes", v)}
+              />
               <Field label="Notas privadas" help="Solo las ves tú: no aparecen en el documento.">
                 {(p) => (
                   <Textarea
@@ -786,153 +801,157 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
             </div>
           </Section>
 
-          <Section title="Opciones avanzadas" index={4}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Fecha de operación" hint="Solo si es distinta de la fecha del documento.">
-                {(p) => (
-                  <Input
-                    {...p}
-                    type="date"
-                    value={form.operationOn}
-                    onChange={(e) => set("operationOn", e.target.value)}
-                  />
+          {isInvoice && (
+            <Section title="Opciones avanzadas" index={4}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Fecha de operación" hint="Solo si es distinta de la fecha del documento.">
+                  {(p) => (
+                    <Input
+                      {...p}
+                      type="date"
+                      value={form.operationOn}
+                      onChange={(e) => set("operationOn", e.target.value)}
+                    />
+                  )}
+                </Field>
+                <Field
+                  label="Tipo de operación"
+                  help="Decide cómo se trata el IVA y en qué casillas de los modelos 303, 349 y 390 aparece."
+                >
+                  {(p) => (
+                    <Select value={form.operationType} onValueChange={(v) => changeOperationType(v as OperationType)}>
+                      <SelectTrigger {...p} className="w-full font-normal">
+                        <span className="min-w-0 flex-1 truncate text-left">
+                          <SelectValue>
+                            {OPERATION_TYPES.find((o) => o.value === form.operationType)?.label}
+                          </SelectValue>
+                        </span>
+                        <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+                      </SelectTrigger>
+                      <SelectContent className="max-w-[min(36rem,calc(100vw-2rem))]">
+                        {OPERATION_TYPES.map((o) => (
+                          <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
+                            {o.label}
+                            <span className="block text-sm font-normal text-muted-foreground">{o.hint}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </Field>
+              </div>
+              <div className="flex flex-col gap-4">
+                <CheckField
+                  label="Factura emitida en criterio de caja"
+                  help="El IVA se declara cuando cobras, no cuando emites. Solo si estás acogido al régimen especial de criterio de caja."
+                  checked={form.cashBasis}
+                  onChange={(v) => set("cashBasis", v)}
+                />
+                <CheckField
+                  label="Operación de arrendamiento de inmuebles"
+                  help="Alquiler de un local o vivienda. Se informa en los modelos 115, 180 y 347 con su situación y referencia catastral."
+                  checked={form.rental}
+                  onChange={(v) => set("rental", v)}
+                />
+                {form.rental && (
+                  <div className="grid gap-4 pl-7.5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                    <Field label="Situación">
+                      {(p) => (
+                        <Select
+                          value={form.rentalLocation}
+                          onValueChange={(v) => set("rentalLocation", v as RentalLocation)}
+                        >
+                          <SelectTrigger {...p} className="w-full font-normal">
+                            <span className="min-w-0 flex-1 truncate text-left">
+                              <SelectValue />
+                            </span>
+                            <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+                          </SelectTrigger>
+                          <SelectContent className="max-w-[min(40rem,calc(100vw-2rem))]">
+                            {RENTAL_LOCATIONS.map((o) => (
+                              <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </Field>
+                    <Field label="Referencia catastral">
+                      {(p) => (
+                        <Input
+                          {...p}
+                          value={form.cadastralRef}
+                          onChange={(e) => set("cadastralRef", e.target.value)}
+                          disabled={form.rentalLocation === "noCadastralRef" || form.rentalLocation === "abroad"}
+                          className="font-mono"
+                        />
+                      )}
+                    </Field>
+                  </div>
                 )}
-              </Field>
-              <Field
-                label="Tipo de operación"
-                help="Decide cómo se trata el IVA y en qué casillas de los modelos 303, 349 y 390 aparece."
-              >
-                {(p) => (
-                  <Select value={form.operationType} onValueChange={(v) => changeOperationType(v as OperationType)}>
-                    <SelectTrigger {...p} className="w-full font-normal">
-                      <span className="min-w-0 flex-1 truncate text-left">
-                        <SelectValue>{OPERATION_TYPES.find((o) => o.value === form.operationType)?.label}</SelectValue>
-                      </span>
-                      <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-                    </SelectTrigger>
-                    <SelectContent className="max-w-[min(36rem,calc(100vw-2rem))]">
-                      {OPERATION_TYPES.map((o) => (
-                        <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
-                          {o.label}
-                          <span className="block text-sm font-normal text-muted-foreground">{o.hint}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </Field>
-            </div>
-            <div className="flex flex-col gap-4">
-              <CheckField
-                label="Factura emitida en criterio de caja"
-                help="El IVA se declara cuando cobras, no cuando emites. Solo si estás acogido al régimen especial de criterio de caja."
-                checked={form.cashBasis}
-                onChange={(v) => set("cashBasis", v)}
-              />
-              <CheckField
-                label="Operación de arrendamiento de inmuebles"
-                help="Alquiler de un local o vivienda. Se informa en los modelos 115, 180 y 347 con su situación y referencia catastral."
-                checked={form.rental}
-                onChange={(v) => set("rental", v)}
-              />
-              {form.rental && (
-                <div className="grid gap-4 pl-7.5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                  <Field label="Situación">
-                    {(p) => (
-                      <Select
-                        value={form.rentalLocation}
-                        onValueChange={(v) => set("rentalLocation", v as RentalLocation)}
-                      >
-                        <SelectTrigger {...p} className="w-full font-normal">
-                          <span className="min-w-0 flex-1 truncate text-left">
-                            <SelectValue />
-                          </span>
-                          <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-                        </SelectTrigger>
-                        <SelectContent className="max-w-[min(40rem,calc(100vw-2rem))]">
-                          {RENTAL_LOCATIONS.map((o) => (
-                            <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
-                              {o.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </Field>
-                  <Field label="Referencia catastral">
-                    {(p) => (
-                      <Input
-                        {...p}
-                        value={form.cadastralRef}
-                        onChange={(e) => set("cadastralRef", e.target.value)}
-                        disabled={form.rentalLocation === "noCadastralRef" || form.rentalLocation === "abroad"}
-                        className="font-mono"
-                      />
-                    )}
-                  </Field>
-                </div>
-              )}
-              {isInvoice && (
                 <CheckField
                   label="Marcar factura como cobrada"
                   help="Registra el cobro con su fecha y el método por el que lo recibiste."
                   checked={form.markPaid}
                   onChange={(v) => set("markPaid", v)}
                 />
-              )}
-              {isInvoice && form.markPaid && (
-                <div className="flex flex-wrap items-end gap-3 pl-7.5">
-                  <Field label="Fecha de cobro" className="w-44">
-                    {(p) => (
-                      <Input {...p} type="date" value={form.paidOn} onChange={(e) => set("paidOn", e.target.value)} />
-                    )}
-                  </Field>
-                  <Field label="Método de cobro" className="w-56">
-                    {(p) => (
-                      <GroupedSelect
-                        {...p}
-                        value={form.paymentMethodId}
-                        onChange={(v) => set("paymentMethodId", v)}
-                        groups={[{ options: paymentMethods.map((m) => ({ value: m.id, label: m.name })) }]}
-                      />
-                    )}
-                  </Field>
-                  <Link
-                    to="/configuracion/metodos-de-pago"
-                    className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "text-primary no-underline")}
-                  >
-                    <Plus aria-hidden="true" />
-                    Nuevo método
-                  </Link>
-                </div>
-              )}
-            </div>
-          </Section>
+                {form.markPaid && (
+                  <div className="flex flex-wrap items-end gap-3 pl-7.5">
+                    <Field label="Fecha de cobro" className="w-44">
+                      {(p) => (
+                        <Input {...p} type="date" value={form.paidOn} onChange={(e) => set("paidOn", e.target.value)} />
+                      )}
+                    </Field>
+                    <Field label="Método de cobro" className="w-56">
+                      {(p) => (
+                        <GroupedSelect
+                          {...p}
+                          value={form.paymentMethodId}
+                          onChange={(v) => set("paymentMethodId", v)}
+                          groups={[{ options: paymentMethods.map((m) => ({ value: m.id, label: m.name })) }]}
+                        />
+                      )}
+                    </Field>
+                    <Link
+                      to="/configuracion/metodos-de-pago"
+                      className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "text-primary no-underline")}
+                    >
+                      <Plus aria-hidden="true" />
+                      Nuevo método
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
 
-          <Section title="Otros" index={5}>
+          <Section title="Otros" index={isInvoice ? 5 : 4}>
             <LocaleFields
               language={form.language}
               numberFormat={form.numberFormat}
               onLanguageChange={changeLanguage}
               onNumberFormatChange={(v) => set("numberFormat", v === CLIENT_DEFAULT ? "" : v)}
             />
-            <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Servicios externos</span>
-              <CheckField
-                label="Subir la factura a tu cuenta de Dropbox"
-                hint="Para subir la factura a tu cuenta de Dropbox es necesario que conectes tu cuenta."
-                checked={settings.uploadToDropbox}
-                disabled
-                onChange={() => {}}
-              />
-              <CheckField
-                label="Subir la factura a tu cuenta de Google Drive"
-                hint="Para subir la factura a tu cuenta de Google Drive es necesario que conectes tu cuenta."
-                checked={settings.uploadToDrive}
-                disabled
-                onChange={() => {}}
-              />
-            </div>
+            {kind !== "draft" && (
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Servicios externos</span>
+                <CheckField
+                  label={`Subir ${config.noun} a tu cuenta de Dropbox`}
+                  hint={`Para subir ${config.noun} a tu cuenta de Dropbox es necesario que conectes tu cuenta.`}
+                  checked={settings.uploadToDropbox}
+                  disabled
+                  onChange={() => {}}
+                />
+                <CheckField
+                  label={`Subir ${config.noun} a tu cuenta de Google Drive`}
+                  hint={`Para subir ${config.noun} a tu cuenta de Google Drive es necesario que conectes tu cuenta.`}
+                  checked={settings.uploadToDrive}
+                  disabled
+                  onChange={() => {}}
+                />
+              </div>
+            )}
           </Section>
         </div>
 
@@ -977,7 +996,7 @@ function ClientSummary({ client }: { client: Client }) {
 }
 
 /** Public notes, with saved templates that can be picked, created or edited. */
-function InvoiceNotes({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function InvoiceNotes({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const { noteTemplates } = useInvoiceSettings();
   const [templateId, setTemplateId] = useState("");
   const [editing, setEditing] = useState<{ title: string; text: string } | null>(null);
@@ -997,7 +1016,7 @@ function InvoiceNotes({ value, onChange }: { value: string; onChange: (value: st
   };
 
   return (
-    <Field label="Notas en la factura" help="Se imprimen en el documento. Guarda las que repites como notas predefinidas.">
+    <Field label={label} help="Se imprimen en el documento. Guarda las que repites como notas predefinidas.">
       {(p) => (
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
@@ -1031,7 +1050,9 @@ function InvoiceNotes({ value, onChange }: { value: string; onChange: (value: st
               className="w-10 px-0"
               aria-label="Gestionar información de la nota"
               title="Gestionar información de la nota"
-              onClick={() => setEditing(editing ? null : { title: selected?.title ?? "", text: selected?.text ?? value })}
+              onClick={() =>
+                setEditing(editing ? null : { title: selected?.title ?? "", text: selected?.text ?? value })
+              }
             >
               <Pencil strokeWidth={1.8} aria-hidden="true" />
             </Button>
@@ -1397,7 +1418,13 @@ function LinesEditor({
   );
 }
 
-function ProductPicker({ disabled, onPick }: { disabled: boolean; onPick: (product: (typeof products)[number]) => void }) {
+function ProductPicker({
+  disabled,
+  onPick,
+}: {
+  disabled: boolean;
+  onPick: (product: (typeof products)[number]) => void;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -1448,7 +1475,7 @@ function NumberCell({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={invalid ? true : undefined}
-          className={cn("amount text-right", suffix && "pr-7")}
+          className={cn("text-right amount", suffix && "pr-7")}
         />
         {suffix && (
           <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground" aria-hidden="true">
@@ -1489,7 +1516,12 @@ function QuantityCell({
           invalid && "border-destructive",
         )}
       >
-        <button type="button" className={stepper} aria-label={`Restar una unidad, concepto ${n}`} onClick={() => step(-1)}>
+        <button
+          type="button"
+          className={stepper}
+          aria-label={`Restar una unidad, concepto ${n}`}
+          onClick={() => step(-1)}
+        >
           <Minus className="size-3.5" aria-hidden="true" />
         </button>
         <input
@@ -1498,9 +1530,14 @@ function QuantityCell({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={invalid ? true : undefined}
-          className="amount w-full min-w-0 border-0 bg-transparent text-center text-foreground outline-none"
+          className="w-full min-w-0 border-0 bg-transparent text-center amount text-foreground outline-none"
         />
-        <button type="button" className={stepper} aria-label={`Sumar una unidad, concepto ${n}`} onClick={() => step(1)}>
+        <button
+          type="button"
+          className={stepper}
+          aria-label={`Sumar una unidad, concepto ${n}`}
+          onClick={() => step(1)}
+        >
           <Plus className="size-3.5" aria-hidden="true" />
         </button>
       </div>
@@ -1533,27 +1570,29 @@ function Totals({
     >
       <div className={cn(card, "lg:flex-1")}>
         <dt className={caption}>Subtotal</dt>
-        <dd className="amount m-0 text-lg font-semibold">
+        <dd className="m-0 amount text-lg font-semibold">
           <AnimatedAmount value={totals.base} />
         </dd>
       </div>
       <div className={cn(card, "lg:flex-1")}>
-        <dt className={caption}>IVA {vatRates.length > 0 && <span className="text-xs">({vatRates.join(", ")})</span>}</dt>
-        <dd className="amount m-0 text-lg font-semibold">
+        <dt className={caption}>
+          IVA {vatRates.length > 0 && <span className="text-xs">({vatRates.join(", ")})</span>}
+        </dt>
+        <dd className="m-0 amount text-lg font-semibold">
           <AnimatedAmount value={totals.vat} />
         </dd>
       </div>
       {(advanced || totals.surcharge !== 0) && (
         <div className={cn(card, "lg:flex-1")}>
           <dt className={caption}>Recargo de equivalencia</dt>
-          <dd className="amount m-0 text-lg font-semibold">
+          <dd className="m-0 amount text-lg font-semibold">
             <AnimatedAmount value={totals.surcharge} />
           </dd>
         </div>
       )}
       <div className={cn(card, "lg:flex-1")}>
         <dt className={caption}>Retención{rate > 0 && ` ${ratePercent(rate)}`}</dt>
-        <dd className="amount m-0 text-lg font-semibold">
+        <dd className="m-0 amount text-lg font-semibold">
           <AnimatedAmount value={totals.withholding ? -totals.withholding : 0} />
         </dd>
       </div>
@@ -1570,7 +1609,7 @@ function Totals({
                 value={supplies}
                 onChange={(e) => onSuppliesChange(e.target.value)}
                 aria-invalid={parseDecimal(supplies || "0") === null ? true : undefined}
-                className="amount h-8 pr-7 text-right font-semibold"
+                className="h-8 pr-7 text-right amount font-semibold"
               />
               <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground" aria-hidden="true">
                 €
@@ -1581,7 +1620,7 @@ function Totals({
       )}
       <div className={cn(card, "col-span-full border-transparent bg-muted sm:col-span-1 lg:flex-[1.3]")}>
         <dt className="text-sm font-semibold">Total</dt>
-        <dd className="amount m-0 text-2xl font-semibold">
+        <dd className="m-0 amount text-2xl font-semibold">
           <AnimatedAmount value={totals.total} />
         </dd>
       </div>
