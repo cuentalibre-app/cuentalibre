@@ -1,0 +1,120 @@
+/*
+ * Semantic tokens: named by purpose, not by value.
+ * They follow shadcn/ui naming (background, primary, muted, accent…)
+ * so its components work without changes.
+ *
+ * Note: in shadcn "accent" is the hover/active surface, NOT the brand color.
+ * The brand color is "primary".
+ */
+:root {
+  color-scheme: light;
+
+  --background: var(--neutral-0);
+  --foreground: var(--neutral-950);
+
+  --card: var(--neutral-0);
+  --card-foreground: var(--neutral-950);
+  --popover: var(--neutral-0);
+  --popover-foreground: var(--neutral-950);
+
+  --primary: var(--blue-600);
+  --primary-foreground: var(--neutral-0);
+  --primary-hover: var(--blue-800);
+  --primary-soft: var(--blue-50); /* selection, highlighted period */
+
+  --secondary: var(--neutral-0);
+  --secondary-foreground: var(--neutral-950);
+
+  --muted: var(--neutral-75);
+  --muted-strong: var(--neutral-250);
+  --muted-foreground: var(--neutral-600);
+
+  --accent: var(--neutral-150);
+  --accent-foreground: var(--neutral-950);
+
+  --border: var(--neutral-200);
+  --input: var(--neutral-300);
+  --divider: var(--neutral-100);
+  --ring: var(--blue-600);
+
+  --success: var(--green-700);
+  --success-soft: var(--green-50);
+  --warning: var(--amber-700);
+  --warning-foreground: var(--neutral-0);
+  --warning-soft: var(--amber-50);
+  --destructive: var(--red-700);
+  --destructive-foreground: var(--neutral-0);
+  --destructive-soft: var(--red-50);
+
+  --sidebar: var(--neutral-50);
+  --sidebar-foreground: var(--neutral-950);
+  --sidebar-accent: var(--neutral-150);
+  --sidebar-accent-foreground: var(--neutral-950);
+  --sidebar-border: var(--neutral-200);
+
+  /* Charts */
+  --chart-income: var(--blue-600);
+  --chart-expense: var(--orange-500);
+  --chart-tax: var(--blue-300);
+  --chart-grid: var(--neutral-200);
+  --chart-axis: var(--neutral-300);
+  --chart-highlight: var(--blue-50);
+}
+
+/*
+ * Dark mode: PROVISIONAL. Structure is in place, values still need tuning.
+ * Enabled by the .dark class on <html>.
+ */
+.dark {
+  color-scheme: dark;
+
+  --background: #131416;
+  --foreground: #ededeb;
+
+  --card: #18191c;
+  --card-foreground: #ededeb;
+  --popover: #1e1f22;
+  --popover-foreground: #ededeb;
+
+  --primary: #7f8ff2;
+  --primary-foreground: #0e1440;
+  --primary-hover: #9aa7f5;
+  --primary-soft: #1f2440;
+
+  --secondary: #18191c;
+  --secondary-foreground: #ededeb;
+
+  --muted: #1f2023;
+  --muted-strong: #34363a;
+  --muted-foreground: #9a9ea4;
+
+  --accent: #26282b;
+  --accent-foreground: #ededeb;
+
+  --border: #2a2c30;
+  --input: #3a3d42;
+  --divider: #222427;
+  --ring: #7f8ff2;
+
+  --success: #5bc08a;
+  --success-soft: #16291f;
+  --warning: #e8a34a;
+  --warning-foreground: #1a1206;
+  --warning-soft: #2b2112;
+  --destructive: #f2877a;
+  --destructive-foreground: #2a0d09;
+  --destructive-soft: #2e1714;
+
+  --sidebar: #161719;
+  --sidebar-foreground: #ededeb;
+  --sidebar-accent: #26282b;
+  --sidebar-accent-foreground: #ededeb;
+  --sidebar-border: #2a2c30;
+
+  --chart-income: #7f8ff2;
+  --chart-expense: #e8a34a;
+  --chart-tax: #4a5296;
+  --chart-grid: #2a2c30;
+  --chart-axis: #3a3d42;
+  --chart-highlight: #1f2440;
+}

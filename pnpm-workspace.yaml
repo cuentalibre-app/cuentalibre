@@ -1,0 +1,6 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Don't install versions published less than 14 days ago (mitigates supply-chain attacks)
+minimumReleaseAge: 20160
