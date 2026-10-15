@@ -17,9 +17,10 @@ import {
   type Period,
   type YearTotals,
 } from "@fiscalia/core";
+import { deductible, supplierOf } from "@/features/purchases/purchases-model";
 import { clientOf, displayStatus, documentTotals } from "@/features/sales/sales-model";
 import { currentUser } from "@/mocks/data";
-import { expenses } from "@/mocks/expenses";
+import type { PurchaseInvoice } from "@/mocks/purchases";
 import type { SalesDocument } from "@/mocks/sales";
 
 export type InvoiceStatus = "paid" | "pending" | "overdue";
@@ -109,16 +110,17 @@ function collectionStatus(invoices: InvoiceSummary[]) {
 }
 
 /**
- * Everything the dashboard shows, derived from the issued invoices and the
- * expenses so every figure adds up with the sales lists.
+ * Everything the dashboard shows, derived from the issued and received invoices so every
+ * figure adds up with the sales and purchase lists. Expenses count their deductible part.
  */
-export function buildHomeData(period: Period, today: Date, documents: SalesDocument[]) {
+export function buildHomeData(period: Period, today: Date, documents: SalesDocument[], purchases: PurchaseInvoice[]) {
   const invoiceDocs = documents
     .filter((d) => d.kind === "invoice")
     .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn));
   const issued = invoiceDocs.map((d) => summarize(d, today));
   const income = invoiceDocs.map((d): LedgerEntry => ({ date: d.issuedOn, ...documentTotals(d) }));
-  const expenseEntries = expenses.map((e): LedgerEntry => ({ ...e, withholding: 0 }));
+  const expenses = purchases.map((p) => ({ supplier: supplierOf(p).name, date: p.bookedOn, ...deductible(p) }));
+  const expenseEntries = expenses.map((e): LedgerEntry => ({ date: e.date, base: e.base, vat: e.vat, withholding: 0 }));
 
   const yearCache = new Map<number, YearTotals>();
   const yearTotals = (y: number) => {

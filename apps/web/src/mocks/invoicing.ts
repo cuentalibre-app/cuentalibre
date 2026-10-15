@@ -23,6 +23,7 @@ export interface PaymentMethod {
 export const paymentMethods: PaymentMethod[] = [
   { id: "transfer", name: "Ingreso/Transferencia" },
   { id: "bank1", name: "Cuenta principal" },
+  { id: "card", name: "Tarjeta" },
   { id: "cash", name: "Efectivo" },
 ];
 
