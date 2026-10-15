@@ -1,8 +1,10 @@
 import {
   Building,
+  CalendarCheck,
   Camera,
   ChartColumn,
   ClipboardList,
+  Download,
   FileText,
   Package,
   Receipt,
@@ -11,6 +13,7 @@ import {
   Percent,
   ReceiptText,
   ShoppingBag,
+  Upload,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -40,7 +43,6 @@ export const mainNav: NavItem[] = [
       { label: "Borradores", to: "/ventas/borradores", badge: "drafts" },
       { label: "Albaranes", to: "/ventas/albaranes" },
       { label: "Presupuestos", to: "/ventas/presupuestos" },
-      { label: "Facturas recurrentes", to: "/ventas/recurrentes" },
     ],
   },
   {
@@ -66,10 +68,10 @@ export const mainNav: NavItem[] = [
   { label: "Informes", to: "/informes", icon: ChartColumn },
 ];
 
-export const secondaryNav: NavLeaf[] = [
-  { label: "Exportar", to: "/exportar" },
-  { label: "Importar", to: "/importar" },
-  { label: "Cierre de trimestres", to: "/cierre-trimestre" },
+export const secondaryNav: NavItem[] = [
+  { label: "Exportar", to: "/exportar", icon: Download },
+  { label: "Importar", to: "/importar", icon: Upload },
+  { label: "Cierre de trimestres", to: "/cierre-trimestre", icon: CalendarCheck },
 ];
 
 /** Every leaf route, used to register placeholder pages. */
