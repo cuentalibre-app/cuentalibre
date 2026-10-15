@@ -4,7 +4,7 @@ import { cn } from "../lib/cn";
 export function Card({ className, ...props }: ComponentProps<"section">) {
   return (
     <section
-      className={cn("flex flex-col gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground", className)}
+      className={cn("flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-card-foreground", className)}
       {...props}
     />
   );

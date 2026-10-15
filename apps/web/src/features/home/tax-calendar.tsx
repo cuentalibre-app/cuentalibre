@@ -70,9 +70,9 @@ export function TaxCalendar({ data, className }: { data: HomeData; className?: s
           aria-valuemin={0}
           aria-valuemax={quarterClose.stepsTotal}
           aria-valuenow={quarterClose.stepsDone}
-          className="h-1.5 rounded-full bg-muted"
+          className="h-1.5 rounded-xs bg-muted"
         >
-          <div className="h-1.5 animate-reveal-x rounded-full bg-primary" style={{ width: `${progress}%` }} />
+          <div className="h-1.5 animate-reveal-x rounded-xs bg-primary" style={{ width: `${progress}%` }} />
         </div>
       </div>
       <Link

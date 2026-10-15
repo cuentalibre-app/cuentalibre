@@ -36,7 +36,7 @@ export function SegmentedControl<T extends string>({ label, options, value, onCh
       {thumb && (
         <span
           aria-hidden="true"
-          className="absolute top-[3px] bottom-[3px] left-0 rounded-sm bg-background shadow-[0_1px_2px_rgb(0_0_0/0.08)] transition-[translate,width] duration-300 ease-out"
+          className="absolute top-[3px] bottom-[3px] left-0 rounded-sm border border-border bg-background transition-[translate,width] duration-300 ease-out"
           style={{ width: thumb.width, translate: `${thumb.left}px 0` }}
         />
       )}
@@ -56,7 +56,7 @@ export function SegmentedControl<T extends string>({ label, options, value, onCh
               "relative h-8 cursor-pointer rounded-sm px-3 text-sm transition-colors duration-200",
               selected ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground",
               // Until the thumb is measured, the selected option paints its own background
-              selected && !thumb && "bg-background shadow-[0_1px_2px_rgb(0_0_0/0.08)]",
+              selected && !thumb && "border border-border bg-background",
             )}
           >
             {option.label}

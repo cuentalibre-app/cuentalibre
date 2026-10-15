@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent, type ReactNode } from "react";
+import { useId, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, Plus, Trash2, UserPlus } from "lucide-react";
 import {
@@ -17,7 +17,7 @@ import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Checkbox, Input, Textarea } from "@fiscalia/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
 import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { AnimatedAmount } from "@/components/animated-amount";
 import { formatDate, formatDecimalInput, parseDecimal } from "@/lib/format";
 import { clients, type IncomeType, type InvoiceSeries, type SalesDocument, type SalesKind } from "@/mocks/sales";
 import {
@@ -128,7 +128,7 @@ export function SalesFormPage({ kind: routeKind }: { kind: SalesKind }) {
   if (id && !existing) {
     const config = KINDS[routeKind];
     return (
-      <div className="flex flex-col gap-3 px-5 pt-6 lg:px-10 lg:pt-8">
+      <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
         <p className="m-0 text-muted-foreground">Este documento no existe o se ha eliminado.</p>
         <Link to={config.path} className="font-medium text-primary no-underline hover:text-primary-hover">
@@ -312,7 +312,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
   );
 
   return (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 lg:gap-6 lg:px-10 lg:pt-8 lg:pb-10">
+    <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <Link
@@ -336,7 +336,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
       )}
 
       <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-        <Section title="Datos">
+        <Section title="Datos" index={1}>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <Field label="Cliente" required error={errors.clientId} className="xl:col-span-2">
               {(fieldProps) => (
@@ -433,7 +433,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
                             setDueTerm(term);
                             set("dueOn", term === null ? null : addDays(form.issuedOn, term));
                           }}
-                          className="h-7 cursor-pointer rounded-full border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary"
+                          className="h-7 cursor-pointer rounded-sm border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary"
                         >
                           {term === null ? "Sin fecha" : `${term} días`}
                         </button>
@@ -468,7 +468,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
           </div>
         </Section>
 
-        <Section title="Conceptos">
+        <Section title="Conceptos" index={2}>
           <LinesEditor
             lines={form.lines}
             parsed={parsedLines}
@@ -496,7 +496,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
           <Totals totals={totals} withholding={form.withholding} />
         </Section>
 
-        <Section title="Notas">
+        <Section title="Notas" index={3}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Notas en el documento" hint="Se imprimen al pie: condiciones de pago, IBAN…">
               {(p) => <Textarea {...p} value={form.publicNotes} onChange={(e) => set("publicNotes", e.target.value)} />}
@@ -509,7 +509,10 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
           </div>
         </Section>
 
-        <details className="group rounded-xl border border-border bg-card">
+        <details
+          className="group animate-rise-in rounded-xl border border-border bg-card"
+          style={{ "--i": 4 } as CSSProperties}
+        >
           <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-5 font-semibold [&::-webkit-details-marker]:hidden">
             <span className="text-lg">Opciones avanzadas</span>
             <ChevronDown
@@ -567,9 +570,12 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, index, children }: { title: string; index: number; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground">
+    <section
+      className="flex animate-rise-in flex-col gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground"
+      style={{ "--i": index } as CSSProperties}
+    >
       <h2 className="m-0 text-lg font-semibold">{title}</h2>
       {children}
     </section>
@@ -711,7 +717,10 @@ function LinesEditor({ lines, parsed, chargesVat, invalid, onChange, onRemove }:
           return (
             <li
               key={line.id}
-              className={cn(lineGrid, "rounded-lg border border-border p-3 lg:rounded-none lg:border-0 lg:p-0")}
+              className={cn(
+                lineGrid,
+                "animate-row-in rounded-lg border border-border p-3 lg:rounded-none lg:border-0 lg:p-0",
+              )}
             >
               <label className="col-span-2 flex flex-col gap-1 lg:col-span-1">
                 <span className={label}>
@@ -768,7 +777,7 @@ function LinesEditor({ lines, parsed, chargesVat, invalid, onChange, onRemove }:
               </div>
               <div className="flex flex-col items-end justify-center gap-1 lg:h-10">
                 <span className={label}>Importe</span>
-                <span className="amount text-base font-medium">{formatEUR(value ? lineBase(value) : 0)}</span>
+                <AnimatedAmount value={value ? lineBase(value) : 0} className="amount text-base font-medium" />
               </div>
               <Button
                 variant="ghost"
@@ -836,23 +845,31 @@ function Totals({ totals, withholding }: { totals: ReturnType<typeof invoiceTota
       <dl aria-label="Totales" className="m-0 flex w-full flex-col gap-2.5 sm:w-80">
         <div className={row}>
           <dt className="text-muted-foreground">Base imponible</dt>
-          <dd className="amount m-0">{formatEUR(totals.base)}</dd>
+          <dd className="amount m-0">
+            <AnimatedAmount value={totals.base} />
+          </dd>
         </div>
         {(totals.vatBreakdown.length ? totals.vatBreakdown : [{ rate: 0.21, base: 0, vat: 0 }]).map((v) => (
           <div key={v.rate} className={row}>
             <dt className="text-muted-foreground">IVA {Math.round(v.rate * 100)} %</dt>
-            <dd className="amount m-0">{formatEUR(v.vat)}</dd>
+            <dd className="amount m-0">
+              <AnimatedAmount value={v.vat} />
+            </dd>
           </div>
         ))}
         {rate > 0 && (
           <div className={row}>
             <dt className="text-muted-foreground">Retención IRPF {Math.round(rate * 100)} %</dt>
-            <dd className="amount m-0">{formatEUR(-totals.withholding)}</dd>
+            <dd className="amount m-0">
+              <AnimatedAmount value={-totals.withholding} />
+            </dd>
           </div>
         )}
         <div className={cn(row, "mt-1 border-t border-divider pt-3.5")}>
           <dt className="font-semibold">Total</dt>
-          <dd className="amount m-0 text-2xl font-semibold">{formatEUR(totals.total)}</dd>
+          <dd className="amount m-0 text-2xl font-semibold">
+            <AnimatedAmount value={totals.total} />
+          </dd>
         </div>
       </dl>
     </div>

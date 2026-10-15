@@ -24,7 +24,7 @@ import {
   Undo2,
   type LucideIcon,
 } from "lucide-react";
-import { periodMonths, type Period } from "@fiscalia/core";
+import { periodKey, periodMonths, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
@@ -39,6 +39,7 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
+import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -108,7 +109,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   const filtered = query.trim() !== "" || status !== ALL;
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-6 lg:px-10 lg:pt-8 lg:pb-10">
+    <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{config.title}</h1>
         <Link to={config.newPath} className={cn(buttonVariants(), "hidden no-underline lg:inline-flex")}>
@@ -124,7 +125,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
         style={{ "--i": 1 } as CSSProperties}
       >
-        <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-5 lg:py-4">
+        <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
           <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
           <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-80">
             <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
@@ -183,8 +184,9 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           />
         ) : (
           <>
-            <DocumentsTable kind={kind} rows={rows} sort={sort} onSort={setSort} />
-            <DocumentsList rows={rows} />
+            {/* Keyed by period so the rows replay their entrance when it changes, like the dashboard */}
+            <DocumentsTable key={periodKey(period)} kind={kind} rows={rows} sort={sort} onSort={setSort} />
+            <DocumentsList key={periodKey(period)} rows={rows} />
           </>
         )}
       </section>
@@ -217,10 +219,15 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
   return (
     <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-5 lg:py-4">
+        <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
           <dt className="text-sm text-muted-foreground">{s.label}</dt>
-          <dd className={cn("amount m-0 text-xl font-semibold", s.danger && s.value > 0 && "text-destructive")}>
-            {formatEUR(s.value)}
+          <dd
+            className={cn(
+              "amount m-0 text-xl font-semibold transition-colors duration-150",
+              s.danger && s.value > 0 && "text-destructive",
+            )}
+          >
+            <AnimatedAmount value={s.value} />
           </dd>
           <dd className="m-0 text-xs text-muted-foreground">{s.detail}</dd>
         </div>
@@ -308,7 +315,7 @@ function DocumentsTable({
                       type="button"
                       onClick={() => onSort(nextSort(sort, c.key))}
                       className={cn(
-                        "group flex w-full cursor-pointer items-center gap-1.5 whitespace-nowrap border-0 bg-transparent px-3 py-2.5 text-inherit uppercase transition-colors duration-150 hover:text-foreground in-[th:first-child]:pl-5",
+                        "group flex w-full cursor-pointer items-center gap-1.5 whitespace-nowrap border-0 bg-transparent px-3 py-2 text-inherit uppercase transition-colors duration-150 hover:text-foreground in-[th:first-child]:pl-4",
                         c.numeric && "justify-end",
                         active && "text-foreground",
                       )}
@@ -332,8 +339,12 @@ function DocumentsTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.doc.id} className={cn(table.row, r.status === "overdue" && "bg-destructive-soft/40")}>
+            {rows.map((r, i) => (
+              <tr
+                key={r.doc.id}
+                className={cn(table.row, "animate-row-in", r.status === "overdue" && "bg-destructive-soft/40")}
+                style={{ "--i": i } as CSSProperties}
+              >
                 <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>
                   <Link
                     to={`${KINDS[kind].path}/${r.doc.id}`}
@@ -369,10 +380,18 @@ function DocumentsTable({
               <td colSpan={4} className={cn(td, "text-sm text-muted-foreground")}>
                 {rows.length} {rows.length === 1 ? "documento" : "documentos"}
               </td>
-              <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "base"))}</td>
-              <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "vat"))}</td>
-              <td className={cn(td, "amount text-right")}>{formatEUR(-sum(rows, "withholding"))}</td>
-              <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "total"))}</td>
+              <td className={cn(td, "amount text-right")}>
+                <AnimatedAmount value={sum(rows, "base")} />
+              </td>
+              <td className={cn(td, "amount text-right")}>
+                <AnimatedAmount value={sum(rows, "vat")} />
+              </td>
+              <td className={cn(td, "amount text-right")}>
+                <AnimatedAmount value={-sum(rows, "withholding")} />
+              </td>
+              <td className={cn(td, "amount text-right")}>
+                <AnimatedAmount value={sum(rows, "total")} />
+              </td>
               <td className={td} />
             </tr>
           </tfoot>
@@ -385,8 +404,12 @@ function DocumentsTable({
 function DocumentsList({ rows }: { rows: Row[] }) {
   return (
     <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
-      {rows.map((r) => (
-        <li key={r.doc.id} className="flex items-center gap-1 border-b border-divider">
+      {rows.map((r, i) => (
+        <li
+          key={r.doc.id}
+          className="flex animate-row-in items-center gap-1 border-b border-divider"
+          style={{ "--i": i } as CSSProperties}
+        >
           <Link
             to={`${KINDS[r.doc.kind].path}/${r.doc.id}`}
             className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60"
@@ -410,7 +433,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
           {rows.length} {rows.length === 1 ? "documento" : "documentos"}
         </span>
         <span>
-          Total <span className="amount font-semibold text-foreground">{formatEUR(sum(rows, "total"))}</span>
+          Total <AnimatedAmount value={sum(rows, "total")} className="amount font-semibold text-foreground" />
         </span>
       </li>
     </ul>
@@ -560,7 +583,7 @@ function IconAction({ action, badge }: { action: Action; badge?: number }) {
         >
           <action.icon strokeWidth={1.8} aria-hidden="true" />
           {!!badge && (
-            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-2xs font-semibold text-primary-foreground">
+            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
               {badge}
             </span>
           )}
@@ -617,8 +640,8 @@ function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) 
 
 function EmptyState({ message, hint, action }: { message: string; hint: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-2 border-t border-border px-5 py-14 text-center">
-      <span className="mb-1 flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+    <div className="flex animate-fade-in flex-col items-center gap-2 border-t border-border px-5 py-14 text-center">
+      <span className="mb-1 flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
         {action ? <FilePlus2 strokeWidth={1.8} aria-hidden="true" /> : <Search strokeWidth={1.8} aria-hidden="true" />}
       </span>
       <p className="m-0 font-medium">{message}</p>
