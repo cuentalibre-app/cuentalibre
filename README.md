@@ -13,6 +13,8 @@ packages/core   Domain logic shared by front and back: periods, tax calculations
 packages/ui     Design system: tokens, base styles and components
 ```
 
+Architecture decisions and performance principles: [docs/architecture.md](docs/architecture.md).
+
 ## Development
 
 Requires Node 22+ and pnpm 12.

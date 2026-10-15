@@ -21,3 +21,7 @@ Open-source accounting and tax app for Spanish self-employed workers. pnpm + Tur
 - Tax and date rules live in `packages/core` as pure functions with tests; keep them out of React components.
 - Until there is a backend, sample data lives in `apps/web/src/mocks`.
 - Run `pnpm typecheck` and `pnpm test` before committing.
+
+## Architecture
+
+The app must feel instant. Read `docs/architecture.md` (a draft of working ideas, not binding) before adding a data layer, the backend, or heavy dependencies; it records the performance principles and the backend decision (Hono + Postgres, postponed for now).
