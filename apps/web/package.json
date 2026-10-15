@@ -13,6 +13,8 @@
   "dependencies": {
     "@fiscalia/core": "workspace:*",
     "@fiscalia/ui": "workspace:*",
+    "fflate": "^0.8.3",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.49.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

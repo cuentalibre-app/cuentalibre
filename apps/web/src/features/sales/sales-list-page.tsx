@@ -8,6 +8,7 @@ import {
   CircleDollarSign,
   Copy,
   Download,
+  FileArchive,
   FileDown,
   FilePlus2,
   FileX2,
@@ -41,7 +42,7 @@ import { table } from "@fiscalia/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
-import { formatDate, formatShortDate, periodCode } from "@/lib/format";
+import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import type { SalesDocument, SalesKind } from "@/mocks/sales";
@@ -107,6 +108,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   }, [periodRows, query, status, sort]);
 
   const filtered = query.trim() !== "" || status !== ALL;
+  const exportName = `${config.title} ${periodCode(period)}`.toLowerCase().replaceAll(" ", "-");
+  const [exporting, setExporting] = useState(false);
 
   return (
     <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
@@ -126,7 +129,6 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         style={{ "--i": 1 } as CSSProperties}
       >
         <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-          <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
           <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-80">
             <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
             <input
@@ -156,16 +158,35 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               </SelectContent>
             </Select>
           )}
-          <Button
-            variant="secondary"
-            size="md"
-            className="ml-auto"
-            disabled={rows.length === 0}
-            onClick={() => downloadCsv(rows, `${config.title} ${periodCode(period)}`)}
-          >
-            <Download strokeWidth={1.8} aria-hidden="true" />
-            Exportar
-          </Button>
+          <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+          <div className="ml-auto flex gap-2">
+            <Button variant="secondary" size="md" disabled={rows.length === 0} onClick={() => downloadCsv(rows, exportName)}>
+              <Download strokeWidth={1.8} aria-hidden="true" />
+              CSV
+            </Button>
+            <Button
+              variant="secondary"
+              size="md"
+              disabled={rows.length === 0 || exporting}
+              aria-label={`Descargar ${rows.length} PDF en un .zip`}
+              title="Un PDF por documento, en un .zip"
+              onClick={async () => {
+                setExporting(true);
+                try {
+                  const { downloadPdfZip } = await import("./sales-pdf");
+                  downloadPdfZip(
+                    rows.map((r) => r.doc),
+                    exportName,
+                  );
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              <FileArchive strokeWidth={1.8} aria-hidden="true" />
+              PDF (.zip)
+            </Button>
+          </div>
         </div>
 
         {rows.length === 0 ? (
@@ -195,25 +216,41 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   );
 }
 
+/**
+ * Same figures as the dashboard for the same period: "Ingresos" is the taxable base (as in
+ * Inicio) and the collection cards use totals with VAT (as in its "Estado de cobro").
+ */
 function InvoiceSummary({ rows }: { rows: Row[] }) {
   const of = (statuses: StatusKey[]) => rows.filter((r) => statuses.includes(r.status));
-  const stats = [
+  const invoices = (n: number) => (n === 1 ? "1 factura" : `${n} facturas`);
+  const total = sum(rows, "total");
+  const paid = sum(of(["paid"]), "total");
+  const overdue = sum(of(["overdue"]), "total");
+  const stats: { label: string; value: number; detail: ReactNode }[] = [
     {
-      label: "Facturado",
-      value: sum(rows, "total"),
-      detail: `${rows.length} facturas · base ${formatEUR(sum(rows, "base"))}`,
+      label: "Ingresos",
+      value: sum(rows, "base"),
+      detail: `Sin IVA · IVA repercutido ${formatEUR(sum(rows, "vat"))}`,
     },
-    { label: "Cobrado", value: sum(of(["paid"]), "total"), detail: `${of(["paid"]).length} facturas` },
+    {
+      label: "Total facturado",
+      value: total,
+      detail: `${invoices(rows.length)} · con IVA y retención`,
+    },
+    {
+      label: "Cobrado",
+      value: paid,
+      detail: `${invoices(of(["paid"]).length)} · ${formatPercent(total ? (paid / total) * 100 : 0)}`,
+    },
     {
       label: "Pendiente de cobro",
       value: sum(of(["pending", "overdue"]), "total"),
-      detail: `${of(["pending"]).length} en plazo`,
-    },
-    {
-      label: "Vencido",
-      value: sum(of(["overdue"]), "total"),
-      detail: `${of(["overdue"]).length} sin cobrar`,
-      danger: true,
+      detail:
+        overdue > 0 ? (
+          <span className="text-destructive">{formatEUR(overdue)} vencido</span>
+        ) : (
+          `${invoices(of(["pending"]).length)} en plazo`
+        ),
     },
   ];
   return (
@@ -221,12 +258,7 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
           <dt className="text-sm text-muted-foreground">{s.label}</dt>
-          <dd
-            className={cn(
-              "amount m-0 text-xl font-semibold transition-colors duration-150",
-              s.danger && s.value > 0 && "text-destructive",
-            )}
-          >
+          <dd className="amount m-0 text-xl font-semibold">
             <AnimatedAmount value={s.value} />
           </dd>
           <dd className="m-0 text-xs text-muted-foreground">{s.detail}</dd>
@@ -471,8 +503,11 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       }),
   };
 
-  // Not built yet: shown disabled so the operation has its place from the start.
-  const pdf: Action = { label: "Exportar PDF · próximamente", icon: FileDown };
+  const pdf: Action = {
+    label: "Descargar PDF",
+    icon: FileDown,
+    run: () => void import("./sales-pdf").then((m) => m.downloadDocumentPdf(doc)),
+  };
 
   const issueDraft = () => {
     const year = Number(doc.issuedOn.slice(0, 4));
@@ -673,7 +708,7 @@ function downloadCsv(rows: Row[], name: string) {
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement("a"), {
     href: url,
-    download: `${name.toLowerCase().replaceAll(" ", "-")}.csv`,
+    download: `${name}.csv`,
   });
   a.click();
   URL.revokeObjectURL(url);
