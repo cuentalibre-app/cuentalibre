@@ -54,7 +54,28 @@ describe("invoiceTotals", () => {
   });
 
   it("is zero for an empty invoice", () => {
-    expect(invoiceTotals([])).toEqual({ base: 0, vat: 0, withholding: 0, total: 0, vatBreakdown: [] });
+    expect(invoiceTotals([])).toEqual({
+      base: 0,
+      vat: 0,
+      surcharge: 0,
+      withholding: 0,
+      supplies: 0,
+      total: 0,
+      vatBreakdown: [],
+    });
+  });
+
+  it("adds the equivalence surcharge per rate on top of VAT", () => {
+    const totals = invoiceTotals([
+      { ...line(1_000), surchargeRate: 0.052 },
+      { ...line(200, 1, 0.1), surchargeRate: 0.014 },
+    ]);
+    expect(totals).toMatchObject({ base: 1_200, vat: 230, surcharge: 54.8, total: 1_484.8 });
+  });
+
+  it("adds supplies to the total outside the taxable base", () => {
+    const totals = invoiceTotals([line(1_000)], 0.15, 80.5);
+    expect(totals).toMatchObject({ base: 1_000, vat: 210, withholding: 150, supplies: 80.5, total: 1_140.5 });
   });
 });
 

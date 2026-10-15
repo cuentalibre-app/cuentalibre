@@ -1,4 +1,6 @@
 import {
+  INVOICE_VAT_RATES,
+  SURCHARGE_RATES,
   WITHHOLDING_RATES,
   invoiceTotals,
   isOverdue,
@@ -10,7 +12,15 @@ import {
   type WithholdingKind,
 } from "@fiscalia/core";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
-import { clients, type IncomeType, type InvoiceSeries, type SalesDocument, type SalesKind } from "@/mocks/sales";
+import {
+  clients,
+  type Client,
+  type IncomeType,
+  type InvoiceSeries,
+  type RentalLocation,
+  type SalesDocument,
+  type SalesKind,
+} from "@/mocks/sales";
 
 export interface KindConfig {
   title: string;
@@ -106,13 +116,13 @@ export function displayStatus(doc: SalesDocument, today: Date): StatusKey {
   return doc.status;
 }
 
-export function documentTotals(doc: Pick<SalesDocument, "lines" | "withholding">): InvoiceTotals {
-  return invoiceTotals(doc.lines, WITHHOLDING_RATES[doc.withholding]);
+export function documentTotals(doc: Pick<SalesDocument, "lines" | "withholding" | "supplies">): InvoiceTotals {
+  return invoiceTotals(doc.lines, WITHHOLDING_RATES[doc.withholding], doc.supplies);
 }
 
 const clientsById = new Map(clients.map((c) => [c.id, c]));
 
-export function clientOf(doc: SalesDocument) {
+export function clientOf(doc: SalesDocument): Client {
   return clientsById.get(doc.clientId) ?? { id: doc.clientId, name: "Cliente eliminado", taxId: "" };
 }
 
@@ -130,45 +140,178 @@ export function periodKeyOf(isoDate: string): string {
   return periodKey({ year: year!, quarter: quarterOfMonth(month! - 1) });
 }
 
-export const SERIES_OPTIONS: { value: InvoiceSeries; label: string }[] = [
+export interface Option<T extends string = string> {
+  value: T;
+  label: string;
+  /** Longer explanation, shown as a tooltip or hint. */
+  title?: string;
+}
+
+/** Options under an optional heading, as in a grouped select. */
+export interface OptionGroup<T extends string = string> {
+  label?: string;
+  options: Option<T>[];
+}
+
+export const SERIES_OPTIONS: Option<InvoiceSeries>[] = [
   { value: "normal", label: "Facturas normales" },
   { value: "rectifying", label: "Facturas rectificativas" },
 ];
 
-export const INCOME_TYPES: { value: IncomeType; label: string }[] = [
-  { value: "705", label: "705 · Prestación de servicios" },
-  { value: "700", label: "700 · Venta de mercaderías" },
-  { value: "759", label: "759 · Ingresos por servicios diversos" },
-  { value: "740", label: "740 · Subvenciones a la explotación" },
+export const SERIES_GROUPS: OptionGroup<InvoiceSeries>[] = [
+  { label: "Series normales", options: [SERIES_OPTIONS[0]!] },
+  { label: "Series rectificativas", options: [SERIES_OPTIONS[1]!] },
 ];
 
-export const WITHHOLDING_OPTIONS: { value: WithholdingKind; label: string }[] = [
-  { value: "none", label: "Sin retención" },
-  { value: "professional", label: "15 % · Profesionales" },
-  { value: "newProfessional", label: "7 % · Profesionales en inicio de actividad" },
-  { value: "rental", label: "19 % · Alquileres o capital mobiliario" },
-  { value: "imageRights", label: "24 % · Derechos de imagen" },
-  { value: "modules", label: "1 % · Módulos" },
-  { value: "farming", label: "2 % · Actividades agrícolas y ganaderas" },
+/** Accounts of group 7 of the PGC, under their subgroup. */
+export const INCOME_TYPE_GROUPS: OptionGroup<IncomeType>[] = [
+  {
+    label: "70. Venta de mercaderías o servicios",
+    options: [
+      { value: "700", label: "700. Venta de mercaderías" },
+      { value: "705", label: "705. Prestación de servicios" },
+      { value: "7098", label: "7098. Otras prestaciones de servicios" },
+      { value: "7099", label: "7099. Otras ventas de mercaderías" },
+    ],
+  },
+  {
+    label: "74. Subvenciones",
+    options: [
+      { value: "740", label: "740. Subvenciones a la explotación" },
+      { value: "746", label: "746. Subvenciones al capital" },
+      { value: "747", label: "747. Otras subvenciones" },
+    ],
+  },
+  { label: "75. Otros ingresos de gestión", options: [{ value: "752", label: "752. Ingresos por arrendamiento" }] },
+  { label: "76. Ingresos financieros", options: [{ value: "769", label: "769. Ingresos financieros" }] },
+];
+
+export const WITHHOLDING_GROUPS: OptionGroup<WithholdingKind>[] = [
+  { options: [{ value: "none", label: "Sin retención" }] },
+  {
+    label: "Valores actuales",
+    options: [
+      { value: "modules", label: "1 % · Módulos o actividades ganaderas" },
+      { value: "farming", label: "2 % · Sector agrario" },
+      { value: "newProfessional", label: "7 % · Profesionales en los dos primeros años de actividad" },
+      { value: "professional", label: "15 % · Profesionales" },
+      { value: "rental", label: "19 % · Alquileres o intereses (capital mobiliario)" },
+      { value: "imageRights", label: "24 % · Cesión de derechos de imagen" },
+    ],
+  },
+  {
+    label: "Valores bonificados (Ceuta y Melilla)",
+    options: [
+      {
+        value: "ceutaNewProfessional",
+        label: "2,8 % · Profesionales en los dos primeros años de actividad (Ceuta y Melilla)",
+      },
+      { value: "ceutaProfessional", label: "6 % · Profesionales (de Ceuta y Melilla)" },
+      { value: "ceutaRental", label: "7,6 % · Alquiler (Ceuta y Melilla)" },
+    ],
+  },
+  {
+    label: "Valores antiguos",
+    options: [
+      {
+        value: "legacyCeutaNewProfessional2018",
+        label: "3,5 % · Profesionales Ceuta y Melilla en los dos primeros años (para facturas anteriores 05-Jul-18)",
+      },
+      {
+        value: "legacyCeutaNewProfessional2015",
+        label: "4,5 % · Profesionales Ceuta y Melilla en los dos primeros años (para facturas anteriores 12-Jul-15)",
+      },
+      {
+        value: "legacyCeutaProfessional2018",
+        label: "7,5 % · Profesionales de Ceuta y Melilla (para facturas anteriores al 05-Jul-18)",
+      },
+      {
+        value: "legacyNewProfessional2015",
+        label: "9 % · Profesionales en los 2 primeros años de actividad (para facturas anteriores 12-Jul-15)",
+      },
+      {
+        value: "legacyCeutaProfessional2015",
+        label: "9,5 % · Profesionales de Ceuta y Melilla (para facturas anteriores 12-Jul-15)",
+      },
+      {
+        value: "legacyCeutaProfessional2014",
+        label: "10,5 % · Profesionales de Ceuta y Melilla (para ejercicios anteriores al 2015)",
+      },
+      { value: "legacyRental2009", label: "18 % · Alquileres (para ejercicios anteriores al 2010)" },
+      {
+        value: "legacyRental2015",
+        label: "19,5 % · Alquileres o intereses (capital mobiliario) (para ejercicios anteriores al 2016)",
+      },
+      {
+        value: "legacyRentalJuly2015",
+        label: "20 % · Alquileres o intereses (capital mobiliario) (para facturas anteriores 12-Jul-15)",
+      },
+      {
+        value: "legacyProfessional2014",
+        label: "21 % · Profesionales o alquileres (para ejercicios anteriores al 2015)",
+      },
+    ],
+  },
 ];
 
 export const OPERATION_TYPES: { value: OperationType; label: string; hint: string }[] = [
-  { value: "national", label: "Nacional", hint: "El cliente tiene su domicilio fiscal en España." },
+  { value: "national", label: "Nacional", hint: "Si el destinatario tiene el domicilio social en España." },
   {
     value: "exempt",
     label: "Nacional exenta",
-    hint: "Actividades exentas de IVA: sanidad, enseñanza reglada, seguros…",
+    hint: "Si la actividad está exenta de IVA: medicina, enseñanza reglada, seguros, etc.",
   },
-  { value: "notSubject", label: "Nacional no sujeta", hint: "Operaciones fuera del ámbito del IVA." },
+  { value: "notSubject", label: "Nacional no sujeta", hint: "Si la actividad no está sujeta a IVA." },
   {
     value: "reverseCharge",
     label: "Inversión del sujeto pasivo",
-    hint: "El cliente declara el IVA: obras, chatarra, servicios importados…",
+    hint: "Por ejemplo, facturas de importación de servicios, ejecuciones de obra, entrega de chatarra, etc.",
   },
   {
     value: "intraEu",
     label: "Intracomunitaria",
-    hint: "Empresa o autónomo de otro país de la UE, dado de alta en el VIES.",
+    hint: "Si el destinatario está inscrito en el VIES y es autónomo o sociedad con domicilio fiscal fuera de España pero en la UE.",
   },
-  { value: "export", label: "Exportación", hint: "Fuera de la UE, Canarias, Ceuta o Melilla." },
+  {
+    value: "export",
+    label: "Exportación",
+    hint: "Entrega de mercancías si el destinatario tiene domicilio social en Canarias, Ceuta, Melilla o fuera de la Unión Europea.",
+  },
 ];
+
+export const RENTAL_LOCATIONS: Option<RentalLocation>[] = [
+  {
+    value: "spain",
+    label:
+      "Inmueble con referencia catastral situado en cualquier punto del territorio español, con excepción de la Comunidad Autónoma del País Vasco y Comunidad Foral de Navarra",
+  },
+  { value: "basqueCountry", label: "Inmueble con referencia catastral situado en la Comunidad Autónoma del País Vasco" },
+  { value: "navarre", label: "Inmueble con referencia catastral situado en la Comunidad Foral de Navarra" },
+  {
+    value: "noCadastralRef",
+    label: "Inmueble situado en cualquier punto del territorio español, pero sin tener asignada referencia catastral",
+  },
+  { value: "abroad", label: "Inmueble situado en el extranjero" },
+];
+
+/** "7,5 %" */
+export const ratePercent = (rate: number) => `${String(Math.round(rate * 10_000) / 100).replace(".", ",")} %`;
+
+export const VAT_RATE_OPTIONS: Option[] = INVOICE_VAT_RATES.map((r) => ({ value: String(r), label: ratePercent(r) }));
+
+const SURCHARGE_HINTS: Record<number, string> = {
+  0: "Para los artículos que no tienen recargo de equivalencia",
+  0.0026: "Para los artículos con IVA al tipo reducido del 2 %",
+  0.005: "Para los artículos con IVA al tipo reducido del 4 %",
+  0.0062: "Para los artículos con IVA al tipo reducido del 5 %",
+  0.01: "Para los artículos con IVA al tipo reducido del 7,5 %",
+  0.014: "Para los artículos con IVA al tipo reducido del 10 %",
+  0.0175: "Para la venta de tabaco",
+  0.052: "Para los artículos con IVA al tipo general del 21 %",
+};
+
+export const SURCHARGE_OPTIONS: Option[] = SURCHARGE_RATES.map((r) => ({
+  value: String(r),
+  label: ratePercent(r),
+  title: SURCHARGE_HINTS[r],
+}));

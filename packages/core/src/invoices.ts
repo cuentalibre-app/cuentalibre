@@ -1,9 +1,26 @@
 /** Spanish VAT rates: general, reduced, super-reduced and exempt. */
 export const VAT_RATES = [0.21, 0.1, 0.04, 0] as const;
 
+/**
+ * Every VAT rate an invoice line can carry: the current ones plus the special
+ * (2 %, 5 %, 7,5 %) and historical (7 %, 8 %, 16 %, 18 %) rates, ascending.
+ */
+export const INVOICE_VAT_RATES = [0, 0.02, 0.04, 0.05, 0.07, 0.075, 0.08, 0.1, 0.16, 0.18, 0.21] as const;
+
+/**
+ * Equivalence surcharge (recargo de equivalencia) rates, charged on top of VAT
+ * to retailers under that regime. Each one pairs with a VAT rate: 5,2 % with
+ * 21 %, 1,4 % with 10 %, 0,5 % with 4 %… and 1,75 % for tobacco.
+ */
+export const SURCHARGE_RATES = [0, 0.0026, 0.005, 0.0062, 0.01, 0.014, 0.0175, 0.052] as const;
+
 /** IRPF withholding rates a self-employed worker can apply on an invoice. */
 export const WITHHOLDING_RATES = {
   none: 0,
+  /** Business activities under the module system, and livestock farming. */
+  modules: 0.01,
+  /** Farming. */
+  farming: 0.02,
   /** Professionals in the year they start and the two following years. */
   newProfessional: 0.07,
   professional: 0.15,
@@ -11,10 +28,21 @@ export const WITHHOLDING_RATES = {
   rental: 0.19,
   /** Image rights. */
   imageRights: 0.24,
-  /** Business activities under the module system. */
-  modules: 0.01,
-  /** Farming and livestock. */
-  farming: 0.02,
+  /** Reduced rates for Ceuta and Melilla. */
+  ceutaNewProfessional: 0.028,
+  ceutaProfessional: 0.06,
+  ceutaRental: 0.076,
+  /** Historical rates, for invoices issued before each change. */
+  legacyCeutaNewProfessional2018: 0.035,
+  legacyCeutaNewProfessional2015: 0.045,
+  legacyCeutaProfessional2018: 0.075,
+  legacyNewProfessional2015: 0.09,
+  legacyCeutaProfessional2015: 0.095,
+  legacyCeutaProfessional2014: 0.105,
+  legacyRental2009: 0.18,
+  legacyRental2015: 0.195,
+  legacyRentalJuly2015: 0.2,
+  legacyProfessional2014: 0.21,
 } as const;
 
 export type WithholdingKind = keyof typeof WITHHOLDING_RATES;
@@ -27,6 +55,8 @@ export interface InvoiceLine {
   discount: number;
   /** VAT rate as a fraction: 0.21 is 21%. */
   vatRate: number;
+  /** Equivalence surcharge rate as a fraction; 0 when it doesn't apply. */
+  surchargeRate?: number;
 }
 
 export interface VatBreakdown {
@@ -39,9 +69,13 @@ export interface InvoiceTotals {
   /** Taxable base (base imponible). */
   base: number;
   vat: number;
+  /** Equivalence surcharge. */
+  surcharge: number;
   /** IRPF withheld by the client. */
   withholding: number;
-  /** What the client pays: base + VAT − withholding. */
+  /** Expenses paid on the client's behalf (suplidos): outside the taxable base. */
+  supplies: number;
+  /** What the client pays: base + VAT + surcharge − withholding + supplies. */
   total: number;
   /** Base and VAT per rate, highest rate first. Only rates in use appear. */
   vatBreakdown: VatBreakdown[];
@@ -58,13 +92,20 @@ export function lineBase(line: InvoiceLine): number {
   return roundCents(line.unitPrice * line.quantity * (1 - line.discount));
 }
 
-/**
- * Invoice totals. VAT is computed per rate on the summed bases (not line by
- * line) and withholding on the whole taxable base, as the invoice shows them.
- */
-export function invoiceTotals(lines: InvoiceLine[], withholdingRate = 0): InvoiceTotals {
+/** Sums line bases per rate and applies it: VAT or surcharge on the grouped bases. */
+function taxByRate(lines: InvoiceLine[], rateOf: (line: InvoiceLine) => number): Map<number, number> {
   const byRate = new Map<number, number>();
-  for (const line of lines) byRate.set(line.vatRate, (byRate.get(line.vatRate) ?? 0) + lineBase(line));
+  for (const line of lines) byRate.set(rateOf(line), (byRate.get(rateOf(line)) ?? 0) + lineBase(line));
+  return byRate;
+}
+
+/**
+ * Invoice totals. VAT and surcharge are computed per rate on the summed bases
+ * (not line by line) and withholding on the whole taxable base, as the invoice
+ * shows them. Supplies are added to the total without tax.
+ */
+export function invoiceTotals(lines: InvoiceLine[], withholdingRate = 0, supplies = 0): InvoiceTotals {
+  const byRate = taxByRate(lines, (l) => l.vatRate);
 
   const vatBreakdown = [...byRate]
     .sort(([a], [b]) => b - a)
@@ -72,8 +113,20 @@ export function invoiceTotals(lines: InvoiceLine[], withholdingRate = 0): Invoic
 
   const base = roundCents(vatBreakdown.reduce((acc, r) => acc + r.base, 0));
   const vat = roundCents(vatBreakdown.reduce((acc, r) => acc + r.vat, 0));
+  const surcharge = roundCents(
+    [...taxByRate(lines, (l) => l.surchargeRate ?? 0)].reduce((acc, [rate, b]) => acc + roundCents(b * rate), 0),
+  );
   const withholding = roundCents(base * withholdingRate);
-  return { base, vat, withholding, total: roundCents(base + vat - withholding), vatBreakdown };
+  supplies = roundCents(supplies);
+  return {
+    base,
+    vat,
+    surcharge,
+    withholding,
+    supplies,
+    total: roundCents(base + vat + surcharge - withholding + supplies),
+    vatBreakdown,
+  };
 }
 
 /** Adds days to an ISO date (YYYY-MM-DD), in calendar days. */

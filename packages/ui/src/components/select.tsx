@@ -51,3 +51,19 @@ export function SelectItem({ className, children, ...props }: ComponentProps<typ
     </Primitive.Item>
   );
 }
+
+export const SelectGroup = Primitive.Group;
+
+/** Heading of a group of options; not selectable. */
+export function SelectLabel({ className, ...props }: ComponentProps<typeof Primitive.Label>) {
+  return (
+    <Primitive.Label
+      className={cn("px-3 pt-2.5 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase", className)}
+      {...props}
+    />
+  );
+}
+
+export function SelectSeparator({ className, ...props }: ComponentProps<typeof Primitive.Separator>) {
+  return <Primitive.Separator className={cn("mx-2 my-1.5 h-px bg-divider", className)} {...props} />;
+}

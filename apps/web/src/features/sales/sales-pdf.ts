@@ -19,7 +19,7 @@ const RIGHT = PAGE_WIDTH - MARGIN;
 
 const pdfText = (text: string) => text.replace(/−/g, "-").replace(/[  ]/g, " ");
 const eur = (value: number) => pdfText(formatEUR(value));
-const percent = (rate: number) => `${String(Math.round(rate * 1000) / 10).replace(".", ",")} %`;
+const percent = (rate: number) => `${String(Math.round(rate * 10_000) / 100).replace(".", ",")} %`;
 
 /** "Factura 2026-0046" or "Borrador" when the document has no number yet. */
 function title(doc: SalesDocument) {
@@ -77,6 +77,16 @@ function render(doc: SalesDocument): jsPDF {
       y = MARGIN + 4;
     }
     pdf.text(concept, cols.concept, y);
+    const extra = [
+      line.detail,
+      line.serviceFrom && line.serviceTo && `Periodo: ${formatDate(line.serviceFrom)} – ${formatDate(line.serviceTo)}`,
+    ].filter(Boolean) as string[];
+    if (extra.length) {
+      const text = pdf.splitTextToSize(pdfText(extra.join("\n")), cols.qty - cols.concept - 14) as string[];
+      pdf.setFontSize(8).setTextColor(110).text(text, cols.concept, y + concept.length * 5);
+      pdf.setFontSize(10).setTextColor(20);
+      y += text.length * 4;
+    }
     pdf.text(String(line.quantity).replace(".", ","), cols.qty, y, { align: "right" });
     pdf.text(eur(line.unitPrice), cols.price, y, { align: "right" });
     pdf.text(eur(lineBase(line)), cols.amount, y, { align: "right" });
@@ -100,7 +110,9 @@ function render(doc: SalesDocument): jsPDF {
   };
   row("Base imponible", eur(totals.base));
   for (const r of totals.vatBreakdown) row(`IVA ${percent(r.rate)}`, eur(r.vat));
+  if (totals.surcharge) row("Recargo de equivalencia", eur(totals.surcharge));
   if (totals.withholding) row(`Retención IRPF ${percent(WITHHOLDING_RATES[doc.withholding])}`, eur(-totals.withholding));
+  if (totals.supplies) row("Suplidos", eur(totals.supplies));
   pdf.setDrawColor(180).line(110, y - 3, RIGHT, y - 3);
   y += 3;
   row("Total", eur(totals.total), true);
