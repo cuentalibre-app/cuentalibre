@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
 import { HomePage } from "@/features/home/home-page";
+import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
 import { SalesListPage } from "@/features/sales/sales-list-page";
 import { KINDS } from "@/features/sales/sales-model";
@@ -23,6 +24,8 @@ const builtPaths = new Set(salesRoutes.map((r) => `/${r.path}`));
 
 const placeholders = [
   ...allNavLeaves.filter((leaf) => leaf.to !== "/"),
+  { label: "Ayuda", to: "/ayuda" },
+  { label: "Métodos de pago y cobro", to: "/configuracion/metodos-de-pago" },
   ...createActions.flat().map((action) => ({ label: `Crear ${action.label.toLowerCase()}`, to: action.to })),
 ].filter((p) => !builtPaths.has(p.to));
 
@@ -36,6 +39,7 @@ export const router = createBrowserRouter([
       { path: "contactos", element: <Navigate to="/contactos/clientes" replace /> },
       { path: "mas", element: <MorePage /> },
       ...salesRoutes,
+      { path: "configuracion/facturas", element: <InvoiceSettingsPage /> },
       ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
     ],

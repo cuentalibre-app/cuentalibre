@@ -7,15 +7,73 @@ export interface Client {
   name: string;
   /** NIF, or VAT number for EU clients. */
   taxId: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  country?: string;
 }
 
 export const clients: Client[] = [
-  { id: "c1", name: "Estudio Norte S.L.", taxId: "B12345674" },
-  { id: "c2", name: "Agencia Brisa S.L.", taxId: "B87654321" },
-  { id: "c3", name: "Talleres Ruiz S.C.", taxId: "J11223344" },
-  { id: "c4", name: "Lumen Software S.A.", taxId: "A55667788" },
-  { id: "c5", name: "Marta Gil Oliva", taxId: "12345678Z" },
-  { id: "c6", name: "Nordlicht GmbH", taxId: "DE123456789" },
+  {
+    id: "c1",
+    name: "Estudio Norte S.L.",
+    taxId: "B12345674",
+    email: "facturas@estudionorte.es",
+    phone: "944 123 456",
+    address: "Gran Vía 45, 2º",
+    city: "Bilbao",
+    province: "Bizkaia",
+    postalCode: "48011",
+    country: "España",
+  },
+  {
+    id: "c2",
+    name: "Agencia Brisa S.L.",
+    taxId: "B87654321",
+    email: "admin@agenciabrisa.com",
+    address: "Calle Colón 8",
+    city: "Valencia",
+    province: "Valencia",
+    postalCode: "46004",
+    country: "España",
+  },
+  {
+    id: "c3",
+    name: "Talleres Ruiz S.C.",
+    taxId: "J11223344",
+    phone: "976 555 010",
+    address: "Polígono Malpica, nave 14",
+    city: "Zaragoza",
+    province: "Zaragoza",
+    postalCode: "50016",
+    country: "España",
+  },
+  {
+    id: "c4",
+    name: "Lumen Software S.A.",
+    taxId: "A55667788",
+    email: "accounts@lumensoftware.es",
+    address: "Calle Serrano 90",
+    city: "Madrid",
+    province: "Madrid",
+    postalCode: "28006",
+    country: "España",
+  },
+  { id: "c5", name: "Marta Gil Oliva", taxId: "12345678Z", email: "marta.gil@correo.es", phone: "611 222 333" },
+  {
+    id: "c6",
+    name: "Nordlicht GmbH",
+    taxId: "DE123456789",
+    email: "billing@nordlicht.de",
+    address: "Torstraße 120",
+    city: "Berlin",
+    province: "Berlin",
+    postalCode: "10119",
+    country: "Alemania",
+  },
 ];
 
 export type SalesKind = "invoice" | "draft" | "quote" | "deliveryNote";
@@ -28,12 +86,20 @@ export type SalesStatus = "pending" | "paid" | "created" | "sent" | "accepted" |
 
 export type InvoiceSeries = "normal" | "rectifying";
 
-/** Income account in the Spanish chart of accounts (PGC). */
-export type IncomeType = "705" | "700" | "759" | "740";
+/** Income account in the Spanish chart of accounts (PGC), group 7. */
+export type IncomeType = "700" | "705" | "7098" | "7099" | "740" | "746" | "747" | "752" | "769";
+
+/** Where a rented property is, as forms 115 and 180 ask. */
+export type RentalLocation = "spain" | "basqueCountry" | "navarre" | "noCadastralRef" | "abroad";
 
 export interface SalesLine extends InvoiceLine {
   id: string;
   concept: string;
+  /** Longer description printed under the concept. */
+  detail?: string;
+  /** Service period (ISO dates). */
+  serviceFrom?: string;
+  serviceTo?: string;
 }
 
 export interface Attachment {
@@ -63,7 +129,20 @@ export interface SalesDocument {
   cashBasis: boolean;
   /** Property rental, reported in form 115/180. */
   rental: boolean;
+  rentalLocation?: RentalLocation;
+  cadastralRef?: string;
+  /** Invoice a rectifying invoice corrects. */
+  rectifiesId?: string;
   lines: SalesLine[];
+  /** Expenses paid on the client's behalf (suplidos), outside the taxable base. */
+  supplies?: number;
+  /** Collection date and method, for invoices marked as paid when created. */
+  paidOn?: string;
+  paymentMethodId?: string;
+  tags?: string[];
+  /** Document language and number format; empty means the client's default. */
+  language?: string;
+  numberFormat?: string;
   status: SalesStatus;
   /** Printed on the document. */
   publicNotes: string;
