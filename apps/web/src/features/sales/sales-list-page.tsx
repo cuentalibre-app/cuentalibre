@@ -1,13 +1,18 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronDown,
+  ChevronsUpDown,
   CircleDollarSign,
   Copy,
   Download,
+  FileDown,
   FilePlus2,
   FileX2,
   MoreHorizontal,
+  Paperclip,
   Pencil,
   Plus,
   ReceiptText,
@@ -17,6 +22,7 @@ import {
   ThumbsUp,
   Trash2,
   Undo2,
+  type LucideIcon,
 } from "lucide-react";
 import { periodMonths, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
@@ -31,8 +37,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { table } from "@fiscalia/ui/lib/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { PeriodSelect } from "@/components/period-select";
-import { formatDate, formatShortDate, periodCode, periodRange } from "@/lib/format";
+import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import type { SalesDocument, SalesKind } from "@/mocks/sales";
@@ -75,6 +83,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   const [period, setPeriod] = usePeriod(today);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>(ALL);
+  const [sort, setSort] = useState(DEFAULT_SORT);
   const documents = useSalesDocuments();
 
   const periodRows = useMemo(
@@ -88,23 +97,20 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return periodRows.filter(
+    const matching = periodRows.filter(
       (r) =>
         (status === ALL || r.status === status) &&
         (!q || [r.doc.number ?? "", r.client.name, r.client.taxId].some((v) => v.toLowerCase().includes(q))),
     );
-  }, [periodRows, query, status]);
+    return sortRows(matching, sort);
+  }, [periodRows, query, status, sort]);
 
   const filtered = query.trim() !== "" || status !== ALL;
 
   return (
     <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-6 lg:px-10 lg:pt-8 lg:pb-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3 lg:gap-4">
-          <h1 className="m-0 w-full text-2xl font-semibold tracking-tight sm:w-auto lg:text-3xl">{config.title}</h1>
-          <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-          <span className="text-sm text-muted-foreground">{periodRange(period)}</span>
-        </div>
+        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{config.title}</h1>
         <Link to={config.newPath} className={cn(buttonVariants(), "hidden no-underline lg:inline-flex")}>
           <Plus strokeWidth={2} aria-hidden="true" />
           {config.newLabel}
@@ -119,6 +125,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         style={{ "--i": 1 } as CSSProperties}
       >
         <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-5 lg:py-4">
+          <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
           <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-80">
             <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
             <input
@@ -164,7 +171,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           <EmptyState
             message={filtered ? "Ningún resultado coincide con la búsqueda." : config.empty}
             hint={
-              filtered ? "Prueba con otro término o estado." : "Puedes cambiar el periodo con el selector de arriba."
+              filtered ? "Prueba con otro término o estado." : "Puedes cambiar el periodo en el selector."
             }
             action={
               !filtered && (
@@ -176,7 +183,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           />
         ) : (
           <>
-            <DocumentsTable kind={kind} rows={rows} />
+            <DocumentsTable kind={kind} rows={rows} sort={sort} onSort={setSort} />
             <DocumentsList rows={rows} />
           </>
         )}
@@ -222,91 +229,156 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
   );
 }
 
-const amountHeaders = ["Base imponible", "IVA", "Retención", "Total"] as const;
+type SortKey = "number" | "date" | "client" | "status" | "base" | "vat" | "withholding" | "total";
+type SortDir = "asc" | "desc";
+interface Sort {
+  key: SortKey;
+  dir: SortDir;
+}
 
-function DocumentsTable({ kind, rows }: { kind: SalesKind; rows: Row[] }) {
-  const th = "border-y border-border px-4 py-2.5 font-medium first:pl-5 last:pr-5";
-  const td = "px-4 py-3 first:pl-5 last:pr-5";
+const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
+  { key: "number", label: "Nº" },
+  { key: "date", label: "Fecha" },
+  { key: "client", label: "Cliente" },
+  { key: "status", label: "Estado" },
+  { key: "base", label: "Base imponible", numeric: true },
+  { key: "vat", label: "IVA", numeric: true },
+  { key: "withholding", label: "Retención", numeric: true },
+  { key: "total", label: "Total", numeric: true },
+];
+
+const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
+
+const COMPARE: Record<SortKey, (a: Row, b: Row) => number> = {
+  number: (a, b) => byText(a.doc.number ?? "", b.doc.number ?? ""),
+  date: (a, b) => a.doc.issuedOn.localeCompare(b.doc.issuedOn) || byText(a.doc.number ?? "", b.doc.number ?? ""),
+  client: (a, b) => byText(a.client.name, b.client.name),
+  status: (a, b) => byText(STATUS[a.status].label, STATUS[b.status].label),
+  base: (a, b) => a.base - b.base,
+  vat: (a, b) => a.vat - b.vat,
+  withholding: (a, b) => a.withholding - b.withholding,
+  total: (a, b) => a.total - b.total,
+};
+
+const DEFAULT_SORT: Sort = { key: "date", dir: "desc" };
+
+function sortRows(rows: Row[], sort: Sort): Row[] {
+  const sign = sort.dir === "asc" ? 1 : -1;
+  return [...rows].sort((a, b) => sign * COMPARE[sort.key](a, b));
+}
+
+/** Clicking the active column flips it; a new column starts with the most useful direction. */
+function nextSort(current: Sort, key: SortKey): Sort {
+  if (current.key === key) return { key, dir: current.dir === "asc" ? "desc" : "asc" };
+  const textual = key === "client" || key === "status" || key === "number";
+  return { key, dir: textual && key !== "number" ? "asc" : "desc" };
+}
+
+function DocumentsTable({
+  kind,
+  rows,
+  sort,
+  onSort,
+}: {
+  kind: SalesKind;
+  rows: Row[];
+  sort: Sort;
+  onSort: (sort: Sort) => void;
+}) {
+  // Tighter than the default so nine columns fit on a laptop screen.
+  const th = cn(table.th, "px-3");
+  const td = cn(table.td, "px-3");
   return (
-    <div className="hidden overflow-x-auto lg:block">
-      <table className="w-full min-w-[880px] border-collapse">
-        <thead>
-          <tr className="text-left text-xs tracking-wide text-muted-foreground uppercase">
-            <th scope="col" className={th}>
-              Nº
-            </th>
-            <th scope="col" className={th}>
-              Fecha
-            </th>
-            <th scope="col" className={th}>
-              Cliente
-            </th>
-            <th scope="col" className={th}>
-              Estado
-            </th>
-            {amountHeaders.map((h) => (
-              <th key={h} scope="col" className={cn(th, "text-right")}>
-                {h}
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <div className="hidden overflow-x-auto lg:block">
+        <table className="w-full min-w-[960px] border-collapse">
+          <thead>
+            <tr className={table.headRow}>
+              {COLUMNS.map((c) => {
+                const active = sort.key === c.key;
+                const SortIcon = !active ? ChevronsUpDown : sort.dir === "asc" ? ArrowUp : ArrowDown;
+                return (
+                  <th
+                    key={c.key}
+                    scope="col"
+                    aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
+                    className={cn(th, "p-0 first:pl-0 last:pr-0", c.numeric && "text-right")}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onSort(nextSort(sort, c.key))}
+                      className={cn(
+                        "group flex w-full cursor-pointer items-center gap-1.5 whitespace-nowrap border-0 bg-transparent px-3 py-2.5 text-inherit uppercase transition-colors duration-150 hover:text-foreground in-[th:first-child]:pl-5",
+                        c.numeric && "justify-end",
+                        active && "text-foreground",
+                      )}
+                    >
+                      {c.label}
+                      <SortIcon
+                        className={cn(
+                          "size-3.5 shrink-0 transition-opacity duration-150",
+                          !active && "opacity-0 group-hover:opacity-60 group-focus-visible:opacity-60",
+                        )}
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </th>
+                );
+              })}
+              <th scope="col" className={cn(th, "text-center")}>
+                Acciones
               </th>
-            ))}
-            <th scope="col" className={th}>
-              <span className="sr-only">Acciones</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr
-              key={r.doc.id}
-              className={cn(
-                "border-b border-divider transition-colors duration-150 hover:bg-muted",
-                r.status === "overdue" && "bg-destructive-soft/40",
-              )}
-            >
-              <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>
-                <Link
-                  to={`${KINDS[kind].path}/${r.doc.id}`}
-                  className="text-foreground no-underline hover:text-primary"
-                >
-                  {r.doc.number ?? <span className="font-sans text-muted-foreground">Sin número</span>}
-                </Link>
-              </td>
-              <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>{formatDate(r.doc.issuedOn)}</td>
-              <td className={td}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{r.client.name}</span>
-                  <span className="font-mono text-xs text-muted-foreground">{r.client.taxId}</span>
-                </div>
-              </td>
-              <td className={td}>
-                <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
-              </td>
-              <td className={cn(td, "amount text-right")}>{formatEUR(r.base)}</td>
-              <td className={cn(td, "amount text-right text-muted-foreground")}>{formatEUR(r.vat)}</td>
-              <td className={cn(td, "amount text-right text-muted-foreground")}>
-                {r.withholding ? formatEUR(-r.withholding) : "—"}
-              </td>
-              <td className={cn(td, "amount text-right font-semibold")}>{formatEUR(r.total)}</td>
-              <td className={cn(td, "w-12 text-right")}>
-                <RowActions doc={r.doc} status={r.status} />
-              </td>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="bg-muted font-semibold">
-            <td colSpan={4} className={cn(td, "text-sm text-muted-foreground")}>
-              {rows.length} {rows.length === 1 ? "documento" : "documentos"}
-            </td>
-            <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "base"))}</td>
-            <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "vat"))}</td>
-            <td className={cn(td, "amount text-right")}>{formatEUR(-sum(rows, "withholding"))}</td>
-            <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "total"))}</td>
-            <td className={td} />
-          </tr>
-        </tfoot>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.doc.id} className={cn(table.row, r.status === "overdue" && "bg-destructive-soft/40")}>
+                <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>
+                  <Link
+                    to={`${KINDS[kind].path}/${r.doc.id}`}
+                    className="text-foreground no-underline hover:text-primary"
+                  >
+                    {r.doc.number ?? <span className="font-sans text-muted-foreground">Sin número</span>}
+                  </Link>
+                </td>
+                <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>{formatDate(r.doc.issuedOn)}</td>
+                <td className={td}>
+                  <div className="flex flex-col">
+                    <span className="font-medium whitespace-nowrap">{r.client.name}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{r.client.taxId}</span>
+                  </div>
+                </td>
+                <td className={td}>
+                  <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
+                </td>
+                <td className={cn(td, "amount text-right")}>{formatEUR(r.base)}</td>
+                <td className={cn(td, "amount text-right text-muted-foreground")}>{formatEUR(r.vat)}</td>
+                <td className={cn(td, "amount text-right text-muted-foreground")}>
+                  {r.withholding ? formatEUR(-r.withholding) : "—"}
+                </td>
+                <td className={cn(td, "amount text-right font-semibold")}>{formatEUR(r.total)}</td>
+                <td className={cn(td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
+                  <QuickActions doc={r.doc} status={r.status} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-border bg-muted font-semibold">
+              <td colSpan={4} className={cn(td, "text-sm text-muted-foreground")}>
+                {rows.length} {rows.length === 1 ? "documento" : "documentos"}
+              </td>
+              <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "base"))}</td>
+              <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "vat"))}</td>
+              <td className={cn(td, "amount text-right")}>{formatEUR(-sum(rows, "withholding"))}</td>
+              <td className={cn(td, "amount text-right")}>{formatEUR(sum(rows, "total"))}</td>
+              <td className={td} />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </TooltipProvider>
   );
 }
 
@@ -345,14 +417,39 @@ function DocumentsList({ rows }: { rows: Row[] }) {
   );
 }
 
-function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) {
+function pickFiles(onPick: (files: File[]) => void) {
+  const input = Object.assign(document.createElement("input"), { type: "file", multiple: true });
+  input.onchange = () => onPick(Array.from(input.files ?? []));
+  input.click();
+}
+
+interface Action {
+  label: string;
+  icon: LucideIcon;
+  run?: () => void;
+  danger?: boolean;
+}
+
+/** Every operation available on a document, grouped so the menu can split them with separators. */
+function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const navigate = useNavigate();
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
+  const attachments = doc.attachments ?? [];
 
-  const remove = () => {
-    if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`)) salesStore.remove(doc.id);
+  const attach: Action = {
+    label: attachments.length > 0 ? `Adjuntar archivos (${attachments.length})` : "Adjuntar archivos",
+    icon: Paperclip,
+    run: () =>
+      pickFiles((files) => {
+        if (files.length === 0) return;
+        const added = files.map((f) => ({ id: crypto.randomUUID(), name: f.name, size: f.size }));
+        salesStore.update(doc.id, { attachments: [...attachments, ...added] });
+      }),
   };
+
+  // Not built yet: shown disabled so the operation has its place from the start.
+  const pdf: Action = { label: "Exportar PDF · próximamente", icon: FileDown };
 
   const issueDraft = () => {
     const year = Number(doc.issuedOn.slice(0, 4));
@@ -365,75 +462,156 @@ function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) 
   };
 
   const workflow = doc.kind === "quote" || doc.kind === "deliveryNote";
-  const transitions: { to: SalesDocument["status"]; label: string; icon: typeof Send }[] = [
-    { to: "sent", label: "Marcar como enviado", icon: Send },
-    { to: "accepted", label: "Marcar como aceptado", icon: ThumbsUp },
-    { to: "rejected", label: "Marcar como rechazado", icon: ThumbsDown },
-  ];
+  let primary: Action | null = null;
+  if (doc.kind === "invoice") {
+    primary =
+      doc.status === "paid"
+        ? { label: "Marcar como pendiente", icon: Undo2, run: () => salesStore.update(doc.id, { status: "pending" }) }
+        : { label: "Marcar como cobrada", icon: CircleDollarSign, run: () => salesStore.update(doc.id, { status: "paid" }) };
+  } else if (doc.kind === "draft") {
+    primary = { label: "Emitir factura", icon: ReceiptText, run: issueDraft };
+  } else if (workflow && status !== "invoiced") {
+    primary = {
+      label: "Convertir en factura",
+      icon: ReceiptText,
+      run: () => navigate(`${KINDS.invoice.newPath}?desde=${doc.id}`),
+    };
+  }
 
+  const transitions: Action[] = workflow
+    ? (
+        [
+          { to: "sent", label: "Marcar como enviado", icon: Send },
+          { to: "accepted", label: "Marcar como aceptado", icon: ThumbsUp },
+          { to: "rejected", label: "Marcar como rechazado", icon: ThumbsDown },
+        ] as const
+      )
+        .filter((t) => t.to !== status)
+        .map((t) => ({ label: t.label, icon: t.icon, run: () => salesStore.update(doc.id, { status: t.to }) }))
+    : [];
+
+  const groups: Action[][] = [
+    [
+      { label: `Editar ${config.singular.toLowerCase()}`, icon: Pencil, run: () => navigate(`${config.path}/${doc.id}`) },
+      { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
+    ],
+    [...(primary ? [primary] : []), ...transitions, attach, pdf],
+    doc.kind === "invoice" && doc.series === "normal"
+      ? [
+          {
+            label: "Generar factura rectificativa",
+            icon: FileX2,
+            run: () => navigate(`${config.newPath}?desde=${doc.id}&rectificar=1`),
+          },
+        ]
+      : [],
+    [
+      {
+        label: `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim(),
+        icon: Trash2,
+        danger: true,
+        run: () => {
+          if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`)) salesStore.remove(doc.id);
+        },
+      },
+    ],
+  ].filter((g) => g.length > 0);
+
+  return { attach, pdf, primary, groups, attachments: attachments.length, label: `${config.noun} ${label}` };
+}
+
+function ActionsMenu({ groups, trigger }: { groups: Action[][]; trigger: ReactNode }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${config.noun} ${label}`}>
-          <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
+      {trigger}
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => navigate(`${config.path}/${doc.id}`)}>
-          <Pencil aria-hidden="true" />
-          Editar
-        </DropdownMenuItem>
-        {doc.kind === "draft" && (
-          <DropdownMenuItem onSelect={issueDraft}>
-            <ReceiptText aria-hidden="true" />
-            Emitir factura
-          </DropdownMenuItem>
-        )}
-        {doc.kind === "invoice" &&
-          (doc.status === "paid" ? (
-            <DropdownMenuItem onSelect={() => salesStore.update(doc.id, { status: "pending" })}>
-              <Undo2 aria-hidden="true" />
-              Marcar como pendiente
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem onSelect={() => salesStore.update(doc.id, { status: "paid" })}>
-              <CircleDollarSign aria-hidden="true" />
-              Marcar como cobrada
-            </DropdownMenuItem>
-          ))}
-        {workflow && status !== "invoiced" && (
-          <>
-            <DropdownMenuItem onSelect={() => navigate(`${KINDS.invoice.newPath}?desde=${doc.id}`)}>
-              <ReceiptText aria-hidden="true" />
-              Convertir en factura
-            </DropdownMenuItem>
-            {transitions
-              .filter((t) => t.to !== status)
-              .map((t) => (
-                <DropdownMenuItem key={t.to} onSelect={() => salesStore.update(doc.id, { status: t.to })}>
-                  <t.icon aria-hidden="true" />
-                  {t.label}
-                </DropdownMenuItem>
-              ))}
-          </>
-        )}
-        <DropdownMenuItem onSelect={() => navigate(`${config.newPath}?desde=${doc.id}`)}>
-          <Copy aria-hidden="true" />
-          Duplicar
-        </DropdownMenuItem>
-        {doc.kind === "invoice" && doc.series === "normal" && (
-          <DropdownMenuItem onSelect={() => navigate(`${config.newPath}?desde=${doc.id}&rectificar=1`)}>
-            <FileX2 aria-hidden="true" />
-            Crear rectificativa
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={remove} className="text-destructive [&_svg]:text-destructive">
-          <Trash2 aria-hidden="true" />
-          Eliminar
-        </DropdownMenuItem>
+        {groups.map((group, i) => (
+          <Fragment key={i}>
+            {i > 0 && <DropdownMenuSeparator />}
+            {group.map((a) => (
+              <DropdownMenuItem
+                key={a.label}
+                disabled={!a.run}
+                onSelect={a.run}
+                className={cn(a.danger && "text-destructive [&_svg]:text-destructive")}
+              >
+                <a.icon aria-hidden="true" />
+                {a.label}
+              </DropdownMenuItem>
+            ))}
+          </Fragment>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function IconAction({ action, badge }: { action: Action; badge?: number }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={action.label}
+          aria-disabled={!action.run}
+          onClick={action.run}
+          className={cn("relative size-8 px-0", !action.run && "cursor-not-allowed opacity-40 hover:bg-transparent")}
+        >
+          <action.icon strokeWidth={1.8} aria-hidden="true" />
+          {!!badge && (
+            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-2xs font-semibold text-primary-foreground">
+              {badge}
+            </span>
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{action.label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** Desktop: the usual operations one click away, the rest behind the arrow. */
+function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) {
+  const { attach, pdf, primary, groups, attachments, label } = useDocumentActions(doc, status);
+  return (
+    <div className="flex items-center justify-center gap-0.5">
+      <IconAction action={attach} badge={attachments} />
+      <IconAction action={pdf} />
+      {primary ? <IconAction action={primary} /> : <span className="size-8" aria-hidden="true" />}
+      <ActionsMenu
+        groups={groups}
+        trigger={
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="size-8 px-0" aria-label={`Más acciones de ${label}`}>
+                  <ChevronDown strokeWidth={1.8} aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Más acciones</TooltipContent>
+          </Tooltip>
+        }
+      />
+    </div>
+  );
+}
+
+/** Mobile: everything in one menu. */
+function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) {
+  const { groups, label } = useDocumentActions(doc, status);
+  return (
+    <ActionsMenu
+      groups={groups}
+      trigger={
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
+            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+      }
+    />
   );
 }
 

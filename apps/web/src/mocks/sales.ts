@@ -36,6 +36,13 @@ export interface SalesLine extends InvoiceLine {
   concept: string;
 }
 
+export interface Attachment {
+  id: string;
+  name: string;
+  /** Bytes. */
+  size: number;
+}
+
 export interface SalesDocument {
   id: string;
   kind: SalesKind;
@@ -62,6 +69,8 @@ export interface SalesDocument {
   publicNotes: string;
   /** Only visible in Fiscalia. */
   privateNotes: string;
+  /** Supporting files (contracts, delivery proofs…). Names only until there is a backend. */
+  attachments?: Attachment[];
 }
 
 let lineSeq = 0;

@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { table } from "@fiscalia/ui/lib/table";
 import type { InvoiceStatus } from "@/mocks/data";
 import { formatDate, formatShortDate } from "@/lib/format";
 import type { HomeData } from "./home-data";
@@ -34,12 +35,12 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       <div className="hidden overflow-x-auto lg:block">
         <table className="w-full min-w-[560px] border-collapse">
           <thead>
-            <tr className="text-left text-xs tracking-wide text-muted-foreground uppercase">
+            <tr className={table.headRow}>
               {headers.map((h) => (
                 <th
                   key={h}
                   scope="col"
-                  className={cn("border-y border-border px-5 py-2.5 font-medium", h === "Total" && "text-right")}
+                  className={cn(table.th, h === "Total" && "text-right")}
                 >
                   {h}
                 </th>
@@ -48,12 +49,12 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           </thead>
           <tbody>
             {data.invoices.map((inv) => (
-              <tr key={inv.number} className="border-b border-divider transition-colors duration-150 last:border-b-0 hover:bg-muted">
-                <td className="px-5 py-3.5 font-mono text-sm">{inv.number}</td>
-                <td className="px-5 py-3.5 font-medium">{inv.client}</td>
-                <td className="px-5 py-3.5 text-muted-foreground">{formatDate(inv.issuedOn)}</td>
-                <td className="amount px-5 py-3.5 text-right">{formatEUR(inv.total)}</td>
-                <td className="px-5 py-3.5">
+              <tr key={inv.number} className={table.row}>
+                <td className={cn(table.td, "font-mono text-sm")}>{inv.number}</td>
+                <td className={cn(table.td, "font-medium")}>{inv.client}</td>
+                <td className={cn(table.td, "text-muted-foreground")}>{formatDate(inv.issuedOn)}</td>
+                <td className={cn(table.td, "amount text-right")}>{formatEUR(inv.total)}</td>
+                <td className={table.td}>
                   <Badge tone={STATUS[inv.status].tone}>{STATUS[inv.status].label}</Badge>
                 </td>
               </tr>

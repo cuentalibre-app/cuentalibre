@@ -4,6 +4,7 @@ import { Button } from "@fiscalia/ui/components/button";
 import { Card, CardTitle } from "@fiscalia/ui/components/card";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { table } from "@fiscalia/ui/lib/table";
 
 const colorGroups: { title: string; tokens: string[] }[] = [
   { title: "Superficies", tokens: ["background", "card", "popover", "sidebar", "muted", "muted-strong", "accent"] },
@@ -234,14 +235,11 @@ export function DesignSystemPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] border-collapse">
                 <thead>
-                  <tr className="text-left text-xs tracking-wide text-muted-foreground uppercase">
+                  <tr className={table.headRow}>
                     {["Nº", "Cliente", "Fecha", "Total", "Estado"].map((h) => (
                       <th
                         key={h}
-                        className={cn(
-                          "border-y border-border px-5 py-2.5 font-medium",
-                          h === "Total" && "text-right",
-                        )}
+                        className={cn(table.th, h === "Total" && "text-right")}
                       >
                         {h}
                       </th>
@@ -250,12 +248,12 @@ export function DesignSystemPage() {
                 </thead>
                 <tbody>
                   {invoices.map((inv) => (
-                    <tr key={inv.n} className="border-b border-divider last:border-b-0">
-                      <td className="px-5 py-3.5 font-mono text-sm">{inv.n}</td>
-                      <td className="px-5 py-3.5 font-medium">{inv.c}</td>
-                      <td className="px-5 py-3.5 text-muted-foreground">{inv.d}</td>
-                      <td className="amount px-5 py-3.5 text-right">{formatEUR(inv.t)}</td>
-                      <td className="px-5 py-3.5">
+                    <tr key={inv.n} className={table.row}>
+                      <td className={cn(table.td, "font-mono text-sm")}>{inv.n}</td>
+                      <td className={cn(table.td, "font-medium")}>{inv.c}</td>
+                      <td className={cn(table.td, "text-muted-foreground")}>{inv.d}</td>
+                      <td className={cn(table.td, "amount text-right")}>{formatEUR(inv.t)}</td>
+                      <td className={table.td}>
                         <Badge tone={inv.tone}>{inv.s}</Badge>
                       </td>
                     </tr>
