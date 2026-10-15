@@ -97,7 +97,7 @@ export function HomePage() {
       </div>
 
       <div
-        className="flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-start"
+        className="flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch"
         style={{ "--i": 6 } as CSSProperties}
       >
         <RecentInvoices data={data} className="order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]" />

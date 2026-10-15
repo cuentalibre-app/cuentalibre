@@ -21,15 +21,10 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       className={cn("flex flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border", className)}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5 lg:items-center lg:px-5 lg:py-[18px]">
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h2 id="recent-invoices-title" className="m-0 text-md font-semibold lg:text-lg">
-            <span className="lg:hidden">Últimas facturas</span>
-            <span className="hidden lg:inline">Últimas facturas emitidas</span>
-          </h2>
-          <span className="hidden text-sm text-muted-foreground lg:inline">
-            Pendiente de cobro <span className="amount text-foreground">{formatEUR(data.pendingCollection)}</span>
-          </span>
-        </div>
+        <h2 id="recent-invoices-title" className="m-0 text-md font-semibold lg:text-lg">
+          <span className="lg:hidden">Últimas facturas</span>
+          <span className="hidden lg:inline">Últimas facturas emitidas</span>
+        </h2>
         <Link to="/ventas/facturas" className="font-medium text-primary no-underline hover:text-primary-hover">
           Ver todas
         </Link>
@@ -65,6 +60,12 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Pinned to the bottom so the card can stretch to match the tax calendar beside it */}
+      <div className="mt-auto hidden items-center justify-between gap-3 border-t border-border bg-muted px-5 py-3.5 text-sm lg:flex">
+        <span className="text-muted-foreground">Pendiente de cobro</span>
+        <span className="amount font-semibold">{formatEUR(data.pendingCollection)}</span>
       </div>
 
       {/* Mobile: list */}
