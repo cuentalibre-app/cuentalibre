@@ -99,7 +99,7 @@ export function DesignSystemPage() {
   const irpf = 0.2 * (ingresos - gastos);
   const neto = ingresos - gastos - irpf;
   const parts = [
-    { label: "Neto para ti", value: neto, className: "bg-chart-income" },
+    { label: "Neto", value: neto, className: "bg-chart-income" },
     { label: "IRPF estimado", value: irpf, className: "bg-chart-tax" },
     { label: "Gastos", value: gastos, className: "bg-chart-expense" },
   ];
@@ -267,7 +267,7 @@ export function DesignSystemPage() {
 
           <Card className="min-w-0 flex-[1_1_300px]">
             <div className="flex flex-col gap-1">
-              <CardTitle>¿Cuánto es tuyo?</CardTitle>
+              <CardTitle>Neto después de impuestos</CardTitle>
               <span className="text-sm text-muted-foreground">De {formatEUR(ingresos)} facturados sin IVA</span>
             </div>
             <span className="amount text-4xl font-medium">{formatEUR(neto)}</span>

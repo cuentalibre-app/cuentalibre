@@ -2,13 +2,14 @@
 
 Open-source accounting and tax management for self-employed workers (*autónomos*) in Spain.
 
-> Early stage: only the design system is in place so far.
+> Early stage: the app shell and the home dashboard are in place, running on sample data.
 
 ## Structure
 
 ```
 apps/web        Frontend (Vite + React + TypeScript + Tailwind CSS v4)
 apps/api        Backend (not started)
+packages/core   Domain logic shared by front and back: periods, tax calculations, filing calendar
 packages/ui     Design system: tokens, base styles and components
 ```
 
@@ -20,8 +21,11 @@ Requires Node 22+ and pnpm 12.
 pnpm install
 pnpm dev          # http://localhost:5173
 pnpm typecheck
+pnpm test
 pnpm build
 ```
+
+The design system reference page is at `/sistema-visual`.
 
 ## Design tokens
 
