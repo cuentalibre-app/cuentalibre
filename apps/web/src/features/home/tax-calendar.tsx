@@ -72,7 +72,7 @@ export function TaxCalendar({ data, className }: { data: HomeData; className?: s
           aria-valuenow={quarterClose.stepsDone}
           className="h-1.5 rounded-full bg-muted"
         >
-          <div className="h-1.5 rounded-full bg-primary" style={{ width: `${progress}%` }} />
+          <div className="h-1.5 animate-reveal-x rounded-full bg-primary" style={{ width: `${progress}%` }} />
         </div>
       </div>
       <Link
@@ -88,7 +88,7 @@ export function TaxCalendar({ data, className }: { data: HomeData; className?: s
           <li key={`${item.deadline.kind}-${item.deadline.date.toISOString()}`}>
             <Link
               to="/impuestos"
-              className="flex items-center gap-3.5 rounded-xl border border-border p-3.5 text-foreground no-underline"
+              className="flex items-center gap-3.5 rounded-xl border border-border p-3.5 text-foreground no-underline transition-[background-color,scale] duration-150 ease-out active:scale-[0.98] active:bg-muted"
             >
               <DateBlock date={item.deadline.date} className="w-10" />
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">

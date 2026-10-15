@@ -35,3 +35,31 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tight);
 }
+
+/* Popovers slide in from the side they open on */
+@utility popover-motion {
+  &[data-side="top"] {
+    --popover-shift: 4px;
+  }
+  &[data-side="bottom"] {
+    --popover-shift: -4px;
+  }
+  &[data-state="open"] {
+    animation: var(--animate-popover-in);
+  }
+  &[data-state="closed"] {
+    animation: var(--animate-popover-out);
+  }
+}
+
+@layer base {
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 1ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 1ms !important;
+    }
+  }
+}

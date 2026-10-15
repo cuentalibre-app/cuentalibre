@@ -11,7 +11,7 @@ export function DropdownMenuContent({ className, sideOffset = 6, ...props }: Com
       <Primitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-48 rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
+          "popover-motion z-50 min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
           className,
         )}
         {...props}
@@ -24,7 +24,7 @@ export function DropdownMenuItem({ className, ...props }: ComponentProps<typeof 
   return (
     <Primitive.Item
       className={cn(
-        "flex h-10 cursor-pointer items-center gap-3 rounded-md px-3 font-medium outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-muted [&_svg]:size-[18px] [&_svg]:shrink-0 [&_svg]:text-muted-foreground",
+        "flex h-10 cursor-pointer items-center gap-3 rounded-md px-3 font-medium transition-colors duration-150 outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-muted [&_svg]:size-[18px] [&_svg]:shrink-0 [&_svg]:text-muted-foreground",
         className,
       )}
       {...props}

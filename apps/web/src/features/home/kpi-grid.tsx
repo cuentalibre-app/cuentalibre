@@ -1,6 +1,8 @@
+import type { CSSProperties } from "react";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { AnimatedAmount } from "@/components/animated-amount";
 import { formatPercent, periodShortLabel } from "@/lib/format";
 import type { HomeData } from "./home-data";
 
@@ -23,13 +25,16 @@ function tone(change: number, upIsGood: boolean | null) {
 
 const toneText = { neutral: "text-muted-foreground", success: "text-success", danger: "text-destructive" };
 
-function KpiCard({ kpi, compareLabel }: { kpi: Kpi; compareLabel: string }) {
+function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string; index: number }) {
   const change = kpi.change;
   const t = change === null ? null : tone(change, kpi.upIsGood);
   const changeText = change === null ? null : `${change >= 0 ? "↑" : "↓"} ${formatPercent(Math.abs(change))}`;
 
   return (
-    <div className="flex flex-col gap-1.5 rounded-xl border border-border p-3.5 lg:gap-2.5 lg:p-5">
+    <div
+      className="flex animate-rise-in flex-col gap-1.5 rounded-xl border border-border p-3.5 lg:gap-2.5 lg:p-5"
+      style={{ "--i": index } as CSSProperties}
+    >
       <div className="flex items-center justify-between gap-2 lg:min-h-6">
         <span className="text-sm text-muted-foreground lg:text-base">{kpi.label}</span>
         {changeText && t && (
@@ -38,7 +43,7 @@ function KpiCard({ kpi, compareLabel }: { kpi: Kpi; compareLabel: string }) {
           </Badge>
         )}
       </div>
-      <span className="amount text-xl font-medium lg:text-2xl">{formatEUR(kpi.value)}</span>
+      <AnimatedAmount value={kpi.value} className="amount text-xl font-medium lg:text-2xl" />
       {changeText && t ? (
         <span className={cn("text-xs font-semibold lg:hidden", toneText[t])}>
           {changeText} vs. {compareLabel}
@@ -95,8 +100,8 @@ export function KpiGrid({ data }: { data: HomeData }) {
       aria-label="Resumen del periodo"
       className="grid grid-cols-2 gap-2.5 lg:grid-cols-[repeat(auto-fit,minmax(min(220px,100%),1fr))] lg:gap-4"
     >
-      {kpis.map((kpi) => (
-        <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} />
+      {kpis.map((kpi, i) => (
+        <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />
       ))}
     </section>
   );

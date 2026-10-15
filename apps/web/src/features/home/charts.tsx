@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Card, CardTitle } from "@fiscalia/ui/components/card";
 import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
 import { cn } from "@fiscalia/ui/lib/cn";
@@ -23,6 +23,14 @@ function Gridlines() {
       <div className="border-t border-chart-axis" />
     </div>
   );
+}
+
+/** Bars grow from the baseline on mount, left to right; later changes in height ease. */
+const barClass =
+  "origin-bottom animate-grow-up rounded-t-xs [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
+
+function barStyle(value: number, max: number, index: number) {
+  return { height: pct(value, max), "--i": index } as CSSProperties;
 }
 
 function Dot({ className }: { className: string }) {
@@ -117,7 +125,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
           <div className="relative h-[200px]">
             <Gridlines />
             {view === "monthly" ? (
-              <div className="absolute inset-0 flex items-end gap-1.5">
+              <div className="absolute inset-0 flex animate-fade-in items-end gap-1.5">
                 {monthly.map((m, i) => (
                   <button
                     key={i}
@@ -132,18 +140,18 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                     onMouseEnter={() => setSelected(i)}
                     onFocus={() => setSelected(i)}
                     className={cn(
-                      "flex h-full min-w-0 flex-1 cursor-pointer items-end justify-center gap-[3px] rounded-sm",
+                      "flex h-full min-w-0 flex-1 cursor-pointer items-end justify-center gap-[3px] rounded-sm transition-colors duration-200",
                       i === selected && "bg-chart-highlight",
                       !months.includes(i) && "opacity-30",
                     )}
                   >
                     <span
-                      className="w-[36%] max-w-[18px] rounded-t-xs bg-chart-income"
-                      style={{ height: pct(m?.income ?? 0, max) }}
+                      className={cn(barClass, "w-[36%] max-w-[18px] bg-chart-income")}
+                      style={barStyle(m?.income ?? 0, max, i)}
                     />
                     <span
-                      className="w-[36%] max-w-[18px] rounded-t-xs bg-chart-expense"
-                      style={{ height: pct(m?.expenses ?? 0, max) }}
+                      className={cn(barClass, "w-[36%] max-w-[18px] bg-chart-expense")}
+                      style={barStyle(m?.expenses ?? 0, max, i)}
                     />
                   </button>
                 ))}
@@ -154,7 +162,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                   viewBox="0 0 1200 200"
                   preserveAspectRatio="none"
                   aria-hidden="true"
-                  className="absolute inset-0 block h-[200px] w-full"
+                  className="absolute inset-0 block h-[200px] w-full animate-fade-in"
                 >
                   <rect
                     x={months[0]! * 100}
@@ -163,6 +171,14 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                     height="200"
                     className="fill-chart-highlight"
                   />
+                </svg>
+                {/* The line draws itself from left to right */}
+                <svg
+                  viewBox="0 0 1200 200"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                  className="absolute inset-0 block h-[200px] w-full animate-reveal-x"
+                >
                   <polygon points={areaPoints} className="fill-chart-income" fillOpacity="0.1" />
                   <polyline
                     points={linePoints}
@@ -253,12 +269,12 @@ export function ProfitChart({ data, className }: { data: HomeData; className?: s
               aria-pressed={i === selected}
               onClick={() => setSelected(i)}
               className={cn(
-                "flex h-full min-w-0 flex-1 cursor-pointer items-end justify-center rounded-[5px]",
+                "flex h-full min-w-0 flex-1 cursor-pointer items-end justify-center rounded-[5px] transition-colors duration-200",
                 i === selected && "bg-chart-highlight",
                 !months.includes(i) && "opacity-30",
               )}
             >
-              <span className="w-[70%] rounded-t-xs bg-chart-income" style={{ height: pct(m?.profit ?? 0, max) }} />
+              <span className={cn(barClass, "w-[70%] bg-chart-income")} style={barStyle(m?.profit ?? 0, max, i)} />
             </button>
           ))}
         </div>

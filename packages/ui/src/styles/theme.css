@@ -95,3 +95,65 @@
 
   --shadow-popover: 0 8px 24px -8px rgb(23 24 26 / 0.18), 0 2px 6px -2px rgb(23 24 26 / 0.08);
 }
+
+/*
+ * Motion. Short and decelerating: things arrive fast and settle softly.
+ * Durations: 150ms for state changes (hover, press), 200–250ms for things
+ * that enter or leave, ~500ms for data (bars, figures).
+ */
+/* Inline so --i resolves on the element, not on :root */
+@theme inline {
+  --animate-rise-in: rise-in 420ms var(--ease-out) calc(var(--i, 0) * 50ms) both; /* stagger with --i */
+}
+
+@theme {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* easeOutQuint */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --animate-page-in: page-in 280ms var(--ease-out) both;
+  --animate-popover-in: popover-in 180ms var(--ease-out);
+  --animate-popover-out: popover-out 120ms ease-in forwards;
+  --animate-grow-up: grow-up 600ms var(--ease-out) both;
+  --animate-reveal-x: reveal-x 900ms var(--ease-out) both;
+  --animate-fade-in: fade-in 200ms var(--ease-out) both;
+
+  @keyframes page-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  @keyframes popover-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(var(--popover-shift, 0));
+    }
+  }
+  @keyframes popover-out {
+    to {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+  }
+  @keyframes grow-up {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  @keyframes reveal-x {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}

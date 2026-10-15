@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { Bell, Camera, Plus, Search } from "lucide-react";
 import { periodKey } from "@fiscalia/core";
@@ -72,14 +72,17 @@ export function HomePage() {
 
       <KpiGrid data={data} />
 
-      <div className="flex flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch">
+      <div
+        className="flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch"
+        style={{ "--i": 4 } as CSSProperties}
+      >
         <CashFlowChart key={`cash-${chartKey}`} data={data} className="hidden min-w-0 lg:flex lg:flex-[2_1_560px]" />
         <ProfitChart key={`profit-${chartKey}`} data={data} className="lg:hidden" />
         <TakeHomeCard data={data} className="min-w-0 lg:flex-[1_1_320px]" />
       </div>
 
       {/* Mobile quick actions */}
-      <div className="grid grid-cols-2 gap-2.5 lg:hidden">
+      <div className="grid animate-rise-in grid-cols-2 gap-2.5 lg:hidden" style={{ "--i": 5 } as CSSProperties}>
         <Link to="/ventas/facturas/nueva" className={cn(buttonVariants({ size: "xl" }), "no-underline")}>
           <Plus strokeWidth={2} aria-hidden="true" />
           Factura
@@ -93,7 +96,10 @@ export function HomePage() {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-start">
+      <div
+        className="flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-start"
+        style={{ "--i": 6 } as CSSProperties}
+      >
         <RecentInvoices data={data} className="order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]" />
         <TaxCalendar data={data} className="order-1 min-w-0 lg:order-none lg:flex-[1_1_320px]" />
       </div>

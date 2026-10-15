@@ -9,7 +9,7 @@ export function SelectTrigger({ className, children, ...props }: ComponentProps<
   return (
     <Primitive.Trigger
       className={cn(
-        "flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-input bg-background px-3 font-semibold text-foreground outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:border-ring [&_svg]:shrink-0",
+        "flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-input bg-background px-3 font-semibold text-foreground transition-colors duration-150 outline-none hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring data-[state=open]:border-ring [&_svg]:shrink-0",
         className,
       )}
       {...props}
@@ -27,7 +27,7 @@ export function SelectContent({ className, children, ...props }: ComponentProps<
         position="popper"
         sideOffset={6}
         className={cn(
-          "z-50 max-h-[min(18rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
+          "popover-motion z-50 max-h-[min(18rem,var(--radix-select-content-available-height))] origin-(--radix-select-content-transform-origin) min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
           className,
         )}
         {...props}
@@ -42,7 +42,7 @@ export function SelectItem({ className, children, ...props }: ComponentProps<typ
   return (
     <Primitive.Item
       className={cn(
-        "flex h-10 cursor-pointer items-center rounded-md px-3 outline-none select-none data-[highlighted]:bg-muted data-[state=checked]:bg-accent data-[state=checked]:font-semibold",
+        "flex h-10 cursor-pointer items-center rounded-md px-3 transition-colors duration-150 outline-none select-none data-[highlighted]:bg-muted data-[state=checked]:bg-accent data-[state=checked]:font-semibold",
         className,
       )}
       {...props}

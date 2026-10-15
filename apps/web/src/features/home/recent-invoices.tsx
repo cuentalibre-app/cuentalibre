@@ -53,7 +53,7 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           </thead>
           <tbody>
             {data.invoices.map((inv) => (
-              <tr key={inv.number} className="border-b border-divider last:border-b-0">
+              <tr key={inv.number} className="border-b border-divider transition-colors duration-150 last:border-b-0 hover:bg-muted">
                 <td className="px-5 py-3.5 font-mono text-sm">{inv.number}</td>
                 <td className="px-5 py-3.5 font-medium">{inv.client}</td>
                 <td className="px-5 py-3.5 text-muted-foreground">{formatDate(inv.issuedOn)}</td>
@@ -73,7 +73,7 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           <li key={inv.number}>
             <Link
               to="/ventas/facturas"
-              className="flex min-h-11 items-center gap-3 border-b border-divider py-3 text-foreground no-underline"
+              className="flex min-h-11 items-center gap-3 border-b border-divider py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60"
             >
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate font-medium">{inv.client}</span>

@@ -17,12 +17,16 @@ function Tab({ label, to, icon: Icon, end }: (typeof tabs)[number]) {
       end={end}
       className={({ isActive }) =>
         cn(
-          "flex min-h-12 flex-col items-center justify-center gap-1 text-2xs no-underline",
+          "group flex min-h-12 flex-col items-center justify-center gap-1 text-2xs no-underline transition-colors duration-200",
           isActive ? "font-semibold text-foreground" : "text-muted-foreground",
         )
       }
     >
-      <Icon className="size-[22px]" strokeWidth={1.8} aria-hidden="true" />
+      <Icon
+        className="size-[22px] transition-transform duration-200 ease-out group-active:scale-90 group-aria-[current=page]:-translate-y-px"
+        strokeWidth={1.8}
+        aria-hidden="true"
+      />
       {label}
     </NavLink>
   );
@@ -45,9 +49,9 @@ export function BottomNav({ className }: { className?: string }) {
           <button
             type="button"
             aria-label="Crear"
-            className="grid size-12 cursor-pointer place-items-center rounded-2xl bg-primary text-primary-foreground"
+            className="grid size-12 cursor-pointer place-items-center rounded-2xl bg-primary text-primary-foreground transition-[background-color,scale] duration-150 ease-out hover:bg-primary-hover active:scale-90 [&[data-state=open]>svg]:rotate-45"
           >
-            <Plus className="size-[22px]" strokeWidth={2} aria-hidden="true" />
+            <Plus className="size-[22px] transition-transform duration-250 ease-out" strokeWidth={2} aria-hidden="true" />
           </button>
         </CreateMenu>
       </div>

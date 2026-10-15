@@ -1,6 +1,7 @@
 import { Card, CardTitle } from "@fiscalia/ui/components/card";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { AnimatedAmount } from "@/components/animated-amount";
 import { currentUser } from "@/mocks/data";
 import { formatPercent } from "@/lib/format";
 import type { HomeData } from "./home-data";
@@ -27,17 +28,21 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className="amount text-2xl font-medium lg:text-4xl">{formatEUR(takeHome)}</span>
+        <AnimatedAmount value={takeHome} className="amount text-2xl font-medium lg:text-4xl" />
         <span className="text-sm font-medium text-success">{formatPercent(share(takeHome))} de lo facturado</span>
       </div>
 
       <div
         role="img"
         aria-label={parts.map((p) => `${p.label}: ${formatEUR(p.value)}`).join(", ")}
-        className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted lg:h-3.5"
+        className="flex h-3 animate-reveal-x gap-0.5 overflow-hidden rounded-full bg-muted lg:h-3.5"
       >
         {parts.map((p) => (
-          <div key={p.label} className={p.color} style={{ width: `${share(p.value)}%` }} />
+          <div
+            key={p.label}
+            className={cn("transition-[width] duration-500 ease-out", p.color)}
+            style={{ width: `${share(p.value)}%` }}
+          />
         ))}
       </div>
 

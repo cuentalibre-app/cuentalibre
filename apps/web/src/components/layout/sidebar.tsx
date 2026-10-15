@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router";
-import { ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import { Button } from "@fiscalia/ui/components/button";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { currentUser } from "@/mocks/data";
@@ -9,9 +9,9 @@ import { mainNav, secondaryNav, type NavItem } from "./nav";
 import { useNavBadges } from "./use-nav-badges";
 
 const itemClass =
-  "flex h-10 items-center gap-3 rounded-lg px-3 font-semibold text-sidebar-foreground no-underline transition-colors hover:bg-sidebar-accent";
+  "flex h-10 shrink-0 items-center gap-3 rounded-lg px-3 font-semibold text-sidebar-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98]";
 const subItemClass =
-  "flex h-9 items-center justify-between rounded-md px-3 text-sidebar-foreground no-underline transition-colors hover:bg-sidebar-accent";
+  "flex h-9 shrink-0 items-center justify-between rounded-md px-3 text-sidebar-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98]";
 const activeClass = "bg-sidebar-accent";
 
 function NavGroup({ item, badges }: { item: NavItem; badges: ReturnType<typeof useNavBadges> }) {
@@ -19,11 +19,11 @@ function NavGroup({ item, badges }: { item: NavItem; badges: ReturnType<typeof u
   const isCurrent = pathname.startsWith(item.to);
   const [open, setOpen] = useState(isCurrent || item.to === "/ventas");
   const Icon = item.icon;
-  const Chevron = open ? ChevronDown : ChevronRight;
   const id = `nav-group-${item.to.slice(1)}`;
 
+  // One flex item for the whole group, so a collapsed panel doesn't add an extra gap
   return (
-    <>
+    <div className="flex shrink-0 flex-col">
       <button
         type="button"
         aria-expanded={open}
@@ -33,19 +33,34 @@ function NavGroup({ item, badges }: { item: NavItem; badges: ReturnType<typeof u
       >
         <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
         <span className="flex-1">{item.label}</span>
-        <Chevron className="size-4" aria-hidden="true" />
+        <ChevronRight
+          className={cn("size-4 transition-transform duration-200 ease-out", open && "rotate-90")}
+          aria-hidden="true"
+        />
       </button>
-      <div id={id} hidden={!open} className="flex flex-col gap-0.5 pl-8">
-        {item.children!.map((child) => (
-          <NavLink key={child.to} to={child.to} className={({ isActive }) => cn(subItemClass, isActive && activeClass)}>
-            {child.label}
-            {child.badge && badges[child.badge] > 0 && (
-              <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
-            )}
-          </NavLink>
-        ))}
+      {/* Animates its height by transitioning the grid row between 0fr and 1fr */}
+      <div
+        id={id}
+        inert={!open}
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-250 ease-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-0.5 pt-1 pl-8">
+            {item.children!.map((child) => (
+              <NavLink key={child.to} to={child.to} className={({ isActive }) => cn(subItemClass, isActive && activeClass)}>
+                {child.label}
+                {child.badge && badges[child.badge] > 0 && (
+                  <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
+                )}
+              </NavLink>
+            ))}
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -60,7 +75,7 @@ export function Sidebar({ className }: { className?: string }) {
         className,
       )}
     >
-      <div className="flex items-center gap-2.5 px-2.5 pt-1 pb-4">
+      <div className="flex shrink-0 items-center gap-2.5 px-2.5 pt-1 pb-4">
         <div className="size-7 rounded-md bg-primary" aria-hidden="true" />
         <span className="text-md font-semibold">Fiscalia</span>
       </div>
@@ -90,7 +105,7 @@ export function Sidebar({ className }: { className?: string }) {
         );
       })}
 
-      <div className="mx-2 my-3 h-px bg-sidebar-border" />
+      <div className="mx-2 my-3 h-px shrink-0 bg-sidebar-border" />
 
       {secondaryNav.map((item) => (
         <NavLink key={item.to} to={item.to} className={({ isActive }) => cn(subItemClass, isActive && activeClass)}>
@@ -100,7 +115,7 @@ export function Sidebar({ className }: { className?: string }) {
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-2.5 border-t border-sidebar-border p-3">
+      <div className="flex shrink-0 items-center gap-2.5 border-t border-sidebar-border p-3">
         <div
           className="grid size-8 shrink-0 place-items-center rounded-full bg-muted-strong text-xs font-semibold"
           aria-hidden="true"
