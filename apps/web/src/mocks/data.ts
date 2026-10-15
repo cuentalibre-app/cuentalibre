@@ -9,6 +9,8 @@ export const availableYears = [
 export const currentUser = {
   name: "Lucía Martín",
   initials: "LM",
+  taxId: "50123456Q",
+  address: "Calle del Pez 12, 3º B · 28004 Madrid",
   taxRegime: "Estimación directa simplificada",
   /** Monthly RETA fee. */
   socialSecurityFee: 294,
