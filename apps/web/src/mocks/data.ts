@@ -1,4 +1,12 @@
-import { GENERAL_VAT_RATE, type MonthTotals, type YearTotals } from "@fiscalia/core";
+import {
+  GENERAL_VAT_RATE,
+  WITHHOLDING_RATES,
+  invoiceTotals,
+  isOverdue,
+  type MonthTotals,
+  type YearTotals,
+} from "@fiscalia/core";
+import { clients, initialSalesDocuments } from "./sales";
 
 /**
  * Sample data until there is a backend. Figures come from the design mockups.
@@ -65,13 +73,18 @@ export interface InvoiceSummary {
   status: InvoiceStatus;
 }
 
-export const recentInvoices: InvoiceSummary[] = [
-  { number: "2026-0047", client: "Estudio Norte S.L.", issuedOn: "2026-09-28", total: 4876, status: "pending" },
-  { number: "2026-0046", client: "Agencia Brisa", issuedOn: "2026-09-15", total: 2120, status: "paid" },
-  { number: "2026-0045", client: "Talleres Ruiz S.C.", issuedOn: "2026-09-02", total: 1060, status: "overdue" },
-  { number: "2026-0044", client: "Estudio Norte S.L.", issuedOn: "2026-08-29", total: 4876, status: "paid" },
-  { number: "2026-0043", client: "Lumen Software S.A.", issuedOn: "2026-07-31", total: 3180, status: "paid" },
-];
+/** Latest issued invoices, from the sales sample data. */
+export const recentInvoices: InvoiceSummary[] = initialSalesDocuments
+  .filter((d) => d.kind === "invoice")
+  .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn))
+  .slice(0, 5)
+  .map((d) => ({
+    number: d.number ?? "",
+    client: clients.find((c) => c.id === d.clientId)?.name ?? "",
+    issuedOn: d.issuedOn,
+    total: invoiceTotals(d.lines, WITHHOLDING_RATES[d.withholding]).total,
+    status: d.status === "paid" ? "paid" : isOverdue(d.dueOn, false, new Date()) ? "overdue" : "pending",
+  }));
 
 export const currentUser = {
   name: "Lucía Martín",
@@ -80,7 +93,5 @@ export const currentUser = {
   /** Monthly RETA fee. */
   socialSecurityFee: 294,
 };
-
-export const draftInvoicesCount = 2;
 
 export const quarterClose = { quarter: 3, year: 2026, stepsDone: 3, stepsTotal: 5 } as const;

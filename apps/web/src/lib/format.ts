@@ -71,3 +71,20 @@ export function daysLeftLabel(days: number): string {
   if (days === 1) return "Queda 1 día";
   return `Quedan ${days} días`;
 }
+
+/**
+ * Parses a number typed in Spanish format: "1.250,5" → 1250.5, also "1250.5".
+ * Returns null when it isn't a number.
+ */
+export function parseDecimal(input: string): number | null {
+  let text = input.trim().replace(/\s|€|%/g, "");
+  if (text === "") return null;
+  if (text.includes(",")) text = text.replace(/\./g, "").replace(",", ".");
+  const value = Number(text);
+  return Number.isFinite(value) ? value : null;
+}
+
+/** 1250.5 → "1250,5", for prefilling inputs. */
+export function formatDecimalInput(value: number): string {
+  return String(value).replace(".", ",");
+}
