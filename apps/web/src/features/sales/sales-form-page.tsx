@@ -1,24 +1,16 @@
-import { useId, useState, type CSSProperties, type FormEvent, type KeyboardEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
-  ArrowDown,
   ArrowLeft,
-  ArrowUp,
-  ArrowUpDown,
   ChevronDown,
   CircleHelp,
-  Copy,
   EllipsisVertical,
   FilePen,
   Landmark,
   Mail,
-  Minus,
-  Package,
   Pencil,
   Plus,
   Settings,
-  Trash2,
-  X,
 } from "lucide-react";
 import {
   WITHHOLDING_RATES,
@@ -44,9 +36,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
-import { AnimatedAmount } from "@/components/animated-amount";
 import { formatDate, formatDecimalInput, parseDecimal } from "@/lib/format";
-import { paymentMethods, products } from "@/mocks/invoicing";
+import { paymentMethods } from "@/mocks/invoicing";
 import {
   clients,
   type Client,
@@ -56,6 +47,17 @@ import {
   type SalesDocument,
   type SalesKind,
 } from "@/mocks/sales";
+import {
+  LinesEditor,
+  TagsField,
+  Totals,
+  emptyLine,
+  linesError,
+  parseLine,
+  toLineDraft,
+  toLines,
+  type LineDraft,
+} from "./document-editor";
 import { CLIENT_DEFAULT, CheckField, Field, GroupedSelect, LocaleFields, Section } from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
 import { invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
@@ -65,13 +67,10 @@ import {
   OPERATION_TYPES,
   RENTAL_LOCATIONS,
   SERIES_GROUPS,
-  SURCHARGE_OPTIONS,
-  VAT_RATE_OPTIONS,
   WITHHOLDING_GROUPS,
   clientOf,
   nextNumber,
   periodKeyOf,
-  ratePercent,
 } from "./sales-model";
 import { salesStore } from "./sales-store";
 
@@ -79,19 +78,6 @@ const DUE_TERMS = [30, 60, 90] as const;
 const SETTINGS_PATH = "/configuracion/facturas";
 /** Radix Select can't hold an empty value: this stands for "no client". */
 const NO_CLIENT = "none";
-
-interface LineDraft {
-  id: string;
-  concept: string;
-  unitPrice: string;
-  quantity: string;
-  discount: string;
-  vatRate: number;
-  surchargeRate: number;
-  detail: string;
-  serviceFrom: string;
-  serviceTo: string;
-}
 
 interface FormState {
   clientId: string;
@@ -125,19 +111,6 @@ type Errors = Partial<Record<"clientId" | "number" | "rectifiesId" | "issuedOn" 
 /** What happens after saving, from the create button's menu. */
 type AfterSave = "list" | "edit" | "send" | "receipt";
 
-const emptyLine = (vatRate = 0.21): LineDraft => ({
-  id: crypto.randomUUID(),
-  concept: "",
-  unitPrice: "",
-  quantity: "1",
-  discount: "0",
-  vatRate,
-  surchargeRate: 0,
-  detail: "",
-  serviceFrom: "",
-  serviceTo: "",
-});
-
 /** The form starts from an existing document (edit), a source to copy (duplicate, rectify, convert) or blank. */
 function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: boolean, rectify: boolean): FormState {
   const today = toIsoDate(new Date());
@@ -168,18 +141,7 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     markPaid: !isCopy && base?.status === "paid",
     paidOn: (!isCopy && base?.paidOn) || issuedOn,
     paymentMethodId: base?.paymentMethodId ?? paymentMethods[0]!.id,
-    lines: base?.lines.map((l) => ({
-      id: crypto.randomUUID(),
-      concept: l.concept,
-      unitPrice: formatDecimalInput(l.unitPrice),
-      quantity: formatDecimalInput(rectify ? -l.quantity : l.quantity),
-      discount: formatDecimalInput(l.discount * 100),
-      vatRate: l.vatRate,
-      surchargeRate: l.surchargeRate ?? 0,
-      detail: l.detail ?? "",
-      serviceFrom: l.serviceFrom ?? "",
-      serviceTo: l.serviceTo ?? "",
-    })) ?? [emptyLine()],
+    lines: base?.lines.map((l) => toLineDraft(l, rectify)) ?? [emptyLine()],
     supplies: base?.supplies ? formatDecimalInput(base.supplies) : "0",
     publicNotes: rectify && base?.number ? `Rectifica la factura ${base.number}.` : (base?.publicNotes ?? ""),
     privateNotes: isCopy ? "" : (base?.privateNotes ?? ""),
@@ -188,16 +150,6 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     numberFormat: base?.numberFormat ?? "",
   };
 }
-
-function parseLine(line: LineDraft): InvoiceLine | null {
-  const unitPrice = parseDecimal(line.unitPrice);
-  const quantity = parseDecimal(line.quantity);
-  const discount = parseDecimal(line.discount || "0");
-  if (unitPrice === null || quantity === null || discount === null) return null;
-  return { unitPrice, quantity, discount: discount / 100, vatRate: line.vatRate, surchargeRate: line.surchargeRate };
-}
-
-const isBlank = (line: LineDraft) => !line.concept.trim() && !line.unitPrice.trim();
 
 /** "la factura" → "Información de la factura"; "el presupuesto" → "Información del presupuesto". */
 const infoTitle = (noun: string) => `Información ${noun.replace(/^el /, "del ").replace(/^la /, "de la ")}`;
@@ -340,31 +292,19 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
         next.number = "Ya existe un documento con este número.";
     }
     if (rectifying && !existing && !form.rectifiesId) next.rectifiesId = "Elige la factura que rectifica.";
-    const filled = form.lines.filter((l) => !isBlank(l));
-    if (filled.length === 0) next.lines = "Añade al menos un concepto con su precio.";
-    else if (filled.some((l) => !l.concept.trim() || parseLine(l) === null))
-      next.lines = "Revisa los conceptos: cada uno necesita descripción, precio y cantidad válidos.";
+    next.lines = linesError(form.lines);
     return next;
   }
 
   function save(asKind: SalesKind, after: AfterSave = "list") {
     const found = validate(asKind);
     setErrors(found);
-    if (Object.keys(found).length > 0) {
+    if (Object.values(found).some(Boolean)) {
       document.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
       return;
     }
 
-    const lines = form.lines
-      .filter((l) => !isBlank(l))
-      .map((l) => ({
-        id: l.id,
-        concept: l.concept.trim(),
-        ...parseLine(l)!,
-        detail: l.detail.trim() || undefined,
-        serviceFrom: l.serviceFrom || undefined,
-        serviceTo: l.serviceTo || undefined,
-      }));
+    const lines = toLines(form.lines);
     const asInvoice = asKind === "invoice";
     const paid = asInvoice && form.markPaid;
     const number =
@@ -1086,544 +1026,5 @@ function InvoiceNotes({ label, value, onChange }: { label: string; value: string
         </div>
       )}
     </Field>
-  );
-}
-
-function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
-  const [draft, setDraft] = useState("");
-  const add = () => {
-    const tag = draft.trim();
-    if (tag && !tags.includes(tag)) onChange([...tags, tag]);
-    setDraft("");
-  };
-  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      add();
-    } else if (e.key === "Backspace" && !draft && tags.length) onChange(tags.slice(0, -1));
-  };
-  return (
-    <Field label="Etiquetas">
-      {(p) => (
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <Input {...p} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={onKeyDown} />
-            <Button
-              variant="secondary"
-              size="lg"
-              className="w-10 px-0"
-              aria-label="Añadir etiqueta"
-              title="Añadir etiqueta"
-              onClick={add}
-            >
-              <Plus strokeWidth={1.8} aria-hidden="true" />
-            </Button>
-          </div>
-          {tags.length > 0 && (
-            <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
-              {tags.map((tag) => (
-                <li
-                  key={tag}
-                  className="flex h-7 items-center gap-1 rounded-full bg-accent pr-1 pl-2.5 text-sm font-medium"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    aria-label={`Quitar etiqueta ${tag}`}
-                    onClick={() => onChange(tags.filter((t) => t !== tag))}
-                    className="flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted-strong hover:text-foreground"
-                  >
-                    <X className="size-3.5" aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </Field>
-  );
-}
-
-/*
- * Desktop: one row per line under a header. Advanced editing adds the taxable base column
- * and a second row with surcharge, detailed description and service period.
- * Mobile: each line is a small card.
- */
-const lineGrid = (advanced: boolean) =>
-  cn(
-    "grid grid-cols-2 gap-x-3 gap-y-2.5 lg:items-start lg:gap-y-0",
-    advanced
-      ? "lg:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_6.5rem_5.5rem_6rem_4.5rem]"
-      : "lg:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_5.5rem_6rem_4.5rem]",
-  );
-
-interface LinesEditorProps {
-  lines: LineDraft[];
-  parsed: (InvoiceLine | null)[];
-  chargesVat: boolean;
-  advanced: boolean;
-  reordering: boolean;
-  invalid: boolean;
-  vatLabel: (line: InvoiceLine | null) => string;
-  onChange: (id: string, changes: Partial<LineDraft>) => void;
-  onRemove: (id: string) => void;
-  onDuplicate: (id: string) => void;
-  onMove: (from: number, to: number) => void;
-  onReorder: () => void;
-}
-
-function LinesEditor({
-  lines,
-  parsed,
-  chargesVat,
-  advanced,
-  reordering,
-  invalid,
-  vatLabel,
-  onChange,
-  onRemove,
-  onDuplicate,
-  onMove,
-  onReorder,
-}: LinesEditorProps) {
-  const head = "text-xs font-medium tracking-wide text-muted-foreground uppercase";
-  const label = "text-xs font-medium text-muted-foreground lg:sr-only";
-  const readOnlyBox =
-    "flex h-10 items-center justify-end rounded-lg bg-muted px-3 text-sm text-muted-foreground amount";
-  return (
-    <div className="flex flex-col gap-3">
-      <div aria-hidden="true" className={cn(lineGrid(advanced), "hidden lg:grid")}>
-        <span className={head}>Concepto</span>
-        <span className={cn(head, "text-right")}>Base</span>
-        <span className={cn(head, "text-center")}>Cantidad</span>
-        <span className={cn(head, "text-right")}>Dto. %</span>
-        {advanced && <span className={cn(head, "text-right")}>Total B.I.</span>}
-        <span className={head}>IVA</span>
-        <span className={cn(head, "text-right")}>Cuota IVA</span>
-        <span />
-      </div>
-      <ul className="m-0 flex list-none flex-col gap-3 p-0">
-        {lines.map((line, i) => {
-          const value = parsed[i] ?? null;
-          const n = i + 1;
-          const lineInvalid = invalid && !isBlank(line) && (!line.concept.trim() || value === null);
-          return (
-            <li
-              key={line.id}
-              className={cn(
-                "flex animate-row-in flex-col gap-2.5 rounded-lg border border-border p-3 lg:rounded-none lg:border-0 lg:p-0",
-                advanced && "lg:border-b lg:border-divider lg:pb-3",
-              )}
-            >
-              <div className={lineGrid(advanced)}>
-                <div className="col-span-2 flex flex-col gap-1 lg:col-span-1">
-                  <span className={label}>
-                    Concepto <span className="sr-only">{n}</span>
-                  </span>
-                  <div className="flex gap-1.5">
-                    <ProductPicker
-                      disabled={reordering}
-                      onPick={(p) =>
-                        onChange(line.id, {
-                          concept: p.name,
-                          unitPrice: formatDecimalInput(p.price),
-                          vatRate: chargesVat ? p.vatRate : 0,
-                        })
-                      }
-                    />
-                    <Textarea
-                      rows={1}
-                      value={line.concept}
-                      onChange={(e) => onChange(line.id, { concept: e.target.value })}
-                      placeholder="Descripción del servicio o producto"
-                      aria-label={`Concepto ${n}`}
-                      aria-invalid={lineInvalid && !line.concept.trim() ? true : undefined}
-                      className="min-h-10 py-2"
-                    />
-                  </div>
-                </div>
-                <NumberCell
-                  label="Base"
-                  n={n}
-                  labelClass={label}
-                  value={line.unitPrice}
-                  suffix="€"
-                  invalid={lineInvalid && parseDecimal(line.unitPrice) === null}
-                  onChange={(v) => onChange(line.id, { unitPrice: v })}
-                />
-                <QuantityCell
-                  n={n}
-                  labelClass={label}
-                  value={line.quantity}
-                  invalid={lineInvalid && parseDecimal(line.quantity) === null}
-                  onChange={(v) => onChange(line.id, { quantity: v })}
-                />
-                <NumberCell
-                  label="Descuento"
-                  n={n}
-                  labelClass={label}
-                  value={line.discount}
-                  suffix="%"
-                  invalid={lineInvalid && parseDecimal(line.discount || "0") === null}
-                  onChange={(v) => onChange(line.id, { discount: v })}
-                />
-                {advanced && (
-                  <div className="flex flex-col gap-1">
-                    <span className={label}>Total B.I.</span>
-                    <span className={readOnlyBox}>{value ? formatEUR(lineBase(value)) : "—"}</span>
-                  </div>
-                )}
-                <div className="flex flex-col gap-1">
-                  <span className={label} id={`${line.id}-vat`}>
-                    IVA <span className="sr-only">{n}</span>
-                  </span>
-                  <GroupedSelect
-                    id={`${line.id}-vat-select`}
-                    aria-labelledby={`${line.id}-vat`}
-                    value={String(line.vatRate)}
-                    onChange={(v) => onChange(line.id, { vatRate: Number(v) })}
-                    groups={[{ options: VAT_RATE_OPTIONS }]}
-                    disabled={!chargesVat}
-                    className="px-2.5"
-                  />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className={label}>Cuota IVA</span>
-                  <span className={readOnlyBox}>{vatLabel(value)}</span>
-                </div>
-                <div className="col-span-2 flex items-center justify-end gap-0.5 lg:col-span-1 lg:h-10">
-                  {reordering ? (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="size-9 px-0"
-                        aria-label={`Subir concepto ${n}`}
-                        disabled={i === 0}
-                        onClick={() => onMove(i, i - 1)}
-                      >
-                        <ArrowUp strokeWidth={1.8} aria-hidden="true" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="size-9 px-0"
-                        aria-label={`Bajar concepto ${n}`}
-                        disabled={i === lines.length - 1}
-                        onClick={() => onMove(i, i + 1)}
-                      >
-                        <ArrowDown strokeWidth={1.8} aria-hidden="true" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemove(line.id)}
-                        aria-label={`Eliminar concepto ${n}`}
-                        className="size-9 px-0 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 strokeWidth={1.8} aria-hidden="true" />
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          aria-label={`Más opciones del concepto ${n}`}
-                          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "size-9 px-0")}
-                        >
-                          <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => onRemove(line.id)}>
-                            <Trash2 aria-hidden="true" />
-                            Eliminar concepto
-                          </DropdownMenuItem>
-                          <DropdownMenuItem disabled={lines.length < 2} onSelect={onReorder}>
-                            <ArrowUpDown aria-hidden="true" />
-                            Reordenar concepto
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => onDuplicate(line.id)}>
-                            <Copy aria-hidden="true" />
-                            Crear concepto por copia
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {advanced && (
-                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end lg:gap-3">
-                  <label className="col-span-full flex flex-col gap-1 lg:col-span-1">
-                    <span className="text-xs font-medium text-muted-foreground">Descripción detallada</span>
-                    <Textarea
-                      rows={1}
-                      value={line.detail}
-                      onChange={(e) => onChange(line.id, { detail: e.target.value })}
-                      placeholder="Texto adicional que se imprime bajo el concepto"
-                      className="min-h-10 py-2"
-                    />
-                  </label>
-                  <fieldset className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0">
-                    <legend className="mb-1 p-0 text-xs font-medium text-muted-foreground">
-                      Periodo de prestación del servicio
-                    </legend>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="date"
-                        aria-label={`Desde, concepto ${n}`}
-                        value={line.serviceFrom}
-                        onChange={(e) => onChange(line.id, { serviceFrom: e.target.value })}
-                        className="w-40"
-                      />
-                      <span className="text-sm text-muted-foreground">hasta</span>
-                      <Input
-                        type="date"
-                        aria-label={`Hasta, concepto ${n}`}
-                        value={line.serviceTo}
-                        min={line.serviceFrom || undefined}
-                        onChange={(e) => onChange(line.id, { serviceTo: e.target.value })}
-                        className="w-40"
-                      />
-                    </div>
-                  </fieldset>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-muted-foreground" id={`${line.id}-re`}>
-                      Recargo de equivalencia
-                    </span>
-                    <div className="flex gap-2">
-                      <GroupedSelect
-                        id={`${line.id}-re-select`}
-                        aria-labelledby={`${line.id}-re`}
-                        value={String(line.surchargeRate)}
-                        onChange={(v) => onChange(line.id, { surchargeRate: Number(v) })}
-                        groups={[{ options: SURCHARGE_OPTIONS }]}
-                        disabled={!chargesVat}
-                        className="w-24 px-2.5"
-                      />
-                      <span className={cn(readOnlyBox, "w-24")}>
-                        {value ? formatEUR(roundCents(lineBase(value) * line.surchargeRate)) : "—"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
-}
-
-function ProductPicker({
-  disabled,
-  onPick,
-}: {
-  disabled: boolean;
-  onPick: (product: (typeof products)[number]) => void;
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        disabled={disabled}
-        aria-label="Seleccionar producto"
-        title="Seleccionar producto"
-        className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "w-10 px-0")}
-      >
-        <Package strokeWidth={1.8} aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-72">
-        {products.map((p) => (
-          <DropdownMenuItem key={p.id} onSelect={() => onPick(p)} className="justify-between">
-            <span className="truncate">{p.name}</span>
-            <span className="amount text-sm text-muted-foreground">{formatEUR(p.price)}</span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function NumberCell({
-  label,
-  n,
-  labelClass,
-  value,
-  suffix,
-  invalid,
-  onChange,
-}: {
-  label: string;
-  n: number;
-  labelClass: string;
-  value: string;
-  suffix?: string;
-  invalid: boolean;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className={labelClass}>
-        {label} <span className="sr-only">{n}</span>
-      </span>
-      <span className="relative flex items-center">
-        <Input
-          inputMode="decimal"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-invalid={invalid ? true : undefined}
-          className={cn("text-right amount", suffix && "pr-7")}
-        />
-        {suffix && (
-          <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground" aria-hidden="true">
-            {suffix}
-          </span>
-        )}
-      </span>
-    </label>
-  );
-}
-
-/** Quantity with − / + steppers of one unit. */
-function QuantityCell({
-  n,
-  labelClass,
-  value,
-  invalid,
-  onChange,
-}: {
-  n: number;
-  labelClass: string;
-  value: string;
-  invalid: boolean;
-  onChange: (value: string) => void;
-}) {
-  const id = useId();
-  const step = (delta: number) => onChange(formatDecimalInput(roundCents((parseDecimal(value) ?? 0) + delta)));
-  const stepper =
-    "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted hover:text-foreground";
-  return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className={labelClass}>
-        Cantidad <span className="sr-only">{n}</span>
-      </label>
-      <div
-        className={cn(
-          "flex h-10 items-center rounded-lg border border-input bg-background px-0.5 focus-within:border-ring",
-          invalid && "border-destructive",
-        )}
-      >
-        <button
-          type="button"
-          className={stepper}
-          aria-label={`Restar una unidad, concepto ${n}`}
-          onClick={() => step(-1)}
-        >
-          <Minus className="size-3.5" aria-hidden="true" />
-        </button>
-        <input
-          id={id}
-          inputMode="decimal"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          aria-invalid={invalid ? true : undefined}
-          className="w-full min-w-0 border-0 bg-transparent text-center amount text-foreground outline-none"
-        />
-        <button
-          type="button"
-          className={stepper}
-          aria-label={`Sumar una unidad, concepto ${n}`}
-          onClick={() => step(1)}
-        >
-          <Plus className="size-3.5" aria-hidden="true" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Totals({
-  totals,
-  withholding,
-  advanced,
-  supplies,
-  onSuppliesChange,
-}: {
-  totals: ReturnType<typeof invoiceTotals>;
-  withholding: WithholdingKind;
-  advanced: boolean;
-  supplies: string;
-  onSuppliesChange: (value: string) => void;
-}) {
-  const rate = WITHHOLDING_RATES[withholding];
-  const card = "flex min-w-0 flex-col gap-1 rounded-xl border border-border bg-card p-4";
-  const caption = "text-sm text-muted-foreground";
-  const vatRates = totals.vatBreakdown.filter((v) => v.vat !== 0).map((v) => ratePercent(v.rate));
-  return (
-    <dl
-      aria-label="Totales"
-      className="m-0 grid animate-rise-in grid-cols-2 gap-3 sm:grid-cols-3 lg:flex"
-      style={{ "--i": 3 } as CSSProperties}
-    >
-      <div className={cn(card, "lg:flex-1")}>
-        <dt className={caption}>Subtotal</dt>
-        <dd className="m-0 amount text-lg font-semibold">
-          <AnimatedAmount value={totals.base} />
-        </dd>
-      </div>
-      <div className={cn(card, "lg:flex-1")}>
-        <dt className={caption}>
-          IVA {vatRates.length > 0 && <span className="text-xs">({vatRates.join(", ")})</span>}
-        </dt>
-        <dd className="m-0 amount text-lg font-semibold">
-          <AnimatedAmount value={totals.vat} />
-        </dd>
-      </div>
-      {(advanced || totals.surcharge !== 0) && (
-        <div className={cn(card, "lg:flex-1")}>
-          <dt className={caption}>Recargo de equivalencia</dt>
-          <dd className="m-0 amount text-lg font-semibold">
-            <AnimatedAmount value={totals.surcharge} />
-          </dd>
-        </div>
-      )}
-      <div className={cn(card, "lg:flex-1")}>
-        <dt className={caption}>Retención{rate > 0 && ` ${ratePercent(rate)}`}</dt>
-        <dd className="m-0 amount text-lg font-semibold">
-          <AnimatedAmount value={totals.withholding ? -totals.withholding : 0} />
-        </dd>
-      </div>
-      {advanced && (
-        <div className={cn(card, "lg:flex-1")}>
-          <dt className={caption}>
-            <label htmlFor="supplies">Suplidos</label>
-          </dt>
-          <dd className="m-0">
-            <span className="relative flex items-center">
-              <Input
-                id="supplies"
-                inputMode="decimal"
-                value={supplies}
-                onChange={(e) => onSuppliesChange(e.target.value)}
-                aria-invalid={parseDecimal(supplies || "0") === null ? true : undefined}
-                className="h-8 pr-7 text-right amount font-semibold"
-              />
-              <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground" aria-hidden="true">
-                €
-              </span>
-            </span>
-          </dd>
-        </div>
-      )}
-      <div className={cn(card, "col-span-full border-transparent bg-muted sm:col-span-1 lg:flex-[1.3]")}>
-        <dt className="text-sm font-semibold">Total</dt>
-        <dd className="m-0 amount text-2xl font-semibold">
-          <AnimatedAmount value={totals.total} />
-        </dd>
-      </div>
-    </dl>
   );
 }

@@ -107,6 +107,8 @@ export interface Attachment {
   name: string;
   /** Bytes. */
   size: number;
+  /** Object URL of the file picked in this session; lost on reload until there is file storage. */
+  url?: string;
 }
 
 export interface SalesDocument {

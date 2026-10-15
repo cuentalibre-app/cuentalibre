@@ -2,6 +2,9 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
 import { HomePage } from "@/features/home/home-page";
+import { PurchaseFormPage } from "@/features/purchases/purchase-form-page";
+import { PurchasesListPage } from "@/features/purchases/purchases-list-page";
+import { NEW_PURCHASE_PATH, PURCHASES_PATH } from "@/features/purchases/purchases-model";
 import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
 import { SalesListPage } from "@/features/sales/sales-list-page";
@@ -20,7 +23,13 @@ const salesRoutes = (Object.keys(KINDS) as SalesKind[]).flatMap((kind) => {
   ];
 });
 
-const builtPaths = new Set(salesRoutes.map((r) => `/${r.path}`));
+const purchaseRoutes = [
+  { path: PURCHASES_PATH.slice(1), element: <PurchasesListPage /> },
+  { path: NEW_PURCHASE_PATH.slice(1), element: <PurchaseFormPage /> },
+  { path: `${PURCHASES_PATH.slice(1)}/:id`, element: <PurchaseFormPage /> },
+];
+
+const builtPaths = new Set([...salesRoutes, ...purchaseRoutes].map((r) => `/${r.path}`));
 
 const placeholders = [
   ...allNavLeaves.filter((leaf) => leaf.to !== "/"),
@@ -39,6 +48,7 @@ export const router = createBrowserRouter([
       { path: "contactos", element: <Navigate to="/contactos/clientes" replace /> },
       { path: "mas", element: <MorePage /> },
       ...salesRoutes,
+      ...purchaseRoutes,
       { path: "configuracion/facturas", element: <InvoiceSettingsPage /> },
       ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },

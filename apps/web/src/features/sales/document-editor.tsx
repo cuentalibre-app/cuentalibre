@@ -1,0 +1,643 @@
+import { useId, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy, EllipsisVertical, Minus, Package, Plus, Trash2, X } from "lucide-react";
+import {
+  WITHHOLDING_RATES,
+  invoiceTotals,
+  lineBase,
+  roundCents,
+  type InvoiceLine,
+  type WithholdingKind,
+} from "@fiscalia/core";
+import { Button, buttonVariants } from "@fiscalia/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@fiscalia/ui/components/dropdown-menu";
+import { Input, Textarea } from "@fiscalia/ui/components/input";
+import { cn } from "@fiscalia/ui/lib/cn";
+import { formatEUR } from "@fiscalia/ui/lib/format";
+import { AnimatedAmount } from "@/components/animated-amount";
+import { formatDecimalInput, parseDecimal } from "@/lib/format";
+import { products } from "@/mocks/invoicing";
+import type { SalesLine } from "@/mocks/sales";
+import { Field, GroupedSelect } from "./form-fields";
+import { SURCHARGE_OPTIONS, VAT_RATE_OPTIONS, ratePercent } from "./sales-model";
+
+/* Concept lines, totals and tags shared by the sales and purchase forms. */
+
+export interface LineDraft {
+  id: string;
+  concept: string;
+  unitPrice: string;
+  quantity: string;
+  discount: string;
+  vatRate: number;
+  surchargeRate: number;
+  detail: string;
+  serviceFrom: string;
+  serviceTo: string;
+}
+
+export const emptyLine = (vatRate = 0.21): LineDraft => ({
+  id: crypto.randomUUID(),
+  concept: "",
+  unitPrice: "",
+  quantity: "1",
+  discount: "0",
+  vatRate,
+  surchargeRate: 0,
+  detail: "",
+  serviceFrom: "",
+  serviceTo: "",
+});
+
+export function parseLine(line: LineDraft): InvoiceLine | null {
+  const unitPrice = parseDecimal(line.unitPrice);
+  const quantity = parseDecimal(line.quantity);
+  const discount = parseDecimal(line.discount || "0");
+  if (unitPrice === null || quantity === null || discount === null) return null;
+  return { unitPrice, quantity, discount: discount / 100, vatRate: line.vatRate, surchargeRate: line.surchargeRate };
+}
+
+export const isBlank = (line: LineDraft) => !line.concept.trim() && !line.unitPrice.trim();
+
+/** A stored line as editable text; `negate` flips the quantity, for credit notes. */
+export function toLineDraft(line: SalesLine, negate = false): LineDraft {
+  return {
+    id: crypto.randomUUID(),
+    concept: line.concept,
+    unitPrice: formatDecimalInput(line.unitPrice),
+    quantity: formatDecimalInput(negate ? -line.quantity : line.quantity),
+    discount: formatDecimalInput(line.discount * 100),
+    vatRate: line.vatRate,
+    surchargeRate: line.surchargeRate ?? 0,
+    detail: line.detail ?? "",
+    serviceFrom: line.serviceFrom ?? "",
+    serviceTo: line.serviceTo ?? "",
+  };
+}
+
+/** The filled-in drafts as stored lines. Call only after validating them. */
+export function toLines(drafts: LineDraft[]): SalesLine[] {
+  return drafts
+    .filter((l) => !isBlank(l))
+    .map((l) => ({
+      id: l.id,
+      concept: l.concept.trim(),
+      ...parseLine(l)!,
+      detail: l.detail.trim() || undefined,
+      serviceFrom: l.serviceFrom || undefined,
+      serviceTo: l.serviceTo || undefined,
+    }));
+}
+
+/** Validation message for the lines, or undefined when they are fine. */
+export function linesError(drafts: LineDraft[]): string | undefined {
+  const filled = drafts.filter((l) => !isBlank(l));
+  if (filled.length === 0) return "Añade al menos un concepto con su precio.";
+  if (filled.some((l) => !l.concept.trim() || parseLine(l) === null))
+    return "Revisa los conceptos: cada uno necesita descripción, precio y cantidad válidos.";
+  return undefined;
+}
+
+export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const tag = draft.trim();
+    if (tag && !tags.includes(tag)) onChange([...tags, tag]);
+    setDraft("");
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      add();
+    } else if (e.key === "Backspace" && !draft && tags.length) onChange(tags.slice(0, -1));
+  };
+  return (
+    <Field label="Etiquetas">
+      {(p) => (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <Input {...p} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={onKeyDown} />
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-10 px-0"
+              aria-label="Añadir etiqueta"
+              title="Añadir etiqueta"
+              onClick={add}
+            >
+              <Plus strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          </div>
+          {tags.length > 0 && (
+            <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+              {tags.map((tag) => (
+                <li
+                  key={tag}
+                  className="flex h-7 items-center gap-1 rounded-full bg-accent pr-1 pl-2.5 text-sm font-medium"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    aria-label={`Quitar etiqueta ${tag}`}
+                    onClick={() => onChange(tags.filter((t) => t !== tag))}
+                    className="flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted-strong hover:text-foreground"
+                  >
+                    <X className="size-3.5" aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </Field>
+  );
+}
+
+/*
+ * Desktop: one row per line under a header. Advanced editing adds the taxable base column
+ * and a second row with surcharge, detailed description and service period.
+ * Mobile: each line is a small card.
+ */
+const lineGrid = (advanced: boolean) =>
+  cn(
+    "grid grid-cols-2 gap-x-3 gap-y-2.5 lg:items-start lg:gap-y-0",
+    advanced
+      ? "lg:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_6.5rem_5.5rem_6rem_4.5rem]"
+      : "lg:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_5.5rem_6rem_4.5rem]",
+  );
+
+interface LinesEditorProps {
+  lines: LineDraft[];
+  parsed: (InvoiceLine | null)[];
+  chargesVat: boolean;
+  advanced: boolean;
+  reordering: boolean;
+  invalid: boolean;
+  vatLabel: (line: InvoiceLine | null) => string;
+  onChange: (id: string, changes: Partial<LineDraft>) => void;
+  onRemove: (id: string) => void;
+  onDuplicate: (id: string) => void;
+  onMove: (from: number, to: number) => void;
+  onReorder: () => void;
+}
+
+export function LinesEditor({
+  lines,
+  parsed,
+  chargesVat,
+  advanced,
+  reordering,
+  invalid,
+  vatLabel,
+  onChange,
+  onRemove,
+  onDuplicate,
+  onMove,
+  onReorder,
+}: LinesEditorProps) {
+  const head = "text-xs font-medium tracking-wide text-muted-foreground uppercase";
+  const label = "text-xs font-medium text-muted-foreground lg:sr-only";
+  const readOnlyBox =
+    "flex h-10 items-center justify-end rounded-lg bg-muted px-3 text-sm text-muted-foreground amount";
+  return (
+    <div className="flex flex-col gap-3">
+      <div aria-hidden="true" className={cn(lineGrid(advanced), "hidden lg:grid")}>
+        <span className={head}>Concepto</span>
+        <span className={cn(head, "text-right")}>Base</span>
+        <span className={cn(head, "text-center")}>Cantidad</span>
+        <span className={cn(head, "text-right")}>Dto. %</span>
+        {advanced && <span className={cn(head, "text-right")}>Total B.I.</span>}
+        <span className={head}>IVA</span>
+        <span className={cn(head, "text-right")}>Cuota IVA</span>
+        <span />
+      </div>
+      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+        {lines.map((line, i) => {
+          const value = parsed[i] ?? null;
+          const n = i + 1;
+          const lineInvalid = invalid && !isBlank(line) && (!line.concept.trim() || value === null);
+          return (
+            <li
+              key={line.id}
+              className={cn(
+                "flex animate-row-in flex-col gap-2.5 rounded-lg border border-border p-3 lg:rounded-none lg:border-0 lg:p-0",
+                advanced && "lg:border-b lg:border-divider lg:pb-3",
+              )}
+            >
+              <div className={lineGrid(advanced)}>
+                <div className="col-span-2 flex flex-col gap-1 lg:col-span-1">
+                  <span className={label}>
+                    Concepto <span className="sr-only">{n}</span>
+                  </span>
+                  <div className="flex gap-1.5">
+                    <ProductPicker
+                      disabled={reordering}
+                      onPick={(p) =>
+                        onChange(line.id, {
+                          concept: p.name,
+                          unitPrice: formatDecimalInput(p.price),
+                          vatRate: chargesVat ? p.vatRate : 0,
+                        })
+                      }
+                    />
+                    <Textarea
+                      rows={1}
+                      value={line.concept}
+                      onChange={(e) => onChange(line.id, { concept: e.target.value })}
+                      placeholder="Descripción del servicio o producto"
+                      aria-label={`Concepto ${n}`}
+                      aria-invalid={lineInvalid && !line.concept.trim() ? true : undefined}
+                      className="min-h-10 py-2"
+                    />
+                  </div>
+                </div>
+                <NumberCell
+                  label="Base"
+                  n={n}
+                  labelClass={label}
+                  value={line.unitPrice}
+                  suffix="€"
+                  invalid={lineInvalid && parseDecimal(line.unitPrice) === null}
+                  onChange={(v) => onChange(line.id, { unitPrice: v })}
+                />
+                <QuantityCell
+                  n={n}
+                  labelClass={label}
+                  value={line.quantity}
+                  invalid={lineInvalid && parseDecimal(line.quantity) === null}
+                  onChange={(v) => onChange(line.id, { quantity: v })}
+                />
+                <NumberCell
+                  label="Descuento"
+                  n={n}
+                  labelClass={label}
+                  value={line.discount}
+                  suffix="%"
+                  invalid={lineInvalid && parseDecimal(line.discount || "0") === null}
+                  onChange={(v) => onChange(line.id, { discount: v })}
+                />
+                {advanced && (
+                  <div className="flex flex-col gap-1">
+                    <span className={label}>Total B.I.</span>
+                    <span className={readOnlyBox}>{value ? formatEUR(lineBase(value)) : "—"}</span>
+                  </div>
+                )}
+                <div className="flex flex-col gap-1">
+                  <span className={label} id={`${line.id}-vat`}>
+                    IVA <span className="sr-only">{n}</span>
+                  </span>
+                  <GroupedSelect
+                    id={`${line.id}-vat-select`}
+                    aria-labelledby={`${line.id}-vat`}
+                    value={String(line.vatRate)}
+                    onChange={(v) => onChange(line.id, { vatRate: Number(v) })}
+                    groups={[{ options: VAT_RATE_OPTIONS }]}
+                    disabled={!chargesVat}
+                    className="px-2.5"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className={label}>Cuota IVA</span>
+                  <span className={readOnlyBox}>{vatLabel(value)}</span>
+                </div>
+                <div className="col-span-2 flex items-center justify-end gap-0.5 lg:col-span-1 lg:h-10">
+                  {reordering ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="size-9 px-0"
+                        aria-label={`Subir concepto ${n}`}
+                        disabled={i === 0}
+                        onClick={() => onMove(i, i - 1)}
+                      >
+                        <ArrowUp strokeWidth={1.8} aria-hidden="true" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="size-9 px-0"
+                        aria-label={`Bajar concepto ${n}`}
+                        disabled={i === lines.length - 1}
+                        onClick={() => onMove(i, i + 1)}
+                      >
+                        <ArrowDown strokeWidth={1.8} aria-hidden="true" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemove(line.id)}
+                        aria-label={`Eliminar concepto ${n}`}
+                        className="size-9 px-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 strokeWidth={1.8} aria-hidden="true" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          aria-label={`Más opciones del concepto ${n}`}
+                          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "size-9 px-0")}
+                        >
+                          <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={() => onRemove(line.id)}>
+                            <Trash2 aria-hidden="true" />
+                            Eliminar concepto
+                          </DropdownMenuItem>
+                          <DropdownMenuItem disabled={lines.length < 2} onSelect={onReorder}>
+                            <ArrowUpDown aria-hidden="true" />
+                            Reordenar concepto
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => onDuplicate(line.id)}>
+                            <Copy aria-hidden="true" />
+                            Crear concepto por copia
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {advanced && (
+                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_auto_auto] lg:items-end lg:gap-3">
+                  <label className="col-span-full flex flex-col gap-1 lg:col-span-1">
+                    <span className="text-xs font-medium text-muted-foreground">Descripción detallada</span>
+                    <Textarea
+                      rows={1}
+                      value={line.detail}
+                      onChange={(e) => onChange(line.id, { detail: e.target.value })}
+                      placeholder="Texto adicional que se imprime bajo el concepto"
+                      className="min-h-10 py-2"
+                    />
+                  </label>
+                  <fieldset className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0">
+                    <legend className="mb-1 p-0 text-xs font-medium text-muted-foreground">
+                      Periodo de prestación del servicio
+                    </legend>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="date"
+                        aria-label={`Desde, concepto ${n}`}
+                        value={line.serviceFrom}
+                        onChange={(e) => onChange(line.id, { serviceFrom: e.target.value })}
+                        className="w-40"
+                      />
+                      <span className="text-sm text-muted-foreground">hasta</span>
+                      <Input
+                        type="date"
+                        aria-label={`Hasta, concepto ${n}`}
+                        value={line.serviceTo}
+                        min={line.serviceFrom || undefined}
+                        onChange={(e) => onChange(line.id, { serviceTo: e.target.value })}
+                        className="w-40"
+                      />
+                    </div>
+                  </fieldset>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs font-medium text-muted-foreground" id={`${line.id}-re`}>
+                      Recargo de equivalencia
+                    </span>
+                    <div className="flex gap-2">
+                      <GroupedSelect
+                        id={`${line.id}-re-select`}
+                        aria-labelledby={`${line.id}-re`}
+                        value={String(line.surchargeRate)}
+                        onChange={(v) => onChange(line.id, { surchargeRate: Number(v) })}
+                        groups={[{ options: SURCHARGE_OPTIONS }]}
+                        disabled={!chargesVat}
+                        className="w-24 px-2.5"
+                      />
+                      <span className={cn(readOnlyBox, "w-24")}>
+                        {value ? formatEUR(roundCents(lineBase(value) * line.surchargeRate)) : "—"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function ProductPicker({
+  disabled,
+  onPick,
+}: {
+  disabled: boolean;
+  onPick: (product: (typeof products)[number]) => void;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        disabled={disabled}
+        aria-label="Seleccionar producto"
+        title="Seleccionar producto"
+        className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "w-10 px-0")}
+      >
+        <Package strokeWidth={1.8} aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-72">
+        {products.map((p) => (
+          <DropdownMenuItem key={p.id} onSelect={() => onPick(p)} className="justify-between">
+            <span className="truncate">{p.name}</span>
+            <span className="amount text-sm text-muted-foreground">{formatEUR(p.price)}</span>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function NumberCell({
+  label,
+  n,
+  labelClass,
+  value,
+  suffix,
+  invalid,
+  onChange,
+}: {
+  label: string;
+  n: number;
+  labelClass: string;
+  value: string;
+  suffix?: string;
+  invalid: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className={labelClass}>
+        {label} <span className="sr-only">{n}</span>
+      </span>
+      <span className="relative flex items-center">
+        <Input
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={invalid ? true : undefined}
+          className={cn("text-right amount", suffix && "pr-7")}
+        />
+        {suffix && (
+          <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground" aria-hidden="true">
+            {suffix}
+          </span>
+        )}
+      </span>
+    </label>
+  );
+}
+
+/** Quantity with − / + steppers of one unit. */
+function QuantityCell({
+  n,
+  labelClass,
+  value,
+  invalid,
+  onChange,
+}: {
+  n: number;
+  labelClass: string;
+  value: string;
+  invalid: boolean;
+  onChange: (value: string) => void;
+}) {
+  const id = useId();
+  const step = (delta: number) => onChange(formatDecimalInput(roundCents((parseDecimal(value) ?? 0) + delta)));
+  const stepper =
+    "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted hover:text-foreground";
+  return (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className={labelClass}>
+        Cantidad <span className="sr-only">{n}</span>
+      </label>
+      <div
+        className={cn(
+          "flex h-10 items-center rounded-lg border border-input bg-background px-0.5 focus-within:border-ring",
+          invalid && "border-destructive",
+        )}
+      >
+        <button
+          type="button"
+          className={stepper}
+          aria-label={`Restar una unidad, concepto ${n}`}
+          onClick={() => step(-1)}
+        >
+          <Minus className="size-3.5" aria-hidden="true" />
+        </button>
+        <input
+          id={id}
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={invalid ? true : undefined}
+          className="w-full min-w-0 border-0 bg-transparent text-center amount text-foreground outline-none"
+        />
+        <button
+          type="button"
+          className={stepper}
+          aria-label={`Sumar una unidad, concepto ${n}`}
+          onClick={() => step(1)}
+        >
+          <Plus className="size-3.5" aria-hidden="true" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function Totals({
+  totals,
+  withholding,
+  advanced,
+  supplies,
+  onSuppliesChange,
+}: {
+  totals: ReturnType<typeof invoiceTotals>;
+  withholding: WithholdingKind;
+  advanced: boolean;
+  /** Suplidos input, shown in advanced mode; purchases don't have them. */
+  supplies?: string;
+  onSuppliesChange?: (value: string) => void;
+}) {
+  const rate = WITHHOLDING_RATES[withholding];
+  const card = "flex min-w-0 flex-col gap-1 rounded-xl border border-border bg-card p-4";
+  const caption = "text-sm text-muted-foreground";
+  const vatRates = totals.vatBreakdown.filter((v) => v.vat !== 0).map((v) => ratePercent(v.rate));
+  return (
+    <dl
+      aria-label="Totales"
+      className="m-0 grid animate-rise-in grid-cols-2 gap-3 sm:grid-cols-3 lg:flex"
+      style={{ "--i": 3 } as CSSProperties}
+    >
+      <div className={cn(card, "lg:flex-1")}>
+        <dt className={caption}>Subtotal</dt>
+        <dd className="m-0 amount text-lg font-semibold">
+          <AnimatedAmount value={totals.base} />
+        </dd>
+      </div>
+      <div className={cn(card, "lg:flex-1")}>
+        <dt className={caption}>
+          IVA {vatRates.length > 0 && <span className="text-xs">({vatRates.join(", ")})</span>}
+        </dt>
+        <dd className="m-0 amount text-lg font-semibold">
+          <AnimatedAmount value={totals.vat} />
+        </dd>
+      </div>
+      {(advanced || totals.surcharge !== 0) && (
+        <div className={cn(card, "lg:flex-1")}>
+          <dt className={caption}>Recargo de equivalencia</dt>
+          <dd className="m-0 amount text-lg font-semibold">
+            <AnimatedAmount value={totals.surcharge} />
+          </dd>
+        </div>
+      )}
+      <div className={cn(card, "lg:flex-1")}>
+        <dt className={caption}>Retención{rate > 0 && ` ${ratePercent(rate)}`}</dt>
+        <dd className="m-0 amount text-lg font-semibold">
+          <AnimatedAmount value={totals.withholding ? -totals.withholding : 0} />
+        </dd>
+      </div>
+      {advanced && supplies !== undefined && onSuppliesChange && (
+        <div className={cn(card, "lg:flex-1")}>
+          <dt className={caption}>
+            <label htmlFor="supplies">Suplidos</label>
+          </dt>
+          <dd className="m-0">
+            <span className="relative flex items-center">
+              <Input
+                id="supplies"
+                inputMode="decimal"
+                value={supplies}
+                onChange={(e) => onSuppliesChange(e.target.value)}
+                aria-invalid={parseDecimal(supplies || "0") === null ? true : undefined}
+                className="h-8 pr-7 text-right amount font-semibold"
+              />
+              <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground" aria-hidden="true">
+                €
+              </span>
+            </span>
+          </dd>
+        </div>
+      )}
+      <div className={cn(card, "col-span-full border-transparent bg-muted sm:col-span-1 lg:flex-[1.3]")}>
+        <dt className="text-sm font-semibold">Total</dt>
+        <dd className="m-0 amount text-2xl font-semibold">
+          <AnimatedAmount value={totals.total} />
+        </dd>
+      </div>
+    </dl>
+  );
+}

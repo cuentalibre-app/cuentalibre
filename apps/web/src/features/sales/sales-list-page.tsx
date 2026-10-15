@@ -1,16 +1,12 @@
-import { Fragment, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import {
-  ArrowDown,
-  ArrowUp,
   ChevronDown,
-  ChevronsUpDown,
   CircleDollarSign,
   Copy,
   Download,
   FileArchive,
   FileDown,
-  FilePlus2,
   FileX2,
   MoreHorizontal,
   Paperclip,
@@ -23,18 +19,11 @@ import {
   ThumbsUp,
   Trash2,
   Undo2,
-  type LucideIcon,
 } from "lucide-react";
 import { periodKey, periodMonths, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
+import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
@@ -56,6 +45,7 @@ import {
   periodKeyOf,
   type StatusKey,
 } from "./sales-model";
+import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, pickFiles, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
 
 const ALL = "all";
@@ -160,7 +150,12 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           )}
           <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
           <div className="ml-auto flex gap-2">
-            <Button variant="secondary" size="md" disabled={rows.length === 0} onClick={() => downloadCsv(rows, exportName)}>
+            <Button
+              variant="secondary"
+              size="md"
+              disabled={rows.length === 0}
+              onClick={() => exportCsv(rows, exportName)}
+            >
               <Download strokeWidth={1.8} aria-hidden="true" />
               CSV
             </Button>
@@ -192,12 +187,11 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         {rows.length === 0 ? (
           <EmptyState
             message={filtered ? "Ningún resultado coincide con la búsqueda." : config.empty}
-            hint={
-              filtered ? "Prueba con otro término o estado." : "Puedes cambiar el periodo en el selector."
-            }
+            hint={filtered ? "Prueba con otro término o estado." : "Puedes cambiar el periodo en el selector."}
             action={
               !filtered && (
-                <Link to={config.newPath} className="font-medium text-primary no-underline hover:text-primary-hover">
+                <Link to={config.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}>
+                  <Plus strokeWidth={2} aria-hidden="true" />
                   {config.newLabel}
                 </Link>
               )
@@ -211,7 +205,6 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           </>
         )}
       </section>
-
     </div>
   );
 }
@@ -258,7 +251,7 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
           <dt className="text-sm text-muted-foreground">{s.label}</dt>
-          <dd className="amount m-0 text-xl font-semibold">
+          <dd className="m-0 amount text-xl font-semibold">
             <AnimatedAmount value={s.value} />
           </dd>
           <dd className="m-0 text-xs text-muted-foreground">{s.detail}</dd>
@@ -280,7 +273,7 @@ const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
   { key: "date", label: "Fecha" },
   { key: "client", label: "Cliente" },
   { key: "status", label: "Estado" },
-  { key: "base", label: "Base imponible", numeric: true },
+  { key: "base", label: "Base\nimponible", numeric: true },
   { key: "vat", label: "IVA", numeric: true },
   { key: "withholding", label: "Retención", numeric: true },
   { key: "total", label: "Total", numeric: true },
@@ -333,38 +326,16 @@ function DocumentsTable({
         <table className="w-full min-w-[960px] border-collapse">
           <thead>
             <tr className={table.headRow}>
-              {COLUMNS.map((c) => {
-                const active = sort.key === c.key;
-                const SortIcon = !active ? ChevronsUpDown : sort.dir === "asc" ? ArrowUp : ArrowDown;
-                return (
-                  <th
-                    key={c.key}
-                    scope="col"
-                    aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
-                    className={cn(th, "p-0 first:pl-0 last:pr-0", c.numeric && "text-right")}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onSort(nextSort(sort, c.key))}
-                      className={cn(
-                        "group flex w-full cursor-pointer items-center gap-1.5 whitespace-nowrap border-0 bg-transparent px-3 py-2 text-inherit uppercase transition-colors duration-150 hover:text-foreground in-[th:first-child]:pl-4",
-                        c.numeric && "justify-end",
-                        active && "text-foreground",
-                      )}
-                    >
-                      {c.label}
-                      <SortIcon
-                        className={cn(
-                          "size-3.5 shrink-0 transition-opacity duration-150",
-                          !active && "opacity-0 group-hover:opacity-60 group-focus-visible:opacity-60",
-                        )}
-                        strokeWidth={2}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </th>
-                );
-              })}
+              {COLUMNS.map((c) => (
+                <SortHeader
+                  key={c.key}
+                  label={c.label}
+                  numeric={c.numeric}
+                  dir={sort.key === c.key ? sort.dir : null}
+                  onClick={() => onSort(nextSort(sort, c.key))}
+                  className={th}
+                />
+              ))}
               <th scope="col" className={cn(th, "text-center")}>
                 Acciones
               </th>
@@ -395,12 +366,12 @@ function DocumentsTable({
                 <td className={td}>
                   <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
                 </td>
-                <td className={cn(td, "amount text-right")}>{formatEUR(r.base)}</td>
-                <td className={cn(td, "amount text-right text-muted-foreground")}>{formatEUR(r.vat)}</td>
-                <td className={cn(td, "amount text-right text-muted-foreground")}>
+                <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
+                <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
+                <td className={cn(td, "text-right amount text-muted-foreground")}>
                   {r.withholding ? formatEUR(-r.withholding) : "—"}
                 </td>
-                <td className={cn(td, "amount text-right font-semibold")}>{formatEUR(r.total)}</td>
+                <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
                 <td className={cn(td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
                   <QuickActions doc={r.doc} status={r.status} />
                 </td>
@@ -412,16 +383,16 @@ function DocumentsTable({
               <td colSpan={4} className={cn(td, "text-sm text-muted-foreground")}>
                 {rows.length} {rows.length === 1 ? "documento" : "documentos"}
               </td>
-              <td className={cn(td, "amount text-right")}>
+              <td className={cn(td, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "base")} />
               </td>
-              <td className={cn(td, "amount text-right")}>
+              <td className={cn(td, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "vat")} />
               </td>
-              <td className={cn(td, "amount text-right")}>
+              <td className={cn(td, "text-right amount")}>
                 <AnimatedAmount value={-sum(rows, "withholding")} />
               </td>
-              <td className={cn(td, "amount text-right")}>
+              <td className={cn(td, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "total")} />
               </td>
               <td className={td} />
@@ -472,19 +443,6 @@ function DocumentsList({ rows }: { rows: Row[] }) {
   );
 }
 
-function pickFiles(onPick: (files: File[]) => void) {
-  const input = Object.assign(document.createElement("input"), { type: "file", multiple: true });
-  input.onchange = () => onPick(Array.from(input.files ?? []));
-  input.click();
-}
-
-interface Action {
-  label: string;
-  icon: LucideIcon;
-  run?: () => void;
-  danger?: boolean;
-}
-
 /** Every operation available on a document, grouped so the menu can split them with separators. */
 function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const navigate = useNavigate();
@@ -525,7 +483,11 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     primary =
       doc.status === "paid"
         ? { label: "Marcar como pendiente", icon: Undo2, run: () => salesStore.update(doc.id, { status: "pending" }) }
-        : { label: "Marcar como cobrada", icon: CircleDollarSign, run: () => salesStore.update(doc.id, { status: "paid" }) };
+        : {
+            label: "Marcar como cobrada",
+            icon: CircleDollarSign,
+            run: () => salesStore.update(doc.id, { status: "paid" }),
+          };
   } else if (doc.kind === "draft") {
     primary = { label: "Emitir factura", icon: ReceiptText, run: issueDraft };
   } else if (workflow && status !== "invoiced") {
@@ -550,7 +512,11 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
 
   const groups: Action[][] = [
     [
-      { label: `Editar ${config.singular.toLowerCase()}`, icon: Pencil, run: () => navigate(`${config.path}/${doc.id}`) },
+      {
+        label: `Editar ${config.singular.toLowerCase()}`,
+        icon: Pencil,
+        run: () => navigate(`${config.path}/${doc.id}`),
+      },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
     ],
     [...(primary ? [primary] : []), ...transitions, attach, pdf],
@@ -576,57 +542,6 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   ].filter((g) => g.length > 0);
 
   return { attach, pdf, primary, groups, attachments: attachments.length, label: `${config.noun} ${label}` };
-}
-
-function ActionsMenu({ groups, trigger }: { groups: Action[][]; trigger: ReactNode }) {
-  return (
-    <DropdownMenu>
-      {trigger}
-      <DropdownMenuContent align="end">
-        {groups.map((group, i) => (
-          <Fragment key={i}>
-            {i > 0 && <DropdownMenuSeparator />}
-            {group.map((a) => (
-              <DropdownMenuItem
-                key={a.label}
-                disabled={!a.run}
-                onSelect={a.run}
-                className={cn(a.danger && "text-destructive [&_svg]:text-destructive")}
-              >
-                <a.icon aria-hidden="true" />
-                {a.label}
-              </DropdownMenuItem>
-            ))}
-          </Fragment>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-function IconAction({ action, badge }: { action: Action; badge?: number }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={action.label}
-          aria-disabled={!action.run}
-          onClick={action.run}
-          className={cn("relative size-8 px-0", !action.run && "cursor-not-allowed opacity-40 hover:bg-transparent")}
-        >
-          <action.icon strokeWidth={1.8} aria-hidden="true" />
-          {!!badge && (
-            <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
-              {badge}
-            </span>
-          )}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{action.label}</TooltipContent>
-    </Tooltip>
-  );
 }
 
 /** Desktop: the usual operations one click away, the rest behind the arrow. */
@@ -673,43 +588,20 @@ function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) 
   );
 }
 
-function EmptyState({ message, hint, action }: { message: string; hint: string; action?: ReactNode }) {
-  return (
-    <div className="flex animate-fade-in flex-col items-center gap-2 border-t border-border px-5 py-14 text-center">
-      <span className="mb-1 flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-        {action ? <FilePlus2 strokeWidth={1.8} aria-hidden="true" /> : <Search strokeWidth={1.8} aria-hidden="true" />}
-      </span>
-      <p className="m-0 font-medium">{message}</p>
-      <p className="m-0 text-sm text-muted-foreground">{hint}</p>
-      {action}
-    </div>
-  );
-}
-
-/** Semicolon-separated with decimal commas, so Excel in Spanish opens it as-is. */
-function downloadCsv(rows: Row[], name: string) {
-  const num = (n: number) => n.toFixed(2).replace(".", ",");
-  const lines = [
+function exportCsv(rows: Row[], name: string) {
+  downloadCsv(
     ["Número", "Fecha", "Cliente", "NIF", "Estado", "Base imponible", "IVA", "Retención", "Total"],
-    ...rows.map((r) => [
+    rows.map((r) => [
       r.doc.number ?? "",
       r.doc.issuedOn,
       r.client.name,
       r.client.taxId,
       STATUS[r.status].label,
-      num(r.base),
-      num(r.vat),
-      num(r.withholding),
-      num(r.total),
+      r.base,
+      r.vat,
+      r.withholding,
+      r.total,
     ]),
-  ].map((cells) => cells.map((c) => `"${c.replaceAll('"', '""')}"`).join(";"));
-
-  const blob = new Blob([`﻿${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = Object.assign(document.createElement("a"), {
-    href: url,
-    download: `${name}.csv`,
-  });
-  a.click();
-  URL.revokeObjectURL(url);
+    name,
+  );
 }
