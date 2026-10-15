@@ -3,9 +3,8 @@ import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
-import type { InvoiceStatus } from "@/mocks/data";
 import { formatDate, formatShortDate } from "@/lib/format";
-import type { HomeData } from "./home-data";
+import type { HomeData, InvoiceStatus } from "./home-data";
 
 const STATUS: Record<InvoiceStatus, { label: string; tone: BadgeProps["tone"] }> = {
   paid: { label: "Cobrada", tone: "success" },
@@ -21,7 +20,7 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       aria-labelledby="recent-invoices-title"
       className={cn("flex flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border", className)}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5 lg:items-center lg:px-5 lg:py-[18px]">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5 lg:items-center lg:px-4 lg:py-3">
         <h2 id="recent-invoices-title" className="m-0 text-md font-semibold lg:text-lg">
           <span className="lg:hidden">Últimas facturas</span>
           <span className="hidden lg:inline">Últimas facturas emitidas</span>
@@ -49,8 +48,12 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           </thead>
           <tbody>
             {data.invoices.map((inv) => (
-              <tr key={inv.number} className={table.row}>
-                <td className={cn(table.td, "font-mono text-sm")}>{inv.number}</td>
+              <tr key={inv.id} className={table.row}>
+                <td className={cn(table.td, "font-mono text-sm")}>
+                  <Link to={`/ventas/facturas/${inv.id}`} className="text-foreground no-underline hover:text-primary">
+                    {inv.number}
+                  </Link>
+                </td>
                 <td className={cn(table.td, "font-medium")}>{inv.client}</td>
                 <td className={cn(table.td, "text-muted-foreground")}>{formatDate(inv.issuedOn)}</td>
                 <td className={cn(table.td, "amount text-right")}>{formatEUR(inv.total)}</td>
@@ -64,17 +67,17 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       </div>
 
       {/* Pinned to the bottom so the card can stretch to match the tax calendar beside it */}
-      <div className="mt-auto hidden items-center justify-between gap-3 border-t border-border bg-muted px-5 py-3.5 text-sm lg:flex">
-        <span className="text-muted-foreground">Pendiente de cobro</span>
+      <div className="mt-auto hidden items-center justify-between gap-3 border-t border-border bg-muted px-4 py-2.5 text-sm lg:flex">
+        <span className="text-muted-foreground">Total sin cobrar</span>
         <span className="amount font-semibold">{formatEUR(data.pendingCollection)}</span>
       </div>
 
       {/* Mobile: list */}
       <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
         {data.invoices.slice(0, 3).map((inv) => (
-          <li key={inv.number}>
+          <li key={inv.id}>
             <Link
-              to="/ventas/facturas"
+              to={`/ventas/facturas/${inv.id}`}
               className="flex min-h-11 items-center gap-3 border-b border-divider py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60"
             >
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">

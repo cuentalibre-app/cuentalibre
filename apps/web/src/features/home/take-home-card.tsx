@@ -19,7 +19,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   ];
 
   return (
-    <Card aria-labelledby="take-home-title" className={cn("gap-3 p-4 lg:gap-4 lg:p-5", className)}>
+    <Card aria-labelledby="take-home-title" className={cn("gap-3 p-4 lg:gap-3 lg:p-4", className)}>
       <div className="flex flex-col gap-1">
         <CardTitle id="take-home-title" className="text-md lg:text-lg">
           Neto después de impuestos
@@ -35,7 +35,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
       <div
         role="img"
         aria-label={parts.map((p) => `${p.label}: ${formatEUR(p.value)}`).join(", ")}
-        className="flex h-3 animate-reveal-x gap-0.5 overflow-hidden rounded-full bg-muted lg:h-3.5"
+        className="flex h-3 animate-reveal-x gap-0.5 overflow-hidden rounded-xs bg-muted lg:h-3.5"
       >
         {parts.map((p) => (
           <div

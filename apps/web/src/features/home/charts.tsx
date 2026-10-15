@@ -34,7 +34,7 @@ function barStyle(value: number, max: number, index: number) {
 }
 
 function Dot({ className }: { className: string }) {
-  return <span className={cn("size-2 shrink-0 rounded-full", className)} aria-hidden="true" />;
+  return <span className={cn("size-2 shrink-0 rounded-xs", className)} aria-hidden="true" />;
 }
 
 type View = "monthly" | "cumulative";
@@ -269,7 +269,7 @@ export function ProfitChart({ data, className }: { data: HomeData; className?: s
               aria-pressed={i === selected}
               onClick={() => setSelected(i)}
               className={cn(
-                "flex h-full min-w-0 flex-1 cursor-pointer items-end justify-center rounded-[5px] transition-colors duration-200",
+                "flex h-full min-w-0 flex-1 cursor-pointer items-end justify-center rounded-xs transition-colors duration-200",
                 i === selected && "bg-chart-highlight",
                 !months.includes(i) && "opacity-30",
               )}

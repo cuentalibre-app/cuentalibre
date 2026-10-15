@@ -13,11 +13,11 @@ const buttonVariants = cva(
         destructive: "bg-destructive font-semibold text-destructive-foreground hover:opacity-90",
       },
       size: {
-        sm: "h-9 px-3 text-base",
-        md: "h-10 px-4 text-base",
-        lg: "h-11 px-4 text-base", // default desktop size (44px)
+        sm: "h-8 px-3 text-base",
+        md: "h-9 px-4 text-base",
+        lg: "h-10 px-4 text-base", // default desktop size (40px)
         xl: "h-13 rounded-xl px-5 text-md", // primary mobile actions (52px)
-        icon: "size-11 rounded-full border border-border",
+        icon: "size-10 rounded-lg border border-border",
       },
     },
     defaultVariants: {

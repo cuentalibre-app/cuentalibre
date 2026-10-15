@@ -272,7 +272,7 @@ export function DesignSystemPage() {
             <div
               role="img"
               aria-label={parts.map((p) => `${p.label} ${formatEUR(p.value)}`).join(", ")}
-              className="flex h-3.5 gap-0.5 overflow-hidden rounded-full"
+              className="flex h-3.5 gap-0.5 overflow-hidden rounded-xs"
             >
               {parts.map((p) => (
                 <div key={p.label} className={p.className} style={{ width: `${(p.value / ingresos) * 100}%` }} />

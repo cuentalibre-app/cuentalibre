@@ -114,7 +114,7 @@ function doc(
   };
 }
 
-const retainer = (month: string) => ln(`Diseño y mantenimiento web · ${month}`, 2_400);
+const retainer = (month: string, fee = 2_400) => ln(`Diseño y mantenimiento web · ${month}`, fee);
 const intl = { withholding: "none", operationType: "intraEu" } as const;
 
 const invoices: SalesDocument[] = [
@@ -183,6 +183,63 @@ const invoices: SalesDocument[] = [
     [retainer("octubre 2025"), ln("Horas de consultoría", 65, 14)],
     "paid",
   ),
+  doc("invoice", "2025-0020", "c6", "2025-09-25", [ln("Usability testing sessions", 1_200, 1, 0)], "paid", intl),
+  doc("invoice", "2025-0019", "c4", "2025-09-11", [ln("Desarrollo de API de reservas", 2_900)], "paid"),
+  doc(
+    "invoice",
+    "2025-0018",
+    "c1",
+    "2025-09-01",
+    [retainer("septiembre 2025", 2_200), ln("Horas de consultoría", 65, 16)],
+    "paid",
+  ),
+  doc("invoice", "2025-0017", "c2", "2025-08-26", [ln("Adaptación de piezas para verano", 620)], "paid"),
+  doc("invoice", "2025-0016", "c1", "2025-08-01", [retainer("agosto 2025", 2_200)], "paid"),
+  doc("invoice", "2025-0015", "c3", "2025-07-17", [ln("Fotografía de instalaciones", 45, 30)], "paid"),
+  doc(
+    "invoice",
+    "2025-0014",
+    "c1",
+    "2025-07-01",
+    [retainer("julio 2025", 2_200), ln("Horas de consultoría", 65, 20)],
+    "paid",
+  ),
+  doc("invoice", "2025-0013", "c4", "2025-06-20", [ln("Mantenimiento de servidores · semestral", 1_800)], "paid"),
+  doc(
+    "invoice",
+    "2025-0012",
+    "c1",
+    "2025-06-02",
+    [retainer("junio 2025", 2_200), ln("Horas de consultoría", 65, 14)],
+    "paid",
+  ),
+  doc("invoice", "2025-0011", "c5", "2025-05-28", [ln("Logotipo y tarjetas de visita", 600)], "paid", {
+    withholding: "none",
+  }),
+  doc("invoice", "2025-0010", "c2", "2025-05-12", [ln("Presentación corporativa", 950)], "paid"),
+  doc("invoice", "2025-0009", "c1", "2025-05-02", [retainer("mayo 2025", 2_200)], "paid"),
+  doc("invoice", "2025-0008", "c6", "2025-04-16", [ln("Brand guidelines review", 1_500, 1, 0)], "paid", intl),
+  doc(
+    "invoice",
+    "2025-0007",
+    "c1",
+    "2025-04-01",
+    [retainer("abril 2025", 2_200), ln("Horas de consultoría", 65, 10)],
+    "paid",
+  ),
+  doc("invoice", "2025-0006", "c4", "2025-03-14", [ln("Diseño de interfaz · módulo de reservas", 2_300)], "paid"),
+  doc("invoice", "2025-0005", "c1", "2025-03-03", [retainer("marzo 2025", 2_200)], "paid"),
+  doc("invoice", "2025-0004", "c2", "2025-02-19", [ln("Kit de plantillas para redes sociales", 1_100)], "paid"),
+  doc(
+    "invoice",
+    "2025-0003",
+    "c1",
+    "2025-02-03",
+    [retainer("febrero 2025", 2_200), ln("Horas de consultoría", 65, 12)],
+    "paid",
+  ),
+  doc("invoice", "2025-0002", "c3", "2025-01-23", [ln("Carta de restaurante y menú", 1_400)], "paid"),
+  doc("invoice", "2025-0001", "c1", "2025-01-02", [retainer("enero 2025", 2_200)], "paid"),
 ];
 
 const drafts: SalesDocument[] = [

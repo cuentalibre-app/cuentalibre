@@ -32,7 +32,7 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
 
   return (
     <div
-      className="flex animate-rise-in flex-col gap-1.5 rounded-xl border border-border p-3.5 lg:gap-2.5 lg:p-5"
+      className="flex animate-rise-in flex-col gap-1.5 rounded-xl border border-border p-3.5 lg:animate-none lg:gap-2 lg:rounded-none lg:border-0 lg:bg-card lg:p-4"
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex items-center justify-between gap-2 lg:min-h-6">
@@ -98,7 +98,7 @@ export function KpiGrid({ data }: { data: HomeData }) {
   return (
     <section
       aria-label="Resumen del periodo"
-      className="grid grid-cols-2 gap-2.5 lg:grid-cols-[repeat(auto-fit,minmax(min(220px,100%),1fr))] lg:gap-4"
+      className="grid grid-cols-2 gap-2.5 lg:gap-px xl:grid-cols-4"
     >
       {kpis.map((kpi, i) => (
         <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />
