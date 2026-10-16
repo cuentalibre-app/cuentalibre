@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { buttonVariants } from "@fiscalia/ui/components/button";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
 import { quarterClose } from "@/mocks/data";
 import { daysLeftLabel, deadlineTitle, MONTHS_SHORT } from "@/lib/format";
 import type { DeadlineItem, HomeData } from "./home-data";
@@ -37,7 +38,12 @@ export function TaxCalendar({ data, className }: { data: HomeData; className?: s
           <span className="lg:hidden">Próximos vencimientos</span>
           <span className="hidden lg:inline">Calendario fiscal</span>
         </h2>
-        {daysLeft !== null && <span className="text-xs font-semibold text-warning">{daysLeftLabel(daysLeft)}</span>}
+        <span className="flex items-baseline gap-3">
+          {daysLeft !== null && <span className="text-xs font-semibold text-warning">{daysLeftLabel(daysLeft)}</span>}
+          <Link to={CALENDAR_PATH} className="text-sm font-medium text-primary no-underline hover:underline">
+            Ver calendario
+          </Link>
+        </span>
       </div>
 
       {/* Desktop: full list */}

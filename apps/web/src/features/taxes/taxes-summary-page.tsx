@@ -18,15 +18,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fisca
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
-import { useExpenses } from "@/features/purchases/expenses-store";
-import { purchaseTotals } from "@/features/purchases/purchases-model";
-import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
-import { useSalesDocuments } from "@/features/sales/sales-store";
 import { daysLeftLabel, deadlineTitle, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
+import { useFormsInUse } from "./forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
-import { FILING_STATUS, INCOME_TAX_PATH, modelPath, quarterOf, VAT_PATH } from "./taxes-model";
+import { CALENDAR_PATH, FILING_STATUS, INCOME_TAX_PATH, modelPath, quarterOf, VAT_PATH } from "./taxes-model";
 
 const QUARTERS = [1, 2, 3, 4] as const;
 
@@ -50,44 +47,33 @@ function useYearReturns(year: number) {
 
 /** Other forms Fiscalia doesn't prepare yet, and whether the books suggest they apply. */
 function useOtherForms(year: number) {
-  const documents = useSalesDocuments();
-  const purchases = usePurchaseInvoices();
-  const expenses = useExpenses();
-  return useMemo(() => {
-    const inYear = (date: string) => date.startsWith(String(year));
-    const yearPurchases = purchases.filter((p) => inYear(p.bookedOn));
-    const withholdings = yearPurchases.some((p) => !p.rental && purchaseTotals(p).withholding !== 0);
-    const rentals = yearPurchases.some((p) => p.rental) || expenses.some((e) => inYear(e.date) && e.rental);
-    const intraEu =
-      documents.some((d) => d.kind === "invoice" && inYear(d.issuedOn) && d.operationType === "intraEu") ||
-      yearPurchases.some((p) => p.operationType === "intraEu");
-    return [
-      {
-        codes: "111 · 190",
-        title: "Retenciones de facturas recibidas",
-        detail: "Si pagas a profesionales que te aplican retención.",
-        applies: withholdings,
-      },
-      {
-        codes: "115 · 180",
-        title: "Retenciones de alquileres",
-        detail: "Si alquilas un local u oficina para tu actividad.",
-        applies: rentals,
-      },
-      {
-        codes: "347",
-        title: "Operaciones con terceras personas",
-        detail: "Clientes y proveedores con más de 3.005,06 € al año.",
-        applies: false,
-      },
-      {
-        codes: "349",
-        title: "Operaciones intracomunitarias",
-        detail: "Ventas y compras a empresas de otros países de la UE.",
-        applies: intraEu,
-      },
-    ];
-  }, [documents, purchases, expenses, year]);
+  const inUse = useFormsInUse()(year);
+  return [
+    {
+      codes: "111 · 190",
+      title: "Retenciones de facturas recibidas",
+      detail: "Si pagas a profesionales que te aplican retención.",
+      applies: inUse.withholdings,
+    },
+    {
+      codes: "115 · 180",
+      title: "Retenciones de alquileres",
+      detail: "Si alquilas un local u oficina para tu actividad.",
+      applies: inUse.rentals,
+    },
+    {
+      codes: "347",
+      title: "Operaciones con terceras personas",
+      detail: "Clientes y proveedores con más de 3.005,06 € al año.",
+      applies: false,
+    },
+    {
+      codes: "349",
+      title: "Operaciones intracomunitarias",
+      detail: "Ventas y compras a empresas de otros países de la UE.",
+      applies: inUse.intraEu,
+    },
+  ];
 }
 
 function NextFiling({ today }: { today: Date }) {
@@ -398,7 +384,7 @@ export function TaxesSummaryPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <Link to="/impuestos/calendario" className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
+            <Link to={CALENDAR_PATH} className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
               <Calendar strokeWidth={1.8} aria-hidden="true" />
               Calendario fiscal
             </Link>
