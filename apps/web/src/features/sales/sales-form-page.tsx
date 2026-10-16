@@ -36,6 +36,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { lockedMessage } from "@/features/closing/closing-model";
+import { useLockedQuarter } from "@/features/closing/closing-store";
+import { LockedNotice } from "@/features/closing/locked-notice";
 import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
@@ -229,6 +232,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   const clients = useContacts("client");
   const [creatingClient, setCreatingClient] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
+  const lockedQuarterOf = useLockedQuarter();
+  // Issued invoices of a closed quarter are read-only; drafts, quotes and delivery notes are not booked
+  const locked = existing?.kind === "invoice" ? lockedQuarterOf(existing.issuedOn) : null;
   const [advanced, setAdvanced] = useState(
     () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
   );
@@ -323,6 +329,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     const next: Errors = {};
     if (KINDS[asKind].clientRequired && !form.clientId) next.clientId = "Elige un cliente.";
     if (!form.issuedOn) next.issuedOn = "Indica la fecha.";
+    else if (asKind === "invoice" && lockedQuarterOf(form.issuedOn))
+      next.issuedOn = lockedMessage(lockedQuarterOf(form.issuedOn)!);
     // Issuing a draft takes the next invoice number, so only the kind's own number is checked
     if (asKind === kind) {
       if (!form.number.trim()) next.number = "Indica el número.";
@@ -495,12 +503,16 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
-              Nuevo cliente
-            </Button>
-            {actions("hidden lg:flex")}
+            {!locked && (
+              <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
+                Nuevo cliente
+              </Button>
+            )}
+            {!locked && actions("hidden lg:flex")}
           </div>
         </header>
+
+        {locked && <LockedNotice period={locked} noun="Esta factura" />}
 
         {source && !existing && (
           <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
@@ -510,7 +522,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
           </p>
         )}
 
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+        <fieldset
+          disabled={Boolean(locked)}
+          className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
+        >
           <Section title={infoTitle(config.noun)} index={1}>
             {client && <ClientSummary client={client} />}
 
@@ -951,10 +966,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               </div>
             )}
           </Section>
-        </div>
+        </fieldset>
 
         {/* Mobile: actions at the end of the form */}
-        {actions("lg:hidden")}
+        {!locked && actions("lg:hidden")}
         <NewContactDialog
           role="client"
           open={creatingClient}

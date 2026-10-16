@@ -23,4 +23,3 @@ export const currentUser = {
   socialSecurityFee: 294,
 };
 
-export const quarterClose = { quarter: 3, year: 2026, stepsDone: 3, stepsTotal: 5 } as const;

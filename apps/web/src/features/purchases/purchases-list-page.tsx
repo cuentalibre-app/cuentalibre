@@ -29,6 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fisca
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
+import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import {
@@ -746,6 +747,7 @@ function PurchasesList({ rows }: { rows: Row[] }) {
 /** Every operation available on a received invoice, grouped so the menu can split them with separators. */
 function usePurchaseActions(row: Row) {
   const navigate = useNavigate();
+  const lockedQuarterOf = useLockedQuarter();
   const { doc } = row;
   const attachments = doc.attachments ?? [];
   const viewable = attachments.find((a) => a.url);
@@ -799,9 +801,10 @@ function usePurchaseActions(row: Row) {
             }),
         };
 
+  const locked = lockedQuarterOf(doc.bookedOn) !== null;
   const groups: Action[][] = [
     [
-      { label: "Editar factura", icon: Pencil, run: () => navigate(editPath(doc)) },
+      { label: locked ? "Ver factura" : "Editar factura", icon: Pencil, run: () => navigate(editPath(doc)) },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${NEW_PURCHASE_PATH}?desde=${doc.id}`) },
     ],
     [
@@ -819,13 +822,15 @@ function usePurchaseActions(row: Row) {
     ],
     [
       {
-        label: `Eliminar factura ${doc.number}`,
+        label: `Eliminar factura ${doc.number}` + (locked ? " (trimestre cerrado)" : ""),
         icon: Trash2,
         danger: true,
-        run: () => {
-          if (window.confirm(`¿Eliminar la factura ${doc.number} de ${row.supplier.name}? No se puede deshacer.`))
-            purchasesStore.remove(doc.id);
-        },
+        run: locked
+          ? undefined
+          : () => {
+              if (window.confirm(`¿Eliminar la factura ${doc.number} de ${row.supplier.name}? No se puede deshacer.`))
+                purchasesStore.remove(doc.id);
+            },
       },
     ],
   ];

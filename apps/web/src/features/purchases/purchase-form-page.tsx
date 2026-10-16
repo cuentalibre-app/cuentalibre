@@ -41,6 +41,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { lockedMessage } from "@/features/closing/closing-model";
+import { useLockedQuarter } from "@/features/closing/closing-store";
+import { LockedNotice } from "@/features/closing/locked-notice";
 import { AnimatedAmount } from "@/components/animated-amount";
 import {
   LinesEditor,
@@ -254,6 +257,9 @@ function PurchaseForm({
       : initial;
   });
   const [errors, setErrors] = useState<Errors>({});
+  const lockedQuarterOf = useLockedQuarter();
+  // The booking date decides the quarter, so it's the one a closed quarter locks
+  const locked = existing ? lockedQuarterOf(existing.bookedOn) : null;
   const [advanced, setAdvanced] = useState(() =>
     form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo),
   );
@@ -363,6 +369,7 @@ function PurchaseForm({
     if (!form.bookedOn) next.bookedOn = "Indica la fecha contable.";
     else if (form.issuedOn && !isValidBookingDate(form.issuedOn, form.bookedOn))
       next.bookedOn = "No puede ser anterior a la fecha de la factura.";
+    else if (lockedQuarterOf(form.bookedOn)) next.bookedOn = lockedMessage(lockedQuarterOf(form.bookedOn)!);
     if (imputation === null) next.imputation = "Un número entero entre 0 y 100.";
     if (form.vatImputation.trim() !== "" && vatImputation === null)
       next.vatImputation = "Un número entero entre 0 y 100, o vacío.";
@@ -499,12 +506,16 @@ function PurchaseForm({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingSupplier(true)}>
-              Nuevo proveedor
-            </Button>
-            {actions("hidden lg:flex")}
+            {!locked && (
+              <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingSupplier(true)}>
+                Nuevo proveedor
+              </Button>
+            )}
+            {!locked && actions("hidden lg:flex")}
           </div>
         </header>
+
+        {locked && <LockedNotice period={locked} noun="Esta factura" />}
 
         {justSaved && !source && (
           <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
@@ -520,7 +531,10 @@ function PurchaseForm({
           </p>
         )}
 
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+        <fieldset
+          disabled={Boolean(locked)}
+          className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
+        >
           <ReceiptDrop attachments={form.attachments} onChange={(a) => set("attachments", a)} />
 
           <Section title="Información de la factura" index={1}>
@@ -948,10 +962,10 @@ function PurchaseForm({
               )}
             </div>
           </Section>
-        </div>
+        </fieldset>
 
         {/* Mobile: actions at the end of the form */}
-        {actions("lg:hidden")}
+        {!locked && actions("lg:hidden")}
         <NewContactDialog
           role="supplier"
           open={creatingSupplier}
