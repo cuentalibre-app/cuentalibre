@@ -2,6 +2,9 @@ import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
 import { HomePage } from "@/features/home/home-page";
+import { ExpenseFormPage } from "@/features/purchases/expense-form-page";
+import { ExpensesListPage } from "@/features/purchases/expenses-list-page";
+import { EXPENSES_PATH, NEW_EXPENSE_PATH } from "@/features/purchases/expenses-model";
 import { PurchaseFormPage } from "@/features/purchases/purchase-form-page";
 import { PurchasesListPage } from "@/features/purchases/purchases-list-page";
 import { NEW_PURCHASE_PATH, PURCHASES_PATH } from "@/features/purchases/purchases-model";
@@ -27,6 +30,9 @@ const purchaseRoutes = [
   { path: PURCHASES_PATH.slice(1), element: <PurchasesListPage /> },
   { path: NEW_PURCHASE_PATH.slice(1), element: <PurchaseFormPage /> },
   { path: `${PURCHASES_PATH.slice(1)}/:id`, element: <PurchaseFormPage /> },
+  { path: EXPENSES_PATH.slice(1), element: <ExpensesListPage /> },
+  { path: NEW_EXPENSE_PATH.slice(1), element: <ExpenseFormPage /> },
+  { path: `${EXPENSES_PATH.slice(1)}/:id`, element: <ExpenseFormPage /> },
 ];
 
 const builtPaths = new Set([...salesRoutes, ...purchaseRoutes].map((r) => `/${r.path}`));

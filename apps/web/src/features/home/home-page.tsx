@@ -16,6 +16,7 @@ import { TakeHomeCard } from "./take-home-card";
 import { TaxCalendar } from "./tax-calendar";
 import { dependencyWarning, TopCounterparties } from "./top-counterparties";
 import { usePeriod } from "@/lib/use-period";
+import { useExpenses } from "@/features/purchases/expenses-store";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 
@@ -31,7 +32,11 @@ export function HomePage() {
   const [period, setPeriod] = usePeriod(today);
   const documents = useSalesDocuments();
   const purchases = usePurchaseInvoices();
-  const data = useMemo(() => buildHomeData(period, today, documents, purchases), [period, today, documents, purchases]);
+  const expenses = useExpenses();
+  const data = useMemo(
+    () => buildHomeData(period, today, documents, purchases, expenses),
+    [period, today, documents, purchases, expenses],
+  );
   // Charts keep their own selection; remount them when the period changes
   const chartKey = periodKey(period);
 
