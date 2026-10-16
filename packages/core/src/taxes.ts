@@ -1,4 +1,4 @@
-import { periodMonths, type Period, type Quarter } from "./period";
+import { periodMonths, type Period } from "./period";
 
 /** General Spanish VAT rate. */
 export const GENERAL_VAT_RATE = 0.21;
@@ -47,37 +47,6 @@ export function sumTotals(months: (MonthTotals | null | undefined)[]): MonthTota
 
 export function periodTotals(year: YearTotals, period: Period): MonthTotals {
   return sumTotals(periodMonths(period).map((m) => year[m]));
-}
-
-/** Form 303 result: positive to pay, negative to offset in later quarters. */
-export function vatSettlement(totals: MonthTotals): number {
-  return totals.outputVat - totals.inputVat;
-}
-
-/**
- * Form 130 installment for each quarter of a year.
- *
- * Each installment is 20% of the net income accumulated since January, minus
- * withholdings accumulated since January, minus the installments already paid
- * that year. It can't be negative.
- */
-export function irpfInstallments(year: YearTotals): Record<Quarter, number> {
-  const result = { 1: 0, 2: 0, 3: 0, 4: 0 } as Record<Quarter, number>;
-  let paid = 0;
-  for (const quarter of [1, 2, 3, 4] as const) {
-    const ytd = sumTotals(year.slice(0, quarter * 3));
-    const due = IRPF_INSTALLMENT_RATE * (ytd.income - ytd.expenses) - ytd.withholdings - paid;
-    result[quarter] = Math.max(0, due);
-    paid += result[quarter];
-  }
-  return result;
-}
-
-/** Form 130 amount for a period: one installment, or the sum of the year's four. */
-export function irpfInstallmentForPeriod(year: YearTotals, period: Period): number {
-  const installments = irpfInstallments(year);
-  if (period.quarter !== null) return installments[period.quarter];
-  return installments[1] + installments[2] + installments[3] + installments[4];
 }
 
 /** Rough split of what was invoiced (before VAT) into take-home, income tax and expenses. */

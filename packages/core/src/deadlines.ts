@@ -28,6 +28,31 @@ function lastBusinessDayOfMonth(year: number, month: number): Date {
 }
 
 /**
+ * Last day to file the return of a quarter (forms 303 and 130) or the yearly VAT summary
+ * (form 390, quarter null). Q1–Q3 are filed from the 1st to the 20th of the following month;
+ * Q4 and form 390 until January 30th.
+ */
+export function filingDeadline(year: number, quarter: Quarter | null): Date {
+  const due = quarter === null || quarter === 4 ? new Date(year + 1, 0, 30) : new Date(year, quarter * 3, 20);
+  return nextBusinessDay(due);
+}
+
+/**
+ * Where a return stands on a given day: its period hasn't started, is still running, can be
+ * filed (until the deadline), or the deadline has passed.
+ */
+export type FilingStatus = "upcoming" | "inProgress" | "open" | "closed";
+
+export function filingStatus(year: number, quarter: Quarter | null, today: Date): FilingStatus {
+  const from = startOfDay(today);
+  const start = new Date(year, quarter === null ? 0 : (quarter - 1) * 3, 1);
+  const end = quarter === null ? new Date(year + 1, 0, 1) : new Date(year, quarter * 3, 1);
+  if (from < start) return "upcoming";
+  if (from < end) return "inProgress";
+  return from <= filingDeadline(year, quarter) ? "open" : "closed";
+}
+
+/**
  * Filing deadlines for a self-employed worker under direct estimation, for
  * the obligations of one fiscal year (some fall in January of the next one).
  *
@@ -38,20 +63,12 @@ export function deadlinesForYear(year: number): Deadline[] {
   const deadlines: Deadline[] = [];
 
   for (const quarter of [1, 2, 3, 4] as const) {
-    // Q1–Q3: 1st–20th of the following month. Q4: until January 30th.
-    const due = quarter === 4 ? new Date(year + 1, 0, 30) : new Date(year, quarter * 3, 20);
-    const date = nextBusinessDay(due);
+    const date = filingDeadline(year, quarter);
     deadlines.push({ kind: "vat-303", date, year, quarter, month: null });
     deadlines.push({ kind: "irpf-130", date, year, quarter, month: null });
   }
 
-  deadlines.push({
-    kind: "vat-390",
-    date: nextBusinessDay(new Date(year + 1, 0, 30)),
-    year,
-    quarter: null,
-    month: null,
-  });
+  deadlines.push({ kind: "vat-390", date: filingDeadline(year, null), year, quarter: null, month: null });
 
   // The RETA fee is charged on the last business day of each month.
   for (let month = 0; month < 12; month++) {

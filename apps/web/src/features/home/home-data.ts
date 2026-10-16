@@ -1,7 +1,6 @@
 import {
   daysUntil,
-  irpfInstallmentForPeriod,
-  irpfInstallments,
+  incomeTaxYear,
   isEconomicallyDependent,
   isInPeriod,
   ledgerYearTotals,
@@ -11,15 +10,17 @@ import {
   rankCounterparties,
   takeHomeEstimate,
   upcomingDeadlines,
-  vatSettlement,
+  vatReturns,
   type Deadline,
   type LedgerEntry,
   type Period,
+  type TaxBooks,
   type YearTotals,
 } from "@fiscalia/core";
 import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { deductible, supplierOf } from "@/features/purchases/purchases-model";
 import { clientOf, displayStatus, documentTotals } from "@/features/sales/sales-model";
+import { TAX_OPTIONS, toTaxBooks } from "@/features/taxes/tax-books";
 import { currentUser } from "@/mocks/data";
 import type { Expense } from "@/mocks/expenses";
 import type { PurchaseInvoice } from "@/mocks/purchases";
@@ -61,19 +62,31 @@ function change(current: number, previous: number): number | null {
   return ((current - previous) / Math.abs(previous)) * 100;
 }
 
-function deadlineItem(deadline: Deadline, yearTotals: (year: number) => YearTotals): DeadlineItem {
+/** Quarterly results of forms 303 and 130 for a year, computed once per year. */
+function yearReturns(books: TaxBooks) {
+  const cache = new Map<number, { vat: number[]; irpf: number[] }>();
+  return (year: number) => {
+    if (!cache.has(year)) {
+      cache.set(year, {
+        vat: vatReturns(books, year).map((r) => r.result),
+        irpf: incomeTaxYear(books, year, TAX_OPTIONS).quarters.map((r) => r.result),
+      });
+    }
+    return cache.get(year)!;
+  };
+}
+
+function deadlineItem(deadline: Deadline, returns: ReturnType<typeof yearReturns>): DeadlineItem {
   const { kind, year, quarter } = deadline;
   switch (kind) {
-    case "vat-303":
-      return {
-        deadline,
-        amount: vatSettlement(periodTotals(yearTotals(year), { year, quarter })),
-        detail: "A ingresar",
-      };
+    case "vat-303": {
+      const amount = quarter ? returns(year).vat[quarter - 1]! : 0;
+      return { deadline, amount, detail: amount < 0 ? "A compensar" : "A ingresar" };
+    }
     case "irpf-130":
       return {
         deadline,
-        amount: quarter ? irpfInstallments(yearTotals(year))[quarter] : null,
+        amount: quarter ? Math.max(0, returns(year).irpf[quarter - 1]!) : null,
         detail: "Pago fraccionado",
       };
     case "social-security":
@@ -157,8 +170,11 @@ export function buildHomeData(
   const previousTotals = periodTotals(yearTotals(previous.year), previous);
   const previousProfit = previousTotals.income - previousTotals.expenses;
 
-  const vat = vatSettlement(totals);
-  const irpf = irpfInstallmentForPeriod(year, period);
+  // The same returns the tax pages show, so both add up
+  const returns = yearReturns(toTaxBooks(documents, purchases, otherExpenses));
+  const quarters = (results: number[]) => (period.quarter ? [results[period.quarter - 1]!] : results);
+  const vat = quarters(returns(period.year).vat).reduce((acc, r) => acc + r, 0);
+  const irpf = quarters(returns(period.year).irpf).reduce((acc, r) => acc + Math.max(0, r), 0);
 
   let running = 0;
   const monthly: (MonthPoint | null)[] = year.map((m, month) => {
@@ -169,7 +185,7 @@ export function buildHomeData(
 
   const lastMonthWithData = [...months].reverse().find((m) => monthly[m] != null) ?? months[0]!;
 
-  const deadlines = upcomingDeadlines(today, 4).map((d) => deadlineItem(d, yearTotals));
+  const deadlines = upcomingDeadlines(today, 4).map((d) => deadlineItem(d, returns));
   const nextFiling = deadlines.find((d) => d.deadline.kind !== "social-security");
   const filingsSoon = deadlines.filter(
     (d) => d.deadline.kind !== "social-security" && daysUntil(today, d.deadline.date) <= 30,

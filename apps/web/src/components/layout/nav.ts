@@ -54,7 +54,18 @@ export const mainNav: NavItem[] = [
       { label: "Gastos", to: "/compras/gastos" },
     ],
   },
-  { label: "Impuestos", to: "/impuestos", icon: Percent, badge: "filingsSoon" },
+  {
+    label: "Impuestos",
+    to: "/impuestos",
+    icon: Percent,
+    badge: "filingsSoon",
+    children: [
+      { label: "Resumen", to: "/impuestos" },
+      { label: "Calendario fiscal", to: "/impuestos/calendario" },
+      { label: "IVA (303, 390)", to: "/impuestos/iva" },
+      { label: "IRPF (130, 100)", to: "/impuestos/irpf" },
+    ],
+  },
   { label: "Bancos", to: "/bancos", icon: Landmark },
   {
     label: "Contactos",
