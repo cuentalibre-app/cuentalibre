@@ -13,6 +13,9 @@ import { Input, Textarea } from "@fiscalia/ui/components/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { lockedMessage } from "@/features/closing/closing-model";
+import { useLockedQuarter } from "@/features/closing/closing-store";
+import { LockedNotice } from "@/features/closing/locked-notice";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
@@ -184,6 +187,8 @@ function ExpenseForm({
   const suppliers = useContacts("supplier");
   const [creatingSupplier, setCreatingSupplier] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
+  const lockedQuarterOf = useLockedQuarter();
+  const locked = existing ? lockedQuarterOf(existing.date) : null;
   // Whether the payment date follows the expense date, until it is changed by hand
   const [paidOnFollows, setPaidOnFollows] = useState(form.paidOn === form.date);
   // Prefill from the payee's last expense only on a blank form, until the user picks a type
@@ -253,6 +258,7 @@ function ExpenseForm({
   function validate(doc: Expense): Errors {
     const next: Errors = {};
     if (!form.date) next.date = "Indica la fecha del gasto.";
+    else if (lockedQuarterOf(form.date)) next.date = lockedMessage(lockedQuarterOf(form.date)!);
     if (!form.concept.trim()) next.concept = "Describe brevemente el gasto.";
     if (amount === null) next.amount = "Indica el importe pagado.";
     else if (roundCents(amount) <= 0) next.amount = "El importe tiene que ser mayor que cero.";
@@ -361,8 +367,10 @@ function ExpenseForm({
             </Link>
             <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
           </div>
-          {actions("hidden lg:flex")}
+          {!locked && actions("hidden lg:flex")}
         </header>
+
+        {locked && <LockedNotice period={locked} noun="Este gasto" />}
 
         {justSaved && !source && (
           <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
@@ -377,7 +385,10 @@ function ExpenseForm({
           </p>
         )}
 
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+        <fieldset
+          disabled={Boolean(locked)}
+          className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
+        >
           <ReceiptDrop
             attachments={form.attachments}
             onChange={(a) => set("attachments", a)}
@@ -644,10 +655,10 @@ function ExpenseForm({
               </div>
             )}
           </Section>
-        </div>
+        </fieldset>
 
         {/* Mobile: actions at the end of the form */}
-        {actions("lg:hidden")}
+        {!locked && actions("lg:hidden")}
         <NewContactDialog
           role="supplier"
           open={creatingSupplier}

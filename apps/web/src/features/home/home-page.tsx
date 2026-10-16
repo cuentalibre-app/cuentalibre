@@ -118,7 +118,11 @@ export function HomePage() {
 
         <div className={row} style={{ "--i": 6 } as CSSProperties}>
           <RecentInvoices data={data} className={cn(panel, "order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]")} />
-          <TaxCalendar data={data} className={cn(panel, "order-1 min-w-0 lg:order-none lg:flex-[1_1_320px]")} />
+          <TaxCalendar
+            data={data}
+            today={today}
+            className={cn(panel, "order-1 min-w-0 lg:order-none lg:flex-[1_1_320px]")}
+          />
         </div>
 
         <div className={row} style={{ "--i": 7 } as CSSProperties}>

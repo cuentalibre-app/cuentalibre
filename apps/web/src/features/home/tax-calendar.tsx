@@ -2,8 +2,9 @@ import { Link } from "react-router";
 import { buttonVariants } from "@fiscalia/ui/components/button";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { closingPath, quarterToClose, useQuarterChecks } from "@/features/closing/closing-model";
+import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
-import { quarterClose } from "@/mocks/data";
 import { daysLeftLabel, deadlineTitle, MONTHS_SHORT } from "@/lib/format";
 import type { DeadlineItem, HomeData } from "./home-data";
 
@@ -21,17 +22,17 @@ function Amount({ item }: { item: DeadlineItem }) {
   return <span className="amount">{formatEUR(item.amount)}</span>;
 }
 
-export function TaxCalendar({ data, className }: { data: HomeData; className?: string }) {
+export function TaxCalendar({ data, today, className }: { data: HomeData; today: Date; className?: string }) {
   const daysLeft = data.nextFilingDays;
-  const progress = (quarterClose.stepsDone / quarterClose.stepsTotal) * 100;
+  const toClose = quarterToClose(today, useClosedQuarters());
+  const checks = useQuarterChecks(toClose);
+  const reviewed = checks.filter((c) => c.tone === "ok").length;
+  const progress = (reviewed / checks.length) * 100;
 
   return (
     <section
       aria-labelledby="tax-calendar-title"
-      className={cn(
-        "flex flex-col gap-2 lg:gap-4 lg:rounded-xl lg:border lg:border-border lg:p-5",
-        className,
-      )}
+      className={cn("flex flex-col gap-2 lg:gap-4 lg:rounded-xl lg:border lg:border-border lg:p-5", className)}
     >
       <div className="flex items-baseline justify-between lg:items-center">
         <h2 id="tax-calendar-title" className="m-0 text-md font-semibold lg:text-lg">
@@ -65,24 +66,24 @@ export function TaxCalendar({ data, className }: { data: HomeData; className?: s
 
       <div className="hidden flex-col gap-2 pt-1 lg:flex">
         <div className="flex justify-between text-sm">
-          <span className="font-medium">Cierre del T{quarterClose.quarter}</span>
+          <span className="font-medium">Cierre del T{toClose.quarter}</span>
           <span className="text-muted-foreground">
-            {quarterClose.stepsDone} de {quarterClose.stepsTotal} pasos
+            {reviewed} de {checks.length} revisados
           </span>
         </div>
         <div
           role="progressbar"
-          aria-label={`Cierre del T${quarterClose.quarter}`}
+          aria-label={`Cierre del T${toClose.quarter}`}
           aria-valuemin={0}
-          aria-valuemax={quarterClose.stepsTotal}
-          aria-valuenow={quarterClose.stepsDone}
+          aria-valuemax={checks.length}
+          aria-valuenow={reviewed}
           className="h-1.5 rounded-xs bg-muted"
         >
           <div className="h-1.5 animate-reveal-x rounded-xs bg-primary" style={{ width: `${progress}%` }} />
         </div>
       </div>
       <Link
-        to="/cierre-trimestre"
+        to={closingPath(toClose)}
         className={cn(buttonVariants({ variant: "secondary" }), "hidden font-semibold no-underline lg:inline-flex")}
       >
         Continuar cierre de trimestre

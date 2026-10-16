@@ -29,6 +29,7 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
+import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
@@ -449,6 +450,9 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
+  // Invoices of a closed quarter can't change, and drafts can't be issued into one
+  const lockedQuarter = useLockedQuarter()(doc.issuedOn);
+  const locked = doc.kind === "invoice" && lockedQuarter !== null;
 
   const attach: Action = {
     label: attachments.length > 0 ? `Adjuntar archivos (${attachments.length})` : "Adjuntar archivos",
@@ -489,7 +493,9 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
             run: () => salesStore.update(doc.id, { status: "paid" }),
           };
   } else if (doc.kind === "draft") {
-    primary = { label: "Emitir factura", icon: ReceiptText, run: issueDraft };
+    primary = lockedQuarter
+      ? { label: "Emitir factura (trimestre cerrado)", icon: ReceiptText }
+      : { label: "Emitir factura", icon: ReceiptText, run: issueDraft };
   } else if (workflow && status !== "invoiced") {
     primary = {
       label: "Convertir en factura",
@@ -513,7 +519,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const groups: Action[][] = [
     [
       {
-        label: `Editar ${config.singular.toLowerCase()}`,
+        label: `${locked ? "Ver" : "Editar"} ${config.singular.toLowerCase()}`,
         icon: Pencil,
         run: () => navigate(`${config.path}/${doc.id}`),
       },
@@ -531,12 +537,16 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       : [],
     [
       {
-        label: `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim(),
+        label:
+          `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim() +
+          (locked ? " (trimestre cerrado)" : ""),
         icon: Trash2,
         danger: true,
-        run: () => {
-          if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`)) salesStore.remove(doc.id);
-        },
+        run: locked
+          ? undefined
+          : () => {
+              if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`)) salesStore.remove(doc.id);
+            },
       },
     ],
   ].filter((g) => g.length > 0);

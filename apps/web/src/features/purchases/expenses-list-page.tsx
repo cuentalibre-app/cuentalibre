@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fisca
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
+import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import {
@@ -682,6 +683,7 @@ function ExpensesList({ rows }: { rows: Row[] }) {
 /** Every operation available on an expense, grouped so the menu can split them with separators. */
 function useExpenseActions(row: Row) {
   const navigate = useNavigate();
+  const lockedQuarterOf = useLockedQuarter();
   const { doc } = row;
   const attachments = doc.attachments ?? [];
   const viewable = attachments.find((a) => a.url);
@@ -719,21 +721,26 @@ function useExpenseActions(row: Row) {
           }),
       };
 
+  const locked = lockedQuarterOf(doc.date) !== null;
   const groups: Action[][] = [
     [
-      { label: "Editar gasto", icon: Pencil, run: () => navigate(editPath(doc)) },
+      { label: locked ? "Ver gasto" : "Editar gasto", icon: Pencil, run: () => navigate(editPath(doc)) },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${NEW_EXPENSE_PATH}?desde=${doc.id}`) },
     ],
     [primary, attach, view],
     [
       {
-        label: "Eliminar gasto",
+        label: locked ? "Eliminar gasto (trimestre cerrado)" : "Eliminar gasto",
         icon: Trash2,
         danger: true,
-        run: () => {
-          if (window.confirm(`¿Eliminar el gasto «${doc.concept}» de ${formatEUR(doc.amount)}? No se puede deshacer.`))
-            expensesStore.remove(doc.id);
-        },
+        run: locked
+          ? undefined
+          : () => {
+              if (
+                window.confirm(`¿Eliminar el gasto «${doc.concept}» de ${formatEUR(doc.amount)}? No se puede deshacer.`)
+              )
+                expensesStore.remove(doc.id);
+            },
       },
     ],
   ];

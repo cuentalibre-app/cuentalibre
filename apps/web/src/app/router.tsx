@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
+import { CLOSING_PATH } from "@/features/closing/closing-model";
+import { QuarterClosePage } from "@/features/closing/quarter-close-page";
 import { ContactDetailPage } from "@/features/contacts/contact-detail-page";
 import { ContactFormPage } from "@/features/contacts/contact-form-page";
 import { ContactsListPage } from "@/features/contacts/contacts-list-page";
@@ -62,8 +64,10 @@ const taxRoutes = [
   { path: INCOME_TAX_PATH.slice(1), element: <IncomeTaxPage /> },
 ];
 
+const closingRoute = { path: CLOSING_PATH.slice(1), element: <QuarterClosePage /> };
+
 const builtPaths = new Set(
-  [...salesRoutes, ...purchaseRoutes, ...contactRoutes, ...taxRoutes].map((r) => `/${r.path}`),
+  [...salesRoutes, ...purchaseRoutes, ...contactRoutes, ...taxRoutes, closingRoute].map((r) => `/${r.path}`),
 );
 
 const placeholders = [
@@ -86,6 +90,7 @@ export const router = createBrowserRouter([
       ...purchaseRoutes,
       ...contactRoutes,
       ...taxRoutes,
+      closingRoute,
       { path: "configuracion/facturas", element: <InvoiceSettingsPage /> },
       ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
