@@ -16,9 +16,10 @@ import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
 import { SalesListPage } from "@/features/sales/sales-list-page";
 import { KINDS } from "@/features/sales/sales-model";
+import { FiscalCalendarPage } from "@/features/taxes/fiscal-calendar-page";
 import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
 import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
-import { INCOME_TAX_PATH, TAXES_PATH, VAT_PATH } from "@/features/taxes/taxes-model";
+import { CALENDAR_PATH, INCOME_TAX_PATH, TAXES_PATH, VAT_PATH } from "@/features/taxes/taxes-model";
 import { VatPage } from "@/features/taxes/vat-page";
 import type { ContactRole } from "@/mocks/contacts";
 import type { SalesKind } from "@/mocks/sales";
@@ -56,6 +57,7 @@ const contactRoutes = (Object.keys(ROLES) as ContactRole[]).flatMap((role) => {
 
 const taxRoutes = [
   { path: TAXES_PATH.slice(1), element: <TaxesSummaryPage /> },
+  { path: CALENDAR_PATH.slice(1), element: <FiscalCalendarPage /> },
   { path: VAT_PATH.slice(1), element: <VatPage /> },
   { path: INCOME_TAX_PATH.slice(1), element: <IncomeTaxPage /> },
 ];

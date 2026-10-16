@@ -1,0 +1,566 @@
+import { useMemo, useState, type CSSProperties } from "react";
+import { Link } from "react-router";
+import { Calendar, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  calendarStatus,
+  fiscalCalendar,
+  incomeTaxYear,
+  vatReturns,
+  type CalendarEntry,
+  type CalendarForm,
+} from "@fiscalia/core";
+import { Badge } from "@fiscalia/ui/components/badge";
+import { Button } from "@fiscalia/ui/components/button";
+import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
+import { cn } from "@fiscalia/ui/lib/cn";
+import { formatEUR } from "@fiscalia/ui/lib/format";
+import { MONTHS, MONTHS_SHORT } from "@/lib/format";
+import { usePeriod } from "@/lib/use-period";
+import { availableYears, currentUser } from "@/mocks/data";
+import { useFormsInUse, type FormsInUse } from "./forms-in-use";
+import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
+import { CALENDAR_STATUS, CHARGE_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "./taxes-model";
+
+interface FormInfo {
+  name: string;
+  /** Row label in the grid, under its group. */
+  row: string;
+  /** Model page in Fiscalia; forms without one are prepared in the AEAT for now. */
+  path?: string;
+  /** When the form applies: always, according to the books, or unknown (the user has to check). */
+  applies: true | keyof FormsInUse | null;
+  /** Who has to file it, shown when the books don't say. */
+  condition?: string;
+}
+
+const FORMS: Record<CalendarForm, FormInfo> = {
+  "303": { name: "IVA", row: "Trimestral", path: VAT_PATH, applies: true },
+  "390": { name: "Resumen anual de IVA", row: "Resumen anual", path: VAT_PATH, applies: true },
+  "130": { name: "IRPF", row: "Pago fraccionado", path: INCOME_TAX_PATH, applies: true },
+  "100": { name: "Renta", row: "Renta anual", path: INCOME_TAX_PATH, applies: true },
+  "115": {
+    name: "Retenciones de alquileres",
+    row: "Alquileres · trimestral",
+    applies: "rentals",
+    condition: "Si alquilas un local u oficina para tu actividad.",
+  },
+  "180": {
+    name: "Resumen anual de alquileres",
+    row: "Alquileres · anual",
+    applies: "rentals",
+    condition: "Si alquilas un local u oficina para tu actividad.",
+  },
+  "111": {
+    name: "Retenciones de profesionales",
+    row: "Profesionales · trimestral",
+    applies: "withholdings",
+    condition: "Si pagas a profesionales que te aplican retención.",
+  },
+  "190": {
+    name: "Resumen anual de retenciones",
+    row: "Profesionales · anual",
+    applies: "withholdings",
+    condition: "Si pagas a profesionales que te aplican retención.",
+  },
+  "347": {
+    name: "Operaciones con terceros",
+    row: "Operaciones con terceros",
+    applies: null,
+    condition: "Si con un cliente o proveedor superas 3.005,06 € en el año (IVA incluido).",
+  },
+  "349": {
+    name: "Operaciones intracomunitarias",
+    row: "Operaciones intracomunitarias",
+    applies: "intraEu",
+    condition: "Si vendes o compras a empresas de otros países de la UE. Mensual si superas 50.000 € al trimestre.",
+  },
+  reta: { name: "Cuota de autónomos", row: "Cuota de autónomos", applies: true },
+};
+
+const GROUPS: { title: string; forms: CalendarForm[] }[] = [
+  { title: "IVA", forms: ["303", "390"] },
+  { title: "IRPF", forms: ["130", "100"] },
+  { title: "Retenciones", forms: ["115", "180", "111", "190"] },
+  { title: "Declaraciones informativas", forms: ["347", "349"] },
+  { title: "Seguridad Social", forms: ["reta"] },
+];
+
+type Scope = "mine" | "all";
+type View = "grid" | "list";
+
+const day = (date: Date) => `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]!.toLowerCase()}`;
+
+function entryTitle(entry: CalendarEntry, calendarYear: number): string {
+  const { form, year, quarter, month } = entry;
+  if (form === "reta") return `${FORMS.reta.name} · ${MONTHS[month!]!.toLowerCase()}`;
+  const period = quarter === null ? String(year) : year === calendarYear ? `T${quarter}` : `T${quarter} ${year}`;
+  return `Modelo ${form} · ${FORMS[form].name} ${period}`;
+}
+
+/** "Del 1 al 20 oct", "Del 1 ene al 2 feb", or how the fee and the income tax campaign work. */
+function windowLabel(entry: CalendarEntry): string {
+  const { form, opensOn, dueOn } = entry;
+  if (form === "reta") return `Cargo domiciliado el ${day(dueOn)}`;
+  if (form === "100") return `Campaña de la renta: de abril al ${day(dueOn)}`;
+  const sameMonth = opensOn.getMonth() === dueOn.getMonth();
+  return `Del ${sameMonth ? opensOn.getDate() : day(opensOn)} al ${day(dueOn)}`;
+}
+
+function entryKey(entry: CalendarEntry): string {
+  return `${entry.form}-${entry.year}-${entry.quarter ?? entry.month ?? "y"}`;
+}
+
+/** Amount to pay for the entries Fiscalia can compute. */
+function useAmounts(calendarYear: number) {
+  const books = useTaxBooks();
+  return useMemo(() => {
+    const byYear = new Map(
+      [calendarYear - 1, calendarYear].map((year) => [
+        year,
+        {
+          vat: vatReturns(books, year).map((r) => r.result),
+          irpf: incomeTaxYear(books, year, TAX_OPTIONS).quarters.map((r) => r.result),
+        },
+      ]),
+    );
+    return (entry: CalendarEntry): number | null => {
+      const returns = byYear.get(entry.year);
+      if (entry.form === "reta") return currentUser.socialSecurityFee;
+      if (!returns || entry.quarter === null) return null;
+      if (entry.form === "303") return returns.vat[entry.quarter - 1]!;
+      if (entry.form === "130") return Math.max(0, returns.irpf[entry.quarter - 1]!);
+      return null;
+    };
+  }, [books, calendarYear]);
+}
+
+function useApplies() {
+  const inUse = useFormsInUse();
+  return (entry: CalendarEntry): boolean | null => {
+    const { applies } = FORMS[entry.form];
+    return applies === true || applies === null ? applies : inUse(entry.year)[applies];
+  };
+}
+
+function StatusBadge({ entry, today }: { entry: CalendarEntry; today: Date }) {
+  const status = (entry.form === "reta" ? CHARGE_STATUS : CALENDAR_STATUS)[calendarStatus(entry, today)];
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span tabIndex={0}>
+          <Badge tone={status.tone}>{status.label}</Badge>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-60">{status.hint}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function Amount({ amount, form }: { amount: number | null; form: CalendarForm }) {
+  if (amount === null) return null;
+  if (form === "303" && amount < 0) {
+    return (
+      <span className="flex flex-col items-end">
+        <span className="amount text-success">{formatEUR(amount)}</span>
+        <span className="text-2xs text-muted-foreground">a compensar</span>
+      </span>
+    );
+  }
+  return <span className={cn("amount", amount === 0 && "text-muted-foreground")}>{formatEUR(amount)}</span>;
+}
+
+function entryLink(entry: CalendarEntry): string | undefined {
+  const path = FORMS[entry.form].path;
+  return path && modelPath(path, { year: entry.year, quarter: entry.quarter });
+}
+
+/* Grid: one row per form and one column per month, like a wall planner. */
+
+const CELL_TONE = {
+  open: "bg-warning-soft text-warning font-semibold",
+  inProgress: "border border-border bg-card text-foreground",
+  upcoming: "border border-border bg-card text-foreground",
+  waiting: "border border-border bg-card text-foreground",
+  closed: "text-muted-foreground",
+} as const;
+
+function GridCell({
+  entry,
+  calendarYear,
+  today,
+  amount,
+  applies,
+}: {
+  entry: CalendarEntry;
+  calendarYear: number;
+  today: Date;
+  amount: number | null;
+  applies: boolean | null;
+}) {
+  const status = calendarStatus(entry, today);
+  const statusInfo = (entry.form === "reta" ? CHARGE_STATUS : CALENDAR_STATUS)[status];
+  const to = entryLink(entry);
+  const tag = entry.form === "reta" ? null : entry.quarter === null ? "Anual" : `T${entry.quarter}`;
+  const className = cn(
+    "flex h-10 w-full flex-col items-center justify-center rounded-md text-sm leading-tight no-underline transition-[background-color,scale] duration-150",
+    CELL_TONE[status],
+    applies !== true && "border-dashed opacity-60",
+    to && "hover:bg-accent active:scale-95",
+  );
+  const content = (
+    <>
+      <span className="amount">{entry.dueOn.getDate()}</span>
+      {tag && <span className="text-2xs font-normal text-muted-foreground">{tag}</span>}
+    </>
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {to ? (
+          <Link to={to} className={className} aria-label={entryTitle(entry, calendarYear)}>
+            {content}
+          </Link>
+        ) : (
+          <span tabIndex={0} className={className} aria-label={entryTitle(entry, calendarYear)}>
+            {content}
+          </span>
+        )}
+      </TooltipTrigger>
+      <TooltipContent className="flex max-w-64 flex-col gap-0.5">
+        <span className="font-semibold">{entryTitle(entry, calendarYear)}</span>
+        <span>{windowLabel(entry)}</span>
+        <span>
+          {statusInfo.label}
+          {amount !== null && ` · ${formatEUR(amount)}`}
+        </span>
+        {!to && entry.form !== "reta" && <span className="text-muted-foreground">Por ahora, prepáralo en la sede de la AEAT.</span>}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function RowLabel({ form, applies }: { form: CalendarForm; applies: boolean | null }) {
+  const info = FORMS[form];
+  return (
+    <span className="flex items-center gap-2.5">
+      {form !== "reta" && (
+        <span
+          className={cn(
+            "rounded-sm px-1.5 py-0.5 font-mono text-xs font-semibold",
+            applies === true ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {form}
+        </span>
+      )}
+      <span className={cn("font-medium whitespace-nowrap", applies !== true && "text-muted-foreground")}>{info.row}</span>
+      {info.condition && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span tabIndex={0}>
+              {applies ? <Badge tone="warning">Te afecta</Badge> : <Badge>{applies === null ? "¿Te afecta?" : "No te afecta"}</Badge>}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-64">
+            {info.condition}
+            {applies === false && " No hay documentos que lo requieran."}
+            {applies === null && " Fiscalia aún no lo comprueba."}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </span>
+  );
+}
+
+function CalendarGrid({
+  entries,
+  calendarYear,
+  today,
+  scope,
+}: {
+  entries: CalendarEntry[];
+  calendarYear: number;
+  today: Date;
+  scope: Scope;
+}) {
+  const amountOf = useAmounts(calendarYear);
+  const appliesTo = useApplies();
+  const currentMonth = today.getFullYear() === calendarYear ? today.getMonth() : -1;
+
+  const groups = GROUPS.map((group) => ({
+    ...group,
+    rows: group.forms
+      .map((form) => {
+        const formEntries = entries.filter((e) => e.form === form);
+        const verdicts = formEntries.map(appliesTo);
+        const applies = verdicts.includes(true) ? true : verdicts.includes(null) ? null : false;
+        return { form, applies, entries: formEntries };
+      })
+      .filter((row) => row.entries.length > 0 && (scope === "all" || row.applies === true)),
+  })).filter((group) => group.rows.length > 0);
+
+  const monthCol = (month: number) => cn("px-1 py-1", month === currentMonth && "bg-primary-soft/40");
+
+  return (
+    <div className="hidden animate-rise-in overflow-x-auto rounded-xl border border-border lg:block" style={{ "--i": 1 } as CSSProperties}>
+      <table className="w-full min-w-[920px] border-collapse">
+        <thead>
+          <tr className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
+            <th scope="col" className="sticky left-0 z-10 w-80 bg-muted px-4 py-2 text-left font-medium">
+              Modelo
+            </th>
+            {MONTHS_SHORT.map((label, month) => (
+              <th
+                key={label}
+                scope="col"
+                className={cn("px-1 py-2 text-center font-medium", month === currentMonth && "bg-primary-soft text-primary")}
+                aria-current={month === currentMonth ? "date" : undefined}
+              >
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        {groups.map((group) => (
+          <tbody key={group.title}>
+            <tr>
+              <th
+                scope="colgroup"
+                colSpan={13}
+                className="border-t border-border bg-card px-4 pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+              >
+                {group.title}
+              </th>
+            </tr>
+            {group.rows.map((row, i) => (
+              <tr key={row.form} className="animate-row-in" style={{ "--i": i } as CSSProperties}>
+                <th scope="row" className="sticky left-0 z-10 bg-background px-4 py-1 text-left font-normal">
+                  <RowLabel form={row.form} applies={row.applies} />
+                </th>
+                {MONTHS_SHORT.map((label, month) => {
+                  const inMonth = row.entries.filter((e) => e.dueOn.getMonth() === month);
+                  return (
+                    <td key={label} className={monthCol(month)}>
+                      <div className="flex flex-col gap-1">
+                        {inMonth.map((entry) => (
+                          <GridCell
+                            key={entryKey(entry)}
+                            entry={entry}
+                            calendarYear={calendarYear}
+                            today={today}
+                            amount={amountOf(entry)}
+                            applies={appliesTo(entry)}
+                          />
+                        ))}
+                      </div>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        ))}
+      </table>
+    </div>
+  );
+}
+
+/* List: the same entries as an agenda grouped by month. */
+
+function AgendaItem({
+  entry,
+  calendarYear,
+  today,
+  amount,
+  applies,
+}: {
+  entry: CalendarEntry;
+  calendarYear: number;
+  today: Date;
+  amount: number | null;
+  applies: boolean | null;
+}) {
+  const to = entryLink(entry);
+  const closed = calendarStatus(entry, today) === "closed";
+  const info = FORMS[entry.form];
+  const body = (
+    <>
+      <div className={cn("flex w-11 shrink-0 flex-col items-center", closed && "text-muted-foreground")}>
+        <span className="text-xl font-semibold">{entry.dueOn.getDate()}</span>
+        <span className="text-2xs text-muted-foreground uppercase">{MONTHS_SHORT[entry.dueOn.getMonth()]}</span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className={cn("font-medium", closed && "text-muted-foreground")}>{entryTitle(entry, calendarYear)}</span>
+        <span className="text-xs text-muted-foreground">
+          {windowLabel(entry)}
+          {!to && entry.form !== "reta" && <span className="hidden sm:inline"> · Se prepara en la sede de la AEAT</span>}
+        </span>
+        {applies !== true && info.condition && <span className="text-xs text-muted-foreground">{info.condition}</span>}
+        <span className="pt-1 sm:hidden">
+          <StatusBadge entry={entry} today={today} />
+        </span>
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <Amount amount={amount} form={entry.form} />
+        <span className="hidden sm:inline-flex">
+          <StatusBadge entry={entry} today={today} />
+        </span>
+      </div>
+      {to ? (
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+      ) : (
+        <span className="size-4 shrink-0" aria-hidden="true" />
+      )}
+    </>
+  );
+  const className = "flex items-center gap-3.5 px-3 py-3 text-foreground no-underline lg:px-4";
+
+  return (
+    <li className="border-b border-divider last:border-b-0">
+      {to ? (
+        <Link to={to} className={cn(className, "transition-colors duration-150 hover:bg-accent active:bg-muted")}>
+          {body}
+        </Link>
+      ) : (
+        <div className={className}>{body}</div>
+      )}
+    </li>
+  );
+}
+
+function CalendarList({
+  entries,
+  calendarYear,
+  today,
+  className,
+}: {
+  entries: CalendarEntry[];
+  calendarYear: number;
+  today: Date;
+  className?: string;
+}) {
+  const amountOf = useAmounts(calendarYear);
+  const appliesTo = useApplies();
+  const isCurrentYear = today.getFullYear() === calendarYear;
+  const [showPast, setShowPast] = useState(false);
+  const firstMonth = isCurrentYear && !showPast ? today.getMonth() : 0;
+
+  const months = Array.from({ length: 12 }, (_, month) => month)
+    .filter((month) => month >= firstMonth)
+    .map((month) => ({ month, entries: entries.filter((e) => e.dueOn.getMonth() === month) }))
+    .filter((m) => m.entries.length > 0);
+  const hiddenCount = entries.filter((e) => e.dueOn.getMonth() < firstMonth).length;
+
+  return (
+    <div className={cn("flex animate-rise-in flex-col gap-4", className)} style={{ "--i": 1 } as CSSProperties}>
+      {hiddenCount > 0 && (
+        <Button variant="ghost" className="self-start" onClick={() => setShowPast(true)}>
+          <ChevronDown aria-hidden="true" />
+          Mostrar plazos anteriores ({hiddenCount})
+        </Button>
+      )}
+      {months.map(({ month, entries: monthEntries }) => (
+        <section key={month} aria-labelledby={`month-${month}`} className="flex flex-col gap-2">
+          <h2 id={`month-${month}`} className="m-0 flex items-center gap-2 text-md font-semibold">
+            {MONTHS[month]} {calendarYear}
+            {isCurrentYear && month === today.getMonth() && <Badge tone="primary">Este mes</Badge>}
+          </h2>
+          <ul className="m-0 list-none overflow-hidden rounded-xl border border-border p-0">
+            {monthEntries.map((entry) => (
+              <AgendaItem
+                key={entryKey(entry)}
+                entry={entry}
+                calendarYear={calendarYear}
+                today={today}
+                amount={amountOf(entry)}
+                applies={appliesTo(entry)}
+              />
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+export function FiscalCalendarPage() {
+  const today = useMemo(() => new Date(), []);
+  const [period, setPeriod] = usePeriod(today);
+  const year = period.year;
+  const [scope, setScope] = useState<Scope>("mine");
+  const [view, setView] = useState<View>("grid");
+  const appliesTo = useApplies();
+
+  const years = useMemo(
+    () => [...new Set([today.getFullYear() + 1, ...availableYears, today.getFullYear()])].sort((a, b) => b - a),
+    [today],
+  );
+  const calendar = useMemo(() => fiscalCalendar(year), [year]);
+  const entries = scope === "all" ? calendar : calendar.filter((e) => appliesTo(e) === true);
+
+  return (
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Calendario fiscal</h1>
+            <p className="m-0 text-sm text-muted-foreground">
+              Plazos de cada modelo en {year}. Si un plazo acaba en fin de semana, pasa al lunes; los festivos aún no se
+              tienen en cuenta.
+            </p>
+          </div>
+          <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}>
+            <SelectTrigger aria-label={`Año ${year}`} className="min-w-32">
+              <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+              <span className="flex-1 text-center">
+                <SelectValue />
+              </span>
+              <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </header>
+
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SegmentedControl<Scope>
+            label="Modelos"
+            options={[
+              { value: "mine", label: "Mis modelos" },
+              { value: "all", label: "Todos los modelos" },
+            ]}
+            value={scope}
+            onChange={setScope}
+          />
+          <SegmentedControl<View>
+            label="Vista"
+            className="hidden lg:flex"
+            options={[
+              { value: "grid", label: "Cuadrícula" },
+              { value: "list", label: "Lista" },
+            ]}
+            value={view}
+            onChange={setView}
+          />
+        </div>
+
+        {view === "grid" && <CalendarGrid entries={entries} calendarYear={year} today={today} scope={scope} />}
+        <CalendarList
+          key={year}
+          entries={entries}
+          calendarYear={year}
+          today={today}
+          className={view === "grid" ? "lg:hidden" : undefined}
+        />
+      </div>
+    </TooltipProvider>
+  );
+}

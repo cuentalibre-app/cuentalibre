@@ -1,9 +1,10 @@
-import { defaultPeriod, EXPENSE_BOXES_100, type FilingStatus, type Period } from "@fiscalia/core";
+import { defaultPeriod, EXPENSE_BOXES_100, type CalendarStatus, type FilingStatus, type Period } from "@fiscalia/core";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 
 export const TAXES_PATH = "/impuestos";
 export const VAT_PATH = "/impuestos/iva";
 export const INCOME_TAX_PATH = "/impuestos/irpf";
+export const CALENDAR_PATH = "/impuestos/calendario";
 
 /** A model page opened on a period: "/impuestos/iva?periodo=2026-T3". */
 export function modelPath(path: string, period: Period): string {
@@ -23,6 +24,24 @@ export const FILING_STATUS: Record<FilingStatus, { label: string; tone: BadgePro
   inProgress: { label: "En curso", tone: "primary", hint: "El periodo no ha terminado: las cifras pueden cambiar." },
   open: { label: "Por presentar", tone: "warning", hint: "Ya se puede presentar y el plazo sigue abierto." },
   closed: { label: "Plazo cerrado", tone: "neutral", hint: "El plazo de presentación ya ha terminado." },
+};
+
+export const CALENDAR_STATUS: Record<CalendarStatus, { label: string; tone: BadgeProps["tone"]; hint: string }> = {
+  ...FILING_STATUS,
+  waiting: {
+    label: "Plazo sin abrir",
+    tone: "neutral",
+    hint: "El periodo ha terminado, pero el plazo de presentación todavía no ha empezado.",
+  },
+};
+
+/** The monthly RETA fee is a direct debit, not a filing. */
+export const CHARGE_STATUS: Record<CalendarStatus, { label: string; tone: BadgeProps["tone"]; hint: string }> = {
+  upcoming: { label: "Próximo cargo", tone: "neutral", hint: "La Seguridad Social la carga el último día hábil del mes." },
+  inProgress: { label: "Próximo cargo", tone: "primary", hint: "La Seguridad Social la carga el último día hábil del mes." },
+  waiting: { label: "Próximo cargo", tone: "primary", hint: "La Seguridad Social la carga el último día hábil del mes." },
+  open: { label: "Se carga hoy", tone: "warning", hint: "Comprueba que tienes saldo en la cuenta domiciliada." },
+  closed: { label: "Cargada", tone: "neutral", hint: "La cuota de este mes ya se ha cargado." },
 };
 
 /** Official pages to file each form, linked as they are. */
