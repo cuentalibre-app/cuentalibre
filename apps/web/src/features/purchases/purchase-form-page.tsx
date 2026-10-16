@@ -53,16 +53,19 @@ import {
   toLines,
   type LineDraft,
 } from "@/features/sales/document-editor";
+import { isIntraEu } from "@/features/contacts/contacts-model";
+import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
+import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
 import { formatDate, formatDecimalInput, parseDecimal, periodLabel } from "@/lib/format";
 import { paymentMethods } from "@/mocks/invoicing";
-import { suppliers, type ExpenseType, type PurchaseInvoice, type Supplier } from "@/mocks/purchases";
+import type { Contact } from "@/mocks/contacts";
+import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import type { Attachment, RentalLocation } from "@/mocks/sales";
 import {
   EXPENSE_TYPE_GROUPS,
   NEW_PURCHASE_PATH,
-  NEW_SUPPLIER_PATH,
   PURCHASES_PATH,
   PURCHASE_OPERATION_TYPES,
   lastExpenseType,
@@ -123,6 +126,47 @@ type Errors = Partial<Record<ErrorKey, string>>;
 type AfterSave = "list" | "edit" | "another";
 
 /** The form starts from an existing invoice (edit), a source to copy (duplicate, credit note) or blank. */
+/** What a supplier's sheet proposes for a first invoice: withholding, intra-EU and discount. */
+function withSupplierDefaults(form: FormState, supplier: Contact): FormState {
+  const intraEu = isIntraEu(supplier);
+  const operationType = intraEu ? "intraEu" : form.operationType === "intraEu" ? "national" : form.operationType;
+  const vat = purchaseCarriesVat(operationType);
+  const discount = supplier.discount ? formatDecimalInput(supplier.discount) : null;
+  return {
+    ...form,
+    withholding: supplier.withholding ?? form.withholding,
+    operationType,
+    lines: form.lines.map((l) => ({
+      ...l,
+      ...(vat !== purchaseCarriesVat(form.operationType) && { vatRate: vat ? 0.21 : 0, surchargeRate: 0 }),
+      ...(discount && (l.discount === "0" || l.discount === "") && { discount }),
+    })),
+  };
+}
+
+/** A new invoice takes the terms of the supplier's last one or, without history, those on its sheet. */
+function prefillFromSupplier(f: FormState, supplierId: string): FormState {
+  const last = purchasesStore
+    .all()
+    .filter((d) => d.supplierId === supplierId)
+    .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn))[0];
+  if (!last) {
+    const contact = contactsStore.get("supplier", supplierId);
+    return contact ? withSupplierDefaults({ ...f, supplierId }, contact) : { ...f, supplierId };
+  }
+  const vat = purchaseCarriesVat(last.operationType);
+  return {
+    ...f,
+    supplierId,
+    expenseType: lastExpenseType(supplierId, purchasesStore.all()) ?? f.expenseType,
+    withholding: last.withholding,
+    operationType: last.operationType,
+    imputation: String(last.imputation),
+    vatImputation: last.vatImputation == null ? "" : String(last.vatImputation),
+    lines: vat ? f.lines : f.lines.map((l) => ({ ...l, vatRate: 0, surchargeRate: 0 })),
+  };
+}
+
 function initialState(base: PurchaseInvoice | undefined, isCopy: boolean, creditNote: boolean): FormState {
   const today = toIsoDate(new Date());
   const issuedOn = isCopy || !base ? today : base.issuedOn;
@@ -181,6 +225,7 @@ export function PurchaseFormPage() {
       source={source}
       creditNote={creditNote}
       justSaved={justSaved}
+      presetSupplierId={!existing && !source ? params.get("proveedor") : null}
     />
   );
 }
@@ -190,16 +235,24 @@ function PurchaseForm({
   source,
   creditNote,
   justSaved,
+  presetSupplierId,
 }: {
   existing?: PurchaseInvoice;
   source?: PurchaseInvoice;
   creditNote: boolean;
+  /** From "Nueva factura recibida" on a supplier's sheet. */
+  presetSupplierId: string | null;
   /** The invoice registered right before, with "Registrar y añadir otra". */
   justSaved?: PurchaseInvoice;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState(() => initialState(existing ?? source, !existing, creditNote));
+  const [form, setForm] = useState(() => {
+    const initial = initialState(existing ?? source, !existing, creditNote);
+    return presetSupplierId && contactsStore.get("supplier", presetSupplierId)
+      ? prefillFromSupplier(initial, presetSupplierId)
+      : initial;
+  });
   const [errors, setErrors] = useState<Errors>({});
   const [advanced, setAdvanced] = useState(() =>
     form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo),
@@ -247,7 +300,11 @@ function PurchaseForm({
   const paymentAmounts = form.payments.map((p) => parseDecimal(p.amount) ?? 0);
   const pending = amountOutstanding(totals.total, paymentAmounts);
 
+  const suppliers = useContacts("supplier");
+  const [creatingSupplier, setCreatingSupplier] = useState(false);
   const supplier = suppliers.find((s) => s.id === form.supplierId);
+  // New lines take the supplier's default discount
+  const lineDiscount = supplier?.discount ? formatDecimalInput(supplier.discount) : "0";
   const isCreditNote = Boolean(form.rectifiesId) || (creditNote && !existing);
   const creditable = purchasesStore
     .all()
@@ -259,25 +316,7 @@ function PurchaseForm({
       : "Nueva factura recibida";
 
   const changeSupplier = (supplierId: string) => {
-    setForm((f) => {
-      if (!prefill) return { ...f, supplierId };
-      const last = purchasesStore
-        .all()
-        .filter((d) => d.supplierId === supplierId)
-        .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn))[0];
-      if (!last) return { ...f, supplierId };
-      const vat = purchaseCarriesVat(last.operationType);
-      return {
-        ...f,
-        supplierId,
-        expenseType: lastExpenseType(supplierId, purchasesStore.all()) ?? f.expenseType,
-        withholding: last.withholding,
-        operationType: last.operationType,
-        imputation: String(last.imputation),
-        vatImputation: last.vatImputation == null ? "" : String(last.vatImputation),
-        lines: vat ? f.lines : f.lines.map((l) => ({ ...l, vatRate: 0, surchargeRate: 0 })),
-      };
-    });
+    setForm((f) => (prefill ? prefillFromSupplier(f, supplierId) : { ...f, supplierId }));
     clearError("supplierId");
     clearError("number");
   };
@@ -460,12 +499,9 @@ function PurchaseForm({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link
-              to={NEW_SUPPLIER_PATH}
-              className={cn(buttonVariants({ variant: "secondary" }), "hidden no-underline sm:inline-flex")}
-            >
+            <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingSupplier(true)}>
               Nuevo proveedor
-            </Link>
+            </Button>
             {actions("hidden lg:flex")}
           </div>
         </header>
@@ -496,16 +532,21 @@ function PurchaseForm({
                 required
                 error={errors.supplierId}
                 action={
-                  <Link
-                    to={NEW_SUPPLIER_PATH}
-                    className="text-xs font-medium text-primary no-underline underline-offset-2 hover:underline"
+                  <button
+                    type="button"
+                    onClick={() => setCreatingSupplier(true)}
+                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
                   >
                     Nuevo proveedor
-                  </Link>
+                  </button>
                 }
               >
                 {(p) => (
-                  <Select value={form.supplierId} onValueChange={changeSupplier}>
+                  <Select
+                    value={form.supplierId}
+                    // Radix fires "" when the options change (a supplier was just created); ignore it
+                    onValueChange={(v) => v && changeSupplier(v)}
+                  >
                     <SelectTrigger {...p} className="w-full font-normal aria-invalid:border-destructive">
                       <span className="min-w-0 flex-1 truncate text-left">
                         <SelectValue placeholder="Selecciona el proveedor" />
@@ -633,7 +674,11 @@ function PurchaseForm({
               <Field
                 label="Tipo de gasto"
                 help="Cuenta del Plan General Contable (grupo 6) en la que se registra el gasto."
-                hint={prefill && form.supplierId ? "Según la última factura de este proveedor." : undefined}
+                hint={
+                  prefill && lastExpenseType(form.supplierId, purchasesStore.all())
+                    ? "Según la última factura de este proveedor."
+                    : undefined
+                }
               >
                 {(p) => (
                   <GroupedSelect
@@ -712,7 +757,9 @@ function PurchaseForm({
               vatLabel={vatLabel}
               onChange={setLine}
               onRemove={(lineId) =>
-                setLines((lines) => (lines.length > 1 ? lines.filter((l) => l.id !== lineId) : [emptyLine()]))
+                setLines((lines) =>
+                  lines.length > 1 ? lines.filter((l) => l.id !== lineId) : [emptyLine(undefined, lineDiscount)],
+                )
               }
               onDuplicate={(lineId) =>
                 setLines((lines) =>
@@ -737,7 +784,7 @@ function PurchaseForm({
               variant="secondary"
               size="md"
               className="self-start"
-              onClick={() => set("lines", [...form.lines, emptyLine(carriesVat ? 0.21 : 0)])}
+              onClick={() => set("lines", [...form.lines, emptyLine(carriesVat ? 0.21 : 0, lineDiscount)])}
             >
               <Plus strokeWidth={2} aria-hidden="true" />
               Añadir otro concepto
@@ -905,6 +952,17 @@ function PurchaseForm({
 
         {/* Mobile: actions at the end of the form */}
         {actions("lg:hidden")}
+        <NewContactDialog
+          role="supplier"
+          open={creatingSupplier}
+          onOpenChange={setCreatingSupplier}
+          onCreated={(c) => {
+            setForm((f) =>
+              existing ? { ...f, supplierId: c.id } : withSupplierDefaults({ ...f, supplierId: c.id }, c),
+            );
+            clearError("supplierId");
+          }}
+        />
       </form>
     </TooltipProvider>
   );
@@ -978,7 +1036,7 @@ function DeductibleStrip({
 }
 
 /** Contact and address of the chosen supplier, as on its invoice. */
-function SupplierSummary({ supplier }: { supplier: Supplier }) {
+function SupplierSummary({ supplier }: { supplier: Contact }) {
   const row = (label: string, value: string | undefined) => (
     <div className="flex gap-2">
       <dt className="text-muted-foreground">{label}</dt>

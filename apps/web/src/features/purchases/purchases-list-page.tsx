@@ -44,7 +44,8 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseDecimal, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import type { ExpenseType, PurchaseInvoice, Supplier } from "@/mocks/purchases";
+import type { Contact } from "@/mocks/contacts";
+import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import {
   EXPENSE_TYPE_GROUPS,
   NEW_PURCHASE_PATH,
@@ -65,7 +66,7 @@ const ALL = "all";
 
 interface Row {
   doc: PurchaseInvoice;
-  supplier: Supplier;
+  supplier: Contact;
   status: PurchaseStatus;
   base: number;
   vat: number;
@@ -394,7 +395,7 @@ function FiltersPanel({
 }: {
   filters: Filters;
   period: Period;
-  suppliers: Supplier[];
+  suppliers: Contact[];
   tags: string[];
   onChange: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
   onClear: () => void;

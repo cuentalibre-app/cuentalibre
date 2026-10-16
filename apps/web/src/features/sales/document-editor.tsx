@@ -40,12 +40,13 @@ export interface LineDraft {
   serviceTo: string;
 }
 
-export const emptyLine = (vatRate = 0.21): LineDraft => ({
+/** A blank line; `discount` is the contact's default, as typed in the form. */
+export const emptyLine = (vatRate = 0.21, discount = "0"): LineDraft => ({
   id: crypto.randomUUID(),
   concept: "",
   unitPrice: "",
   quantity: "1",
-  discount: "0",
+  discount,
   vatRate,
   surchargeRate: 0,
   detail: "",

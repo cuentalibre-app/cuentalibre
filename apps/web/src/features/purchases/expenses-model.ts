@@ -1,7 +1,7 @@
 import { deductibleExpense, type ExpenseIdentity } from "@fiscalia/core";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import type { Expense, OtherPayee } from "@/mocks/expenses";
-import { suppliers } from "@/mocks/purchases";
+import { contactsStore } from "@/features/contacts/contacts-store";
 
 export const EXPENSES_PATH = "/compras/gastos";
 export const NEW_EXPENSE_PATH = "/compras/gastos/nuevo";
@@ -21,12 +21,10 @@ export const expenseStatus = (expense: Pick<Expense, "payment">): ExpenseStatus 
 export const deductibleOf = (expense: Pick<Expense, "amount" | "imputation">) =>
   deductibleExpense(expense.amount, expense.imputation);
 
-const suppliersById = new Map(suppliers.map((s) => [s.id, s]));
-
 /** Who was paid: a saved supplier, a one-off payee, or nobody in particular. */
 export function payeeOf(expense: Pick<Expense, "supplierId" | "otherPayee">): OtherPayee | null {
   if (expense.supplierId) {
-    const supplier = suppliersById.get(expense.supplierId);
+    const supplier = contactsStore.get("supplier", expense.supplierId);
     return supplier ? { name: supplier.name, taxId: supplier.taxId } : { name: "Proveedor eliminado", taxId: "" };
   }
   return expense.otherPayee ?? null;

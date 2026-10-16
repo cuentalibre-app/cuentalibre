@@ -1,6 +1,10 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
+import { ContactDetailPage } from "@/features/contacts/contact-detail-page";
+import { ContactFormPage } from "@/features/contacts/contact-form-page";
+import { ContactsListPage } from "@/features/contacts/contacts-list-page";
+import { ROLES } from "@/features/contacts/contacts-model";
 import { HomePage } from "@/features/home/home-page";
 import { ExpenseFormPage } from "@/features/purchases/expense-form-page";
 import { ExpensesListPage } from "@/features/purchases/expenses-list-page";
@@ -12,6 +16,7 @@ import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
 import { SalesListPage } from "@/features/sales/sales-list-page";
 import { KINDS } from "@/features/sales/sales-model";
+import type { ContactRole } from "@/mocks/contacts";
 import type { SalesKind } from "@/mocks/sales";
 import { DesignSystemPage } from "@/pages/design-system";
 import { MorePage } from "@/pages/more-page";
@@ -35,7 +40,17 @@ const purchaseRoutes = [
   { path: `${EXPENSES_PATH.slice(1)}/:id`, element: <ExpenseFormPage /> },
 ];
 
-const builtPaths = new Set([...salesRoutes, ...purchaseRoutes].map((r) => `/${r.path}`));
+const contactRoutes = (Object.keys(ROLES) as ContactRole[]).flatMap((role) => {
+  const { path, newPath } = ROLES[role];
+  return [
+    { path: path.slice(1), element: <ContactsListPage key={role} role={role} /> },
+    { path: newPath.slice(1), element: <ContactFormPage key={role} role={role} /> },
+    { path: `${path.slice(1)}/:id`, element: <ContactDetailPage key={role} role={role} /> },
+    { path: `${path.slice(1)}/:id/editar`, element: <ContactFormPage key={role} role={role} /> },
+  ];
+});
+
+const builtPaths = new Set([...salesRoutes, ...purchaseRoutes, ...contactRoutes].map((r) => `/${r.path}`));
 
 const placeholders = [
   ...allNavLeaves.filter((leaf) => leaf.to !== "/"),
@@ -55,6 +70,7 @@ export const router = createBrowserRouter([
       { path: "mas", element: <MorePage /> },
       ...salesRoutes,
       ...purchaseRoutes,
+      ...contactRoutes,
       { path: "configuracion/facturas", element: <InvoiceSettingsPage /> },
       ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
