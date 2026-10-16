@@ -14,6 +14,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fisca
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
+import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
+import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { TagsField } from "@/features/sales/document-editor";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
@@ -21,12 +23,12 @@ import { MONTHS, formatDecimalInput, parseDecimal } from "@/lib/format";
 import { currentUser } from "@/mocks/data";
 import { SOCIAL_SECURITY, type Expense, type OtherPayee } from "@/mocks/expenses";
 import { paymentMethods } from "@/mocks/invoicing";
-import { suppliers, type ExpenseType } from "@/mocks/purchases";
+import type { ExpenseType } from "@/mocks/purchases";
 import type { Attachment, RentalLocation } from "@/mocks/sales";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH, expenseIdentity, payeeOf } from "./expenses-model";
 import { expensesStore } from "./expenses-store";
 import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
-import { EXPENSE_TYPE_GROUPS, NEW_PURCHASE_PATH, NEW_SUPPLIER_PATH } from "./purchases-model";
+import { EXPENSE_TYPE_GROUPS, NEW_PURCHASE_PATH } from "./purchases-model";
 
 /** Values of the payee select besides the supplier ids. */
 const NO_PAYEE = "none";
@@ -86,6 +88,21 @@ type Errors = Partial<Record<ErrorKey, string>>;
 /** What happens after creating, from the create button's menu. */
 type AfterSave = "list" | "edit" | "another";
 
+/** A supplier's last expense proposes the type and imputation; its sheet, the payment method. */
+function prefillFromPayee(f: FormState, supplierId: string): FormState {
+  const last = expensesStore
+    .all()
+    .filter((e) => e.supplierId === supplierId)
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+  const method = contactsStore.get("supplier", supplierId)?.paymentMethodId;
+  return {
+    ...f,
+    payee: supplierId,
+    ...(last && { expenseType: last.expenseType, imputation: String(last.imputation) }),
+    ...(method && { paymentMethodId: method }),
+  };
+}
+
 /** The form starts from an existing expense (edit), one to copy, or blank. */
 function initialState(base: Expense | undefined, isCopy: boolean): FormState {
   const today = toIsoDate(new Date());
@@ -139,6 +156,7 @@ export function ExpenseFormPage() {
       existing={existing}
       source={source}
       justSaved={justSaved}
+      presetSupplierId={!existing && !source ? params.get("proveedor") : null}
     />
   );
 }
@@ -147,14 +165,24 @@ function ExpenseForm({
   existing,
   source,
   justSaved,
+  presetSupplierId,
 }: {
   existing?: Expense;
   source?: Expense;
+  /** From "Nuevo gasto" on a supplier's sheet. */
+  presetSupplierId: string | null;
   /** The expense registered right before, with "Registrar y añadir otro". */
   justSaved?: Expense;
 }) {
   const navigate = useNavigate();
-  const [form, setForm] = useState(() => initialState(existing ?? source, !existing));
+  const [form, setForm] = useState(() => {
+    const initial = initialState(existing ?? source, !existing);
+    return presetSupplierId && contactsStore.get("supplier", presetSupplierId)
+      ? prefillFromPayee(initial, presetSupplierId)
+      : initial;
+  });
+  const suppliers = useContacts("supplier");
+  const [creatingSupplier, setCreatingSupplier] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   // Whether the payment date follows the expense date, until it is changed by hand
   const [paidOnFollows, setPaidOnFollows] = useState(form.paidOn === form.date);
@@ -179,16 +207,9 @@ function ExpenseForm({
   };
 
   const changePayee = (payee: string) => {
-    setForm((f) => {
-      if (!prefill || payee === NO_PAYEE || payee === OTHER_PAYEE) return { ...f, payee };
-      const last = expensesStore
-        .all()
-        .filter((e) => e.supplierId === payee)
-        .sort((a, b) => b.date.localeCompare(a.date))[0];
-      return last
-        ? { ...f, payee, expenseType: last.expenseType, imputation: String(last.imputation) }
-        : { ...f, payee };
-    });
+    setForm((f) =>
+      !prefill || payee === NO_PAYEE || payee === OTHER_PAYEE ? { ...f, payee } : prefillFromPayee(f, payee),
+    );
     clearError("otherName");
   };
 
@@ -425,7 +446,7 @@ function ExpenseForm({
                 label="Tipo de gasto"
                 help="Cuenta del Plan General Contable (grupo 6) en la que se registra el gasto."
                 hint={
-                  prefill && form.payee !== NO_PAYEE && form.payee !== OTHER_PAYEE
+                  prefill && expensesStore.all().some((e) => e.supplierId === form.payee)
                     ? "Según el último gasto de este proveedor."
                     : undefined
                 }
@@ -458,12 +479,13 @@ function ExpenseForm({
               <Field
                 label="Pagado a"
                 action={
-                  <Link
-                    to={NEW_SUPPLIER_PATH}
-                    className="text-xs font-medium text-primary no-underline underline-offset-2 hover:underline"
+                  <button
+                    type="button"
+                    onClick={() => setCreatingSupplier(true)}
+                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
                   >
                     Nuevo proveedor
-                  </Link>
+                  </button>
                 }
               >
                 {(p) => <GroupedSelect {...p} value={form.payee} onChange={changePayee} groups={payeeGroups} />}
@@ -626,6 +648,15 @@ function ExpenseForm({
 
         {/* Mobile: actions at the end of the form */}
         {actions("lg:hidden")}
+        <NewContactDialog
+          role="supplier"
+          open={creatingSupplier}
+          onOpenChange={setCreatingSupplier}
+          onCreated={(c) => {
+            setForm((f) => prefillFromPayee(f, c.id));
+            clearError("otherName");
+          }}
+        />
       </form>
     </TooltipProvider>
   );

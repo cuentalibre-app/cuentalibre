@@ -9,12 +9,13 @@ import {
   type PurchaseOperationType,
 } from "@fiscalia/core";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
-import { suppliers, type ExpenseType, type PurchaseInvoice, type Supplier } from "@/mocks/purchases";
+import type { Contact } from "@/mocks/contacts";
+import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
+import { contactsStore } from "@/features/contacts/contacts-store";
 import type { OptionGroup } from "@/features/sales/sales-model";
 
 export const PURCHASES_PATH = "/compras/facturas";
 export const NEW_PURCHASE_PATH = "/compras/facturas/nueva";
-export const NEW_SUPPLIER_PATH = "/contactos/proveedores/nuevo";
 
 /** What the list shows: the payment status, with "overdue" derived from the due date. */
 export type PurchaseStatus = "pending" | "partial" | "paid" | "overdue";
@@ -54,10 +55,10 @@ export function deductible(doc: PurchaseInvoice) {
   return deductibleAmounts(purchaseTotals(doc), doc.imputation, doc.vatImputation);
 }
 
-const suppliersById = new Map(suppliers.map((s) => [s.id, s]));
-
-export function supplierOf(doc: Pick<PurchaseInvoice, "supplierId">): Supplier {
-  return suppliersById.get(doc.supplierId) ?? { id: doc.supplierId, name: "Proveedor eliminado", taxId: "" };
+export function supplierOf(doc: Pick<PurchaseInvoice, "supplierId">): Contact {
+  return (
+    contactsStore.get("supplier", doc.supplierId) ?? { id: doc.supplierId, name: "Proveedor eliminado", taxId: "" }
+  );
 }
 
 /** Accounts of group 6 of the PGC, under their subgroup. */

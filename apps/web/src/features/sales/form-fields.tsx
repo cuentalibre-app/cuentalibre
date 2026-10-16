@@ -213,23 +213,30 @@ export function CheckField({
   );
 }
 
-/** Language and number format of the PDF, with a live sample. Empty values follow the client's defaults. */
+/** Language and number format of the PDF, with a live sample. Empty values follow a default: the client's, by default. */
 export function LocaleFields({
   language,
   numberFormat,
   allowClientDefault = true,
+  defaultLabels = {
+    language: "Idioma por defecto del cliente",
+    format: "Formato por defecto del cliente",
+    note: "Se usa el idioma y formato configurados en la ficha del cliente.",
+  },
   onLanguageChange,
   onNumberFormatChange,
 }: {
   language: string;
   numberFormat: string;
   allowClientDefault?: boolean;
+  /** Wording of the empty choice and of the sample without a language. */
+  defaultLabels?: { language: string; format: string; note: string };
   onLanguageChange: (value: string) => void;
   onNumberFormatChange: (value: string) => void;
 }) {
   const formats = language
     ? (NUMBER_FORMATS[language] ?? [])
-    : [{ value: CLIENT_DEFAULT, label: "Formato por defecto del cliente" }];
+    : [{ value: CLIENT_DEFAULT, label: defaultLabels.format }];
   const sample = formatSample(language, numberFormat, new Date());
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -243,7 +250,7 @@ export function LocaleFields({
               groups={[
                 {
                   options: allowClientDefault
-                    ? [{ value: CLIENT_DEFAULT, label: "Idioma por defecto del cliente" }, ...LANGUAGES]
+                    ? [{ value: CLIENT_DEFAULT, label: defaultLabels.language }, ...LANGUAGES]
                     : LANGUAGES,
                 },
               ]}
@@ -266,14 +273,14 @@ export function LocaleFields({
         {sample ? (
           <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
             <dt className="text-muted-foreground">Números negativos</dt>
-            <dd className="amount m-0">{sample.negative}</dd>
+            <dd className="m-0 amount">{sample.negative}</dd>
             <dt className="text-muted-foreground">Números positivos</dt>
-            <dd className="amount m-0">{sample.positive}</dd>
+            <dd className="m-0 amount">{sample.positive}</dd>
             <dt className="text-muted-foreground">Fecha</dt>
-            <dd className="amount m-0">{sample.date}</dd>
+            <dd className="m-0 amount">{sample.date}</dd>
           </dl>
         ) : (
-          <span className="text-muted-foreground">Se usa el idioma y formato configurados en la ficha del cliente.</span>
+          <span className="text-muted-foreground">{defaultLabels.note}</span>
         )}
       </div>
     </div>

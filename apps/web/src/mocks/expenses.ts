@@ -44,7 +44,7 @@ export interface Expense {
 let seq = 0;
 
 export const SOCIAL_SECURITY: OtherPayee = { name: "Tesorería General de la Seguridad Social", taxId: "Q2827003A" };
-const BANK: OtherPayee = { name: "Banco Meseta S.A.", taxId: "A28000112" };
+const BANK: OtherPayee = { name: "Banco Meseta S.A.", taxId: "A28000115" };
 
 const MONTH_NAMES = [
   "enero",
@@ -121,12 +121,12 @@ const bankFees = [
 
 const occasional: Expense[] = [
   expense("2025-02-14", "Tasa de solicitud de marca nacional", 127.88, "631", {
-    otherPayee: { name: "Oficina Española de Patentes y Marcas", taxId: "Q2819013C" },
+    otherPayee: { name: "Oficina Española de Patentes y Marcas", taxId: "Q2819013J" },
     number: "TASA-2025-778120",
   }),
   expense("2025-06-05", "Parking · reunión con cliente", 9.6, "6292", { paymentMethodId: "card" }),
   expense("2026-01-20", "Cuota anual del colegio profesional", 180, "6297", {
-    otherPayee: { name: "Colegio Oficial de Diseñadores", taxId: "Q2800571J" },
+    otherPayee: { name: "Colegio Oficial de Diseñadores", taxId: "Q2800571H" },
     number: "C-2026-0412",
     paymentMethodId: "transfer",
   }),
@@ -135,7 +135,7 @@ const occasional: Expense[] = [
     privateNotes: "Ticket sin NIF del taxista.",
   }),
   expense("2026-07-15", "Comida de trabajo con cliente", 46.8, "627", {
-    otherPayee: { name: "Restaurante La Corrala", taxId: "B87112233" },
+    otherPayee: { name: "Restaurante La Corrala", taxId: "B87112231" },
     number: "T-58812",
     paymentMethodId: "card",
   }),
@@ -150,14 +150,14 @@ const occasional: Expense[] = [
   }),
   // The home's electricity, partly used for the business
   expense("2026-10-02", "Luz de la vivienda · septiembre", 68.4, "628", {
-    otherPayee: { name: "Eléctrica del Centro S.A.", taxId: "A28945612" },
+    otherPayee: { name: "Eléctrica del Centro S.A.", taxId: "A28945616" },
     number: "EC-2610-55102",
     imputation: 6,
     privateNotes: "Trabajo en casa: el 20 % de la vivienda, y de los suministros se deduce el 30 % de esa parte.",
   }),
   // Pending: will be charged at the end of the month
   expense("2026-10-10", "Inscripción en congreso de diseño", 95, "6297", {
-    otherPayee: { name: "Asociación de Diseñadores de Madrid", taxId: "G28654321" },
+    otherPayee: { name: "Asociación de Diseñadores de Madrid", taxId: "G28654325" },
     paidOn: null,
   }),
 ];

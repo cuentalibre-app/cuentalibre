@@ -54,10 +54,16 @@ export function ReceiptDrop({
   attachments,
   onChange,
   prompt = "Arrastra aquí la factura del proveedor",
+  label = "Justificante",
+  note = "PDF o imagen. Se guarda solo en esta sesión; la lectura automática de datos (OCR) llegará más adelante.",
+  accept = "application/pdf,image/*",
 }: {
   attachments: Attachment[];
   onChange: (a: Attachment[]) => void;
   prompt?: string;
+  label?: string;
+  note?: string;
+  accept?: string;
 }) {
   const [over, setOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -79,11 +85,7 @@ export function ReceiptDrop({
     add(e.dataTransfer.files);
   };
   return (
-    <section
-      aria-label="Justificante"
-      className="flex animate-rise-in flex-col gap-3"
-      style={{ "--i": 0 } as CSSProperties}
-    >
+    <section aria-label={label} className="flex animate-rise-in flex-col gap-3" style={{ "--i": 0 } as CSSProperties}>
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -109,13 +111,13 @@ export function ReceiptDrop({
         </p>
         <p className="m-0 flex items-center gap-1.5 text-xs text-muted-foreground">
           <ScanText className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
-          PDF o imagen. Se guarda solo en esta sesión; la lectura automática de datos (OCR) llegará más adelante.
+          {note}
         </p>
         <input
           ref={inputRef}
           type="file"
           multiple
-          accept="application/pdf,image/*"
+          accept={accept}
           className="sr-only"
           tabIndex={-1}
           onChange={(e) => {

@@ -36,11 +36,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { isIntraEu } from "@/features/contacts/contacts-model";
+import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
+import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, parseDecimal } from "@/lib/format";
+import type { Contact } from "@/mocks/contacts";
 import { paymentMethods } from "@/mocks/invoicing";
 import {
-  clients,
-  type Client,
   type IncomeType,
   type InvoiceSeries,
   type RentalLocation,
@@ -181,6 +183,7 @@ export function SalesFormPage({ kind: routeKind }: { kind: SalesKind }) {
       existing={existing}
       source={source}
       rectify={params.get("rectificar") === "1"}
+      presetClient={!existing && !source ? contactsStore.get("client", params.get("cliente") ?? "") : undefined}
     />
   );
 }
@@ -190,13 +193,41 @@ interface SalesFormProps {
   existing?: SalesDocument;
   source?: SalesDocument;
   rectify: boolean;
+  /** From "Nueva factura" on a client's sheet. */
+  presetClient?: Contact;
 }
 
-function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
+/** What a client's sheet proposes for their documents: withholding, collection method, intra-EU and discount. */
+function withClientDefaults(form: FormState, client: Contact): FormState {
+  const intraEu = isIntraEu(client);
+  const operationType = intraEu ? "intraEu" : form.operationType === "intraEu" ? "national" : form.operationType;
+  const vat = operationChargesVat(operationType);
+  const discount = client.discount ? formatDecimalInput(client.discount) : null;
+  return {
+    ...form,
+    clientId: client.id,
+    withholding: intraEu ? "none" : (client.withholding ?? form.withholding),
+    paymentMethodId: client.paymentMethodId ?? form.paymentMethodId,
+    operationType,
+    lines: form.lines.map((l) => ({
+      ...l,
+      ...(vat !== operationChargesVat(form.operationType) && { vatRate: vat ? 0.21 : 0, surchargeRate: 0 }),
+      // Only lines still without a discount take the client's
+      ...(discount && (l.discount === "0" || l.discount === "") && { discount }),
+    })),
+  };
+}
+
+function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormProps) {
   const navigate = useNavigate();
   const config = KINDS[kind];
   const settings = useInvoiceSettings();
-  const [form, setForm] = useState(() => initialState(kind, existing ?? source, !existing, rectify));
+  const [form, setForm] = useState(() => {
+    const initial = initialState(kind, existing ?? source, !existing, rectify);
+    return presetClient ? withClientDefaults(initial, presetClient) : initial;
+  });
+  const clients = useContacts("client");
+  const [creatingClient, setCreatingClient] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [advanced, setAdvanced] = useState(
     () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
@@ -231,6 +262,15 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
   const isInvoice = kind === "invoice";
   const rectifying = isInvoice && form.series === "rectifying";
   const client = clients.find((c) => c.id === form.clientId);
+  // New lines take the client's default discount
+  const lineDiscount = client?.discount ? formatDecimalInput(client.discount) : "0";
+
+  const changeClient = (clientId: string) => {
+    const picked = clients.find((c) => c.id === clientId);
+    // An existing document keeps its terms; a new one takes the client's
+    setForm((f) => (picked && !existing ? withClientDefaults(f, picked) : { ...f, clientId }));
+    clearError("clientId");
+  };
   const rectifiable = salesStore
     .all()
     .filter((d) => d.kind === "invoice" && d.series === "normal" && d.id !== existing?.id);
@@ -455,12 +495,9 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Link
-              to="/contactos/clientes/nuevo"
-              className={cn(buttonVariants({ variant: "secondary" }), "hidden no-underline sm:inline-flex")}
-            >
+            <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
               Nuevo cliente
-            </Link>
+            </Button>
             {actions("hidden lg:flex")}
           </div>
         </header>
@@ -478,9 +515,26 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
             {client && <ClientSummary client={client} />}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Cliente" required={config.clientRequired} error={errors.clientId}>
+              <Field
+                label="Cliente"
+                required={config.clientRequired}
+                error={errors.clientId}
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setCreatingClient(true)}
+                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    Nuevo cliente
+                  </button>
+                }
+              >
                 {(fieldProps) => (
-                  <Select value={form.clientId} onValueChange={(v) => set("clientId", v === NO_CLIENT ? "" : v)}>
+                  <Select
+                    value={form.clientId}
+                    // Radix fires "" when the options change (a client was just created); ignore it
+                    onValueChange={(v) => v && changeClient(v === NO_CLIENT ? "" : v)}
+                  >
                     <SelectTrigger {...fieldProps} className="w-full font-normal aria-invalid:border-destructive">
                       <span className="min-w-0 flex-1 truncate text-left">
                         <SelectValue placeholder={config.clientPlaceholder} />
@@ -493,11 +547,13 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
                           {config.clientPlaceholder}
                         </SelectItem>
                       )}
-                      {clients.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name} · <span className="font-mono text-sm">{c.taxId}</span>
-                        </SelectItem>
-                      ))}
+                      {[...clients]
+                        .sort((a, b) => a.name.localeCompare(b.name, "es"))
+                        .map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name} · <span className="font-mono text-sm">{c.taxId}</span>
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -680,7 +736,9 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
               vatLabel={vatLabel}
               onChange={setLine}
               onRemove={(lineId) =>
-                setLines((lines) => (lines.length > 1 ? lines.filter((l) => l.id !== lineId) : [emptyLine()]))
+                setLines((lines) =>
+                  lines.length > 1 ? lines.filter((l) => l.id !== lineId) : [emptyLine(undefined, lineDiscount)],
+                )
               }
               onDuplicate={(lineId) =>
                 setLines((lines) =>
@@ -705,7 +763,7 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
               variant="secondary"
               size="md"
               className="self-start"
-              onClick={() => set("lines", [...form.lines, emptyLine(chargesVat ? 0.21 : 0)])}
+              onClick={() => set("lines", [...form.lines, emptyLine(chargesVat ? 0.21 : 0, lineDiscount)])}
             >
               <Plus strokeWidth={2} aria-hidden="true" />
               Añadir otro concepto
@@ -897,13 +955,22 @@ function SalesForm({ kind, existing, source, rectify }: SalesFormProps) {
 
         {/* Mobile: actions at the end of the form */}
         {actions("lg:hidden")}
+        <NewContactDialog
+          role="client"
+          open={creatingClient}
+          onOpenChange={setCreatingClient}
+          onCreated={(c) => {
+            setForm((f) => (existing ? { ...f, clientId: c.id } : withClientDefaults(f, c)));
+            clearError("clientId");
+          }}
+        />
       </form>
     </TooltipProvider>
   );
 }
 
 /** Contact and address of the chosen client, as they will print on the document. */
-function ClientSummary({ client }: { client: Client }) {
+function ClientSummary({ client }: { client: Contact }) {
   const row = (label: string, value: string | undefined) => (
     <div className="flex gap-2">
       <dt className="text-muted-foreground">{label}</dt>

@@ -12,9 +12,9 @@ import {
   type WithholdingKind,
 } from "@fiscalia/core";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
+import { contactsStore } from "@/features/contacts/contacts-store";
+import type { Contact } from "@/mocks/contacts";
 import {
-  clients,
-  type Client,
   type IncomeType,
   type InvoiceSeries,
   type RentalLocation,
@@ -138,12 +138,10 @@ export function documentTotals(doc: Pick<SalesDocument, "lines" | "withholding" 
   return invoiceTotals(doc.lines, WITHHOLDING_RATES[doc.withholding], doc.supplies);
 }
 
-const clientsById = new Map(clients.map((c) => [c.id, c]));
-
-export function clientOf(doc: SalesDocument): Client {
+export function clientOf(doc: SalesDocument): Contact {
   // Drafts and quotes can be saved without a client
   if (!doc.clientId) return { id: "", name: "Sin cliente", taxId: "" };
-  return clientsById.get(doc.clientId) ?? { id: doc.clientId, name: "Cliente eliminado", taxId: "" };
+  return contactsStore.get("client", doc.clientId) ?? { id: doc.clientId, name: "Cliente eliminado", taxId: "" };
 }
 
 const SERIES_PREFIX: Record<InvoiceSeries, string> = { normal: "", rectifying: "R-" };
