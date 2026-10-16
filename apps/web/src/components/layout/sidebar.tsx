@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fisca
 import { cn } from "@fiscalia/ui/lib/cn";
 import { currentUser } from "@/mocks/data";
 import { CreateMenu } from "./create-menu";
-import { mainNav, secondaryNav, type NavItem } from "./nav";
+import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
 import { useNavBadges } from "./use-nav-badges";
 
@@ -61,18 +61,33 @@ function RailTooltip({ label, enabled, side = "right", children, ...props }: Rai
   );
 }
 
+/** Count of filings due soon, next to an item or group label. */
+function FilingsPill({ count }: { count: number }) {
+  return (
+    <span className="rounded-sm bg-warning px-2 py-0.5 text-2xs font-semibold text-warning-foreground">
+      {count}
+      <span className="sr-only"> presentaciones próximas</span>
+    </span>
+  );
+}
+
+/** A child pointing at its group's base path (a "Resumen" page) only matches that exact path. */
+const isChildCurrent = (item: NavItem, child: NavLeaf, pathname: string) =>
+  child.to === item.to ? pathname === child.to : pathname.startsWith(child.to);
+
 /** In the icon rail, a group opens its sections in a flyout menu instead of expanding inline. */
 function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isCurrent = pathname.startsWith(item.to);
   const { open, onOpenChange, triggerProps, contentProps } = useHoverMenu();
+  const count = item.badge ? badges[item.badge] : 0;
 
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false}>
       <DropdownMenuTrigger asChild {...triggerProps}>
         <button type="button" className={cn(itemClass, "w-full cursor-pointer text-left", isCurrent && activeClass)}>
-          <NavIcon item={item} />
+          <NavIcon item={item} dot={count > 0} />
           <span className={labelClass(true)}>{item.label}</span>
         </button>
       </DropdownMenuTrigger>
@@ -82,7 +97,7 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
           <DropdownMenuItem
             key={child.to}
             onSelect={() => navigate(child.to)}
-            className={cn("justify-between", pathname.startsWith(child.to) && "bg-muted")}
+            className={cn("justify-between", isChildCurrent(item, child, pathname) && "bg-muted")}
           >
             {child.label}
             {child.badge && badges[child.badge] > 0 && (
@@ -100,6 +115,7 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
   const isCurrent = pathname.startsWith(item.to);
   const [open, setOpen] = useState(isCurrent || item.to === "/ventas");
   const id = `nav-group-${item.to.slice(1)}`;
+  const count = item.badge ? badges[item.badge] : 0;
 
   if (collapsed) return <NavGroupFlyout item={item} badges={badges} />;
 
@@ -114,8 +130,9 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
         className={cn(itemClass, "w-full cursor-pointer text-left")}
       >
         <NavIcon item={item} />
-        <span className={cn("flex flex-1 items-center justify-between", labelClass(false))}>
-          {item.label}
+        <span className={cn("flex flex-1 items-center justify-between gap-2", labelClass(false))}>
+          <span className="flex-1">{item.label}</span>
+          {count > 0 && <FilingsPill count={count} />}
           <ChevronRight
             className={cn("size-4 transition-transform duration-200 ease-out", open && "rotate-90")}
             aria-hidden="true"
@@ -134,7 +151,12 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
         <div className="min-h-0 overflow-hidden">
           <div className="flex flex-col gap-0.5 pt-1 pl-8">
             {item.children!.map((child) => (
-              <NavLink key={child.to} to={child.to} className={({ isActive }) => cn(subItemClass, isActive && activeClass)}>
+              <NavLink
+                key={child.to}
+                to={child.to}
+                end={child.to === item.to}
+                className={({ isActive }) => cn(subItemClass, isActive && activeClass)}
+              >
                 {child.label}
                 {child.badge && badges[child.badge] > 0 && (
                   <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
@@ -224,12 +246,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
                 <NavIcon item={item} dot={collapsed && count > 0} />
                 <span className={cn("flex flex-1 items-center justify-between", labelClass(collapsed))}>
                   {item.label}
-                  {count > 0 && (
-                    <span className="rounded-sm bg-warning px-2 py-0.5 text-2xs font-semibold text-warning-foreground">
-                      {count}
-                      <span className="sr-only"> presentaciones próximas</span>
-                    </span>
-                  )}
+                  {count > 0 && <FilingsPill count={count} />}
                 </span>
               </NavLink>
             </RailTooltip>

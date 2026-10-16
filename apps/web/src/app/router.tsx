@@ -16,6 +16,10 @@ import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
 import { SalesListPage } from "@/features/sales/sales-list-page";
 import { KINDS } from "@/features/sales/sales-model";
+import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
+import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
+import { INCOME_TAX_PATH, TAXES_PATH, VAT_PATH } from "@/features/taxes/taxes-model";
+import { VatPage } from "@/features/taxes/vat-page";
 import type { ContactRole } from "@/mocks/contacts";
 import type { SalesKind } from "@/mocks/sales";
 import { DesignSystemPage } from "@/pages/design-system";
@@ -50,7 +54,15 @@ const contactRoutes = (Object.keys(ROLES) as ContactRole[]).flatMap((role) => {
   ];
 });
 
-const builtPaths = new Set([...salesRoutes, ...purchaseRoutes, ...contactRoutes].map((r) => `/${r.path}`));
+const taxRoutes = [
+  { path: TAXES_PATH.slice(1), element: <TaxesSummaryPage /> },
+  { path: VAT_PATH.slice(1), element: <VatPage /> },
+  { path: INCOME_TAX_PATH.slice(1), element: <IncomeTaxPage /> },
+];
+
+const builtPaths = new Set(
+  [...salesRoutes, ...purchaseRoutes, ...contactRoutes, ...taxRoutes].map((r) => `/${r.path}`),
+);
 
 const placeholders = [
   ...allNavLeaves.filter((leaf) => leaf.to !== "/"),
@@ -71,6 +83,7 @@ export const router = createBrowserRouter([
       ...salesRoutes,
       ...purchaseRoutes,
       ...contactRoutes,
+      ...taxRoutes,
       { path: "configuracion/facturas", element: <InvoiceSettingsPage /> },
       ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },

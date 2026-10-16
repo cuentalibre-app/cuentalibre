@@ -1,0 +1,258 @@
+import { useMemo, useState } from "react";
+import { filingDeadline, incomeTaxYear, model130, type Quarter } from "@fiscalia/core";
+import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import { formatEUR } from "@fiscalia/ui/lib/format";
+import { PeriodSelect } from "@/components/period-select";
+import { deductibleOf, EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
+import { useExpenses } from "@/features/purchases/expenses-store";
+import { deductible, expenseTypeShortLabel, PURCHASES_PATH, supplierOf } from "@/features/purchases/purchases-model";
+import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
+import { clientOf, documentTotals, KINDS } from "@/features/sales/sales-model";
+import { useSalesDocuments } from "@/features/sales/sales-store";
+import { usePeriod } from "@/lib/use-period";
+import { availableYears } from "@/mocks/data";
+import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
+import {
+  Assumptions,
+  DocumentsPanel,
+  EmptyBoxesToggle,
+  FormSections,
+  FormSwitch,
+  ResultPanel,
+  useEditable,
+  type DocumentGroup,
+  type ResultSummary,
+} from "./tax-form";
+import { LAYOUT_130, layout100, quarterOf } from "./taxes-model";
+
+/** Documents from January to the end of `lastMonth` (0-based) of a year. */
+function useIncomeDocuments(year: number, lastMonth: number): DocumentGroup[] {
+  const documents = useSalesDocuments();
+  const purchases = usePurchaseInvoices();
+  const expenses = useExpenses();
+  return useMemo(() => {
+    const within = (date: string) => Number(date.slice(0, 4)) === year && Number(date.slice(5, 7)) - 1 <= lastMonth;
+    const byDate = <T,>(rows: (T & { date: string })[]) => rows.sort((a, b) => a.date.localeCompare(b.date));
+    return [
+      {
+        key: "income",
+        label: "Ingresos",
+        columns: ["Base", "Retención"],
+        empty: "No hay facturas emitidas en este periodo.",
+        rows: byDate(
+          documents
+            .filter((d) => d.kind === "invoice" && within(d.issuedOn))
+            .map((d) => {
+              const totals = documentTotals(d);
+              return {
+                id: d.id,
+                to: `${KINDS.invoice.path}/${d.id}`,
+                date: d.issuedOn,
+                number: d.number ?? "",
+                contact: clientOf(d).name,
+                tag: d.series === "rectifying" ? "Rectificativa" : undefined,
+                amounts: [totals.base, totals.withholding],
+              };
+            }),
+        ),
+      },
+      {
+        key: "purchases",
+        label: "Facturas recibidas",
+        columns: ["Gasto deducible"],
+        empty: "No hay facturas recibidas en este periodo.",
+        rows: byDate(
+          purchases
+            .filter((p) => within(p.bookedOn))
+            .map((p) => ({
+              id: p.id,
+              to: `${PURCHASES_PATH}/${p.id}`,
+              date: p.bookedOn,
+              number: p.number,
+              contact: supplierOf(p).name,
+              tag: expenseTypeShortLabel(p.expenseType),
+              amounts: [deductible(p).base],
+            })),
+        ),
+      },
+      {
+        key: "expenses",
+        label: "Gastos",
+        columns: ["Gasto deducible"],
+        empty: "No hay gastos en este periodo.",
+        rows: byDate(
+          expenses
+            .filter((e) => within(e.date))
+            .map((e) => ({
+              id: e.id,
+              to: `${EXPENSES_PATH}/${e.id}`,
+              date: e.date,
+              number: e.number,
+              contact: payeeOf(e)?.name ?? e.concept,
+              tag: expenseTypeShortLabel(e.expenseType),
+              amounts: [deductibleOf(e)],
+            })),
+        ),
+      },
+    ];
+  }, [documents, purchases, expenses, year, lastMonth]);
+}
+
+function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter; today: Date }) {
+  const books = useTaxBooks();
+  const [showEmpty, setShowEmpty] = useState(false);
+  const annual = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
+  const [reduction, reductionBox] = useEditable(annual.reduction);
+  const [negativeCarry, negativeBox] = useEditable(0);
+  const [mortgage, mortgageBox] = useEditable(0);
+
+  const r = useMemo(() => {
+    // Box 05 subtracts the positive installments of the earlier quarters, as computed
+    const previous = annual.quarters.slice(0, quarter - 1).map((q) => q.boxes["07"]!);
+    return model130(books, year, quarter, TAX_OPTIONS, previous, { reduction, negativeCarry, mortgage });
+  }, [books, year, quarter, annual, reduction, negativeCarry, mortgage]);
+  const documents = useIncomeDocuments(year, quarter * 3 - 1);
+
+  const result: ResultSummary = {
+    label: "Resultado de la declaración [19]",
+    amount: Math.max(0, r.result),
+    verdict: r.result > 0 ? "A ingresar" : "Negativa",
+    tone: r.result > 0 ? "danger" : "neutral",
+    detail:
+      r.result > 0
+        ? "20 % del rendimiento acumulado, menos retenciones y pagos anteriores."
+        : r.result < 0
+          ? `Sale ${formatEUR(r.result)}: se presenta como negativa y no pagas nada.`
+          : "Se presenta igualmente, aunque no haya que pagar.",
+  };
+
+  return (
+    <>
+      <ResultPanel
+        form="130"
+        year={year}
+        quarter={quarter}
+        deadline={filingDeadline(year, quarter)}
+        today={today}
+        result={result}
+      />
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="m-0 text-md font-semibold">Casillas del modelo 130</h2>
+        <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
+      </div>
+      <FormSections
+        sections={LAYOUT_130.map((s, i) =>
+          i === 0 && r.hardToJustify > 0
+            ? {
+                ...s,
+                rows: s.rows.map((row) =>
+                  row.cells[0] === "02"
+                    ? { ...row, hint: `Incluye ${formatEUR(r.hardToJustify)} de gastos de difícil justificación (5 %, máximo 2.000 € al año).` }
+                    : row,
+                ),
+              }
+            : s,
+        )}
+        boxes={r.boxes}
+        showEmpty={showEmpty}
+        editable={{ "13": reductionBox, "15": negativeBox, "16": mortgageBox }}
+      />
+      <DocumentsPanel title="Documentos desde el 1 de enero" groups={documents} />
+      <Assumptions
+        items={[
+          "Estimación directa con criterio de devengo: las cifras se acumulan desde el 1 de enero hasta el final del trimestre.",
+          TAX_OPTIONS.simplified
+            ? "Estimación directa simplificada: los gastos incluyen un 5 % de gastos de difícil justificación, con un máximo de 2.000 € al año."
+            : "Estimación directa normal: no se añaden gastos de difícil justificación.",
+          annual.previousNet === null
+            ? "No hay datos del año anterior para calcular la minoración de la casilla 13: indícala a mano si te corresponde."
+            : `La minoración de la casilla 13 sale del rendimiento neto de ${year - 1} (${formatEUR(annual.previousNet)}).`,
+          "Las facturas recibidas y los gastos cuentan por su parte deducible. La cuota de autónomos cuenta como gasto.",
+          "Si más del 70 % de tus ingresos llevan retención puedes pedir no presentar el 130 (modelo 036 o 037).",
+        ]}
+      />
+    </>
+  );
+}
+
+function IncomeTax100({ year, today }: { year: number; today: Date }) {
+  const books = useTaxBooks();
+  const [showEmpty, setShowEmpty] = useState(false);
+  const { annual } = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
+  const documents = useIncomeDocuments(year, 11);
+  const paid = annual.boxes["0598"]! + annual.boxes["0599"]! + annual.boxes["0604"]!;
+
+  const result: ResultSummary = {
+    label: "Rendimiento neto de la actividad [0224]",
+    amount: annual.netIncome,
+    verdict: "Para la renta",
+    tone: "neutral",
+    detail: `Retenciones y pagos a cuenta: ${formatEUR(paid)}`,
+  };
+
+  return (
+    <>
+      <ResultPanel
+        form="100"
+        year={year}
+        quarter={null}
+        deadline={null}
+        deadlineText={`Campaña de la renta ${year}: de abril a finales de junio de ${year + 1}`}
+        today={today}
+        result={result}
+      />
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="m-0 text-md font-semibold">Apartado D1 y pagos a cuenta</h2>
+        <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
+      </div>
+      <FormSections sections={layout100(TAX_OPTIONS.simplified)} boxes={annual.boxes} showEmpty={showEmpty} />
+      <DocumentsPanel title="Documentos del año" groups={documents} />
+      <Assumptions
+        items={[
+          "Solo el apartado de la actividad económica (D1) y sus retenciones: el resto de la renta (trabajo, ahorro, deducciones…) se completa en Renta WEB.",
+          "Una sola actividad. Cada gasto va a la casilla que le corresponde por su tipo de gasto.",
+          "La reducción por inicio de actividad y las de discapacidad no se aplican: márcalas en Renta WEB si te corresponden.",
+        ]}
+      />
+    </>
+  );
+}
+
+export function IncomeTaxPage() {
+  const today = useMemo(() => new Date(), []);
+  const [period, setPeriod] = usePeriod(today);
+  const annual = period.quarter === null;
+
+  return (
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">IRPF</h1>
+            <p className="m-0 text-sm text-muted-foreground">
+              {annual
+                ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."
+                : "Modelo 130: pago a cuenta del 20 % de lo que llevas ganado en el año."}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <FormSwitch
+              value={annual ? "100" : "130"}
+              onChange={(v) => setPeriod(v === "100" ? { year: period.year, quarter: null } : quarterOf(period.year, today))}
+              options={[
+                { value: "130", label: "130 · Trimestral" },
+                { value: "100", label: "100 · Anual" },
+              ]}
+            />
+            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+          </div>
+        </header>
+        {period.quarter === null ? (
+          <IncomeTax100 key={period.year} year={period.year} today={today} />
+        ) : (
+          <IncomeTax130 key={`${period.year}-${period.quarter}`} year={period.year} quarter={period.quarter} today={today} />
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}

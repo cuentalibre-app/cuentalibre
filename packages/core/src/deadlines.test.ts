@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { daysUntil, deadlinesForYear, upcomingDeadlines } from "./deadlines";
+import { daysUntil, deadlinesForYear, filingDeadline, filingStatus, upcomingDeadlines } from "./deadlines";
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -48,5 +48,30 @@ describe("daysUntil", () => {
   it("counts calendar days ignoring the time of day", () => {
     expect(daysUntil(new Date(2026, 9, 15, 23, 0), new Date(2026, 9, 20))).toBe(5);
     expect(daysUntil(new Date(2026, 9, 20, 9, 0), new Date(2026, 9, 20))).toBe(0);
+  });
+});
+
+describe("filingDeadline", () => {
+  it("is the 20th of the following month for Q1–Q3, moved off weekends", () => {
+    expect(filingDeadline(2026, 3)).toEqual(new Date(2026, 9, 20));
+    // 20 July 2026 is a Monday
+    expect(filingDeadline(2026, 2)).toEqual(new Date(2026, 6, 20));
+  });
+
+  it("is January 30th for Q4 and the yearly summary", () => {
+    // 30 January 2027 is a Saturday
+    expect(filingDeadline(2026, 4)).toEqual(new Date(2027, 1, 1));
+    expect(filingDeadline(2026, null)).toEqual(new Date(2027, 1, 1));
+  });
+});
+
+describe("filingStatus", () => {
+  it("follows the period and its deadline", () => {
+    expect(filingStatus(2026, 4, new Date(2026, 8, 30))).toBe("upcoming");
+    expect(filingStatus(2026, 3, new Date(2026, 8, 30))).toBe("inProgress");
+    expect(filingStatus(2026, 3, new Date(2026, 9, 20))).toBe("open");
+    expect(filingStatus(2026, 3, new Date(2026, 9, 21))).toBe("closed");
+    expect(filingStatus(2026, null, new Date(2026, 9, 21))).toBe("inProgress");
+    expect(filingStatus(2025, null, new Date(2026, 0, 15))).toBe("open");
   });
 });
