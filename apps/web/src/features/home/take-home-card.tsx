@@ -61,7 +61,14 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
           Además has cobrado <span className="amount text-foreground">{formatEUR(outputVat)}</span> de IVA, que es de
           Hacienda.
         </span>
-        <span>No incluye tu cuota de autónomos ({formatEUR(currentUser.socialSecurityFee)} al mes).</span>
+        {data.socialSecurityBooked > 0 ? (
+          <span>
+            Los gastos incluyen tu cuota de autónomos:{" "}
+            <span className="amount text-foreground">{formatEUR(data.socialSecurityBooked)}</span> en el periodo.
+          </span>
+        ) : (
+          <span>No incluye tu cuota de autónomos ({formatEUR(currentUser.socialSecurityFee)} al mes).</span>
+        )}
       </div>
     </Card>
   );

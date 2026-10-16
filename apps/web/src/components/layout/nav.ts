@@ -46,7 +46,7 @@ export const mainNav: NavItem[] = [
     ],
   },
   {
-    label: "Compras y gastos",
+    label: "Compras",
     to: "/compras",
     icon: ShoppingBag,
     children: [
@@ -75,10 +75,7 @@ export const secondaryNav: NavItem[] = [
 ];
 
 /** Every leaf route, used to register placeholder pages. */
-export const allNavLeaves: NavLeaf[] = [
-  ...mainNav.flatMap((item) => item.children ?? [item]),
-  ...secondaryNav,
-];
+export const allNavLeaves: NavLeaf[] = [...mainNav.flatMap((item) => item.children ?? [item]), ...secondaryNav];
 
 export interface CreateAction {
   label: string;

@@ -17,9 +17,11 @@ import {
   type Period,
   type YearTotals,
 } from "@fiscalia/core";
+import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { deductible, supplierOf } from "@/features/purchases/purchases-model";
 import { clientOf, displayStatus, documentTotals } from "@/features/sales/sales-model";
 import { currentUser } from "@/mocks/data";
+import type { Expense } from "@/mocks/expenses";
 import type { PurchaseInvoice } from "@/mocks/purchases";
 import type { SalesDocument } from "@/mocks/sales";
 
@@ -110,16 +112,31 @@ function collectionStatus(invoices: InvoiceSummary[]) {
 }
 
 /**
- * Everything the dashboard shows, derived from the issued and received invoices so every
- * figure adds up with the sales and purchase lists. Expenses count their deductible part.
+ * Everything the dashboard shows, derived from the issued and received invoices and the expenses
+ * so every figure adds up with their lists. Expenses count their deductible part.
  */
-export function buildHomeData(period: Period, today: Date, documents: SalesDocument[], purchases: PurchaseInvoice[]) {
+export function buildHomeData(
+  period: Period,
+  today: Date,
+  documents: SalesDocument[],
+  purchases: PurchaseInvoice[],
+  otherExpenses: Expense[],
+) {
   const invoiceDocs = documents
     .filter((d) => d.kind === "invoice")
     .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn));
   const issued = invoiceDocs.map((d) => summarize(d, today));
   const income = invoiceDocs.map((d): LedgerEntry => ({ date: d.issuedOn, ...documentTotals(d) }));
-  const expenses = purchases.map((p) => ({ supplier: supplierOf(p).name, date: p.bookedOn, ...deductible(p) }));
+  const expenses = [
+    ...purchases.map((p) => ({ supplier: supplierOf(p).name, date: p.bookedOn, ...deductible(p) })),
+    // Without an invoice there is no VAT to deduct. Only saved suppliers enter the ranking
+    ...otherExpenses.map((e) => ({
+      supplier: e.supplierId ? payeeOf(e)!.name : null,
+      date: e.date,
+      base: deductibleOf(e),
+      vat: 0,
+    })),
+  ];
   const expenseEntries = expenses.map((e): LedgerEntry => ({ date: e.date, base: e.base, vat: e.vat, withholding: 0 }));
 
   const yearCache = new Map<number, YearTotals>();
@@ -183,7 +200,13 @@ export function buildHomeData(period: Period, today: Date, documents: SalesDocum
     filingsSoon,
     invoices: issued.slice(0, 5),
     clients,
-    suppliers: rankCounterparties(periodExpenses.map((e) => ({ name: e.supplier, amount: e.base }))),
+    suppliers: rankCounterparties(
+      periodExpenses.flatMap((e) => (e.supplier ? [{ name: e.supplier, amount: e.base }] : [])),
+    ),
+    /** Self-employed fees (PGC 6422) booked in the period, already counted as expenses. */
+    socialSecurityBooked: otherExpenses
+      .filter((e) => e.expenseType === "6422" && isInPeriod(e.date, period))
+      .reduce((acc, e) => acc + e.amount, 0),
     economicallyDependent: isEconomicallyDependent(clients),
     collection: collectionStatus(periodInvoices),
     /** Every unpaid invoice, whatever its date. */
