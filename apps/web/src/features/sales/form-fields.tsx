@@ -137,6 +137,8 @@ export function Help({ text }: { text: string }) {
 }
 
 export interface GroupedSelectProps extends FieldControlProps {
+  /** For a select without a visible label, such as a list filter. */
+  "aria-label"?: string;
   value: string;
   onChange: (value: string) => void;
   groups: OptionGroup[];

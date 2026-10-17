@@ -12,14 +12,3 @@ export const availableYears = [
     ].map((d) => Number(d.slice(0, 4))),
   ),
 ].sort((a, b) => b - a);
-
-export const currentUser = {
-  name: "Lucía Martín",
-  initials: "LM",
-  taxId: "50123456Q",
-  address: "Calle del Pez 12, 3º B · 28004 Madrid",
-  taxRegime: "Estimación directa simplificada",
-  /** Monthly RETA fee. */
-  socialSecurityFee: 294,
-};
-

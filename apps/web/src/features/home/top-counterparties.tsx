@@ -15,7 +15,8 @@ interface Props {
   ranking: CounterpartyRanking;
   /** Bar color, as a background class. */
   barClass: string;
-  href: string;
+  /** "Ver todos" link; omitted when there is no list to open. */
+  href?: string;
   empty: string;
   /** Shown above the list when the ranking signals a risk. */
   warning?: string;
@@ -37,9 +38,11 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
             {ranking.count} {noun} · <span className="amount">{formatEUR(ranking.total)}</span> sin IVA
           </span>
         </div>
-        <Link to={href} className="shrink-0 font-medium text-primary no-underline hover:text-primary-hover">
-          Ver todos
-        </Link>
+        {href && (
+          <Link to={href} className="shrink-0 font-medium text-primary no-underline hover:text-primary-hover">
+            Ver todos
+          </Link>
+        )}
       </div>
 
       {warning && (
@@ -60,14 +63,14 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
                   {item.name}
                 </span>
                 <span className="amount">{formatEUR(item.amount)}</span>
-                <span className="amount w-11 text-right text-sm text-muted-foreground">
+                <span className="w-11 text-right amount text-sm text-muted-foreground">
                   {formatPercent(item.share * 100)}
                 </span>
               </div>
               <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-xs bg-muted">
                 <div
                   className={cn(
-                    "h-full origin-left animate-reveal-x rounded-xs [animation-delay:calc(var(--i)*60ms)] transition-[width] duration-500 ease-out",
+                    "h-full origin-left animate-reveal-x rounded-xs transition-[width] duration-500 ease-out [animation-delay:calc(var(--i)*60ms)]",
                     item.isOther ? "bg-muted-strong" : barClass,
                   )}
                   style={{ width: `${item.share * 100}%`, "--i": i } as CSSProperties}

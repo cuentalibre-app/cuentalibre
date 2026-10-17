@@ -9,6 +9,7 @@ import {
   Package,
   Receipt,
   Landmark,
+  Settings,
   LayoutGrid,
   Percent,
   ReceiptText,
@@ -76,13 +77,22 @@ export const mainNav: NavItem[] = [
       { label: "Proveedores", to: "/contactos/proveedores" },
     ],
   },
-  { label: "Informes", to: "/informes", icon: ChartColumn },
+  {
+    label: "Informes",
+    to: "/informes",
+    icon: ChartColumn,
+    children: [
+      { label: "Resumen", to: "/informes" },
+      { label: "Pérdidas y ganancias", to: "/informes/perdidas-y-ganancias" },
+    ],
+  },
 ];
 
 export const secondaryNav: NavItem[] = [
   { label: "Exportar", to: "/exportar", icon: Download },
   { label: "Importar", to: "/importar", icon: Upload },
   { label: "Cierre de trimestres", to: "/cierre-trimestre", icon: CalendarCheck },
+  { label: "Configuración", to: "/configuracion", icon: Settings },
 ];
 
 /** Every leaf route, used to register placeholder pages. */

@@ -21,7 +21,7 @@ import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { deductible, supplierOf } from "@/features/purchases/purchases-model";
 import { clientOf, displayStatus, documentTotals } from "@/features/sales/sales-model";
 import { TAX_OPTIONS, toTaxBooks } from "@/features/taxes/tax-books";
-import { currentUser } from "@/mocks/data";
+import { settingsStore } from "@/features/settings/settings-store";
 import type { Expense } from "@/mocks/expenses";
 import type { PurchaseInvoice } from "@/mocks/purchases";
 import type { SalesDocument } from "@/mocks/sales";
@@ -90,7 +90,7 @@ function deadlineItem(deadline: Deadline, returns: ReturnType<typeof yearReturns
         detail: "Pago fraccionado",
       };
     case "social-security":
-      return { deadline, amount: currentUser.socialSecurityFee, detail: "Seguridad Social · RETA" };
+      return { deadline, amount: settingsStore.get().tax.socialSecurityFee, detail: "Seguridad Social · RETA" };
     case "vat-390":
       return { deadline, amount: null, detail: `Anual ${year}` };
   }

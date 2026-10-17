@@ -6,7 +6,7 @@ import { deductible, purchaseTotals } from "@/features/purchases/purchases-model
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { documentTotals } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
-import { currentUser } from "@/mocks/data";
+import { taxOptions } from "@/features/settings/settings-model";
 import type { Expense } from "@/mocks/expenses";
 import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import type { SalesDocument } from "@/mocks/sales";
@@ -14,7 +14,12 @@ import type { SalesDocument } from "@/mocks/sales";
 /** Purchases of goods rather than services, which form 390 reports apart when intra-EU. */
 const GOODS: ExpenseType[] = ["600", "602"];
 
-export const TAX_OPTIONS = { simplified: /simplificada/i.test(currentUser.taxRegime) };
+/** Read on each use, so a change of method in the tax settings applies on the next render. */
+export const TAX_OPTIONS = {
+  get simplified() {
+    return taxOptions().simplified;
+  },
+};
 
 export function taxableSale(doc: SalesDocument): TaxableSale {
   const totals = documentTotals(doc);
@@ -26,6 +31,7 @@ export function taxableSale(doc: SalesDocument): TaxableSale {
     vatBreakdown: totals.vatBreakdown,
     withholding: totals.withholding,
     rental: doc.rental,
+    account: doc.incomeType,
   };
 }
 

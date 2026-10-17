@@ -43,7 +43,7 @@ import { MONTHS, formatDate, formatShortDate, parseDecimal, periodCode } from "@
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import type { Expense, OtherPayee } from "@/mocks/expenses";
-import { paymentMethods } from "@/mocks/invoicing";
+import { paymentMethodName } from "@/features/settings/settings-model";
 import {
   EXPENSES_PATH,
   EXPENSE_STATUS,
@@ -79,8 +79,6 @@ function inPeriod(isoDate: string, period: Period): boolean {
 function sum(rows: Row[], key: "amount" | "deductible") {
   return rows.reduce((acc, r) => acc + r[key], 0);
 }
-
-const methodName = new Map(paymentMethods.map((m) => [m.id, m.name]));
 
 interface Filters {
   query: string;
@@ -627,7 +625,7 @@ function StatusBadge({ row }: { row: Row }) {
   const status = EXPENSE_STATUS[row.status];
   const { payment } = row.doc;
   const detail = payment
-    ? `Pagado el ${formatDate(payment.date)} · ${methodName.get(payment.paymentMethodId) ?? "Método eliminado"}.`
+    ? `Pagado el ${formatDate(payment.date)} · ${paymentMethodName(payment.paymentMethodId) ?? "Método eliminado"}.`
     : status.hint;
   return (
     <Tooltip>
@@ -816,7 +814,7 @@ function exportCsv(rows: Row[], name: string) {
       expenseTypeLabel(r.doc.expenseType),
       EXPENSE_STATUS[r.status].label,
       r.doc.payment?.date ?? "",
-      r.doc.payment ? (methodName.get(r.doc.payment.paymentMethodId) ?? "") : "",
+      r.doc.payment ? (paymentMethodName(r.doc.payment.paymentMethodId) ?? "") : "",
       r.amount,
       String(r.doc.imputation),
       r.deductible,

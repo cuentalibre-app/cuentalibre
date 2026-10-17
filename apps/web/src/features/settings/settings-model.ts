@@ -1,0 +1,226 @@
+import type { BadgeProps } from "@fiscalia/ui/components/badge";
+import type {
+  AccountKind,
+  BusinessProfile,
+  FiscalRegion,
+  IncomeTaxMethod,
+  PaymentMethod,
+  PaymentMethodType,
+  TaxSetup,
+  VatRegime,
+} from "@/mocks/settings";
+import type { Option } from "@/features/sales/sales-model";
+import { settingsStore, useSettings } from "./settings-store";
+
+export const SETTINGS_PATH = "/configuracion";
+export const BUSINESS_PATH = "/configuracion/empresa";
+export const TAX_SETTINGS_PATH = "/configuracion/impuestos";
+export const ACCOUNTS_PATH = "/configuracion/cuentas";
+export const PAYMENT_METHODS_PATH = "/configuracion/metodos-de-pago";
+export const INVOICE_SETTINGS_PATH = "/configuracion/facturas";
+
+/* ───────────────────────────── Business profile ───────────────────────────── */
+
+/** Full name of a self-employed worker, or the company's legal name. */
+export function fullName(profile: BusinessProfile): string {
+  if (profile.kind === "company") return profile.legalName.trim();
+  return [profile.firstName, profile.lastName, profile.secondLastName]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** The name printed on invoices and reports. */
+export const businessName = (profile: BusinessProfile) => profile.tradeName.trim() || fullName(profile);
+
+/** "Calle del Pez 12, 3º B · 28004 Madrid", for the invoice header. */
+export function addressLine(profile: BusinessProfile): string {
+  const town = [profile.postalCode, profile.city]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(" ");
+  return [profile.address.trim(), town].filter(Boolean).join(" · ");
+}
+
+export function initials(name: string): string {
+  const words = name.split(/\s+/).filter(Boolean);
+  return ((words[0]?.[0] ?? "") + (words[1]?.[0] ?? "")).toUpperCase() || "?";
+}
+
+/* ───────────────────────────────── Taxes ───────────────────────────────── */
+
+export const REGIONS: Option<FiscalRegion>[] = [
+  { value: "peninsula", label: "España - Península y Baleares" },
+  { value: "canarias", label: "España - Canarias" },
+  { value: "ceutaMelilla", label: "España - Ceuta y Melilla" },
+  { value: "navarra", label: "España - Navarra" },
+  { value: "alava", label: "España - Álava" },
+  { value: "vizcaya", label: "España - Vizcaya" },
+  { value: "guipuzcoa", label: "España - Guipúzcoa" },
+];
+
+export const INCOME_TAX_METHODS: Option<IncomeTaxMethod>[] = [
+  { value: "simplified", label: "Estimación directa simplificada" },
+  { value: "normal", label: "Estimación directa normal" },
+  { value: "modules", label: "Estimación objetiva (módulos)" },
+];
+
+export const VAT_REGIMES: Option<VatRegime>[] = [
+  { value: "general", label: "Régimen general" },
+  { value: "cashBasis", label: "Régimen especial del criterio de caja" },
+  { value: "simplified", label: "Régimen simplificado (módulos)" },
+  { value: "surcharge", label: "Régimen especial del recargo de equivalencia" },
+];
+
+const label = <T extends string>(options: Option<T>[], value: T) =>
+  options.find((o) => o.value === value)?.label ?? value;
+export const regionLabel = (region: FiscalRegion) => label(REGIONS, region);
+export const incomeTaxMethodLabel = (method: IncomeTaxMethod) => label(INCOME_TAX_METHODS, method);
+export const vatRegimeLabel = (regime: VatRegime) => label(VAT_REGIMES, regime);
+
+/**
+ * What the tax pages can't compute for this setup. Fiscalia prepares forms 303 and 130 of the
+ * common territory, general VAT regime and direct estimation; anything else is flagged.
+ */
+export function unsupportedSetup(tax: Pick<TaxSetup, "region" | "incomeTaxMethod" | "vatRegime">): string[] {
+  const notes: string[] = [];
+  if (tax.region === "canarias") notes.push("En Canarias se aplica el IGIC en lugar del IVA (modelo 420).");
+  if (tax.region === "ceutaMelilla") notes.push("En Ceuta y Melilla se aplica el IPSI en lugar del IVA.");
+  if (["navarra", "alava", "vizcaya", "guipuzcoa"].includes(tax.region))
+    notes.push("Los territorios forales tienen sus propios modelos y plazos de IVA e IRPF.");
+  if (tax.incomeTaxMethod === "modules")
+    notes.push("En módulos el pago fraccionado (modelo 131) no depende de tus ingresos y gastos.");
+  if (tax.vatRegime === "simplified") notes.push("En el régimen simplificado la cuota de IVA se calcula por módulos.");
+  if (tax.vatRegime === "surcharge")
+    notes.push("En el recargo de equivalencia no se presenta el modelo 303: el IVA lo ingresa tu proveedor.");
+  if (tax.vatRegime === "cashBasis")
+    notes.push("Con criterio de caja el IVA se declara al cobrar y pagar; Fiscalia lo calcula todavía por devengo.");
+  return notes;
+}
+
+/** Activity types of forms 036/037. Their epígrafes live in the lazily loaded IAE catalog. */
+export const ACTIVITY_TYPES: { group: string; options: Option[] }[] = [
+  {
+    group: "Actividades incluidas en el IAE",
+    options: [
+      { value: "A01", label: "A01 - Arrendadores de bienes inmuebles" },
+      { value: "A02", label: "A02 - Ganadería independiente" },
+      { value: "A03", label: "A03 - Resto de actividades empresariales" },
+      { value: "A04", label: "A04 - Actividades profesionales de carácter artístico o deportivo" },
+      { value: "A05", label: "A05 - Resto de actividades profesionales" },
+    ],
+  },
+  {
+    group: "Actividades no incluidas en el IAE",
+    options: [
+      { value: "B01", label: "B01 - Actividad agrícola" },
+      { value: "B02", label: "B02 - Actividad ganadera dependiente" },
+      { value: "B03", label: "B03 - Actividad forestal" },
+      { value: "B04", label: "B04 - Producción de mejillón en batea" },
+      { value: "B05", label: "B05 - Actividad pesquera" },
+      { value: "B06", label: "B06 - Otras actividades no sujetas al IAE" },
+    ],
+  },
+  { group: "Otras", options: [{ value: "C", label: "C - Actividades no iniciadas" }] },
+];
+
+/** The options in effect for forms 130 and 100. */
+export const taxOptions = () => ({ simplified: settingsStore.get().tax.incomeTaxMethod !== "normal" });
+
+/* ─────────────────────────── Accounts and methods ─────────────────────────── */
+
+export const ACCOUNT_KINDS: Record<AccountKind, { label: string; hint: string; numberLabel: string | null }> = {
+  bank: {
+    label: "Cuenta bancaria",
+    hint: "Una cuenta corriente donde cobras y pagas por transferencia o recibo.",
+    numberLabel: "IBAN",
+  },
+  cash: {
+    label: "Efectivo / Caja",
+    hint: "Para registrar los cobros y pagos en efectivo.",
+    numberLabel: null,
+  },
+  paypal: {
+    label: "PayPal",
+    hint: "Una cuenta de PayPal donde recibes o envías pagos.",
+    numberLabel: "Email de PayPal",
+  },
+  card: {
+    label: "Tarjeta de crédito",
+    hint: "Una tarjeta con la que pagas gastos del negocio.",
+    numberLabel: "Número de tarjeta",
+  },
+};
+
+export const ACCOUNT_KIND_ORDER: AccountKind[] = ["bank", "cash", "paypal", "card"];
+
+export const METHOD_TYPES: Option<PaymentMethodType>[] = [
+  { value: "cash", label: "Efectivo" },
+  { value: "card", label: "Tarjeta" },
+  { value: "transfer", label: "Ingreso/Transferencia" },
+  { value: "directDebit", label: "Recibo bancario" },
+  { value: "promissory", label: "Pagaré/Cheque" },
+  { value: "paypal", label: "PayPal" },
+];
+
+export const methodTypeLabel = (type: PaymentMethodType) => label(METHOD_TYPES, type);
+
+/** Account kind a new method of each type usually books into. */
+export const ACCOUNT_KIND_FOR_METHOD: Record<PaymentMethodType, AccountKind> = {
+  cash: "cash",
+  card: "card",
+  transfer: "bank",
+  directDebit: "bank",
+  promissory: "bank",
+  paypal: "paypal",
+};
+
+export const ACTIVE_STATUS: Record<"active" | "inactive", { label: string; tone: BadgeProps["tone"] }> = {
+  active: { label: "Activo", tone: "success" },
+  inactive: { label: "Inactivo", tone: "neutral" },
+};
+
+/** The same statuses for accounts, which take the feminine ("cuenta activa"). */
+export const ACCOUNT_STATUS: typeof ACTIVE_STATUS = {
+  active: { label: "Activa", tone: "success" },
+  inactive: { label: "Inactiva", tone: "neutral" },
+};
+
+/** Masks all but the last four digits: "•••• 4821". Short numbers are shown whole. */
+export function maskNumber(number: string): string {
+  const digits = number.replace(/\s+/g, "");
+  if (digits.length <= 4 || digits.includes("@")) return number;
+  return `•••• ${digits.slice(-4)}`;
+}
+
+const sortDefaultFirst = (methods: PaymentMethod[], defaultId: string) =>
+  [...methods].sort((a, b) => Number(b.id === defaultId) - Number(a.id === defaultId));
+
+/** Every payment method, the default first. */
+export function usePaymentMethods(): PaymentMethod[] {
+  const { paymentMethods, defaultPaymentMethodId } = useSettings();
+  return sortDefaultFirst(paymentMethods, defaultPaymentMethodId);
+}
+
+/*
+ * Forms and lists read the methods when they render rather than subscribing: they only change
+ * on the settings page, and every page renders afresh when it opens.
+ */
+
+/** Options for a payment method select: the active methods, default first, plus `currentId` if it was deactivated. */
+export function paymentMethodOptions(currentId?: string): Option[] {
+  const { paymentMethods, defaultPaymentMethodId } = settingsStore.get();
+  return sortDefaultFirst(paymentMethods, defaultPaymentMethodId)
+    .filter((m) => m.active || m.id === currentId)
+    .map((m) => ({ value: m.id, label: m.active ? m.name : `${m.name} (inactivo)` }));
+}
+
+/** The method proposed on new documents: the default one while it's active. */
+export function defaultPaymentMethodId(): string {
+  const { paymentMethods, defaultPaymentMethodId: id } = settingsStore.get();
+  return paymentMethods.find((m) => m.id === id && m.active)?.id ?? paymentMethods.find((m) => m.active)?.id ?? "";
+}
+
+export function paymentMethodName(id: string): string | undefined {
+  return settingsStore.get().paymentMethods.find((m) => m.id === id)?.name;
+}
