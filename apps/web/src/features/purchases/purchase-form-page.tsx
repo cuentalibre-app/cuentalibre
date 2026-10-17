@@ -833,6 +833,7 @@ function PurchaseForm({
               </p>
             )}
             <LinesEditor
+              pricing="cost"
               lines={form.lines}
               parsed={parsedLines}
               chargesVat={carriesVat}

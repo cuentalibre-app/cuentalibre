@@ -20,7 +20,9 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
-import { products } from "@/mocks/invoicing";
+import { conceptFor } from "@/features/catalog/catalog-model";
+import { useCatalog } from "@/features/catalog/catalog-store";
+import type { Product } from "@/mocks/catalog";
 import type { SalesLine } from "@/mocks/sales";
 import { Field, GroupedSelect } from "./form-fields";
 import { SURCHARGE_OPTIONS, VAT_RATE_OPTIONS, ratePercent } from "./sales-model";
@@ -38,6 +40,8 @@ export interface LineDraft {
   detail: string;
   serviceFrom: string;
   serviceTo: string;
+  productId?: string;
+  unit?: string;
 }
 
 /** A blank line; `discount` is the contact's default, as typed in the form. */
@@ -77,6 +81,8 @@ export function toLineDraft(line: SalesLine, negate = false): LineDraft {
     detail: line.detail ?? "",
     serviceFrom: line.serviceFrom ?? "",
     serviceTo: line.serviceTo ?? "",
+    productId: line.productId,
+    unit: line.unit,
   };
 }
 
@@ -91,6 +97,8 @@ export function toLines(drafts: LineDraft[]): SalesLine[] {
       detail: l.detail.trim() || undefined,
       serviceFrom: l.serviceFrom || undefined,
       serviceTo: l.serviceTo || undefined,
+      productId: l.productId,
+      unit: l.unit,
     }));
 }
 
@@ -180,6 +188,8 @@ interface LinesEditorProps {
   reordering: boolean;
   invalid: boolean;
   vatLabel: (line: InvoiceLine | null) => string;
+  /** Which catalog price a picked product brings: the sale price, or the cost for purchases. */
+  pricing?: "sale" | "cost";
   onChange: (id: string, changes: Partial<LineDraft>) => void;
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -200,7 +210,22 @@ export function LinesEditor({
   onDuplicate,
   onMove,
   onReorder,
+  pricing = "sale",
 }: LinesEditorProps) {
+  const { settings } = useCatalog();
+  const fromProduct = (p: Product): Partial<LineDraft> => {
+    const sale = pricing === "sale";
+    return {
+      productId: p.id,
+      unit: p.unit ?? undefined,
+      concept: conceptFor(p, settings.conceptText),
+      unitPrice: formatDecimalInput(sale ? p.price : (p.cost ?? 0)),
+      discount: sale ? formatDecimalInput(p.discount * 100) : "0",
+      vatRate: chargesVat ? (sale ? p.vatRate : p.costVatRate) : 0,
+      surchargeRate: chargesVat ? (sale ? p.surchargeRate : p.costSurchargeRate) : 0,
+      ...(settings.copyDescription && p.description ? { detail: p.description } : {}),
+    };
+  };
   const head = "text-xs font-medium tracking-wide text-muted-foreground uppercase";
   const label = "text-xs font-medium text-muted-foreground lg:sr-only";
   const readOnlyBox =
@@ -238,13 +263,8 @@ export function LinesEditor({
                   <div className="flex gap-1.5">
                     <ProductPicker
                       disabled={reordering}
-                      onPick={(p) =>
-                        onChange(line.id, {
-                          concept: p.name,
-                          unitPrice: formatDecimalInput(p.price),
-                          vatRate: chargesVat ? p.vatRate : 0,
-                        })
-                      }
+                      pricing={pricing}
+                      onPick={(p) => onChange(line.id, fromProduct(p))}
                     />
                     <Textarea
                       rows={1}
@@ -432,30 +452,67 @@ export function LinesEditor({
   );
 }
 
+/** Active catalog products, searchable by name, code or family. */
 function ProductPicker({
   disabled,
+  pricing,
   onPick,
 }: {
   disabled: boolean;
-  onPick: (product: (typeof products)[number]) => void;
+  pricing: "sale" | "cost";
+  onPick: (product: Product) => void;
 }) {
+  const { products, families } = useCatalog();
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const familyName = new Map(families.map((f) => [f.id, f.name]));
+  const shown = products
+    .filter((p) => p.active)
+    .filter((p) => !q || [p.name, p.sku, familyName.get(p.familyId ?? "")].some((v) => v?.toLowerCase().includes(q)))
+    .sort((a, b) => a.name.localeCompare(b.name, "es"));
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => !open && setQuery("")}>
       <DropdownMenuTrigger
         disabled={disabled}
-        aria-label="Seleccionar producto"
-        title="Seleccionar producto"
+        aria-label="Seleccionar producto del catálogo"
+        title="Seleccionar producto del catálogo"
         className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "w-10 px-0")}
       >
         <Package strokeWidth={1.8} aria-hidden="true" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-72">
-        {products.map((p) => (
-          <DropdownMenuItem key={p.id} onSelect={() => onPick(p)} className="justify-between">
-            <span className="truncate">{p.name}</span>
-            <span className="amount text-sm text-muted-foreground">{formatEUR(p.price)}</span>
-          </DropdownMenuItem>
-        ))}
+      <DropdownMenuContent align="start" className="max-h-96 w-80 overflow-y-auto">
+        <div className="p-1 pb-1.5">
+          <Input
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            // Keep the menu's typeahead from taking the keys
+            onKeyDown={(e) => e.key !== "ArrowDown" && e.key !== "Escape" && e.stopPropagation()}
+            placeholder="Buscar en el catálogo"
+            aria-label="Buscar en el catálogo"
+            className="h-9"
+          />
+        </div>
+        {shown.length === 0 && (
+          <p className="m-0 px-2.5 py-2 text-sm text-muted-foreground">
+            {products.length === 0 ? "El catálogo está vacío." : "Ningún producto coincide."}
+          </p>
+        )}
+        {shown.map((p) => {
+          const price = pricing === "sale" ? p.price : p.cost;
+          return (
+            <DropdownMenuItem key={p.id} onSelect={() => onPick(p)} className="h-auto justify-between gap-3 py-1.5">
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate">{p.name}</span>
+                {p.sku && <span className="truncate font-mono text-xs text-muted-foreground">{p.sku}</span>}
+              </span>
+              <span className="amount text-sm text-muted-foreground">
+                {price === null ? "—" : formatEUR(price)}
+                {p.unit && <span className="font-sans">/{p.unit}</span>}
+              </span>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

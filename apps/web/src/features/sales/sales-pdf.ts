@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/format";
 import { addressLine, businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
 import type { SalesDocument } from "@/mocks/sales";
+import { invoiceSettingsStore } from "./invoice-settings";
 import { clientOf, documentTotals, KINDS, OPERATION_TYPES } from "./sales-model";
 
 /*
@@ -72,6 +73,7 @@ function render(doc: SalesDocument): jsPDF {
 
   pdf.setFont("helvetica", "normal").setFontSize(10).setTextColor(20);
   y += 9;
+  const showUnits = invoiceSettingsStore.get().showProductUnits;
   for (const line of doc.lines) {
     const concept = pdf.splitTextToSize(line.concept, cols.qty - cols.concept - 14) as string[];
     if (y + concept.length * 5 > 250) {
@@ -92,7 +94,8 @@ function render(doc: SalesDocument): jsPDF {
       pdf.setFontSize(10).setTextColor(20);
       y += text.length * 4;
     }
-    pdf.text(String(line.quantity).replace(".", ","), cols.qty, y, { align: "right" });
+    const quantity = String(line.quantity).replace(".", ",");
+    pdf.text(showUnits && line.unit ? `${quantity} ${line.unit}` : quantity, cols.qty, y, { align: "right" });
     pdf.text(eur(line.unitPrice), cols.price, y, { align: "right" });
     pdf.text(eur(lineBase(line)), cols.amount, y, { align: "right" });
     if (line.discount) {

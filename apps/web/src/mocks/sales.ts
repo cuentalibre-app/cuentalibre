@@ -26,6 +26,10 @@ export interface SalesLine extends InvoiceLine {
   /** Service period (ISO dates). */
   serviceFrom?: string;
   serviceTo?: string;
+  /** Catalog product it was made from; moves its stock when the catalog settings say so. */
+  productId?: string;
+  /** Unit of measure of that product, printed next to the quantity. */
+  unit?: string;
 }
 
 export interface Attachment {

@@ -1,6 +1,20 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
+import { CatalogExportPage } from "@/features/catalog/catalog-export-page";
+import { CatalogImportPage } from "@/features/catalog/catalog-import-page";
+import { CatalogListPage } from "@/features/catalog/catalog-list-page";
+import {
+  CATALOG_EXPORT_PATH,
+  CATALOG_IMPORT_PATH,
+  CATALOG_SETTINGS_PATH,
+  NEW_PRODUCT_PATH,
+  PRODUCTS_PATH,
+  STOCK_PATH,
+} from "@/features/catalog/catalog-model";
+import { CatalogSettingsPage } from "@/features/catalog/catalog-settings-page";
+import { ProductFormPage } from "@/features/catalog/product-form-page";
+import { StockPage } from "@/features/catalog/stock-page";
 import { CLOSING_PATH } from "@/features/closing/closing-model";
 import { QuarterClosePage } from "@/features/closing/quarter-close-page";
 import { ContactDetailPage } from "@/features/contacts/contact-detail-page";
@@ -13,12 +27,7 @@ import { ExpensesListPage } from "@/features/purchases/expenses-list-page";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH } from "@/features/purchases/expenses-model";
 import { PurchaseFormPage } from "@/features/purchases/purchase-form-page";
 import { PurchasesListPage } from "@/features/purchases/purchases-list-page";
-import {
-  ASSETS_PATH,
-  NEW_ASSET_PATH,
-  NEW_PURCHASE_PATH,
-  PURCHASES_PATH,
-} from "@/features/purchases/purchases-model";
+import { ASSETS_PATH, NEW_ASSET_PATH, NEW_PURCHASE_PATH, PURCHASES_PATH } from "@/features/purchases/purchases-model";
 import { CompanyReportsPage } from "@/features/reports/company-reports-page";
 import { ProfitLossPage } from "@/features/reports/profit-loss-page";
 import { COMPANY_REPORTS_PATH, PNL_PATH, REPORTS_PATH } from "@/features/reports/reports-model";
@@ -108,6 +117,15 @@ const contactRoutes = (Object.keys(ROLES) as ContactRole[]).flatMap((role) => {
   ];
 });
 
+const catalogRoutes = [
+  { path: PRODUCTS_PATH.slice(1), element: <CatalogListPage /> },
+  { path: NEW_PRODUCT_PATH.slice(1), element: <ProductFormPage /> },
+  { path: `${PRODUCTS_PATH.slice(1)}/:id`, element: <ProductFormPage /> },
+  { path: STOCK_PATH.slice(1), element: <StockPage /> },
+  { path: CATALOG_IMPORT_PATH.slice(1), element: <CatalogImportPage /> },
+  { path: CATALOG_EXPORT_PATH.slice(1), element: <CatalogExportPage /> },
+];
+
 const taxRoutes = [
   { path: TAXES_PATH.slice(1), element: <TaxesSummaryPage /> },
   { path: CALENDAR_PATH.slice(1), element: <FiscalCalendarPage /> },
@@ -144,6 +162,7 @@ const settingsRoutes = [
   { path: ACCOUNTS_PATH.slice(1), element: <AccountsPage /> },
   { path: PAYMENT_METHODS_PATH.slice(1), element: <PaymentMethodsPage /> },
   { path: INVOICE_SETTINGS_PATH.slice(1), element: <InvoiceSettingsPage /> },
+  { path: CATALOG_SETTINGS_PATH.slice(1), element: <CatalogSettingsPage /> },
 ];
 
 const transferRoutes = [
@@ -158,6 +177,7 @@ const builtPaths = new Set(
     ...salesRoutes,
     ...purchaseRoutes,
     ...contactRoutes,
+    ...catalogRoutes,
     ...taxRoutes,
     ...treasuryRoutes,
     closingRoute,
@@ -182,10 +202,12 @@ export const router = createBrowserRouter([
       { path: "ventas", element: <Navigate to="/ventas/facturas" replace /> },
       { path: "compras", element: <Navigate to="/compras/facturas" replace /> },
       { path: "contactos", element: <Navigate to="/contactos/clientes" replace /> },
+      { path: "catalogo", element: <Navigate to={PRODUCTS_PATH} replace /> },
       { path: "mas", element: <MorePage /> },
       ...salesRoutes,
       ...purchaseRoutes,
       ...contactRoutes,
+      ...catalogRoutes,
       ...taxRoutes,
       ...treasuryRoutes,
       closingRoute,

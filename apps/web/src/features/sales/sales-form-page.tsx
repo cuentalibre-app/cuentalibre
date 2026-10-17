@@ -36,6 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { stockShortageMessage } from "@/features/catalog/catalog-store";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
@@ -326,6 +327,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     setForm((f) => ({ ...f, language, numberFormat: defaultNumberFormat(language) }));
   };
 
+  /** Kind of the document this one is made from when it converts it (quote → invoice…), for the stock rules. */
+  const originKind = (asKind: SalesKind) =>
+    existing && existing.kind !== asKind ? existing.kind : source && source.kind !== asKind ? source.kind : undefined;
+
   function validate(asKind: SalesKind): Errors {
     const next: Errors = {};
     if (KINDS[asKind].clientRequired && !form.clientId) next.clientId = "Elige un cliente.";
@@ -341,7 +346,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         next.number = "Ya existe un documento con este número.";
     }
     if (rectifying && !existing && !form.rectifiesId) next.rectifiesId = "Elige la factura que rectifica.";
-    next.lines = linesError(form.lines);
+    next.lines =
+      linesError(form.lines) ??
+      stockShortageMessage({ id: existing?.id ?? "", kind: asKind, lines: toLines(form.lines) }, originKind(asKind));
     return next;
   }
 
@@ -395,7 +402,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     };
 
     if (existing) salesStore.update(existing.id, doc);
-    else salesStore.add(doc);
+    else salesStore.add(doc, originKind(asKind));
     // Invoicing a quote or delivery note closes it
     if (source && (source.kind === "quote" || source.kind === "deliveryNote") && (asInvoice || asKind === "draft"))
       salesStore.update(source.id, { status: "invoiced" });
