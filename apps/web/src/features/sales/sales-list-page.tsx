@@ -20,7 +20,7 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
-import { periodKey, periodMonths, type Period } from "@fiscalia/core";
+import { periodKey, periodMonths, toIsoDate, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -30,6 +30,7 @@ import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { useLockedQuarter } from "@/features/closing/closing-store";
+import { defaultPaymentMethodId } from "@/features/settings/settings-model";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
@@ -490,7 +491,12 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
         : {
             label: "Marcar como cobrada",
             icon: CircleDollarSign,
-            run: () => salesStore.update(doc.id, { status: "paid" }),
+            run: () =>
+              salesStore.update(doc.id, {
+                status: "paid",
+                paidOn: toIsoDate(new Date()),
+                paymentMethodId: doc.paymentMethodId ?? defaultPaymentMethodId(),
+              }),
           };
   } else if (doc.kind === "draft") {
     primary = lockedQuarter
