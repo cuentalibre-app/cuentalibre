@@ -150,7 +150,7 @@ export function PaymentsPage() {
             { label: "Sin conciliar", value: `${unreconciled} de ${rows.length}` },
           ].map((s) => (
             <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3">
-              <dt className="text-sm text-muted-foreground">{s.label}</dt>
+              <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
               <dd className="m-0 amount text-lg font-semibold lg:text-xl">{s.value}</dd>
             </div>
           ))}

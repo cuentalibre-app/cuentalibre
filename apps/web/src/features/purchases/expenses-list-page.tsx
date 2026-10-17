@@ -345,11 +345,11 @@ function ExpenseSummary({ rows }: { rows: Row[] }) {
     <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
-          <dt className="text-sm text-muted-foreground">{s.label}</dt>
+          <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
           <dd className="m-0 amount text-xl font-semibold">
             <AnimatedAmount value={s.value} />
           </dd>
-          <dd className="m-0 text-xs text-muted-foreground">{s.detail}</dd>
+          <dd className="m-0 text-sm text-muted-foreground">{s.detail}</dd>
         </div>
       ))}
     </dl>
