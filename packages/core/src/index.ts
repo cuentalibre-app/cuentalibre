@@ -11,3 +11,4 @@ export * from "./tax-returns";
 export * from "./closing";
 export * from "./reports";
 export * from "./treasury";
+export * from "./informative-returns";

@@ -37,8 +37,21 @@ import { TaxSettingsPage } from "@/features/settings/tax-settings-page";
 import { FiscalCalendarPage } from "@/features/taxes/fiscal-calendar-page";
 import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
 import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
-import { CALENDAR_PATH, INCOME_TAX_PATH, TAXES_PATH, VAT_PATH } from "@/features/taxes/taxes-model";
+import { IntraEuPage } from "@/features/taxes/intra-eu-page";
+import { RentalsPage } from "@/features/taxes/rentals-page";
+import {
+  CALENDAR_PATH,
+  INCOME_TAX_PATH,
+  INTRA_EU_PATH,
+  RENTALS_PATH,
+  TAXES_PATH,
+  THIRD_PARTIES_PATH,
+  VAT_PATH,
+  WITHHOLDINGS_PATH,
+} from "@/features/taxes/taxes-model";
+import { ThirdPartiesPage } from "@/features/taxes/third-parties-page";
 import { VatPage } from "@/features/taxes/vat-page";
+import { WithholdingsPage } from "@/features/taxes/withholdings-page";
 import { MovementsPage } from "@/features/treasury/movements-page";
 import { PaymentsPage } from "@/features/treasury/payments-page";
 import { ReconciliationPage } from "@/features/treasury/reconciliation-page";
@@ -83,6 +96,10 @@ const taxRoutes = [
   { path: CALENDAR_PATH.slice(1), element: <FiscalCalendarPage /> },
   { path: VAT_PATH.slice(1), element: <VatPage /> },
   { path: INCOME_TAX_PATH.slice(1), element: <IncomeTaxPage /> },
+  { path: WITHHOLDINGS_PATH.slice(1), element: <WithholdingsPage /> },
+  { path: RENTALS_PATH.slice(1), element: <RentalsPage /> },
+  { path: THIRD_PARTIES_PATH.slice(1), element: <ThirdPartiesPage /> },
+  { path: INTRA_EU_PATH.slice(1), element: <IntraEuPage /> },
 ];
 
 const treasuryRoutes = [

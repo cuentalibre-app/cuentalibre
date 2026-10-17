@@ -171,6 +171,13 @@ function obligationsOfYear(year: number): CalendarEntry[] {
   return entries;
 }
 
+/** The filing window of one form for a period: a quarter, or the year when `quarter` is null. */
+export function obligation(form: CalendarForm, year: number, quarter: Quarter | null): CalendarEntry {
+  const entry = obligationsOfYear(year).find((e) => e.form === form && e.quarter === quarter);
+  if (!entry) throw new Error(`No ${form} filing for ${year}${quarter ? `-T${quarter}` : ""}`);
+  return entry;
+}
+
 /**
  * Filings due within a calendar year, soonest first. Form 349 is listed
  * quarterly, which applies while intra-EU deliveries stay under 50.000 € a

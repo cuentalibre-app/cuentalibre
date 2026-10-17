@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Check, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
-import { daysUntil, filingStatus, toIsoDate, type Boxes, type Quarter } from "@fiscalia/core";
+import { calendarStatus, daysUntil, obligation, toIsoDate, type Boxes, type Quarter } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Input } from "@fiscalia/ui/components/input";
@@ -11,16 +11,26 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { daysLeftLabel, formatDate, parseDecimal } from "@/lib/format";
-import { AEAT_LINKS, FILING_STATUS, type Cell, type FormCode, type FormSection } from "./taxes-model";
+import {
+  AEAT_LINKS,
+  CALENDAR_STATUS,
+  ONLINE_ONLY_FORMS,
+  type Cell,
+  type FormCode,
+  type FormSection,
+} from "./taxes-model";
 
 /* Building blocks of the tax form pages. Tooltips need a TooltipProvider above. */
 
 /** As the AEAT forms expect it: no thousands separator and a decimal comma. */
-const clipboardValue = (value: number) => value.toFixed(2).replace(".", ",");
+export const clipboardValue = (value: number) => value.toFixed(2).replace(".", ",");
 
 const formatPercent = (value: number) => `${value.toLocaleString("es-ES", { maximumFractionDigits: 2 })} %`;
 
-function useCopied(): [string | null, (key: string, text: string) => void] {
+const formatBox = (value: number, percent: boolean, count?: boolean) =>
+  percent ? formatPercent(value) : count ? value.toLocaleString("es-ES") : formatEUR(value);
+
+export function useCopied(): [string | null, (key: string, text: string) => void] {
   const [copied, setCopied] = useState<string | null>(null);
   const timer = useRef<number>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
@@ -43,6 +53,7 @@ function BoxValue({
   box,
   value,
   percent,
+  count,
   copied,
   onCopy,
   strong,
@@ -50,6 +61,8 @@ function BoxValue({
   box: string;
   value: number;
   percent: boolean;
+  /** A number of people, not an amount. */
+  count?: boolean;
   copied: boolean;
   onCopy: () => void;
   strong?: boolean;
@@ -58,18 +71,21 @@ function BoxValue({
     <button
       type="button"
       onClick={onCopy}
-      aria-label={`Copiar casilla ${box}: ${percent ? formatPercent(value) : formatEUR(value)}`}
+      aria-label={`Copiar casilla ${box}: ${formatBox(value, percent, count)}`}
       className="group inline-flex cursor-pointer items-center justify-end gap-2 rounded-md px-1.5 py-0.5 transition-colors duration-150 hover:bg-accent"
     >
       <BoxCode box={box} />
       <span className={cn("amount", value === 0 && "text-muted-foreground", strong && "font-semibold")}>
-        {percent ? formatPercent(value) : formatEUR(value)}
+        {formatBox(value, percent, count)}
       </span>
       <span className="grid size-3.5 place-items-center text-muted-foreground" aria-hidden="true">
         {copied ? (
           <Check className="size-3.5 animate-fade-in text-success" strokeWidth={2} />
         ) : (
-          <Copy className="size-3.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100" strokeWidth={1.8} />
+          <Copy
+            className="size-3.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+            strokeWidth={1.8}
+          />
         )}
       </span>
     </button>
@@ -117,7 +133,13 @@ function EditableValue({ box, edit }: { box: string; edit: EditableBox }) {
       {edit.overridden ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-7 px-0" aria-label="Volver al valor calculado" onClick={edit.onReset}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="size-7 px-0"
+              aria-label="Volver al valor calculado"
+              onClick={edit.onReset}
+            >
               <RotateCcw className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </TooltipTrigger>
@@ -139,6 +161,7 @@ export function FormSections({
   sections,
   boxes,
   percentBoxes = NO_BOXES,
+  countBoxes = NO_BOXES,
   editable = {},
   showEmpty,
 }: {
@@ -146,6 +169,8 @@ export function FormSections({
   boxes: Boxes;
   /** Boxes holding a rate, shown as a percentage. */
   percentBoxes?: Set<string>;
+  /** Boxes holding a number of people (perceptors), shown without a currency. */
+  countBoxes?: Set<string>;
   editable?: Record<string, EditableBox>;
   showEmpty: boolean;
 }) {
@@ -213,7 +238,11 @@ export function FormSections({
                         {r.hint && (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <button type="button" aria-label="Más información" className="cursor-help text-muted-foreground">
+                              <button
+                                type="button"
+                                aria-label="Más información"
+                                className="cursor-help text-muted-foreground"
+                              >
                                 <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
                               </button>
                             </TooltipTrigger>
@@ -228,7 +257,7 @@ export function FormSections({
                           <div key={c} className="flex items-center justify-between gap-2 lg:justify-end">
                             <span className="text-xs text-muted-foreground lg:hidden">{section.columns?.[c]}</span>
                             {!isBox(cell) ? (
-                              <span className="amount pr-7 text-muted-foreground">{cell.text} %</span>
+                              <span className="pr-7 amount text-muted-foreground">{cell.text} %</span>
                             ) : editable[cell] ? (
                               <EditableValue box={cell} edit={editable[cell]} />
                             ) : (
@@ -236,9 +265,12 @@ export function FormSections({
                                 box={cell}
                                 value={value(cell)}
                                 percent={percentBoxes.has(cell)}
+                                count={countBoxes.has(cell)}
                                 strong={r.total}
                                 copied={copied === cell}
-                                onCopy={() => copy(cell, clipboardValue(value(cell)))}
+                                onCopy={() =>
+                                  copy(cell, countBoxes.has(cell) ? String(value(cell)) : clipboardValue(value(cell)))
+                                }
                               />
                             )}
                           </div>
@@ -300,7 +332,8 @@ export function ResultPanel({
   result: ResultSummary;
   extra?: ReactNode;
 }) {
-  const status = deadline ? filingStatus(year, quarter, today) : null;
+  // Each form has its own window: a Q4 111 is due on January 20th, a Q4 303 on the 30th
+  const status = deadline ? calendarStatus(obligation(form, year, quarter), today) : null;
   const days = deadline ? daysUntil(today, deadline) : null;
 
   return (
@@ -316,7 +349,9 @@ export function ResultPanel({
             result.tone === "success" && "text-success",
             result.amount === 0 && "text-muted-foreground",
           )}
-        >{formatEUR(result.amount)}</span>
+        >
+          {formatEUR(result.amount)}
+        </span>
         <span className="flex flex-wrap items-center gap-2 text-sm">
           <Badge tone={result.tone === "danger" ? "warning" : result.tone === "success" ? "success" : "neutral"}>
             {result.verdict}
@@ -336,10 +371,10 @@ export function ResultPanel({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span tabIndex={0}>
-                      <Badge tone={FILING_STATUS[status].tone}>{FILING_STATUS[status].label}</Badge>
+                      <Badge tone={CALENDAR_STATUS[status].tone}>{CALENDAR_STATUS[status].label}</Badge>
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent>{FILING_STATUS[status].hint}</TooltipContent>
+                  <TooltipContent>{CALENDAR_STATUS[status].hint}</TooltipContent>
                 </Tooltip>
               )}
               {status === "open" && days !== null && (
@@ -351,21 +386,23 @@ export function ResultPanel({
           )}
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {/* Disabled buttons don't fire pointer events: the wrapper shows the tooltip */}
-              <span tabIndex={0}>
-                <Button variant="secondary" size="md" disabled>
-                  <Download strokeWidth={1.8} aria-hidden="true" />
-                  {form === "100" ? "Libros para Renta WEB" : "Fichero para la AEAT"}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-64">
-              Disponible próximamente: generará el fichero para importarlo en la sede de la AEAT. Mientras, copia
-              cada casilla haciendo clic en su importe.
-            </TooltipContent>
-          </Tooltip>
+          {!ONLINE_ONLY_FORMS.has(form) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* Disabled buttons don't fire pointer events: the wrapper shows the tooltip */}
+                <span tabIndex={0}>
+                  <Button variant="secondary" size="md" disabled>
+                    <Download strokeWidth={1.8} aria-hidden="true" />
+                    {form === "100" ? "Libros para Renta WEB" : "Fichero para la AEAT"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64">
+                Disponible próximamente: generará el fichero para importarlo en la sede de la AEAT. Mientras, copia cada
+                casilla haciendo clic en su importe.
+              </TooltipContent>
+            </Tooltip>
+          )}
           <a
             href={AEAT_LINKS[form]}
             target="_blank"
@@ -373,7 +410,11 @@ export function ResultPanel({
             className={cn(buttonVariants({ variant: "secondary", size: "md" }), "no-underline")}
           >
             <ExternalLink strokeWidth={1.8} aria-hidden="true" />
-            {form === "100" ? "Ir a Renta WEB" : `Presentar el ${form}`}
+            {form === "100"
+              ? "Ir a Renta WEB"
+              : ONLINE_ONLY_FORMS.has(form)
+                ? `Cumplimentar el ${form}`
+                : `Presentar el ${form}`}
           </a>
         </div>
       </div>
@@ -421,7 +462,10 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
   const td = cn(table.td, "px-2.5");
 
   return (
-    <section aria-label={title} className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:rounded-xl lg:border lg:border-border">
+    <section
+      aria-label={title}
+      className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 lg:px-4 lg:pt-3">
         <h2 className="m-0 text-md font-semibold">{title}</h2>
         <SegmentedControl
@@ -440,10 +484,18 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
             <table className="w-full min-w-[760px] border-collapse">
               <thead>
                 <tr className={table.headRow}>
-                  <th scope="col" className={th}>Fecha</th>
-                  <th scope="col" className={th}>Número</th>
-                  <th scope="col" className={th}>Contacto</th>
-                  <th scope="col" className={th}>Operación</th>
+                  <th scope="col" className={th}>
+                    Fecha
+                  </th>
+                  <th scope="col" className={th}>
+                    Número
+                  </th>
+                  <th scope="col" className={th}>
+                    Contacto
+                  </th>
+                  <th scope="col" className={th}>
+                    Operación
+                  </th>
                   {group.columns.map((c) => (
                     <th key={c} scope="col" className={cn(th, "text-right")}>
                       {c}
@@ -456,7 +508,10 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
                   <tr key={r.id} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
                     <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>{formatDate(r.date)}</td>
                     <td className={td}>
-                      <Link to={r.to} className="font-mono text-sm font-medium text-foreground no-underline hover:text-primary">
+                      <Link
+                        to={r.to}
+                        className="font-mono text-sm font-medium text-foreground no-underline hover:text-primary"
+                      >
                         {r.number || "Sin número"}
                       </Link>
                     </td>
@@ -465,7 +520,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
                     </td>
                     <td className={td}>{r.tag && <Badge>{r.tag}</Badge>}</td>
                     {r.amounts.map((a, j) => (
-                      <td key={j} className={cn(td, "text-right whitespace-nowrap amount")}>
+                      <td key={j} className={cn(td, "text-right amount whitespace-nowrap")}>
                         {formatEUR(a)}
                       </td>
                     ))}
@@ -478,7 +533,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
                     Total
                   </td>
                   {totals.map((t, j) => (
-                    <td key={j} className={cn(td, "text-right whitespace-nowrap amount")}>
+                    <td key={j} className={cn(td, "text-right amount whitespace-nowrap")}>
                       {formatEUR(t)}
                     </td>
                   ))}
@@ -548,5 +603,62 @@ export function EmptyBoxesToggle({ checked, onChange }: { checked: boolean; onCh
       />
       Mostrar casillas a cero
     </label>
+  );
+}
+
+/** The four quarterly returns behind a yearly summary, each linking to its quarter with its filing status. */
+export function QuarterCards({
+  form,
+  year,
+  today,
+  values,
+  to,
+}: {
+  form: "111" | "115";
+  year: number;
+  today: Date;
+  values: number[];
+  to: (quarter: Quarter) => string;
+}) {
+  return (
+    <section
+      aria-label={`Resultados de los ${form} del año`}
+      className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4"
+    >
+      {values.map((v, i) => {
+        const quarter = (i + 1) as Quarter;
+        const status = CALENDAR_STATUS[calendarStatus(obligation(form, year, quarter), today)];
+        return (
+          <Link
+            key={i}
+            to={to(quarter)}
+            className="flex flex-col gap-1 bg-card px-4 py-3 text-foreground no-underline transition-colors duration-150 hover:bg-accent"
+          >
+            <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+              {form} · T{quarter}
+              <Badge tone={status.tone}>{status.label}</Badge>
+            </span>
+            <span className={cn("amount text-lg font-semibold", v === 0 && "text-muted-foreground")}>
+              {formatEUR(v)}
+            </span>
+            <span className="text-xs text-muted-foreground">{v > 0 ? "A ingresar" : "Sin retenciones"}</span>
+          </Link>
+        );
+      })}
+    </section>
+  );
+}
+
+/** A warning above the figures, with optional links to the documents to review. */
+export function Notice({ children, tone = "warning" }: { children: ReactNode; tone?: "warning" | "info" }) {
+  return (
+    <div
+      className={cn(
+        "m-0 flex flex-col gap-1.5 rounded-lg px-4 py-2.5 text-sm",
+        tone === "warning" ? "bg-warning-soft text-warning" : "bg-muted text-muted-foreground",
+      )}
+    >
+      {children}
+    </div>
   );
 }

@@ -219,6 +219,22 @@ const RECURRING: Recurring[] = [
     paymentMethodId: "card",
     paidAfter: 0,
   },
+  {
+    supplierId: "s11",
+    day: 1,
+    number: (y, _m, n) => `ALM-${y}-${String(n).padStart(2, "0")}`,
+    concept: (m) => `Alquiler de almacén · ${m}`,
+    base: (y) => (y === 2025 ? 180 : 190),
+    extra: {
+      expenseType: "621",
+      withholding: "rental",
+      rental: true,
+      rentalLocation: "spain",
+      cadastralRef: "9872023VH5797S0001WX",
+    },
+    paymentMethodId: "transfer",
+    paidAfter: 4,
+  },
 ];
 
 /** Months with sample invoices: January 2025 to October 2026. */
