@@ -17,6 +17,7 @@ import { CreateMenu } from "./create-menu";
 import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
 import { useNavBadges } from "./use-nav-badges";
+import { UserMenu } from "./user-menu";
 
 type Badges = ReturnType<typeof useNavBadges>;
 
@@ -271,22 +272,30 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
 
         <div className="flex-1" />
 
-        <RailTooltip enabled={collapsed} label={name}>
-          <div className="flex shrink-0 items-center gap-2.5 overflow-hidden border-t border-sidebar-border px-1.5 pt-3">
-            <div
-              className="grid size-8 shrink-0 place-items-center rounded-md bg-muted-strong text-xs font-semibold"
-              aria-hidden="true"
-            >
-              {initials(name)}
-            </div>
-            <div className={cn("flex min-w-0 flex-col gap-0.5 whitespace-nowrap", labelClass(collapsed))}>
-              <span className="truncate font-semibold">{name}</span>
-              <span className="truncate text-xs text-muted-foreground">
-                {incomeTaxMethodLabel(tax.incomeTaxMethod)}
-              </span>
-            </div>
-          </div>
-        </RailTooltip>
+        <div className="shrink-0 border-t border-sidebar-border pt-3">
+          <UserMenu side={collapsed ? "right" : "top"} align={collapsed ? "end" : "start"}>
+            <RailTooltip enabled={collapsed} label={name}>
+              <button
+                type="button"
+                aria-label={`Cuenta de ${name}`}
+                className="flex w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-lg p-1.5 text-left transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98] data-[state=open]:bg-sidebar-accent"
+              >
+                <div
+                  className="grid size-8 shrink-0 place-items-center rounded-md bg-muted-strong text-xs font-semibold"
+                  aria-hidden="true"
+                >
+                  {initials(name)}
+                </div>
+                <div className={cn("flex min-w-0 flex-col gap-0.5 whitespace-nowrap", labelClass(collapsed))}>
+                  <span className="truncate font-semibold">{name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {incomeTaxMethodLabel(tax.incomeTaxMethod)}
+                  </span>
+                </div>
+              </button>
+            </RailTooltip>
+          </UserMenu>
+        </div>
       </nav>
     </TooltipProvider>
   );
