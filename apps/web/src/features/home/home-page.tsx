@@ -7,7 +7,6 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { availableYears } from "@/mocks/data";
 import { periodRange } from "@/lib/format";
 import { CashFlowChart, ProfitChart } from "./charts";
-import { CollectionCard } from "./collection-card";
 import { buildHomeData } from "./home-data";
 import { KpiGrid } from "./kpi-grid";
 import { Notifications } from "./notifications";
@@ -142,7 +141,6 @@ export function HomePage() {
             empty="No hay gastos en este periodo."
             className={cn(panel, "min-w-0 lg:flex-[1_1_320px]")}
           />
-          <CollectionCard data={data} className={cn(panel, "min-w-0 lg:flex-[1_1_320px]")} />
         </div>
       </div>
     </div>

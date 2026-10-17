@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { ArrowDownLeft, ArrowUpRight, Landmark, TrendingUp, type LucideIcon } from "lucide-react";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
@@ -8,6 +9,9 @@ import type { HomeData } from "./home-data";
 
 interface Kpi {
   label: string;
+  icon: LucideIcon;
+  /** Icon chip colors, so each figure is recognisable at a glance. */
+  iconClass: string;
   value: number;
   change: number | null;
   /** Whether going up is good news (true), bad news (false) or neither (null). */
@@ -36,7 +40,15 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex items-center justify-between gap-2 lg:min-h-6">
-        <span className="text-sm text-muted-foreground lg:text-base">{kpi.label}</span>
+        <span className="flex min-w-0 items-center gap-2 text-sm font-semibold lg:text-base">
+          <span
+            className={cn("flex size-6 shrink-0 items-center justify-center rounded-sm lg:size-7", kpi.iconClass)}
+            aria-hidden="true"
+          >
+            <kpi.icon className="size-3.5 lg:size-4" strokeWidth={2.2} />
+          </span>
+          <span className="truncate">{kpi.label}</span>
+        </span>
         {changeText && t && (
           <Badge tone={t} className="hidden h-6 px-2.5 text-xs lg:inline-flex">
             {changeText}
@@ -66,6 +78,8 @@ export function KpiGrid({ data }: { data: HomeData }) {
   const kpis: Kpi[] = [
     {
       label: "Ingresos",
+      icon: ArrowDownLeft,
+      iconClass: "bg-chart-highlight text-chart-income",
       value: data.totals.income,
       change: data.changes.income,
       upIsGood: true,
@@ -73,6 +87,8 @@ export function KpiGrid({ data }: { data: HomeData }) {
     },
     {
       label: "Gastos",
+      icon: ArrowUpRight,
+      iconClass: "bg-warning-soft text-chart-expense",
       value: data.totals.expenses,
       change: data.changes.expenses,
       upIsGood: null,
@@ -80,6 +96,8 @@ export function KpiGrid({ data }: { data: HomeData }) {
     },
     {
       label: "Beneficio",
+      icon: TrendingUp,
+      iconClass: "bg-success-soft text-success",
       value: data.profit,
       change: data.changes.profit,
       upIsGood: true,
@@ -87,6 +105,8 @@ export function KpiGrid({ data }: { data: HomeData }) {
     },
     {
       label: "Impuestos est.",
+      icon: Landmark,
+      iconClass: "bg-muted text-foreground",
       value: data.taxes.total,
       change: null,
       upIsGood: null,
