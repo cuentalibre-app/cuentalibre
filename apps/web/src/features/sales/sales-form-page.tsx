@@ -44,7 +44,8 @@ import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, parseDecimal } from "@/lib/format";
 import type { Contact } from "@/mocks/contacts";
-import { paymentMethods } from "@/mocks/invoicing";
+import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
+import { settingsStore } from "@/features/settings/settings-store";
 import {
   type IncomeType,
   type InvoiceSeries,
@@ -136,7 +137,7 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     issuedOn,
     dueOn,
     incomeType: base?.incomeType ?? "705",
-    withholding: base?.withholding ?? "none",
+    withholding: base?.withholding ?? settingsStore.get().tax.defaultWithholding,
     operationType: base?.operationType ?? "national",
     operationOn: (!isCopy && base?.operationOn) || "",
     cashBasis: base?.cashBasis ?? false,
@@ -145,8 +146,8 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     cadastralRef: base?.cadastralRef ?? "",
     markPaid: !isCopy && base?.status === "paid",
     paidOn: (!isCopy && base?.paidOn) || issuedOn,
-    paymentMethodId: base?.paymentMethodId ?? paymentMethods[0]!.id,
-    lines: base?.lines.map((l) => toLineDraft(l, rectify)) ?? [emptyLine()],
+    paymentMethodId: base?.paymentMethodId ?? defaultPaymentMethodId(),
+    lines: base?.lines.map((l) => toLineDraft(l, rectify)) ?? [emptyLine(settingsStore.get().tax.defaultVatRate)],
     supplies: base?.supplies ? formatDecimalInput(base.supplies) : "0",
     publicNotes: rectify && base?.number ? `Rectifica la factura ${base.number}.` : (base?.publicNotes ?? ""),
     privateNotes: isCopy ? "" : (base?.privateNotes ?? ""),
@@ -752,7 +753,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               onChange={setLine}
               onRemove={(lineId) =>
                 setLines((lines) =>
-                  lines.length > 1 ? lines.filter((l) => l.id !== lineId) : [emptyLine(undefined, lineDiscount)],
+                  lines.length > 1
+                    ? lines.filter((l) => l.id !== lineId)
+                    : [emptyLine(settingsStore.get().tax.defaultVatRate, lineDiscount)],
                 )
               }
               onDuplicate={(lineId) =>
@@ -778,7 +781,12 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               variant="secondary"
               size="md"
               className="self-start"
-              onClick={() => set("lines", [...form.lines, emptyLine(chargesVat ? 0.21 : 0, lineDiscount)])}
+              onClick={() =>
+                set("lines", [
+                  ...form.lines,
+                  emptyLine(chargesVat ? settingsStore.get().tax.defaultVatRate : 0, lineDiscount),
+                ])
+              }
             >
               <Plus strokeWidth={2} aria-hidden="true" />
               Añadir otro concepto
@@ -922,7 +930,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                           {...p}
                           value={form.paymentMethodId}
                           onChange={(v) => set("paymentMethodId", v)}
-                          groups={[{ options: paymentMethods.map((m) => ({ value: m.id, label: m.name })) }]}
+                          groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
                         />
                       )}
                     </Field>

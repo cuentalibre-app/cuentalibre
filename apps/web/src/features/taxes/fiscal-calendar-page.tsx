@@ -18,7 +18,8 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { MONTHS, MONTHS_SHORT } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears, currentUser } from "@/mocks/data";
+import { useSettings } from "@/features/settings/settings-store";
+import { availableYears } from "@/mocks/data";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
 import { CALENDAR_STATUS, CHARGE_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "./taxes-model";
@@ -115,6 +116,7 @@ function entryKey(entry: CalendarEntry): string {
 /** Amount to pay for the entries Fiscalia can compute. */
 function useAmounts(calendarYear: number) {
   const books = useTaxBooks();
+  const fee = useSettings().tax.socialSecurityFee;
   return useMemo(() => {
     const byYear = new Map(
       [calendarYear - 1, calendarYear].map((year) => [
@@ -127,13 +129,13 @@ function useAmounts(calendarYear: number) {
     );
     return (entry: CalendarEntry): number | null => {
       const returns = byYear.get(entry.year);
-      if (entry.form === "reta") return currentUser.socialSecurityFee;
+      if (entry.form === "reta") return fee;
       if (!returns || entry.quarter === null) return null;
       if (entry.form === "303") return returns.vat[entry.quarter - 1]!;
       if (entry.form === "130") return Math.max(0, returns.irpf[entry.quarter - 1]!);
       return null;
     };
-  }, [books, calendarYear]);
+  }, [books, calendarYear, fee]);
 }
 
 function useApplies() {
@@ -236,7 +238,9 @@ function GridCell({
           {statusInfo.label}
           {amount !== null && ` · ${formatEUR(amount)}`}
         </span>
-        {!to && entry.form !== "reta" && <span className="text-muted-foreground">Por ahora, prepáralo en la sede de la AEAT.</span>}
+        {!to && entry.form !== "reta" && (
+          <span className="text-muted-foreground">Por ahora, prepáralo en la sede de la AEAT.</span>
+        )}
       </TooltipContent>
     </Tooltip>
   );
@@ -256,12 +260,18 @@ function RowLabel({ form, applies }: { form: CalendarForm; applies: boolean | nu
           {form}
         </span>
       )}
-      <span className={cn("font-medium whitespace-nowrap", applies !== true && "text-muted-foreground")}>{info.row}</span>
+      <span className={cn("font-medium whitespace-nowrap", applies !== true && "text-muted-foreground")}>
+        {info.row}
+      </span>
       {info.condition && (
         <Tooltip>
           <TooltipTrigger asChild>
             <span tabIndex={0}>
-              {applies ? <Badge tone="warning">Te afecta</Badge> : <Badge>{applies === null ? "¿Te afecta?" : "No te afecta"}</Badge>}
+              {applies ? (
+                <Badge tone="warning">Te afecta</Badge>
+              ) : (
+                <Badge>{applies === null ? "¿Te afecta?" : "No te afecta"}</Badge>
+              )}
             </span>
           </TooltipTrigger>
           <TooltipContent className="max-w-64">
@@ -305,7 +315,10 @@ function CalendarGrid({
   const monthCol = (month: number) => cn("px-1 py-1", month === currentMonth && "bg-primary-soft/40");
 
   return (
-    <div className="hidden animate-rise-in overflow-x-auto rounded-xl border border-border lg:block" style={{ "--i": 1 } as CSSProperties}>
+    <div
+      className="hidden animate-rise-in overflow-x-auto rounded-xl border border-border lg:block"
+      style={{ "--i": 1 } as CSSProperties}
+    >
       <table className="w-full min-w-[920px] border-collapse">
         <thead>
           <tr className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
@@ -316,7 +329,10 @@ function CalendarGrid({
               <th
                 key={label}
                 scope="col"
-                className={cn("px-1 py-2 text-center font-medium", month === currentMonth && "bg-primary-soft text-primary")}
+                className={cn(
+                  "px-1 py-2 text-center font-medium",
+                  month === currentMonth && "bg-primary-soft text-primary",
+                )}
                 aria-current={month === currentMonth ? "date" : undefined}
               >
                 {label}
@@ -396,7 +412,9 @@ function AgendaItem({
         <span className={cn("font-medium", closed && "text-muted-foreground")}>{entryTitle(entry, calendarYear)}</span>
         <span className="text-xs text-muted-foreground">
           {windowLabel(entry)}
-          {!to && entry.form !== "reta" && <span className="hidden sm:inline"> · Se prepara en la sede de la AEAT</span>}
+          {!to && entry.form !== "reta" && (
+            <span className="hidden sm:inline"> · Se prepara en la sede de la AEAT</span>
+          )}
         </span>
         {applies !== true && info.condition && <span className="text-xs text-muted-foreground">{info.condition}</span>}
         <span className="pt-1 sm:hidden">

@@ -97,7 +97,16 @@ export function IdentityFields({
   );
 }
 
-export function AddressFields({ draft, set }: { draft: ContactDraft; set: SetDraft }) {
+type AddressDraft = Pick<ContactDraft, "address" | "postalCode" | "city" | "province" | "country">;
+
+/** Address, postal code, town and province. Also used by the business profile. */
+export function AddressFields({
+  draft,
+  set,
+}: {
+  draft: AddressDraft;
+  set: <K extends keyof AddressDraft>(key: K, value: AddressDraft[K]) => void;
+}) {
   const query = [draft.address, draft.postalCode, draft.city, draft.province, draft.country]
     .filter((v) => v.trim())
     .join(", ");

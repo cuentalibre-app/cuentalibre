@@ -39,6 +39,8 @@ export interface TaxableSale {
   withholding: number;
   /** Property rental: its withholding goes to its own box in form 100. */
   rental: boolean;
+  /** Income account (PGC group 7), for the profit and loss report: 705, or 752 for rentals, when missing. */
+  account?: string;
 }
 
 /** A received invoice, as the returns see it. */
@@ -144,7 +146,12 @@ export interface Model303 {
  * Form 303 for one quarter. `carry` is box 110: negative results of previous quarters still
  * pending to offset. It is applied up to the positive result of the quarter.
  */
-export function model303(books: Pick<TaxBooks, "sales" | "purchases">, year: number, quarter: Quarter, carry = 0): Model303 {
+export function model303(
+  books: Pick<TaxBooks, "sales" | "purchases">,
+  year: number,
+  quarter: Quarter,
+  carry = 0,
+): Model303 {
   const b = boxes();
   let unmappedBase = 0;
   const sales = books.sales.filter((s) => inQuarter(s.date, year, quarter));
@@ -278,7 +285,12 @@ export function vatCarryInto(books: Pick<TaxBooks, "sales" | "purchases">, year:
 
 type RateBoxes = Record<number, [base: string, vat: string]>;
 
-const rates = (zero: [string, string] | null, four: [string, string], ten: [string, string], general: [string, string]): RateBoxes => ({
+const rates = (
+  zero: [string, string] | null,
+  four: [string, string],
+  ten: [string, string],
+  general: [string, string],
+): RateBoxes => ({
   ...(zero && { [rateKey(0)]: zero }),
   [rateKey(0.04)]: four,
   [rateKey(0.1)]: ten,
@@ -395,7 +407,13 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
 
   b.round();
   const pairs = (table: RateBoxes) => Object.values(table);
-  const outputPairs = [...pairs(OUTPUT_390), ...pairs(INTRA_GOODS_390), ...pairs(INTRA_SERVICES_390), ["27", "28"], ["29", "30"]];
+  const outputPairs = [
+    ...pairs(OUTPUT_390),
+    ...pairs(INTRA_GOODS_390),
+    ...pairs(INTRA_SERVICES_390),
+    ["27", "28"],
+    ["29", "30"],
+  ];
   const deductPairs = [
     ...pairs(DEDUCT_DOMESTIC_390),
     ...pairs(DEDUCT_IMPORTS_390),
@@ -484,8 +502,14 @@ function incomeTotals(books: TaxBooks, matches: (date: string) => boolean): Inco
           (e) => e.expense,
         ),
     ),
-    withholdings: sum(sales.filter((s) => !s.rental), (s) => s.withholding),
-    rentalWithholdings: sum(sales.filter((s) => s.rental), (s) => s.withholding),
+    withholdings: sum(
+      sales.filter((s) => !s.rental),
+      (s) => s.withholding,
+    ),
+    rentalWithholdings: sum(
+      sales.filter((s) => s.rental),
+      (s) => s.withholding,
+    ),
   };
 }
 
@@ -549,7 +573,10 @@ export function model130(
     boxes: v,
     result: v["19"],
     hardToJustify: extra,
-    hasActivity: books.sales.some((s) => inQ(s.date)) || books.purchases.some((p) => inQ(p.date)) || books.expenses.some((e) => inQ(e.date)),
+    hasActivity:
+      books.sales.some((s) => inQ(s.date)) ||
+      books.purchases.some((p) => inQ(p.date)) ||
+      books.expenses.some((e) => inQ(e.date)),
   };
 }
 
@@ -566,7 +593,16 @@ export function incomeTaxReturns(
   const reduction = installmentReduction(previousYearNetIncome);
   const result: Model130[] = [];
   for (const quarter of [1, 2, 3, 4] as const) {
-    result.push(model130(books, year, quarter, options, result.map((r) => r.boxes["07"]!), { reduction }));
+    result.push(
+      model130(
+        books,
+        year,
+        quarter,
+        options,
+        result.map((r) => r.boxes["07"]!),
+        { reduction },
+      ),
+    );
   }
   return result;
 }
@@ -600,8 +636,33 @@ const EXPENSE_BOX_100: Record<string, string> = {
 
 /** Expense boxes of section D1, in the order the form lists them. */
 export const EXPENSE_BOXES_100 = [
-  "0181", "0182", "0183", "0184", "0185", "0186", "0187", "0188", "0189", "0190", "0191", "0192", "0193",
-  "0194", "0198", "0199", "0200", "0202", "0203", "0205", "0206", "0208", "0227", "0214", "0215", "0216", "0217",
+  "0181",
+  "0182",
+  "0183",
+  "0184",
+  "0185",
+  "0186",
+  "0187",
+  "0188",
+  "0189",
+  "0190",
+  "0191",
+  "0192",
+  "0193",
+  "0194",
+  "0198",
+  "0199",
+  "0200",
+  "0202",
+  "0203",
+  "0205",
+  "0206",
+  "0208",
+  "0227",
+  "0214",
+  "0215",
+  "0216",
+  "0217",
 ] as const;
 
 export function expenseBox100(account: string): string {
@@ -620,7 +681,12 @@ export interface Model100 {
  * The activity section (D1) of the yearly income tax return, plus the withholdings and the
  * installments paid with form 130 (`installments`, the year's box 19 results).
  */
-export function model100(books: TaxBooks, year: number, options: IncomeTaxOptions, installments: number[] = []): Model100 {
+export function model100(
+  books: TaxBooks,
+  year: number,
+  options: IncomeTaxOptions,
+  installments: number[] = [],
+): Model100 {
   const b = boxes();
   const matches = (date: string) => inYear(date, year);
   const totals = incomeTotals(books, matches);
@@ -669,6 +735,11 @@ export function hasBooks(books: TaxBooks, year: number): boolean {
 export function incomeTaxYear(books: TaxBooks, year: number, options: IncomeTaxOptions) {
   const previousNet = hasBooks(books, year - 1) ? model100(books, year - 1, options).netIncome : null;
   const quarters = incomeTaxReturns(books, year, options, previousNet);
-  const annual = model100(books, year, options, quarters.map((q) => q.result));
+  const annual = model100(
+    books,
+    year,
+    options,
+    quarters.map((q) => q.result),
+  );
   return { quarters, annual, previousNet, reduction: installmentReduction(previousNet) };
 }

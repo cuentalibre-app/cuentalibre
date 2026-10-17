@@ -14,10 +14,26 @@ import { EXPENSES_PATH, NEW_EXPENSE_PATH } from "@/features/purchases/expenses-m
 import { PurchaseFormPage } from "@/features/purchases/purchase-form-page";
 import { PurchasesListPage } from "@/features/purchases/purchases-list-page";
 import { NEW_PURCHASE_PATH, PURCHASES_PATH } from "@/features/purchases/purchases-model";
+import { ProfitLossPage } from "@/features/reports/profit-loss-page";
+import { PNL_PATH, REPORTS_PATH } from "@/features/reports/reports-model";
+import { ReportsSummaryPage } from "@/features/reports/reports-summary-page";
 import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
 import { SalesListPage } from "@/features/sales/sales-list-page";
 import { KINDS } from "@/features/sales/sales-model";
+import { AccountsPage } from "@/features/settings/accounts-page";
+import { BusinessPage } from "@/features/settings/business-page";
+import { PaymentMethodsPage } from "@/features/settings/payment-methods-page";
+import {
+  ACCOUNTS_PATH,
+  BUSINESS_PATH,
+  INVOICE_SETTINGS_PATH,
+  PAYMENT_METHODS_PATH,
+  SETTINGS_PATH,
+  TAX_SETTINGS_PATH,
+} from "@/features/settings/settings-model";
+import { SettingsPage } from "@/features/settings/settings-page";
+import { TaxSettingsPage } from "@/features/settings/tax-settings-page";
 import { FiscalCalendarPage } from "@/features/taxes/fiscal-calendar-page";
 import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
 import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
@@ -66,14 +82,35 @@ const taxRoutes = [
 
 const closingRoute = { path: CLOSING_PATH.slice(1), element: <QuarterClosePage /> };
 
+const reportRoutes = [
+  { path: REPORTS_PATH.slice(1), element: <ReportsSummaryPage /> },
+  { path: PNL_PATH.slice(1), element: <ProfitLossPage /> },
+];
+
+const settingsRoutes = [
+  { path: SETTINGS_PATH.slice(1), element: <SettingsPage /> },
+  { path: BUSINESS_PATH.slice(1), element: <BusinessPage /> },
+  { path: TAX_SETTINGS_PATH.slice(1), element: <TaxSettingsPage /> },
+  { path: ACCOUNTS_PATH.slice(1), element: <AccountsPage /> },
+  { path: PAYMENT_METHODS_PATH.slice(1), element: <PaymentMethodsPage /> },
+  { path: INVOICE_SETTINGS_PATH.slice(1), element: <InvoiceSettingsPage /> },
+];
+
 const builtPaths = new Set(
-  [...salesRoutes, ...purchaseRoutes, ...contactRoutes, ...taxRoutes, closingRoute].map((r) => `/${r.path}`),
+  [
+    ...salesRoutes,
+    ...purchaseRoutes,
+    ...contactRoutes,
+    ...taxRoutes,
+    closingRoute,
+    ...reportRoutes,
+    ...settingsRoutes,
+  ].map((r) => `/${r.path}`),
 );
 
 const placeholders = [
   ...allNavLeaves.filter((leaf) => leaf.to !== "/"),
   { label: "Ayuda", to: "/ayuda" },
-  { label: "Métodos de pago y cobro", to: "/configuracion/metodos-de-pago" },
   ...createActions.flat().map((action) => ({ label: `Crear ${action.label.toLowerCase()}`, to: action.to })),
 ].filter((p) => !builtPaths.has(p.to));
 
@@ -91,7 +128,8 @@ export const router = createBrowserRouter([
       ...contactRoutes,
       ...taxRoutes,
       closingRoute,
-      { path: "configuracion/facturas", element: <InvoiceSettingsPage /> },
+      ...reportRoutes,
+      ...settingsRoutes,
       ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
     ],

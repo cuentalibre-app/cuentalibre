@@ -23,9 +23,9 @@ import { TagsField } from "@/features/sales/document-editor";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
 import { MONTHS, formatDecimalInput, parseDecimal } from "@/lib/format";
-import { currentUser } from "@/mocks/data";
+import { settingsStore } from "@/features/settings/settings-store";
 import { SOCIAL_SECURITY, type Expense, type OtherPayee } from "@/mocks/expenses";
-import { paymentMethods } from "@/mocks/invoicing";
+import { paymentMethodOptions } from "@/features/settings/settings-model";
 import type { ExpenseType } from "@/mocks/purchases";
 import type { Attachment, RentalLocation } from "@/mocks/sales";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH, expenseIdentity, payeeOf } from "./expenses-model";
@@ -42,7 +42,8 @@ interface Preset {
   label: string;
   expenseType: ExpenseType;
   concept: (date: string) => string;
-  amount?: number;
+  /** Read when the preset is applied, so it follows the settings. */
+  amount?: () => number;
   payee?: OtherPayee;
 }
 
@@ -55,7 +56,7 @@ const PRESETS: Preset[] = [
       const [year, month] = date.split("-").map(Number);
       return year ? `Cuota de autónomos · ${MONTHS[month! - 1]!.toLowerCase()} ${year}` : "Cuota de autónomos";
     },
-    amount: currentUser.socialSecurityFee,
+    amount: () => settingsStore.get().tax.socialSecurityFee,
     payee: SOCIAL_SECURITY,
   },
   { label: "Comisión bancaria", expenseType: "626", concept: () => "Comisión bancaria" },
@@ -223,7 +224,7 @@ function ExpenseForm({
       ...f,
       expenseType: preset.expenseType,
       concept: preset.concept(f.date),
-      amount: preset.amount !== undefined ? formatDecimalInput(preset.amount) : f.amount,
+      amount: preset.amount ? formatDecimalInput(preset.amount()) : f.amount,
       ...(preset.payee && { payee: OTHER_PAYEE, otherName: preset.payee.name, otherTaxId: preset.payee.taxId }),
     }));
     setPrefill(false);
@@ -579,7 +580,7 @@ function ExpenseForm({
                       {...p}
                       value={form.paymentMethodId}
                       onChange={(v) => set("paymentMethodId", v)}
-                      groups={[{ options: paymentMethods.map((m) => ({ value: m.id, label: m.name })) }]}
+                      groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
                     />
                   )}
                 </Field>

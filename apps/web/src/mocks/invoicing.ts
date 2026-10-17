@@ -1,4 +1,4 @@
-/** Sample catalog, payment methods and note templates until there is a backend. */
+/** Sample catalog and note templates until there is a backend. Payment methods live in the settings. */
 
 export interface Product {
   id: string;
@@ -13,18 +13,6 @@ export const products: Product[] = [
   { id: "p2", name: "Diseño y mantenimiento web · cuota mensual", price: 2_400, vatRate: 0.21 },
   { id: "p3", name: "Fotografía de producto (unidad)", price: 45, vatRate: 0.21 },
   { id: "p4", name: "Landing page", price: 1_900, vatRate: 0.21 },
-];
-
-export interface PaymentMethod {
-  id: string;
-  name: string;
-}
-
-export const paymentMethods: PaymentMethod[] = [
-  { id: "transfer", name: "Ingreso/Transferencia" },
-  { id: "bank1", name: "Cuenta principal" },
-  { id: "card", name: "Tarjeta" },
-  { id: "cash", name: "Efectivo" },
 ];
 
 export interface NoteTemplate {

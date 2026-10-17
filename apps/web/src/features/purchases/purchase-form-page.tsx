@@ -62,7 +62,7 @@ import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
 import { formatDate, formatDecimalInput, parseDecimal, periodLabel } from "@/lib/format";
-import { paymentMethods } from "@/mocks/invoicing";
+import { paymentMethodOptions } from "@/features/settings/settings-model";
 import type { Contact } from "@/mocks/contacts";
 import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import type { Attachment, RentalLocation } from "@/mocks/sales";
@@ -1160,7 +1160,7 @@ function Payments({
                   aria-labelledby={`${p.id}-method`}
                   value={p.paymentMethodId}
                   onChange={(v) => update(p.id, { paymentMethodId: v })}
-                  groups={[{ options: paymentMethods.map((m) => ({ value: m.id, label: m.name })) }]}
+                  groups={[{ options: paymentMethodOptions(p.paymentMethodId) }]}
                 />
               </label>
               <Button

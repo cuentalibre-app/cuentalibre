@@ -3,7 +3,8 @@ import { zipSync } from "fflate";
 import { lineBase, WITHHOLDING_RATES } from "@fiscalia/core";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { formatDate } from "@/lib/format";
-import { currentUser } from "@/mocks/data";
+import { addressLine, businessName } from "@/features/settings/settings-model";
+import { settingsStore } from "@/features/settings/settings-store";
 import type { SalesDocument } from "@/mocks/sales";
 import { clientOf, documentTotals, KINDS, OPERATION_TYPES } from "./sales-model";
 
@@ -55,7 +56,8 @@ function render(doc: SalesDocument): jsPDF {
       pdf.setFont("helvetica", i === 0 ? "bold" : "normal").text(line, x, y + 6 + i * 5);
     });
   };
-  party("Emisor", [currentUser.name, `NIF ${currentUser.taxId}`, currentUser.address], MARGIN);
+  const { profile } = settingsStore.get();
+  party("Emisor", [businessName(profile), `NIF ${profile.taxId}`, addressLine(profile)], MARGIN);
   party("Cliente", [client.name, `NIF ${client.taxId}`], PAGE_WIDTH / 2 + 4);
 
   // Lines
@@ -83,7 +85,10 @@ function render(doc: SalesDocument): jsPDF {
     ].filter(Boolean) as string[];
     if (extra.length) {
       const text = pdf.splitTextToSize(pdfText(extra.join("\n")), cols.qty - cols.concept - 14) as string[];
-      pdf.setFontSize(8).setTextColor(110).text(text, cols.concept, y + concept.length * 5);
+      pdf
+        .setFontSize(8)
+        .setTextColor(110)
+        .text(text, cols.concept, y + concept.length * 5);
       pdf.setFontSize(10).setTextColor(20);
       y += text.length * 4;
     }
@@ -111,7 +116,8 @@ function render(doc: SalesDocument): jsPDF {
   row("Base imponible", eur(totals.base));
   for (const r of totals.vatBreakdown) row(`IVA ${percent(r.rate)}`, eur(r.vat));
   if (totals.surcharge) row("Recargo de equivalencia", eur(totals.surcharge));
-  if (totals.withholding) row(`Retención IRPF ${percent(WITHHOLDING_RATES[doc.withholding])}`, eur(-totals.withholding));
+  if (totals.withholding)
+    row(`Retención IRPF ${percent(WITHHOLDING_RATES[doc.withholding])}`, eur(-totals.withholding));
   if (totals.supplies) row("Suplidos", eur(totals.supplies));
   pdf.setDrawColor(180).line(110, y - 3, RIGHT, y - 3);
   y += 3;

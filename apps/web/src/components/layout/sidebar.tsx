@@ -10,7 +10,8 @@ import {
 } from "@fiscalia/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
-import { currentUser } from "@/mocks/data";
+import { businessName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
+import { useSettings } from "@/features/settings/settings-store";
 import { CreateMenu } from "./create-menu";
 import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
@@ -179,6 +180,8 @@ interface SidebarProps {
 
 export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
   const badges = useNavBadges();
+  const { profile, tax } = useSettings();
+  const name = businessName(profile);
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
   return (
@@ -228,10 +231,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           openOnHover={collapsed}
           contentClassName={collapsed ? undefined : "w-[var(--radix-dropdown-menu-trigger-width)]"}
         >
-          <Button
-            variant="secondary"
-            className={cn("mb-4 w-full overflow-hidden font-semibold", collapsed && "px-0")}
-          >
+          <Button variant="secondary" className={cn("mb-4 w-full overflow-hidden font-semibold", collapsed && "px-0")}>
             <Plus strokeWidth={2} aria-hidden="true" />
             <span className={collapsed ? "sr-only" : undefined}>Crear</span>
           </Button>
@@ -266,17 +266,19 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
 
         <div className="flex-1" />
 
-        <RailTooltip enabled={collapsed} label={currentUser.name}>
+        <RailTooltip enabled={collapsed} label={name}>
           <div className="flex shrink-0 items-center gap-2.5 overflow-hidden border-t border-sidebar-border px-1.5 pt-3">
             <div
               className="grid size-8 shrink-0 place-items-center rounded-md bg-muted-strong text-xs font-semibold"
               aria-hidden="true"
             >
-              {currentUser.initials}
+              {initials(name)}
             </div>
             <div className={cn("flex min-w-0 flex-col gap-0.5 whitespace-nowrap", labelClass(collapsed))}>
-              <span className="truncate font-semibold">{currentUser.name}</span>
-              <span className="truncate text-xs text-muted-foreground">{currentUser.taxRegime}</span>
+              <span className="truncate font-semibold">{name}</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {incomeTaxMethodLabel(tax.incomeTaxMethod)}
+              </span>
             </div>
           </div>
         </RailTooltip>

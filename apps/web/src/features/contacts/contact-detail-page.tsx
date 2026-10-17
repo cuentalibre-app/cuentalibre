@@ -20,7 +20,7 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 import { MONTHS_SHORT, formatDate, periodCode } from "@/lib/format";
 import { availableYears } from "@/mocks/data";
 import type { Contact, ContactRole } from "@/mocks/contacts";
-import { paymentMethods } from "@/mocks/invoicing";
+import { paymentMethodName } from "@/features/settings/settings-model";
 import { ContactNotFound } from "./contact-form-page";
 import {
   ACTIVITY_KIND_LABELS,
@@ -222,7 +222,6 @@ function Rows({ rows }: { rows: [string, ReactNode][] }) {
 
 const TAX_ID_KIND = { nif: "NIF", nie: "NIE", cif: "CIF", foreign: "Extranjero" } as const;
 const withholdingLabel = new Map(WITHHOLDING_GROUPS.flatMap((g) => g.options.map((o) => [o.value, o.label])));
-const methodName = new Map(paymentMethods.map((m) => [m.id, m.name]));
 
 function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
   const country = countryOf(contact);
@@ -333,7 +332,7 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
             ["Retención", contact.withholding && withholdingLabel.get(contact.withholding)],
             [
               role === "client" ? "Método de cobro" : "Método de pago",
-              contact.paymentMethodId && methodName.get(contact.paymentMethodId),
+              contact.paymentMethodId && paymentMethodName(contact.paymentMethodId),
             ],
             ...(role === "client"
               ? ([

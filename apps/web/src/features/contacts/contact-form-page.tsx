@@ -18,7 +18,7 @@ import { CLIENT_DEFAULT, Field, GroupedSelect, LocaleFields, Section } from "@/f
 import { defaultNumberFormat } from "@/features/sales/invoice-locale";
 import { WITHHOLDING_GROUPS } from "@/features/sales/sales-model";
 import type { BankAccount, Contact, ContactRole } from "@/mocks/contacts";
-import { paymentMethods } from "@/mocks/invoicing";
+import { paymentMethodOptions } from "@/features/settings/settings-model";
 import {
   NO_DEFAULT,
   fromDraft,
@@ -284,7 +284,7 @@ function ContactForm({
                       {
                         options: [
                           { value: NO_DEFAULT, label: "El del documento" },
-                          ...paymentMethods.map((m) => ({ value: m.id, label: m.name })),
+                          ...paymentMethodOptions(draft.paymentMethodId),
                         ],
                       },
                     ]}

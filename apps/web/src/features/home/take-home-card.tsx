@@ -2,7 +2,7 @@ import { Card, CardTitle } from "@fiscalia/ui/components/card";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { currentUser } from "@/mocks/data";
+import { useSettings } from "@/features/settings/settings-store";
 import { formatPercent } from "@/lib/format";
 import type { HomeData } from "./home-data";
 
@@ -10,6 +10,7 @@ import type { HomeData } from "./home-data";
 export function TakeHomeCard({ data, className }: { data: HomeData; className?: string }) {
   const { income, outputVat } = data.totals;
   const { takeHome, incomeTax } = data.takeHome;
+  const fee = useSettings().tax.socialSecurityFee;
   const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
 
   const parts = [
@@ -67,7 +68,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
             <span className="amount text-foreground">{formatEUR(data.socialSecurityBooked)}</span> en el periodo.
           </span>
         ) : (
-          <span>No incluye tu cuota de autónomos ({formatEUR(currentUser.socialSecurityFee)} al mes).</span>
+          <span>No incluye tu cuota de autónomos ({formatEUR(fee)} al mes).</span>
         )}
       </div>
     </Card>
