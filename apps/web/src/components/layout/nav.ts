@@ -65,6 +65,10 @@ export const mainNav: NavItem[] = [
       { label: "Calendario fiscal", to: "/impuestos/calendario" },
       { label: "IVA (303, 390)", to: "/impuestos/iva" },
       { label: "IRPF (130, 100)", to: "/impuestos/irpf" },
+      { label: "Retenciones (111, 190)", to: "/impuestos/retenciones" },
+      { label: "Alquileres (115, 180)", to: "/impuestos/alquileres" },
+      { label: "Terceras personas (347)", to: "/impuestos/terceras-personas" },
+      { label: "Intracomunitarias (349)", to: "/impuestos/intracomunitarias" },
     ],
   },
   {

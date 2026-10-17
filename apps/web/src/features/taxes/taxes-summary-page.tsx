@@ -1,11 +1,15 @@
 import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Calendar, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowRight, Calendar, ChevronDown, ChevronRight, Settings } from "lucide-react";
 import {
   daysUntil,
   filingDeadline,
   filingStatus,
   incomeTaxYear,
+  model180,
+  model190,
+  model347,
+  model349,
   toIsoDate,
   upcomingDeadlines,
   vatReturns,
@@ -18,18 +22,32 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fisca
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
+import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { daysLeftLabel, deadlineTitle, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { useFormsInUse } from "./forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
-import { CALENDAR_PATH, FILING_STATUS, INCOME_TAX_PATH, modelPath, quarterOf, VAT_PATH } from "./taxes-model";
+import { usePartyBooks } from "./party-operations";
+import {
+  CALENDAR_PATH,
+  FILING_STATUS,
+  INCOME_TAX_PATH,
+  INTRA_EU_PATH,
+  modelPath,
+  quarterOf,
+  RENTALS_PATH,
+  THIRD_PARTIES_PATH,
+  VAT_PATH,
+  WITHHOLDINGS_PATH,
+} from "./taxes-model";
 
 const QUARTERS = [1, 2, 3, 4] as const;
 
 /** "A compensar" for a negative 303, which is carried forward rather than paid. */
 function VatAmount({ amount }: { amount: number }) {
-  if (amount >= 0) return <span className={cn("amount", amount === 0 && "text-muted-foreground")}>{formatEUR(amount)}</span>;
+  if (amount >= 0)
+    return <span className={cn("amount", amount === 0 && "text-muted-foreground")}>{formatEUR(amount)}</span>;
   return (
     <span className="flex flex-col items-end">
       <span className="amount text-success">{formatEUR(amount)}</span>
@@ -43,37 +61,6 @@ function useYearReturns(year: number) {
   return useMemo(() => {
     return { vat: vatReturns(books, year), income: incomeTaxYear(books, year, TAX_OPTIONS) };
   }, [books, year]);
-}
-
-/** Other forms Fiscalia doesn't prepare yet, and whether the books suggest they apply. */
-function useOtherForms(year: number) {
-  const inUse = useFormsInUse()(year);
-  return [
-    {
-      codes: "111 · 190",
-      title: "Retenciones de facturas recibidas",
-      detail: "Si pagas a profesionales que te aplican retención.",
-      applies: inUse.withholdings,
-    },
-    {
-      codes: "115 · 180",
-      title: "Retenciones de alquileres",
-      detail: "Si alquilas un local u oficina para tu actividad.",
-      applies: inUse.rentals,
-    },
-    {
-      codes: "347",
-      title: "Operaciones con terceras personas",
-      detail: "Clientes y proveedores con más de 3.005,06 € al año.",
-      applies: false,
-    },
-    {
-      codes: "349",
-      title: "Operaciones intracomunitarias",
-      detail: "Ventas y compras a empresas de otros países de la UE.",
-      applies: inUse.intraEu,
-    },
-  ];
 }
 
 function NextFiling({ today }: { today: Date }) {
@@ -181,12 +168,24 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
         <table className="w-full min-w-[760px] border-collapse">
           <thead>
             <tr className={table.headRow}>
-              <th scope="col" className={th}>Trimestre</th>
-              <th scope="col" className={cn(th, "text-right")}>IVA · 303</th>
-              <th scope="col" className={cn(th, "text-right")}>IRPF · 130</th>
-              <th scope="col" className={cn(th, "text-right")}>Total a ingresar</th>
-              <th scope="col" className={th}>Plazo</th>
-              <th scope="col" className={th}>Estado</th>
+              <th scope="col" className={th}>
+                Trimestre
+              </th>
+              <th scope="col" className={cn(th, "text-right")}>
+                IVA · 303
+              </th>
+              <th scope="col" className={cn(th, "text-right")}>
+                IRPF · 130
+              </th>
+              <th scope="col" className={cn(th, "text-right")}>
+                Total a ingresar
+              </th>
+              <th scope="col" className={th}>
+                Plazo
+              </th>
+              <th scope="col" className={th}>
+                Estado
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -202,12 +201,17 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
                   </Link>
                 </td>
                 <td className={cn(td, "text-right")}>
-                  <Link to={modelPath(INCOME_TAX_PATH, { year, quarter: r.quarter })} className={cn(linkClass, "justify-end")}>
+                  <Link
+                    to={modelPath(INCOME_TAX_PATH, { year, quarter: r.quarter })}
+                    className={cn(linkClass, "justify-end")}
+                  >
                     <span className={cn("amount", r.irpf === 0 && "text-muted-foreground")}>{formatEUR(r.irpf)}</span>
                   </Link>
                 </td>
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
-                <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>{formatDate(toIsoDate(r.deadline))}</td>
+                <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>
+                  {formatDate(toIsoDate(r.deadline))}
+                </td>
                 <td className={td}>
                   <QuarterStatus year={year} quarter={r.quarter} today={today} />
                 </td>
@@ -331,38 +335,114 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
   );
 }
 
+/** Withholding and informative forms: what the books give for the year and where to check them. */
 function OtherForms({ year }: { year: number }) {
-  const forms = useOtherForms(year);
+  const inUse = useFormsInUse()(year);
+  const books = usePartyBooks();
+  const figures = useMemo(() => {
+    const withholdings = model190(books.ops, year);
+    const rentals = model180(books.ops, year);
+    const third = model347(books.ops, year, books.excludedFrom347);
+    const intra = model349(books.ops, { year, months: Array.from({ length: 12 }, (_, m) => m) });
+    return { withholdings, rentals, third, intra };
+  }, [books, year]);
+  const quarter = quarterOf(year, new Date());
+  const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
+
+  const forms = [
+    {
+      codes: ["111", "190"],
+      title: "Retenciones de facturas recibidas",
+      path: WITHHOLDINGS_PATH,
+      figure: formatEUR(figures.withholdings.withholding),
+      caption: `retenido en el año · ${count(figures.withholdings.perceptors.length, "perceptor", "perceptores")}`,
+      applies: inUse.withholdings,
+    },
+    {
+      codes: ["115", "180"],
+      title: "Retenciones de alquileres",
+      path: RENTALS_PATH,
+      figure: formatEUR(figures.rentals.withholding),
+      caption: `retenido en el año · ${count(figures.rentals.landlords.length, "arrendador", "arrendadores")}`,
+      applies: inUse.rentals,
+    },
+    {
+      codes: [null, "347"],
+      title: "Operaciones con terceras personas",
+      path: THIRD_PARTIES_PATH,
+      figure: count(figures.third.declared.length, "declarado", "declarados"),
+      caption: "con más de 3.005,06 € en el año",
+      applies: inUse.thirdParties,
+    },
+    {
+      codes: ["349", null],
+      title: "Operaciones intracomunitarias",
+      path: INTRA_EU_PATH,
+      figure: formatEUR(figures.intra.total),
+      caption: `de base en el año · ${count(figures.intra.operators, "operador", "operadores")}`,
+      applies: inUse.intraEu,
+    },
+  ];
+
   return (
-    <section aria-labelledby="other-forms-title" className="flex animate-rise-in flex-col gap-3" style={{ "--i": 3 } as CSSProperties}>
+    <section
+      aria-labelledby="other-forms-title"
+      className="flex animate-rise-in flex-col gap-3"
+      style={{ "--i": 3 } as CSSProperties}
+    >
       <div className="flex items-baseline justify-between">
         <h2 id="other-forms-title" className="m-0 text-md font-semibold">
           Otros modelos
         </h2>
-        <span className="text-xs text-muted-foreground">Disponibles próximamente</span>
+        <span className="text-xs text-muted-foreground">Retenciones y declaraciones informativas</span>
       </div>
       <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-4">
-        {forms.map((f) => (
-          <li key={f.codes} className="flex flex-col gap-1.5 rounded-xl border border-dashed border-border p-4">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-xs font-semibold text-muted-foreground">{f.codes}</span>
-              {f.applies && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0}>
-                      <Badge tone="warning">Te afecta</Badge>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-60">
-                    Tienes documentos de {year} que lo requieren. Por ahora, prepáralo en la sede de la AEAT.
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-            <span className="font-medium">{f.title}</span>
-            <span className="text-sm text-muted-foreground">{f.detail}</span>
-          </li>
-        ))}
+        {forms.map((f) => {
+          const [quarterly, yearly] = f.codes;
+          return (
+            <li key={f.title} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium">{f.title}</span>
+                {f.applies ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0}>
+                        <Badge tone="warning">Te afecta</Badge>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-60">Tienes documentos de {year} que lo requieren.</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Badge>No te afecta</Badge>
+                )}
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="amount text-lg font-semibold">{f.figure}</span>
+                <span className="text-xs text-muted-foreground">{f.caption}</span>
+              </div>
+              <div className="mt-auto flex flex-wrap gap-1.5">
+                {quarterly ? (
+                  <Link
+                    to={quarterly === "349" ? f.path : modelPath(f.path, quarter)}
+                    className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
+                  >
+                    Trimestral · {quarterly}
+                  </Link>
+                ) : (
+                  <span className="px-1 py-1 text-xs text-muted-foreground">Sin modelo trimestral</span>
+                )}
+                {yearly && (
+                  <Link
+                    to={modelPath(f.path, { year, quarter: null })}
+                    className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
+                  >
+                    Anual · {yearly}
+                  </Link>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -387,6 +467,10 @@ export function TaxesSummaryPage() {
             <Link to={CALENDAR_PATH} className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
               <Calendar strokeWidth={1.8} aria-hidden="true" />
               Calendario fiscal
+            </Link>
+            <Link to={TAX_SETTINGS_PATH} className={cn(buttonVariants({ variant: "ghost" }), "no-underline")}>
+              <Settings strokeWidth={1.8} aria-hidden="true" />
+              Configurar impuestos
             </Link>
             <Select
               value={String(year)}

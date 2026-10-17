@@ -5,6 +5,10 @@ export const TAXES_PATH = "/impuestos";
 export const VAT_PATH = "/impuestos/iva";
 export const INCOME_TAX_PATH = "/impuestos/irpf";
 export const CALENDAR_PATH = "/impuestos/calendario";
+export const WITHHOLDINGS_PATH = "/impuestos/retenciones";
+export const RENTALS_PATH = "/impuestos/alquileres";
+export const THIRD_PARTIES_PATH = "/impuestos/terceras-personas";
+export const INTRA_EU_PATH = "/impuestos/intracomunitarias";
 
 /** A model page opened on a period: "/impuestos/iva?periodo=2026-T3". */
 export function modelPath(path: string, period: Period): string {
@@ -37,9 +41,21 @@ export const CALENDAR_STATUS: Record<CalendarStatus, { label: string; tone: Badg
 
 /** The monthly RETA fee is a direct debit, not a filing. */
 export const CHARGE_STATUS: Record<CalendarStatus, { label: string; tone: BadgeProps["tone"]; hint: string }> = {
-  upcoming: { label: "Próximo cargo", tone: "neutral", hint: "La Seguridad Social la carga el último día hábil del mes." },
-  inProgress: { label: "Próximo cargo", tone: "primary", hint: "La Seguridad Social la carga el último día hábil del mes." },
-  waiting: { label: "Próximo cargo", tone: "primary", hint: "La Seguridad Social la carga el último día hábil del mes." },
+  upcoming: {
+    label: "Próximo cargo",
+    tone: "neutral",
+    hint: "La Seguridad Social la carga el último día hábil del mes.",
+  },
+  inProgress: {
+    label: "Próximo cargo",
+    tone: "primary",
+    hint: "La Seguridad Social la carga el último día hábil del mes.",
+  },
+  waiting: {
+    label: "Próximo cargo",
+    tone: "primary",
+    hint: "La Seguridad Social la carga el último día hábil del mes.",
+  },
   open: { label: "Se carga hoy", tone: "warning", hint: "Comprueba que tienes saldo en la cuenta domiciliada." },
   closed: { label: "Cargada", tone: "neutral", hint: "La cuota de este mes ya se ha cargado." },
 };
@@ -50,7 +66,16 @@ export const AEAT_LINKS = {
   "390": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/G412.shtml",
   "130": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/G601.shtml",
   "100": "https://sede.agenciatributaria.gob.es/Sede/Renta.html",
+  "111": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/GH01.shtml",
+  "190": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/GI10.shtml",
+  "115": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/GH02.shtml",
+  "180": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/GI00.shtml",
+  "347": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/GI27.shtml",
+  "349": "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/GI28.shtml",
 } as const;
+
+/** Informative forms filled in on the AEAT website record by record: there is no file to import. */
+export const ONLINE_ONLY_FORMS = new Set<FormCode>(["190", "180", "347"]);
 
 export type FormCode = keyof typeof AEAT_LINKS;
 
@@ -151,9 +176,36 @@ export const LAYOUT_390: FormSection[] = [
     title: "Operaciones en régimen general · IVA devengado",
     columns: ["Base imponible", "Tipo %", "Cuota"],
     rows: [
-      ...ratesRows("Régimen ordinario", [["700", "701"], ["01", "02"], ["03", "04"], ["05", "06"]], ["0", "4", "10", "21"]),
-      ...ratesRows("Adquisiciones intracomunitarias de bienes", [["716", "717"], ["21", "22"], ["23", "24"], ["25", "26"]], ["0", "4", "10", "21"]),
-      ...ratesRows("Adquisiciones intracomunitarias de servicios", [["720", "721"], ["545", "546"], ["547", "548"], ["551", "552"]], ["0", "4", "10", "21"]),
+      ...ratesRows(
+        "Régimen ordinario",
+        [
+          ["700", "701"],
+          ["01", "02"],
+          ["03", "04"],
+          ["05", "06"],
+        ],
+        ["0", "4", "10", "21"],
+      ),
+      ...ratesRows(
+        "Adquisiciones intracomunitarias de bienes",
+        [
+          ["716", "717"],
+          ["21", "22"],
+          ["23", "24"],
+          ["25", "26"],
+        ],
+        ["0", "4", "10", "21"],
+      ),
+      ...ratesRows(
+        "Adquisiciones intracomunitarias de servicios",
+        [
+          ["720", "721"],
+          ["545", "546"],
+          ["547", "548"],
+          ["551", "552"],
+        ],
+        ["0", "4", "10", "21"],
+      ),
       row("IVA devengado en otros supuestos de inversión del sujeto pasivo", "27", null, "28"),
       row("Modificación de bases y cuotas", "29", null, "30"),
       total("Total bases y cuotas IVA", "33", null, "34"),
@@ -164,10 +216,42 @@ export const LAYOUT_390: FormSection[] = [
     title: "IVA deducible",
     columns: ["Base imponible", "Tipo %", "Cuota"],
     rows: [
-      ...ratesRows("Operaciones interiores de bienes y servicios corrientes", [["190", "191"], ["603", "604"], ["605", "606"]], ["4", "10", "21"]),
-      ...ratesRows("Importaciones de bienes corrientes", [["202", "203"], ["619", "620"], ["621", "622"]], ["4", "10", "21"]),
-      ...ratesRows("Adquisiciones intracomunitarias de bienes corrientes", [["214", "215"], ["627", "628"], ["629", "630"]], ["4", "10", "21"]),
-      ...ratesRows("Adquisiciones intracomunitarias de servicios", [["587", "588"], ["635", "636"], ["637", "638"]], ["4", "10", "21"]),
+      ...ratesRows(
+        "Operaciones interiores de bienes y servicios corrientes",
+        [
+          ["190", "191"],
+          ["603", "604"],
+          ["605", "606"],
+        ],
+        ["4", "10", "21"],
+      ),
+      ...ratesRows(
+        "Importaciones de bienes corrientes",
+        [
+          ["202", "203"],
+          ["619", "620"],
+          ["621", "622"],
+        ],
+        ["4", "10", "21"],
+      ),
+      ...ratesRows(
+        "Adquisiciones intracomunitarias de bienes corrientes",
+        [
+          ["214", "215"],
+          ["627", "628"],
+          ["629", "630"],
+        ],
+        ["4", "10", "21"],
+      ),
+      ...ratesRows(
+        "Adquisiciones intracomunitarias de servicios",
+        [
+          ["587", "588"],
+          ["635", "636"],
+          ["637", "638"],
+        ],
+        ["4", "10", "21"],
+      ),
       row("Rectificación de deducciones", "639", null, "62"),
       total("Suma de deducciones", null, null, "64"),
       total("Resultado régimen general ([47] − [64])", null, null, "65"),
@@ -272,18 +356,12 @@ export function layout100(simplified: boolean): FormSection[] {
   return [
     {
       title: "Ingresos íntegros",
-      rows: [
-        row("Ingresos de explotación", "0171"),
-        total("Total ingresos computables", "0180"),
-      ],
+      rows: [row("Ingresos de explotación", "0171"), total("Total ingresos computables", "0180")],
       note: "Subvenciones, autoconsumo y otros ingresos (casillas 0172 a 0179) no se calculan: añádelos en Renta WEB si los tienes.",
     },
     {
       title: "Gastos fiscalmente deducibles",
-      rows: [
-        ...EXPENSE_BOXES_100.map((box) => row(EXPENSE_LABELS_100[box], box)),
-        total("Suma de gastos", "0218"),
-      ],
+      rows: [...EXPENSE_BOXES_100.map((box) => row(EXPENSE_LABELS_100[box], box)), total("Suma de gastos", "0218")],
     },
     {
       title: simplified ? "Estimación directa simplificada" : "Estimación directa normal",
@@ -322,3 +400,61 @@ export function layout100(simplified: boolean): FormSection[] {
   ];
 }
 
+const perceptorColumns = ["Nº de perceptores", "Importe de las percepciones", "Importe de las retenciones"];
+
+export const LAYOUT_111: FormSection[] = [
+  {
+    title: "I. Rendimientos del trabajo",
+    columns: perceptorColumns,
+    rows: [
+      {
+        label: "Rendimientos dinerarios",
+        cells: ["01", "02", "03"],
+        hint: "Facturas de servicios esporádicos (cuenta 6231: cursos, conferencias, seminarios) con retención.",
+      },
+      row("Rendimientos en especie", "04", "05", "06"),
+    ],
+  },
+  {
+    title: "II. Rendimientos de actividades económicas",
+    columns: perceptorColumns,
+    rows: [
+      {
+        label: "Rendimientos dinerarios",
+        cells: ["07", "08", "09"],
+        hint: "Facturas recibidas de profesionales con retención, salvo alquileres (van al 115).",
+      },
+      row("Rendimientos en especie", "10", "11", "12"),
+    ],
+  },
+  {
+    title: "V. Cesión de derechos de imagen (art. 92.8 LIRPF)",
+    columns: perceptorColumns,
+    rows: [row("Contraprestaciones dinerarias o en especie", "25", "26", "27")],
+  },
+  {
+    title: "Total liquidación",
+    rows: [
+      total("Suma de retenciones e ingresos a cuenta", "28"),
+      row("A deducir (solo en declaraciones complementarias)", "29"),
+      total("Resultado a ingresar ([28] − [29])", "30"),
+    ],
+  },
+];
+
+/** Boxes of forms 111 and 115 holding a number of perceptors. */
+export const COUNT_BOXES_111 = new Set(["01", "04", "07", "10", "25"]);
+export const COUNT_BOXES_115 = new Set(["01"]);
+
+export const LAYOUT_115: FormSection[] = [
+  {
+    title: "Retenciones e ingresos a cuenta",
+    rows: [
+      row("Nº de perceptores", "01"),
+      row("Base de las retenciones e ingresos a cuenta", "02"),
+      row("Retenciones e ingresos a cuenta", "03"),
+      row("A deducir (solo en declaraciones complementarias)", "04"),
+      total("Resultado a ingresar ([03] − [04])", "05"),
+    ],
+  },
+];

@@ -5,6 +5,8 @@ import {
   calendarStatus,
   fiscalCalendar,
   incomeTaxYear,
+  model180,
+  model190,
   vatReturns,
   type CalendarEntry,
   type CalendarForm,
@@ -21,8 +23,19 @@ import { usePeriod } from "@/lib/use-period";
 import { useSettings } from "@/features/settings/settings-store";
 import { availableYears } from "@/mocks/data";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
+import { usePartyBooks } from "./party-operations";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
-import { CALENDAR_STATUS, CHARGE_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "./taxes-model";
+import {
+  CALENDAR_STATUS,
+  CHARGE_STATUS,
+  INCOME_TAX_PATH,
+  INTRA_EU_PATH,
+  modelPath,
+  RENTALS_PATH,
+  THIRD_PARTIES_PATH,
+  VAT_PATH,
+  WITHHOLDINGS_PATH,
+} from "./taxes-model";
 
 interface FormInfo {
   name: string;
@@ -44,36 +57,42 @@ const FORMS: Record<CalendarForm, FormInfo> = {
   "115": {
     name: "Retenciones de alquileres",
     row: "Alquileres · trimestral",
+    path: RENTALS_PATH,
     applies: "rentals",
     condition: "Si alquilas un local u oficina para tu actividad.",
   },
   "180": {
     name: "Resumen anual de alquileres",
     row: "Alquileres · anual",
+    path: RENTALS_PATH,
     applies: "rentals",
     condition: "Si alquilas un local u oficina para tu actividad.",
   },
   "111": {
     name: "Retenciones de profesionales",
     row: "Profesionales · trimestral",
+    path: WITHHOLDINGS_PATH,
     applies: "withholdings",
     condition: "Si pagas a profesionales que te aplican retención.",
   },
   "190": {
     name: "Resumen anual de retenciones",
     row: "Profesionales · anual",
+    path: WITHHOLDINGS_PATH,
     applies: "withholdings",
     condition: "Si pagas a profesionales que te aplican retención.",
   },
   "347": {
     name: "Operaciones con terceros",
     row: "Operaciones con terceros",
-    applies: null,
+    path: THIRD_PARTIES_PATH,
+    applies: "thirdParties",
     condition: "Si con un cliente o proveedor superas 3.005,06 € en el año (IVA incluido).",
   },
   "349": {
     name: "Operaciones intracomunitarias",
     row: "Operaciones intracomunitarias",
+    path: INTRA_EU_PATH,
     applies: "intraEu",
     condition: "Si vendes o compras a empresas de otros países de la UE. Mensual si superas 50.000 € al trimestre.",
   },
@@ -116,6 +135,7 @@ function entryKey(entry: CalendarEntry): string {
 /** Amount to pay for the entries Fiscalia can compute. */
 function useAmounts(calendarYear: number) {
   const books = useTaxBooks();
+  const party = usePartyBooks();
   const fee = useSettings().tax.socialSecurityFee;
   return useMemo(() => {
     const byYear = new Map(
@@ -124,6 +144,8 @@ function useAmounts(calendarYear: number) {
         {
           vat: vatReturns(books, year).map((r) => r.result),
           irpf: incomeTaxYear(books, year, TAX_OPTIONS).quarters.map((r) => r.result),
+          withholdings: model190(party.ops, year).paid,
+          rentals: model180(party.ops, year).paid,
         },
       ]),
     );
@@ -133,9 +155,11 @@ function useAmounts(calendarYear: number) {
       if (!returns || entry.quarter === null) return null;
       if (entry.form === "303") return returns.vat[entry.quarter - 1]!;
       if (entry.form === "130") return Math.max(0, returns.irpf[entry.quarter - 1]!);
+      if (entry.form === "111") return returns.withholdings[entry.quarter - 1]!;
+      if (entry.form === "115") return returns.rentals[entry.quarter - 1]!;
       return null;
     };
-  }, [books, calendarYear, fee]);
+  }, [books, party, calendarYear, fee]);
 }
 
 function useApplies() {

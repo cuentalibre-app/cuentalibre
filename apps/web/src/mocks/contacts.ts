@@ -252,4 +252,16 @@ export const initialSuppliers: Contact[] = [
     postalCode: "11207",
     country: "España",
   },
+  {
+    id: "s11",
+    name: "Luis Ortega Prado",
+    taxId: "51234567C",
+    address: "Calle de Embajadores 140",
+    city: "Madrid",
+    province: "Madrid",
+    postalCode: "28045",
+    country: "España",
+    withholding: "rental",
+    notes: "Alquiler del almacén donde guardo el material de fotografía.",
+  },
 ];
