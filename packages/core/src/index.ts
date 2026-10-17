@@ -16,3 +16,5 @@ export * from "./working-hours";
 export * from "./assets";
 export * from "./transfer";
 export * from "./catalog";
+export * from "./verifactu";
+export * from "./accounting-codes";

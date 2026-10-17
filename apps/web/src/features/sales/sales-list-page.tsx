@@ -19,6 +19,7 @@ import {
   ThumbsUp,
   Trash2,
   Undo2,
+  X,
 } from "lucide-react";
 import { periodKey, periodMonths, toIsoDate, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
@@ -47,10 +48,13 @@ import {
   periodKeyOf,
   type StatusKey,
 } from "./sales-model";
+import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, pickFiles, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
 
 const ALL = "all";
+/** Status filter for the quotes and delivery notes not invoiced or rejected yet. */
+const OPEN = "open";
 
 interface Row {
   doc: SalesDocument;
@@ -61,6 +65,10 @@ interface Row {
   withholding: number;
   total: number;
 }
+
+const MONTH_NAME = new Intl.DateTimeFormat("es-ES", { month: "long" });
+
+const isOpen = (status: StatusKey) => (OPEN_STATUSES as StatusKey[]).includes(status);
 
 function inPeriod(isoDate: string, period: Period): boolean {
   const [year, month] = isoDate.split("-").map(Number);
@@ -76,30 +84,37 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<string>(ALL);
+  // Quotes and delivery notes open with the default filters of "Ordenación y filtrado"
+  const defaults = kind === "quote" || kind === "deliveryNote" ? listPreferencesStore.get()[kind] : null;
+  const [status, setStatus] = useState<string>(defaults?.status === "open" ? OPEN : ALL);
+  const [thisMonth, setThisMonth] = useState(defaults?.date === "month");
   const [sort, setSort] = useState(DEFAULT_SORT);
   const documents = useSalesDocuments();
 
+  // The month filter replaces the period until another period is picked
+  const monthPrefix = toIsoDate(today).slice(0, 7);
   const periodRows = useMemo(
     () =>
       documents
-        .filter((d) => d.kind === kind && inPeriod(d.issuedOn, period))
+        .filter(
+          (d) => d.kind === kind && (thisMonth ? d.issuedOn.startsWith(monthPrefix) : inPeriod(d.issuedOn, period)),
+        )
         .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn) || (b.number ?? "").localeCompare(a.number ?? ""))
         .map((doc): Row => ({ doc, client: clientOf(doc), status: displayStatus(doc, today), ...documentTotals(doc) })),
-    [documents, kind, period, today],
+    [documents, kind, period, today, thisMonth, monthPrefix],
   );
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     const matching = periodRows.filter(
       (r) =>
-        (status === ALL || r.status === status) &&
+        (status === ALL || r.status === status || (status === OPEN && isOpen(r.status))) &&
         (!q || [r.doc.number ?? "", r.client.name, r.client.taxId].some((v) => v.toLowerCase().includes(q))),
     );
     return sortRows(matching, sort);
   }, [periodRows, query, status, sort]);
 
-  const filtered = query.trim() !== "" || status !== ALL;
+  const filtered = query.trim() !== "" || status !== ALL || thisMonth;
   const exportName = `${config.title} ${periodCode(period)}`.toLowerCase().replaceAll(" ", "-");
   const [exporting, setExporting] = useState(false);
 
@@ -142,6 +157,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>Todos los estados</SelectItem>
+                {defaults && <SelectItem value={OPEN}>Pendientes</SelectItem>}
                 {config.statuses.map((s) => (
                   <SelectItem key={s} value={s}>
                     {STATUS[s].label}
@@ -150,7 +166,26 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               </SelectContent>
             </Select>
           )}
-          <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+          <PeriodSelect
+            value={period}
+            onChange={(p) => {
+              setPeriod(p);
+              setThisMonth(false);
+            }}
+            years={availableYears}
+            today={today}
+          />
+          {thisMonth && (
+            <button
+              type="button"
+              onClick={() => setThisMonth(false)}
+              aria-label="Quitar el filtro del mes en curso"
+              className="flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-primary-soft px-3 text-sm font-medium text-primary hover:bg-accent"
+            >
+              Solo {MONTH_NAME.format(today)}
+              <X className="size-4" aria-hidden="true" />
+            </button>
+          )}
           <div className="ml-auto flex gap-2">
             <Button
               variant="secondary"

@@ -1,15 +1,10 @@
 import { useSyncExternalStore } from "react";
 import { initialNoteTemplates, type NoteTemplate } from "@/mocks/invoicing";
+import type { SalesKind } from "@/mocks/sales";
 
 /** Look of the PDF. Each template also has a "traditional" variant. */
 export type InvoiceTemplate =
-  | "classic"
-  | "classicTraditional"
-  | "modern"
-  | "modernTraditional"
-  | "elegant"
-  | "elegantTraditional"
-  | "avantGarde";
+  "classic" | "classicTraditional" | "modern" | "modernTraditional" | "elegant" | "elegantTraditional" | "avantGarde";
 
 export const TEMPLATES: { value: InvoiceTemplate; label: string }[] = [
   { value: "classic", label: "Clásica" },
@@ -34,7 +29,8 @@ export const FONTS = [
   "Verdana",
 ] as const;
 
-export interface InvoiceSettings {
+/** Look and locale of a PDF, shared by every kind of sales document. */
+export interface DocumentLook {
   template: InvoiceTemplate;
   font: (typeof FONTS)[number];
   textColor: string;
@@ -42,6 +38,9 @@ export interface InvoiceSettings {
   backgroundColor: string;
   language: string;
   numberFormat: string;
+}
+
+export interface InvoiceSettings extends DocumentLook {
   showProductUnits: boolean;
   hideZeroTaxes: boolean;
   hideWatermark: boolean;
@@ -99,3 +98,107 @@ export const invoiceSettingsStore = {
     listeners.forEach((listener) => listener());
   },
 };
+
+/* ─────────────────── Drafts, quotes and delivery notes ─────────────────── */
+
+export type DocumentKind = Exclude<SalesKind, "invoice">;
+
+/** Settings of the kinds other than invoices; each has its own copy. */
+export interface DocumentSettings extends DocumentLook {
+  showProductUnits: boolean;
+  showServicePeriod: boolean;
+  showPrices: boolean;
+  /** Quotes and drafts only; delivery notes always print them, like before the setting existed. */
+  showTaxes: boolean;
+  hideZeroTaxes: boolean;
+  footer: string;
+  /**
+   * Drafts and delivery notes: when invoiced, copy every line as it is (true) or one line per tax
+   * rate naming the source document (false).
+   */
+  keepLinesOnInvoice: boolean;
+  /** Quotes and delivery notes. */
+  uploadToDropbox: boolean;
+  uploadToDrive: boolean;
+}
+
+const lookDefaults: DocumentLook = {
+  template: DEFAULT_SETTINGS.template,
+  font: DEFAULT_SETTINGS.font,
+  textColor: DEFAULT_SETTINGS.textColor,
+  lineColor: DEFAULT_SETTINGS.lineColor,
+  backgroundColor: DEFAULT_SETTINGS.backgroundColor,
+  language: DEFAULT_SETTINGS.language,
+  numberFormat: DEFAULT_SETTINGS.numberFormat,
+};
+
+const documentDefaults = (kind: DocumentKind): DocumentSettings => ({
+  ...lookDefaults,
+  showProductUnits: true,
+  showServicePeriod: true,
+  showPrices: true,
+  showTaxes: true,
+  hideZeroTaxes: false,
+  footer: "",
+  keepLinesOnInvoice: kind === "deliveryNote",
+  uploadToDropbox: false,
+  uploadToDrive: false,
+});
+
+export const DEFAULT_DOCUMENT_SETTINGS: Record<DocumentKind, DocumentSettings> = {
+  draft: documentDefaults("draft"),
+  quote: documentDefaults("quote"),
+  deliveryNote: documentDefaults("deliveryNote"),
+};
+
+let documentSettings = DEFAULT_DOCUMENT_SETTINGS;
+
+export function useDocumentSettings(kind: DocumentKind): DocumentSettings {
+  return useSyncExternalStore(subscribe, () => documentSettings[kind]);
+}
+
+export const documentSettingsStore = {
+  get: (kind: DocumentKind) => documentSettings[kind],
+  update(kind: DocumentKind, changes: Partial<DocumentSettings>) {
+    documentSettings = { ...documentSettings, [kind]: { ...documentSettings[kind], ...changes } };
+    listeners.forEach((listener) => listener());
+  },
+};
+
+/** Whether new documents of a kind propose uploading them to Dropbox and Google Drive. */
+export function useUploadDefaults(kind: SalesKind): Pick<DocumentSettings, "uploadToDropbox" | "uploadToDrive"> {
+  return useSyncExternalStore(subscribe, () => (kind === "invoice" ? settings : documentSettings[kind]));
+}
+
+/** What the PDF of a document prints, from its kind's settings. */
+export interface PrintOptions {
+  showProductUnits: boolean;
+  showServicePeriod: boolean;
+  showPrices: boolean;
+  showTaxes: boolean;
+  hideZeroTaxes: boolean;
+  footer: string;
+}
+
+export function printOptions(kind: SalesKind): PrintOptions {
+  if (kind === "invoice") {
+    const s = settings;
+    return {
+      showProductUnits: s.showProductUnits,
+      showServicePeriod: s.showServicePeriod,
+      showPrices: true,
+      showTaxes: true,
+      hideZeroTaxes: s.hideZeroTaxes,
+      footer: s.footer,
+    };
+  }
+  const s = documentSettings[kind];
+  return {
+    showProductUnits: s.showProductUnits,
+    showServicePeriod: s.showServicePeriod,
+    showPrices: s.showPrices,
+    showTaxes: kind === "deliveryNote" || s.showTaxes,
+    hideZeroTaxes: kind !== "deliveryNote" && s.hideZeroTaxes,
+    footer: s.footer,
+  };
+}

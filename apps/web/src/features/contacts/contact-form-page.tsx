@@ -30,7 +30,8 @@ import {
   type DraftErrors,
 } from "./contact-draft";
 import { AddressFields, IdentityFields } from "./contact-fields";
-import { CUSTOM_FIELD_LABELS, ROLES, contactPath } from "./contacts-model";
+import { useCustomFieldLabels } from "./contact-settings-store";
+import { ROLES, contactPath } from "./contacts-model";
 import { contactsStore } from "./contacts-store";
 
 const ERROR_KEYS: Record<DraftErrorKey, true> = { taxId: true, name: true, email: true, discount: true };
@@ -96,6 +97,7 @@ function ContactForm({
   });
   const [errors, setErrors] = useState<DraftErrors>({});
   const isClient = role === "client";
+  const customLabels = useCustomFieldLabels();
 
   const set = <K extends keyof ContactDraft>(key: K, value: ContactDraft[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -319,10 +321,10 @@ function ContactForm({
 
           <Section title="Otros" index={6}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={CUSTOM_FIELD_LABELS[0]}>
+              <Field label={customLabels[0]}>
                 {(p) => <Input {...p} value={draft.custom1} onChange={(e) => set("custom1", e.target.value)} />}
               </Field>
-              <Field label={CUSTOM_FIELD_LABELS[1]}>
+              <Field label={customLabels[1]}>
                 {(p) => <Input {...p} value={draft.custom2} onChange={(e) => set("custom2", e.target.value)} />}
               </Field>
               <Field label="Notas" help="Solo las ves tú.">

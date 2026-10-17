@@ -67,7 +67,7 @@ import {
 } from "./document-editor";
 import { CLIENT_DEFAULT, CheckField, Field, GroupedSelect, LocaleFields, Section } from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
-import { invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
+import { documentSettingsStore, invoiceSettingsStore, useInvoiceSettings, useUploadDefaults } from "./invoice-settings";
 import {
   INCOME_TYPE_GROUPS,
   KINDS,
@@ -76,6 +76,7 @@ import {
   SERIES_GROUPS,
   WITHHOLDING_GROUPS,
   clientOf,
+  groupLinesByTax,
   nextNumber,
   periodKeyOf,
 } from "./sales-model";
@@ -125,6 +126,12 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
   // Only invoices have rectifying series; the other kinds have a single series of their own
   const series: InvoiceSeries = rectify ? "rectifying" : kind === "invoice" ? (base?.series ?? "normal") : "normal";
   const dueOn = KINDS[kind].dueLabel === null ? null : isCopy || !base ? addDays(issuedOn, 30) : base.dueOn;
+  // Invoicing a delivery note copies its lines or, if the settings say so, one line per tax rate
+  const groupedOnInvoice =
+    kind === "invoice" &&
+    isCopy &&
+    base?.kind === "deliveryNote" &&
+    !documentSettingsStore.get("deliveryNote").keepLinesOnInvoice;
   const number =
     base && !isCopy && base.number
       ? base.number
@@ -148,7 +155,9 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     markPaid: !isCopy && base?.status === "paid",
     paidOn: (!isCopy && base?.paidOn) || issuedOn,
     paymentMethodId: base?.paymentMethodId ?? defaultPaymentMethodId(),
-    lines: base?.lines.map((l) => toLineDraft(l, rectify)) ?? [emptyLine(settingsStore.get().tax.defaultVatRate)],
+    lines: (groupedOnInvoice ? groupLinesByTax(base!) : base?.lines)?.map((l) => toLineDraft(l, rectify)) ?? [
+      emptyLine(settingsStore.get().tax.defaultVatRate),
+    ],
     supplies: base?.supplies ? formatDecimalInput(base.supplies) : "0",
     publicNotes: rectify && base?.number ? `Rectifica la factura ${base.number}.` : (base?.publicNotes ?? ""),
     privateNotes: isCopy ? "" : (base?.privateNotes ?? ""),
@@ -226,7 +235,7 @@ function withClientDefaults(form: FormState, client: Contact): FormState {
 function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormProps) {
   const navigate = useNavigate();
   const config = KINDS[kind];
-  const settings = useInvoiceSettings();
+  const uploads = useUploadDefaults(kind);
   const [form, setForm] = useState(() => {
     const initial = initialState(kind, existing ?? source, !existing, rectify);
     return presetClient ? withClientDefaults(initial, presetClient) : initial;
@@ -967,14 +976,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                 <CheckField
                   label={`Subir ${config.noun} a tu cuenta de Dropbox`}
                   hint={`Para subir ${config.noun} a tu cuenta de Dropbox es necesario que conectes tu cuenta.`}
-                  checked={settings.uploadToDropbox}
+                  checked={uploads.uploadToDropbox}
                   disabled
                   onChange={() => {}}
                 />
                 <CheckField
                   label={`Subir ${config.noun} a tu cuenta de Google Drive`}
                   hint={`Para subir ${config.noun} a tu cuenta de Google Drive es necesario que conectes tu cuenta.`}
-                  checked={settings.uploadToDrive}
+                  checked={uploads.uploadToDrive}
                   disabled
                   onChange={() => {}}
                 />

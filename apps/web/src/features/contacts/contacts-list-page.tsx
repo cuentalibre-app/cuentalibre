@@ -43,17 +43,11 @@ import {
 } from "@/features/sales/list-parts";
 import { KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
+import { TagChip } from "@/features/settings/tag-chip";
 import type { Contact, ContactRole } from "@/mocks/contacts";
+import { customFieldLabels } from "./contact-settings-store";
 import { contactActivity, type ActivityRow } from "./contacts-activity";
-import {
-  CUSTOM_FIELD_LABELS,
-  ROLES,
-  contactPath,
-  countryOf,
-  downloadVCard,
-  editContactPath,
-  formatAddress,
-} from "./contacts-model";
+import { ROLES, contactPath, countryOf, downloadVCard, editContactPath, formatAddress } from "./contacts-model";
 import { contactsStore, useContacts } from "./contacts-store";
 
 const ALL = "all";
@@ -369,9 +363,7 @@ function ContactsTable({
                     {!!c.tags?.length && (
                       <span className="flex flex-wrap gap-1">
                         {c.tags.map((t) => (
-                          <span key={t} className="rounded-full bg-accent px-2 text-2xs leading-5 font-medium">
-                            {t}
-                          </span>
+                          <TagChip key={t} name={t} className="px-2 text-2xs leading-5" />
                         ))}
                       </span>
                     )}
@@ -699,7 +691,7 @@ function exportCsv(role: ContactRole, rows: Row[]) {
       "Email",
       "Web",
       "Etiquetas",
-      ...CUSTOM_FIELD_LABELS,
+      ...customFieldLabels(),
       "Notas",
       role === "client" ? "Facturado" : "Gastado",
     ],

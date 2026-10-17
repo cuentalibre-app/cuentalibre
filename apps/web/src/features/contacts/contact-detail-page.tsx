@@ -21,6 +21,7 @@ import { MONTHS_SHORT, formatDate, periodCode } from "@/lib/format";
 import { availableYears } from "@/mocks/data";
 import type { Contact, ContactRole } from "@/mocks/contacts";
 import { paymentMethodName } from "@/features/settings/settings-model";
+import { TagChip } from "@/features/settings/tag-chip";
 import { ContactNotFound } from "./contact-form-page";
 import {
   ACTIVITY_KIND_LABELS,
@@ -30,8 +31,9 @@ import {
   type ActivityRow,
   type ActivitySummary,
 } from "./contacts-activity";
+import { useCustomFieldLabels } from "./contact-settings-store";
 import { TagsDialog, useContactActions } from "./contacts-list-page";
-import { CUSTOM_FIELD_LABELS, ROLES, contactPath, countryOf, editContactPath, formatAddress } from "./contacts-model";
+import { ROLES, contactPath, countryOf, editContactPath, formatAddress } from "./contacts-model";
 import { contactsStore, useContacts } from "./contacts-store";
 
 type Tab = "ficha" | "documentos" | "facturacion" | "adjuntos";
@@ -227,6 +229,7 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
   const country = countryOf(contact);
   const check = checkTaxId(contact.taxId, country);
   const address = formatAddress(contact);
+  const customLabels = useCustomFieldLabels();
   const language = LANGUAGES.find((l) => l.value === contact.language)?.label;
   const numberFormat = contact.language
     ? NUMBER_FORMATS[contact.language]?.find((f) => f.value === contact.numberFormat)?.label
@@ -379,16 +382,14 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
       <InfoCard title="Otros" index={5}>
         <Rows
           rows={[
-            [CUSTOM_FIELD_LABELS[0], contact.custom1],
-            [CUSTOM_FIELD_LABELS[1], contact.custom2],
+            [customLabels[0], contact.custom1],
+            [customLabels[1], contact.custom2],
             [
               "Etiquetas",
               contact.tags?.length ? (
                 <span className="flex flex-wrap gap-1">
                   {contact.tags.map((t) => (
-                    <span key={t} className="rounded-full bg-accent px-2.5 text-xs leading-6 font-medium">
-                      {t}
-                    </span>
+                    <TagChip key={t} name={t} className="px-2.5 text-xs leading-6" />
                   ))}
                 </span>
               ) : null,

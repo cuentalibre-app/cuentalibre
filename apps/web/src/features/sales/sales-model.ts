@@ -3,6 +3,8 @@ import {
   SURCHARGE_RATES,
   WITHHOLDING_RATES,
   invoiceTotals,
+  lineBase,
+  roundCents,
   isOverdue,
   nextDocumentNumber,
   periodKey,
@@ -20,6 +22,7 @@ import {
   type RentalLocation,
   type SalesDocument,
   type SalesKind,
+  type SalesLine,
 } from "@/mocks/sales";
 
 export interface KindConfig {
@@ -150,6 +153,34 @@ export function nextNumber(kind: SalesKind, series: InvoiceSeries, year: number,
   const prefix = kind === "invoice" ? SERIES_PREFIX[series] : KINDS[kind].numberPrefix;
   const numbers = docs.filter((d) => d.number !== null).map((d) => d.number!);
   return nextDocumentNumber(prefix, year, numbers);
+}
+
+/**
+ * One line per tax rate (VAT and surcharge) naming the source document, for invoicing a delivery
+ * note without copying its lines. Discounts are folded into each line's amount.
+ */
+export function groupLinesByTax(doc: SalesDocument): SalesLine[] {
+  const name = `${KINDS[doc.kind].singular} ${doc.number ?? ""}`.trim();
+  const groups = new Map<string, SalesLine>();
+  for (const line of doc.lines) {
+    const surchargeRate = line.surchargeRate ?? 0;
+    const key = `${line.vatRate}|${surchargeRate}`;
+    const group = groups.get(key);
+    if (group) group.unitPrice = roundCents(group.unitPrice + lineBase(line));
+    else
+      groups.set(key, {
+        id: crypto.randomUUID(),
+        concept: name,
+        unitPrice: lineBase(line),
+        quantity: 1,
+        discount: 0,
+        vatRate: line.vatRate,
+        surchargeRate,
+      });
+  }
+  const lines = [...groups.values()];
+  if (lines.length > 1) for (const line of lines) line.concept = `${name} (IVA ${ratePercent(line.vatRate)})`;
+  return lines;
 }
 
 /** URL period key ("2026-T4") of the quarter a date falls in. */

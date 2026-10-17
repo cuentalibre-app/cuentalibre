@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { Building2, LogOut, Settings } from "lucide-react";
+import { Building2, LogOut, Settings, UserRound } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,7 @@ import {
 import { cn } from "@fiscalia/ui/lib/cn";
 import {
   BUSINESS_PATH,
+  PROFILE_PATH,
   SETTINGS_PATH,
   businessName,
   incomeTaxMethodLabel,
@@ -26,7 +27,7 @@ interface UserMenuProps {
   className?: string;
 }
 
-/** The account's shortcuts (business details, settings, signing out), from the avatar or the sidebar. */
+/** The account's shortcuts (personal and business details, settings, signing out), from the avatar or the sidebar. */
 export function UserMenu({ children, side = "bottom", align = "end", className }: UserMenuProps) {
   const navigate = useNavigate();
   const { profile, tax } = useSettings();
@@ -56,6 +57,10 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
           </span>
         </div>
         <DropdownMenuSeparator className="mt-0" />
+        <DropdownMenuItem onSelect={() => navigate(PROFILE_PATH)}>
+          <UserRound strokeWidth={1.8} aria-hidden="true" />
+          Datos personales
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate(BUSINESS_PATH)}>
           <Building2 strokeWidth={1.8} aria-hidden="true" />
           Datos de la empresa

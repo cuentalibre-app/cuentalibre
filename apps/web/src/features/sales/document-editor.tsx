@@ -22,6 +22,8 @@ import { AnimatedAmount } from "@/components/animated-amount";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
 import { conceptFor } from "@/features/catalog/catalog-model";
 import { useCatalog } from "@/features/catalog/catalog-store";
+import { TagChip } from "@/features/settings/tag-chip";
+import { tagsStore, useTags } from "@/features/settings/tags-store";
 import type { Product } from "@/mocks/catalog";
 import type { SalesLine } from "@/mocks/sales";
 import { Field, GroupedSelect } from "./form-fields";
@@ -113,8 +115,11 @@ export function linesError(drafts: LineDraft[]): string | undefined {
 
 export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
   const [draft, setDraft] = useState("");
+  const listId = useId();
+  const known = useTags();
   const add = () => {
-    const tag = draft.trim();
+    // Use the configured spelling when the name matches a known tag
+    const tag = tagsStore.find(draft)?.name ?? draft.trim();
     if (tag && !tags.includes(tag)) onChange([...tags, tag]);
     setDraft("");
   };
@@ -129,7 +134,21 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
       {(p) => (
         <div className="flex flex-col gap-2">
           <div className="flex gap-2">
-            <Input {...p} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={onKeyDown} />
+            <Input
+              {...p}
+              value={draft}
+              list={listId}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={onKeyDown}
+            />
+            {/* Tags from Configuración › Etiquetas as suggestions; any other name works too */}
+            <datalist id={listId}>
+              {known
+                .filter((t) => !tags.includes(t.name))
+                .map((t) => (
+                  <option key={t.id} value={t.name} />
+                ))}
+            </datalist>
             <Button
               variant="secondary"
               size="lg"
@@ -144,20 +163,16 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
           {tags.length > 0 && (
             <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
               {tags.map((tag) => (
-                <li
-                  key={tag}
-                  className="flex h-7 items-center gap-1 rounded-full bg-accent pr-1 pl-2.5 text-sm font-medium"
-                >
-                  {tag}
+                <TagChip key={tag} as="li" name={tag} className="flex h-7 items-center gap-1 pr-1 pl-2.5 text-sm">
                   <button
                     type="button"
                     aria-label={`Quitar etiqueta ${tag}`}
                     onClick={() => onChange(tags.filter((t) => t !== tag))}
-                    className="flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted-strong hover:text-foreground"
+                    className="flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-current opacity-70 hover:bg-current/15 hover:opacity-100"
                   >
                     <X className="size-3.5" aria-hidden="true" />
                   </button>
-                </li>
+                </TagChip>
               ))}
             </ul>
           )}

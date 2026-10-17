@@ -36,19 +36,43 @@ import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
 import { SalesListPage } from "@/features/sales/sales-list-page";
 import { KINDS } from "@/features/sales/sales-model";
+import { DocumentSettingsPage } from "@/features/sales/document-settings-page";
+import { AccessPage } from "@/features/settings/access-page";
 import { AccountsPage } from "@/features/settings/accounts-page";
 import { BusinessPage } from "@/features/settings/business-page";
+import { CertificatesPage } from "@/features/settings/certificates-page";
+import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
+import { EmailSettingsPage } from "@/features/settings/email-settings-page";
+import { LedgerAccountsPage } from "@/features/settings/ledger-accounts-page";
 import { PaymentMethodsPage } from "@/features/settings/payment-methods-page";
+import { PreferencesPage } from "@/features/settings/preferences-page";
+import { ProfilePage } from "@/features/settings/profile-page";
 import {
+  ACCESS_PATH,
   ACCOUNTS_PATH,
   BUSINESS_PATH,
+  CERTIFICATES_PATH,
+  CONTACT_SETTINGS_PATH,
+  DELIVERY_NOTE_SETTINGS_PATH,
+  DRAFT_SETTINGS_PATH,
+  EMAIL_SETTINGS_PATH,
   INVOICE_SETTINGS_PATH,
+  LEDGER_ACCOUNTS_PATH,
   PAYMENT_METHODS_PATH,
+  PREFERENCES_PATH,
+  PROFILE_PATH,
+  QUOTE_SETTINGS_PATH,
   SETTINGS_PATH,
+  TAGS_PATH,
   TAX_SETTINGS_PATH,
+  USERS_PATH,
+  VERIFACTU_PATH,
 } from "@/features/settings/settings-model";
 import { SettingsPage } from "@/features/settings/settings-page";
+import { TagsPage } from "@/features/settings/tags-page";
 import { TaxSettingsPage } from "@/features/settings/tax-settings-page";
+import { UsersPage } from "@/features/settings/users-page";
+import { VerifactuPage } from "@/features/settings/verifactu-page";
 import { FiscalCalendarPage } from "@/features/taxes/fiscal-calendar-page";
 import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
 import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
@@ -163,6 +187,22 @@ const settingsRoutes = [
   { path: PAYMENT_METHODS_PATH.slice(1), element: <PaymentMethodsPage /> },
   { path: INVOICE_SETTINGS_PATH.slice(1), element: <InvoiceSettingsPage /> },
   { path: CATALOG_SETTINGS_PATH.slice(1), element: <CatalogSettingsPage /> },
+  { path: PROFILE_PATH.slice(1), element: <ProfilePage /> },
+  { path: ACCESS_PATH.slice(1), element: <AccessPage /> },
+  { path: VERIFACTU_PATH.slice(1), element: <VerifactuPage /> },
+  { path: DRAFT_SETTINGS_PATH.slice(1), element: <DocumentSettingsPage key="draft" kind="draft" /> },
+  { path: QUOTE_SETTINGS_PATH.slice(1), element: <DocumentSettingsPage key="quote" kind="quote" /> },
+  {
+    path: DELIVERY_NOTE_SETTINGS_PATH.slice(1),
+    element: <DocumentSettingsPage key="deliveryNote" kind="deliveryNote" />,
+  },
+  { path: LEDGER_ACCOUNTS_PATH.slice(1), element: <LedgerAccountsPage /> },
+  { path: CERTIFICATES_PATH.slice(1), element: <CertificatesPage /> },
+  { path: CONTACT_SETTINGS_PATH.slice(1), element: <ContactSettingsPage /> },
+  { path: USERS_PATH.slice(1), element: <UsersPage /> },
+  { path: TAGS_PATH.slice(1), element: <TagsPage /> },
+  { path: PREFERENCES_PATH.slice(1), element: <PreferencesPage /> },
+  { path: EMAIL_SETTINGS_PATH.slice(1), element: <EmailSettingsPage /> },
 ];
 
 const transferRoutes = [

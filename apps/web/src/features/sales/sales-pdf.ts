@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/format";
 import { addressLine, businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
 import type { SalesDocument } from "@/mocks/sales";
-import { invoiceSettingsStore } from "./invoice-settings";
+import { printOptions } from "./invoice-settings";
 import { clientOf, documentTotals, KINDS, OPERATION_TYPES } from "./sales-model";
 
 /*
@@ -40,6 +40,7 @@ function render(doc: SalesDocument): jsPDF {
   const client = clientOf(doc);
   const totals = documentTotals(doc);
   const config = KINDS[doc.kind];
+  const options = printOptions(doc.kind);
   let y = MARGIN + 4;
 
   pdf.setFont("helvetica", "bold").setFontSize(18).text(title(doc), MARGIN, y);
@@ -67,13 +68,16 @@ function render(doc: SalesDocument): jsPDF {
   pdf.setFillColor(242, 241, 237).rect(MARGIN - 2, y - 5, RIGHT - MARGIN + 4, 8, "F");
   pdf.setFont("helvetica", "bold").setFontSize(8).setTextColor(90);
   pdf.text("CONCEPTO", cols.concept, y);
-  pdf.text("CANT.", cols.qty, y, { align: "right" });
-  pdf.text("PRECIO", cols.price, y, { align: "right" });
-  pdf.text("IMPORTE", cols.amount, y, { align: "right" });
+  // Without prices the quantity takes the last column
+  const qtyX = options.showPrices ? cols.qty : cols.amount;
+  pdf.text("CANT.", qtyX, y, { align: "right" });
+  if (options.showPrices) {
+    pdf.text("PRECIO", cols.price, y, { align: "right" });
+    pdf.text("IMPORTE", cols.amount, y, { align: "right" });
+  }
 
   pdf.setFont("helvetica", "normal").setFontSize(10).setTextColor(20);
   y += 9;
-  const showUnits = invoiceSettingsStore.get().showProductUnits;
   for (const line of doc.lines) {
     const concept = pdf.splitTextToSize(line.concept, cols.qty - cols.concept - 14) as string[];
     if (y + concept.length * 5 > 250) {
@@ -83,7 +87,10 @@ function render(doc: SalesDocument): jsPDF {
     pdf.text(concept, cols.concept, y);
     const extra = [
       line.detail,
-      line.serviceFrom && line.serviceTo && `Periodo: ${formatDate(line.serviceFrom)} – ${formatDate(line.serviceTo)}`,
+      options.showServicePeriod &&
+        line.serviceFrom &&
+        line.serviceTo &&
+        `Periodo: ${formatDate(line.serviceFrom)} – ${formatDate(line.serviceTo)}`,
     ].filter(Boolean) as string[];
     if (extra.length) {
       const text = pdf.splitTextToSize(pdfText(extra.join("\n")), cols.qty - cols.concept - 14) as string[];
@@ -95,10 +102,14 @@ function render(doc: SalesDocument): jsPDF {
       y += text.length * 4;
     }
     const quantity = String(line.quantity).replace(".", ",");
-    pdf.text(showUnits && line.unit ? `${quantity} ${line.unit}` : quantity, cols.qty, y, { align: "right" });
-    pdf.text(eur(line.unitPrice), cols.price, y, { align: "right" });
-    pdf.text(eur(lineBase(line)), cols.amount, y, { align: "right" });
-    if (line.discount) {
+    pdf.text(options.showProductUnits && line.unit ? `${quantity} ${line.unit}` : quantity, qtyX, y, {
+      align: "right",
+    });
+    if (options.showPrices) {
+      pdf.text(eur(line.unitPrice), cols.price, y, { align: "right" });
+      pdf.text(eur(lineBase(line)), cols.amount, y, { align: "right" });
+    }
+    if (options.showPrices && line.discount) {
       pdf.setFontSize(8).setTextColor(110);
       pdf.text(`Descuento ${percent(line.discount)}`, cols.concept, y + concept.length * 5);
       pdf.setFontSize(10).setTextColor(20);
@@ -116,15 +127,22 @@ function render(doc: SalesDocument): jsPDF {
     pdf.text(value, RIGHT, y, { align: "right" });
     y += bold ? 8 : 6;
   };
-  row("Base imponible", eur(totals.base));
-  for (const r of totals.vatBreakdown) row(`IVA ${percent(r.rate)}`, eur(r.vat));
-  if (totals.surcharge) row("Recargo de equivalencia", eur(totals.surcharge));
-  if (totals.withholding)
-    row(`Retención IRPF ${percent(WITHHOLDING_RATES[doc.withholding])}`, eur(-totals.withholding));
-  if (totals.supplies) row("Suplidos", eur(totals.supplies));
-  pdf.setDrawColor(180).line(110, y - 3, RIGHT, y - 3);
-  y += 3;
-  row("Total", eur(totals.total), true);
+  if (options.showPrices && options.showTaxes) {
+    row("Base imponible", eur(totals.base));
+    for (const r of totals.vatBreakdown) if (r.vat || !options.hideZeroTaxes) row(`IVA ${percent(r.rate)}`, eur(r.vat));
+    if (totals.surcharge) row("Recargo de equivalencia", eur(totals.surcharge));
+    if (totals.withholding)
+      row(`Retención IRPF ${percent(WITHHOLDING_RATES[doc.withholding])}`, eur(-totals.withholding));
+    if (totals.supplies) row("Suplidos", eur(totals.supplies));
+    pdf.setDrawColor(180).line(110, y - 3, RIGHT, y - 3);
+    y += 3;
+    row("Total", eur(totals.total), true);
+  } else if (options.showPrices) {
+    // Taxes hidden: the total is the taxable base
+    pdf.setDrawColor(180).line(110, y - 3, RIGHT, y - 3);
+    y += 3;
+    row("Total (impuestos no incluidos)", eur(totals.base), true);
+  }
 
   // Legal mentions and notes
   const notes: string[] = [];
@@ -136,6 +154,17 @@ function render(doc: SalesDocument): jsPDF {
     y += 6;
     pdf.setFont("helvetica", "normal").setFontSize(9).setTextColor(90);
     pdf.text(pdf.splitTextToSize(notes.join("\n"), RIGHT - MARGIN) as string[], MARGIN, y);
+  }
+
+  // Fixed footer, up the left margin of every page
+  const footer = pdfText(options.footer.trim());
+  if (footer) {
+    pdf.setFont("helvetica", "normal").setFontSize(7).setTextColor(130);
+    const lines = pdf.splitTextToSize(footer, 260) as string[];
+    for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
+      pdf.setPage(page);
+      lines.forEach((line, i) => pdf.text(line, 8 + i * 3, 285, { angle: 90 }));
+    }
   }
 
   return pdf;
