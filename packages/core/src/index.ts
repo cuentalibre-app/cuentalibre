@@ -15,3 +15,4 @@ export * from "./informative-returns";
 export * from "./working-hours";
 export * from "./assets";
 export * from "./transfer";
+export * from "./catalog";

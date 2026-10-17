@@ -6,6 +6,7 @@ import {
   CreditCard,
   FileSignature,
   Landmark,
+  Package,
   Percent,
   ReceiptText,
   ShieldCheck,
@@ -14,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { formatEUR } from "@fiscalia/ui/lib/format";
+import { CATALOG_SETTINGS_PATH } from "@/features/catalog/catalog-model";
 import {
   ACCOUNTS_PATH,
   BUSINESS_PATH,
@@ -116,6 +118,12 @@ export function SettingsPage() {
           description: "Series de numeración, plantilla del PDF, logotipo y textos.",
           to: INVOICE_SETTINGS_PATH,
           icon: ReceiptText,
+        },
+        {
+          title: "Catálogo",
+          description: "Campos personalizados, productos en las facturas y control de stock.",
+          to: CATALOG_SETTINGS_PATH,
+          icon: Package,
         },
         {
           title: "Métodos de pago y cobro",

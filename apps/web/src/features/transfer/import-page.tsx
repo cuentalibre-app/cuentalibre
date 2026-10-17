@@ -173,7 +173,7 @@ export function ImportPage() {
   );
 }
 
-function DropZone({ file, onPick }: { file: File | null; onPick: (file: File | null) => void }) {
+export function DropZone({ file, onPick }: { file: File | null; onPick: (file: File | null) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   const drop = (e: DragEvent) => {

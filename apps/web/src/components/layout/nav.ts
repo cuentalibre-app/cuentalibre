@@ -104,6 +104,17 @@ export const mainNav: NavItem[] = [
     ],
   },
   {
+    label: "Catálogo",
+    to: "/catalogo",
+    icon: Package,
+    children: [
+      { label: "Productos", to: "/catalogo/productos" },
+      { label: "Regularizar stock", to: "/catalogo/regularizar-stock" },
+      { label: "Importar", to: "/catalogo/importar", separator: true },
+      { label: "Exportar", to: "/catalogo/exportar" },
+    ],
+  },
+  {
     label: "Informes",
     to: "/informes",
     icon: ChartColumn,
@@ -148,6 +159,6 @@ export const createActions: CreateAction[][] = [
   [
     { label: "Cliente", to: "/contactos/clientes/nuevo", icon: UserRound },
     { label: "Proveedor", to: "/contactos/proveedores/nuevo", icon: Building },
-    { label: "Producto", to: "/productos/nuevo", icon: Package },
+    { label: "Producto", to: "/catalogo/productos/nuevo", icon: Package },
   ],
 ];
