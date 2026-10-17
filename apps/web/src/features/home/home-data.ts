@@ -229,8 +229,6 @@ export function buildHomeData(
       .reduce((acc, e) => acc + e.amount, 0),
     economicallyDependent: isEconomicallyDependent(clients),
     collection: collectionStatus(periodInvoices),
-    /** Every unpaid invoice, whatever its date. */
-    pendingCollection: issued.filter((i) => i.status !== "paid").reduce((acc, i) => acc + i.total, 0),
   };
 }
 

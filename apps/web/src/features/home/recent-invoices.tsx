@@ -4,6 +4,7 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { formatDate, formatShortDate } from "@/lib/format";
+import { CollectionSummary } from "./collection-summary";
 import type { HomeData, InvoiceStatus } from "./home-data";
 
 const STATUS: Record<InvoiceStatus, { label: string; tone: BadgeProps["tone"] }> = {
@@ -66,12 +67,6 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
         </table>
       </div>
 
-      {/* Pinned to the bottom so the card can stretch to match the tax calendar beside it */}
-      <div className="mt-auto hidden items-center justify-between gap-3 border-t border-border bg-muted px-4 py-2.5 text-sm lg:flex">
-        <span className="text-muted-foreground">Total sin cobrar</span>
-        <span className="amount font-semibold">{formatEUR(data.pendingCollection)}</span>
-      </div>
-
       {/* Mobile: list */}
       <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
         {data.invoices.slice(0, 3).map((inv) => (
@@ -94,6 +89,12 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           </li>
         ))}
       </ul>
+
+      {/* Pinned to the bottom so the card can stretch to match the tax calendar beside it */}
+      <CollectionSummary
+        data={data}
+        className="mt-4 lg:mt-auto lg:border-t lg:border-border lg:bg-muted/40 lg:px-4 lg:py-3.5"
+      />
     </section>
   );
 }
