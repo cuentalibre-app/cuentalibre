@@ -1,0 +1,81 @@
+import { Input } from "@fiscalia/ui/components/input";
+import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import {
+  DEFAULT_CUSTOM_FIELD_NAMES,
+  contactSettingsStore,
+  useContactSettings,
+  type ContactSettings,
+} from "@/features/contacts/contact-settings-store";
+import { CheckField, Field, Section } from "@/features/sales/form-fields";
+import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
+
+/** Options for clients and suppliers: the names of the two free fields and the data autocomplete. */
+export function ContactSettingsPage() {
+  const saved = useContactSettings();
+  const { draft, set, dirty, justSaved, markSaved } = useDraft<ContactSettings>(saved);
+  const setName = (index: 0 | 1, value: string) =>
+    set(
+      "customFieldNames",
+      (index === 0 ? [value, draft.customFieldNames[1]] : [draft.customFieldNames[0], value]) as [string, string],
+    );
+
+  const save = () => {
+    contactSettingsStore.update({
+      ...draft,
+      customFieldNames: [draft.customFieldNames[0].trim(), draft.customFieldNames[1].trim()],
+    });
+    markSaved();
+  };
+
+  return (
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+        <SettingsHeader title="Clientes y proveedores" description="Opciones de las fichas de clientes y proveedores.">
+          <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />
+        </SettingsHeader>
+
+        <Section title="Campos personalizados" index={0}>
+          <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
+            <p className="m-0">
+              Define dos campos propios para cada cliente o proveedor. Escribe aquí su nombre y lo verás en la ficha
+              cada vez que la consultes o la modifiques.
+            </p>
+            <p className="m-0">
+              Por ejemplo, llama «Segundo email» al personalizado 1 para guardar un dato que Fiscalia no pide por
+              defecto.
+            </p>
+          </div>
+          <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
+            {([0, 1] as const).map((i) => (
+              <Field key={i} label={`Nombre del campo personalizado ${i + 1}`}>
+                {(p) => (
+                  <Input
+                    {...p}
+                    value={draft.customFieldNames[i]}
+                    placeholder={DEFAULT_CUSTOM_FIELD_NAMES[i]}
+                    maxLength={40}
+                    onChange={(e) => setName(i, e.target.value)}
+                  />
+                )}
+              </Field>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Autocompletar datos de clientes y proveedores" index={1}>
+          <p className="m-0 max-w-3xl text-muted-foreground">
+            Al crear un cliente o proveedor, cuando hayas escrito su NIF completo o tres caracteres o más de su nombre o
+            razón social, Fiscalia puede consultar bases de datos externas de empresas y completar sus datos para
+            ahorrarte el tiempo de escribirlos. Si no te gusta, desmarca la casilla.
+          </p>
+          <CheckField
+            label="Activar el autocompletar para clientes y proveedores"
+            hint="La consulta llegará con el servidor de Fiscalia; por ahora se guarda tu preferencia."
+            checked={draft.autocomplete}
+            onChange={(v) => set("autocomplete", v)}
+          />
+        </Section>
+      </div>
+    </TooltipProvider>
+  );
+}

@@ -1,30 +1,58 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import {
+  ArrowDownWideNarrow,
+  BookText,
   Building2,
   ChevronRight,
+  ClipboardList,
   CreditCard,
   FileSignature,
+  FilePen,
+  FileText,
+  FileUp,
+  KeyRound,
   Landmark,
+  Mail,
   Package,
   Percent,
   ReceiptText,
   ShieldCheck,
   Tags,
+  UserRound,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
+import { Badge } from "@fiscalia/ui/components/badge";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { CATALOG_SETTINGS_PATH } from "@/features/catalog/catalog-model";
+import { isVerifactuMandatory, verifactuMandatoryFrom } from "@fiscalia/core";
+import { IMPORT_PATH } from "@/features/transfer/transfer-model";
+import { formatDate } from "@/lib/format";
+import { useCompliance } from "./compliance-store";
 import {
+  ACCESS_PATH,
   ACCOUNTS_PATH,
   BUSINESS_PATH,
   businessName,
+  CERTIFICATES_PATH,
+  CONTACT_SETTINGS_PATH,
+  DELIVERY_NOTE_SETTINGS_PATH,
+  DRAFT_SETTINGS_PATH,
+  EMAIL_SETTINGS_PATH,
   incomeTaxMethodLabel,
   INVOICE_SETTINGS_PATH,
+  LEDGER_ACCOUNTS_PATH,
   PAYMENT_METHODS_PATH,
+  PREFERENCES_PATH,
+  PROFILE_PATH,
+  QUOTE_SETTINGS_PATH,
+  TAGS_PATH,
   TAX_SETTINGS_PATH,
+  USERS_PATH,
   vatRegimeLabel,
+  VERIFACTU_PATH,
 } from "./settings-model";
 import { useSettings } from "./settings-store";
 
@@ -37,29 +65,13 @@ interface Entry {
   summary?: string;
 }
 
-interface Soon {
-  title: string;
-  description: string;
-  icon: LucideIcon;
-}
-
-const SOON: Soon[] = [
-  { title: "Sistema VERI*FACTU", description: "Firma y envío de las facturas a la AEAT.", icon: ShieldCheck },
-  {
-    title: "Certificados digitales",
-    description: "Tu certificado para presentar modelos y firmar.",
-    icon: FileSignature,
-  },
-  { title: "Gestión de etiquetas", description: "Etiquetas para clasificar facturas y gastos.", icon: Tags },
-  { title: "Usuarios", description: "Da acceso a tu gestor o a tu equipo.", icon: Users },
-];
-
 function EntryCard({ entry, index }: { entry: Entry; index: number }) {
   return (
     <Link
       to={entry.to}
       className="group flex min-w-0 animate-rise-in items-start gap-3.5 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.99]"
-      style={{ "--i": index } as CSSProperties}
+      // Cap the stagger so the last cards of a long hub don't lag
+      style={{ "--i": Math.min(index, 6) } as CSSProperties}
     >
       <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
         <entry.icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
@@ -77,6 +89,52 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
   );
 }
 
+/** VERI*FACTU gets a section of its own: it's new, mandatory and decides how every invoice is issued. */
+function VerifactuCard() {
+  const { verifactu } = useCompliance();
+  const { profile } = useSettings();
+  const exempt = verifactu.system === "exempt";
+  const mandatoryFrom = verifactuMandatoryFrom(profile.kind);
+  const mandatory = isVerifactuMandatory(profile.kind, new Date().toISOString().slice(0, 10));
+  return (
+    <Link
+      to={VERIFACTU_PATH}
+      className="group flex min-w-0 animate-rise-in flex-col gap-4 rounded-xl border border-primary/30 bg-primary-soft/40 p-5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-primary-soft active:scale-[0.995] sm:flex-row sm:items-center"
+    >
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <ShieldCheck className="size-6" strokeWidth={1.8} aria-hidden="true" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-lg font-semibold">Sistema VERI*FACTU</span>
+          <Badge tone="primary">
+            {mandatory ? "Obligatorio" : `Obligatorio desde el ${formatDate(mandatoryFrom)}`}
+          </Badge>
+        </span>
+        <span className="text-sm text-muted-foreground">
+          El sistema de facturación con el que se registran tus facturas en la AEAT.{" "}
+          {mandatory
+            ? "Revisa que esté bien configurado antes de emitir."
+            : "Hasta entonces puedes seguir en Exento o activarlo ya para probarlo."}
+        </span>
+        <span className="mt-1.5 flex flex-wrap items-center gap-2 text-sm">
+          <Badge tone={exempt ? "neutral" : "success"}>{exempt ? "Exento" : "VERI*FACTU activo"}</Badge>
+          {verifactu.startDate && <span>Desde el {formatDate(verifactu.startDate)}</span>}
+          {!exempt && (
+            <Badge tone={verifactu.validatedByAeat ? "success" : "warning"}>
+              {verifactu.validatedByAeat ? "NIF validado por la AEAT" : "NIF pendiente de validar"}
+            </Badge>
+          )}
+        </span>
+      </span>
+      <ChevronRight
+        className="hidden size-5 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 sm:block"
+        aria-hidden="true"
+      />
+    </Link>
+  );
+}
+
 export function SettingsPage() {
   const { profile, tax, accounts, paymentMethods } = useSettings();
   const activeAccounts = accounts.filter((a) => a.active).length;
@@ -85,7 +143,24 @@ export function SettingsPage() {
 
   const groups: { title: string; entries: Entry[] }[] = [
     {
-      title: "Tu negocio",
+      title: "Ajustes de usuario",
+      entries: [
+        {
+          title: "Datos personales",
+          description: "Tu nombre, notificaciones, idioma y zona horaria.",
+          to: PROFILE_PATH,
+          icon: UserRound,
+        },
+        {
+          title: "Credenciales de acceso",
+          description: "Cómo entras en Fiscalia: contraseña, código y cuentas vinculadas.",
+          to: ACCESS_PATH,
+          icon: KeyRound,
+        },
+      ],
+    },
+    {
+      title: "Ajustes de empresa",
       entries: [
         {
           title: "Datos de la empresa",
@@ -93,6 +168,30 @@ export function SettingsPage() {
           to: BUSINESS_PATH,
           icon: Building2,
           summary: `${businessName(profile)} · ${profile.taxId}`,
+        },
+        {
+          title: "Facturas",
+          description: "Series de numeración, plantilla del PDF, logotipo y textos.",
+          to: INVOICE_SETTINGS_PATH,
+          icon: ReceiptText,
+        },
+        {
+          title: "Facturas borrador",
+          description: "Series de numeración y plantilla de las facturas borrador.",
+          to: DRAFT_SETTINGS_PATH,
+          icon: FilePen,
+        },
+        {
+          title: "Presupuestos",
+          description: "Series de numeración, plantilla y firma de los presupuestos.",
+          to: QUOTE_SETTINGS_PATH,
+          icon: FileText,
+        },
+        {
+          title: "Albaranes",
+          description: "Series de numeración, plantilla y firma de los albaranes.",
+          to: DELIVERY_NOTE_SETTINGS_PATH,
+          icon: ClipboardList,
         },
         {
           title: "Impuestos",
@@ -108,22 +207,11 @@ export function SettingsPage() {
             .filter(Boolean)
             .join(" · "),
         },
-      ],
-    },
-    {
-      title: "Facturación y cobros",
-      entries: [
         {
-          title: "Facturas",
-          description: "Series de numeración, plantilla del PDF, logotipo y textos.",
-          to: INVOICE_SETTINGS_PATH,
-          icon: ReceiptText,
-        },
-        {
-          title: "Catálogo",
-          description: "Campos personalizados, productos en las facturas y control de stock.",
-          to: CATALOG_SETTINGS_PATH,
-          icon: Package,
+          title: "Usuarios",
+          description: "Las personas y gestores con acceso a tu empresa.",
+          to: USERS_PATH,
+          icon: Users,
         },
         {
           title: "Métodos de pago y cobro",
@@ -139,6 +227,59 @@ export function SettingsPage() {
           icon: Landmark,
           summary: `${activeAccounts} ${activeAccounts === 1 ? "cuenta activa" : "cuentas activas"}`,
         },
+        {
+          title: "Cuentas contables",
+          description: "Los números de cuenta para pasar tu contabilidad a tu gestoría.",
+          to: LEDGER_ACCOUNTS_PATH,
+          icon: BookText,
+        },
+        {
+          title: "Certificados digitales",
+          description: "Sube tu certificado digital y configura la firma electrónica.",
+          to: CERTIFICATES_PATH,
+          icon: FileSignature,
+        },
+        {
+          title: "Clientes y proveedores",
+          description: "Campos personalizados y autocompletado de sus datos.",
+          to: CONTACT_SETTINGS_PATH,
+          icon: UsersRound,
+        },
+        {
+          title: "Catálogo",
+          description: "Campos personalizados, productos en las facturas y control de stock.",
+          to: CATALOG_SETTINGS_PATH,
+          icon: Package,
+        },
+        {
+          title: "Etiquetas",
+          description: "Etiquetas para clasificar facturas, presupuestos, albaranes y gastos.",
+          to: TAGS_PATH,
+          icon: Tags,
+        },
+      ],
+    },
+    {
+      title: "Otras opciones",
+      entries: [
+        {
+          title: "Ordenación y filtrado",
+          description: "Cómo se muestran y filtran de entrada tus listados.",
+          to: PREFERENCES_PATH,
+          icon: ArrowDownWideNarrow,
+        },
+        {
+          title: "Configuración de correo",
+          description: "Desde qué dirección se envían tus facturas por email.",
+          to: EMAIL_SETTINGS_PATH,
+          icon: Mail,
+        },
+        {
+          title: "Importaciones",
+          description: "Importa clientes, proveedores, productos y facturas desde Excel.",
+          to: IMPORT_PATH,
+          icon: FileUp,
+        },
       ],
     },
   ];
@@ -151,6 +292,13 @@ export function SettingsPage() {
         <p className="m-0 text-sm text-muted-foreground">Los datos de tu negocio y cómo trabaja Fiscalia con ellos.</p>
       </header>
 
+      <section aria-label="Facturación verificable" className="flex flex-col gap-3">
+        <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Facturación verificable
+        </h2>
+        <VerifactuCard />
+      </section>
+
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title} className="flex flex-col gap-3">
           <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">{group.title}</h2>
@@ -161,24 +309,6 @@ export function SettingsPage() {
           </div>
         </section>
       ))}
-
-      <section aria-label="Próximamente" className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between">
-          <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">Más ajustes</h2>
-          <span className="text-xs text-muted-foreground">Disponibles próximamente</span>
-        </div>
-        <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4">
-          {SOON.map((s) => (
-            <li key={s.title} className="flex items-start gap-3 rounded-xl border border-dashed border-border p-4">
-              <s.icon className="mt-0.5 size-5 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-              <span className="flex flex-col gap-0.5">
-                <span className="font-medium">{s.title}</span>
-                <span className="text-sm text-muted-foreground">{s.description}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

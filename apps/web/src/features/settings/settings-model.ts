@@ -18,6 +18,19 @@ export const TAX_SETTINGS_PATH = "/configuracion/impuestos";
 export const ACCOUNTS_PATH = "/configuracion/cuentas";
 export const PAYMENT_METHODS_PATH = "/configuracion/metodos-de-pago";
 export const INVOICE_SETTINGS_PATH = "/configuracion/facturas";
+export const PROFILE_PATH = "/configuracion/datos-personales";
+export const ACCESS_PATH = "/configuracion/credenciales";
+export const VERIFACTU_PATH = "/configuracion/verifactu";
+export const DRAFT_SETTINGS_PATH = "/configuracion/facturas-borrador";
+export const QUOTE_SETTINGS_PATH = "/configuracion/presupuestos";
+export const DELIVERY_NOTE_SETTINGS_PATH = "/configuracion/albaranes";
+export const LEDGER_ACCOUNTS_PATH = "/configuracion/cuentas-contables";
+export const CERTIFICATES_PATH = "/configuracion/certificados";
+export const CONTACT_SETTINGS_PATH = "/configuracion/clientes-proveedores";
+export const USERS_PATH = "/configuracion/usuarios";
+export const TAGS_PATH = "/configuracion/etiquetas";
+export const PREFERENCES_PATH = "/configuracion/ordenacion-y-filtrado";
+export const EMAIL_SETTINGS_PATH = "/configuracion/correo";
 
 /* ───────────────────────────── Business profile ───────────────────────────── */
 
