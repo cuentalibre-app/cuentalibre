@@ -100,6 +100,23 @@ describe("model303", () => {
     expect(r.result).toBe(0);
   });
 
+  it("deducts the VAT of investment goods in their own boxes", () => {
+    const r = model303(
+      books({
+        purchases: [
+          purchase("2026-07-12", 1_000, { investment: true }),
+          purchase("2026-07-13", 500, { investment: true, operation: "import" }),
+          purchase("2026-07-14", 200, { investment: true, operation: "intraEu" }),
+        ],
+      }),
+      2026,
+      3,
+    );
+    expect(r.boxes).toMatchObject({ "30": 1_000, "31": 210, "34": 500, "35": 105, "38": 200, "39": 42 });
+    expect(r.boxes["28"] ?? 0).toBe(0);
+    expect(r.boxes["45"]).toBe(357);
+  });
+
   it("deducts only the deductible share of VAT", () => {
     const r = model303(books({ purchases: [purchase("2026-07-12", 100, { vatShare: 0.5 })] }), 2026, 3);
     expect(r.boxes).toMatchObject({ "28": 50, "29": 10.5 });

@@ -1,10 +1,16 @@
 import {
+  ASSET_CATEGORIES,
   WITHHOLDING_RATES,
+  amortizableValue,
   amountOutstanding,
   deductibleAmounts,
   invoiceTotals,
   isOverdue,
   paymentStatus,
+  type AmortizationMethod,
+  type AmortizedAsset,
+  type AssetCategory,
+  type AssetCondition,
   type InvoiceTotals,
   type PurchaseOperationType,
 } from "@fiscalia/core";
@@ -16,6 +22,8 @@ import type { OptionGroup } from "@/features/sales/sales-model";
 
 export const PURCHASES_PATH = "/compras/facturas";
 export const NEW_PURCHASE_PATH = "/compras/facturas/nueva";
+export const ASSETS_PATH = "/compras/bienes-de-inversion";
+export const NEW_ASSET_PATH = "/compras/bienes-de-inversion/nuevo";
 
 /** What the list shows: the payment status, with "overdue" derived from the due date. */
 export type PurchaseStatus = "pending" | "partial" | "paid" | "overdue";
@@ -50,10 +58,82 @@ export function outstanding(doc: PurchaseInvoice): number {
   );
 }
 
-/** Deductible base and VAT after the imputation percentages. */
+/**
+ * Deductible base and VAT after the imputation percentages. An investment good's VAT is
+ * deducted at once, but its base is no expense: it counts through its amortization.
+ */
 export function deductible(doc: PurchaseInvoice) {
-  return deductibleAmounts(purchaseTotals(doc), doc.imputation, doc.vatImputation);
+  const amounts = deductibleAmounts(purchaseTotals(doc), doc.imputation, doc.vatImputation);
+  return doc.asset ? { ...amounts, base: 0 } : amounts;
 }
+
+export const isAsset = (doc: Pick<PurchaseInvoice, "asset">) => Boolean(doc.asset);
+
+/** Date an investment good starts being used: the operation date, or the invoice's. */
+export const assetStartsOn = (doc: Pick<PurchaseInvoice, "operationOn" | "issuedOn">) =>
+  doc.operationOn ?? doc.issuedOn;
+
+/** The amortization inputs of an investment good. Only call it on invoices with `asset`. */
+export function assetOf(doc: PurchaseInvoice): AmortizedAsset {
+  const totals = purchaseTotals(doc);
+  return {
+    value: amortizableValue(totals.base, totals.vat, doc.imputation, doc.vatImputation),
+    startsOn: assetStartsOn(doc),
+    plan: doc.asset!,
+  };
+}
+
+/** Labels of the simplified amortization table, in its order. */
+export const ASSET_CATEGORY_LABELS: Record<AssetCategory, string> = {
+  buildings: "Edificios y otras construcciones",
+  installations: "Instalaciones, mobiliario y enseres",
+  machinery: "Maquinaria",
+  transport: "Elementos de transporte",
+  itEquipment: "Equipos para el tratamiento de la información y sistemas y programas informáticos",
+  software: "Sistemas y programas de información",
+  tools: "Útiles y herramientas",
+  cattle: "Ganado vacuno, porcino y ovino",
+  horses: "Ganado equino, frutales no cítricos",
+  citrus: "Frutales cítricos, viñedos",
+  olives: "Olivar",
+  research: "Gastos de investigación",
+  development: "Desarrollo",
+  concessions: "Concesiones administrativas",
+  industrialProperty: "Propiedad industrial",
+  goodwill: "Fondo de comercio",
+  leaseRights: "Derechos de traspaso",
+};
+
+export const ASSET_CATEGORY_ORDER = Object.keys(ASSET_CATEGORIES) as AssetCategory[];
+
+export const ASSET_CONDITIONS: { value: AssetCondition; label: string; hint: string }[] = [
+  { value: "new", label: "Nuevo", hint: "Se amortiza con los coeficientes de la tabla." },
+  {
+    value: "used",
+    label: "Segunda mano",
+    hint: "Puedes aplicar hasta el doble del coeficiente máximo de la tabla.",
+  },
+  {
+    value: "accelerated",
+    label: "Amortización acelerada",
+    hint: "Para empresas de reducida dimensión: hasta el doble del coeficiente máximo.",
+  },
+  {
+    value: "lowValue",
+    label: "Bienes de escaso valor",
+    hint: "Elementos de hasta 300 € cada uno (25.000 € al año): se amortizan del todo el año de compra.",
+  },
+  {
+    value: "free",
+    label: "Libertad de amortización",
+    hint: "Casos que permite la ley (I+D, creación de empleo…): se amortiza del todo el año de compra.",
+  },
+];
+
+export const AMORTIZATION_METHODS: { value: AmortizationMethod; label: string }[] = [
+  { value: "rate", label: "Por coeficiente (valor de amortización anual)" },
+  { value: "years", label: "Por período (número de años)" },
+];
 
 export function supplierOf(doc: Pick<PurchaseInvoice, "supplierId">): Contact {
   return (

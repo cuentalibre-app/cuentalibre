@@ -1,10 +1,11 @@
 import {
+  Armchair,
   Building,
   CalendarCheck,
   Camera,
   ChartColumn,
   ClipboardList,
-  Download,
+  Clock,
   FileText,
   Package,
   Receipt,
@@ -14,7 +15,6 @@ import {
   Percent,
   ReceiptText,
   ShoppingBag,
-  Upload,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -25,6 +25,8 @@ export interface NavLeaf {
   label: string;
   to: string;
   badge?: BadgeKey;
+  /** Draws a divider above the leaf, splitting a group's records from its tools. */
+  separator?: boolean;
 }
 
 export interface NavItem extends NavLeaf {
@@ -32,6 +34,12 @@ export interface NavItem extends NavLeaf {
   /** Items with children render as a collapsible group; `to` is then the group's base path. */
   children?: NavLeaf[];
 }
+
+/** Export and import cover sales and purchases alike, so both groups list them, as in Contasimple. */
+const transferLeaves: NavLeaf[] = [
+  { label: "Exportar", to: "/exportar", separator: true },
+  { label: "Importar", to: "/importar" },
+];
 
 export const mainNav: NavItem[] = [
   { label: "Inicio", to: "/", icon: LayoutGrid },
@@ -44,6 +52,7 @@ export const mainNav: NavItem[] = [
       { label: "Borradores", to: "/ventas/borradores", badge: "drafts" },
       { label: "Albaranes", to: "/ventas/albaranes" },
       { label: "Presupuestos", to: "/ventas/presupuestos" },
+      ...transferLeaves,
     ],
   },
   {
@@ -52,7 +61,9 @@ export const mainNav: NavItem[] = [
     icon: ShoppingBag,
     children: [
       { label: "Facturas recibidas", to: "/compras/facturas" },
+      { label: "Bienes de inversión", to: "/compras/bienes-de-inversion" },
       { label: "Gastos", to: "/compras/gastos" },
+      ...transferLeaves,
     ],
   },
   {
@@ -99,19 +110,24 @@ export const mainNav: NavItem[] = [
     children: [
       { label: "Resumen", to: "/informes" },
       { label: "Pérdidas y ganancias", to: "/informes/perdidas-y-ganancias" },
+      { label: "Informes de empresas", to: "/informes/empresas" },
+      { label: "Horas trabajadas", to: "/informes/horas-trabajadas" },
     ],
   },
 ];
 
 export const secondaryNav: NavItem[] = [
-  { label: "Exportar", to: "/exportar", icon: Download },
-  { label: "Importar", to: "/importar", icon: Upload },
   { label: "Cierre de trimestres", to: "/cierre-trimestre", icon: CalendarCheck },
+  { label: "Jornada laboral", to: "/jornada", icon: Clock },
   { label: "Configuración", to: "/configuracion", icon: Settings },
 ];
 
 /** Every leaf route, used to register placeholder pages. */
-export const allNavLeaves: NavLeaf[] = [...mainNav.flatMap((item) => item.children ?? [item]), ...secondaryNav];
+export const allNavLeaves: NavLeaf[] = [
+  ...new Map(
+    [...mainNav.flatMap((item) => item.children ?? [item]), ...secondaryNav].map((leaf) => [leaf.to, leaf]),
+  ).values(),
+];
 
 export interface CreateAction {
   label: string;
@@ -125,6 +141,7 @@ export const createActions: CreateAction[][] = [
     { label: "Factura emitida", to: "/ventas/facturas/nueva", icon: ReceiptText },
     { label: "Factura recibida", to: "/compras/facturas/nueva", icon: Receipt },
     { label: "Gasto", to: "/compras/gastos/nuevo", icon: Camera },
+    { label: "Bien de inversión", to: "/compras/bienes-de-inversion/nuevo", icon: Armchair },
     { label: "Albarán", to: "/ventas/albaranes/nuevo", icon: ClipboardList },
     { label: "Presupuesto", to: "/ventas/presupuestos/nuevo", icon: FileText },
   ],
