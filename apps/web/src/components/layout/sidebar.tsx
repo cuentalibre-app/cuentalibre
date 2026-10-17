@@ -1,4 +1,4 @@
-import { useState, type ComponentProps, type ReactNode } from "react";
+import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react";
 import { Button } from "@fiscalia/ui/components/button";
@@ -6,6 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@fiscalia/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
@@ -95,16 +96,18 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
       <DropdownMenuContent side="right" align="start" sideOffset={12} {...contentProps}>
         <div className="px-3 pt-1.5 pb-1 text-xs font-semibold text-muted-foreground">{item.label}</div>
         {item.children!.map((child) => (
-          <DropdownMenuItem
-            key={child.to}
-            onSelect={() => navigate(child.to)}
-            className={cn("justify-between", isChildCurrent(item, child, pathname) && "bg-muted")}
-          >
-            {child.label}
-            {child.badge && badges[child.badge] > 0 && (
-              <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
-            )}
-          </DropdownMenuItem>
+          <Fragment key={child.to}>
+            {child.separator && <DropdownMenuSeparator />}
+            <DropdownMenuItem
+              onSelect={() => navigate(child.to)}
+              className={cn("justify-between", isChildCurrent(item, child, pathname) && "bg-muted")}
+            >
+              {child.label}
+              {child.badge && badges[child.badge] > 0 && (
+                <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
+              )}
+            </DropdownMenuItem>
+          </Fragment>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -152,17 +155,19 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
         <div className="min-h-0 overflow-hidden">
           <div className="flex flex-col gap-0.5 pt-1 pl-8">
             {item.children!.map((child) => (
-              <NavLink
-                key={child.to}
-                to={child.to}
-                end={child.to === item.to}
-                className={({ isActive }) => cn(subItemClass, isActive && activeClass)}
-              >
-                {child.label}
-                {child.badge && badges[child.badge] > 0 && (
-                  <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
-                )}
-              </NavLink>
+              <Fragment key={child.to}>
+                {child.separator && <div className="mx-3 my-1.5 h-px shrink-0 bg-sidebar-border" />}
+                <NavLink
+                  to={child.to}
+                  end={child.to === item.to}
+                  className={({ isActive }) => cn(subItemClass, isActive && activeClass)}
+                >
+                  {child.label}
+                  {child.badge && badges[child.badge] > 0 && (
+                    <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
+                  )}
+                </NavLink>
+              </Fragment>
             ))}
           </div>
         </div>

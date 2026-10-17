@@ -52,6 +52,8 @@ export interface TaxablePurchase {
   creditNote: boolean;
   /** Goods rather than services: form 390 reports intra-EU acquisitions of each apart. */
   goods: boolean;
+  /** Investment good: its VAT is deducted in the boxes for investment goods. */
+  investment?: boolean;
   /**
    * Base and VAT per rate as invoiced. In intra-EU and reverse-charge purchases the supplier
    * charges no VAT and the buyer self-assesses it; lines at 0 % are taken at the general rate.
@@ -203,22 +205,28 @@ export function model303(
       b.add(baseBox, sumBases(deductible));
       b.add(vatBox, sumVat(deductible));
     };
+    // Investment goods have their own deduction boxes, right after current goods and services
+    const investment = Boolean(purchase.investment);
     switch (purchase.operation) {
       case "intraEu":
         b.add("10", sumBases(charged));
         b.add("11", sumVat(charged));
-        deduct("36", "37");
+        if (investment) deduct("38", "39");
+        else deduct("36", "37");
         break;
       case "reverseCharge":
         b.add("12", sumBases(charged));
         b.add("13", sumVat(charged));
-        deduct("28", "29");
+        if (investment) deduct("30", "31");
+        else deduct("28", "29");
         break;
       case "import":
-        deduct("32", "33");
+        if (investment) deduct("34", "35");
+        else deduct("32", "33");
         break;
       case "national":
         if (purchase.creditNote) deduct("40", "41");
+        else if (investment) deduct("30", "31");
         else deduct("28", "29");
         break;
       case "exempt":
@@ -304,6 +312,9 @@ const DEDUCT_DOMESTIC_390 = rates(null, ["190", "191"], ["603", "604"], ["605", 
 const DEDUCT_IMPORTS_390 = rates(null, ["202", "203"], ["619", "620"], ["621", "622"]);
 const DEDUCT_INTRA_GOODS_390 = rates(null, ["214", "215"], ["627", "628"], ["629", "630"]);
 const DEDUCT_INTRA_SERVICES_390 = rates(null, ["587", "588"], ["635", "636"], ["637", "638"]);
+const DEDUCT_DOMESTIC_INVESTMENT_390 = rates(null, ["196", "197"], ["611", "612"], ["613", "614"]);
+const DEDUCT_IMPORTS_INVESTMENT_390 = rates(null, ["208", "209"], ["623", "624"], ["625", "626"]);
+const DEDUCT_INTRA_INVESTMENT_390 = rates(null, ["220", "221"], ["631", "632"], ["633", "634"]);
 
 /** Rate printed next to each pair of boxes of form 390, for display. */
 export const RATE_BOXES_390 = {
@@ -314,6 +325,9 @@ export const RATE_BOXES_390 = {
   deductImports: DEDUCT_IMPORTS_390,
   deductIntraGoods: DEDUCT_INTRA_GOODS_390,
   deductIntraServices: DEDUCT_INTRA_SERVICES_390,
+  deductDomesticInvestment: DEDUCT_DOMESTIC_INVESTMENT_390,
+  deductImportsInvestment: DEDUCT_IMPORTS_INVESTMENT_390,
+  deductIntraInvestment: DEDUCT_INTRA_INVESTMENT_390,
 };
 
 export interface Model390 {
@@ -380,24 +394,33 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
   for (const purchase of purchases) {
     const charged = selfAssessed(purchase);
     const deductible = deductiblePart(purchase);
+    const investment = Boolean(purchase.investment);
+    const domestic = investment ? DEDUCT_DOMESTIC_INVESTMENT_390 : DEDUCT_DOMESTIC_390;
     switch (purchase.operation) {
       case "intraEu":
         byRate(purchase.goods ? INTRA_GOODS_390 : INTRA_SERVICES_390, charged);
-        byRate(purchase.goods ? DEDUCT_INTRA_GOODS_390 : DEDUCT_INTRA_SERVICES_390, deductible);
+        byRate(
+          investment
+            ? DEDUCT_INTRA_INVESTMENT_390
+            : purchase.goods
+              ? DEDUCT_INTRA_GOODS_390
+              : DEDUCT_INTRA_SERVICES_390,
+          deductible,
+        );
         break;
       case "reverseCharge":
         b.add("27", sumBases(charged));
         b.add("28", sumVat(charged));
-        byRate(DEDUCT_DOMESTIC_390, deductible);
+        byRate(domestic, deductible);
         break;
       case "import":
-        byRate(DEDUCT_IMPORTS_390, deductible);
+        byRate(investment ? DEDUCT_IMPORTS_INVESTMENT_390 : DEDUCT_IMPORTS_390, deductible);
         break;
       case "national":
         if (purchase.creditNote) {
           b.add("639", sumBases(deductible));
           b.add("62", sumVat(deductible));
-        } else byRate(DEDUCT_DOMESTIC_390, deductible);
+        } else byRate(domestic, deductible);
         break;
       case "exempt":
       case "notSubject":
@@ -419,6 +442,9 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
     ...pairs(DEDUCT_IMPORTS_390),
     ...pairs(DEDUCT_INTRA_GOODS_390),
     ...pairs(DEDUCT_INTRA_SERVICES_390),
+    ...pairs(DEDUCT_DOMESTIC_INVESTMENT_390),
+    ...pairs(DEDUCT_IMPORTS_INVESTMENT_390),
+    ...pairs(DEDUCT_INTRA_INVESTMENT_390),
     ["639", "62"],
   ];
   const v = b.values;

@@ -20,7 +20,7 @@ import {
 import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { deductible, supplierOf } from "@/features/purchases/purchases-model";
 import { clientOf, displayStatus, documentTotals } from "@/features/sales/sales-model";
-import { TAX_OPTIONS, toTaxBooks } from "@/features/taxes/tax-books";
+import { TAX_OPTIONS, amortizationExpenses, toTaxBooks } from "@/features/taxes/tax-books";
 import { settingsStore } from "@/features/settings/settings-store";
 import type { Expense } from "@/mocks/expenses";
 import type { PurchaseInvoice } from "@/mocks/purchases";
@@ -142,6 +142,10 @@ export function buildHomeData(
   const income = invoiceDocs.map((d): LedgerEntry => ({ date: d.issuedOn, ...documentTotals(d) }));
   const expenses = [
     ...purchases.map((p) => ({ supplier: supplierOf(p).name, date: p.bookedOn, ...deductible(p) })),
+    // Investment goods count through their quarterly amortization
+    ...purchases.flatMap((p) =>
+      amortizationExpenses(p).map((a) => ({ supplier: supplierOf(p).name, date: a.date, base: a.expense, vat: 0 })),
+    ),
     // Without an invoice there is no VAT to deduct. Only saved suppliers enter the ranking
     ...otherExpenses.map((e) => ({
       supplier: e.supplierId ? payeeOf(e)!.name : null,

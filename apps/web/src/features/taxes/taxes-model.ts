@@ -226,6 +226,15 @@ export const LAYOUT_390: FormSection[] = [
         ["4", "10", "21"],
       ),
       ...ratesRows(
+        "Operaciones interiores de bienes de inversión",
+        [
+          ["196", "197"],
+          ["611", "612"],
+          ["613", "614"],
+        ],
+        ["4", "10", "21"],
+      ),
+      ...ratesRows(
         "Importaciones de bienes corrientes",
         [
           ["202", "203"],
@@ -235,11 +244,29 @@ export const LAYOUT_390: FormSection[] = [
         ["4", "10", "21"],
       ),
       ...ratesRows(
+        "Importaciones de bienes de inversión",
+        [
+          ["208", "209"],
+          ["623", "624"],
+          ["625", "626"],
+        ],
+        ["4", "10", "21"],
+      ),
+      ...ratesRows(
         "Adquisiciones intracomunitarias de bienes corrientes",
         [
           ["214", "215"],
           ["627", "628"],
           ["629", "630"],
+        ],
+        ["4", "10", "21"],
+      ),
+      ...ratesRows(
+        "Adquisiciones intracomunitarias de bienes de inversión",
+        [
+          ["220", "221"],
+          ["631", "632"],
+          ["633", "634"],
         ],
         ["4", "10", "21"],
       ),

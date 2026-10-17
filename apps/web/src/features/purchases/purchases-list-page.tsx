@@ -19,7 +19,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { periodKey, periodMonths, toIsoDate, type Period } from "@fiscalia/core";
+import { amortizationBetween, periodKey, periodMonths, toIsoDate, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -48,11 +48,15 @@ import { availableYears } from "@/mocks/data";
 import type { Contact } from "@/mocks/contacts";
 import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import {
+  ASSETS_PATH,
+  ASSET_CATEGORY_LABELS,
   EXPENSE_TYPE_GROUPS,
+  NEW_ASSET_PATH,
   NEW_PURCHASE_PATH,
   PURCHASES_PATH,
   PURCHASE_STATUS,
   PURCHASE_STATUS_ORDER,
+  assetOf,
   deductible,
   expenseTypeLabel,
   outstanding,
@@ -65,6 +69,41 @@ import { purchasesStore, usePurchaseInvoices } from "./purchases-store";
 
 const ALL = "all";
 
+/** The list serves both received invoices and investment goods, which are received invoices too. */
+export type PurchaseListKind = "invoice" | "asset";
+
+const LIST_KINDS: Record<
+  PurchaseListKind,
+  { title: string; newLabel: string; newPath: string; export: string; empty: string; filtered: string }
+> = {
+  invoice: {
+    title: "Facturas recibidas",
+    newLabel: "Nueva factura recibida",
+    newPath: NEW_PURCHASE_PATH,
+    export: "facturas-recibidas",
+    empty: "No hay facturas recibidas en este periodo.",
+    filtered: "Ninguna factura coincide con los filtros.",
+  },
+  asset: {
+    title: "Bienes de inversión",
+    newLabel: "Nuevo bien de inversión",
+    newPath: NEW_ASSET_PATH,
+    export: "bienes-de-inversion",
+    empty: "No hay bienes de inversión comprados en este periodo.",
+    filtered: "Ningún bien de inversión coincide con los filtros.",
+  },
+};
+
+/** First and last day (ISO) of a period. */
+function periodBounds(period: Period): [string, string] {
+  const months = periodMonths(period);
+  const first = months[0]! + 1;
+  const last = months.at(-1)! + 1;
+  const lastDay = new Date(Date.UTC(period.year, last, 0)).getUTCDate();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return [`${period.year}-${pad(first)}-01`, `${period.year}-${pad(last)}-${pad(lastDay)}`];
+}
+
 interface Row {
   doc: PurchaseInvoice;
   supplier: Contact;
@@ -76,9 +115,12 @@ interface Row {
   outstanding: number;
   deductibleBase: number;
   deductibleVat: number;
+  /** Investment goods: amortization of the period shown. */
+  amortization: number;
 }
 
-type Amount = "base" | "vat" | "withholding" | "total" | "outstanding" | "deductibleBase" | "deductibleVat";
+type Amount =
+  "base" | "vat" | "withholding" | "total" | "outstanding" | "deductibleBase" | "deductibleVat" | "amortization";
 
 function inPeriod(isoDate: string, period: Period): boolean {
   const [year, month] = isoDate.split("-").map(Number);
@@ -131,33 +173,42 @@ function matches(r: Row, f: Filters): boolean {
   );
 }
 
-export function PurchasesListPage() {
+export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKind }) {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [filters, setFilters] = useState(NO_FILTERS);
   const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState(DEFAULT_SORT);
-  const invoices = usePurchaseInvoices();
+  const all = usePurchaseInvoices();
+  const invoices = useMemo(() => all.filter((d) => Boolean(d.asset) === (kind === "asset")), [all, kind]);
+  const copy = LIST_KINDS[kind];
 
-  const periodRows = useMemo(
-    () =>
-      invoices
-        .filter((d) => inPeriod(d.bookedOn, period))
-        .map((doc): Row => {
-          const totals = purchaseTotals(doc);
-          const ded = deductible(doc);
-          return {
-            doc,
-            supplier: supplierOf(doc),
-            status: purchaseStatus(doc, today),
-            ...totals,
-            outstanding: outstanding(doc),
-            deductibleBase: ded.base,
-            deductibleVat: ded.vat,
-          };
-        }),
-    [invoices, period, today],
-  );
+  const periodRows = useMemo(() => {
+    const [from, to] = periodBounds(period);
+    return invoices
+      .filter((d) => inPeriod(d.bookedOn, period))
+      .map((doc): Row => {
+        const totals = purchaseTotals(doc);
+        const ded = deductible(doc);
+        return {
+          doc,
+          supplier: supplierOf(doc),
+          status: purchaseStatus(doc, today),
+          ...totals,
+          outstanding: outstanding(doc),
+          deductibleBase: ded.base,
+          deductibleVat: ded.vat,
+          amortization: doc.asset ? amortizationBetween(assetOf(doc), from, to) : 0,
+        };
+      });
+  }, [invoices, period, today]);
+
+  // What every investment good amortizes in the period, also those bought earlier
+  const periodAmortization = useMemo(() => {
+    if (kind !== "asset") return 0;
+    const [from, to] = periodBounds(period);
+    return invoices.reduce((acc, doc) => acc + amortizationBetween(assetOf(doc), from, to), 0);
+  }, [invoices, kind, period]);
 
   const rows = useMemo(
     () =>
@@ -179,7 +230,7 @@ export function PurchasesListPage() {
   const periodSuppliers = [...new Map(periodRows.map((r) => [r.supplier.id, r.supplier])).values()].sort((a, b) =>
     a.name.localeCompare(b.name, "es"),
   );
-  const exportName = `facturas-recibidas-${periodCode(period)}`.toLowerCase();
+  const exportName = `${copy.export}-${periodCode(period)}`.toLowerCase();
 
   const filterBySupplier = (supplierId: string) => {
     set("supplierId", supplierId);
@@ -190,31 +241,37 @@ export function PurchasesListPage() {
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
         <header className="flex flex-wrap items-end justify-between gap-4">
-          <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Facturas recibidas</h1>
+          <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{copy.title}</h1>
           <div className="hidden gap-2.5 lg:flex">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                {/* aria-disabled keeps the tooltip reachable, unlike disabled */}
-                <Button variant="secondary" aria-disabled className="cursor-not-allowed opacity-50">
-                  <ScanText strokeWidth={1.8} aria-hidden="true" />
-                  Leer factura con OCR
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-64">
-                Disponible próximamente: leerá los datos del PDF por ti.
-              </TooltipContent>
-            </Tooltip>
-            <Link to={NEW_PURCHASE_PATH} className={cn(buttonVariants(), "no-underline")}>
+            {kind === "invoice" && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* aria-disabled keeps the tooltip reachable, unlike disabled */}
+                  <Button variant="secondary" aria-disabled className="cursor-not-allowed opacity-50">
+                    <ScanText strokeWidth={1.8} aria-hidden="true" />
+                    Leer factura con OCR
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-64">
+                  Disponible próximamente: leerá los datos del PDF por ti.
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Link to={copy.newPath} className={cn(buttonVariants(), "no-underline")}>
               <Plus strokeWidth={2} aria-hidden="true" />
-              Nueva factura recibida
+              {copy.newLabel}
             </Link>
           </div>
         </header>
 
-        <PurchaseSummary rows={periodRows} />
+        {kind === "asset" ? (
+          <AssetSummary rows={periodRows} amortization={periodAmortization} />
+        ) : (
+          <PurchaseSummary rows={periodRows} />
+        )}
 
         <section
-          aria-label="Listado de facturas recibidas"
+          aria-label={`Listado de ${copy.title.toLowerCase()}`}
           className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
           style={{ "--i": 1 } as CSSProperties}
         >
@@ -276,7 +333,7 @@ export function PurchasesListPage() {
                 variant="secondary"
                 size="md"
                 disabled={rows.length === 0}
-                onClick={() => exportCsv(rows, exportName)}
+                onClick={() => exportCsv(rows, exportName, kind)}
               >
                 <Download strokeWidth={1.8} aria-hidden="true" />
                 CSV
@@ -297,20 +354,15 @@ export function PurchasesListPage() {
 
           {rows.length === 0 ? (
             <EmptyState
-              message={
-                filtered ? "Ninguna factura coincide con los filtros." : "No hay facturas recibidas en este periodo."
-              }
+              message={filtered ? copy.filtered : copy.empty}
               hint={
                 filtered ? "Prueba con otro término o quita algún filtro." : "Puedes cambiar el periodo en el selector."
               }
               action={
                 !filtered && (
-                  <Link
-                    to={NEW_PURCHASE_PATH}
-                    className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}
-                  >
+                  <Link to={copy.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}>
                     <Plus strokeWidth={2} aria-hidden="true" />
-                    Nueva factura recibida
+                    {copy.newLabel}
                   </Link>
                 )
               }
@@ -320,6 +372,7 @@ export function PurchasesListPage() {
               {/* Keyed by period so the rows replay their entrance when it changes, like the dashboard */}
               <PurchasesTable
                 key={`table-${periodKey(period)}`}
+                kind={kind}
                 rows={rows}
                 sort={sort}
                 onSort={setSort}
@@ -369,6 +422,47 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
         ) : (
           `${invoices(unpaid.length)} sin pagar del todo`
         ),
+    },
+  ];
+  return (
+    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
+      {stats.map((s) => (
+        <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
+          <dt className="text-sm text-muted-foreground">{s.label}</dt>
+          <dd className="m-0 amount text-xl font-semibold">
+            <AnimatedAmount value={s.value} />
+          </dd>
+          <dd className="m-0 text-xs text-muted-foreground">{s.detail}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** Investment goods: what they cost and what they lower the income tax by through amortization. */
+function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: number }) {
+  const goods = (n: number) => (n === 1 ? "1 bien" : `${n} bienes`);
+  const unpaid = rows.filter((r) => r.status !== "paid");
+  const stats: { label: string; value: number; detail: ReactNode }[] = [
+    {
+      label: "Amortización del periodo",
+      value: amortization,
+      detail: "Gasto deducible de todos tus bienes",
+    },
+    {
+      label: "IVA soportado deducible",
+      value: sum(rows, "deductibleVat"),
+      detail: "Se deduce entero al comprarlos",
+    },
+    {
+      label: "Comprado en el periodo",
+      value: sum(rows, "base"),
+      detail: `${goods(rows.length)} · sin IVA`,
+    },
+    {
+      label: "Pendiente de pago",
+      value: sum(unpaid, "outstanding"),
+      detail: `${goods(unpaid.length)} sin pagar del todo`,
     },
   ];
   return (
@@ -486,7 +580,7 @@ function FiltersPanel({
   );
 }
 
-type SortKey = "number" | "date" | "supplier" | "status" | "base" | "vat" | "withholding" | "total";
+type SortKey = "number" | "date" | "supplier" | "status" | "base" | "vat" | "withholding" | "amortization" | "total";
 type SortDir = "asc" | "desc";
 interface Sort {
   key: SortKey;
@@ -504,6 +598,11 @@ const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
   { key: "total", label: "Total", numeric: true },
 ];
 
+/** Investment goods show the period's amortization where invoices show the withholding. */
+const ASSET_COLUMNS = COLUMNS.map((c) =>
+  c.key === "withholding" ? { key: "amortization" as const, label: "Amortización\ndel periodo", numeric: true } : c,
+);
+
 const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
 
 const COMPARE: Record<SortKey, (a: Row, b: Row) => number> = {
@@ -514,6 +613,7 @@ const COMPARE: Record<SortKey, (a: Row, b: Row) => number> = {
   base: (a, b) => a.base - b.base,
   vat: (a, b) => a.vat - b.vat,
   withholding: (a, b) => a.withholding - b.withholding,
+  amortization: (a, b) => a.amortization - b.amortization,
   total: (a, b) => a.total - b.total,
 };
 
@@ -530,7 +630,8 @@ function nextSort(current: Sort, key: SortKey): Sort {
   return { key, dir: key === "supplier" || key === "status" ? "asc" : "desc" };
 }
 
-const editPath = (doc: PurchaseInvoice) => `${PURCHASES_PATH}/${doc.id}`;
+const editPath = (doc: PurchaseInvoice) => `${doc.asset ? ASSETS_PATH : PURCHASES_PATH}/${doc.id}`;
+const newPathFor = (doc: PurchaseInvoice) => (doc.asset ? NEW_ASSET_PATH : NEW_PURCHASE_PATH);
 
 /** "Vence el 02 oct 2026 · contabilizada el 06 oct 2026" */
 function dateHint(doc: PurchaseInvoice): string | null {
@@ -542,11 +643,13 @@ function dateHint(doc: PurchaseInvoice): string | null {
 }
 
 function PurchasesTable({
+  kind,
   rows,
   sort,
   onSort,
   onFilterSupplier,
 }: {
+  kind: PurchaseListKind;
   rows: Row[];
   sort: Sort;
   onSort: (sort: Sort) => void;
@@ -560,7 +663,7 @@ function PurchasesTable({
       <table className="w-full min-w-[980px] border-collapse">
         <thead>
           <tr className={table.headRow}>
-            {COLUMNS.map((c) => (
+            {(kind === "asset" ? ASSET_COLUMNS : COLUMNS).map((c) => (
               <SortHeader
                 key={c.key}
                 label={c.label}
@@ -588,6 +691,14 @@ function PurchasesTable({
                   <Link to={editPath(r.doc)} className="text-foreground no-underline hover:text-primary">
                     {r.doc.number}
                   </Link>
+                  {r.doc.asset && (
+                    <span
+                      className="block max-w-44 truncate font-sans text-xs text-muted-foreground"
+                      title={ASSET_CATEGORY_LABELS[r.doc.asset.category]}
+                    >
+                      {ASSET_CATEGORY_LABELS[r.doc.asset.category]}
+                    </span>
+                  )}
                 </td>
                 <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>
                   {hint ? (
@@ -635,9 +746,15 @@ function PurchasesTable({
                   <Imputation row={r} />
                 </td>
                 <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
-                <td className={cn(td, "text-right amount text-muted-foreground")}>
-                  {r.withholding ? formatEUR(-r.withholding) : "—"}
-                </td>
+                {kind === "asset" ? (
+                  <td className={cn(td, "text-right amount text-muted-foreground")}>
+                    {r.amortization ? formatEUR(r.amortization) : "—"}
+                  </td>
+                ) : (
+                  <td className={cn(td, "text-right amount text-muted-foreground")}>
+                    {r.withholding ? formatEUR(-r.withholding) : "—"}
+                  </td>
+                )}
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
                 <td className={cn(td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
                   <QuickActions row={r} />
@@ -649,7 +766,8 @@ function PurchasesTable({
         <tfoot>
           <tr className="border-t border-border bg-muted font-semibold">
             <td colSpan={4} className={cn(td, "text-sm text-muted-foreground")}>
-              {rows.length} {rows.length === 1 ? "factura" : "facturas"}
+              {rows.length}{" "}
+              {kind === "asset" ? (rows.length === 1 ? "bien" : "bienes") : rows.length === 1 ? "factura" : "facturas"}
             </td>
             <td className={cn(td, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "base")} />
@@ -658,7 +776,7 @@ function PurchasesTable({
               <AnimatedAmount value={sum(rows, "vat")} />
             </td>
             <td className={cn(td, "text-right amount")}>
-              <AnimatedAmount value={-sum(rows, "withholding")} />
+              <AnimatedAmount value={kind === "asset" ? sum(rows, "amortization") : -sum(rows, "withholding")} />
             </td>
             <td className={cn(td, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "total")} />
@@ -805,7 +923,7 @@ function usePurchaseActions(row: Row) {
   const groups: Action[][] = [
     [
       { label: locked ? "Ver factura" : "Editar factura", icon: Pencil, run: () => navigate(editPath(doc)) },
-      { label: "Crear por copia", icon: Copy, run: () => navigate(`${NEW_PURCHASE_PATH}?desde=${doc.id}`) },
+      { label: "Crear por copia", icon: Copy, run: () => navigate(`${newPathFor(doc)}?desde=${doc.id}`) },
     ],
     [
       primary,
@@ -817,7 +935,7 @@ function usePurchaseActions(row: Row) {
       {
         label: "Registrar un abono de esta factura",
         icon: FileX2,
-        run: () => navigate(`${NEW_PURCHASE_PATH}?desde=${doc.id}&abono=1`),
+        run: () => navigate(`${newPathFor(doc)}?desde=${doc.id}&abono=1`),
       },
     ],
     [
@@ -881,7 +999,8 @@ function RowActions({ row }: { row: Row }) {
   );
 }
 
-function exportCsv(rows: Row[], name: string) {
+function exportCsv(rows: Row[], name: string, kind: PurchaseListKind) {
+  const asset = kind === "asset";
   downloadCsv(
     [
       "Número",
@@ -889,7 +1008,7 @@ function exportCsv(rows: Row[], name: string) {
       "Fecha contable",
       "Proveedor",
       "NIF",
-      "Tipo de gasto",
+      asset ? "Tipo de bien" : "Tipo de gasto",
       "Estado",
       "Base imponible",
       "IVA",
@@ -897,7 +1016,7 @@ function exportCsv(rows: Row[], name: string) {
       "Total",
       "Pendiente",
       "Imputación %",
-      "Base deducible",
+      asset ? "Amortización del periodo" : "Base deducible",
       "IVA deducible",
     ],
     rows.map((r) => [
@@ -906,7 +1025,7 @@ function exportCsv(rows: Row[], name: string) {
       r.doc.bookedOn,
       r.supplier.name,
       r.supplier.taxId,
-      expenseTypeLabel(r.doc.expenseType as ExpenseType),
+      r.doc.asset ? ASSET_CATEGORY_LABELS[r.doc.asset.category] : expenseTypeLabel(r.doc.expenseType as ExpenseType),
       PURCHASE_STATUS[r.status].label,
       r.base,
       r.vat,
@@ -914,7 +1033,7 @@ function exportCsv(rows: Row[], name: string) {
       r.total,
       r.outstanding,
       String(r.doc.imputation),
-      r.deductibleBase,
+      asset ? r.amortization : r.deductibleBase,
       r.deductibleVat,
     ]),
     name,

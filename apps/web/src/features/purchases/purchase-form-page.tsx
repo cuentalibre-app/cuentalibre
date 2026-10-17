@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   ArrowLeft,
   ChevronDown,
@@ -12,8 +12,10 @@ import {
   Trash2,
 } from "lucide-react";
 import {
+  ASSET_CATEGORIES,
   WITHHOLDING_RATES,
   addDays,
+  amortizableValue,
   amountOutstanding,
   deductibleAmounts,
   invoiceTotals,
@@ -67,19 +69,47 @@ import type { Contact } from "@/mocks/contacts";
 import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import type { Attachment, RentalLocation } from "@/mocks/sales";
 import {
+  ASSETS_PATH,
   EXPENSE_TYPE_GROUPS,
+  NEW_ASSET_PATH,
   NEW_PURCHASE_PATH,
   PURCHASES_PATH,
   PURCHASE_OPERATION_TYPES,
   lastExpenseType,
   supplierOf,
 } from "./purchases-model";
+import { AssetSection, assetDraftError, toAsset, toAssetDraft, type AssetDraft } from "./asset-fields";
 import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
 import { purchasesStore } from "./purchases-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
 /** Default expense account, as in the reference app, when the supplier has no previous invoices. */
 const DEFAULT_EXPENSE_TYPE: ExpenseType = "600";
+
+/** The form registers received invoices and investment goods, which are received invoices that get amortized. */
+export type PurchaseFormKind = "invoice" | "asset";
+
+const FORM_KINDS = {
+  invoice: {
+    listPath: PURCHASES_PATH,
+    newPath: NEW_PURCHASE_PATH,
+    back: "Volver a facturas recibidas",
+    newTitle: "Nueva factura recibida",
+    editTitle: "Factura recibida",
+    expenseTypes: [{ label: "Grupo 6: Compras y gastos", options: [] }, ...EXPENSE_TYPE_GROUPS],
+    defaultExpenseType: DEFAULT_EXPENSE_TYPE,
+  },
+  asset: {
+    listPath: ASSETS_PATH,
+    newPath: NEW_ASSET_PATH,
+    back: "Volver a bienes de inversión",
+    newTitle: "Nuevo bien de inversión",
+    editTitle: "Bien de inversión",
+    // Investment goods are no expense: they go to the amortization accounts
+    expenseTypes: EXPENSE_TYPE_GROUPS.filter((g) => g.label?.startsWith("68")),
+    defaultExpenseType: "681" as ExpenseType,
+  },
+} satisfies Record<PurchaseFormKind, unknown>;
 
 interface PaymentDraft {
   id: string;
@@ -111,6 +141,7 @@ interface FormState {
   privateNotes: string;
   tags: string[];
   attachments: Attachment[];
+  asset: AssetDraft;
 }
 
 type ErrorKey =
@@ -122,7 +153,8 @@ type ErrorKey =
   | "vatImputation"
   | "customsDocument"
   | "lines"
-  | "payments";
+  | "payments"
+  | "asset";
 type Errors = Partial<Record<ErrorKey, string>>;
 
 /** What happens after creating, from the create button's menu. */
@@ -148,9 +180,9 @@ function withSupplierDefaults(form: FormState, supplier: Contact): FormState {
 }
 
 /** A new invoice takes the terms of the supplier's last one or, without history, those on its sheet. */
-function prefillFromSupplier(f: FormState, supplierId: string): FormState {
-  const last = purchasesStore
-    .all()
+function prefillFromSupplier(f: FormState, supplierId: string, kind: PurchaseFormKind): FormState {
+  const sameKind = purchasesStore.all().filter((d) => Boolean(d.asset) === (kind === "asset"));
+  const last = sameKind
     .filter((d) => d.supplierId === supplierId)
     .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn))[0];
   if (!last) {
@@ -161,7 +193,7 @@ function prefillFromSupplier(f: FormState, supplierId: string): FormState {
   return {
     ...f,
     supplierId,
-    expenseType: lastExpenseType(supplierId, purchasesStore.all()) ?? f.expenseType,
+    expenseType: lastExpenseType(supplierId, sameKind) ?? f.expenseType,
     withholding: last.withholding,
     operationType: last.operationType,
     imputation: String(last.imputation),
@@ -170,7 +202,12 @@ function prefillFromSupplier(f: FormState, supplierId: string): FormState {
   };
 }
 
-function initialState(base: PurchaseInvoice | undefined, isCopy: boolean, creditNote: boolean): FormState {
+function initialState(
+  base: PurchaseInvoice | undefined,
+  isCopy: boolean,
+  creditNote: boolean,
+  kind: PurchaseFormKind,
+): FormState {
   const today = toIsoDate(new Date());
   const issuedOn = isCopy || !base ? today : base.issuedOn;
   return {
@@ -180,7 +217,7 @@ function initialState(base: PurchaseInvoice | undefined, isCopy: boolean, credit
     issuedOn,
     bookedOn: isCopy || !base ? issuedOn : base.bookedOn,
     dueOn: isCopy ? null : (base?.dueOn ?? null),
-    expenseType: base?.expenseType ?? DEFAULT_EXPENSE_TYPE,
+    expenseType: base?.expenseType ?? FORM_KINDS[kind].defaultExpenseType,
     imputation: String(base?.imputation ?? 100),
     vatImputation: base?.vatImputation == null ? "" : String(base.vatImputation),
     withholding: base?.withholding ?? "none",
@@ -197,21 +234,29 @@ function initialState(base: PurchaseInvoice | undefined, isCopy: boolean, credit
     privateNotes: creditNote && base ? `Abono de la factura ${base.number}.` : isCopy ? "" : (base?.privateNotes ?? ""),
     tags: base?.tags ?? [],
     attachments: isCopy ? [] : (base?.attachments ?? []),
+    asset: toAssetDraft(base?.asset),
   };
 }
 
-export function PurchaseFormPage() {
+export function PurchaseFormPage({ kind = "invoice" }: { kind?: PurchaseFormKind }) {
   const { id } = useParams();
   const [params] = useSearchParams();
   const existing = id ? purchasesStore.get(id) : undefined;
+  const copy = FORM_KINDS[kind];
+
+  // An investment good opened from the invoices' path, or the other way round
+  if (existing && Boolean(existing.asset) !== (kind === "asset")) {
+    const other = existing.asset ? ASSETS_PATH : PURCHASES_PATH;
+    return <Navigate to={`${other}/${existing.id}`} replace />;
+  }
 
   if (id && !existing) {
     return (
       <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrada</h1>
         <p className="m-0 text-muted-foreground">Esta factura no existe o se ha eliminado.</p>
-        <Link to={PURCHASES_PATH} className="font-medium text-primary no-underline hover:text-primary-hover">
-          Volver a facturas recibidas
+        <Link to={copy.listPath} className="font-medium text-primary no-underline hover:text-primary-hover">
+          {copy.back}
         </Link>
       </div>
     );
@@ -223,7 +268,8 @@ export function PurchaseFormPage() {
   return (
     <PurchaseForm
       // A new ?desde= or ?registrada= starts over
-      key={existing?.id ?? params.toString()}
+      key={`${kind}-${existing?.id ?? params.toString()}`}
+      kind={kind}
       existing={existing}
       source={source}
       creditNote={creditNote}
@@ -234,12 +280,14 @@ export function PurchaseFormPage() {
 }
 
 function PurchaseForm({
+  kind,
   existing,
   source,
   creditNote,
   justSaved,
   presetSupplierId,
 }: {
+  kind: PurchaseFormKind;
   existing?: PurchaseInvoice;
   source?: PurchaseInvoice;
   creditNote: boolean;
@@ -250,10 +298,12 @@ function PurchaseForm({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const copy = FORM_KINDS[kind];
+  const isAssetForm = kind === "asset";
   const [form, setForm] = useState(() => {
-    const initial = initialState(existing ?? source, !existing, creditNote);
+    const initial = initialState(existing ?? source, !existing, creditNote, kind);
     return presetSupplierId && contactsStore.get("supplier", presetSupplierId)
-      ? prefillFromSupplier(initial, presetSupplierId)
+      ? prefillFromSupplier(initial, presetSupplierId, kind)
       : initial;
   });
   const [errors, setErrors] = useState<Errors>({});
@@ -305,6 +355,15 @@ function PurchaseForm({
   const deductible = deductibleAmounts(totals, imputation ?? 0, vatImputation);
   const paymentAmounts = form.payments.map((p) => parseDecimal(p.amount) ?? 0);
   const pending = amountOutstanding(totals.total, paymentAmounts);
+  const assetError = isAssetForm ? assetDraftError(form.asset) : undefined;
+  const amortized =
+    isAssetForm && !assetError && imputation !== null && form.issuedOn
+      ? {
+          value: amortizableValue(totals.base, totals.vat, imputation, vatImputation),
+          startsOn: form.operationOn || form.issuedOn,
+          plan: toAsset(form.asset),
+        }
+      : null;
 
   const suppliers = useContacts("supplier");
   const [creatingSupplier, setCreatingSupplier] = useState(false);
@@ -314,15 +373,21 @@ function PurchaseForm({
   const isCreditNote = Boolean(form.rectifiesId) || (creditNote && !existing);
   const creditable = purchasesStore
     .all()
-    .filter((d) => d.id !== existing?.id && (!form.supplierId || d.supplierId === form.supplierId) && !d.rectifiesId);
+    .filter(
+      (d) =>
+        d.id !== existing?.id &&
+        Boolean(d.asset) === isAssetForm &&
+        (!form.supplierId || d.supplierId === form.supplierId) &&
+        !d.rectifiesId,
+    );
   const title = existing
-    ? `Factura recibida ${existing.number}`
+    ? `${copy.editTitle} ${existing.number}`
     : isCreditNote
       ? "Nuevo abono de proveedor"
-      : "Nueva factura recibida";
+      : copy.newTitle;
 
   const changeSupplier = (supplierId: string) => {
-    setForm((f) => (prefill ? prefillFromSupplier(f, supplierId) : { ...f, supplierId }));
+    setForm((f) => (prefill ? prefillFromSupplier(f, supplierId, kind) : { ...f, supplierId }));
     clearError("supplierId");
     clearError("number");
   };
@@ -376,6 +441,7 @@ function PurchaseForm({
     if (form.operationType === "import" && totals.vat !== 0 && !form.customsDocument.trim())
       next.customsDocument = "Las importaciones con IVA necesitan el número del DUA o H7.";
     next.lines = linesError(form.lines);
+    if (isAssetForm) next.asset = assetError;
     if (form.payments.some((p) => !p.date || parseDecimal(p.amount) === null || parseDecimal(p.amount) === 0))
       next.payments = "Cada pago necesita fecha e importe.";
     else if (Math.abs(roundCents(paymentAmounts.reduce((a, b) => a + b, 0))) > Math.abs(totals.total) + 0.005)
@@ -420,16 +486,17 @@ function PurchaseForm({
       privateNotes: form.privateNotes.trim(),
       tags: form.tags.length ? form.tags : undefined,
       attachments: form.attachments.length ? form.attachments : undefined,
+      asset: isAssetForm ? toAsset(form.asset) : undefined,
     };
 
     if (existing) purchasesStore.update(existing.id, doc);
     else purchasesStore.add(doc);
 
-    if (after === "edit") navigate(`${PURCHASES_PATH}/${doc.id}`);
+    if (after === "edit") navigate(`${copy.listPath}/${doc.id}`);
     else if (after === "another") {
-      navigate(`${NEW_PURCHASE_PATH}?registrada=${doc.id}`);
+      navigate(`${copy.newPath}?registrada=${doc.id}`);
       window.scrollTo({ top: 0 });
-    } else navigate(`${PURCHASES_PATH}?periodo=${periodKeyOf(doc.bookedOn)}`);
+    } else navigate(`${copy.listPath}?periodo=${periodKeyOf(doc.bookedOn)}`);
   }
 
   const submit = (e: FormEvent) => {
@@ -442,7 +509,7 @@ function PurchaseForm({
       {!existing ? (
         <div className="flex flex-1 lg:flex-none">
           <Button type="submit" className="flex-1 rounded-r-none lg:flex-none">
-            {isCreditNote ? "Registrar abono" : "Registrar factura"}
+            {isCreditNote ? "Registrar abono" : isAssetForm ? "Registrar bien" : "Registrar factura"}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -461,7 +528,7 @@ function PurchaseForm({
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => save("another")}>
                 <FilePlus2 aria-hidden="true" />
-                Registrar y añadir otra
+                {isAssetForm ? "Registrar y añadir otro" : "Registrar y añadir otra"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -483,8 +550,8 @@ function PurchaseForm({
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <Link
-              to={PURCHASES_PATH}
-              aria-label="Volver a facturas recibidas"
+              to={copy.listPath}
+              aria-label={copy.back}
               className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
             >
               <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
@@ -519,7 +586,9 @@ function PurchaseForm({
 
         {justSaved && !source && (
           <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
-            Factura {justSaved.number} de {supplierOf(justSaved).name} registrada. Ya puedes añadir la siguiente.
+            {isAssetForm ? "Bien de inversión" : "Factura"} {justSaved.number} de {supplierOf(justSaved).name}{" "}
+            {isAssetForm ? "registrado" : "registrada"}. Ya puedes añadir{" "}
+            {isAssetForm ? "el siguiente" : "la siguiente"}.
           </p>
         )}
 
@@ -689,9 +758,11 @@ function PurchaseForm({
                 label="Tipo de gasto"
                 help="Cuenta del Plan General Contable (grupo 6) en la que se registra el gasto."
                 hint={
-                  prefill && lastExpenseType(form.supplierId, purchasesStore.all())
-                    ? "Según la última factura de este proveedor."
-                    : undefined
+                  isAssetForm
+                    ? "Se propone según el tipo de bien de la amortización."
+                    : prefill && lastExpenseType(form.supplierId, purchasesStore.all())
+                      ? "Según la última factura de este proveedor."
+                      : undefined
                 }
               >
                 {(p) => (
@@ -702,7 +773,7 @@ function PurchaseForm({
                       set("expenseType", v as ExpenseType);
                       setPrefill(false);
                     }}
-                    groups={[{ label: "Grupo 6: Compras y gastos", options: [] }, ...EXPENSE_TYPE_GROUPS]}
+                    groups={copy.expenseTypes}
                   />
                 )}
               </Field>
@@ -808,12 +879,33 @@ function PurchaseForm({
           <Totals totals={totals} withholding={form.withholding} advanced={advanced} />
 
           <DeductibleStrip
-            base={deductible.base}
+            base={isAssetForm ? (amortized?.value ?? 0) : deductible.base}
+            baseLabel={isAssetForm ? "Valor amortizable" : "Gasto"}
             vat={deductible.vat}
             imputation={imputation}
             vatImputation={vatImputation}
             invalid={imputation === null}
           />
+
+          {isAssetForm && (
+            <Section title="Información sobre la amortización" index={4}>
+              <AssetSection
+                draft={form.asset}
+                error={errors.asset}
+                asset={amortized}
+                onChange={(asset) => {
+                  // The kind of good decides the amortization account
+                  const account = asset.category ? ASSET_CATEGORIES[asset.category].account : null;
+                  setForm((f) => ({
+                    ...f,
+                    asset,
+                    expenseType: account && asset.category !== f.asset.category ? account : f.expenseType,
+                  }));
+                  clearError("asset");
+                }}
+              />
+            </Section>
+          )}
 
           <div ref={paymentsRef} id="pagos" className="scroll-mt-4">
             <Section title="Pagos" index={4}>
@@ -992,6 +1084,7 @@ const ERROR_KEYS: Record<ErrorKey, true> = {
   customsDocument: true,
   lines: true,
   payments: true,
+  asset: true,
 };
 
 function hasAdvancedOptions(form: FormState): boolean {
@@ -1013,12 +1106,14 @@ function quarterName(isoDate: string): string {
 /** What the invoice lowers in the tax returns, after imputation. */
 function DeductibleStrip({
   base,
+  baseLabel,
   vat,
   imputation,
   vatImputation,
   invalid,
 }: {
   base: number;
+  baseLabel: string;
   vat: number;
   imputation: number | null;
   vatImputation: number | null;
@@ -1036,7 +1131,9 @@ function DeductibleStrip({
       ) : (
         <>
           <span>
-            <span className="text-muted-foreground">Gasto ({imputation} %) </span>
+            <span className="text-muted-foreground">
+              {baseLabel} ({imputation} %){" "}
+            </span>
             <AnimatedAmount value={base} className="amount font-semibold" />
           </span>
           <span>

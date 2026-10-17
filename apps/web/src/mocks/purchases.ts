@@ -1,5 +1,6 @@
 import {
   WITHHOLDING_RATES,
+  type AmortizationPlan,
   addDays,
   invoiceTotals,
   type PurchaseOperationType,
@@ -55,6 +56,12 @@ export interface Payment {
   paymentMethodId: string;
 }
 
+/** What turns a received invoice into an investment good: how it is amortized. */
+export interface InvestmentAsset extends AmortizationPlan {
+  /** Licence plate or cadastral reference, for vehicles and real estate. */
+  identifier?: string;
+}
+
 export interface PurchaseInvoice {
   id: string;
   supplierId: string;
@@ -89,6 +96,8 @@ export interface PurchaseInvoice {
   privateNotes: string;
   tags?: string[];
   attachments?: Attachment[];
+  /** Investment good: amortized over the years instead of an expense the day it is bought. */
+  asset?: InvestmentAsset;
 }
 
 let seq = 0;
@@ -373,10 +382,36 @@ const occasional: PurchaseInvoice[] = [
   }),
 ];
 
+/** Investment goods: amortized over the years instead of an expense the day they are bought. */
+const assets: PurchaseInvoice[] = [
+  invoice("s9", "TP-25-001204", "2025-02-10", [['Portátil MacBook Pro 14" M4', 1_652.89]], {
+    expenseType: "681",
+    paymentMethodId: "card",
+    asset: { category: "itEquipment", condition: "new", method: "rate", value: 26 },
+    tags: ["Equipo"],
+  }),
+  invoice("s9", "TP-25-006630", "2025-11-18", [["Mesa elevable y silla ergonómica", 694.21]], {
+    expenseType: "681",
+    paymentMethodId: "card",
+    asset: { category: "installations", condition: "new", method: "years", value: 10 },
+  }),
+  invoice("s9", "TP-26-002291", "2026-04-07", [["Cámara web 4K para videollamadas", 165.29]], {
+    expenseType: "681",
+    paymentMethodId: "card",
+    asset: { category: "itEquipment", condition: "lowValue", method: "rate", value: 100 },
+  }),
+  invoice("s9", "TP-26-005318", "2026-10-03", [["Licencia perpetua de software de maquetación", 826.45]], {
+    expenseType: "680",
+    dueOn: "2026-11-02",
+    paidOn: null,
+    asset: { category: "software", condition: "new", method: "rate", value: 33 },
+  }),
+];
+
 const partial = occasional.find((p) => p.number === "TP-26-005102")!;
 partial.payments = [{ id: `pay${++seq}`, date: "2026-09-30", amount: 200, paymentMethodId: "transfer" }];
 
 /** Received invoices, newest first. */
-export const initialPurchaseInvoices: PurchaseInvoice[] = [...recurring, ...occasional].sort((a, b) =>
+export const initialPurchaseInvoices: PurchaseInvoice[] = [...recurring, ...occasional, ...assets].sort((a, b) =>
   b.bookedOn.localeCompare(a.bookedOn),
 );

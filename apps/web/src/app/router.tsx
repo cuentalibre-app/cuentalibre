@@ -13,9 +13,15 @@ import { ExpensesListPage } from "@/features/purchases/expenses-list-page";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH } from "@/features/purchases/expenses-model";
 import { PurchaseFormPage } from "@/features/purchases/purchase-form-page";
 import { PurchasesListPage } from "@/features/purchases/purchases-list-page";
-import { NEW_PURCHASE_PATH, PURCHASES_PATH } from "@/features/purchases/purchases-model";
+import {
+  ASSETS_PATH,
+  NEW_ASSET_PATH,
+  NEW_PURCHASE_PATH,
+  PURCHASES_PATH,
+} from "@/features/purchases/purchases-model";
+import { CompanyReportsPage } from "@/features/reports/company-reports-page";
 import { ProfitLossPage } from "@/features/reports/profit-loss-page";
-import { PNL_PATH, REPORTS_PATH } from "@/features/reports/reports-model";
+import { COMPANY_REPORTS_PATH, PNL_PATH, REPORTS_PATH } from "@/features/reports/reports-model";
 import { ReportsSummaryPage } from "@/features/reports/reports-summary-page";
 import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
@@ -57,6 +63,14 @@ import { PaymentsPage } from "@/features/treasury/payments-page";
 import { ReconciliationPage } from "@/features/treasury/reconciliation-page";
 import { TreasurySummaryPage } from "@/features/treasury/treasury-summary-page";
 import { MOVEMENTS_PATH, PAYMENTS_PATH, RECONCILIATION_PATH, TREASURY_PATH } from "@/features/treasury/treasury-model";
+import { ExportAdvancedPage } from "@/features/transfer/export-advanced-page";
+import { ExportBooksPage } from "@/features/transfer/export-books-page";
+import { ExportPage } from "@/features/transfer/export-page";
+import { ImportPage } from "@/features/transfer/import-page";
+import { EXPORT_ADVANCED_PATH, EXPORT_BOOKS_PATH, EXPORT_PATH, IMPORT_PATH } from "@/features/transfer/transfer-model";
+import { WorkedHoursPage } from "@/features/working-hours/worked-hours-page";
+import { WORKED_HOURS_PATH, WORKING_HOURS_PATH } from "@/features/working-hours/working-hours-model";
+import { WorkingHoursPage } from "@/features/working-hours/working-hours-page";
 import type { ContactRole } from "@/mocks/contacts";
 import type { SalesKind } from "@/mocks/sales";
 import { DesignSystemPage } from "@/pages/design-system";
@@ -73,9 +87,12 @@ const salesRoutes = (Object.keys(KINDS) as SalesKind[]).flatMap((kind) => {
 });
 
 const purchaseRoutes = [
-  { path: PURCHASES_PATH.slice(1), element: <PurchasesListPage /> },
-  { path: NEW_PURCHASE_PATH.slice(1), element: <PurchaseFormPage /> },
-  { path: `${PURCHASES_PATH.slice(1)}/:id`, element: <PurchaseFormPage /> },
+  { path: PURCHASES_PATH.slice(1), element: <PurchasesListPage key="invoice" /> },
+  { path: NEW_PURCHASE_PATH.slice(1), element: <PurchaseFormPage key="invoice" /> },
+  { path: `${PURCHASES_PATH.slice(1)}/:id`, element: <PurchaseFormPage key="invoice" /> },
+  { path: ASSETS_PATH.slice(1), element: <PurchasesListPage key="asset" kind="asset" /> },
+  { path: NEW_ASSET_PATH.slice(1), element: <PurchaseFormPage key="asset" kind="asset" /> },
+  { path: `${ASSETS_PATH.slice(1)}/:id`, element: <PurchaseFormPage key="asset" kind="asset" /> },
   { path: EXPENSES_PATH.slice(1), element: <ExpensesListPage /> },
   { path: NEW_EXPENSE_PATH.slice(1), element: <ExpenseFormPage /> },
   { path: `${EXPENSES_PATH.slice(1)}/:id`, element: <ExpenseFormPage /> },
@@ -114,7 +131,11 @@ const closingRoute = { path: CLOSING_PATH.slice(1), element: <QuarterClosePage /
 const reportRoutes = [
   { path: REPORTS_PATH.slice(1), element: <ReportsSummaryPage /> },
   { path: PNL_PATH.slice(1), element: <ProfitLossPage /> },
+  { path: COMPANY_REPORTS_PATH.slice(1), element: <CompanyReportsPage /> },
+  { path: WORKED_HOURS_PATH.slice(1), element: <WorkedHoursPage /> },
 ];
+
+const workingHoursRoute = { path: WORKING_HOURS_PATH.slice(1), element: <WorkingHoursPage /> };
 
 const settingsRoutes = [
   { path: SETTINGS_PATH.slice(1), element: <SettingsPage /> },
@@ -123,6 +144,13 @@ const settingsRoutes = [
   { path: ACCOUNTS_PATH.slice(1), element: <AccountsPage /> },
   { path: PAYMENT_METHODS_PATH.slice(1), element: <PaymentMethodsPage /> },
   { path: INVOICE_SETTINGS_PATH.slice(1), element: <InvoiceSettingsPage /> },
+];
+
+const transferRoutes = [
+  { path: EXPORT_PATH.slice(1), element: <ExportPage /> },
+  { path: EXPORT_BOOKS_PATH.slice(1), element: <ExportBooksPage /> },
+  { path: EXPORT_ADVANCED_PATH.slice(1), element: <ExportAdvancedPage /> },
+  { path: IMPORT_PATH.slice(1), element: <ImportPage /> },
 ];
 
 const builtPaths = new Set(
@@ -134,7 +162,9 @@ const builtPaths = new Set(
     ...treasuryRoutes,
     closingRoute,
     ...reportRoutes,
+    workingHoursRoute,
     ...settingsRoutes,
+    ...transferRoutes,
   ].map((r) => `/${r.path}`),
 );
 
@@ -160,7 +190,9 @@ export const router = createBrowserRouter([
       ...treasuryRoutes,
       closingRoute,
       ...reportRoutes,
+      workingHoursRoute,
       ...settingsRoutes,
+      ...transferRoutes,
       ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
     ],
