@@ -315,4 +315,9 @@ const deliveryNotes: SalesDocument[] = [
   }),
 ];
 
-export const initialSalesDocuments: SalesDocument[] = [...invoices, ...drafts, ...quotes, ...deliveryNotes];
+/** Paid invoices are collected by transfer about two weeks after they are issued. */
+const collected = invoices.map((d) =>
+  d.status === "paid" && !d.paidOn ? { ...d, paidOn: addDays(d.issuedOn, 12), paymentMethodId: "transfer" } : d,
+);
+
+export const initialSalesDocuments: SalesDocument[] = [...collected, ...drafts, ...quotes, ...deliveryNotes];

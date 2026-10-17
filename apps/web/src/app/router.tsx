@@ -39,6 +39,11 @@ import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
 import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
 import { CALENDAR_PATH, INCOME_TAX_PATH, TAXES_PATH, VAT_PATH } from "@/features/taxes/taxes-model";
 import { VatPage } from "@/features/taxes/vat-page";
+import { MovementsPage } from "@/features/treasury/movements-page";
+import { PaymentsPage } from "@/features/treasury/payments-page";
+import { ReconciliationPage } from "@/features/treasury/reconciliation-page";
+import { TreasurySummaryPage } from "@/features/treasury/treasury-summary-page";
+import { MOVEMENTS_PATH, PAYMENTS_PATH, RECONCILIATION_PATH, TREASURY_PATH } from "@/features/treasury/treasury-model";
 import type { ContactRole } from "@/mocks/contacts";
 import type { SalesKind } from "@/mocks/sales";
 import { DesignSystemPage } from "@/pages/design-system";
@@ -80,6 +85,13 @@ const taxRoutes = [
   { path: INCOME_TAX_PATH.slice(1), element: <IncomeTaxPage /> },
 ];
 
+const treasuryRoutes = [
+  { path: TREASURY_PATH.slice(1), element: <TreasurySummaryPage /> },
+  { path: MOVEMENTS_PATH.slice(1), element: <MovementsPage /> },
+  { path: RECONCILIATION_PATH.slice(1), element: <ReconciliationPage /> },
+  { path: PAYMENTS_PATH.slice(1), element: <PaymentsPage /> },
+];
+
 const closingRoute = { path: CLOSING_PATH.slice(1), element: <QuarterClosePage /> };
 
 const reportRoutes = [
@@ -102,6 +114,7 @@ const builtPaths = new Set(
     ...purchaseRoutes,
     ...contactRoutes,
     ...taxRoutes,
+    ...treasuryRoutes,
     closingRoute,
     ...reportRoutes,
     ...settingsRoutes,
@@ -127,6 +140,7 @@ export const router = createBrowserRouter([
       ...purchaseRoutes,
       ...contactRoutes,
       ...taxRoutes,
+      ...treasuryRoutes,
       closingRoute,
       ...reportRoutes,
       ...settingsRoutes,

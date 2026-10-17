@@ -19,7 +19,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type BadgeKey = "drafts" | "filingsSoon";
+export type BadgeKey = "drafts" | "filingsSoon" | "unreconciled";
 
 export interface NavLeaf {
   label: string;
@@ -67,7 +67,18 @@ export const mainNav: NavItem[] = [
       { label: "IRPF (130, 100)", to: "/impuestos/irpf" },
     ],
   },
-  { label: "Bancos", to: "/bancos", icon: Landmark },
+  {
+    label: "Bancos",
+    to: "/bancos",
+    icon: Landmark,
+    badge: "unreconciled",
+    children: [
+      { label: "Resumen", to: "/bancos" },
+      { label: "Movimientos", to: "/bancos/movimientos" },
+      { label: "Conciliación", to: "/bancos/conciliacion", badge: "unreconciled" },
+      { label: "Cobros y pagos", to: "/bancos/cobros-y-pagos" },
+    ],
+  },
   {
     label: "Contactos",
     to: "/contactos",

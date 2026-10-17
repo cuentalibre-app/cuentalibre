@@ -42,7 +42,7 @@ function numberError(kind: AccountKind, number: string): string | undefined {
 }
 
 /** New account: pick the kind first, then name it. Editing skips the first step. */
-function AccountDialog({
+export function AccountDialog({
   open,
   onOpenChange,
   account,
