@@ -1,13 +1,17 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import {
+  ArrowRight,
   ChevronDown,
   CircleDollarSign,
   Copy,
   Download,
   FileArchive,
+  FileCode2,
   FileDown,
   FileX2,
+  HandCoins,
+  Mail,
   MoreHorizontal,
   Paperclip,
   Pencil,
@@ -15,6 +19,7 @@ import {
   ReceiptText,
   Search,
   Send,
+  Tag,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -48,6 +53,7 @@ import {
   periodKeyOf,
   type StatusKey,
 } from "./sales-model";
+import { PaymentDialog, TagsDialog } from "./document-dialogs";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, pickFiles, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
@@ -483,6 +489,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
 /** Every operation available on a document, grouped so the menu can split them with separators. */
 function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const navigate = useNavigate();
+  const [dialog, setDialog] = useState<"payment" | "tags" | null>(null);
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
@@ -506,6 +513,49 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     icon: FileDown,
     run: () => void import("./sales-pdf").then((m) => m.downloadDocumentPdf(doc)),
   };
+
+  const tags = doc.tags ?? [];
+  const extras = {
+    view: {
+      label: `Ver ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim(),
+      icon: ArrowRight,
+      run: () => {
+        // Opened now, while the click still counts, and filled once the PDF code loads
+        const tab = window.open("", "_blank");
+        if (tab) void import("./sales-pdf").then((m) => m.showDocumentPdf(doc, tab));
+      },
+    },
+    payments: {
+      label: "Gestionar el cobro",
+      icon: HandCoins,
+      run: () => setDialog("payment"),
+    },
+    tags: {
+      label: tags.length > 0 ? `Gestionar etiquetas (${tags.length})` : "Gestionar etiquetas",
+      icon: Tag,
+      run: () => setDialog("tags"),
+    },
+    facturae: {
+      label: "Exportar Facturae",
+      icon: FileCode2,
+      run: () =>
+        void import("./sales-facturae").then((m) => {
+          const problems = m.facturaeProblems(doc);
+          if (problems.length > 0) window.alert(`Para exportar la factura en Facturae falta ${problems.join(" y ")}.`);
+          else m.downloadFacturae(doc);
+        }),
+    },
+    send: {
+      label: `Enviar ${config.singular.toLowerCase()}`,
+      icon: Mail,
+      // No email backend yet: download the PDF and open the mail client to attach it
+      run: () => {
+        void import("./sales-pdf").then((m) => m.downloadDocumentPdf(doc));
+        const subject = `${config.singular} ${doc.number ?? ""}`.trim();
+        window.location.href = `mailto:${clientOf(doc).email ?? ""}?subject=${encodeURIComponent(subject)}`;
+      },
+    },
+  } satisfies Record<string, Action>;
 
   const issueDraft = () => {
     const year = Number(doc.issuedOn.slice(0, 4));
@@ -557,17 +607,26 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
         .map((t) => ({ label: t.label, icon: t.icon, run: () => salesStore.update(doc.id, { status: t.to }) }))
     : [];
 
+  const isInvoice = doc.kind === "invoice";
   const groups: Action[][] = [
     [
+      extras.view,
       {
-        label: `${locked ? "Ver" : "Editar"} ${config.singular.toLowerCase()}`,
+        label: `${locked ? "Ver los datos de" : "Editar"} ${locked ? config.noun : config.singular.toLowerCase()}`,
         icon: Pencil,
         run: () => navigate(`${config.path}/${doc.id}`),
       },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
     ],
-    [...(primary ? [primary] : []), ...transitions, attach, pdf],
-    doc.kind === "invoice" && doc.series === "normal"
+    [
+      // Invoices manage the collection in a dialog; the one-click toggle stays among the quick actions
+      ...(isInvoice ? [extras.payments] : primary ? [primary] : []),
+      ...transitions,
+      attach,
+      extras.tags,
+    ],
+    [pdf, ...(isInvoice ? [extras.facturae] : []), extras.send],
+    isInvoice && doc.series === "normal"
       ? [
           {
             label: "Generar factura rectificativa",
@@ -592,14 +651,31 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     ],
   ].filter((g) => g.length > 0);
 
-  return { attach, pdf, primary, groups, attachments: attachments.length, label: `${config.noun} ${label}` };
+  const close = (open: boolean) => !open && setDialog(null);
+  const dialogs =
+    dialog === "payment" ? (
+      <PaymentDialog doc={doc} onOpenChange={close} />
+    ) : dialog === "tags" ? (
+      <TagsDialog doc={doc} title={`${config.noun} ${label}`} onOpenChange={close} />
+    ) : null;
+
+  return {
+    attach,
+    pdf,
+    primary,
+    groups,
+    dialogs,
+    attachments: attachments.length,
+    label: `${config.noun} ${label}`,
+  };
 }
 
 /** Desktop: the usual operations one click away, the rest behind the arrow. */
 function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) {
-  const { attach, pdf, primary, groups, attachments, label } = useDocumentActions(doc, status);
+  const { attach, pdf, primary, groups, dialogs, attachments, label } = useDocumentActions(doc, status);
   return (
     <div className="flex items-center justify-center gap-0.5">
+      {dialogs}
       <IconAction action={attach} badge={attachments} />
       <IconAction action={pdf} />
       {primary ? <IconAction action={primary} /> : <span className="size-8" aria-hidden="true" />}
@@ -624,18 +700,21 @@ function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }
 
 /** Mobile: everything in one menu. */
 function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) {
-  const { groups, label } = useDocumentActions(doc, status);
+  const { groups, dialogs, label } = useDocumentActions(doc, status);
   return (
-    <ActionsMenu
-      groups={groups}
-      trigger={
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
-            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-      }
-    />
+    <>
+      {dialogs}
+      <ActionsMenu
+        groups={groups}
+        trigger={
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
+              <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+        }
+      />
+    </>
   );
 }
 

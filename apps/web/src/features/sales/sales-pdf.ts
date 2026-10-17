@@ -7,7 +7,7 @@ import { addressLine, businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
 import type { SalesDocument } from "@/mocks/sales";
 import { printOptions } from "./invoice-settings";
-import { clientOf, documentTotals, KINDS, OPERATION_TYPES } from "./sales-model";
+import { clientOf, documentFileName, documentTotals, KINDS, OPERATION_TYPES } from "./sales-model";
 
 /*
  * PDF export. Loaded on demand (dynamic import) so jsPDF stays out of the main bundle.
@@ -28,11 +28,6 @@ function title(doc: SalesDocument) {
   const { singular } = KINDS[doc.kind];
   const name = doc.series === "rectifying" ? "Factura rectificativa" : singular;
   return doc.number ? `${name} ${doc.number}` : name;
-}
-
-export function fileName(doc: SalesDocument) {
-  const slug = clientOf(doc).name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  return `${doc.number ?? `borrador-${doc.issuedOn}`}-${slug.replace(/[^a-z0-9]+/g, "-").replace(/-$/, "")}.pdf`;
 }
 
 function render(doc: SalesDocument): jsPDF {
@@ -178,13 +173,18 @@ function save(blob: Blob, name: string) {
 }
 
 export function downloadDocumentPdf(doc: SalesDocument) {
-  render(doc).save(fileName(doc));
+  render(doc).save(documentFileName(doc, "pdf"));
+}
+
+/** Shows the PDF in a tab opened beforehand (synchronously, so pop-up blockers allow it), to read or print. */
+export function showDocumentPdf(doc: SalesDocument, tab: Window) {
+  tab.location.href = URL.createObjectURL(render(doc).output("blob"));
 }
 
 /** Every document as its own PDF, packed in one .zip. */
 export function downloadPdfZip(docs: SalesDocument[], name: string) {
   const files = Object.fromEntries(
-    docs.map((doc) => [fileName(doc), new Uint8Array(render(doc).output("arraybuffer"))] as const),
+    docs.map((doc) => [documentFileName(doc, "pdf"), new Uint8Array(render(doc).output("arraybuffer"))] as const),
   );
   // PDFs are already compressed: store them as they are
   const zip = zipSync(files, { level: 0 });

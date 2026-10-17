@@ -18,3 +18,4 @@ export * from "./transfer";
 export * from "./catalog";
 export * from "./verifactu";
 export * from "./accounting-codes";
+export * from "./facturae";
