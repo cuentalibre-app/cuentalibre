@@ -149,6 +149,15 @@ export function clientOf(doc: SalesDocument): Contact {
 
 const SERIES_PREFIX: Record<InvoiceSeries, string> = { normal: "", rectifying: "R-" };
 
+/** "2026-0046-estudio-norte-s-l.pdf": number (or draft date) and client, for downloads. */
+export function documentFileName(doc: SalesDocument, extension: string) {
+  const slug = clientOf(doc)
+    .name.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  return `${doc.number ?? `borrador-${doc.issuedOn}`}-${slug.replace(/[^a-z0-9]+/g, "-").replace(/-$/, "")}.${extension}`;
+}
+
 export function nextNumber(kind: SalesKind, series: InvoiceSeries, year: number, docs: SalesDocument[]): string {
   const prefix = kind === "invoice" ? SERIES_PREFIX[series] : KINDS[kind].numberPrefix;
   const numbers = docs.filter((d) => d.number !== null).map((d) => d.number!);
