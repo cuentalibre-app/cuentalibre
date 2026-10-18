@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router";
 import { DemoBanner } from "@/features/auth/session-gate";
 import { BottomNav } from "./bottom-nav";
+import { CommandErrorNotice } from "./command-error-notice";
 import { Sidebar } from "./sidebar";
 import { useSidebarCollapsed } from "./use-sidebar-collapsed";
 
@@ -11,6 +12,7 @@ export function AppLayout() {
   return (
     <>
       <DemoBanner />
+      <CommandErrorNotice />
       <div className="flex min-h-dvh">
         <a
           href="#main"

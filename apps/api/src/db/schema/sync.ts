@@ -1,10 +1,13 @@
+import type { SyncCommand } from "@fiscalia/contracts";
 import { bigint, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth";
+
+export type LoggedEntity = "contact" | "sales_document" | "closed_quarter";
 
 /**
  * Append-only log of every change to an organization's data: the feed clients
  * sync from (`seq` is the cursor) and the audit trail. Writes to one
- * organization are serialized (see `withOrganizationWrite`), so within an
+ * organization are serialized (see `applyCommands`), so within an
  * organization `seq` follows commit order and a client never skips a change.
  */
 export const changeLog = pgTable(
@@ -15,9 +18,11 @@ export const changeLog = pgTable(
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
     /** The table, e.g. `contact`. */
-    entity: text().$type<"contact">().notNull(),
-    recordId: uuid().notNull(),
-    op: text().$type<"create" | "update" | "delete">().notNull(),
+    entity: text().$type<LoggedEntity>().notNull(),
+    /** The record's ID; for closed quarters, the period. */
+    recordId: text().notNull(),
+    /** The command that made the change. */
+    op: text().$type<SyncCommand["type"]>().notNull(),
     userId: uuid().references(() => user.id, { onDelete: "set null" }),
     at: timestamp({ withTimezone: true }).defaultNow().notNull(),
   },

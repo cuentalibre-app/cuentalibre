@@ -3,8 +3,10 @@ import {
   addDays,
   invoiceTotals,
   isOverdue,
+  laterInvoiceInSeries,
   lineBase,
   nextDocumentNumber,
+  nextInvoiceNumber,
   operationChargesVat,
   type InvoiceLine,
 } from "./invoices";
@@ -103,6 +105,37 @@ describe("nextDocumentNumber", () => {
   it("starts again in a new year and ignores other series", () => {
     expect(nextDocumentNumber("", 2027, ["2026-0047"])).toBe("2027-0001");
     expect(nextDocumentNumber("R-", 2026, ["2026-0047", "R-2026-0002"])).toBe("R-2026-0003");
+  });
+});
+
+describe("nextInvoiceNumber", () => {
+  const issued = [
+    { number: "2026-0046", series: "normal", issuedOn: "2026-10-02" },
+    { number: "R-2026-0001", series: "rectifying", issuedOn: "2026-10-05" },
+  ] as const;
+
+  it("numbers each series apart, by the year of the date", () => {
+    expect(nextInvoiceNumber("normal", "2026-10-18", [...issued])).toBe("2026-0047");
+    expect(nextInvoiceNumber("rectifying", "2026-10-18", [...issued])).toBe("R-2026-0002");
+    expect(nextInvoiceNumber("normal", "2027-01-02", [...issued])).toBe("2027-0001");
+  });
+});
+
+describe("laterInvoiceInSeries", () => {
+  const issued = [
+    { number: "2026-0046", series: "normal", issuedOn: "2026-10-02" },
+    { number: "2026-0047", series: "normal", issuedOn: "2026-10-09" },
+    { number: "R-2026-0001", series: "rectifying", issuedOn: "2026-10-20" },
+  ] as const;
+
+  it("finds the latest invoice of the series dated after the new one", () => {
+    expect(laterInvoiceInSeries("normal", "2026-10-01", [...issued])?.number).toBe("2026-0047");
+  });
+
+  it("allows the same date or a later one, and ignores other series and years", () => {
+    expect(laterInvoiceInSeries("normal", "2026-10-09", [...issued])).toBeUndefined();
+    expect(laterInvoiceInSeries("rectifying", "2026-10-25", [...issued])).toBeUndefined();
+    expect(laterInvoiceInSeries("normal", "2025-12-31", [...issued])).toBeUndefined();
   });
 });
 

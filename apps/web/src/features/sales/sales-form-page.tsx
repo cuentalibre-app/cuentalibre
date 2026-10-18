@@ -72,9 +72,11 @@ import {
   WITHHOLDING_GROUPS,
   clientOf,
   groupLinesByTax,
+  laterInvoice,
   nextNumber,
   periodKeyOf,
 } from "./sales-model";
+import { IssuedNotice } from "./issued-notice";
 import { salesStore } from "./sales-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
@@ -127,10 +129,7 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     isCopy &&
     base?.kind === "deliveryNote" &&
     !documentSettingsStore.get("deliveryNote").keepLinesOnInvoice;
-  const number =
-    base && !isCopy && base.number
-      ? base.number
-      : nextNumber(kind, series, Number(issuedOn.slice(0, 4)), salesStore.all());
+  const number = base && !isCopy && base.number ? base.number : nextNumber(kind, series, issuedOn, salesStore.all());
 
   return {
     clientId: base?.clientId ?? "",
@@ -239,8 +238,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   const [creatingClient, setCreatingClient] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const lockedQuarterOf = useLockedQuarter();
-  // Issued invoices of a closed quarter are read-only; drafts, quotes and delivery notes are not booked
-  const locked = existing?.kind === "invoice" ? lockedQuarterOf(existing.issuedOn) : null;
+  // Issued invoices are read-only: they are corrected with a rectifying invoice
+  const issued = existing?.kind === "invoice";
+  // Drafts, quotes and delivery notes are not booked, so only invoices belong to a closed quarter
+  const locked = issued ? lockedQuarterOf(existing.issuedOn) : null;
   const [advanced, setAdvanced] = useState(
     () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
   );
@@ -301,7 +302,12 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   };
 
   const suggestedNumber = (series: InvoiceSeries) =>
-    nextNumber(kind, series, Number((form.issuedOn || toIsoDate(new Date())).slice(0, 4)), salesStore.all());
+    nextNumber(kind, series, form.issuedOn || toIsoDate(new Date()), salesStore.all());
+  // The server numbers invoices when they are issued: a new one shows the number it will most likely get
+  const invoiceNumber = (asKind: SalesKind) =>
+    asKind === "invoice" && !issued
+      ? nextNumber("invoice", form.series, form.issuedOn || toIsoDate(new Date()), salesStore.all())
+      : null;
 
   const changeSeries = (value: string) => {
     // The "Opciones" entries lead to the series settings
@@ -341,8 +347,13 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     if (!form.issuedOn) next.issuedOn = "Indica la fecha.";
     else if (asKind === "invoice" && lockedQuarterOf(form.issuedOn))
       next.issuedOn = lockedMessage(lockedQuarterOf(form.issuedOn)!);
-    // Issuing a draft takes the next invoice number, so only the kind's own number is checked
-    if (asKind === kind) {
+    else if (asKind === "invoice") {
+      const later = laterInvoice(form.series, form.issuedOn, salesStore.all());
+      if (later)
+        next.issuedOn = `La factura ${later.number} de esta serie es del ${formatDate(later.issuedOn)}: esta no puede tener una fecha anterior.`;
+    }
+    // Invoices take the next number of their series, so only the other kinds' own number is checked
+    if (asKind === kind && asKind !== "invoice") {
       if (!form.number.trim()) next.number = "Indica el número.";
       else if (
         salesStore.all().some((d) => d.id !== existing?.id && d.kind === asKind && d.number === form.number.trim())
@@ -357,6 +368,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   }
 
   function save(asKind: SalesKind, after: AfterSave = "list") {
+    if (issued) return;
     const found = validate(asKind);
     setErrors(found);
     if (Object.values(found).some(Boolean)) {
@@ -368,9 +380,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     const asInvoice = asKind === "invoice";
     const paid = asInvoice && form.markPaid;
     const number =
-      asKind === kind
-        ? form.number.trim()
-        : nextNumber(asKind, form.series, Number(form.issuedOn.slice(0, 4)), salesStore.all());
+      invoiceNumber(asKind) ??
+      (asKind === kind ? form.number.trim() : nextNumber(asKind, form.series, form.issuedOn, salesStore.all()));
     const doc: SalesDocument = {
       id: existing?.id ?? newId(),
       kind: asKind,
@@ -405,7 +416,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       attachments: existing?.attachments,
     };
 
-    if (existing) salesStore.update(existing.id, doc);
+    if (asInvoice) salesStore.issue(doc, { origin: originKind(asKind) });
+    else if (existing) salesStore.update(existing.id, doc);
     else salesStore.add(doc, originKind(asKind));
     // Invoicing a quote or delivery note closes it
     if (source && (source.kind === "quote" || source.kind === "deliveryNote") && (asInvoice || asKind === "draft"))
@@ -515,16 +527,16 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            {!locked && (
+            {!issued && (
               <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
                 Nuevo cliente
               </Button>
             )}
-            {!locked && actions("hidden lg:flex")}
+            {!issued && actions("hidden lg:flex")}
           </div>
         </header>
 
-        {locked && <LockedNotice period={locked} noun="Esta factura" />}
+        {locked ? <LockedNotice period={locked} noun="Esta factura" /> : issued && <IssuedNotice invoice={existing} />}
 
         {source && !existing && (
           <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
@@ -535,7 +547,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         )}
 
         <fieldset
-          disabled={Boolean(locked)}
+          disabled={issued}
           className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
         >
           <Section title={infoTitle(config.noun)} index={1}>
@@ -586,30 +598,43 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                 )}
               </Field>
 
-              <Field
-                label="Número"
-                required
-                error={errors.number}
-                help="Número correlativo dentro de la serie. «Obtener número» propone el siguiente libre."
-                action={
-                  <button
-                    type="button"
-                    onClick={() => set("number", suggestedNumber(form.series))}
-                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
-                  >
-                    Obtener número
-                  </button>
-                }
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    value={form.number}
-                    onChange={(e) => set("number", e.target.value)}
-                    className="font-mono"
-                  />
-                )}
-              </Field>
+              {isInvoice ? (
+                <Field
+                  label="Número"
+                  help={
+                    issued
+                      ? "Número que recibió al emitirse."
+                      : "Se asigna al emitir la factura: el siguiente de la serie, en orden de fecha."
+                  }
+                >
+                  {(p) => <Input {...p} readOnly value={invoiceNumber(kind) ?? form.number} className="font-mono" />}
+                </Field>
+              ) : (
+                <Field
+                  label="Número"
+                  required
+                  error={errors.number}
+                  help="Número correlativo dentro de la serie. «Obtener número» propone el siguiente libre."
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => set("number", suggestedNumber(form.series))}
+                      className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                    >
+                      Obtener número
+                    </button>
+                  }
+                >
+                  {(p) => (
+                    <Input
+                      {...p}
+                      value={form.number}
+                      onChange={(e) => set("number", e.target.value)}
+                      className="font-mono"
+                    />
+                  )}
+                </Field>
+              )}
 
               <Field label="Serie" required>
                 {(p) => (
@@ -986,7 +1011,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         </fieldset>
 
         {/* Mobile: actions at the end of the form */}
-        {!locked && actions("lg:hidden")}
+        {!issued && actions("lg:hidden")}
         <NewContactDialog
           role="client"
           open={creatingClient}

@@ -4,10 +4,12 @@
  * never waits, and undo it if the backend rejects it.
  *
  * Plain create/update/delete covers most records. Settings are saved a whole
- * section at a time, and changes with legal effects (closing a quarter, and
- * later issuing or rectifying an invoice) get their own command, because only
- * the server may decide them.
+ * section at a time, and changes with legal effects (issuing an invoice,
+ * closing a quarter) get their own command, because only the server may decide
+ * them.
  */
+
+import type { SalesDocument } from "@fiscalia/contracts";
 
 /** Collections of records, named like the tables they will be stored in. */
 export type Entity =
@@ -51,5 +53,7 @@ export type Command =
   | { type: "update"; entity: Entity; id: string; changes: object }
   | { type: "delete"; entity: Entity; id: string }
   | { type: "saveSettings"; section: SettingsSection; data: unknown }
+  /** Issues an invoice, new or from a draft: the server numbers it, unless `number` keeps an imported one. */
+  | { type: "issue"; data: SalesDocument; number?: string }
   | { type: "closeQuarter"; period: string; closedOn: string }
   | { type: "reopenQuarter"; period: string };

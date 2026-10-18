@@ -49,6 +49,7 @@ import {
   clientOf,
   displayStatus,
   documentTotals,
+  laterInvoice,
   nextNumber,
   periodKeyOf,
   type StatusKey,
@@ -493,9 +494,8 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
-  // Invoices of a closed quarter can't change, and drafts can't be issued into one
+  // Drafts can't be issued into a closed quarter
   const lockedQuarter = useLockedQuarter()(doc.issuedOn);
-  const locked = doc.kind === "invoice" && lockedQuarter !== null;
 
   const attach: Action = {
     label: attachments.length > 0 ? `Adjuntar archivos (${attachments.length})` : "Adjuntar archivos",
@@ -558,11 +558,18 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   } satisfies Record<string, Action>;
 
   const issueDraft = () => {
-    const year = Number(doc.issuedOn.slice(0, 4));
-    salesStore.update(doc.id, {
+    const later = laterInvoice(doc.series, doc.issuedOn, salesStore.all());
+    if (later) {
+      window.alert(
+        `No se puede emitir: la factura ${later.number} de esta serie es del ${formatDate(later.issuedOn)} y este borrador tiene una fecha anterior. Cambia su fecha antes de emitirlo.`,
+      );
+      return;
+    }
+    salesStore.issue({
+      ...doc,
       kind: "invoice",
       status: "pending",
-      number: nextNumber("invoice", doc.series, year, salesStore.all()),
+      number: nextNumber("invoice", doc.series, doc.issuedOn, salesStore.all()),
     });
     navigate(`${KINDS.invoice.path}?periodo=${periodKeyOf(doc.issuedOn)}`);
   };
@@ -612,7 +619,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     [
       extras.view,
       {
-        label: `${locked ? "Ver los datos de" : "Editar"} ${locked ? config.noun : config.singular.toLowerCase()}`,
+        label: isInvoice ? `Ver los datos de ${config.noun}` : `Editar ${config.singular.toLowerCase()}`,
         icon: Pencil,
         run: () => navigate(`${config.path}/${doc.id}`),
       },
@@ -635,20 +642,19 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
           },
         ]
       : [],
-    [
-      {
-        label:
-          `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim() +
-          (locked ? " (trimestre cerrado)" : ""),
-        icon: Trash2,
-        danger: true,
-        run: locked
-          ? undefined
-          : () => {
+    // Issued invoices are never deleted: they are corrected with a rectifying invoice
+    isInvoice
+      ? []
+      : [
+          {
+            label: `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim(),
+            icon: Trash2,
+            danger: true,
+            run: () => {
               if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`)) salesStore.remove(doc.id);
             },
-      },
-    ],
+          },
+        ],
   ].filter((g) => g.length > 0);
 
   const close = (open: boolean) => !open && setDialog(null);

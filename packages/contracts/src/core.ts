@@ -11,6 +11,7 @@ import {
   type CatalogFamily,
   type CatalogUnit,
   type InvoiceLine,
+  type InvoiceTotals,
   type OperationType,
   type PurchaseOperationType,
   type StockMovement,
@@ -19,7 +20,7 @@ import {
   type WithholdingKind,
 } from "@fiscalia/core";
 import { z } from "zod";
-import { fraction, id, localDateTime } from "./common";
+import { cents, fraction, id, localDateTime } from "./common";
 
 const keysOf = <K extends string>(record: Record<K, unknown>) => Object.keys(record) as [K, ...K[]];
 
@@ -43,6 +44,16 @@ export const invoiceLineSchema = z.object({
   discount: fraction,
   vatRate: fraction,
   surchargeRate: fraction.optional(),
+});
+
+export const invoiceTotalsSchema = z.object({
+  base: cents,
+  vat: cents,
+  surcharge: cents,
+  withholding: cents,
+  supplies: cents,
+  total: cents,
+  vatBreakdown: z.array(z.object({ rate: fraction, base: cents, vat: cents })),
 });
 
 export const amortizationPlanSchema = z.object({
@@ -97,6 +108,7 @@ export type CoreTypesMatch = [
   Assert<Mirrors<typeof operationTypeSchema, OperationType>>,
   Assert<Mirrors<typeof purchaseOperationTypeSchema, PurchaseOperationType>>,
   Assert<Mirrors<typeof invoiceLineSchema, InvoiceLine>>,
+  Assert<Mirrors<typeof invoiceTotalsSchema, InvoiceTotals>>,
   Assert<Mirrors<typeof amortizationPlanSchema, AmortizationPlan>>,
   Assert<Mirrors<typeof catalogUnitSchema, CatalogUnit>>,
   Assert<Mirrors<typeof catalogFamilySchema, CatalogFamily>>,

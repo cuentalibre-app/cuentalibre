@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { attachmentSchema, cents, id, isoDate, rentalLocationSchema } from "./common";
-import { invoiceLineSchema, operationTypeSchema, withholdingKindSchema } from "./core";
+import { contactSchema } from "./contacts";
+import { invoiceLineSchema, invoiceTotalsSchema, operationTypeSchema, withholdingKindSchema } from "./core";
 
 export const salesKindSchema = z.enum(["invoice", "draft", "quote", "deliveryNote"]);
 export type SalesKind = z.infer<typeof salesKindSchema>;
@@ -34,13 +35,33 @@ export const salesLineSchema = invoiceLineSchema.extend({
 });
 export type SalesLine = z.infer<typeof salesLineSchema>;
 
+/**
+ * What an invoice froze when it was issued: the client's fiscal data and the
+ * totals. Editing the contact, or changing how core rounds, never alters an
+ * issued invoice. Set by the server; the app never sends it.
+ */
+export const issuedSnapshotSchema = z.object({
+  client: contactSchema.pick({
+    name: true,
+    taxId: true,
+    address: true,
+    postalCode: true,
+    city: true,
+    province: true,
+    country: true,
+  }),
+  totals: invoiceTotalsSchema,
+});
+export type IssuedSnapshot = z.infer<typeof issuedSnapshotSchema>;
+
 export const salesDocumentSchema = z.object({
   id,
   kind: salesKindSchema,
   /** Drafts are numbered in their own series (BOR-); issuing one gives it an invoice number. Null on older drafts. */
   number: z.string().nullable(),
   series: invoiceSeriesSchema,
-  clientId: id,
+  /** Empty on drafts and quotes saved without a client. */
+  clientId: id.or(z.literal("")),
   issuedOn: isoDate,
   /** Due date for invoices; "valid until" for quotes. */
   dueOn: isoDate.nullable(),
@@ -74,6 +95,8 @@ export const salesDocumentSchema = z.object({
   privateNotes: z.string(),
   /** Supporting files (contracts, delivery proofs…). Names only until there is a backend. */
   attachments: z.array(attachmentSchema).optional(),
+  /** Issued invoices only. */
+  issued: issuedSnapshotSchema.optional(),
 });
 export type SalesDocument = z.infer<typeof salesDocumentSchema>;
 

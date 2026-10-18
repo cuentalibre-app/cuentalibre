@@ -1,46 +1,14 @@
-import type { Changes, SyncCommand, Workspace } from "@fiscalia/contracts";
 import { newId } from "@fiscalia/core";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { changeLog } from "./db/schema";
-import { createOrganization, db, signUp, type Client } from "./test/harness";
-
-/** A signed-in user working in a new organization of their own. */
-async function member(name = "Ana") {
-  const client = await signUp(name);
-  const organization = await createOrganization(client, `${name} SL`);
-  return Object.assign(client, { organizationId: organization.id });
-}
-
-const client = (fields: Record<string, unknown> = {}) => ({
-  id: newId(),
-  name: "Estudio Norte S.L.",
-  taxId: "B12345674",
-  ...fields,
-});
-
-async function send(user: Client, commands: SyncCommand[]) {
-  return user.request("/v1/commands", { method: "POST", body: { commands } });
-}
-
-async function workspace(user: Client) {
-  const response = await user.request("/v1/workspace");
-  expect(response.status).toBe(200);
-  return (await response.json()) as Workspace;
-}
-
-async function changes(user: Client, since: number, limit?: number) {
-  const response = await user.request(`/v1/sync?since=${since}${limit ? `&limit=${limit}` : ""}`);
-  expect(response.status).toBe(200);
-  return (await response.json()) as Changes;
-}
-
-const errorCode = async (response: Response) => ((await response.json()) as { error: { code: string } }).error.code;
+import { db, signUp } from "./test/harness";
+import { changes, client, EMPTY, errorCode, member, send, workspace } from "./test/sync";
 
 describe("sync", () => {
   it("starts with an empty workspace", async () => {
     const ana = await member();
-    expect(await workspace(ana)).toEqual({ cursor: 0, clients: [], suppliers: [] });
+    expect(await workspace(ana)).toEqual(EMPTY);
   });
 
   it("applies commands and returns the authoritative records", async () => {
@@ -86,7 +54,7 @@ describe("sync", () => {
       { type: "update", entity: "clients", id: newId(), changes: { city: "Bilbao" } },
     ]);
     expect(response.status).toBe(404);
-    expect(await workspace(ana)).toEqual({ cursor: 0, clients: [], suppliers: [] });
+    expect(await workspace(ana)).toEqual(EMPTY);
     expect(await db.select().from(changeLog).where(eq(changeLog.organizationId, ana.organizationId))).toEqual([]);
   });
 
@@ -146,13 +114,15 @@ describe("sync", () => {
     );
 
     const first = await changes(ana, 0, 2);
-    expect(first.changes.map((change) => change.op === "upsert" && change.data.id)).toEqual([
+    expect(first.changes.map((change) => change.op === "upsert" && "id" in change.data && change.data.id)).toEqual([
       records[0]!.id,
       records[1]!.id,
     ]);
     expect(first.hasMore).toBe(true);
     const second = await changes(ana, first.cursor, 2);
-    expect(second.changes.map((change) => change.op === "upsert" && change.data.id)).toEqual([records[2]!.id]);
+    expect(second.changes.map((change) => change.op === "upsert" && "id" in change.data && change.data.id)).toEqual([
+      records[2]!.id,
+    ]);
     expect(second.hasMore).toBe(false);
   });
 
@@ -162,7 +132,7 @@ describe("sync", () => {
     const norte = client();
     await send(ana, [{ type: "create", entity: "clients", data: norte }]);
 
-    expect(await workspace(luis)).toEqual({ cursor: 0, clients: [], suppliers: [] });
+    expect(await workspace(luis)).toEqual(EMPTY);
     expect((await changes(luis, 0)).changes).toEqual([]);
     expect(
       (await send(luis, [{ type: "update", entity: "clients", id: norte.id, changes: { name: "Mine" } }])).status,

@@ -1,12 +1,33 @@
-import type { Contact } from "@fiscalia/contracts";
+import type { ClosedQuarter, Contact, SalesDocument } from "@fiscalia/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApiBackend, ApiError } from "./api";
 import { localBackend, setBackend } from "./backend";
 import { createCollection } from "./collection";
-import { syncCollection } from "./sync";
+import { createStore } from "./store";
+import { syncCollection, syncTarget } from "./sync";
 
 const norte: Contact = { id: "0199f0a0-0000-7000-8000-000000000001", name: "Estudio Norte S.L.", taxId: "B12345674" };
 const brisa: Contact = { id: "0199f0a0-0000-7000-8000-000000000002", name: "Agencia Brisa S.L.", taxId: "B87654323" };
+
+const invoice: SalesDocument = {
+  id: "0199f0a0-0000-7000-8000-000000000003",
+  kind: "invoice",
+  number: "2026-0047",
+  series: "normal",
+  clientId: norte.id,
+  issuedOn: "2026-10-18",
+  dueOn: null,
+  incomeType: "705",
+  withholding: "none",
+  operationType: "national",
+  operationOn: null,
+  cashBasis: false,
+  rental: false,
+  lines: [{ id: "l1", concept: "Diseño", unitPrice: 100, quantity: 1, discount: 0, vatRate: 0.21 }],
+  status: "pending",
+  publicNotes: "",
+  privateNotes: "",
+};
 
 interface Call {
   url: string;
@@ -29,12 +50,14 @@ function fakeFetch(...responses: { status?: number; body: unknown }[]) {
 function setup(...responses: { status?: number; body: unknown }[]) {
   const clients = createCollection<Contact>("clients", []);
   const suppliers = createCollection<Contact>("suppliers", []);
+  const salesDocuments = createCollection<SalesDocument>("salesDocuments", []);
   syncCollection("clients", clients);
   syncCollection("suppliers", suppliers);
+  syncCollection("salesDocuments", salesDocuments);
   const { calls, fetchImpl } = fakeFetch(...responses);
   const api = createApiBackend("http://api", fetchImpl);
   setBackend(api);
-  return { api, calls, clients, suppliers };
+  return { api, calls, clients, suppliers, salesDocuments };
 }
 
 afterEach(() => setBackend(localBackend));
@@ -42,7 +65,7 @@ afterEach(() => setBackend(localBackend));
 describe("api backend", () => {
   it("replaces the synced collections with the workspace, then follows the feed from its cursor", async () => {
     const { api, calls, clients, suppliers } = setup(
-      { body: { cursor: 7, clients: [norte], suppliers: [brisa] } },
+      { body: { cursor: 7, clients: [norte], suppliers: [brisa], salesDocuments: [], closedQuarters: [] } },
       { body: { cursor: 9, changes: [{ op: "delete", entity: "clients", id: norte.id }], hasMore: true } },
       {
         body: {
@@ -96,6 +119,51 @@ describe("api backend", () => {
     await tags.add({ id: "t1", name: "Recurrente" });
     expect(calls).toEqual([]);
     expect(tags.all()).toEqual([{ id: "t1", name: "Recurrente" }]);
+  });
+
+  it("issues invoices and takes the number the server gives them", async () => {
+    const { calls, salesDocuments } = setup({
+      body: { changes: [{ op: "upsert", entity: "salesDocuments", data: { ...invoice, number: "2026-0048" } }] },
+    });
+    const issued = salesDocuments.write(invoice, [{ type: "issue", data: invoice }]);
+    expect(salesDocuments.all()).toEqual([invoice]);
+    await issued;
+    expect(calls[0]!.body).toEqual({ commands: [{ type: "issue", data: invoice }] });
+    expect(salesDocuments.all()).toEqual([{ ...invoice, number: "2026-0048" }]);
+  });
+
+  it("sends closing and reopening quarters once the server stores them", async () => {
+    const { calls } = setup({ body: { changes: [] } });
+    const quarters = createStore<ClosedQuarter[]>([]);
+    syncTarget<ClosedQuarter>("closedQuarters", {
+      receive: (quarter) => quarters.set([quarter]),
+      forget: () => quarters.set([]),
+      replace: quarters.set,
+    });
+    await quarters.write(
+      [],
+      [
+        { type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15" },
+        { type: "saveSettings", section: "userLocale", data: {} },
+      ],
+    );
+    expect(calls[0]!.body).toEqual({
+      commands: [{ type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15" }],
+    });
+  });
+
+  it("sends one request at a time, in order", async () => {
+    const { calls, clients } = setup({ body: { changes: [] } }, { body: { changes: [] } });
+    const first = clients.add(norte);
+    const second = clients.add(brisa);
+    // The second request waits for the answer to the first
+    expect(calls).toHaveLength(0);
+    await first;
+    await second;
+    expect(calls.map((call) => (call.body as { commands: { data: Contact }[] }).commands[0]!.data.id)).toEqual([
+      norte.id,
+      brisa.id,
+    ]);
   });
 
   it("undoes a change the server rejects", async () => {

@@ -1,4 +1,4 @@
-import { contactRoleSchema, storedContactSchema, type ContactRole, type SyncedEntity } from "@fiscalia/contracts";
+import { contactRoleSchema, storedContactSchema, type ContactEntity, type ContactRole } from "@fiscalia/contracts";
 import { newId } from "@fiscalia/core";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
@@ -14,7 +14,7 @@ import { applyCommands } from "../sync/write";
  */
 
 const contactWithRole = storedContactSchema.extend({ role: contactRoleSchema });
-const ENTITIES: Record<ContactRole, SyncedEntity> = { client: "clients", supplier: "suppliers" };
+const ENTITIES: Record<ContactRole, ContactEntity> = { client: "clients", supplier: "suppliers" };
 
 const tenantErrors = {
   401: errorContent("Not signed in"),

@@ -2,26 +2,29 @@ import type { Change, SyncedEntity, Workspace } from "@fiscalia/contracts";
 import type { Collection } from "./collection";
 
 /*
- * The collections the server stores. Records the server sends (in the
- * workspace, in answer to commands, or in the change feed) are applied to them
- * without being sent back.
+ * The data the server stores. Records the server sends (in the workspace, in
+ * answer to commands, or in the change feed) are applied to the stores without
+ * being sent back.
  */
 
-interface Target {
-  receive: (item: unknown) => void;
+/** How the server's records for one entity reach the store that keeps them. */
+export interface SyncTarget<T> {
+  receive: (item: T) => void;
+  /** `id` is the record's ID; for closed quarters, the period. */
   forget: (id: string) => void;
-  replace: (items: unknown[]) => void;
+  replace: (items: T[]) => void;
 }
 
-const targets = new Map<SyncedEntity, Target>();
+const targets = new Map<SyncedEntity, SyncTarget<unknown>>();
+
+/** Lets the server's records for `entity` reach a store. */
+export function syncTarget<T>(entity: SyncedEntity, target: SyncTarget<T>) {
+  targets.set(entity, target as SyncTarget<unknown>);
+}
 
 /** Lets the server's records for `entity` reach the collection. */
 export function syncCollection<T extends { id: string }>(entity: SyncedEntity, collection: Collection<T>) {
-  targets.set(entity, {
-    receive: (item) => collection.receive(item as T),
-    forget: collection.forget,
-    replace: (items) => collection.replace(items as T[]),
-  });
+  syncTarget<T>(entity, { receive: collection.receive, forget: collection.forget, replace: collection.replace });
 }
 
 export function isSynced(entity: string): entity is SyncedEntity {

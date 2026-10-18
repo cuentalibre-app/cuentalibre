@@ -1,10 +1,18 @@
 import { ENTITY_ROLES, type Change, type Changes, type Workspace } from "@fiscalia/contracts";
 import { and, asc, eq, gt, max } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
-import { changeLog } from "../db/schema";
+import { changeLog, type LoggedEntity } from "../db/schema";
+import { closedQuartersByPeriod, liveClosedQuarters, toClosedQuarter } from "./closing";
 import { contactsById, liveContacts, toContact, type ContactRow } from "./contacts";
+import { liveSalesDocuments, salesDocumentsById } from "./sales";
 
 const entityOf = (row: ContactRow) => (row.role === ENTITY_ROLES.clients ? "clients" : "suppliers");
+
+/** A record named in the change log. */
+export interface RecordRef {
+  entity: LoggedEntity;
+  id: string;
+}
 
 /**
  * Everything the client keeps, with the cursor it was read at. Read in one
@@ -17,9 +25,14 @@ export function readWorkspace(db: Db, organizationId: string): Promise<Workspace
         .select({ seq: max(changeLog.seq) })
         .from(changeLog)
         .where(eq(changeLog.organizationId, organizationId));
-      const contacts = await liveContacts(tx, organizationId);
-      const workspace: Workspace = { cursor: last?.seq ?? 0, clients: [], suppliers: [] };
-      for (const row of contacts) workspace[entityOf(row)].push(toContact(row));
+      const workspace: Workspace = {
+        cursor: last?.seq ?? 0,
+        clients: [],
+        suppliers: [],
+        salesDocuments: await liveSalesDocuments(tx, organizationId),
+        closedQuarters: (await liveClosedQuarters(tx, organizationId)).map(toClosedQuarter),
+      };
+      for (const row of await liveContacts(tx, organizationId)) workspace[entityOf(row)].push(toContact(row));
       return workspace;
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
@@ -34,7 +47,7 @@ export function readChanges(db: Db, organizationId: string, since: number, limit
   return db.transaction(
     async (tx) => {
       const entries = await tx
-        .select({ seq: changeLog.seq, recordId: changeLog.recordId })
+        .select({ seq: changeLog.seq, entity: changeLog.entity, id: changeLog.recordId })
         .from(changeLog)
         .where(and(eq(changeLog.organizationId, organizationId), gt(changeLog.seq, since)))
         .orderBy(asc(changeLog.seq))
@@ -42,7 +55,7 @@ export function readChanges(db: Db, organizationId: string, since: number, limit
       const page = entries.slice(0, limit);
       return {
         cursor: page.at(-1)?.seq ?? since,
-        changes: await changesFor(tx, organizationId, [...new Set(page.map((entry) => entry.recordId))]),
+        changes: await changesFor(tx, organizationId, page),
         hasMore: entries.length > limit,
       };
     },
@@ -50,15 +63,34 @@ export function readChanges(db: Db, organizationId: string, since: number, limit
   );
 }
 
-/** The current state of the given records, as changes. */
-export async function changesFor(tx: Tx, organizationId: string, ids: string[]): Promise<Change[]> {
-  const rows = await contactsById(tx, organizationId, ids);
-  const byId = new Map(rows.map((row) => [row.id, row]));
-  return ids.flatMap((id): Change[] => {
-    const row = byId.get(id);
-    if (!row) return [];
-    return row.deletedAt
-      ? [{ op: "delete", entity: entityOf(row), id }]
-      : [{ op: "upsert", entity: entityOf(row), data: toContact(row) }];
-  });
+/** The current state of the given records, as changes, each once in order of first mention. */
+export async function changesFor(tx: Tx, organizationId: string, refs: RecordRef[]): Promise<Change[]> {
+  const unique = [...new Map(refs.map((ref) => [`${ref.entity}:${ref.id}`, ref])).values()];
+  const idsOf = (entity: LoggedEntity) => unique.filter((ref) => ref.entity === entity).map((ref) => ref.id);
+
+  const changes = new Map<string, Change>();
+  for (const row of await contactsById(tx, organizationId, idsOf("contact"))) {
+    const entity = entityOf(row);
+    changes.set(
+      `contact:${row.id}`,
+      row.deletedAt ? { op: "delete", entity, id: row.id } : { op: "upsert", entity, data: toContact(row) },
+    );
+  }
+  for (const doc of await salesDocumentsById(tx, organizationId, idsOf("sales_document"))) {
+    changes.set(
+      `sales_document:${doc.id}`,
+      doc.deleted
+        ? { op: "delete", entity: "salesDocuments", id: doc.id }
+        : { op: "upsert", entity: "salesDocuments", data: doc.record },
+    );
+  }
+  for (const row of await closedQuartersByPeriod(tx, organizationId, idsOf("closed_quarter"))) {
+    changes.set(
+      `closed_quarter:${row.period}`,
+      row.deletedAt
+        ? { op: "delete", entity: "closedQuarters", id: row.period }
+        : { op: "upsert", entity: "closedQuarters", data: toClosedQuarter(row) },
+    );
+  }
+  return unique.flatMap((ref) => changes.get(`${ref.entity}:${ref.id}`) ?? []);
 }
