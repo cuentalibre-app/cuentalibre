@@ -1,12 +1,17 @@
 import {
   accumulatedAmortization,
   amortizationBetween,
+  applyRate,
+  cents,
+  centsToEuros,
   formatSpanishDate,
   lineBase,
   quarterOfMonth,
-  roundCents,
+  roundHundredths,
+  sumBy,
   WITHHOLDING_RATES,
   yearlyRate,
+  type Cents,
   type InvoiceLine,
 } from "@fiscalia/core";
 import { deductibleOf, EXPENSE_STATUS, expenseStatus, payeeOf } from "@/features/purchases/expenses-model";
@@ -43,8 +48,8 @@ import type { SalesDocument, SalesLine } from "@/mocks/sales";
 /*
  * Rows of every listing that can be exported: the official register books
  * (libros registro) of VAT and income tax, and the advanced export. Amounts
- * are numbers, dates dd/mm/yyyy and rates whole percentages, as Spanish
- * spreadsheets and the tax office's book format expect.
+ * are numbers in euros, dates dd/mm/yyyy and rates whole percentages, as
+ * Spanish spreadsheets and the tax office's book format expect.
  */
 
 /** ISO range, both ends included. */
@@ -55,7 +60,10 @@ export interface DateRange {
 
 const inRange = (isoDate: string, range: DateRange) => isoDate >= range.from && isoDate <= range.to;
 const date = (isoDate: string | null | undefined): Cell => (isoDate ? formatSpanishDate(isoDate) : null);
-const percent = (fraction: number) => roundCents(fraction * 100);
+const percent = (fraction: number) => roundHundredths(fraction * 100);
+const eur = (amount: Cents): number => centsToEuros(amount);
+/** Empty cell for a zero amount. */
+const eurOrNull = (amount: Cents): number | null => (amount ? centsToEuros(amount) : null);
 const quarterCode = (isoDate: string) => `${quarterOfMonth(Number(isoDate.slice(5, 7)) - 1)}T`;
 
 const INCOME_TYPE_LABELS = new Map(INCOME_TYPE_GROUPS.flatMap((g) => g.options.map((o) => [o.value, o.label])));
@@ -66,10 +74,10 @@ const methodName = (id: string | undefined) => (id ? (paymentMethodName(id) ?? i
 
 interface RateRow {
   rate: number;
-  base: number;
-  vat: number;
+  base: Cents;
+  vat: Cents;
   surchargeRate: number;
-  surcharge: number;
+  surcharge: Cents;
 }
 
 /** Base, VAT and surcharge per VAT rate, as the register books list an invoice: one row per rate. */
@@ -79,20 +87,24 @@ function byRate(lines: InvoiceLine[]): RateRow[] {
   const rows = [...groups]
     .sort(([a], [b]) => b - a)
     .map(([rate, group]) => {
-      const base = roundCents(group.reduce((acc, l) => acc + lineBase(l), 0));
-      const surcharge = roundCents(group.reduce((acc, l) => acc + lineBase(l) * (l.surchargeRate ?? 0), 0));
+      const base = sumBy(group, lineBase);
+      const surcharge = cents(group.reduce((acc, l) => acc + lineBase(l) * (l.surchargeRate ?? 0), 0));
       return {
         rate,
         base,
-        vat: roundCents(base * rate),
+        vat: applyRate(base, rate),
         surchargeRate: group.find((l) => l.surchargeRate)?.surchargeRate ?? 0,
         surcharge,
       };
     });
-  return rows.length ? rows : [{ rate: 0, base: 0, vat: 0, surchargeRate: 0, surcharge: 0 }];
+  return rows.length ? rows : [{ rate: 0, base: cents(0), vat: cents(0), surchargeRate: 0, surcharge: cents(0) }];
 }
 
-const describe = (lines: SalesLine[]) => lines.map((l) => l.concept).filter(Boolean).join(" · ");
+const describe = (lines: SalesLine[]) =>
+  lines
+    .map((l) => l.concept)
+    .filter(Boolean)
+    .join(" · ");
 
 const issuedInvoices = (documents: SalesDocument[], range: DateRange) =>
   documents
@@ -137,13 +149,13 @@ function issuedRows(doc: SalesDocument): Cell[][] {
     client.taxId,
     client.name,
     operationLabel(doc.operationType),
-    r.base,
+    eur(r.base),
     percent(r.rate),
-    r.vat,
+    eur(r.vat),
     r.surchargeRate ? percent(r.surchargeRate) : null,
-    r.surcharge || null,
+    eurOrNull(r.surcharge),
     // The total belongs to the invoice: only on its first row
-    i === 0 ? totals.total : null,
+    i === 0 ? eur(totals.total) : null,
   ]);
 }
 
@@ -182,13 +194,13 @@ function receivedRows(doc: PurchaseInvoice, receipt: number): Cell[][] {
     supplier.taxId,
     supplier.name,
     purchaseOperationLabel(doc.operationType),
-    r.base,
+    eur(r.base),
     percent(r.rate),
-    r.vat,
-    roundCents(r.vat * share),
+    eur(r.vat),
+    eur(applyRate(r.vat, share)),
     r.surchargeRate ? percent(r.surchargeRate) : null,
-    r.surcharge || null,
-    i === 0 ? total : null,
+    eurOrNull(r.surcharge),
+    i === 0 ? eur(total) : null,
   ]);
 }
 
@@ -222,10 +234,10 @@ function assetVatRows(doc: PurchaseInvoice): Cell[][] {
     supplier.name,
     describe(doc.lines),
     doc.asset?.identifier ?? "",
-    r.base,
+    eur(r.base),
     percent(r.rate),
-    r.vat,
-    roundCents(r.vat * share),
+    eur(r.vat),
+    eur(applyRate(r.vat, share)),
     100,
   ]);
 }
@@ -262,11 +274,11 @@ function amortizationRows(purchases: PurchaseInvoice[], range: DateRange): Cell[
         supplier.name,
         describe(doc.lines),
         ASSET_CATEGORY_LABELS[asset.plan.category],
-        asset.value,
-        roundCents(yearlyRate(asset.plan)),
-        amount,
-        accumulated,
-        roundCents(asset.value - accumulated),
+        eur(asset.value),
+        roundHundredths(yearlyRate(asset.plan)),
+        eur(amount),
+        eur(accumulated),
+        eur(cents(asset.value - accumulated)),
       ];
     });
 }
@@ -315,9 +327,9 @@ function incomeRow(doc: SalesDocument): Cell[] {
     client.taxId,
     client.name,
     incomeTypeLabel(doc.incomeType),
-    totals.base,
-    totals.withholding || null,
-    totals.total,
+    eur(totals.base),
+    eurOrNull(totals.withholding),
+    eur(totals.total),
   ];
 }
 
@@ -347,10 +359,10 @@ function purchaseExpenseRow(doc: PurchaseInvoice): Cell[] {
     supplier.taxId,
     supplier.name,
     expenseTypeLabel(doc.expenseType),
-    totals.base,
+    eur(totals.base),
     doc.imputation,
-    deductible(doc).base,
-    totals.withholding || null,
+    eur(deductible(doc).base),
+    eurOrNull(totals.withholding),
     "Sí",
   ];
 }
@@ -365,9 +377,9 @@ function expenseRow(expense: Expense): Cell[] {
     payee?.taxId ?? "",
     payee?.name ?? "",
     expenseTypeLabel(expense.expenseType),
-    expense.amount,
+    eur(expense.amount),
     expense.imputation,
-    deductibleOf(expense),
+    eur(deductibleOf(expense)),
     null,
     "No",
   ];
@@ -413,8 +425,8 @@ export function unifiedBooks(
     return issuedRows(doc).map((row, i) => [
       ...row,
       incomeTypeLabel(doc.incomeType),
-      i === 0 ? totals.base : null,
-      i === 0 ? totals.withholding || null : null,
+      i === 0 ? eur(totals.base) : null,
+      i === 0 ? eurOrNull(totals.withholding) : null,
     ]);
   });
 
@@ -425,8 +437,8 @@ export function unifiedBooks(
       row: [
         ...row,
         expenseTypeLabel(doc.expenseType),
-        i === 0 ? deductible(doc).base : null,
-        i === 0 ? totals.withholding || null : null,
+        i === 0 ? eur(deductible(doc).base) : null,
+        i === 0 ? eurOrNull(totals.withholding) : null,
       ],
     }));
   });
@@ -445,24 +457,22 @@ export function unifiedBooks(
         payee?.taxId ?? "",
         payee?.name ?? "",
         "Gasto sin factura",
-        e.amount,
+        eur(e.amount),
         null,
         null,
         null,
         null,
         null,
-        e.amount,
+        eur(e.amount),
         expenseTypeLabel(e.expenseType),
-        deductibleOf(e),
+        eur(deductibleOf(e)),
         null,
       ];
       return { date: e.date, row };
     });
 
   const assets = receivedInvoices(purchases, range, true);
-  const amortizationByNumber = new Map(
-    amortizationRows(assets, range).map((row) => [row[1], row] as const),
-  );
+  const amortizationByNumber = new Map(amortizationRows(assets, range).map((row) => [row[1], row] as const));
   const assetRows = assets.flatMap((doc) =>
     assetVatRows(doc).map((row, i) => {
       const amortization = amortizationByNumber.get(doc.number);
@@ -543,9 +553,9 @@ function detailRows(number: string, isoDate: string, contact: Contact, lines: Sa
     l.unitPrice,
     l.quantity,
     percent(l.discount),
-    lineBase(l),
+    eur(lineBase(l)),
     percent(l.vatRate),
-    roundCents(lineBase(l) * l.vatRate),
+    eur(applyRate(lineBase(l), l.vatRate)),
     l.surchargeRate ? percent(l.surchargeRate) : null,
   ]);
 }
@@ -582,11 +592,11 @@ function salesListing(docs: SalesDocument[], today: Date): Cell[][] {
       client.taxId,
       client.name,
       STATUS[displayStatus(doc, today)].label,
-      totals.base,
-      totals.vat,
-      totals.surcharge || null,
-      totals.withholding || null,
-      totals.total,
+      eur(totals.base),
+      eur(totals.vat),
+      eurOrNull(totals.surcharge),
+      eurOrNull(totals.withholding),
+      eur(totals.total),
     ];
   });
 }
@@ -620,22 +630,22 @@ function purchaseListing(docs: PurchaseInvoice[], today: Date, assets: boolean):
       expenseTypeLabel(doc.expenseType),
       purchaseOperationLabel(doc.operationType),
       PURCHASE_STATUS[purchaseStatus(doc, today)].label,
-      totals.base,
-      totals.vat,
-      totals.withholding || null,
-      totals.total,
-      outstanding(doc),
+      eur(totals.base),
+      eur(totals.vat),
+      eurOrNull(totals.withholding),
+      eur(totals.total),
+      eur(outstanding(doc)),
       doc.imputation,
-      assets ? null : ded.base,
-      ded.vat,
+      assets ? null : eur(ded.base),
+      eur(ded.vat),
     ];
     if (assets && doc.asset) {
       const asset = assetOf(doc);
       row.push(
         ASSET_CATEGORY_LABELS[doc.asset.category],
         ASSET_CONDITIONS.find((c) => c.value === doc.asset!.condition)?.label ?? "",
-        roundCents(yearlyRate(doc.asset)),
-        asset.value,
+        roundHundredths(yearlyRate(doc.asset)),
+        eur(asset.value),
         doc.asset.identifier ?? "",
       );
     }
@@ -712,7 +722,14 @@ export function advancedSheets(data: AdvancedData, options: AdvancedOptions, ran
       sheets.push(
         {
           name: "Cobros",
-          header: ["Número de factura", "NIF del cliente", "Nombre del cliente", "Fecha de cobro", "Importe", "Método de cobro"],
+          header: [
+            "Número de factura",
+            "NIF del cliente",
+            "Nombre del cliente",
+            "Fecha de cobro",
+            "Importe",
+            "Método de cobro",
+          ],
           rows: issued
             .filter((d) => d.status === "paid")
             .map((d) => {
@@ -722,14 +739,21 @@ export function advancedSheets(data: AdvancedData, options: AdvancedOptions, ran
                 client.taxId,
                 client.name,
                 date(d.paidOn),
-                documentTotals(d).total,
+                eur(documentTotals(d).total),
                 methodName(d.paymentMethodId),
               ];
             }),
         },
         {
           name: "Pagos",
-          header: ["Número de factura", "NIF del proveedor", "Nombre del proveedor", "Fecha de pago", "Importe", "Método de pago"],
+          header: [
+            "Número de factura",
+            "NIF del proveedor",
+            "Nombre del proveedor",
+            "Fecha de pago",
+            "Importe",
+            "Método de pago",
+          ],
           rows: [...received, ...assets].flatMap((d) => {
             const supplier = supplierOf(d);
             return d.payments.map((p) => [
@@ -737,7 +761,7 @@ export function advancedSheets(data: AdvancedData, options: AdvancedOptions, ran
               supplier.taxId,
               supplier.name,
               date(p.date),
-              p.amount,
+              eur(p.amount),
               methodName(p.paymentMethodId),
             ]);
           }),
@@ -782,9 +806,9 @@ export function advancedSheets(data: AdvancedData, options: AdvancedOptions, ran
             payee?.taxId ?? "",
             payee?.name ?? "",
             expenseTypeLabel(e.expenseType),
-            e.amount,
+            eur(e.amount),
             e.imputation,
-            deductibleOf(e),
+            eur(deductibleOf(e)),
             EXPENSE_STATUS[expenseStatus(e)].label,
             date(e.payment?.date),
             methodName(e.payment?.paymentMethodId),

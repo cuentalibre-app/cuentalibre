@@ -1,4 +1,5 @@
-import { lineBase, roundCents, type InvoiceLine } from "./invoices";
+import { lineBase, type InvoiceLine } from "./invoices";
+import { applyRate, cents, centsToEuros, eurosToCents, sumBy, type Cents } from "./money";
 
 /*
  * Facturae 3.2.2: the XML electronic invoice the Spanish public administration
@@ -65,7 +66,7 @@ export interface FacturaeInvoice {
   /** IRPF withholding as a fraction of the taxable base. */
   withholdingRate: number;
   /** Expenses paid on the client's behalf (suplidos), outside the taxable base. */
-  supplies?: number;
+  supplies?: Cents;
   /** Payment means code of Facturae: 04 transfer, 02 direct debit, 01 cash, 19 card… */
   paymentMeans?: string;
   /** The invoice this one corrects, for rectifying invoices. */
@@ -94,6 +95,8 @@ const escape = (text: string) =>
 /** Facturae decimals use a dot and a fixed number of places. */
 const fixed = (value: number, places = 2) => (Math.abs(value) < 1e-9 ? 0 : value).toFixed(places);
 const ratePercent = (rate: number) => fixed(rate * 100);
+/** Amounts are computed in cents and written in euros. */
+const money = (value: Cents) => fixed(centsToEuros(value));
 
 /** Element with escaped text; empty values are left out. */
 function el(name: string, value: string | number | undefined | null): string {
@@ -180,60 +183,57 @@ function partyXml(party: FacturaeParty): string {
 interface TaxGroup {
   vatRate: number;
   surchargeRate: number;
-  base: number;
+  base: Cents;
 }
 
 /** Bases grouped by VAT and surcharge rate, highest VAT first, as the invoice shows them. */
-function taxGroups(lines: FacturaeLine[]): (TaxGroup & { vat: number; surcharge: number })[] {
+function taxGroups(lines: FacturaeLine[]): (TaxGroup & { vat: Cents; surcharge: Cents })[] {
   const groups = new Map<string, TaxGroup>();
   for (const line of lines) {
     const surchargeRate = line.surchargeRate ?? 0;
     const key = `${line.vatRate}|${surchargeRate}`;
-    const group = groups.get(key) ?? { vatRate: line.vatRate, surchargeRate, base: 0 };
-    group.base += lineBase(line);
+    const group = groups.get(key) ?? { vatRate: line.vatRate, surchargeRate, base: cents(0) };
+    group.base = cents(group.base + lineBase(line));
     groups.set(key, group);
   }
   return [...groups.values()]
     .sort((a, b) => b.vatRate - a.vatRate || b.surchargeRate - a.surchargeRate)
-    .map((g) => {
-      const base = roundCents(g.base);
-      return { ...g, base, vat: roundCents(base * g.vatRate), surcharge: roundCents(base * g.surchargeRate) };
-    });
+    .map((g) => ({ ...g, vat: applyRate(g.base, g.vatRate), surcharge: applyRate(g.base, g.surchargeRate) }));
 }
 
-function outputTax(vatRate: number, base: number, vat: number, surchargeRate = 0, surcharge = 0): string {
+function outputTax(vatRate: number, base: Cents, vat: Cents, surchargeRate = 0, surcharge = cents(0)): string {
   return wrap(
     "Tax",
     el("TaxTypeCode", "01"),
     el("TaxRate", ratePercent(vatRate)),
-    wrap("TaxableBase", el("TotalAmount", fixed(base))),
-    wrap("TaxAmount", el("TotalAmount", fixed(vat))),
+    wrap("TaxableBase", el("TotalAmount", money(base))),
+    wrap("TaxAmount", el("TotalAmount", money(vat))),
     surchargeRate ? el("EquivalenceSurcharge", ratePercent(surchargeRate)) : "",
-    surchargeRate ? wrap("EquivalenceSurchargeAmount", el("TotalAmount", fixed(surcharge))) : "",
+    surchargeRate ? wrap("EquivalenceSurchargeAmount", el("TotalAmount", money(surcharge))) : "",
   );
 }
 
-function withheldTax(rate: number, base: number, amount: number): string {
+function withheldTax(rate: number, base: Cents, amount: Cents): string {
   return wrap(
     "Tax",
     el("TaxTypeCode", "04"),
     el("TaxRate", ratePercent(rate)),
-    wrap("TaxableBase", el("TotalAmount", fixed(base))),
-    wrap("TaxAmount", el("TotalAmount", fixed(amount))),
+    wrap("TaxableBase", el("TotalAmount", money(base))),
+    wrap("TaxAmount", el("TotalAmount", money(amount))),
   );
 }
 
 function lineXml(line: FacturaeLine, withholdingRate: number): string {
-  const totalCost = roundCents(line.unitPrice * line.quantity);
+  const totalCost = eurosToCents(line.unitPrice * line.quantity);
   const gross = lineBase(line);
-  const discount = roundCents(totalCost - gross);
+  const discount = cents(totalCost - gross);
   const surchargeRate = line.surchargeRate ?? 0;
   return wrap(
     "InvoiceLine",
     el("ItemDescription", line.description),
     el("Quantity", fixed(line.quantity, 2)),
     el("UnitPriceWithoutTax", fixed(line.unitPrice, 6)),
-    el("TotalCost", fixed(totalCost)),
+    el("TotalCost", money(totalCost)),
     line.discount
       ? wrap(
           "DiscountsAndRebates",
@@ -241,23 +241,17 @@ function lineXml(line: FacturaeLine, withholdingRate: number): string {
             "Discount",
             el("DiscountReason", "Descuento"),
             el("DiscountRate", fixed(line.discount * 100, 4)),
-            el("DiscountAmount", fixed(discount)),
+            el("DiscountAmount", money(discount)),
           ),
         )
       : "",
-    el("GrossAmount", fixed(gross)),
+    el("GrossAmount", money(gross)),
     withholdingRate
-      ? wrap("TaxesWithheld", withheldTax(withholdingRate, gross, roundCents(gross * withholdingRate)))
+      ? wrap("TaxesWithheld", withheldTax(withholdingRate, gross, applyRate(gross, withholdingRate)))
       : "",
     wrap(
       "TaxesOutputs",
-      outputTax(
-        line.vatRate,
-        gross,
-        roundCents(gross * line.vatRate),
-        surchargeRate,
-        roundCents(gross * surchargeRate),
-      ),
+      outputTax(line.vatRate, gross, applyRate(gross, line.vatRate), surchargeRate, applyRate(gross, surchargeRate)),
     ),
     line.periodFrom && line.periodTo
       ? wrap("LineItemPeriod", el("StartDate", line.periodFrom), el("EndDate", line.periodTo))
@@ -268,12 +262,12 @@ function lineXml(line: FacturaeLine, withholdingRate: number): string {
 /** The Facturae 3.2.2 XML of one invoice, as a single batch (modality I) issued by the seller (EM). */
 export function facturaeXml(invoice: FacturaeInvoice): string {
   const groups = taxGroups(invoice.lines);
-  const base = roundCents(groups.reduce((acc, g) => acc + g.base, 0));
-  const taxOutputs = roundCents(groups.reduce((acc, g) => acc + g.vat + g.surcharge, 0));
-  const withheld = roundCents(base * invoice.withholdingRate);
-  const invoiceTotal = roundCents(base + taxOutputs - withheld);
-  const supplies = roundCents(invoice.supplies ?? 0);
-  const outstanding = roundCents(invoiceTotal + supplies);
+  const base = sumBy(groups, (g) => g.base);
+  const taxOutputs = sumBy(groups, (g) => cents(g.vat + g.surcharge));
+  const withheld = applyRate(base, invoice.withholdingRate);
+  const invoiceTotal = cents(base + taxOutputs - withheld);
+  const supplies = invoice.supplies ?? cents(0);
+  const outstanding = cents(invoiceTotal + supplies);
 
   const header = wrap(
     "InvoiceHeader",
@@ -295,17 +289,17 @@ export function facturaeXml(invoice: FacturaeInvoice): string {
 
   const totals = wrap(
     "InvoiceTotals",
-    el("TotalGrossAmount", fixed(base)),
-    el("TotalGrossAmountBeforeTaxes", fixed(base)),
-    el("TotalTaxOutputs", fixed(taxOutputs)),
-    el("TotalTaxesWithheld", fixed(withheld)),
-    el("InvoiceTotal", fixed(invoiceTotal)),
+    el("TotalGrossAmount", money(base)),
+    el("TotalGrossAmountBeforeTaxes", money(base)),
+    el("TotalTaxOutputs", money(taxOutputs)),
+    el("TotalTaxesWithheld", money(withheld)),
+    el("InvoiceTotal", money(invoiceTotal)),
     supplies
-      ? wrap("ReimbursableExpenses", wrap("ReimbursableExpenses", el("ReimbursableExpensesAmount", fixed(supplies))))
+      ? wrap("ReimbursableExpenses", wrap("ReimbursableExpenses", el("ReimbursableExpensesAmount", money(supplies))))
       : "",
-    el("TotalOutstandingAmount", fixed(outstanding)),
-    el("TotalExecutableAmount", fixed(outstanding)),
-    supplies ? el("TotalReimbursableExpenses", fixed(supplies)) : "",
+    el("TotalOutstandingAmount", money(outstanding)),
+    el("TotalExecutableAmount", money(outstanding)),
+    supplies ? el("TotalReimbursableExpenses", money(supplies)) : "",
   );
 
   const body = wrap(
@@ -331,7 +325,7 @@ export function facturaeXml(invoice: FacturaeInvoice): string {
           wrap(
             "Installment",
             el("InstallmentDueDate", invoice.dueDate),
-            el("InstallmentAmount", fixed(outstanding)),
+            el("InstallmentAmount", money(outstanding)),
             el("PaymentMeans", invoice.paymentMeans ?? "04"),
           ),
         )
@@ -343,9 +337,9 @@ export function facturaeXml(invoice: FacturaeInvoice): string {
     "Batch",
     el("BatchIdentifier", `${invoice.seller.taxId.trim().toUpperCase()}${invoice.number}`),
     el("InvoicesCount", 1),
-    wrap("TotalInvoicesAmount", el("TotalAmount", fixed(invoiceTotal))),
-    wrap("TotalOutstandingAmount", el("TotalAmount", fixed(outstanding))),
-    wrap("TotalExecutableAmount", el("TotalAmount", fixed(outstanding))),
+    wrap("TotalInvoicesAmount", el("TotalAmount", money(invoiceTotal))),
+    wrap("TotalOutstandingAmount", el("TotalAmount", money(outstanding))),
+    wrap("TotalExecutableAmount", el("TotalAmount", money(outstanding))),
     el("InvoiceCurrencyCode", "EUR"),
   );
 

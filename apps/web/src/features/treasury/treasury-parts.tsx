@@ -5,6 +5,7 @@ import {
   isDuplicateMovement,
   parseBankStatement,
   toIsoDate,
+  type Cents,
   type ReconciliationStatus,
   type StatementLine,
   type StatementParse,
@@ -25,7 +26,7 @@ import {
 } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
-import { formatDate, parseDecimal } from "@/lib/format";
+import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";
 import type { TreasuryAccount } from "@/mocks/settings";
 import { RECONCILIATION } from "./treasury-model";
 import { treasuryStore } from "./treasury-store";
@@ -57,7 +58,7 @@ export function ReconciliationBadge({ status }: { status: ReconciliationStatus }
 }
 
 /** Green for money in, plain for money out, with an explicit sign. */
-export function SignedAmount({ value, className }: { value: number; className?: string }) {
+export function SignedAmount({ value, className }: { value: Cents; className?: string }) {
   return (
     <span className={cn("amount whitespace-nowrap", value > 0 && "text-success", className)}>
       {value > 0 ? "+" : ""}
@@ -141,7 +142,7 @@ export function MovementDialog({
   const [reference, setReference] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const value = parseDecimal(amount);
+  const value = parseEuros(amount);
   const errors = {
     date: date ? undefined : "Indica la fecha.",
     amount: value === null || value === 0 ? "Introduce un importe distinto de cero." : undefined,
@@ -413,7 +414,7 @@ function ImportPreview({ preview, fresh }: { preview: Preview; fresh: StatementL
 /* ─────────────────────────────── Manual payment ─────────────────────────────── */
 
 export interface ManualPaymentDraft {
-  amount: number;
+  amount: Cents;
   date: string;
   description: string;
   paymentMethodId: string;
@@ -431,13 +432,13 @@ export function ManualPaymentDialog({
   initial?: Partial<ManualPaymentDraft>;
   onCreated?: (key: string) => void;
 }) {
-  const [amount, setAmount] = useState(initial?.amount !== undefined ? String(initial.amount).replace(".", ",") : "");
+  const [amount, setAmount] = useState(initial?.amount !== undefined ? formatEurosInput(initial.amount) : "");
   const [date, setDate] = useState(initial?.date ?? toIsoDate(new Date()));
   const [methodId, setMethodId] = useState(initial?.paymentMethodId || defaultPaymentMethodId());
   const [description, setDescription] = useState(initial?.description ?? "");
   const [submitted, setSubmitted] = useState(false);
 
-  const value = parseDecimal(amount);
+  const value = parseEuros(amount);
   const errors = {
     amount: value === null || value === 0 ? "Introduce un importe distinto de cero." : undefined,
     date: date ? undefined : "Indica la fecha.",

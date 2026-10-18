@@ -1,11 +1,34 @@
-import type { Deadline, Period } from "@fiscalia/core";
+import { centsToEuros, eurosToCents, type Cents, type Deadline, type Period } from "@fiscalia/core";
 
 export const MONTHS = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ] as const;
 
-export const MONTHS_SHORT = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"] as const;
+export const MONTHS_SHORT = [
+  "Ene",
+  "Feb",
+  "Mar",
+  "Abr",
+  "May",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dic",
+] as const;
 
 export const MONTHS_INITIAL = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"] as const;
 
@@ -44,9 +67,9 @@ export function formatShortDate(isoDate: string): string {
 }
 
 /** Compact axis label: 0, "4k €", "7,5k €". */
-export function formatThousands(value: number): string {
-  if (value === 0) return "0";
-  return `${String(value / 1000).replace(".", ",")}k €`;
+export function formatThousands(amount: Cents): string {
+  if (amount === 0) return "0";
+  return `${String(centsToEuros(amount) / 1000).replace(".", ",")}k €`;
 }
 
 export function formatPercent(value: number): string {
@@ -87,4 +110,15 @@ export function parseDecimal(input: string): number | null {
 /** 1250.5 → "1250,5", for prefilling inputs. */
 export function formatDecimalInput(value: number): string {
   return String(value).replace(".", ",");
+}
+
+/** A money amount typed in euros ("1.250,5") as cents; null when it isn't a number. */
+export function parseEuros(input: string): Cents | null {
+  const value = parseDecimal(input);
+  return value === null ? null : eurosToCents(value);
+}
+
+/** 125050 cents → "1250,5", for prefilling money inputs. */
+export function formatEurosInput(amount: Cents): string {
+  return formatDecimalInput(centsToEuros(amount));
 }

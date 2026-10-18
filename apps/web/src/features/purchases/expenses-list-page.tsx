@@ -16,7 +16,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { periodKey, periodMonths, toIsoDate, type Period } from "@fiscalia/core";
+import { periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -39,7 +39,7 @@ import {
   type Action,
 } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
-import { MONTHS, formatDate, formatShortDate, parseDecimal, periodCode } from "@/lib/format";
+import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import type { Expense, OtherPayee } from "@/mocks/expenses";
@@ -67,8 +67,8 @@ interface Row {
   payee: OtherPayee | null;
   payeeKey: string;
   status: ExpenseStatus;
-  amount: number;
-  deductible: number;
+  amount: Cents;
+  deductible: Cents;
 }
 
 function inPeriod(isoDate: string, period: Period): boolean {
@@ -77,7 +77,7 @@ function inPeriod(isoDate: string, period: Period): boolean {
 }
 
 function sum(rows: Row[], key: "amount" | "deductible") {
-  return rows.reduce((acc, r) => acc + r[key], 0);
+  return sumBy(rows, (r) => r[key]);
 }
 
 interface Filters {
@@ -105,8 +105,8 @@ const NO_FILTERS: Filters = {
 
 function matches(r: Row, f: Filters): boolean {
   const q = f.query.trim().toLowerCase();
-  const from = parseDecimal(f.amountFrom);
-  const to = parseDecimal(f.amountTo);
+  const from = parseEuros(f.amountFrom);
+  const to = parseEuros(f.amountTo);
   return (
     (f.status === ALL || r.status === f.status) &&
     (f.expenseType === ALL || r.doc.expenseType === f.expenseType) &&
@@ -319,7 +319,7 @@ function ExpenseSummary({ rows }: { rows: Row[] }) {
   const count = (n: number) => (n === 1 ? "1 gasto" : `${n} gastos`);
   const pending = rows.filter((r) => r.status === "pending");
   const socialSecurity = rows.filter((r) => r.doc.expenseType === SOCIAL_SECURITY_TYPE);
-  const stats: { label: string; value: number; detail: ReactNode }[] = [
+  const stats: { label: string; value: Cents; detail: ReactNode }[] = [
     {
       label: "Gasto deducible",
       value: sum(rows, "deductible"),
@@ -433,7 +433,7 @@ function FiltersPanel({
             aria-label="Importe desde"
             value={filters.amountFrom}
             onChange={(e) => onChange("amountFrom", e.target.value)}
-            aria-invalid={filters.amountFrom && parseDecimal(filters.amountFrom) === null ? true : undefined}
+            aria-invalid={filters.amountFrom && parseEuros(filters.amountFrom) === null ? true : undefined}
             className="text-right amount"
           />
           <span className="text-muted-foreground">–</span>
@@ -443,7 +443,7 @@ function FiltersPanel({
             aria-label="Importe hasta"
             value={filters.amountTo}
             onChange={(e) => onChange("amountTo", e.target.value)}
-            aria-invalid={filters.amountTo && parseDecimal(filters.amountTo) === null ? true : undefined}
+            aria-invalid={filters.amountTo && parseEuros(filters.amountTo) === null ? true : undefined}
             className="text-right amount"
           />
         </div>

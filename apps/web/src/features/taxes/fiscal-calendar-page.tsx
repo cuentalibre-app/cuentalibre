@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Calendar, ChevronDown, ChevronRight } from "lucide-react";
 import {
   calendarStatus,
+  cents,
   fiscalCalendar,
   incomeTaxYear,
   model180,
@@ -10,6 +11,7 @@ import {
   vatReturns,
   type CalendarEntry,
   type CalendarForm,
+  type Cents,
 } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
@@ -149,12 +151,12 @@ function useAmounts(calendarYear: number) {
         },
       ]),
     );
-    return (entry: CalendarEntry): number | null => {
+    return (entry: CalendarEntry): Cents | null => {
       const returns = byYear.get(entry.year);
       if (entry.form === "reta") return fee;
       if (!returns || entry.quarter === null) return null;
       if (entry.form === "303") return returns.vat[entry.quarter - 1]!;
-      if (entry.form === "130") return Math.max(0, returns.irpf[entry.quarter - 1]!);
+      if (entry.form === "130") return cents(Math.max(0, returns.irpf[entry.quarter - 1]!));
       if (entry.form === "111") return returns.withholdings[entry.quarter - 1]!;
       if (entry.form === "115") return returns.rentals[entry.quarter - 1]!;
       return null;
@@ -184,7 +186,7 @@ function StatusBadge({ entry, today }: { entry: CalendarEntry; today: Date }) {
   );
 }
 
-function Amount({ amount, form }: { amount: number | null; form: CalendarForm }) {
+function Amount({ amount, form }: { amount: Cents | null; form: CalendarForm }) {
   if (amount === null) return null;
   if (form === "303" && amount < 0) {
     return (
@@ -222,7 +224,7 @@ function GridCell({
   entry: CalendarEntry;
   calendarYear: number;
   today: Date;
-  amount: number | null;
+  amount: Cents | null;
   applies: boolean | null;
 }) {
   const status = calendarStatus(entry, today);
@@ -420,7 +422,7 @@ function AgendaItem({
   entry: CalendarEntry;
   calendarYear: number;
   today: Date;
-  amount: number | null;
+  amount: Cents | null;
   applies: boolean | null;
 }) {
   const to = entryLink(entry);

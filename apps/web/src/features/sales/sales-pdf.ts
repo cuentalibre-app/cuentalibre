@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import { zipSync } from "fflate";
-import { lineBase, WITHHOLDING_RATES } from "@fiscalia/core";
+import { cents, eurosToCents, lineBase, WITHHOLDING_RATES, type Cents } from "@fiscalia/core";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { formatDate } from "@/lib/format";
 import { addressLine, businessName } from "@/features/settings/settings-model";
@@ -20,7 +20,7 @@ const PAGE_WIDTH = 210;
 const RIGHT = PAGE_WIDTH - MARGIN;
 
 const pdfText = (text: string) => text.replace(/−/g, "-").replace(/[  ]/g, " ");
-const eur = (value: number) => pdfText(formatEUR(value));
+const eur = (amount: Cents) => pdfText(formatEUR(amount));
 const percent = (rate: number) => `${String(Math.round(rate * 10_000) / 100).replace(".", ",")} %`;
 
 /** "Factura 2026-0046" or "Borrador" when the document has no number yet. */
@@ -101,7 +101,7 @@ function render(doc: SalesDocument): jsPDF {
       align: "right",
     });
     if (options.showPrices) {
-      pdf.text(eur(line.unitPrice), cols.price, y, { align: "right" });
+      pdf.text(eur(eurosToCents(line.unitPrice)), cols.price, y, { align: "right" });
       pdf.text(eur(lineBase(line)), cols.amount, y, { align: "right" });
     }
     if (options.showPrices && line.discount) {
@@ -127,7 +127,7 @@ function render(doc: SalesDocument): jsPDF {
     for (const r of totals.vatBreakdown) if (r.vat || !options.hideZeroTaxes) row(`IVA ${percent(r.rate)}`, eur(r.vat));
     if (totals.surcharge) row("Recargo de equivalencia", eur(totals.surcharge));
     if (totals.withholding)
-      row(`Retención IRPF ${percent(WITHHOLDING_RATES[doc.withholding])}`, eur(-totals.withholding));
+      row(`Retención IRPF ${percent(WITHHOLDING_RATES[doc.withholding])}`, eur(cents(-totals.withholding)));
     if (totals.supplies) row("Suplidos", eur(totals.supplies));
     pdf.setDrawColor(180).line(110, y - 3, RIGHT, y - 3);
     y += 3;

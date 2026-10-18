@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router";
 import { CircleCheck, HandCoins, Search, Sparkles, Unlink, X } from "lucide-react";
-import { autoReconcile, rankCandidates, reconciliationStatus, type ReconciliationStatus } from "@fiscalia/core";
+import {
+  autoReconcile,
+  cents,
+  rankCandidates,
+  reconciliationStatus,
+  sumBy,
+  type Cents,
+  type ReconciliationStatus,
+} from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Checkbox } from "@fiscalia/ui/components/input";
@@ -27,13 +35,12 @@ import { treasuryStore, usePayments, usePendingDocuments, useTreasury } from "./
 
 const ALL = "all";
 const OPEN = "open";
-const round = (value: number) => Math.round(value * 100) / 100;
 
 /** Something a movement can be reconciled with: a recorded payment, or a document still pending. */
 interface Candidate {
   id: string;
   date: string;
-  amount: number;
+  amount: Cents;
   source: PaymentSource;
   reference: string;
   counterparty: string;
@@ -46,7 +53,7 @@ interface Row {
   movement: BankMovement;
   status: ReconciliationStatus;
   /** What is still unexplained: the movement's amount minus the linked payments. */
-  remaining: number;
+  remaining: Cents;
   linked: TreasuryPayment[];
 }
 
@@ -82,7 +89,7 @@ export function ReconciliationPage() {
         return {
           movement,
           status: reconciliationStatus(movement.amount, matched),
-          remaining: round(movement.amount - matched),
+          remaining: cents(movement.amount - matched),
           linked: movement.paymentKeys.map((k) => byKey.get(k)).filter((p) => p !== undefined),
         };
       }),
@@ -466,8 +473,8 @@ function MatchDialog({
         Math.abs(Date.parse(b.date) - Date.parse(row.movement.date)),
     );
   const picked = candidates.filter((c) => selected.has(c.id));
-  const total = round(picked.reduce((sum, c) => sum + c.amount, 0));
-  const diff = round(row.remaining - total);
+  const total = sumBy(picked, (c) => c.amount);
+  const diff = cents(row.remaining - total);
   const toggle = (id: string) =>
     setSelected((s) => {
       const next = new Set(s);
@@ -522,7 +529,7 @@ function MatchDialog({
               ) : Math.sign(diff) === sign ? (
                 <span> · quedará {formatEUR(diff)} sin conciliar</span>
               ) : (
-                <span className="text-warning"> · supera el movimiento en {formatEUR(-diff)}</span>
+                <span className="text-warning"> · supera el movimiento en {formatEUR(cents(-diff))}</span>
               ))}
           </p>
           <div className="flex gap-2.5">

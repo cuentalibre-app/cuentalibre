@@ -1,4 +1,5 @@
-import { addDays, roundCents } from "./invoices";
+import { addDays } from "./invoices";
+import { cents, roundHundredths, type Cents } from "./money";
 
 /*
  * Investment goods (bienes de inversión): purchases that last more than a year
@@ -88,13 +89,13 @@ export function rateRange(category: AssetCategory, condition: AssetCondition): {
   const info = ASSET_CATEGORIES[category];
   if (isImmediate(condition)) return { min: 100, max: 100 };
   const factor = condition === "used" || condition === "accelerated" ? 2 : 1;
-  return { min: roundCents(100 / info.maxYears), max: Math.min(100, info.maxRate * factor) };
+  return { min: roundHundredths(100 / info.maxYears), max: Math.min(100, info.maxRate * factor) };
 }
 
 /** Range of years the plan's category and condition allow. */
 export function yearsRange(category: AssetCategory, condition: AssetCondition): { min: number; max: number } {
   const { max } = rateRange(category, condition);
-  const min = roundCents(100 / max);
+  const min = roundHundredths(100 / max);
   return { min, max: isImmediate(condition) ? min : ASSET_CATEGORIES[category].maxYears };
 }
 
@@ -118,9 +119,9 @@ export function isValidPlan(plan: AmortizationPlan): boolean {
  * Amortizable value: the purchase price without the deductible VAT, times the
  * share used in the activity. VAT that can't be deducted is part of the cost.
  */
-export function amortizableValue(base: number, vat: number, imputation: number, vatImputation: number | null): number {
+export function amortizableValue(base: Cents, vat: Cents, imputation: number, vatImputation: number | null): Cents {
   const nonDeductibleVat = vat * (1 - (vatImputation ?? imputation) / 100);
-  return roundCents(((base + nonDeductibleVat) * imputation) / 100);
+  return cents(((base + nonDeductibleVat) * imputation) / 100);
 }
 
 const isLeap = (year: number) => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
@@ -147,24 +148,24 @@ function yearsOfUse(startsOn: string, isoDate: string): number {
 
 export interface AmortizedAsset {
   /** Amortizable value, see `amortizableValue`. */
-  value: number;
+  value: Cents;
   /** Date the good starts being used (ISO). */
   startsOn: string;
   plan: AmortizationPlan;
 }
 
 /** Amortization accumulated from the start up to the end of `isoDate`, never above the value. */
-export function accumulatedAmortization(asset: AmortizedAsset, isoDate: string): number {
-  if (isoDate < asset.startsOn) return 0;
+export function accumulatedAmortization(asset: AmortizedAsset, isoDate: string): Cents {
+  if (isoDate < asset.startsOn) return cents(0);
   if (isImmediate(asset.plan.condition)) return asset.value;
   const accrued = (asset.value * yearlyRate(asset.plan) * yearsOfUse(asset.startsOn, isoDate)) / 100;
-  return roundCents(Math.min(asset.value, accrued));
+  return cents(Math.min(asset.value, accrued));
 }
 
 /** Amortization of the days between two ISO dates, both included. */
-export function amortizationBetween(asset: AmortizedAsset, from: string, to: string): number {
+export function amortizationBetween(asset: AmortizedAsset, from: string, to: string): Cents {
   const before = accumulatedAmortization(asset, addDays(from, -1));
-  return roundCents(accumulatedAmortization(asset, to) - before);
+  return cents(accumulatedAmortization(asset, to) - before);
 }
 
 /** Year the good is fully amortized. */
@@ -184,7 +185,7 @@ export interface AmortizationQuota {
   date: string;
   year: number;
   quarter: 1 | 2 | 3 | 4;
-  amount: number;
+  amount: Cents;
 }
 
 const QUARTER_ENDS = ["03-31", "06-30", "09-30", "12-31"] as const;
@@ -194,13 +195,13 @@ export function amortizationQuotas(asset: AmortizedAsset): AmortizationQuota[] {
   const quotas: AmortizationQuota[] = [];
   const start = Number(asset.startsOn.slice(0, 4));
   const end = lastAmortizationYear(asset);
-  let previous = 0;
+  let previous = cents(0);
   for (let year = start; year <= end; year++) {
     QUARTER_ENDS.forEach((suffix, i) => {
       const date = `${year}-${suffix}`;
       if (date < asset.startsOn) return;
       const accumulated = accumulatedAmortization(asset, date);
-      const amount = roundCents(accumulated - previous);
+      const amount = cents(accumulated - previous);
       previous = accumulated;
       if (amount !== 0) quotas.push({ date, year, quarter: (i + 1) as AmortizationQuota["quarter"], amount });
     });
@@ -210,23 +211,23 @@ export function amortizationQuotas(asset: AmortizedAsset): AmortizationQuota[] {
 
 export interface AmortizationYear {
   year: number;
-  amount: number;
-  accumulated: number;
-  pending: number;
+  amount: Cents;
+  accumulated: Cents;
+  pending: Cents;
 }
 
 /** Year-by-year amortization table, as the register of investment goods shows it. */
 export function amortizationTable(asset: AmortizedAsset): AmortizationYear[] {
   const rows: AmortizationYear[] = [];
   const start = Number(asset.startsOn.slice(0, 4));
-  let previous = 0;
+  let previous = cents(0);
   for (let year = start; year <= lastAmortizationYear(asset); year++) {
     const accumulated = accumulatedAmortization(asset, `${year}-12-31`);
     rows.push({
       year,
-      amount: roundCents(accumulated - previous),
+      amount: cents(accumulated - previous),
       accumulated,
-      pending: roundCents(asset.value - accumulated),
+      pending: cents(asset.value - accumulated),
     });
     previous = accumulated;
   }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { model111, model190, obligation, type Perceptor, type Quarter } from "@fiscalia/core";
+import { cents, model111, model190, obligation, sumCents, type Perceptor, type Quarter } from "@fiscalia/core";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -87,7 +87,7 @@ function Form111({ year, quarter, today }: { year: number; quarter: Quarter; tod
   const books = usePartyBooks();
   const [showEmpty, setShowEmpty] = useState(false);
   const r = useMemo(() => model111(books.ops, year, quarter), [books, year, quarter]);
-  const amount = r.boxes["30"]!;
+  const amount = cents(r.boxes["30"]!);
 
   const result: ResultSummary = {
     label: "Resultado a ingresar [30]",
@@ -142,8 +142,8 @@ function Form111({ year, quarter, today }: { year: number; quarter: Quarter; tod
 function Form190({ year, today }: { year: number; today: Date }) {
   const books = usePartyBooks();
   const r = useMemo(() => model190(books.ops, year), [books, year]);
-  const paid = r.paid.reduce((acc, q) => acc + q, 0);
-  const mismatch = Math.abs(paid - r.withholding) > 0.005;
+  const paid = sumCents(r.paid);
+  const mismatch = paid !== r.withholding;
 
   const result: ResultSummary = {
     label: "Total de retenciones del año",

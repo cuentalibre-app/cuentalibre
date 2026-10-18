@@ -26,7 +26,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { periodKey, periodMonths, toIsoDate, type Period } from "@fiscalia/core";
+import { cents, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -66,10 +66,10 @@ interface Row {
   doc: SalesDocument;
   client: { name: string; taxId: string };
   status: StatusKey;
-  base: number;
-  vat: number;
-  withholding: number;
-  total: number;
+  base: Cents;
+  vat: Cents;
+  withholding: Cents;
+  total: Cents;
 }
 
 const MONTH_NAME = new Intl.DateTimeFormat("es-ES", { month: "long" });
@@ -82,7 +82,7 @@ function inPeriod(isoDate: string, period: Period): boolean {
 }
 
 function sum(rows: Row[], key: "base" | "vat" | "withholding" | "total") {
-  return rows.reduce((acc, r) => acc + r[key], 0);
+  return sumBy(rows, (r) => r[key]);
 }
 
 export function SalesListPage({ kind }: { kind: SalesKind }) {
@@ -262,7 +262,7 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
   const total = sum(rows, "total");
   const paid = sum(of(["paid"]), "total");
   const overdue = sum(of(["overdue"]), "total");
-  const stats: { label: string; value: number; detail: ReactNode }[] = [
+  const stats: { label: string; value: Cents; detail: ReactNode }[] = [
     {
       label: "Ingresos",
       value: sum(rows, "base"),
@@ -412,7 +412,7 @@ function DocumentsTable({
                 <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
                 <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
                 <td className={cn(td, "text-right amount text-muted-foreground")}>
-                  {r.withholding ? formatEUR(-r.withholding) : "—"}
+                  {r.withholding ? formatEUR(cents(-r.withholding)) : "—"}
                 </td>
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
                 <td className={cn(td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
@@ -433,7 +433,7 @@ function DocumentsTable({
                 <AnimatedAmount value={sum(rows, "vat")} />
               </td>
               <td className={cn(td, "text-right amount")}>
-                <AnimatedAmount value={-sum(rows, "withholding")} />
+                <AnimatedAmount value={cents(-sum(rows, "withholding"))} />
               </td>
               <td className={cn(td, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "total")} />

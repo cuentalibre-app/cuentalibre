@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Plus, Settings, Upload } from "lucide-react";
-import { monthlyFlows, reconciliationStatus } from "@fiscalia/core";
+import { cents, monthlyFlows, reconciliationStatus, sumBy } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { Card, CardTitle } from "@fiscalia/ui/components/card";
 import { cn } from "@fiscalia/ui/lib/cn";
@@ -29,9 +29,9 @@ export function TreasurySummaryPage() {
   const active = accounts.filter((a) => a.active);
   const toReconcile = movements.filter((m) => reconciliationStatus(m.amount, matchedAmount(m, byKey)) !== "full");
   const months = useMemo(() => monthlyFlows(payments, today), [payments, today]);
-  const total = active.reduce((sum, a) => sum + accountBalance(a.id, movements), 0);
-  const collected = months.reduce((sum, m) => sum + m.collected, 0);
-  const paid = months.reduce((sum, m) => sum + m.paid, 0);
+  const total = sumBy(active, (a) => accountBalance(a.id, movements));
+  const collected = sumBy(months, (m) => m.collected);
+  const paid = sumBy(months, (m) => m.paid);
 
   const close = (open: boolean) => !open && setDialog(null);
 
@@ -162,7 +162,8 @@ function FlowsChart({ months }: { months: ReturnType<typeof monthlyFlows> }) {
     return last === -1 ? months.length - 1 : last;
   });
   const peak = Math.max(0, ...months.flatMap((m) => [m.collected, m.paid]));
-  const max = Math.max(2000, Math.ceil(peak / 2000) * 2000);
+  // Steps of 2.000 €
+  const max = cents(Math.max(200_000, Math.ceil(peak / 200_000) * 200_000));
   const current = months[selected]!;
   const height = (v: number) => ({ height: `${(v / max) * 100}%` });
 
@@ -179,7 +180,7 @@ function FlowsChart({ months }: { months: ReturnType<typeof monthlyFlows> }) {
           [
             ["Cobros", current.collected, "bg-chart-income"],
             ["Pagos", current.paid, "bg-chart-expense"],
-            ["Neto", current.collected - current.paid, "bg-foreground"],
+            ["Neto", cents(current.collected - current.paid), "bg-foreground"],
           ] as const
         ).map(([label, value, dot]) => (
           <span key={label} className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -194,7 +195,7 @@ function FlowsChart({ months }: { months: ReturnType<typeof monthlyFlows> }) {
           className="-mt-1.5 mb-6 flex h-[200px] min-w-10 flex-col justify-between text-right font-mono text-2xs text-muted-foreground"
         >
           <span>{formatThousands(max)}</span>
-          <span>{formatThousands(max / 2)}</span>
+          <span>{formatThousands(cents(max / 2))}</span>
           <span>0</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">

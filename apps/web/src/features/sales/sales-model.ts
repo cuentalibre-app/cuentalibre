@@ -2,9 +2,10 @@ import {
   INVOICE_VAT_RATES,
   SURCHARGE_RATES,
   WITHHOLDING_RATES,
+  centsToEuros,
+  eurosToCents,
   invoiceTotals,
   lineBase,
-  roundCents,
   isOverdue,
   nextDocumentNumber,
   periodKey,
@@ -175,12 +176,13 @@ export function groupLinesByTax(doc: SalesDocument): SalesLine[] {
     const surchargeRate = line.surchargeRate ?? 0;
     const key = `${line.vatRate}|${surchargeRate}`;
     const group = groups.get(key);
-    if (group) group.unitPrice = roundCents(group.unitPrice + lineBase(line));
+    // Unit prices are in euros; add the line bases as cents so the sum stays exact
+    if (group) group.unitPrice = centsToEuros(eurosToCents(group.unitPrice + centsToEuros(lineBase(line))));
     else
       groups.set(key, {
         id: crypto.randomUUID(),
         concept: name,
-        unitPrice: lineBase(line),
+        unitPrice: centsToEuros(lineBase(line)),
         quantity: 1,
         discount: 0,
         vatRate: line.vatRate,

@@ -1,3 +1,5 @@
+import { centsToEuros, type Cents } from "@fiscalia/core";
+
 const eur = new Intl.NumberFormat("es-ES", {
   style: "currency",
   currency: "EUR",
@@ -8,7 +10,7 @@ const eur = new Intl.NumberFormat("es-ES", {
   useGrouping: "always",
 });
 
-/** 4876 → "4.876,00 €". Uses the typographic minus sign (−) for negatives. */
-export function formatEUR(value: number): string {
-  return eur.format(value).replace("-", "−");
+/** 487600 cents → "4.876,00 €". Uses the typographic minus sign (−) for negatives. */
+export function formatEUR(amount: Cents): string {
+  return eur.format(centsToEuros(amount)).replace("-", "−");
 }

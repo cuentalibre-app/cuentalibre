@@ -1,5 +1,6 @@
-import { roundCents, type OperationType } from "./invoices";
+import type { OperationType } from "./invoices";
 import { isInPeriod } from "./ledger";
+import { applyRate, cents, sumBy, sumCents, type Cents } from "./money";
 import { periodMonths, type Quarter } from "./period";
 import type { PurchaseOperationType } from "./purchases";
 import { GENERAL_VAT_RATE, IRPF_INSTALLMENT_RATE } from "./taxes";
@@ -15,14 +16,18 @@ import { GENERAL_VAT_RATE, IRPF_INSTALLMENT_RATE } from "./taxes";
  * taken as an input.
  */
 
-/** Box number (as printed on the form, "01", "0171"…) to amount. Rate boxes hold a percentage. */
+/**
+ * Box number (as printed on the form, "01", "0171"…) to its value: an amount in cents for money
+ * boxes, a percentage for rate boxes and a count for the boxes that count people. The callers know
+ * which is which, so the map stays a plain number record.
+ */
 export type Boxes = Record<string, number>;
 
 export interface RateAmounts {
   /** VAT rate as a fraction: 0.21 is 21%. */
   rate: number;
-  base: number;
-  vat: number;
+  base: Cents;
+  vat: Cents;
 }
 
 /** An issued invoice, as the returns see it. */
@@ -36,7 +41,7 @@ export interface TaxableSale {
   /** Base and VAT per rate. */
   vatBreakdown: RateAmounts[];
   /** IRPF withheld by the client. */
-  withholding: number;
+  withholding: Cents;
   /** Property rental: its withholding goes to its own box in form 100. */
   rental: boolean;
   /** Income account (PGC group 7), for the profit and loss report: 705, or 752 for rentals, when missing. */
@@ -62,7 +67,7 @@ export interface TaxablePurchase {
   /** Share (0–1) of the VAT that can be deducted. */
   vatShare: number;
   /** Part of the base that counts as an expense for income tax. */
-  expense: number;
+  expense: Cents;
   /** Expense account (PGC group 6), which decides its box in form 100. */
   account: string;
 }
@@ -72,7 +77,7 @@ export interface TaxableExpense {
   id: string;
   date: string;
   /** Deductible amount. */
-  expense: number;
+  expense: Cents;
   account: string;
 }
 
@@ -90,7 +95,7 @@ const rateKey = (rate: number) => Math.round(rate * 10_000);
 function selfAssessed(purchase: TaxablePurchase): RateAmounts[] {
   if (!SELF_ASSESSED.includes(purchase.operation)) return purchase.vatBreakdown;
   return purchase.vatBreakdown.map((r) =>
-    r.rate === 0 ? { rate: GENERAL_VAT_RATE, base: r.base, vat: roundCents(r.base * GENERAL_VAT_RATE) } : r,
+    r.rate === 0 ? { rate: GENERAL_VAT_RATE, base: r.base, vat: applyRate(r.base, GENERAL_VAT_RATE) } : r,
   );
 }
 
@@ -98,13 +103,13 @@ function selfAssessed(purchase: TaxablePurchase): RateAmounts[] {
 function deductiblePart(purchase: TaxablePurchase): RateAmounts[] {
   return selfAssessed(purchase).map((r) => ({
     rate: r.rate,
-    base: roundCents(r.base * purchase.vatShare),
-    vat: roundCents(r.vat * purchase.vatShare),
+    base: applyRate(r.base, purchase.vatShare),
+    vat: applyRate(r.vat, purchase.vatShare),
   }));
 }
 
-const sumBases = (rates: RateAmounts[]) => rates.reduce((acc, r) => acc + r.base, 0);
-const sumVat = (rates: RateAmounts[]) => rates.reduce((acc, r) => acc + r.vat, 0);
+const sumBases = (rates: RateAmounts[]) => sumBy(rates, (r) => r.base);
+const sumVat = (rates: RateAmounts[]) => sumBy(rates, (r) => r.vat);
 
 const inQuarter = (date: string, year: number, quarter: Quarter) => isInPeriod(date, { year, quarter });
 const inYear = (date: string, year: number) => isInPeriod(date, { year, quarter: null });
@@ -114,12 +119,9 @@ function boxes() {
   const add = (box: string, amount: number) => {
     values[box] = (values[box] ?? 0) + amount;
   };
-  const get = (...keys: string[]) => keys.reduce((acc, k) => acc + (values[k] ?? 0), 0);
-  const round = () => {
-    for (const key of Object.keys(values)) values[key] = roundCents(values[key]!);
-    return values;
-  };
-  return { values, add, get, round };
+  /** Sum of money boxes. */
+  const get = (...keys: string[]) => cents(keys.reduce((acc, k) => acc + (values[k] ?? 0), 0));
+  return { values, add, get };
 }
 
 /* ───────────────────────── Form 303: quarterly VAT ───────────────────────── */
@@ -137,9 +139,9 @@ export interface Model303 {
   quarter: Quarter;
   boxes: Boxes;
   /** Box 71: positive to pay, negative to offset (or refund in Q4). */
-  result: number;
+  result: Cents;
   /** Taxable base charged at rates the form no longer has (2 %, 5 %, historical ones). */
-  unmappedBase: number;
+  unmappedBase: Cents;
   /** Whether any document fell in the quarter. */
   hasActivity: boolean;
 }
@@ -152,10 +154,10 @@ export function model303(
   books: Pick<TaxBooks, "sales" | "purchases">,
   year: number,
   quarter: Quarter,
-  carry = 0,
+  carry = cents(0),
 ): Model303 {
   const b = boxes();
-  let unmappedBase = 0;
+  let unmappedBase = cents(0);
   const sales = books.sales.filter((s) => inQuarter(s.date, year, quarter));
   const purchases = books.purchases.filter((p) => inQuarter(p.date, year, quarter));
 
@@ -173,7 +175,7 @@ export function model303(
         for (const r of sale.vatBreakdown) {
           const target = OUTPUT_303[rateKey(r.rate)];
           if (!target) {
-            unmappedBase += r.base;
+            unmappedBase = cents(unmappedBase + r.base);
             continue;
           }
           b.add(target[0], r.base);
@@ -235,28 +237,31 @@ export function model303(
     }
   }
 
-  b.round();
   const accrued = b.get("152", "03", "06", "09", "11", "13", "15");
   const deductible = b.get("29", "31", "33", "35", "37", "39", "41");
+  const result46 = cents(accrued - deductible);
+  const pending = cents(Math.max(0, carry));
+  const offset = cents(Math.min(pending, Math.max(0, result46)));
+  const result = cents(result46 - offset);
   const v = b.values;
-  v["27"] = roundCents(accrued);
-  v["45"] = roundCents(deductible);
-  v["46"] = roundCents(accrued - deductible);
-  v["64"] = v["46"];
+  v["27"] = accrued;
+  v["45"] = deductible;
+  v["46"] = result46;
+  v["64"] = result46;
   v["65"] = 100;
-  v["66"] = v["64"];
-  v["110"] = roundCents(Math.max(0, carry));
-  v["78"] = roundCents(Math.min(v["110"], Math.max(0, v["66"])));
-  v["87"] = roundCents(v["110"] - v["78"]);
-  v["69"] = roundCents(v["66"] - v["78"]);
-  v["71"] = v["69"];
+  v["66"] = result46;
+  v["110"] = pending;
+  v["78"] = offset;
+  v["87"] = cents(pending - offset);
+  v["69"] = result;
+  v["71"] = result;
 
   return {
     year,
     quarter,
     boxes: v,
-    result: v["71"],
-    unmappedBase: roundCents(unmappedBase),
+    result,
+    unmappedBase,
     hasActivity: sales.length > 0 || purchases.length > 0,
   };
 }
@@ -273,11 +278,11 @@ function firstYear(books: Pick<TaxBooks, "sales" | "purchases">, fallback: numbe
  */
 export function vatReturns(books: Pick<TaxBooks, "sales" | "purchases">, year: number): Model303[] {
   const result: Model303[] = [];
-  let carry = 0;
+  let carry = cents(0);
   for (let y = firstYear(books, year); y <= year; y++) {
     for (const quarter of [1, 2, 3, 4] as const) {
       const r = model303(books, y, quarter, carry);
-      carry = r.boxes["87"]! + Math.max(0, -r.result);
+      carry = cents(r.boxes["87"]! + Math.max(0, -r.result));
       if (y === year) result.push(r);
     }
   }
@@ -285,8 +290,8 @@ export function vatReturns(books: Pick<TaxBooks, "sales" | "purchases">, year: n
 }
 
 /** Box 110 of a quarter: what earlier returns left pending to offset. */
-export function vatCarryInto(books: Pick<TaxBooks, "sales" | "purchases">, year: number, quarter: Quarter): number {
-  return vatReturns(books, year)[quarter - 1]!.boxes["110"]!;
+export function vatCarryInto(books: Pick<TaxBooks, "sales" | "purchases">, year: number, quarter: Quarter): Cents {
+  return cents(vatReturns(books, year)[quarter - 1]!.boxes["110"]!);
 }
 
 /* ───────────────────────── Form 390: yearly VAT summary ───────────────────────── */
@@ -334,10 +339,10 @@ export interface Model390 {
   year: number;
   boxes: Boxes;
   /** Box 86: yearly result. Informative: what is paid are the quarterly 303s. */
-  result: number;
+  result: Cents;
   /** Results (box 71) of the year's four 303 returns. */
-  quarters: [number, number, number, number];
-  unmappedBase: number;
+  quarters: [Cents, Cents, Cents, Cents];
+  unmappedBase: Cents;
   hasActivity: boolean;
 }
 
@@ -347,7 +352,7 @@ export interface Model390 {
  */
 export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: number): Model390 {
   const b = boxes();
-  let unmappedBase = 0;
+  let unmappedBase = cents(0);
   const sales = books.sales.filter((s) => inYear(s.date, year));
   const purchases = books.purchases.filter((p) => inYear(p.date, year));
 
@@ -355,7 +360,7 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
     for (const r of amounts) {
       const target = table[rateKey(r.rate)];
       if (!target) {
-        unmappedBase += r.base;
+        unmappedBase = cents(unmappedBase + r.base);
         continue;
       }
       b.add(target[0], r.base);
@@ -428,7 +433,6 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
     }
   }
 
-  b.round();
   const pairs = (table: RateBoxes) => Object.values(table);
   const outputPairs = [
     ...pairs(OUTPUT_390),
@@ -447,36 +451,41 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
     ...pairs(DEDUCT_INTRA_INVESTMENT_390),
     ["639", "62"],
   ];
-  const v = b.values;
-  v["33"] = roundCents(b.get(...outputPairs.map((p) => p[0]!)));
-  v["34"] = roundCents(b.get(...outputPairs.map((p) => p[1]!)));
-  v["47"] = v["34"];
-  v["64"] = roundCents(b.get(...deductPairs.map((p) => p[1]!)));
-  v["65"] = roundCents(v["47"] - v["64"]);
-  v["84"] = v["65"];
-
+  const outputVat = b.get(...outputPairs.map((p) => p[1]!));
+  const deductibleVat = b.get(...deductPairs.map((p) => p[1]!));
+  const result84 = cents(outputVat - deductibleVat);
   const quarterly = vatReturns(books, year);
-  v["85"] = quarterly[0]!.boxes["110"]!;
-  v["86"] = roundCents(v["84"] - v["85"]);
+  const pendingAtStart = cents(quarterly[0]!.boxes["110"]!);
+  const result = cents(result84 - pendingAtStart);
   const quarters = quarterly.map((q) => q.result) as Model390["quarters"];
-  v["95"] = roundCents(quarters.filter((r) => r > 0).reduce((acc, r) => acc + r, 0));
-  v["97"] = roundCents(Math.max(0, -quarters[3]));
-  v["108"] = roundCents(b.get("99", "653", "103", "104", "105", "110", "125"));
+
+  const v = b.values;
+  v["33"] = b.get(...outputPairs.map((p) => p[0]!));
+  v["34"] = outputVat;
+  v["47"] = outputVat;
+  v["64"] = deductibleVat;
+  v["65"] = result84;
+  v["84"] = result84;
+  v["85"] = pendingAtStart;
+  v["86"] = result;
+  v["95"] = sumCents(quarters.filter((r) => r > 0));
+  v["97"] = cents(Math.max(0, -quarters[3]));
+  v["108"] = b.get("99", "653", "103", "104", "105", "110", "125");
 
   return {
     year,
     boxes: v,
-    result: v["86"],
+    result,
     quarters,
-    unmappedBase: roundCents(unmappedBase),
+    unmappedBase,
     hasActivity: sales.length > 0 || purchases.length > 0,
   };
 }
 
 /* ───────────────────────── Income tax: forms 130 and 100 ───────────────────────── */
 
-/** Annual cap of the hard-to-justify expenses in simplified direct estimation. */
-export const HARD_TO_JUSTIFY_CAP = 2_000;
+/** Annual cap of the hard-to-justify expenses in simplified direct estimation: 2.000 €. */
+export const HARD_TO_JUSTIFY_CAP = cents(200_000);
 
 /** Share of the net income deductible as hard-to-justify expenses: 7 % in 2023, 5 % otherwise. */
 export function hardToJustifyRate(year: number): number {
@@ -484,21 +493,21 @@ export function hardToJustifyRate(year: number): number {
 }
 
 /** Hard-to-justify expenses on a net income before them; nothing when it isn't positive. */
-export function hardToJustify(netBefore: number, year: number): number {
-  return roundCents(Math.min(HARD_TO_JUSTIFY_CAP, Math.max(0, netBefore) * hardToJustifyRate(year)));
+export function hardToJustify(netBefore: Cents, year: number): Cents {
+  return cents(Math.min(HARD_TO_JUSTIFY_CAP, applyRate(cents(Math.max(0, netBefore)), hardToJustifyRate(year))));
 }
 
 /**
  * Quarterly reduction of form 130 (art. 110.3.c RIRPF) for low incomes, from the previous
  * year's net income from the activity: 100 € up to 9.000 €, then 25 € less per 1.000 €.
  */
-export function installmentReduction(previousYearNetIncome: number | null): number {
-  if (previousYearNetIncome === null) return 0;
-  if (previousYearNetIncome <= 9_000) return 100;
-  if (previousYearNetIncome <= 10_000) return 75;
-  if (previousYearNetIncome <= 11_000) return 50;
-  if (previousYearNetIncome <= 12_000) return 25;
-  return 0;
+export function installmentReduction(previousYearNetIncome: Cents | null): Cents {
+  if (previousYearNetIncome === null) return cents(0);
+  if (previousYearNetIncome <= 900_000) return cents(10_000);
+  if (previousYearNetIncome <= 1_000_000) return cents(7_500);
+  if (previousYearNetIncome <= 1_100_000) return cents(5_000);
+  if (previousYearNetIncome <= 1_200_000) return cents(2_500);
+  return cents(0);
 }
 
 export interface IncomeTaxOptions {
@@ -507,32 +516,31 @@ export interface IncomeTaxOptions {
 }
 
 interface IncomeTotals {
-  income: number;
-  expenses: number;
-  withholdings: number;
-  rentalWithholdings: number;
+  income: Cents;
+  expenses: Cents;
+  withholdings: Cents;
+  rentalWithholdings: Cents;
 }
 
 function incomeTotals(books: TaxBooks, matches: (date: string) => boolean): IncomeTotals {
   const sales = books.sales.filter((s) => matches(s.date));
-  const sum = <T>(items: T[], of: (item: T) => number) => roundCents(items.reduce((acc, i) => acc + of(i), 0));
   return {
-    income: sum(sales, (s) => sumBases(s.vatBreakdown)),
-    expenses: roundCents(
-      sum(
+    income: sumBy(sales, (s) => sumBases(s.vatBreakdown)),
+    expenses: cents(
+      sumBy(
         books.purchases.filter((p) => matches(p.date)),
         (p) => p.expense,
       ) +
-        sum(
+        sumBy(
           books.expenses.filter((e) => matches(e.date)),
           (e) => e.expense,
         ),
     ),
-    withholdings: sum(
+    withholdings: sumBy(
       sales.filter((s) => !s.rental),
       (s) => s.withholding,
     ),
-    rentalWithholdings: sum(
+    rentalWithholdings: sumBy(
       sales.filter((s) => s.rental),
       (s) => s.withholding,
     ),
@@ -544,19 +552,19 @@ export interface Model130 {
   quarter: Quarter;
   boxes: Boxes;
   /** Box 19: positive to pay; zero or negative is a "negative" return with nothing to pay. */
-  result: number;
+  result: Cents;
   /** Hard-to-justify expenses included in box 02. */
-  hardToJustify: number;
+  hardToJustify: Cents;
   hasActivity: boolean;
 }
 
 export interface Model130Inputs {
   /** Box 13: reduction for low incomes. Defaults to none. */
-  reduction?: number;
+  reduction?: Cents;
   /** Box 15: negative results of earlier quarters of the year still to deduct. */
-  negativeCarry?: number;
+  negativeCarry?: Cents;
   /** Box 16: deduction for the mortgage of the main home (only old loans). */
-  mortgage?: number;
+  mortgage?: Cents;
 }
 
 /**
@@ -569,35 +577,47 @@ export function model130(
   year: number,
   quarter: Quarter,
   options: IncomeTaxOptions,
-  previous: number[] = [],
+  previous: Cents[] = [],
   inputs: Model130Inputs = {},
 ): Model130 {
   const lastMonth = periodMonths({ year, quarter })[2]!;
   const ytd = incomeTotals(books, (date) => inYear(date, year) && Number(date.slice(5, 7)) - 1 <= lastMonth);
-  const extra = options.simplified ? hardToJustify(ytd.income - ytd.expenses, year) : 0;
+  const extra = options.simplified ? hardToJustify(cents(ytd.income - ytd.expenses), year) : cents(0);
+
+  const expenses = cents(ytd.expenses + extra);
+  const net = cents(ytd.income - expenses);
+  const installment = net > 0 ? applyRate(net, IRPF_INSTALLMENT_RATE) : cents(0);
+  const paid = sumCents(previous.filter((p) => p > 0));
+  const withheld = cents(ytd.withholdings + ytd.rentalWithholdings);
+  const before = cents(installment - paid - withheld);
+  const reduction = cents(Math.min(inputs.reduction ?? 0, Math.max(0, before)));
+  const afterReduction = cents(before - reduction);
+  const negativeCarry = cents(Math.min(inputs.negativeCarry ?? 0, Math.max(0, afterReduction)));
+  const mortgage = cents(Math.min(inputs.mortgage ?? 0, Math.max(0, afterReduction - negativeCarry)));
+  const result = cents(afterReduction - negativeCarry - mortgage);
 
   const v: Boxes = {};
   v["01"] = ytd.income;
-  v["02"] = roundCents(ytd.expenses + extra);
-  v["03"] = roundCents(v["01"] - v["02"]);
-  v["04"] = v["03"] > 0 ? roundCents(v["03"] * IRPF_INSTALLMENT_RATE) : 0;
-  v["05"] = roundCents(previous.filter((p) => p > 0).reduce((acc, p) => acc + p, 0));
-  v["06"] = roundCents(ytd.withholdings + ytd.rentalWithholdings);
-  v["07"] = roundCents(v["04"] - v["05"] - v["06"]);
-  v["12"] = v["07"];
-  v["13"] = roundCents(Math.min(inputs.reduction ?? 0, Math.max(0, v["12"])));
-  v["14"] = roundCents(v["12"] - v["13"]);
-  v["15"] = roundCents(Math.min(inputs.negativeCarry ?? 0, Math.max(0, v["14"])));
-  v["16"] = roundCents(Math.min(inputs.mortgage ?? 0, Math.max(0, v["14"] - v["15"])));
-  v["17"] = roundCents(v["14"] - v["15"] - v["16"]);
-  v["19"] = v["17"];
+  v["02"] = expenses;
+  v["03"] = net;
+  v["04"] = installment;
+  v["05"] = paid;
+  v["06"] = withheld;
+  v["07"] = before;
+  v["12"] = before;
+  v["13"] = reduction;
+  v["14"] = afterReduction;
+  v["15"] = negativeCarry;
+  v["16"] = mortgage;
+  v["17"] = result;
+  v["19"] = result;
 
   const inQ = (d: string) => inQuarter(d, year, quarter);
   return {
     year,
     quarter,
     boxes: v,
-    result: v["19"],
+    result,
     hardToJustify: extra,
     hasActivity:
       books.sales.some((s) => inQ(s.date)) ||
@@ -614,7 +634,7 @@ export function incomeTaxReturns(
   books: TaxBooks,
   year: number,
   options: IncomeTaxOptions,
-  previousYearNetIncome: number | null = null,
+  previousYearNetIncome: Cents | null = null,
 ): Model130[] {
   const reduction = installmentReduction(previousYearNetIncome);
   const result: Model130[] = [];
@@ -625,7 +645,7 @@ export function incomeTaxReturns(
         year,
         quarter,
         options,
-        result.map((r) => r.boxes["07"]!),
+        result.map((r) => cents(r.boxes["07"]!)),
         { reduction },
       ),
     );
@@ -699,7 +719,7 @@ export interface Model100 {
   year: number;
   boxes: Boxes;
   /** Box 0224: net income from the activity. */
-  netIncome: number;
+  netIncome: Cents;
   hasActivity: boolean;
 }
 
@@ -711,7 +731,7 @@ export function model100(
   books: TaxBooks,
   year: number,
   options: IncomeTaxOptions,
-  installments: number[] = [],
+  installments: Cents[] = [],
 ): Model100 {
   const b = boxes();
   const matches = (date: string) => inYear(date, year);
@@ -720,31 +740,36 @@ export function model100(
   for (const box of EXPENSE_BOXES_100) b.add(box, 0);
   for (const p of books.purchases.filter((p) => matches(p.date))) b.add(expenseBox100(p.account), p.expense);
   for (const e of books.expenses.filter((e) => matches(e.date))) b.add(expenseBox100(e.account), e.expense);
-  b.round();
 
+  const expenses = b.get(...EXPENSE_BOXES_100);
+  let deductible = expenses;
   const v = b.values;
   v["0171"] = totals.income;
   v["0180"] = totals.income;
-  v["0218"] = roundCents(b.get(...EXPENSE_BOXES_100));
+  v["0218"] = expenses;
   if (options.simplified) {
-    v["0221"] = roundCents(v["0180"] - v["0218"]);
-    v["0222"] = hardToJustify(v["0221"], year);
-    v["0223"] = roundCents(v["0218"] + v["0222"]);
+    const netBefore = cents(totals.income - expenses);
+    const extra = hardToJustify(netBefore, year);
+    deductible = cents(expenses + extra);
+    v["0221"] = netBefore;
+    v["0222"] = extra;
+    v["0223"] = deductible;
   } else {
     v["0219"] = 0;
-    v["0220"] = v["0218"];
+    v["0220"] = expenses;
   }
-  v["0224"] = roundCents(v["0180"] - (options.simplified ? v["0223"]! : v["0220"]!));
+  const netIncome = cents(totals.income - deductible);
+  v["0224"] = netIncome;
   v["0225"] = 0;
-  v["0226"] = v["0224"];
+  v["0226"] = netIncome;
   v["0598"] = totals.rentalWithholdings;
   v["0599"] = totals.withholdings;
-  v["0604"] = roundCents(installments.filter((i) => i > 0).reduce((acc, i) => acc + i, 0));
+  v["0604"] = sumCents(installments.filter((i) => i > 0));
 
   return {
     year,
     boxes: v,
-    netIncome: v["0224"],
+    netIncome,
     hasActivity: [...books.sales, ...books.purchases, ...books.expenses].some((d) => matches(d.date)),
   };
 }

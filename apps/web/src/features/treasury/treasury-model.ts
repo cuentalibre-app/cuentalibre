@@ -1,5 +1,5 @@
 import { HandCoins, Receipt, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
-import type { ReconciliationStatus } from "@fiscalia/core";
+import { cents, sumBy, type Cents, type ReconciliationStatus } from "@fiscalia/core";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import { EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { PURCHASES_PATH, outstanding, supplierOf } from "@/features/purchases/purchases-model";
@@ -46,7 +46,7 @@ export interface TreasuryPayment {
   reference: string;
   counterparty: string;
   date: string;
-  amount: number;
+  amount: Cents;
   paymentMethodId: string;
   accountId: string | null;
   /** The linked document's page, null for manual payments. */
@@ -63,7 +63,7 @@ export interface PendingDocument {
   /** Due date when it has one, otherwise the issue date. */
   date: string;
   /** What is left to collect (positive) or pay (negative). */
-  amount: number;
+  amount: Cents;
   href: string;
 }
 
@@ -74,8 +74,6 @@ interface Books {
   manual: ManualPayment[];
   methods: PaymentMethod[];
 }
-
-const round = (value: number) => Math.round(value * 100) / 100;
 
 export const saleHref = (id: string) => `${KINDS.invoice.path}/${id}`;
 export const purchaseHref = (id: string) => `${PURCHASES_PATH}/${id}`;
@@ -95,7 +93,7 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
       reference: doc.number ?? "",
       counterparty: clientOf(doc).name,
       date: doc.paidOn ?? doc.issuedOn,
-      amount: round(documentTotals(doc).total),
+      amount: documentTotals(doc).total,
       paymentMethodId: methodId,
       accountId: accountOf(methodId),
       href: saleHref(doc.id),
@@ -111,7 +109,7 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
         reference: doc.number,
         counterparty,
         date: p.date,
-        amount: round(-p.amount),
+        amount: cents(-p.amount),
         paymentMethodId: p.paymentMethodId,
         accountId: accountOf(p.paymentMethodId),
         href: purchaseHref(doc.id),
@@ -126,7 +124,7 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
       reference: e.number || e.concept,
       counterparty: payeeOf(e)?.name ?? "",
       date: e.payment.date,
-      amount: round(-e.amount),
+      amount: cents(-e.amount),
       paymentMethodId: e.payment.paymentMethodId,
       accountId: accountOf(e.payment.paymentMethodId),
       href: expenseHref(e.id),
@@ -161,13 +159,13 @@ export function pendingDocuments({ sales, purchases, expenses }: Omit<Books, "ma
       reference: doc.number ?? "",
       counterparty: clientOf(doc).name,
       date: doc.dueOn ?? doc.issuedOn,
-      amount: round(documentTotals(doc).total),
+      amount: documentTotals(doc).total,
       href: saleHref(doc.id),
     });
   }
   for (const doc of purchases) {
     const left = outstanding(doc);
-    if (Math.round(left * 100) === 0) continue;
+    if (left === 0) continue;
     pending.push({
       key: `pending-purchase:${doc.id}`,
       source: "purchase",
@@ -175,7 +173,7 @@ export function pendingDocuments({ sales, purchases, expenses }: Omit<Books, "ma
       reference: doc.number,
       counterparty: supplierOf(doc).name,
       date: doc.dueOn ?? doc.issuedOn,
-      amount: round(-left),
+      amount: cents(-left),
       href: purchaseHref(doc.id),
     });
   }
@@ -188,7 +186,7 @@ export function pendingDocuments({ sales, purchases, expenses }: Omit<Books, "ma
       reference: e.number || e.concept,
       counterparty: payeeOf(e)?.name ?? "",
       date: e.date,
-      amount: round(-e.amount),
+      amount: cents(-e.amount),
       href: expenseHref(e.id),
     });
   }
@@ -202,19 +200,19 @@ export function methodForAccount(accountId: string, methods: PaymentMethod[], de
 }
 
 /** Sum of the linked payments that still exist: a payment deleted elsewhere stops counting. */
-export function matchedAmount(movement: BankMovement, paymentsByKey: Map<string, TreasuryPayment>): number {
-  return round(movement.paymentKeys.reduce((sum, key) => sum + (paymentsByKey.get(key)?.amount ?? 0), 0));
+export function matchedAmount(movement: BankMovement, paymentsByKey: Map<string, TreasuryPayment>): Cents {
+  return sumBy(movement.paymentKeys, (key) => paymentsByKey.get(key)?.amount ?? cents(0));
 }
 
 /**
  * Balance of an account: the last balance the bank reported plus anything recorded after it,
  * or the plain sum of its movements when the bank gives none.
  */
-export function accountBalance(accountId: string, movements: BankMovement[]): number {
+export function accountBalance(accountId: string, movements: BankMovement[]): Cents {
   const own = movements.filter((m) => m.accountId === accountId);
   const lastReported = own.findLastIndex((m) => m.balance !== null);
-  if (lastReported === -1) return round(own.reduce((sum, m) => sum + m.amount, 0));
-  return round(own.slice(lastReported + 1).reduce((sum, m) => sum + m.amount, own[lastReported]!.balance!));
+  if (lastReported === -1) return sumBy(own, (m) => m.amount);
+  return cents(own[lastReported]!.balance! + sumBy(own.slice(lastReported + 1), (m) => m.amount));
 }
 
 export function accountName(id: string | null, accounts: TreasuryAccount[]): string {

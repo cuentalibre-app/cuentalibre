@@ -1,7 +1,15 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ExternalLink, MapPin, MoreHorizontal, Pencil } from "lucide-react";
-import { checkTaxId, defaultPeriod, formatIban, isOtherEuCountry, periodMonths, type Period } from "@fiscalia/core";
+import {
+  cents,
+  checkTaxId,
+  defaultPeriod,
+  formatIban,
+  isOtherEuCountry,
+  periodMonths,
+  type Period,
+} from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -604,7 +612,7 @@ function SummaryTable({ summary, kinds }: { summary: ActivitySummary; kinds: Act
             <tr key={k} className={table.row}>
               <td className={table.td}>{ACTIVITY_KIND_LABELS[k]}</td>
               <td className={cn(table.td, "text-right amount")}>{summary.byKind[k]?.count ?? 0}</td>
-              <td className={cn(table.td, "text-right amount")}>{formatEUR(summary.byKind[k]?.total ?? 0)}</td>
+              <td className={cn(table.td, "text-right amount")}>{formatEUR(summary.byKind[k]?.total ?? cents(0))}</td>
             </tr>
           ))}
         </tbody>
@@ -625,7 +633,7 @@ function MonthlyBars({ role, rows, period }: { role: ContactRole; rows: Activity
           Number(r.date.slice(0, 4)) === period.year &&
           Number(r.date.slice(5, 7)) - 1 === m,
       )
-      .reduce((s, r) => s + r.total, 0),
+      .reduce((s, r) => cents(s + r.total), cents(0)),
   }));
   const max = Math.max(...months.map((m) => m.total), 0);
   if (max <= 0)

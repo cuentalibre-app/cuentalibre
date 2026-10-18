@@ -19,7 +19,16 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { amortizationBetween, periodKey, periodMonths, toIsoDate, type Period } from "@fiscalia/core";
+import {
+  amortizationBetween,
+  cents,
+  periodKey,
+  periodMonths,
+  sumBy,
+  toIsoDate,
+  type Cents,
+  type Period,
+} from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -42,7 +51,7 @@ import {
   type Action,
 } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
-import { MONTHS, formatDate, formatShortDate, parseDecimal, periodCode } from "@/lib/format";
+import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import type { Contact } from "@/mocks/contacts";
@@ -108,15 +117,15 @@ interface Row {
   doc: PurchaseInvoice;
   supplier: Contact;
   status: PurchaseStatus;
-  base: number;
-  vat: number;
-  withholding: number;
-  total: number;
-  outstanding: number;
-  deductibleBase: number;
-  deductibleVat: number;
+  base: Cents;
+  vat: Cents;
+  withholding: Cents;
+  total: Cents;
+  outstanding: Cents;
+  deductibleBase: Cents;
+  deductibleVat: Cents;
   /** Investment goods: amortization of the period shown. */
-  amortization: number;
+  amortization: Cents;
 }
 
 type Amount =
@@ -128,7 +137,7 @@ function inPeriod(isoDate: string, period: Period): boolean {
 }
 
 function sum(rows: Row[], key: Amount) {
-  return rows.reduce((acc, r) => acc + r[key], 0);
+  return sumBy(rows, (r) => r[key]);
 }
 
 interface Filters {
@@ -156,8 +165,8 @@ const NO_FILTERS: Filters = {
 
 function matches(r: Row, f: Filters): boolean {
   const q = f.query.trim().toLowerCase();
-  const from = parseDecimal(f.totalFrom);
-  const to = parseDecimal(f.totalTo);
+  const from = parseEuros(f.totalFrom);
+  const to = parseEuros(f.totalTo);
   return (
     (f.status === ALL || r.status === f.status) &&
     (f.expenseType === ALL || r.doc.expenseType === f.expenseType) &&
@@ -198,16 +207,16 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
           outstanding: outstanding(doc),
           deductibleBase: ded.base,
           deductibleVat: ded.vat,
-          amortization: doc.asset ? amortizationBetween(assetOf(doc), from, to) : 0,
+          amortization: doc.asset ? amortizationBetween(assetOf(doc), from, to) : cents(0),
         };
       });
   }, [invoices, period, today]);
 
   // What every investment good amortizes in the period, also those bought earlier
   const periodAmortization = useMemo(() => {
-    if (kind !== "asset") return 0;
+    if (kind !== "asset") return cents(0);
     const [from, to] = periodBounds(period);
-    return invoices.reduce((acc, doc) => acc + amortizationBetween(assetOf(doc), from, to), 0);
+    return sumBy(invoices, (doc) => amortizationBetween(assetOf(doc), from, to));
   }, [invoices, kind, period]);
 
   const rows = useMemo(
@@ -397,7 +406,7 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
   );
   const base = sum(rows, "base");
   const vat = sum(rows, "vat");
-  const stats: { label: string; value: number; detail: ReactNode }[] = [
+  const stats: { label: string; value: Cents; detail: ReactNode }[] = [
     {
       label: "Gasto deducible",
       value: sum(rows, "deductibleBase"),
@@ -440,10 +449,10 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
 }
 
 /** Investment goods: what they cost and what they lower the income tax by through amortization. */
-function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: number }) {
+function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: Cents }) {
   const goods = (n: number) => (n === 1 ? "1 bien" : `${n} bienes`);
   const unpaid = rows.filter((r) => r.status !== "paid");
-  const stats: { label: string; value: number; detail: ReactNode }[] = [
+  const stats: { label: string; value: Cents; detail: ReactNode }[] = [
     {
       label: "Amortización del periodo",
       value: amortization,
@@ -557,7 +566,7 @@ function FiltersPanel({
             aria-label="Total desde"
             value={filters.totalFrom}
             onChange={(e) => onChange("totalFrom", e.target.value)}
-            aria-invalid={filters.totalFrom && parseDecimal(filters.totalFrom) === null ? true : undefined}
+            aria-invalid={filters.totalFrom && parseEuros(filters.totalFrom) === null ? true : undefined}
             className="text-right amount"
           />
           <span className="text-muted-foreground">–</span>
@@ -567,7 +576,7 @@ function FiltersPanel({
             aria-label="Total hasta"
             value={filters.totalTo}
             onChange={(e) => onChange("totalTo", e.target.value)}
-            aria-invalid={filters.totalTo && parseDecimal(filters.totalTo) === null ? true : undefined}
+            aria-invalid={filters.totalTo && parseEuros(filters.totalTo) === null ? true : undefined}
             className="text-right amount"
           />
         </div>
@@ -752,7 +761,7 @@ function PurchasesTable({
                   </td>
                 ) : (
                   <td className={cn(td, "text-right amount text-muted-foreground")}>
-                    {r.withholding ? formatEUR(-r.withholding) : "—"}
+                    {r.withholding ? formatEUR(cents(-r.withholding)) : "—"}
                   </td>
                 )}
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
@@ -776,7 +785,7 @@ function PurchasesTable({
               <AnimatedAmount value={sum(rows, "vat")} />
             </td>
             <td className={cn(td, "text-right amount")}>
-              <AnimatedAmount value={kind === "asset" ? sum(rows, "amortization") : -sum(rows, "withholding")} />
+              <AnimatedAmount value={kind === "asset" ? sum(rows, "amortization") : cents(-sum(rows, "withholding"))} />
             </td>
             <td className={cn(td, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "total")} />

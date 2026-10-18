@@ -2,6 +2,7 @@ import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Calendar, ChevronDown, ChevronRight, Settings } from "lucide-react";
 import {
+  cents,
   daysUntil,
   filingDeadline,
   filingStatus,
@@ -12,7 +13,9 @@ import {
   model349,
   toIsoDate,
   upcomingDeadlines,
+  sumBy,
   vatReturns,
+  type Cents,
   type Quarter,
 } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
@@ -45,7 +48,7 @@ import {
 const QUARTERS = [1, 2, 3, 4] as const;
 
 /** "A compensar" for a negative 303, which is carried forward rather than paid. */
-function VatAmount({ amount }: { amount: number }) {
+function VatAmount({ amount }: { amount: Cents }) {
   if (amount >= 0)
     return <span className={cn("amount", amount === 0 && "text-muted-foreground")}>{formatEUR(amount)}</span>;
   return (
@@ -76,7 +79,7 @@ function NextFiling({ today }: { today: Date }) {
     }
     if (d.kind === "irpf-130" && quarter) {
       const result = incomeTaxYear(books, d.year, TAX_OPTIONS).quarters[quarter - 1]!.result;
-      return { d, amount: Math.max(0, result), to: modelPath(INCOME_TAX_PATH, d) };
+      return { d, amount: cents(Math.max(0, result)), to: modelPath(INCOME_TAX_PATH, d) };
     }
     return { d, amount: null, to: modelPath(VAT_PATH, { year: d.year, quarter: null }) };
   });
@@ -140,13 +143,14 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
   const { vat, income } = useYearReturns(year);
   const rows = QUARTERS.map((quarter) => {
     const v = vat[quarter - 1]!.result;
-    const i = Math.max(0, income.quarters[quarter - 1]!.result);
-    return { quarter, vat: v, irpf: i, total: Math.max(0, v) + i, deadline: filingDeadline(year, quarter) };
+    const i = cents(Math.max(0, income.quarters[quarter - 1]!.result));
+    return { quarter, vat: v, irpf: i, total: cents(Math.max(0, v) + i), deadline: filingDeadline(year, quarter) };
   });
-  const totals = rows.reduce(
-    (acc, r) => ({ vat: acc.vat + Math.max(0, r.vat), irpf: acc.irpf + r.irpf, total: acc.total + r.total }),
-    { vat: 0, irpf: 0, total: 0 },
-  );
+  const totals = {
+    vat: sumBy(rows, (r) => cents(Math.max(0, r.vat))),
+    irpf: sumBy(rows, (r) => r.irpf),
+    total: sumBy(rows, (r) => r.total),
+  };
   const th = cn(table.th, "px-3");
   const td = cn(table.td, "px-3");
   const linkClass = "inline-flex items-center gap-1 text-foreground no-underline hover:text-primary";
@@ -273,9 +277,9 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
 
 function AnnualForms({ year, today }: { year: number; today: Date }) {
   const { vat, income } = useYearReturns(year);
-  const vatPaid = vat.reduce((acc, q) => acc + Math.max(0, q.result), 0);
+  const vatPaid = sumBy(vat, (q) => cents(Math.max(0, q.result)));
   const annual = income.annual;
-  const prepaid = annual.boxes["0598"]! + annual.boxes["0599"]! + annual.boxes["0604"]!;
+  const prepaid = cents(annual.boxes["0598"]! + annual.boxes["0599"]! + annual.boxes["0604"]!);
   const cards = [
     {
       code: "390",

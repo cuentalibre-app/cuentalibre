@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { Cents } from "@fiscalia/core";
 import { ArrowDownLeft, ArrowUpRight, Landmark, TrendingUp, type LucideIcon } from "lucide-react";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { cn } from "@fiscalia/ui/lib/cn";
@@ -12,7 +13,7 @@ interface Kpi {
   icon: LucideIcon;
   /** Icon chip colors, so each figure is recognisable at a glance. */
   iconClass: string;
-  value: number;
+  value: Cents;
   change: number | null;
   /** Whether going up is good news (true), bad news (false) or neither (null). */
   upIsGood: boolean | null;
@@ -116,10 +117,7 @@ export function KpiGrid({ data }: { data: HomeData }) {
   ];
 
   return (
-    <section
-      aria-label="Resumen del periodo"
-      className="grid grid-cols-2 gap-2.5 lg:gap-px xl:grid-cols-4"
-    >
+    <section aria-label="Resumen del periodo" className="grid grid-cols-2 gap-2.5 lg:gap-px xl:grid-cols-4">
       {kpis.map((kpi, i) => (
         <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />
       ))}

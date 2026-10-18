@@ -15,10 +15,11 @@ import {
 import {
   WITHHOLDING_RATES,
   addDays,
+  applyRate,
+  cents,
   invoiceTotals,
   lineBase,
   operationChargesVat,
-  roundCents,
   toIsoDate,
   type InvoiceLine,
   type OperationType,
@@ -43,7 +44,7 @@ import { LockedNotice } from "@/features/closing/locked-notice";
 import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
-import { formatDate, formatDecimalInput, parseDecimal } from "@/lib/format";
+import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
 import type { Contact } from "@/mocks/contacts";
 import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
@@ -158,7 +159,7 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     lines: (groupedOnInvoice ? groupLinesByTax(base!) : base?.lines)?.map((l) => toLineDraft(l, rectify)) ?? [
       emptyLine(settingsStore.get().tax.defaultVatRate),
     ],
-    supplies: base?.supplies ? formatDecimalInput(base.supplies) : "0",
+    supplies: base?.supplies ? formatEurosInput(base.supplies) : "0",
     publicNotes: rectify && base?.number ? `Rectifica la factura ${base.number}.` : (base?.publicNotes ?? ""),
     privateNotes: isCopy ? "" : (base?.privateNotes ?? ""),
     tags: base?.tags ?? [],
@@ -273,7 +274,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   const totals = invoiceTotals(
     parsedLines.filter((l) => l !== null),
     WITHHOLDING_RATES[form.withholding],
-    parseDecimal(form.supplies || "0") ?? 0,
+    parseEuros(form.supplies || "0") ?? cents(0),
   );
 
   const isInvoice = kind === "invoice";
@@ -485,7 +486,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     </div>
   );
 
-  const vatLabel = (line: InvoiceLine | null) => (line ? formatEUR(roundCents(lineBase(line) * line.vatRate)) : "—");
+  const vatLabel = (line: InvoiceLine | null) => (line ? formatEUR(applyRate(lineBase(line), line.vatRate)) : "—");
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>

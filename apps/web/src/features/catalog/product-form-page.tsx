@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePlus2, FolderTree, X } from "lucide-react";
-import { isCatalogUnit, priceBreakdown, stockOf, surchargeFitsVat } from "@fiscalia/core";
+import { cents, isCatalogUnit, priceBreakdown, stockOf, surchargeFitsVat, type Cents } from "@fiscalia/core";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -481,7 +481,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
               rows={[
                 ["Precio descontado", sale.base],
                 ["IVA", sale.vat],
-                ...(advancedSale ? [["RE", sale.surcharge] as [string, number]] : []),
+                ...(advancedSale ? [["RE", sale.surcharge] as [string, Cents]] : []),
               ]}
               total={["P.V.P.", sale.total]}
             />
@@ -527,14 +527,14 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
               )}
             </div>
             <Breakdown
-              rows={[["IVA", cost.vat], ...(advancedCost ? [["RE", cost.surcharge] as [string, number]] : [])]}
+              rows={[["IVA", cost.vat], ...(advancedCost ? [["RE", cost.surcharge] as [string, Cents]] : [])]}
               total={["Total", cost.total]}
               extra={
                 draft.cost.trim() && sale.base > 0 ? (
                   <>
                     <dt className="text-muted-foreground">Margen</dt>
                     <dd className="m-0 text-right amount">
-                      {formatEUR(sale.base - cost.base)}
+                      {formatEUR(cents(sale.base - cost.base))}
                       <span className="ml-1.5 text-muted-foreground">
                         ({Math.round(((sale.base - cost.base) / sale.base) * 100)} %)
                       </span>
@@ -728,7 +728,7 @@ function MoneyInput({
   );
 }
 
-function Breakdown({ rows, total, extra }: { rows: [string, number][]; total: [string, number]; extra?: ReactNode }) {
+function Breakdown({ rows, total, extra }: { rows: [string, Cents][]; total: [string, Cents]; extra?: ReactNode }) {
   return (
     <dl className="m-0 grid max-w-72 grid-cols-[auto_1fr] gap-x-6 gap-y-1 rounded-lg bg-muted px-4 py-3 text-sm">
       {rows.map(([label, value]) => (

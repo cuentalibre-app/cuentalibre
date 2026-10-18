@@ -1,4 +1,4 @@
-import type { WithholdingKind } from "@fiscalia/core";
+import { eurosToCents, type Cents, type WithholdingKind } from "@fiscalia/core";
 
 /** Sample business profile, tax setup, accounts and payment methods until there is a backend. Made up. */
 
@@ -48,7 +48,7 @@ export interface TaxSetup {
   /** IRPF withholding proposed on new invoices; a client's own default wins. */
   defaultWithholding: WithholdingKind;
   /** Monthly self-employed fee (RETA). */
-  socialSecurityFee: number;
+  socialSecurityFee: Cents;
   /** Client that groups sales to unidentified customers ("Clientes varios"). */
   variousClientsId: string | null;
 }
@@ -104,7 +104,7 @@ export const initialTaxSetup: TaxSetup = {
   ],
   defaultVatRate: 0.21,
   defaultWithholding: "professional",
-  socialSecurityFee: 294,
+  socialSecurityFee: eurosToCents(294),
   variousClientsId: null,
 };
 

@@ -1,9 +1,11 @@
 import {
+  cents,
   PNL_EXPENSE_LINES,
   PNL_FINANCIAL_LINES,
   PNL_INCOME_LINES,
   PNL_LABELS,
   pnlLine,
+  type Cents,
   type PnlLine,
   type ProfitAndLoss,
 } from "@fiscalia/core";
@@ -11,14 +13,14 @@ import { accountLabel } from "./reports-model";
 
 /** One row of the report, with its amount in the selected year and the one before. */
 export type PnlRow =
-  | { kind: "section"; label: string; values: [number, number] }
-  | { kind: "line"; label: string; values: [number, number] }
-  | { kind: "account"; label: string; values: [number, number] }
-  | { kind: "result"; label: string; values: [number, number]; final?: boolean };
+  | { kind: "section"; label: string; values: [Cents, Cents] }
+  | { kind: "line"; label: string; values: [Cents, Cents] }
+  | { kind: "account"; label: string; values: [Cents, Cents] }
+  | { kind: "result"; label: string; values: [Cents, Cents]; final?: boolean };
 
 /** The rows in Contasimple's order. The extended version lists each account under its line. */
 export function pnlRows(current: ProfitAndLoss, previous: ProfitAndLoss, extended: boolean): PnlRow[] {
-  const both = (pick: (p: ProfitAndLoss) => number): [number, number] => [pick(current), pick(previous)];
+  const both = (pick: (p: ProfitAndLoss) => Cents): [Cents, Cents] => [pick(current), pick(previous)];
   const accounts = [...new Set([...Object.keys(current.accounts), ...Object.keys(previous.accounts)])].sort();
 
   const lines = (keys: readonly PnlLine[]): PnlRow[] =>
@@ -30,7 +32,7 @@ export function pnlRows(current: ProfitAndLoss, previous: ProfitAndLoss, extende
         .map((a): PnlRow => ({
           kind: "account",
           label: `${a}. ${accountLabel(a)}`,
-          values: both((p) => p.accounts[a] ?? 0),
+          values: both((p) => p.accounts[a] ?? cents(0)),
         }));
       return [row, ...detail];
     });

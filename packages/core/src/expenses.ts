@@ -1,4 +1,4 @@
-import { roundCents } from "./invoices";
+import { cents, type Cents } from "./money";
 
 /*
  * Expenses without an invoice: the social security fee, fees and taxes, bank
@@ -8,8 +8,8 @@ import { roundCents } from "./invoices";
  */
 
 /** Part of an expense's amount that counts for income tax, after its imputation (0–100). */
-export function deductibleExpense(amount: number, imputation: number): number {
-  return roundCents((amount * imputation) / 100);
+export function deductibleExpense(amount: Cents, imputation: number): Cents {
+  return cents((amount * imputation) / 100);
 }
 
 export interface ExpenseIdentity {
@@ -19,7 +19,7 @@ export interface ExpenseIdentity {
   /** Receipt number; often empty. */
   number: string;
   concept: string;
-  amount: number;
+  amount: Cents;
   /** Supplier id, or the name and tax ID of a one-off payee; empty without one. */
   payee: string;
 }
@@ -39,7 +39,7 @@ export function isDuplicateExpense(candidate: ExpenseIdentity, existing: Require
       !normalize(e.number) &&
       e.date === candidate.date &&
       normalize(e.concept) === normalize(candidate.concept) &&
-      roundCents(e.amount) === roundCents(candidate.amount)
+      e.amount === candidate.amount
     );
   });
 }
