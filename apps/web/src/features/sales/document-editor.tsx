@@ -12,6 +12,7 @@ import {
   type InvoiceLine,
   type WithholdingKind,
 } from "@fiscalia/core";
+import type { Product, SalesLine } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -28,8 +29,6 @@ import { conceptFor } from "@/features/catalog/catalog-model";
 import { useCatalog } from "@/features/catalog/catalog-store";
 import { TagChip } from "@/features/settings/tag-chip";
 import { tagsStore, useTags } from "@/features/settings/tags-store";
-import type { Product } from "@/mocks/catalog";
-import type { SalesLine } from "@/mocks/sales";
 import { Field, GroupedSelect } from "./form-fields";
 import { SURCHARGE_OPTIONS, VAT_RATE_OPTIONS, ratePercent } from "./sales-model";
 

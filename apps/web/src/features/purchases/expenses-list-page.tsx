@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { newId, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
+import type { Expense, OtherPayee } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -42,7 +43,6 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import type { Expense, OtherPayee } from "@/mocks/expenses";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import {
   EXPENSES_PATH,

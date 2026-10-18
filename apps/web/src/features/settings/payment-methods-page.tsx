@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { MoreHorizontal, Pencil, Plus, Power, Search, Star, Trash2 } from "lucide-react";
 import { newId } from "@fiscalia/core";
+import type { PaymentMethod, PaymentMethodType } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -16,7 +17,6 @@ import { purchasesStore } from "@/features/purchases/purchases-store";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, type Action } from "@/features/sales/list-parts";
 import { salesStore } from "@/features/sales/sales-store";
-import type { PaymentMethod, PaymentMethodType } from "@/mocks/settings";
 import { ACCOUNT_ICONS } from "./account-icons";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import {

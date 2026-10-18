@@ -1,11 +1,11 @@
 import { jsPDF } from "jspdf";
 import { zipSync } from "fflate";
 import { cents, eurosToCents, lineBase, WITHHOLDING_RATES, type Cents } from "@fiscalia/core";
+import type { SalesDocument } from "@fiscalia/contracts";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { formatDate } from "@/lib/format";
 import { addressLine, businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
-import type { SalesDocument } from "@/mocks/sales";
 import { printOptions } from "./invoice-settings";
 import { clientOf, documentFileName, documentTotals, KINDS, OPERATION_TYPES } from "./sales-model";
 

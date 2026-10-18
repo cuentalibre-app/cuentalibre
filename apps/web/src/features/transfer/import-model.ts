@@ -25,6 +25,19 @@ import {
   type PurchaseOperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
+import type {
+  Contact,
+  ContactRole,
+  Expense,
+  ExpenseType,
+  IncomeType,
+  OtherPayee,
+  Payment,
+  PurchaseInvoice,
+  PurchaseLine,
+  SalesDocument,
+  SalesLine,
+} from "@fiscalia/contracts";
 import { contactsStore } from "@/features/contacts/contacts-store";
 import { EXPENSES_PATH, expenseIdentity } from "@/features/purchases/expenses-model";
 import { expensesStore } from "@/features/purchases/expenses-store";
@@ -35,10 +48,6 @@ import { salesStore } from "@/features/sales/sales-store";
 import { METHOD_TYPES, defaultPaymentMethodId } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
 import type { Cell } from "@/lib/xlsx";
-import type { Contact, ContactRole } from "@/mocks/contacts";
-import type { Expense, OtherPayee } from "@/mocks/expenses";
-import type { ExpenseType, Payment, PurchaseInvoice, PurchaseLine } from "@/mocks/purchases";
-import type { IncomeType, SalesDocument, SalesLine } from "@/mocks/sales";
 
 /*
  * Importing issued invoices, received invoices and expenses from a spreadsheet

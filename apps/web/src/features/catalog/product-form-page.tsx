@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePlus2, FolderTree, X } from "lucide-react";
 import { cents, isCatalogUnit, newId, priceBreakdown, stockOf, surchargeFitsVat, type Cents } from "@fiscalia/core";
+import type { Product } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -18,7 +19,6 @@ import { TagsField } from "@/features/sales/document-editor";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { SURCHARGE_OPTIONS, VAT_RATE_OPTIONS } from "@/features/sales/sales-model";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
-import type { Product } from "@/mocks/catalog";
 import {
   CATALOG_SETTINGS_PATH,
   NEW_PRODUCT_PATH,

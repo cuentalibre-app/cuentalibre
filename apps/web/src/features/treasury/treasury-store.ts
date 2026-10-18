@@ -1,10 +1,11 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { cents, newId, toIsoDate } from "@fiscalia/core";
+import type { BankMovement, ManualPayment } from "@fiscalia/contracts";
 import { expensesStore, useExpenses } from "@/features/purchases/expenses-store";
 import { purchasesStore, usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { salesStore, useSalesDocuments } from "@/features/sales/sales-store";
 import { settingsStore, useSettings } from "@/features/settings/settings-store";
-import { initialManualPayments, sampleMovements, type BankMovement, type ManualPayment } from "@/mocks/treasury";
+import { initialManualPayments, sampleMovements } from "@/mocks/treasury";
 import { collectPayments, methodForAccount, pendingDocuments, type PendingDocument } from "./treasury-model";
 
 /**

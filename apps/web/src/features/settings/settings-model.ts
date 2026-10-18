@@ -1,4 +1,3 @@
-import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import type {
   AccountKind,
   BusinessProfile,
@@ -8,7 +7,8 @@ import type {
   PaymentMethodType,
   TaxSetup,
   VatRegime,
-} from "@/mocks/settings";
+} from "@fiscalia/contracts";
+import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import type { Option } from "@/features/sales/sales-model";
 import { settingsStore, useSettings } from "./settings-store";
 

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { initialTags, type Tag } from "@/mocks/tags";
+import type { Tag } from "@fiscalia/contracts";
+import { initialTags } from "@/mocks/tags";
 
 /**
  * The tag list with its colors. Documents and contacts store tag names; a name that isn't

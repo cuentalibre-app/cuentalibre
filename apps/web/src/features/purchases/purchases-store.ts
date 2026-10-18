@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { initialPurchaseInvoices, type PurchaseInvoice } from "@/mocks/purchases";
+import type { PurchaseInvoice } from "@fiscalia/contracts";
+import { initialPurchaseInvoices } from "@/mocks/purchases";
 
 /**
  * In-memory received invoices. Changes apply instantly and last until reload;

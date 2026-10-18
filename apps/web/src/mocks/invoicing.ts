@@ -1,10 +1,6 @@
-/** Sample note templates until there is a backend. Payment methods live in the settings; products, in the catalog. */
+import type { NoteTemplate } from "@fiscalia/contracts";
 
-export interface NoteTemplate {
-  id: string;
-  title: string;
-  text: string;
-}
+/** Sample note templates until there is a backend. Payment methods live in the settings; products, in the catalog. */
 
 export const initialNoteTemplates: NoteTemplate[] = [
   {

@@ -10,8 +10,8 @@ import {
   type StockReason,
   type StockRules,
 } from "@fiscalia/core";
+import type { Product } from "@fiscalia/contracts";
 import type { Option } from "@/features/sales/sales-model";
-import type { Product } from "@/mocks/catalog";
 
 export const CATALOG_PATH = "/catalogo";
 export const PRODUCTS_PATH = "/catalogo/productos";

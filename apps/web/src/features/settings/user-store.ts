@@ -1,14 +1,6 @@
 import { useSyncExternalStore } from "react";
-import {
-  initialNotificationPrefs,
-  initialUserAccess,
-  initialUserLocale,
-  initialUserProfile,
-  type NotificationPrefs,
-  type UserAccess,
-  type UserLocale,
-  type UserProfile,
-} from "@/mocks/user";
+import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@fiscalia/contracts";
+import { initialNotificationPrefs, initialUserAccess, initialUserLocale, initialUserProfile } from "@/mocks/user";
 
 /** The signed-in user's own settings, in memory until reload like the other stores. */
 export interface UserSettings {

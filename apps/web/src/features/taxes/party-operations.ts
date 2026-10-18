@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { cents, SPAIN, sumBy, WITHHOLDING_RATES, type PartyOperation } from "@fiscalia/core";
+import type { Contact, Expense, PurchaseInvoice, SalesDocument } from "@fiscalia/contracts";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { PURCHASES_PATH, purchaseTotals } from "@/features/purchases/purchases-model";
@@ -8,10 +9,6 @@ import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { documentTotals, KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { useSettings } from "@/features/settings/settings-store";
-import type { Contact } from "@/mocks/contacts";
-import type { Expense } from "@/mocks/expenses";
-import type { PurchaseInvoice } from "@/mocks/purchases";
-import type { SalesDocument } from "@/mocks/sales";
 
 /** Purchases of goods rather than services, as in the VAT returns. */
 const GOODS_PURCHASES = new Set(["600", "602"]);

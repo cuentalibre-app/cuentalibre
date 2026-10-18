@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { rankCounterparties, type CounterpartyRanking } from "@fiscalia/core";
+import type { ExpenseType } from "@fiscalia/contracts";
 import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { deductible, expenseTypeShortLabel, supplierOf } from "@/features/purchases/purchases-model";
@@ -7,7 +8,6 @@ import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { clientOf, documentTotals, INCOME_TYPE_GROUPS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { amortizationExpenses, toTaxBooks } from "@/features/taxes/tax-books";
-import type { ExpenseType } from "@/mocks/purchases";
 
 export const REPORTS_PATH = "/informes";
 export const PNL_PATH = "/informes/perdidas-y-ganancias";

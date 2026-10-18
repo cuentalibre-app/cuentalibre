@@ -1,12 +1,9 @@
 import { cents, isInPeriod, sumBy, sumCents, type Cents, type Period } from "@fiscalia/core";
+import type { ContactRole, Expense, PurchaseInvoice, SalesDocument, SalesKind } from "@fiscalia/contracts";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import { EXPENSES_PATH, EXPENSE_STATUS, expenseStatus } from "@/features/purchases/expenses-model";
 import { PURCHASES_PATH, PURCHASE_STATUS, purchaseStatus, purchaseTotals } from "@/features/purchases/purchases-model";
 import { KINDS, STATUS, displayStatus, documentTotals } from "@/features/sales/sales-model";
-import type { ContactRole } from "@/mocks/contacts";
-import type { Expense } from "@/mocks/expenses";
-import type { PurchaseInvoice } from "@/mocks/purchases";
-import type { SalesDocument, SalesKind } from "@/mocks/sales";
 
 /** Kinds of document a contact can have. */
 export type ActivityKind = SalesKind | "purchase" | "expense";

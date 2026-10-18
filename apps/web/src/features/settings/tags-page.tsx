@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { newId } from "@fiscalia/core";
+import type { Tag } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
@@ -9,7 +10,6 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { table } from "@fiscalia/ui/lib/table";
 import { Field } from "@/features/sales/form-fields";
 import { EmptyState, IconAction } from "@/features/sales/list-parts";
-import type { Tag } from "@/mocks/tags";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { TagChip } from "./tag-chip";
 import { tagsStore, textColorOn, useTags } from "./tags-store";

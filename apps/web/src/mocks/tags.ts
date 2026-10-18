@@ -1,11 +1,6 @@
-/** Sample tag list until there is a backend. */
+import type { Tag } from "@fiscalia/contracts";
 
-export interface Tag {
-  id: string;
-  name: string;
-  /** Background color chosen by the user, as #rrggbb. */
-  color: string;
-}
+/** Sample tag list until there is a backend. */
 
 /** The tags used by the sample documents and contacts. */
 export const initialTags: Tag[] = [

@@ -14,6 +14,7 @@ import {
   type Cents,
   type InvoiceLine,
 } from "@fiscalia/core";
+import type { Contact, Expense, PurchaseInvoice, SalesDocument, SalesLine } from "@fiscalia/contracts";
 import { deductibleOf, EXPENSE_STATUS, expenseStatus, payeeOf } from "@/features/purchases/expenses-model";
 import {
   ASSET_CATEGORY_LABELS,
@@ -40,10 +41,6 @@ import {
 } from "@/features/sales/sales-model";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import type { Cell, Sheet } from "@/lib/xlsx";
-import type { Contact } from "@/mocks/contacts";
-import type { Expense } from "@/mocks/expenses";
-import type { PurchaseInvoice } from "@/mocks/purchases";
-import type { SalesDocument, SalesLine } from "@/mocks/sales";
 
 /*
  * Rows of every listing that can be exported: the official register books

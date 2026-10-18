@@ -19,6 +19,7 @@ Open-source accounting and tax app for Spanish self-employed workers. pnpm + Tur
 - Style only with semantic tokens (`bg-primary`, `text-muted-foreground`, `border-border`…). Never use the raw palette variables from `primitives.css` in components; Tailwind's default palette is disabled on purpose.
 - Format money with `formatEUR()` and render amounts with the `amount` class.
 - Tax and date rules live in `packages/core` as pure functions with tests; keep them out of React components.
+- Data shapes are zod schemas in `packages/contracts`, with types inferred from them; don't declare entity types elsewhere.
 - Until there is a backend, sample data lives in `apps/web/src/mocks`.
 - Run `pnpm typecheck` and `pnpm test` before committing.
 

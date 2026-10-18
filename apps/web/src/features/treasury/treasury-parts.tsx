@@ -10,6 +10,7 @@ import {
   type StatementLine,
   type StatementParse,
 } from "@fiscalia/core";
+import type { TreasuryAccount } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -27,7 +28,6 @@ import {
 import { useSettings } from "@/features/settings/settings-store";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";
-import type { TreasuryAccount } from "@/mocks/settings";
 import { RECONCILIATION } from "./treasury-model";
 import { treasuryStore } from "./treasury-store";
 

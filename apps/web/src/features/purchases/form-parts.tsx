@@ -5,8 +5,8 @@ import { Input } from "@fiscalia/ui/components/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { parseDecimal } from "@/lib/format";
-import type { Attachment } from "@/mocks/sales";
 import { isValidImputation, newId } from "@fiscalia/core";
+import type { Attachment } from "@fiscalia/contracts";
 
 /* Form building blocks shared by received invoices and expenses. Tooltips need a TooltipProvider above. */
 

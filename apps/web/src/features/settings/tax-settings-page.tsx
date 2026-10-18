@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ArrowDown, ArrowUp, Info, Plus, Search, Star, Trash2, TriangleAlert, UserPlus } from "lucide-react";
 import { cents, newId } from "@fiscalia/core";
+import type { EconomicActivity, FiscalRegion, IncomeTaxMethod, TaxSetup, VatRegime } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
@@ -15,7 +16,6 @@ import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { IconAction } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, WITHHOLDING_GROUPS } from "@/features/sales/sales-model";
 import { formatEurosInput, parseEuros } from "@/lib/format";
-import type { EconomicActivity, FiscalRegion, IncomeTaxMethod, TaxSetup, VatRegime } from "@/mocks/settings";
 import { ConfirmDialog, SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import {
   ACTIVITY_TYPES,

@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { lockedQuarter, periodKey, toIsoDate, type Period } from "@fiscalia/core";
-import { initialClosedQuarters, type ClosedQuarter } from "@/mocks/closing";
+import type { ClosedQuarter } from "@fiscalia/contracts";
+import { initialClosedQuarters } from "@/mocks/closing";
 
 /**
  * Closed quarters, in memory until reload like the other stores. Closing is

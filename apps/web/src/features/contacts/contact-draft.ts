@@ -6,9 +6,8 @@ import {
   normalizeTaxId,
   type WithholdingKind,
 } from "@fiscalia/core";
+import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@fiscalia/contracts";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
-import type { BankAccount, Contact, ContactRole, EInvoiceCodes } from "@/mocks/contacts";
-import type { Attachment } from "@/mocks/sales";
 import { ROLES, countryOf, taxIdError } from "./contacts-model";
 import { contactsStore } from "./contacts-store";
 

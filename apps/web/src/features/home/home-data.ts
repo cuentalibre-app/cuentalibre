@@ -21,14 +21,12 @@ import {
   type TaxBooks,
   type YearTotals,
 } from "@fiscalia/core";
+import type { Expense, PurchaseInvoice, SalesDocument } from "@fiscalia/contracts";
 import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { deductible, supplierOf } from "@/features/purchases/purchases-model";
 import { clientOf, displayStatus, documentTotals } from "@/features/sales/sales-model";
 import { TAX_OPTIONS, amortizationExpenses, toTaxBooks } from "@/features/taxes/tax-books";
 import { settingsStore } from "@/features/settings/settings-store";
-import type { Expense } from "@/mocks/expenses";
-import type { PurchaseInvoice } from "@/mocks/purchases";
-import type { SalesDocument } from "@/mocks/sales";
 
 export type InvoiceStatus = "paid" | "pending" | "overdue";
 

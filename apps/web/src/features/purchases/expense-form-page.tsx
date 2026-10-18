@@ -2,6 +2,7 @@ import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark } from "lucide-react";
 import { cents, deductibleExpense, isDuplicateExpense, newId, toIsoDate, type Cents } from "@fiscalia/core";
+import type { Attachment, Expense, ExpenseType, OtherPayee, RentalLocation } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -24,10 +25,8 @@ import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form
 import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
 import { MONTHS, formatEurosInput, parseEuros } from "@/lib/format";
 import { settingsStore } from "@/features/settings/settings-store";
-import { SOCIAL_SECURITY, type Expense, type OtherPayee } from "@/mocks/expenses";
+import { SOCIAL_SECURITY } from "@/mocks/expenses";
 import { paymentMethodOptions } from "@/features/settings/settings-model";
-import type { ExpenseType } from "@/mocks/purchases";
-import type { Attachment, RentalLocation } from "@/mocks/sales";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH, expenseIdentity, payeeOf } from "./expenses-model";
 import { expensesStore } from "./expenses-store";
 import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";

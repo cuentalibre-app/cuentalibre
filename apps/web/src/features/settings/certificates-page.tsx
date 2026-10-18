@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { FileKey2, ShieldCheck, Trash2 } from "lucide-react";
+import type { SignatureMode, SignedDocument } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -8,7 +9,6 @@ import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { formatDate } from "@/lib/format";
-import type { SignatureMode, SignedDocument } from "@/mocks/compliance";
 import { complianceStore, useCompliance } from "./compliance-store";
 import { ConfirmDialog, SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { fullName } from "./settings-model";

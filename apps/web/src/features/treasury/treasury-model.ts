@@ -1,14 +1,18 @@
 import { HandCoins, Receipt, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
 import { cents, sumBy, type Cents, type ReconciliationStatus } from "@fiscalia/core";
+import type {
+  BankMovement,
+  Expense,
+  ManualPayment,
+  PaymentMethod,
+  PurchaseInvoice,
+  SalesDocument,
+  TreasuryAccount,
+} from "@fiscalia/contracts";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import { EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { PURCHASES_PATH, outstanding, supplierOf } from "@/features/purchases/purchases-model";
 import { KINDS, clientOf, documentTotals } from "@/features/sales/sales-model";
-import type { Expense } from "@/mocks/expenses";
-import type { PurchaseInvoice } from "@/mocks/purchases";
-import type { SalesDocument } from "@/mocks/sales";
-import type { PaymentMethod, TreasuryAccount } from "@/mocks/settings";
-import type { BankMovement, ManualPayment } from "@/mocks/treasury";
 
 export const TREASURY_PATH = "/bancos";
 export const MOVEMENTS_PATH = "/bancos/movimientos";

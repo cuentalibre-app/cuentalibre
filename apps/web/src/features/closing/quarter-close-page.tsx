@@ -22,6 +22,7 @@ import {
   type Period,
   type Quarter,
 } from "@fiscalia/core";
+import type { ClosedQuarter } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -36,7 +37,6 @@ import { FILING_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "@/features/
 import { formatDate, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import type { ClosedQuarter } from "@/mocks/closing";
 import { quarterName, quarterToClose, useQuarterChecks, type QuarterCheck } from "./closing-model";
 import { closingStore, useClosedQuarters } from "./closing-store";
 

@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { newId, sumBy, type Cents } from "@fiscalia/core";
+import type { Contact, ContactRole } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -44,7 +45,6 @@ import {
 import { KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { TagChip } from "@/features/settings/tag-chip";
-import type { Contact, ContactRole } from "@/mocks/contacts";
 import { customFieldLabels } from "./contact-settings-store";
 import { contactActivity, type ActivityRow } from "./contacts-activity";
 import { ROLES, contactPath, countryOf, downloadVCard, editContactPath, formatAddress } from "./contacts-model";

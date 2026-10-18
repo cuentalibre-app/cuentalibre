@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { cents, newId, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
+import type { SalesDocument, SalesKind } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -42,7 +43,6 @@ import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import type { SalesDocument, SalesKind } from "@/mocks/sales";
 import {
   KINDS,
   STATUS,

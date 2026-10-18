@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { initialLedgerAccounts, type LedgerAccountSettings } from "@/mocks/ledger-accounts";
+import type { LedgerAccountSettings } from "@fiscalia/contracts";
+import { initialLedgerAccounts } from "@/mocks/ledger-accounts";
 
 /** Ledger account numbers for the accounting export, in memory until reload like the other stores. */
 let settings = initialLedgerAccounts;

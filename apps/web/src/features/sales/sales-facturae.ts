@@ -1,8 +1,7 @@
 import { SPAIN, WITHHOLDING_RATES, facturaeXml, type FacturaeAddress } from "@fiscalia/core";
+import type { PaymentMethodType, SalesDocument } from "@fiscalia/contracts";
 import { businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
-import type { PaymentMethodType } from "@/mocks/settings";
-import type { SalesDocument } from "@/mocks/sales";
 import { salesStore } from "./sales-store";
 import { clientOf, documentFileName } from "./sales-model";
 

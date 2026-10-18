@@ -9,13 +9,13 @@ import {
   type Period,
   type Quarter,
 } from "@fiscalia/core";
+import type { ClosedQuarter } from "@fiscalia/contracts";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { EXPENSES_PATH } from "@/features/purchases/expenses-model";
 import { outstanding, PURCHASES_PATH } from "@/features/purchases/purchases-model";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
-import type { ClosedQuarter } from "@/mocks/closing";
 
 export const CLOSING_PATH = "/cierre-trimestre";
 

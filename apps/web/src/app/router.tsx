@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router";
+import type { ContactRole, SalesKind } from "@fiscalia/contracts";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
 import { CatalogExportPage } from "@/features/catalog/catalog-export-page";
@@ -104,8 +105,6 @@ import { EXPORT_ADVANCED_PATH, EXPORT_BOOKS_PATH, EXPORT_PATH, IMPORT_PATH } fro
 import { WorkedHoursPage } from "@/features/working-hours/worked-hours-page";
 import { WORKED_HOURS_PATH, WORKING_HOURS_PATH } from "@/features/working-hours/working-hours-model";
 import { WorkingHoursPage } from "@/features/working-hours/working-hours-page";
-import type { ContactRole } from "@/mocks/contacts";
-import type { SalesKind } from "@/mocks/sales";
 import { DesignSystemPage } from "@/pages/design-system";
 import { MorePage } from "@/pages/more-page";
 import { PlaceholderPage } from "@/pages/placeholder-page";

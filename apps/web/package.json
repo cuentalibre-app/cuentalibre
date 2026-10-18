@@ -8,9 +8,11 @@
     "dev": "vite",
     "build": "pnpm typecheck && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.node.json",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@fiscalia/contracts": "workspace:*",
     "@fiscalia/core": "workspace:*",
     "@fiscalia/ui": "workspace:*",
     "fflate": "^0.8.3",
@@ -28,6 +30,8 @@
     "@vitejs/plugin-react": "^6.0.0",
     "tailwindcss": "^4.3.0",
     "typescript": "~6.0.3",
-    "vite": "^8.0.0"
+    "vite": "^8.0.0",
+    "vitest": "^5.0.3",
+    "zod": "^4.6.5"
   }
 }

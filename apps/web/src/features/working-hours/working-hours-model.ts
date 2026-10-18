@@ -1,5 +1,6 @@
 import type { EntryError } from "@fiscalia/core";
-import { workers, type Worker } from "@/mocks/working-hours";
+import type { Worker } from "@fiscalia/contracts";
+import { workers } from "@/mocks/working-hours";
 
 export const WORKING_HOURS_PATH = "/jornada";
 export const WORKED_HOURS_PATH = "/informes/horas-trabajadas";

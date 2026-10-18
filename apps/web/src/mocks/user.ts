@@ -1,43 +1,6 @@
+import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@fiscalia/contracts";
+
 /** Sample signed-in user until there is a backend. Made up; matches the sample business profile. */
-
-export type Gender = "" | "male" | "female";
-
-export interface UserProfile {
-  /** Contact and sign-in email; changed through support, not on the profile page. */
-  email: string;
-  /** Object URL of the chosen picture, kept in memory. */
-  avatarUrl: string | null;
-  firstName: string;
-  lastName: string;
-  /** ISO date (yyyy-mm-dd). */
-  birthDate: string;
-  phone: string;
-  gender: Gender;
-}
-
-export interface NotificationPrefs {
-  appByEmail: boolean;
-  appByPush: boolean;
-  promosByEmail: boolean;
-  promosByPush: boolean;
-}
-
-/** Empty values follow the business defaults. */
-export interface UserLocale {
-  language: string;
-  numberFormat: string;
-  timeZone: string;
-}
-
-export type LinkedProvider = "google" | "apple";
-
-export interface UserAccess {
-  /** When the password was last changed (ISO date). */
-  passwordChangedAt: string;
-  twoFactor: boolean;
-  /** Linked sign-in accounts and the email of each. */
-  linked: Partial<Record<LinkedProvider, string>>;
-}
 
 export const initialUserProfile: UserProfile = {
   email: "hola@luciamartin.es",
