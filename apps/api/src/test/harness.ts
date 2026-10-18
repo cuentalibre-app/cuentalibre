@@ -5,7 +5,7 @@ import { createDb } from "../db/client";
 import { loadEnv } from "../env";
 import { testDatabaseUrl } from "./database";
 
-const env = loadEnv({ NODE_ENV: "test", DATABASE_URL: testDatabaseUrl });
+export const env = loadEnv({ NODE_ENV: "test", DATABASE_URL: testDatabaseUrl });
 export const db = createDb(env.DATABASE_URL);
 export const app = createApp({ db, auth: createAuth(db, env), env });
 

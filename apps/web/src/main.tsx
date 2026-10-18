@@ -3,11 +3,10 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router/dom";
 import "./index.css";
 import { router } from "@/app/router";
-import { connectApi } from "@/data/api";
+import { startSession } from "@/features/auth/session";
 
-// Without VITE_API_URL the app runs on the sample data, in memory.
-const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
-if (apiUrl) await connectApi(apiUrl);
+// Signed in, the app runs on the API; in the demo, or without VITE_API_URL, on the sample data in memory.
+await startSession();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
