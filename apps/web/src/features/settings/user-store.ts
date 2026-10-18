@@ -1,8 +1,9 @@
-import { useSyncExternalStore } from "react";
 import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@fiscalia/contracts";
+import type { SettingsSection } from "@/data/commands";
+import { createStore } from "@/data/store";
 import { initialNotificationPrefs, initialUserAccess, initialUserLocale, initialUserProfile } from "@/mocks/user";
 
-/** The signed-in user's own settings, in memory until reload like the other stores. */
+/** The signed-in user's own settings. */
 export interface UserSettings {
   profile: UserProfile;
   notifications: NotificationPrefs;
@@ -10,34 +11,34 @@ export interface UserSettings {
   access: UserAccess;
 }
 
-let user: UserSettings = {
+const user = createStore<UserSettings>({
   profile: initialUserProfile,
   notifications: initialNotificationPrefs,
   locale: initialUserLocale,
   access: initialUserAccess,
-};
-const listeners = new Set<() => void>();
-
-function commit(changes: Partial<UserSettings>) {
-  user = { ...user, ...changes };
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+});
 
 export function useUserSettings(): UserSettings {
-  return useSyncExternalStore(subscribe, () => user);
+  return user.use();
+}
+
+const SECTIONS = {
+  profile: "userProfile",
+  notifications: "notificationPrefs",
+  locale: "userLocale",
+  access: "userAccess",
+} satisfies Record<keyof UserSettings, SettingsSection>;
+
+function save<K extends keyof UserSettings>(key: K, value: UserSettings[K]) {
+  return user.write({ ...user.get(), [key]: value }, [{ type: "saveSettings", section: SECTIONS[key], data: value }]);
 }
 
 export const userStore = {
-  get: () => user,
-  updateProfile: (profile: UserProfile) => commit({ profile }),
-  updateNotifications: (notifications: NotificationPrefs) => commit({ notifications }),
-  updateLocale: (locale: UserLocale) => commit({ locale }),
-  updateAccess: (changes: Partial<UserAccess>) => commit({ access: { ...user.access, ...changes } }),
+  get: user.get,
+  updateProfile: (profile: UserProfile) => save("profile", profile),
+  updateNotifications: (notifications: NotificationPrefs) => save("notifications", notifications),
+  updateLocale: (locale: UserLocale) => save("locale", locale),
+  updateAccess: (changes: Partial<UserAccess>) => save("access", { ...user.get().access, ...changes }),
 };
 
 /** "Lucía Martín Ortega". */

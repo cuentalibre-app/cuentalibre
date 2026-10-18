@@ -1,36 +1,34 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import { lockedQuarter, periodKey, toIsoDate, type Period } from "@fiscalia/core";
 import type { ClosedQuarter } from "@fiscalia/contracts";
+import { createStore } from "@/data/store";
 import { initialClosedQuarters } from "@/mocks/closing";
 
 /**
- * Closed quarters, in memory until reload like the other stores. Closing is
- * enforced by the forms and lists; the backend will enforce it too.
+ * Closed quarters. Closing is enforced by the forms and lists; the backend will
+ * enforce it too, which is why closing and reopening are commands of their own.
  */
-let closed = initialClosedQuarters;
-const listeners = new Set<() => void>();
-
-function commit(next: ClosedQuarter[]) {
-  closed = next;
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+const closed = createStore<ClosedQuarter[]>(initialClosedQuarters);
 
 export function useClosedQuarters(): ClosedQuarter[] {
-  return useSyncExternalStore(subscribe, () => closed);
+  return closed.use();
 }
 
 export const closingStore = {
-  close: (period: Period, today: Date) =>
-    commit([
-      { period: periodKey(period), closedOn: toIsoDate(today) },
-      ...closed.filter((c) => c.period !== periodKey(period)),
-    ]),
-  reopen: (period: Period) => commit(closed.filter((c) => c.period !== periodKey(period))),
+  close(period: Period, today: Date) {
+    const quarter = { period: periodKey(period), closedOn: toIsoDate(today) };
+    return closed.write(
+      [quarter, ...closed.get().filter((c) => c.period !== quarter.period)],
+      [{ type: "closeQuarter", ...quarter }],
+    );
+  },
+  reopen(period: Period) {
+    const key = periodKey(period);
+    return closed.write(
+      closed.get().filter((c) => c.period !== key),
+      [{ type: "reopenQuarter", period: key }],
+    );
+  },
 };
 
 /** The closed quarter a document date falls in, or null when it can be changed. */

@@ -1,39 +1,24 @@
-import { useSyncExternalStore } from "react";
 import { toIsoDate } from "@fiscalia/core";
 import type { CompanyUser, EmailSettings, UserRole } from "@fiscalia/contracts";
+import { createCollection } from "@/data/collection";
+import { createStore } from "@/data/store";
 import { initialEmailSettings, initialUsers } from "@/mocks/users";
 import type { Option } from "@/features/sales/sales-model";
 
-/** Company users and the outgoing email settings, in memory until reload like the other stores. */
-interface State {
-  users: CompanyUser[];
-  email: EmailSettings;
-}
+/** Company users and the outgoing email settings. */
+const users = createCollection<CompanyUser>("companyUsers", initialUsers);
+const email = createStore<EmailSettings>(initialEmailSettings);
 
-let state: State = { users: initialUsers, email: initialEmailSettings };
-const listeners = new Set<() => void>();
-
-function commit(changes: Partial<State>) {
-  state = { ...state, ...changes };
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-export const useUsers = () => useSyncExternalStore(subscribe, () => state.users);
-export const useEmailSettings = () => useSyncExternalStore(subscribe, () => state.email);
+export const useUsers = users.use;
+export const useEmailSettings = email.use;
 
 export const usersStore = {
-  get: () => state,
-  addUser: (user: CompanyUser) => commit({ users: [...state.users, user] }),
-  updateUser: (id: string, changes: Partial<CompanyUser>) =>
-    commit({ users: state.users.map((u) => (u.id === id ? { ...u, ...changes } : u)) }),
+  addUser: users.add,
+  updateUser: users.update,
   /** The owner always keeps access. */
-  removeUser: (id: string) => commit({ users: state.users.filter((u) => u.id !== id || u.owner) }),
-  updateEmail: (email: EmailSettings) => commit({ email }),
+  removeUser: (id: string) => (users.get(id)?.owner ? Promise.resolve() : users.remove(id)),
+  updateEmail: (settings: EmailSettings) =>
+    email.write(settings, [{ type: "saveSettings", section: "emailSettings", data: settings }]),
 };
 
 export const ROLES: (Option<UserRole> & { hint: string })[] = [

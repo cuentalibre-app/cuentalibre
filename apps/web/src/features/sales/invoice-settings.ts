@@ -1,5 +1,5 @@
-import { useSyncExternalStore } from "react";
 import type { NoteTemplate, SalesKind } from "@fiscalia/contracts";
+import { createStore } from "@/data/store";
 import { initialNoteTemplates } from "@/mocks/invoicing";
 
 /** Look of the PDF. Each template also has a "traditional" variant. */
@@ -78,24 +78,17 @@ export const DEFAULT_SETTINGS: InvoiceSettings = {
   noteTemplates: initialNoteTemplates,
 };
 
-/** In-memory invoice settings, like the sales store: they last until reload. */
-let settings = DEFAULT_SETTINGS;
-const listeners = new Set<() => void>();
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+const settings = createStore<InvoiceSettings>(DEFAULT_SETTINGS);
 
 export function useInvoiceSettings(): InvoiceSettings {
-  return useSyncExternalStore(subscribe, () => settings);
+  return settings.use();
 }
 
 export const invoiceSettingsStore = {
-  get: () => settings,
+  get: settings.get,
   update(changes: Partial<InvoiceSettings>) {
-    settings = { ...settings, ...changes };
-    listeners.forEach((listener) => listener());
+    const next = { ...settings.get(), ...changes };
+    return settings.write(next, [{ type: "saveSettings", section: "invoiceSettings", data: next }]);
   },
 };
 
@@ -151,23 +144,28 @@ export const DEFAULT_DOCUMENT_SETTINGS: Record<DocumentKind, DocumentSettings> =
   deliveryNote: documentDefaults("deliveryNote"),
 };
 
-let documentSettings = DEFAULT_DOCUMENT_SETTINGS;
+const documentSettings = createStore(DEFAULT_DOCUMENT_SETTINGS);
 
 export function useDocumentSettings(kind: DocumentKind): DocumentSettings {
-  return useSyncExternalStore(subscribe, () => documentSettings[kind]);
+  return documentSettings.use()[kind];
 }
 
 export const documentSettingsStore = {
-  get: (kind: DocumentKind) => documentSettings[kind],
+  get: (kind: DocumentKind) => documentSettings.get()[kind],
   update(kind: DocumentKind, changes: Partial<DocumentSettings>) {
-    documentSettings = { ...documentSettings, [kind]: { ...documentSettings[kind], ...changes } };
-    listeners.forEach((listener) => listener());
+    const all = documentSettings.get();
+    const next = { ...all[kind], ...changes };
+    return documentSettings.write({ ...all, [kind]: next }, [
+      { type: "saveSettings", section: "documentSettings", data: { kind, settings: next } },
+    ]);
   },
 };
 
 /** Whether new documents of a kind propose uploading them to Dropbox and Google Drive. */
 export function useUploadDefaults(kind: SalesKind): Pick<DocumentSettings, "uploadToDropbox" | "uploadToDrive"> {
-  return useSyncExternalStore(subscribe, () => (kind === "invoice" ? settings : documentSettings[kind]));
+  const invoice = settings.use();
+  const documents = documentSettings.use();
+  return kind === "invoice" ? invoice : documents[kind];
 }
 
 /** What the PDF of a document prints, from its kind's settings. */
@@ -182,7 +180,7 @@ export interface PrintOptions {
 
 export function printOptions(kind: SalesKind): PrintOptions {
   if (kind === "invoice") {
-    const s = settings;
+    const s = settings.get();
     return {
       showProductUnits: s.showProductUnits,
       showServicePeriod: s.showServicePeriod,
@@ -192,7 +190,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
       footer: s.footer,
     };
   }
-  const s = documentSettings[kind];
+  const s = documentSettings.get()[kind];
   return {
     showProductUnits: s.showProductUnits,
     showServicePeriod: s.showServicePeriod,
