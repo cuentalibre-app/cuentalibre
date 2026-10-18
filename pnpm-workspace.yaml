@@ -4,3 +4,8 @@ packages:
 
 # Don't install versions published less than 14 days ago (mitigates supply-chain attacks)
 minimumReleaseAge: 20160
+
+# Skip install scripts we don't need: esbuild ships its binary as an optional dependency, core-js only prints a banner
+allowBuilds:
+  core-js: false
+  esbuild: false

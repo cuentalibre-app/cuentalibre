@@ -8,7 +8,7 @@ Open-source accounting and tax management for self-employed workers (*autónomos
 
 ```
 apps/web               Frontend (Vite + React + TypeScript + Tailwind CSS v4)
-apps/api               Backend (not started)
+apps/api               Backend (Hono + Drizzle + Postgres, Better Auth): auth and organizations so far
 packages/core          Domain logic shared by front and back: periods, tax calculations, filing calendar
 packages/contracts     zod schemas of the stored data, shared by front and back; types are inferred from them
 packages/ui            Design system: tokens, base styles and components
@@ -21,12 +21,16 @@ Architecture decisions and performance principles: [docs/architecture.md](docs/a
 Requires Node 22+ and pnpm 12.
 
 ```sh
+docker compose up -d   # Postgres on localhost:5432
 pnpm install
-pnpm dev          # http://localhost:5173
+pnpm --filter @fiscalia/api db:migrate
+pnpm dev          # web on http://localhost:5173, API on http://localhost:3000/v1
 pnpm typecheck
-pnpm test
+pnpm test         # API tests need the compose Postgres running
 pnpm build
 ```
+
+See [apps/api/README.md](apps/api/README.md) for the API.
 
 The design system reference page is at `/sistema-visual`.
 
