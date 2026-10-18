@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { initialClients, initialSuppliers, type Contact, type ContactRole } from "@/mocks/contacts";
+import type { Contact, ContactRole } from "@fiscalia/contracts";
+import { initialClients, initialSuppliers } from "@/mocks/contacts";
 
 /**
  * In-memory clients and suppliers. Changes apply instantly and last until

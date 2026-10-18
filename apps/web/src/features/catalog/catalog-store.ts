@@ -11,15 +11,8 @@ import {
   type StockMovement,
   type StockReason,
 } from "@fiscalia/core";
-import {
-  initialCatalogSettings,
-  initialFamilies,
-  initialMovements,
-  initialProducts,
-  type CatalogSettings,
-  type Product,
-} from "@/mocks/catalog";
-import type { SalesDocument } from "@/mocks/sales";
+import type { CatalogSettings, Product, SalesDocument } from "@fiscalia/contracts";
+import { initialCatalogSettings, initialFamilies, initialMovements, initialProducts } from "@/mocks/catalog";
 
 /**
  * In-memory catalog: products, families, stock movements and the catalog settings.

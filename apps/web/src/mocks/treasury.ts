@@ -1,36 +1,7 @@
 import { addDays, cents, eurosToCents, type Cents } from "@fiscalia/core";
+import type { BankMovement, ManualPayment } from "@fiscalia/contracts";
 
 /** Sample bank movements until there is a backend and bank sync. Concepts and figures are made up. */
-
-export type MovementSource = "import" | "manual";
-
-export interface BankMovement {
-  id: string;
-  /** Treasury account (settings) the movement belongs to. */
-  accountId: string;
-  /** ISO date (YYYY-MM-DD). */
-  date: string;
-  /** As the bank writes it: "TRANSFERENCIA DE …", "RECIBO …". */
-  concept: string;
-  reference: string;
-  /** Signed: positive money in, negative money out. */
-  amount: Cents;
-  /** Balance after the movement, when the bank reports it. */
-  balance: Cents | null;
-  source: MovementSource;
-  /** Payments (see `TreasuryPayment.key`) this movement is reconciled with. */
-  paymentKeys: string[];
-}
-
-/** A collection or payment not tied to any invoice or expense: a loan, a transfer to savings, an adjustment… */
-export interface ManualPayment {
-  id: string;
-  date: string;
-  /** Signed: positive for money in. */
-  amount: Cents;
-  paymentMethodId: string;
-  description: string;
-}
 
 /** What the sample statement needs to know about each recorded payment. */
 export interface SamplePayment {

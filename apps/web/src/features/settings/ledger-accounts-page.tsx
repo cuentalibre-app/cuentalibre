@@ -8,15 +8,13 @@ import {
   ledgerAccountNumber,
   prefixError,
 } from "@fiscalia/core";
+import type { ContactRole, LedgerAccountKey, LedgerAccountSettings, PaymentMethodType } from "@fiscalia/contracts";
 import { Input } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { table } from "@fiscalia/ui/lib/table";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
-import type { ContactRole } from "@/mocks/contacts";
-import type { LedgerAccountKey, LedgerAccountSettings } from "@/mocks/ledger-accounts";
-import type { PaymentMethodType } from "@/mocks/settings";
 import { ledgerAccountsStore, useLedgerAccounts } from "./ledger-accounts-store";
 import { methodTypeLabel, usePaymentMethods } from "./settings-model";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";

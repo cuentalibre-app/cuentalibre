@@ -1,65 +1,6 @@
-import type { WithholdingKind } from "@fiscalia/core";
-import type { Attachment } from "./sales";
+import type { Contact } from "@fiscalia/contracts";
 
 /** Sample clients and suppliers until there is a backend. Names, tax IDs and figures are made up. */
-
-export type ContactRole = "client" | "supplier";
-
-export interface BankAccount {
-  id: string;
-  /** Without spaces. */
-  iban: string;
-  bic?: string;
-  notes?: string;
-  /** The account used for direct debits and printed on documents. */
-  isDefault: boolean;
-}
-
-/** Codes of the public body that receives an electronic invoice through FACe (DIR3). */
-export interface EInvoiceCodes {
-  accountingOffice?: string;
-  managementBody?: string;
-  processingUnit?: string;
-  proposingBody?: string;
-}
-
-export interface Contact {
-  id: string;
-  /** Name or company name. */
-  name: string;
-  /** NIF, or VAT number for EU contacts. */
-  taxId: string;
-  address?: string;
-  postalCode?: string;
-  /** Town (población). */
-  city?: string;
-  province?: string;
-  /** Spanish name of the country, as in COUNTRIES; Spain when missing. */
-  country?: string;
-  email?: string;
-  phone?: string;
-  mobile?: string;
-  fax?: string;
-  website?: string;
-  /** Registered in the EU VAT information exchange system (VIES), for intra-EU operations. */
-  vies?: boolean;
-  /** Default discount on document lines, as a whole percentage. */
-  discount?: number;
-  /** Income-tax withholding applied by default on their documents. */
-  withholding?: WithholdingKind;
-  paymentMethodId?: string;
-  /** Clients only: default language and number format of documents; empty uses the document's own. */
-  language?: string;
-  numberFormat?: string;
-  bankAccounts?: BankAccount[];
-  eInvoice?: EInvoiceCodes;
-  /** Free fields, named in the contacts settings. */
-  custom1?: string;
-  custom2?: string;
-  notes?: string;
-  tags?: string[];
-  attachments?: Attachment[];
-}
 
 export const initialClients: Contact[] = [
   {

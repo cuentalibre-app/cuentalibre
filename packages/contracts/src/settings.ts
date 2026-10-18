@@ -1,0 +1,234 @@
+import { z } from "zod";
+import { cents, fraction, hexColor, id, isoDate, localDateTime } from "./common";
+import { withholdingKindSchema } from "./core";
+
+export const businessKindSchema = z.enum(["selfEmployed", "company"]);
+export type BusinessKind = z.infer<typeof businessKindSchema>;
+
+export const businessProfileSchema = z.object({
+  kind: businessKindSchema,
+  taxId: z.string(),
+  /** Self-employed: first name and surnames. Companies use `legalName` instead. */
+  firstName: z.string(),
+  lastName: z.string(),
+  secondLastName: z.string(),
+  legalName: z.string(),
+  /** Name printed on invoices; empty falls back to the full name or legal name. */
+  tradeName: z.string(),
+  address: z.string(),
+  postalCode: z.string(),
+  city: z.string(),
+  province: z.string(),
+  country: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  website: z.string(),
+});
+export type BusinessProfile = z.infer<typeof businessProfileSchema>;
+
+export const fiscalRegionSchema = z.enum([
+  "peninsula",
+  "canarias",
+  "ceutaMelilla",
+  "navarra",
+  "alava",
+  "vizcaya",
+  "guipuzcoa",
+]);
+export type FiscalRegion = z.infer<typeof fiscalRegionSchema>;
+
+export const incomeTaxMethodSchema = z.enum(["simplified", "normal", "modules"]);
+export type IncomeTaxMethod = z.infer<typeof incomeTaxMethodSchema>;
+
+export const vatRegimeSchema = z.enum(["general", "cashBasis", "simplified", "surcharge"]);
+export type VatRegime = z.infer<typeof vatRegimeSchema>;
+
+export const economicActivitySchema = z.object({
+  id,
+  /** Activity type of forms 036/037: A01…A05, B01…B06 or C. */
+  type: z.string(),
+  /** IAE epígrafe ("763"); empty for activities outside the IAE. */
+  code: z.string(),
+  name: z.string(),
+});
+export type EconomicActivity = z.infer<typeof economicActivitySchema>;
+
+export const taxSetupSchema = z.object({
+  region: fiscalRegionSchema,
+  incomeTaxMethod: incomeTaxMethodSchema,
+  vatRegime: vatRegimeSchema,
+  /** Ordered by volume: the first one is the main activity. */
+  activities: z.array(economicActivitySchema),
+  /** VAT rate proposed on new invoice lines. */
+  defaultVatRate: fraction,
+  /** IRPF withholding proposed on new invoices; a client's own default wins. */
+  defaultWithholding: withholdingKindSchema,
+  /** Monthly self-employed fee (RETA). */
+  socialSecurityFee: cents,
+  /** Client that groups sales to unidentified customers ("Clientes varios"). */
+  variousClientsId: id.nullable(),
+});
+export type TaxSetup = z.infer<typeof taxSetupSchema>;
+
+export const accountKindSchema = z.enum(["bank", "cash", "paypal", "card"]);
+export type AccountKind = z.infer<typeof accountKindSchema>;
+
+export const treasuryAccountSchema = z.object({
+  id,
+  kind: accountKindSchema,
+  name: z.string().min(1),
+  /** IBAN, card number (often its last digits) or PayPal email. */
+  number: z.string(),
+  active: z.boolean(),
+});
+export type TreasuryAccount = z.infer<typeof treasuryAccountSchema>;
+
+export const paymentMethodTypeSchema = z.enum(["cash", "card", "transfer", "directDebit", "promissory", "paypal"]);
+export type PaymentMethodType = z.infer<typeof paymentMethodTypeSchema>;
+
+export const paymentMethodSchema = z.object({
+  id,
+  type: paymentMethodTypeSchema,
+  name: z.string().min(1),
+  /** Account or card number the money goes through; may hold only the last four digits. */
+  number: z.string(),
+  /** Treasury account it books into, if any. */
+  accountId: id.nullable(),
+  active: z.boolean(),
+});
+export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
+
+export const tagSchema = z.object({
+  id,
+  name: z.string().min(1),
+  /** Background color chosen by the user. */
+  color: hexColor,
+});
+export type Tag = z.infer<typeof tagSchema>;
+
+/** A closed quarter: its books are frozen until it is reopened. */
+export const closedQuarterSchema = z.object({
+  /** Period key, "2026-T2". */
+  period: z.string().regex(/^\d{4}-T[1-4]$/),
+  closedOn: isoDate,
+});
+export type ClosedQuarter = z.infer<typeof closedQuarterSchema>;
+
+export const ledgerAccountKeySchema = z.enum([
+  "customers",
+  "suppliers",
+  "assetSuppliers",
+  "creditors",
+  "sales",
+  "purchases",
+  "outputVat",
+  "inputVat",
+  "salesWithholding",
+  "purchasesWithholding",
+  "cash",
+  "bank",
+  "nonDeductible",
+]);
+export type LedgerAccountKey = z.infer<typeof ledgerAccountKeySchema>;
+
+export const ledgerAccountSettingsSchema = z.object({
+  /** Company code in the accounting program the books are transferred to. */
+  companyCode: z.string(),
+  /** Length of every account number. */
+  digits: z.int().min(6).max(12),
+  prefixes: z.record(ledgerAccountKeySchema, z.string()),
+  /** Code after the prefix used when a contact or method has none of its own. */
+  defaults: z.record(ledgerAccountKeySchema, z.string()),
+  /** Own codes by contact id; empty means the default. */
+  contactCodes: z.record(id, z.string()),
+  /** Own codes by payment method id. */
+  methodCodes: z.record(id, z.string()),
+});
+export type LedgerAccountSettings = z.infer<typeof ledgerAccountSettingsSchema>;
+
+export const invoicingSystemSchema = z.enum(["verifactu", "exempt"]);
+export type InvoicingSystem = z.infer<typeof invoicingSystemSchema>;
+
+export const verifactuSetupSchema = z.object({
+  system: invoicingSystemSchema,
+  /** Date the system applies from. */
+  startDate: isoDate,
+  /** AEAT authorization number, when the AEAT granted one. */
+  authorizationNumber: z.string(),
+  /** Resolution that exempts the business from VERI*FACTU. */
+  exemptionResolution: z.string(),
+  /** Whether the AEAT recognises the issuer's NIF and name. */
+  validatedByAeat: z.boolean(),
+});
+export type VerifactuSetup = z.infer<typeof verifactuSetupSchema>;
+
+export const certificateSchema = z.object({
+  fileName: z.string(),
+  holder: z.string(),
+  taxId: z.string(),
+  uploadedOn: isoDate,
+  expiresOn: isoDate,
+  hasPassword: z.boolean(),
+});
+export type Certificate = z.infer<typeof certificateSchema>;
+
+export const signatureModeSchema = z.enum(["none", "company"]);
+export type SignatureMode = z.infer<typeof signatureModeSchema>;
+
+export const signedDocumentSchema = z.enum(["invoice", "quote", "deliveryNote"]);
+export type SignedDocument = z.infer<typeof signedDocumentSchema>;
+
+export const signingSettingsSchema = z.record(signedDocumentSchema, signatureModeSchema);
+export type SigningSettings = z.infer<typeof signingSettingsSchema>;
+
+/** People who work in the company, or an outside advisor (gestoría) who keeps its books. */
+export const userKindSchema = z.enum(["member", "advisor"]);
+export type UserKind = z.infer<typeof userKindSchema>;
+
+export const userRoleSchema = z.enum(["admin", "standard", "readOnly"]);
+export type UserRole = z.infer<typeof userRoleSchema>;
+
+export const companyUserSchema = z.object({
+  id,
+  kind: userKindSchema,
+  name: z.string(),
+  email: z.email(),
+  role: userRoleSchema,
+  /** Access can be switched off without removing the user. */
+  enabled: z.boolean(),
+  /** Invited users haven't accepted yet and have never signed in. */
+  invited: z.boolean(),
+  lastAccessAt: localDateTime.nullable(),
+  /** Last day with access; null never expires. */
+  expiresOn: isoDate.nullable(),
+  /** Who created the company: always an enabled admin, can't be removed. */
+  owner: z.boolean().optional(),
+});
+export type CompanyUser = z.infer<typeof companyUserSchema>;
+
+export const emailProviderSchema = z.enum(["fiscalia", "gmail", "outlook", "smtp"]);
+export type EmailProvider = z.infer<typeof emailProviderSchema>;
+
+export const smtpSecuritySchema = z.enum(["none", "auto", "implicit", "explicit"]);
+export type SmtpSecurity = z.infer<typeof smtpSecuritySchema>;
+
+export const smtpSettingsSchema = z.object({
+  displayName: z.string(),
+  email: z.string(),
+  username: z.string(),
+  password: z.string(),
+  server: z.string(),
+  port: z.string(),
+  security: smtpSecuritySchema,
+  /** Keep a copy in the server's sent folder (IMAP). */
+  saveCopy: z.boolean(),
+});
+export type SmtpSettings = z.infer<typeof smtpSettingsSchema>;
+
+export const emailSettingsSchema = z.object({
+  provider: emailProviderSchema,
+  /** Address of the connected Gmail or Outlook account, if any. */
+  connected: z.object({ gmail: z.string().nullable(), outlook: z.string().nullable() }),
+  smtp: smtpSettingsSchema,
+});
+export type EmailSettings = z.infer<typeof emailSettingsSchema>;

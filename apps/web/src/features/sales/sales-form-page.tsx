@@ -26,6 +26,7 @@ import {
   type OperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
+import type { Contact, IncomeType, InvoiceSeries, RentalLocation, SalesDocument, SalesKind } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -46,16 +47,8 @@ import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
-import type { Contact } from "@/mocks/contacts";
 import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
-import {
-  type IncomeType,
-  type InvoiceSeries,
-  type RentalLocation,
-  type SalesDocument,
-  type SalesKind,
-} from "@/mocks/sales";
 import {
   LinesEditor,
   TagsField,

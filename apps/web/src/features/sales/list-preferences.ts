@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { SalesDocument } from "@/mocks/sales";
+import type { SalesDocument } from "@fiscalia/contracts";
 
 /** Filters the quote and delivery note lists open with; the user can still clear them. */
 export interface ListFilterDefaults {

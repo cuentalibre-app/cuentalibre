@@ -35,6 +35,7 @@ import {
   type PurchaseOperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
+import type { Attachment, Contact, ExpenseType, PurchaseInvoice, RentalLocation } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -69,9 +70,6 @@ import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros, periodLabel } from "@/lib/format";
 import { paymentMethodOptions } from "@/features/settings/settings-model";
-import type { Contact } from "@/mocks/contacts";
-import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
-import type { Attachment, RentalLocation } from "@/mocks/sales";
 import {
   ASSETS_PATH,
   EXPENSE_TYPE_GROUPS,

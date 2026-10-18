@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
+import type { SalesDocument, SalesKind } from "@fiscalia/contracts";
 import { releaseDocumentStock, syncDocumentStock } from "@/features/catalog/catalog-store";
-import { initialSalesDocuments, type SalesDocument, type SalesKind } from "@/mocks/sales";
+import { initialSalesDocuments } from "@/mocks/sales";
 
 /**
  * In-memory sales documents. Changes apply instantly and last until reload;

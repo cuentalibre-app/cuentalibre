@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation } from "react-router";
 import { Trash2 } from "lucide-react";
+import type { CatalogSettings } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Checkbox, Input } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
@@ -8,7 +9,6 @@ import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ConfirmDialog, SaveButton, SettingsHeader, useDraft } from "@/features/settings/settings-parts";
 import { RadioOption } from "@/features/transfer/transfer-parts";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
-import type { CatalogSettings } from "@/mocks/catalog";
 import { RULE_OPTIONS } from "./catalog-model";
 import { catalogStore, useCatalog } from "./catalog-store";
 

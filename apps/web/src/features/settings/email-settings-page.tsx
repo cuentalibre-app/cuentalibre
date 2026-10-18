@@ -1,12 +1,12 @@
 import { useState, type CSSProperties } from "react";
 import { AtSign, CircleCheck, Inbox, Loader2, Mail, Server, Unplug, type LucideIcon } from "lucide-react";
+import type { EmailProvider, EmailSettings, SmtpSecurity, SmtpSettings } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Input } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import type { Option } from "@/features/sales/sales-model";
-import type { EmailProvider, EmailSettings, SmtpSecurity, SmtpSettings } from "@/mocks/users";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { useSettings } from "./settings-store";
 import { useEmailSettings, usersStore } from "./users-store";

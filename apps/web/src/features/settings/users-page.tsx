@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { MailCheck, MoreHorizontal, Pencil, Plus, Power, Send, Trash2, UserRound } from "lucide-react";
 import { newId } from "@fiscalia/core";
+import type { CompanyUser, UserKind, UserRole } from "@fiscalia/contracts";
 import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -13,7 +14,6 @@ import { table } from "@fiscalia/ui/lib/table";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, type Action } from "@/features/sales/list-parts";
 import { formatDate } from "@/lib/format";
-import type { CompanyUser, UserKind, UserRole } from "@/mocks/users";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { isExpired, ROLES, roleLabel, useUsers, usersStore } from "./users-store";
 

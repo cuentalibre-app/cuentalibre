@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ArrowLeft, Building2, ExternalLink, Info, Search, TriangleAlert } from "lucide-react";
+import type { Contact, ContactRole } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
@@ -10,7 +11,6 @@ import { contactPath } from "@/features/contacts/contacts-model";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { formatDate } from "@/lib/format";
 import { registryChanges } from "@/mocks/company-reports";
-import type { Contact, ContactRole } from "@/mocks/contacts";
 import { REPORTS_PATH } from "./reports-model";
 
 const REPORTS_URL = "https://example.com";

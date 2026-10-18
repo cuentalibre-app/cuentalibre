@@ -1,46 +1,7 @@
-import { eurosToCents, type Cents } from "@fiscalia/core";
-import type { ExpenseType } from "./purchases";
-import type { Attachment, RentalLocation } from "./sales";
+import { eurosToCents } from "@fiscalia/core";
+import type { Expense, ExpenseType, OtherPayee } from "@fiscalia/contracts";
 
 /** Sample expenses without an invoice until there is a backend. Names, tax IDs and figures are made up. */
-
-export interface ExpensePayment {
-  /** ISO date (YYYY-MM-DD). */
-  date: string;
-  paymentMethodId: string;
-}
-
-/** Who was paid when they are not a saved supplier: the social security, a town hall, a car park… */
-export interface OtherPayee {
-  name: string;
-  /** NIF; may be empty for a ticket without one. */
-  taxId: string;
-}
-
-export interface Expense {
-  id: string;
-  /** ISO date (YYYY-MM-DD); decides the quarter. */
-  date: string;
-  /** Receipt or reference number; empty when there is none. */
-  number: string;
-  concept: string;
-  /** Taxes included: without an invoice no VAT can be deducted. */
-  amount: Cents;
-  expenseType: ExpenseType;
-  /** Whole percentage (0–100) that counts as an expense. */
-  imputation: number;
-  supplierId: string | null;
-  otherPayee?: OtherPayee;
-  /** Expenses are paid in one go; null while pending. */
-  payment: ExpensePayment | null;
-  /** Property rental, reported in forms 115/180. */
-  rental: boolean;
-  rentalLocation?: RentalLocation;
-  cadastralRef?: string;
-  privateNotes: string;
-  tags?: string[];
-  attachments?: Attachment[];
-}
 
 let seq = 0;
 

@@ -6,6 +6,7 @@ import {
   type TaxableSale,
   type TaxBooks,
 } from "@fiscalia/core";
+import type { Expense, ExpenseType, PurchaseInvoice, SalesDocument } from "@fiscalia/contracts";
 import { deductibleOf } from "@/features/purchases/expenses-model";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { assetOf, deductible, purchaseTotals } from "@/features/purchases/purchases-model";
@@ -13,9 +14,6 @@ import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { documentTotals } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { taxOptions } from "@/features/settings/settings-model";
-import type { Expense } from "@/mocks/expenses";
-import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
-import type { SalesDocument } from "@/mocks/sales";
 
 /** Purchases of goods rather than services, which form 390 reports apart when intra-EU. */
 const GOODS: ExpenseType[] = ["600", "602"];

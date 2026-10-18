@@ -1,14 +1,7 @@
 import { addDays, type TimeEntry } from "@fiscalia/core";
+import type { Worker } from "@fiscalia/contracts";
 
 /** People who clock in, and their sample intervals, until there is a backend. Made up. */
-
-export interface Worker {
-  id: string;
-  name: string;
-  email: string;
-  /** The business owner; the others are employees. */
-  owner: boolean;
-}
 
 export const workers: Worker[] = [
   { id: "w-lucia", name: "Lucía Martín Ortega", email: "hola@luciamartin.es", owner: true },

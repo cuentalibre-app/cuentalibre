@@ -1,10 +1,4 @@
-/** A closed quarter: its books are frozen until it is reopened. */
-export interface ClosedQuarter {
-  /** Period key, "2026-T2". */
-  period: string;
-  /** ISO date it was closed on. */
-  closedOn: string;
-}
+import type { ClosedQuarter } from "@fiscalia/contracts";
 
 /** Quarters already filed and closed in the sample data. */
 export const initialClosedQuarters: ClosedQuarter[] = [

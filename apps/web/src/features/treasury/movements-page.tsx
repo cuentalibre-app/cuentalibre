@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 import { isInPeriod, periodKey, reconciliationStatus, sumBy, type ReconciliationStatus } from "@fiscalia/core";
+import type { BankMovement } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
@@ -29,7 +30,6 @@ import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import type { BankMovement } from "@/mocks/treasury";
 import { ImportDialog, MovementDialog, PageHeader, ReconciliationBadge, SignedAmount } from "./treasury-parts";
 import {
   RECONCILIATION,

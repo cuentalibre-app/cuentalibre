@@ -30,6 +30,7 @@ import {
   type Cents,
   type Period,
 } from "@fiscalia/core";
+import type { Contact, ExpenseType, PurchaseInvoice } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -55,8 +56,6 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import type { Contact } from "@/mocks/contacts";
-import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import {
   ASSETS_PATH,
   ASSET_CATEGORY_LABELS,

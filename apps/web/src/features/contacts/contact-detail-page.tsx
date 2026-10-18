@@ -10,6 +10,7 @@ import {
   periodMonths,
   type Period,
 } from "@fiscalia/core";
+import type { Contact, ContactRole } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -27,7 +28,6 @@ import { WITHHOLDING_GROUPS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { MONTHS_SHORT, formatDate, periodCode } from "@/lib/format";
 import { availableYears } from "@/mocks/data";
-import type { Contact, ContactRole } from "@/mocks/contacts";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import { TagChip } from "@/features/settings/tag-chip";
 import { ContactNotFound } from "./contact-form-page";

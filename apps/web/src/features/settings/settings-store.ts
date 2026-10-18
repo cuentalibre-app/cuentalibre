@@ -1,14 +1,11 @@
 import { useSyncExternalStore } from "react";
+import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@fiscalia/contracts";
 import {
   initialAccounts,
   initialDefaultPaymentMethodId,
   initialPaymentMethods,
   initialProfile,
   initialTaxSetup,
-  type BusinessProfile,
-  type PaymentMethod,
-  type TaxSetup,
-  type TreasuryAccount,
 } from "@/mocks/settings";
 
 /**

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { initialExpenses, type Expense } from "@/mocks/expenses";
+import type { Expense } from "@fiscalia/contracts";
+import { initialExpenses } from "@/mocks/expenses";
 
 /**
  * In-memory expenses. Changes apply instantly and last until reload;

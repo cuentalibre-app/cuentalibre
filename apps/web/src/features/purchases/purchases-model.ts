@@ -17,9 +17,8 @@ import {
   type InvoiceTotals,
   type PurchaseOperationType,
 } from "@fiscalia/core";
+import type { Contact, ExpenseType, PurchaseInvoice } from "@fiscalia/contracts";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
-import type { Contact } from "@/mocks/contacts";
-import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
 import { contactsStore } from "@/features/contacts/contacts-store";
 import type { OptionGroup } from "@/features/sales/sales-model";
 

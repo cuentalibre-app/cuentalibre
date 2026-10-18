@@ -10,6 +10,7 @@ import {
   type Cents,
   type ReconciliationStatus,
 } from "@fiscalia/core";
+import type { BankMovement } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Checkbox } from "@fiscalia/ui/components/input";
@@ -20,7 +21,6 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { EmptyState } from "@/features/sales/list-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate } from "@/lib/format";
-import type { BankMovement } from "@/mocks/treasury";
 import { ManualPaymentDialog, PageHeader, ReconciliationBadge, SignedAmount } from "./treasury-parts";
 import {
   PAYMENT_SOURCES,

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
-import { initialNoteTemplates, type NoteTemplate } from "@/mocks/invoicing";
-import type { SalesKind } from "@/mocks/sales";
+import type { NoteTemplate, SalesKind } from "@fiscalia/contracts";
+import { initialNoteTemplates } from "@/mocks/invoicing";
 
 /** Look of the PDF. Each template also has a "traditional" variant. */
 export type InvoiceTemplate =

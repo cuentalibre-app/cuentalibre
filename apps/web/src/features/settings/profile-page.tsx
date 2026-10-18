@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { BellRing, ImageUp, Trash2 } from "lucide-react";
+import type { Gender, NotificationPrefs, UserLocale, UserProfile } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Input } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { LANGUAGES, NUMBER_FORMATS, defaultNumberFormat, formatSample } from "@/features/sales/invoice-locale";
 import type { Option } from "@/features/sales/sales-model";
-import type { Gender, NotificationPrefs, UserLocale, UserProfile } from "@/mocks/user";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { initials } from "./settings-model";
 import { userFullName, userStore, useUserSettings } from "./user-store";

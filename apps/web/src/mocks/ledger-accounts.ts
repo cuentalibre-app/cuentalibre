@@ -1,33 +1,6 @@
+import type { LedgerAccountSettings } from "@fiscalia/contracts";
+
 /** Ledger account numbers for exporting to accounting software. the reference app's defaults until there is a backend. */
-
-export type LedgerAccountKey =
-  | "customers"
-  | "suppliers"
-  | "assetSuppliers"
-  | "creditors"
-  | "sales"
-  | "purchases"
-  | "outputVat"
-  | "inputVat"
-  | "salesWithholding"
-  | "purchasesWithholding"
-  | "cash"
-  | "bank"
-  | "nonDeductible";
-
-export interface LedgerAccountSettings {
-  /** Company code in the accounting program the books are transferred to. */
-  companyCode: string;
-  /** Length of every account number, 6 to 12. */
-  digits: number;
-  prefixes: Record<LedgerAccountKey, string>;
-  /** Code after the prefix used when a contact or method has none of its own. */
-  defaults: Record<LedgerAccountKey, string>;
-  /** Own codes by contact id; empty means the default. */
-  contactCodes: Record<string, string>;
-  /** Own codes by payment method id. */
-  methodCodes: Record<string, string>;
-}
 
 export const initialLedgerAccounts: LedgerAccountSettings = {
   companyCode: "",

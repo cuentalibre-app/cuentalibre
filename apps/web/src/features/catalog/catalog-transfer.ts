@@ -13,8 +13,8 @@ import {
   type CatalogFamily,
   type StockMovement,
 } from "@fiscalia/core";
+import type { Product } from "@fiscalia/contracts";
 import type { Cell, Sheet } from "@/lib/xlsx";
-import type { Product } from "@/mocks/catalog";
 import { catalogStore, type CatalogState } from "./catalog-store";
 
 /*

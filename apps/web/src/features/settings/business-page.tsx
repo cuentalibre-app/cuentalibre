@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { checkSpanishTaxId, isValidEmail, normalizeTaxId } from "@fiscalia/core";
+import type { BusinessKind, BusinessProfile } from "@fiscalia/contracts";
 import { Input } from "@fiscalia/ui/components/input";
 import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { AddressFields } from "@/features/contacts/contact-fields";
 import { Field, Section } from "@/features/sales/form-fields";
-import type { BusinessKind, BusinessProfile } from "@/mocks/settings";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { addressLine, businessName, fullName, INVOICE_SETTINGS_PATH } from "./settings-model";
 import { settingsStore, useSettings } from "./settings-store";

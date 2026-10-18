@@ -1,6 +1,6 @@
 import { deductibleExpense, type ExpenseIdentity } from "@fiscalia/core";
+import type { Expense, OtherPayee } from "@fiscalia/contracts";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
-import type { Expense, OtherPayee } from "@/mocks/expenses";
 import { contactsStore } from "@/features/contacts/contacts-store";
 
 export const EXPENSES_PATH = "/compras/gastos";

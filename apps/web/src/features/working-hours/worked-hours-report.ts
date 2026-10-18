@@ -9,8 +9,9 @@ import {
   type WorkedDay,
   type WorkedTotals,
 } from "@fiscalia/core";
+import type { Worker } from "@fiscalia/contracts";
 import { MONTHS } from "@/lib/format";
-import { workers, type Worker } from "@/mocks/working-hours";
+import { workers } from "@/mocks/working-hours";
 
 /* The data behind the worked-hours reports, shared by the page and the PDFs. */
 

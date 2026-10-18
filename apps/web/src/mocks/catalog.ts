@@ -1,69 +1,7 @@
-import type { CatalogFamily, CatalogUnit, StockMovement, StockRules } from "@fiscalia/core";
+import type { CatalogFamily, CatalogUnit, StockMovement } from "@fiscalia/core";
+import type { CatalogSettings, Product } from "@fiscalia/contracts";
 
 /** Sample catalog until there is a backend: products and services, their families and stock. */
-
-export interface StockAlarmSettings {
-  /** Warn when fewer units than this are left. */
-  minUnits: number;
-  /** List the product on the home page. */
-  dashboard: boolean;
-  notification: boolean;
-  email: boolean;
-}
-
-export interface StockControl {
-  allowWithoutStock: boolean;
-  /** Null when the alarm is off. */
-  alarm: StockAlarmSettings | null;
-}
-
-export interface Product {
-  id: string;
-  familyId: string | null;
-  name: string;
-  /** Printed on documents when the settings ask for it. */
-  description: string;
-  /** Only visible in Fiscalia. */
-  privateNotes: string;
-  unit: CatalogUnit | null;
-  tags: string[];
-  /** Inactive products stay in the catalog but can't be picked in documents. */
-  active: boolean;
-  /** Own product code (SKU), unique in the catalog. */
-  sku: string;
-  supplierRef: string;
-  /** Unit sale price before discount and taxes. */
-  price: number;
-  /** Fractions: 0.1 for 10 %. */
-  discount: number;
-  vatRate: number;
-  surchargeRate: number;
-  /** Unit acquisition cost before taxes, with transport and customs; null when unknown. */
-  cost: number | null;
-  costVatRate: number;
-  costSurchargeRate: number;
-  custom: [string, string, string, string];
-  /** Null when its stock isn't counted. */
-  stock: StockControl | null;
-}
-
-export type { CatalogFamily, StockMovement };
-
-export interface CatalogSettings {
-  customFieldNames: [string, string, string, string];
-  /** What a document's concept gets when a product is picked. */
-  conceptText: "name" | "codeAndName";
-  /** Copy the product description into the concept's detailed description. */
-  copyDescription: boolean;
-  /** Where stock alarms are emailed. */
-  alarmEmail: string;
-  rules: StockRules;
-  /** Put the stock back when an invoice or delivery note that took it is deleted. */
-  restoreOnDeleteInvoice: boolean;
-  restoreOnDeleteDeliveryNote: boolean;
-  /** Stock options a new product starts with, and imports fall back to. */
-  defaults: StockControl & { enabled: boolean; alarmOn: boolean };
-}
 
 export const initialCatalogSettings: CatalogSettings = {
   customFieldNames: ["Personalizado1", "Personalizado2", "Personalizado3", "Personalizado4"],

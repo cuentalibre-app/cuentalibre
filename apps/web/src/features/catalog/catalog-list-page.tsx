@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { eurosToCents, familyWithDescendants, stockLevel, type Cents, type StockAlarm } from "@fiscalia/core";
+import type { Product } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -32,7 +33,6 @@ import { GroupedSelect, Help } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, type Action } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
 import { parseDecimal } from "@/lib/format";
-import type { Product } from "@/mocks/catalog";
 import {
   CATALOG_EXPORT_PATH,
   CATALOG_IMPORT_PATH,

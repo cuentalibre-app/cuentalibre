@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { toIsoDate } from "@fiscalia/core";
-import { initialEmailSettings, initialUsers, type CompanyUser, type EmailSettings, type UserRole } from "@/mocks/users";
+import type { CompanyUser, EmailSettings, UserRole } from "@fiscalia/contracts";
+import { initialEmailSettings, initialUsers } from "@/mocks/users";
 import type { Option } from "@/features/sales/sales-model";
 
 /** Company users and the outgoing email settings, in memory until reload like the other stores. */

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { toIsoDate } from "@fiscalia/core";
+import type { SalesDocument } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { formatDate } from "@/lib/format";
-import type { SalesDocument } from "@/mocks/sales";
 import { TagsField } from "./document-editor";
 import { Field, GroupedSelect } from "./form-fields";
 import { documentTotals } from "./sales-model";

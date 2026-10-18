@@ -7,10 +7,11 @@ Open-source accounting and tax management for self-employed workers (*autónomos
 ## Structure
 
 ```
-apps/web        Frontend (Vite + React + TypeScript + Tailwind CSS v4)
-apps/api        Backend (not started)
-packages/core   Domain logic shared by front and back: periods, tax calculations, filing calendar
-packages/ui     Design system: tokens, base styles and components
+apps/web               Frontend (Vite + React + TypeScript + Tailwind CSS v4)
+apps/api               Backend (not started)
+packages/core          Domain logic shared by front and back: periods, tax calculations, filing calendar
+packages/contracts     zod schemas of the stored data, shared by front and back; types are inferred from them
+packages/ui            Design system: tokens, base styles and components
 ```
 
 Architecture decisions and performance principles: [docs/architecture.md](docs/architecture.md).

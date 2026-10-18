@@ -15,17 +15,17 @@ import {
   type OperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
+import type {
+  Contact,
+  IncomeType,
+  InvoiceSeries,
+  RentalLocation,
+  SalesDocument,
+  SalesKind,
+  SalesLine,
+} from "@fiscalia/contracts";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import { contactsStore } from "@/features/contacts/contacts-store";
-import type { Contact } from "@/mocks/contacts";
-import {
-  type IncomeType,
-  type InvoiceSeries,
-  type RentalLocation,
-  type SalesDocument,
-  type SalesKind,
-  type SalesLine,
-} from "@/mocks/sales";
 
 export interface KindConfig {
   title: string;

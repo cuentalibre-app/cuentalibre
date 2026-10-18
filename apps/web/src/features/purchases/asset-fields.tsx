@@ -12,6 +12,7 @@ import {
   type AssetCategory,
   type AssetCondition,
 } from "@fiscalia/core";
+import type { InvestmentAsset } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
@@ -20,7 +21,6 @@ import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
-import type { InvestmentAsset } from "@/mocks/purchases";
 import { AMORTIZATION_METHODS, ASSET_CATEGORY_LABELS, ASSET_CATEGORY_ORDER, ASSET_CONDITIONS } from "./purchases-model";
 
 /* The amortization section of an investment good. Tooltips need a TooltipProvider above. */
