@@ -1,14 +1,7 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { Link, useSearchParams } from "react-router";
-import {
-  CircleAlert,
-  CircleCheck,
-  FileSpreadsheet,
-  Info,
-  TriangleAlert,
-  Upload,
-  X,
-} from "lucide-react";
+import { CircleAlert, CircleCheck, FileSpreadsheet, Info, TriangleAlert, Upload, X } from "lucide-react";
+import { sumBy } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
@@ -211,7 +204,13 @@ export function DropZone({ file, onPick }: { file: File | null; onPick: (file: F
           <FileSpreadsheet className="size-5 text-primary" strokeWidth={1.8} aria-hidden="true" />
           <span className="font-medium">{file.name}</span>
           <span className="text-sm text-muted-foreground">{Math.max(1, Math.round(file.size / 1024))} KB</span>
-          <Button variant="ghost" size="sm" className="size-8 px-0" aria-label="Quitar archivo" onClick={() => onPick(null)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="size-8 px-0"
+            aria-label="Quitar archivo"
+            onClick={() => onPick(null)}
+          >
             <X strokeWidth={1.8} aria-hidden="true" />
           </Button>
         </div>
@@ -250,7 +249,7 @@ function Preview({
   const config = IMPORT_KINDS[preview.kind];
   const valid = preview.items.filter((i) => i.errors.length === 0);
   const invalid = preview.items.length - valid.length;
-  const total = valid.reduce((acc, i) => acc + i.total, 0);
+  const total = sumBy(valid, (i) => i.total);
   const names = new Set(valid.map((i) => i.contactName));
   const newContacts = preview.newContacts.filter((c) => names.has(c.name));
   const [singular, plural] = config.noun;
@@ -278,8 +277,9 @@ function Preview({
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5">
         <h2 className="m-0 text-md font-semibold">Vista previa</h2>
         <span className="text-sm">
-          <span className="font-semibold">{valid.length}</span> {valid.length === 1 ? `${singular} lista` : `${plural} listas`}{" "}
-          para importar · <span className="amount font-semibold">{formatEUR(total)}</span>
+          <span className="font-semibold">{valid.length}</span>{" "}
+          {valid.length === 1 ? `${singular} lista` : `${plural} listas`} para importar ·{" "}
+          <span className="amount font-semibold">{formatEUR(total)}</span>
         </span>
         {invalid > 0 && (
           <span className="text-sm text-destructive">
@@ -324,10 +324,7 @@ function Preview({
             {preview.items.map((item, i) => {
               const ok = item.errors.length === 0;
               return (
-                <tr
-                  key={`${item.rows[0]}-${i}`}
-                  className={cn(table.row, !ok && "bg-destructive-soft/40")}
-                >
+                <tr key={`${item.rows[0]}-${i}`} className={cn(table.row, !ok && "bg-destructive-soft/40")}>
                   <td className={cn(table.td, "font-mono text-sm whitespace-nowrap text-muted-foreground")}>
                     {item.rows.length > 1 ? `${item.rows[0]}–${item.rows.at(-1)}` : item.rows[0]}
                   </td>

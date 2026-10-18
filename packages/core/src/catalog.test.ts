@@ -19,19 +19,22 @@ import {
   type StockMovement,
   type StockRules,
 } from "./catalog";
+import { eurosToCents } from "./money";
+
+const eur = eurosToCents;
 
 describe("priceBreakdown", () => {
   it("applies the discount, then VAT and surcharge on the discounted base", () => {
     expect(priceBreakdown(198.5, { discount: 0.1, vatRate: 0.21, surchargeRate: 0.052 })).toEqual({
-      base: 178.65,
-      vat: 37.52,
-      surcharge: 9.29,
-      total: 225.46,
+      base: eur(178.65),
+      vat: eur(37.52),
+      surcharge: eur(9.29),
+      total: eur(225.46),
     });
   });
 
   it("defaults to no discount and no taxes", () => {
-    expect(priceBreakdown(50)).toEqual({ base: 50, vat: 0, surcharge: 0, total: 50 });
+    expect(priceBreakdown(50)).toEqual({ base: eur(50), vat: 0, surcharge: 0, total: eur(50) });
   });
 });
 

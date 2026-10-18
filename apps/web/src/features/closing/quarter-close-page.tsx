@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import {
+  cents,
   filingDeadline,
   filingStatus,
   incomeTaxYear,
@@ -127,7 +128,7 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
   const { vat, irpf } = useMemo(
     () => ({
       vat: vatReturns(books, period.year)[period.quarter - 1]!.result,
-      irpf: Math.max(0, incomeTaxYear(books, period.year, TAX_OPTIONS).quarters[period.quarter - 1]!.result),
+      irpf: cents(Math.max(0, incomeTaxYear(books, period.year, TAX_OPTIONS).quarters[period.quarter - 1]!.result)),
     }),
     [books, period],
   );

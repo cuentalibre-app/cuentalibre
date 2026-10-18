@@ -2,9 +2,12 @@ import { useId, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Copy, EllipsisVertical, Minus, Package, Plus, Trash2, X } from "lucide-react";
 import {
   WITHHOLDING_RATES,
+  applyRate,
+  cents,
+  eurosToCents,
   invoiceTotals,
   lineBase,
-  roundCents,
+  roundHundredths,
   type InvoiceLine,
   type WithholdingKind,
 } from "@fiscalia/core";
@@ -453,7 +456,7 @@ export function LinesEditor({
                         className="w-24 px-2.5"
                       />
                       <span className={cn(readOnlyBox, "w-24")}>
-                        {value ? formatEUR(roundCents(lineBase(value) * line.surchargeRate)) : "—"}
+                        {value ? formatEUR(applyRate(lineBase(value), line.surchargeRate)) : "—"}
                       </span>
                     </div>
                   </div>
@@ -522,7 +525,7 @@ function ProductPicker({
                 {p.sku && <span className="truncate font-mono text-xs text-muted-foreground">{p.sku}</span>}
               </span>
               <span className="amount text-sm text-muted-foreground">
-                {price === null ? "—" : formatEUR(price)}
+                {price === null ? "—" : formatEUR(eurosToCents(price))}
                 {p.unit && <span className="font-sans">/{p.unit}</span>}
               </span>
             </DropdownMenuItem>
@@ -588,7 +591,7 @@ function QuantityCell({
   onChange: (value: string) => void;
 }) {
   const id = useId();
-  const step = (delta: number) => onChange(formatDecimalInput(roundCents((parseDecimal(value) ?? 0) + delta)));
+  const step = (delta: number) => onChange(formatDecimalInput(roundHundredths((parseDecimal(value) ?? 0) + delta)));
   const stepper =
     "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted hover:text-foreground";
   return (
@@ -680,7 +683,7 @@ export function Totals({
       <div className={cn(card, "lg:flex-1")}>
         <dt className={caption}>Retención{rate > 0 && ` ${ratePercent(rate)}`}</dt>
         <dd className="m-0 amount text-lg font-semibold">
-          <AnimatedAmount value={totals.withholding ? -totals.withholding : 0} />
+          <AnimatedAmount value={cents(-totals.withholding)} />
         </dd>
       </div>
       {advanced && supplies !== undefined && onSuppliesChange && (

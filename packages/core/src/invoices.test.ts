@@ -6,9 +6,9 @@ import {
   lineBase,
   nextDocumentNumber,
   operationChargesVat,
-  roundCents,
   type InvoiceLine,
 } from "./invoices";
+import { cents } from "./money";
 
 const line = (unitPrice: number, quantity = 1, vatRate = 0.21, discount = 0): InvoiceLine => ({
   unitPrice,
@@ -17,40 +17,39 @@ const line = (unitPrice: number, quantity = 1, vatRate = 0.21, discount = 0): In
   vatRate,
 });
 
-describe("roundCents", () => {
-  it("rounds half away from zero", () => {
-    expect(roundCents(1.005)).toBe(1.01);
-    expect(roundCents(-1.005)).toBe(-1.01);
-    expect(roundCents(2.344)).toBe(2.34);
-  });
-});
-
 describe("lineBase", () => {
   it("multiplies price by quantity and applies the discount", () => {
-    expect(lineBase(line(120, 3, 0.21, 0.1))).toBe(324);
+    expect(lineBase(line(120, 3, 0.21, 0.1))).toBe(32_400);
+  });
+
+  it("rounds sub-cent unit prices to cents once, on the line", () => {
+    expect(lineBase(line(0.065, 1_234))).toBe(8_021);
+    expect(lineBase(line(1.005))).toBe(101);
   });
 });
 
 describe("invoiceTotals", () => {
   it("adds VAT and subtracts the withholding", () => {
     const totals = invoiceTotals([line(1_000), line(500)], 0.15);
-    expect(totals).toMatchObject({ base: 1_500, vat: 315, withholding: 225, total: 1_590 });
+    expect(totals).toMatchObject({ base: 150_000, vat: 31_500, withholding: 22_500, total: 159_000 });
   });
 
   it("groups VAT by rate, highest first", () => {
     const totals = invoiceTotals([line(100, 1, 0.1), line(200), line(50, 2, 0.1), line(30, 1, 0)]);
     expect(totals.vatBreakdown).toEqual([
-      { rate: 0.21, base: 200, vat: 42 },
-      { rate: 0.1, base: 200, vat: 20 },
-      { rate: 0, base: 30, vat: 0 },
+      { rate: 0.21, base: 20_000, vat: 4_200 },
+      { rate: 0.1, base: 20_000, vat: 2_000 },
+      { rate: 0, base: 3_000, vat: 0 },
     ]);
-    expect(totals.vat).toBe(62);
-    expect(totals.total).toBe(492);
+    expect(totals.vat).toBe(6_200);
+    expect(totals.total).toBe(49_200);
   });
 
   it("computes VAT on the summed base, not line by line", () => {
-    // Line by line it would be 3 × 0.21 × 0.05 = 0.03 (three times 0.0105 → 0.01)
-    expect(invoiceTotals([line(0.05), line(0.05), line(0.05)]).vat).toBe(0.03);
+    // Line by line it would be 3 cents (three times 1.05 → 1); on 15 cents it is 3.15 → 3
+    expect(invoiceTotals([line(0.05), line(0.05), line(0.05)]).vat).toBe(3);
+    // 0.25 € at 21 % is 5.25 cents per line → 5 each, 15 in all; on the 75-cent base it is 15.75 → 16
+    expect(invoiceTotals([line(0.25), line(0.25), line(0.25)]).vat).toBe(16);
   });
 
   it("is zero for an empty invoice", () => {
@@ -70,12 +69,12 @@ describe("invoiceTotals", () => {
       { ...line(1_000), surchargeRate: 0.052 },
       { ...line(200, 1, 0.1), surchargeRate: 0.014 },
     ]);
-    expect(totals).toMatchObject({ base: 1_200, vat: 230, surcharge: 54.8, total: 1_484.8 });
+    expect(totals).toMatchObject({ base: 120_000, vat: 23_000, surcharge: 5_480, total: 148_480 });
   });
 
   it("adds supplies to the total outside the taxable base", () => {
-    const totals = invoiceTotals([line(1_000)], 0.15, 80.5);
-    expect(totals).toMatchObject({ base: 1_000, vat: 210, withholding: 150, supplies: 80.5, total: 1_140.5 });
+    const totals = invoiceTotals([line(1_000)], 0.15, cents(8_050));
+    expect(totals).toMatchObject({ base: 100_000, vat: 21_000, withholding: 15_000, supplies: 8_050, total: 114_050 });
   });
 });
 

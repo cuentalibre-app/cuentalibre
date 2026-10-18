@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { cents, type Cents } from "@fiscalia/core";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 
 const DURATION = 500;
@@ -34,11 +35,11 @@ export function useTweenedNumber(value: number) {
 }
 
 /** A euro amount that counts to its new value. Screen readers only get the final value. */
-export function AnimatedAmount({ value, className }: { value: number; className?: string }) {
+export function AnimatedAmount({ value, className }: { value: Cents; className?: string }) {
   const shown = useTweenedNumber(value);
   return (
     <span className={className}>
-      <span aria-hidden="true">{formatEUR(shown)}</span>
+      <span aria-hidden="true">{formatEUR(cents(shown))}</span>
       <span className="sr-only">{formatEUR(value)}</span>
     </span>
   );

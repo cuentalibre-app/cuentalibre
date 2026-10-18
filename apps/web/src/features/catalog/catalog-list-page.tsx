@@ -19,7 +19,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { familyWithDescendants, stockLevel, type StockAlarm } from "@fiscalia/core";
+import { eurosToCents, familyWithDescendants, stockLevel, type Cents, type StockAlarm } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -52,7 +52,7 @@ interface Row {
   product: Product;
   family: string;
   /** Unit price after the discount. */
-  discounted: number;
+  discounted: Cents;
   stock: number | null;
   alarm: StockAlarm | null;
 }
@@ -144,7 +144,7 @@ export function CatalogListPage() {
         return {
           product,
           family: familyLabel(families, product.familyId),
-          discounted: Math.round(product.price * (1 - product.discount) * 100) / 100,
+          discounted: eurosToCents(product.price * (1 - product.discount)),
           stock: stock?.stock ?? null,
           alarm: stock?.alarm ?? null,
         };
@@ -574,7 +574,7 @@ function ProductsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSort
                 </td>
                 <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>{p.sku || "—"}</td>
                 <td className={cn(td, "text-right amount")}>
-                  {formatEUR(p.price)}
+                  {formatEUR(eurosToCents(p.price))}
                   {p.unit && <span className="ml-0.5 font-sans text-xs text-muted-foreground">/{p.unit}</span>}
                 </td>
                 <td className={cn(td, "text-right amount")}>{p.discount ? ratePercent(p.discount) : "—"}</td>

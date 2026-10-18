@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { model115, model180, obligation, type Quarter } from "@fiscalia/core";
+import { cents, model115, model180, obligation, sumCents, type Quarter } from "@fiscalia/core";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -113,7 +113,7 @@ function Form115({ year, quarter, today }: { year: number; quarter: Quarter; tod
         .map((o) => o.id),
     [books, year, quarter],
   );
-  const amount = r.boxes["05"]!;
+  const amount = cents(r.boxes["05"]!);
 
   const result: ResultSummary = {
     label: "Resultado a ingresar [05]",
@@ -176,7 +176,7 @@ function Form180({ year, today }: { year: number; today: Date }) {
       documentIds: l.documentIds,
     };
   });
-  const paid = r.paid.reduce((acc, q) => acc + q, 0);
+  const paid = sumCents(r.paid);
 
   const result: ResultSummary = {
     label: "Total de retenciones por alquileres",
@@ -206,7 +206,7 @@ function Form180({ year, today }: { year: number; today: Date }) {
         values={r.paid}
         to={(q) => modelPath(RENTALS_PATH, { year, quarter: q })}
       />
-      {Math.abs(paid - r.withholding) > 0.005 && (
+      {paid !== r.withholding && (
         <Notice>
           Los 115 del año suman {formatEUR(paid)} y las retenciones de los arrendadores {formatEUR(r.withholding)}.
         </Notice>

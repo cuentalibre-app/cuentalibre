@@ -1,15 +1,16 @@
+import { cents, type Cents } from "./money";
 import { periodMonths, type Period } from "./period";
 import { EMPTY_TOTALS, type MonthTotals, type YearTotals } from "./taxes";
 
-/** One booked document: an issued invoice (income) or an expense. Amounts are in euros. */
+/** One booked document: an issued invoice (income) or an expense. */
 export interface LedgerEntry {
   /** ISO date (YYYY-MM-DD) the entry is booked on. */
   date: string;
   /** Taxable base, before VAT. */
-  base: number;
-  vat: number;
+  base: Cents;
+  vat: Cents;
   /** IRPF withheld by the client; only issued invoices carry it. */
-  withholding: number;
+  withholding: Cents;
 }
 
 function yearAndMonth(isoDate: string): [year: number, month: number] {
@@ -48,13 +49,13 @@ export function ledgerYearTotals(
   };
 
   book(income, (month, e) => {
-    month.income += e.base;
-    month.outputVat += e.vat;
-    month.withholdings += e.withholding;
+    month.income = cents(month.income + e.base);
+    month.outputVat = cents(month.outputVat + e.vat);
+    month.withholdings = cents(month.withholdings + e.withholding);
   });
   book(expenses, (month, e) => {
-    month.expenses += e.base;
-    month.inputVat += e.vat;
+    month.expenses = cents(month.expenses + e.base);
+    month.inputVat = cents(month.inputVat + e.vat);
   });
 
   return months;

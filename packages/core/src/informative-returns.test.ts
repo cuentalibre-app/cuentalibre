@@ -12,9 +12,13 @@ import {
   splitVatNumber,
   type PartyOperation,
 } from "./informative-returns";
+import { applyRate, cents, eurosToCents } from "./money";
+
+const eur = eurosToCents;
 
 let seq = 0;
 
+/** An operation with its base in euros, for readable fixtures. */
 function op(date: string, base: number, extra: Partial<PartyOperation> = {}): PartyOperation {
   const withholdingRate = extra.withholdingRate ?? 0;
   return {
@@ -25,13 +29,13 @@ function op(date: string, base: number, extra: Partial<PartyOperation> = {}): Pa
     abroad: false,
     operation: "national",
     goods: false,
-    base,
-    total: Math.round(base * 1.21 * 100) / 100,
-    withholding: Math.round(base * withholdingRate * 100) / 100,
+    base: eur(base),
+    total: applyRate(eur(base), 1.21),
+    withholding: applyRate(eur(base), withholdingRate),
     withholdingRate,
     rental: false,
     account: "623",
-    cash: 0,
+    cash: cents(0),
     ...extra,
   };
 }
@@ -50,16 +54,25 @@ describe("model111", () => {
 
   it("splits earned income and professional activities and counts perceptors once", () => {
     const r = model111(ops, 2026, 1);
-    expect(r.boxes).toMatchObject({ "01": 1, "02": 300, "03": 45, "07": 2, "08": 400, "09": 44, "28": 89, "30": 89 });
+    expect(r.boxes).toMatchObject({
+      "01": 1,
+      "02": eur(300),
+      "03": eur(45),
+      "07": 2,
+      "08": eur(400),
+      "09": eur(44),
+      "28": eur(89),
+      "30": eur(89),
+    });
     expect(r.documentIds).toHaveLength(4);
   });
 
   it("lists perceptors with the key and subkey of form 190", () => {
     const r = model111(ops, 2026, 1);
     expect(r.perceptors.map((p) => [p.contactId, p.key, p.subkey, p.withholding])).toEqual([
-      ["s3", "F", "01", 45],
-      ["s1", "G", "01", 30],
-      ["s2", "G", "02", 14],
+      ["s3", "F", "01", eur(45)],
+      ["s1", "G", "01", eur(30)],
+      ["s2", "G", "02", eur(14)],
     ]);
   });
 
@@ -77,9 +90,9 @@ describe("model190", () => {
     ];
     const r = model190(ops, 2026);
     expect(r.perceptors).toHaveLength(1);
-    expect(r.perceptors[0]).toMatchObject({ base: 200, withholding: 30, rate: 0.15 });
-    expect(r.paid).toEqual([15, 15, 0, 0]);
-    expect(r.withholding).toBe(30);
+    expect(r.perceptors[0]).toMatchObject({ base: eur(200), withholding: eur(30), rate: 0.15 });
+    expect(r.paid).toEqual([15, 15, 0, 0].map(eur));
+    expect(r.withholding).toBe(eur(30));
   });
 
   it("flags mixed rates with a null rate", () => {
@@ -108,17 +121,17 @@ describe("rentals: model115 and model180", () => {
   ];
 
   it("computes the quarter's withholdings", () => {
-    expect(model115(ops, 2026, 1).boxes).toEqual({ "01": 2, "02": 1500, "03": 285, "04": 0, "05": 285 });
+    expect(model115(ops, 2026, 1).boxes).toEqual({ "01": 2, "02": eur(1500), "03": eur(285), "04": 0, "05": eur(285) });
   });
 
   it("reports one record per landlord and property", () => {
     const r = model180(ops, 2026);
     expect(r.landlords.map((l) => [l.contactId, l.cadastralRef, l.situation, l.withholding])).toEqual([
-      ["l1", "REF1", "1", 190],
-      ["l2", "REF2", "2", 95],
-      ["l1", "REF3", "1", 95],
+      ["l1", "REF1", "1", eur(190)],
+      ["l2", "REF2", "2", eur(95)],
+      ["l1", "REF3", "1", eur(95)],
     ]);
-    expect(r.paid).toEqual([285, 95, 0, 0]);
+    expect(r.paid).toEqual([285, 95, 0, 0].map(eur));
   });
 
   it("warns about rentals with an unusual rate", () => {
@@ -128,25 +141,25 @@ describe("rentals: model115 and model180", () => {
 
 describe("model347", () => {
   const sale = (date: string, total: number, extra: Partial<PartyOperation> = {}) =>
-    op(date, total / 1.21, { side: "sale", contactId: "c1", total, account: "705", ...extra });
+    op(date, total / 1.21, { side: "sale", contactId: "c1", total: eur(total), account: "705", ...extra });
 
   it("reports parties above 3.005,06 € with their quarters, sales and purchases apart", () => {
     const ops = [
       sale("2026-01-10", 2000),
       sale("2026-07-10", 1500),
-      op("2026-03-01", 3000, { contactId: "c1", total: 3630 }),
+      op("2026-03-01", 3000, { contactId: "c1", total: eur(3630) }),
       sale("2026-02-01", 3000, { contactId: "c2" }),
     ];
     const r = model347(ops, 2026);
     expect(r.declared.map((d) => [d.contactId, d.key, d.total, d.quarters])).toEqual([
-      ["c1", "A", 3630, [3630, 0, 0, 0]],
-      ["c1", "B", 3500, [2000, 0, 1500, 0]],
+      ["c1", "A", eur(3630), [3630, 0, 0, 0].map(eur)],
+      ["c1", "B", eur(3500), [2000, 0, 1500, 0].map(eur)],
     ]);
     expect(r.belowThreshold.map((d) => d.contactId)).toEqual(["c2"]);
   });
 
   it("leaves out withheld, foreign and unidentified operations and excluded contacts", () => {
-    expect(excludedFrom347(sale("2026-01-01", 5000, { withholding: 600 }))).toMatch(/retención/);
+    expect(excludedFrom347(sale("2026-01-01", 5000, { withholding: eur(600) }))).toMatch(/retención/);
     expect(excludedFrom347(sale("2026-01-01", 5000, { operation: "intraEu" }))).toMatch(/extranjero/);
     expect(excludedFrom347(op("2026-01-01", 5000, { operation: "reverseCharge", abroad: true }))).toMatch(/extranjero/);
     expect(excludedFrom347(op("2026-01-01", 5000, { contactId: "" }))).toMatch(/identificado/);
@@ -155,9 +168,12 @@ describe("model347", () => {
   });
 
   it("reports cash collected only above 6.000 €", () => {
-    const ops = [sale("2026-01-10", 7000, { cash: 7000 }), sale("2026-01-10", 4000, { contactId: "c2", cash: 4000 })];
+    const ops = [
+      sale("2026-01-10", 7000, { cash: eur(7000) }),
+      sale("2026-01-10", 4000, { contactId: "c2", cash: eur(4000) }),
+    ];
     const r = model347(ops, 2026);
-    expect(r.declared.map((d) => d.cash)).toEqual([7000, 0]);
+    expect(r.declared.map((d) => d.cash)).toEqual([7000, 0].map(eur));
   });
 });
 
@@ -174,16 +190,16 @@ describe("model349", () => {
   it("groups by operator and key within the period", () => {
     const r = model349(ops, { year: 2026, months: [0, 1, 2] });
     expect(r.operations.map((o) => [o.contactId, o.key, o.base])).toEqual([
-      ["c1", "E", 300],
-      ["s4", "I", 60],
-      ["c1", "S", 1500],
+      ["c1", "E", eur(300)],
+      ["s4", "I", eur(60)],
+      ["c1", "S", eur(1500)],
     ]);
     expect(r.operators).toBe(3);
-    expect(r.total).toBe(1860);
+    expect(r.total).toBe(eur(1860));
   });
 
   it("covers one month for monthly filers", () => {
-    expect(model349(ops, { year: 2026, months: [1] }).total).toBe(800);
+    expect(model349(ops, { year: 2026, months: [1] }).total).toBe(eur(800));
   });
 
   it("lists the periods of each periodicity", () => {

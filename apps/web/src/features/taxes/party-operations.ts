@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { SPAIN, WITHHOLDING_RATES, type PartyOperation } from "@fiscalia/core";
+import { cents, SPAIN, sumBy, WITHHOLDING_RATES, type PartyOperation } from "@fiscalia/core";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { PURCHASES_PATH, purchaseTotals } from "@/features/purchases/purchases-model";
@@ -43,7 +43,7 @@ const isAbroad = (contact: Contact | undefined) => Boolean(contact) && (contact!
 
 function fromSale(doc: SalesDocument, contacts: Map<string, Contact>, cash: Set<string>): PartyOperation {
   const totals = documentTotals(doc);
-  const total = totals.base + totals.vat + totals.surcharge;
+  const total = cents(totals.base + totals.vat + totals.surcharge);
   return {
     id: doc.id,
     date: doc.issuedOn,
@@ -60,7 +60,7 @@ function fromSale(doc: SalesDocument, contacts: Map<string, Contact>, cash: Set<
     account: doc.incomeType,
     cadastralRef: doc.cadastralRef,
     rentalLocation: doc.rentalLocation,
-    cash: doc.paidOn && cash.has(doc.paymentMethodId ?? "") ? total : 0,
+    cash: doc.paidOn && cash.has(doc.paymentMethodId ?? "") ? total : cents(0),
   };
 }
 
@@ -75,14 +75,17 @@ function fromPurchase(doc: PurchaseInvoice, contacts: Map<string, Contact>, cash
     operation: doc.operationType,
     goods: GOODS_PURCHASES.has(doc.expenseType),
     base: totals.base,
-    total: totals.base + totals.vat + totals.surcharge,
+    total: cents(totals.base + totals.vat + totals.surcharge),
     withholding: totals.withholding,
     withholdingRate: WITHHOLDING_RATES[doc.withholding],
     rental: doc.rental,
     account: doc.expenseType,
     cadastralRef: doc.cadastralRef,
     rentalLocation: doc.rentalLocation,
-    cash: doc.payments.filter((p) => cash.has(p.paymentMethodId)).reduce((acc, p) => acc + p.amount, 0),
+    cash: sumBy(
+      doc.payments.filter((p) => cash.has(p.paymentMethodId)),
+      (p) => p.amount,
+    ),
   };
 }
 
@@ -98,13 +101,13 @@ function fromExpense(expense: Expense, contacts: Map<string, Contact>, cash: Set
     goods: GOODS_PURCHASES.has(expense.expenseType),
     base: expense.amount,
     total: expense.amount,
-    withholding: 0,
+    withholding: cents(0),
     withholdingRate: 0,
     rental: expense.rental,
     account: expense.expenseType,
     cadastralRef: expense.cadastralRef,
     rentalLocation: expense.rentalLocation,
-    cash: cash.has(expense.payment?.paymentMethodId ?? "") ? expense.amount : 0,
+    cash: cash.has(expense.payment?.paymentMethodId ?? "") ? expense.amount : cents(0),
   };
 }
 

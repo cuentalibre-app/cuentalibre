@@ -17,6 +17,8 @@ import {
   addDays,
   amortizableValue,
   amountOutstanding,
+  applyRate,
+  cents,
   deductibleAmounts,
   invoiceTotals,
   isBookedLate,
@@ -26,8 +28,9 @@ import {
   paymentStatus,
   purchaseCarriesVat,
   quarterOfMonth,
-  roundCents,
+  sumCents,
   toIsoDate,
+  type Cents,
   type PurchaseOperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
@@ -63,7 +66,7 @@ import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
-import { formatDate, formatDecimalInput, parseDecimal, periodLabel } from "@/lib/format";
+import { formatDate, formatDecimalInput, formatEurosInput, parseEuros, periodLabel } from "@/lib/format";
 import { paymentMethodOptions } from "@/features/settings/settings-model";
 import type { Contact } from "@/mocks/contacts";
 import type { ExpenseType, PurchaseInvoice } from "@/mocks/purchases";
@@ -230,7 +233,7 @@ function initialState(
     cadastralRef: base?.cadastralRef ?? "",
     rectifiesId: creditNote && base ? base.id : (base?.rectifiesId ?? ""),
     lines: base?.lines.map((l) => toLineDraft(l, creditNote)) ?? [emptyLine()],
-    payments: isCopy ? [] : (base?.payments.map((p) => ({ ...p, amount: formatDecimalInput(p.amount) })) ?? []),
+    payments: isCopy ? [] : (base?.payments.map((p) => ({ ...p, amount: formatEurosInput(p.amount) })) ?? []),
     privateNotes: creditNote && base ? `Abono de la factura ${base.number}.` : isCopy ? "" : (base?.privateNotes ?? ""),
     tags: base?.tags ?? [],
     attachments: isCopy ? [] : (base?.attachments ?? []),
@@ -353,7 +356,7 @@ function PurchaseForm({
   const imputation = parseImputation(form.imputation);
   const vatImputation = form.vatImputation.trim() === "" ? null : parseImputation(form.vatImputation);
   const deductible = deductibleAmounts(totals, imputation ?? 0, vatImputation);
-  const paymentAmounts = form.payments.map((p) => parseDecimal(p.amount) ?? 0);
+  const paymentAmounts = form.payments.map((p) => parseEuros(p.amount) ?? cents(0));
   const pending = amountOutstanding(totals.total, paymentAmounts);
   const assetError = isAssetForm ? assetDraftError(form.asset) : undefined;
   const amortized =
@@ -442,9 +445,9 @@ function PurchaseForm({
       next.customsDocument = "Las importaciones con IVA necesitan el número del DUA o H7.";
     next.lines = linesError(form.lines);
     if (isAssetForm) next.asset = assetError;
-    if (form.payments.some((p) => !p.date || parseDecimal(p.amount) === null || parseDecimal(p.amount) === 0))
+    if (form.payments.some((p) => !p.date || parseEuros(p.amount) === null || parseEuros(p.amount) === 0))
       next.payments = "Cada pago necesita fecha e importe.";
-    else if (Math.abs(roundCents(paymentAmounts.reduce((a, b) => a + b, 0))) > Math.abs(totals.total) + 0.005)
+    else if (Math.abs(sumCents(paymentAmounts)) > Math.abs(totals.total))
       next.payments = `Los pagos suman más que el total de la factura (${formatEUR(totals.total)}).`;
     return next;
   }
@@ -480,7 +483,7 @@ function PurchaseForm({
       payments: form.payments.map((p) => ({
         id: p.id,
         date: p.date,
-        amount: roundCents(parseDecimal(p.amount)!),
+        amount: parseEuros(p.amount)!,
         paymentMethodId: p.paymentMethodId,
       })),
       privateNotes: form.privateNotes.trim(),
@@ -542,7 +545,7 @@ function PurchaseForm({
   );
 
   const vatLabel = (line: ReturnType<typeof parseLine>) =>
-    line ? formatEUR(roundCents(lineBase(line) * line.vatRate)) : "—";
+    line ? formatEUR(applyRate(lineBase(line), line.vatRate)) : "—";
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
@@ -880,7 +883,7 @@ function PurchaseForm({
           <Totals totals={totals} withholding={form.withholding} advanced={advanced} />
 
           <DeductibleStrip
-            base={isAssetForm ? (amortized?.value ?? 0) : deductible.base}
+            base={isAssetForm ? (amortized?.value ?? cents(0)) : deductible.base}
             baseLabel={isAssetForm ? "Valor amortizable" : "Gasto"}
             vat={deductible.vat}
             imputation={imputation}
@@ -1113,9 +1116,9 @@ function DeductibleStrip({
   vatImputation,
   invalid,
 }: {
-  base: number;
+  base: Cents;
   baseLabel: string;
-  vat: number;
+  vat: Cents;
   imputation: number | null;
   vatImputation: number | null;
   invalid: boolean;
@@ -1184,8 +1187,8 @@ function Payments({
   onChange,
 }: {
   payments: PaymentDraft[];
-  total: number;
-  pending: number;
+  total: Cents;
+  pending: Cents;
   status: ReturnType<typeof paymentStatus>;
   error?: string;
   issuedOn: string;
@@ -1200,7 +1203,7 @@ function Payments({
         id: crypto.randomUUID(),
         // Today, unless the invoice is dated later
         date: [toIsoDate(new Date()), issuedOn].sort().at(-1)!,
-        amount: formatDecimalInput(pending),
+        amount: formatEurosInput(pending),
         paymentMethodId: list.at(-1)?.paymentMethodId ?? "bank1",
       },
     ]);
@@ -1237,7 +1240,7 @@ function Payments({
                   <Input
                     inputMode="decimal"
                     value={p.amount}
-                    aria-invalid={error && !parseDecimal(p.amount) ? true : undefined}
+                    aria-invalid={error && !parseEuros(p.amount) ? true : undefined}
                     onChange={(e) => update(p.id, { amount: e.target.value })}
                     className="pr-7 text-right amount"
                   />

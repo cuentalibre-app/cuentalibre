@@ -1,5 +1,8 @@
 import {
   WITHHOLDING_RATES,
+  cents,
+  centsToEuros,
+  eurosToCents,
   groupRows,
   invoiceTotals,
   isDuplicateExpense,
@@ -11,10 +14,11 @@ import {
   parseDate,
   parsePercent,
   purchaseCarriesVat,
-  roundCents,
+  sumBy,
   surchargeRateFromPercent,
   vatRateFromPercent,
   withholdingFromPercent,
+  type Cents,
   type OperationType,
   type Period,
   type PurchaseOperationType,
@@ -62,9 +66,18 @@ const CONCEPT_COLUMNS = [
 ];
 
 const contactColumns = (who: "Cliente" | "Proveedor") =>
-  ["NIF", "Nombre o Razón Social", "Dirección", "Cód. Postal", "Población", "Provincia", "País", "Telf", "Fax", "Email"].map(
-    (c) => `${who} - ${c}`,
-  );
+  [
+    "NIF",
+    "Nombre o Razón Social",
+    "Dirección",
+    "Cód. Postal",
+    "Población",
+    "Provincia",
+    "País",
+    "Telf",
+    "Fax",
+    "Email",
+  ].map((c) => `${who} - ${c}`);
 
 const paymentColumns = (prefix: "Cobro" | "Pago", noun: "cobro" | "pago") => [
   `${prefix} - Fecha`,
@@ -242,7 +255,7 @@ export interface ImportItem {
   number: string;
   date: string;
   contactName: string;
-  total: number;
+  total: Cents;
   errors: string[];
   warnings: string[];
   /** Adds the document to its store. */
@@ -391,12 +404,15 @@ function parseLines(
     };
     const stated = parseAmount(get(row, "Concepto - Total base imponible"));
     const computed = invoiceTotals([line]).base;
-    if (stated !== null && Math.abs(stated - computed) > 0.01)
-      warnings.push(`En la ${at} la base total del archivo (${stated}) no cuadra con la calculada (${computed}).`);
+    if (stated !== null && Math.abs(eurosToCents(stated) - computed) > 1)
+      warnings.push(
+        `En la ${at} la base total del archivo (${stated}) no cuadra con la calculada (${centsToEuros(computed)}).`,
+      );
     lines.push(line);
   });
   if (lines.length === 0) errors.push("No tiene ningún concepto.");
-  if (withholdings.size > 1) errors.push("Los conceptos tienen retenciones distintas; usa la misma en toda la factura.");
+  if (withholdings.size > 1)
+    errors.push("Los conceptos tienen retenciones distintas; usa la misma en toda la factura.");
   return { lines, withholding: [...withholdings][0] ?? "none" };
 }
 
@@ -442,8 +458,16 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         ? operationFor(at("Tipo operación"), OPERATION_TYPES)
         : "national";
       if (!operationType) errors.push(`Tipo de operación desconocido: «${at("Tipo operación")}».`);
-      const incomeType = (at("Tipo ingreso") ? accountCode(at("Tipo ingreso"), INCOME_TYPE_GROUPS.flatMap((g) => g.options)) : "705") as IncomeType | null;
-      if (!incomeType || !INCOME_TYPES.has(incomeType)) errors.push(`Tipo de ingreso desconocido: «${at("Tipo ingreso")}».`);
+      const incomeType = (
+        at("Tipo ingreso")
+          ? accountCode(
+              at("Tipo ingreso"),
+              INCOME_TYPE_GROUPS.flatMap((g) => g.options),
+            )
+          : "705"
+      ) as IncomeType | null;
+      if (!incomeType || !INCOME_TYPES.has(incomeType))
+        errors.push(`Tipo de ingreso desconocido: «${at("Tipo ingreso")}».`);
       const client = contacts.resolve((c) => at(c), "Cliente");
       if (!client) errors.push("Falta el cliente: indica su NIF o su nombre.");
       const { lines, withholding } = parseLines(
@@ -466,7 +490,8 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
       const taken = (d: SalesDocument) =>
         d.kind === "invoice" && d.number === number && d.issuedOn.slice(0, 4) === year;
       if (number && issuedOn && salesStore.all().some(taken)) errors.push(`Ya existe la factura ${number} en ${year}.`);
-      else if (number && issuedOn && accepted.some(taken)) errors.push(`La factura ${number} está repetida en el archivo.`);
+      else if (number && issuedOn && accepted.some(taken))
+        errors.push(`La factura ${number} está repetida en el archivo.`);
       lockedError(issuedOn, ctx, errors);
 
       // The last payment row gives the collection; invoices here hold a single one
@@ -509,7 +534,7 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         number,
         date: issuedOn,
         contactName: client?.name ?? "",
-        total: errors.length ? 0 : documentTotals(doc).total,
+        total: errors.length ? cents(0) : documentTotals(doc).total,
         errors,
         warnings,
         commit: () => salesStore.add(doc),
@@ -536,12 +561,19 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
       ? operationFor(at("Tipo operación"), PURCHASE_OPERATION_TYPES)
       : "national";
     if (!operationType) errors.push(`Tipo de operación desconocido: «${at("Tipo operación")}».`);
-    const expenseType = (at("Tipo de gasto")
-      ? accountCode(at("Tipo de gasto"), EXPENSE_TYPE_GROUPS.flatMap((g) => g.options))
-      : "600") as ExpenseType | null;
-    if (!expenseType || !EXPENSE_TYPES.has(expenseType)) errors.push(`Tipo de gasto desconocido: «${at("Tipo de gasto")}».`);
+    const expenseType = (
+      at("Tipo de gasto")
+        ? accountCode(
+            at("Tipo de gasto"),
+            EXPENSE_TYPE_GROUPS.flatMap((g) => g.options),
+          )
+        : "600"
+    ) as ExpenseType | null;
+    if (!expenseType || !EXPENSE_TYPES.has(expenseType))
+      errors.push(`Tipo de gasto desconocido: «${at("Tipo de gasto")}».`);
     const imputation = at("% Imputación") ? parsePercent(at("% Imputación")) : 100;
-    if (imputation === null || !isValidImputation(imputation)) errors.push("La imputación debe ser un número entero entre 0 y 100.");
+    if (imputation === null || !isValidImputation(imputation))
+      errors.push("La imputación debe ser un número entero entre 0 y 100.");
     const vatImputation = at("Imputación a IVA") ? parsePercent(at("Imputación a IVA")) : null;
     if (at("Imputación a IVA") && (vatImputation === null || !isValidImputation(vatImputation)))
       errors.push("La imputación a IVA debe ser un número entero entre 0 y 100.");
@@ -561,7 +593,8 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
       const candidate = { supplierId: supplier.id, number, issuedOn };
       if (isDuplicatePurchase(candidate, purchasesStore.all()))
         errors.push(`Ya has registrado la factura ${number} de este proveedor este año.`);
-      else if (isDuplicatePurchase(candidate, accepted)) errors.push(`La factura ${number} está repetida en el archivo.`);
+      else if (isDuplicatePurchase(candidate, accepted))
+        errors.push(`La factura ${number} está repetida en el archivo.`);
     }
     if (!number) errors.push("Falta el número de la factura.");
     lockedError(issuedOn, ctx, errors);
@@ -578,13 +611,22 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
       payments.push({
         id: crypto.randomUUID(),
         date: iso,
-        amount: roundCents(amount ?? totals.total - payments.reduce((a, p) => a + p.amount, 0)),
-        paymentMethodId: paymentMethodFor(get(row, "Pago - Método de pago"), get(row, "Pago - Tipo de método de pago"), warnings),
+        amount: amount === null ? cents(totals.total - sumBy(payments, (p) => p.amount)) : eurosToCents(amount),
+        paymentMethodId: paymentMethodFor(
+          get(row, "Pago - Método de pago"),
+          get(row, "Pago - Tipo de método de pago"),
+          warnings,
+        ),
       });
     }
     if (payments.length === 0 && isPaidStatus(at("Estado")) && issuedOn)
-      payments.push({ id: crypto.randomUUID(), date: issuedOn, amount: totals.total, paymentMethodId: defaultPaymentMethodId() });
-    if (Math.abs(payments.reduce((a, p) => a + p.amount, 0)) > Math.abs(totals.total) + 0.005)
+      payments.push({
+        id: crypto.randomUUID(),
+        date: issuedOn,
+        amount: totals.total,
+        paymentMethodId: defaultPaymentMethodId(),
+      });
+    if (Math.abs(sumBy(payments, (p) => p.amount)) > Math.abs(totals.total))
       errors.push("Los pagos suman más que el total de la factura.");
 
     const notes = [at("Notas privadas"), at("Notas en la factura")].filter(Boolean).join(" · ");
@@ -601,7 +643,8 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
       withholding,
       operationType: operationType ?? "national",
       operationOn,
-      customsDocument: operationType === "import" ? at("Número DUA/H7 (solo para facturas de importación)") || undefined : undefined,
+      customsDocument:
+        operationType === "import" ? at("Número DUA/H7 (solo para facturas de importación)") || undefined : undefined,
       cashBasis: false,
       rental: expenseType === "621" && withholding === "rental",
       lines: lines as PurchaseLine[],
@@ -614,7 +657,7 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
       number,
       date: issuedOn,
       contactName: supplier?.name ?? "",
-      total: errors.length ? 0 : totals.total,
+      total: errors.length ? cents(0) : totals.total,
       errors,
       warnings,
       commit: () => purchasesStore.add(doc),
@@ -633,11 +676,18 @@ function parseExpenses(body: { row: string[]; line: number }[], get: Getter, ctx
     const amount = parseAmount(at("Importe"));
     if (amount === null) errors.push(at("Importe") ? `Importe no válido: «${at("Importe")}».` : "Falta el importe.");
     const imputation = at("% Imputación") ? parsePercent(at("% Imputación")) : 100;
-    if (imputation === null || !isValidImputation(imputation)) errors.push("La imputación debe ser un número entero entre 0 y 100.");
-    const expenseType = (at("Tipo de gasto")
-      ? accountCode(at("Tipo de gasto"), EXPENSE_TYPE_GROUPS.flatMap((g) => g.options))
-      : "629") as ExpenseType | null;
-    if (!expenseType || !EXPENSE_TYPES.has(expenseType)) errors.push(`Tipo de gasto desconocido: «${at("Tipo de gasto")}».`);
+    if (imputation === null || !isValidImputation(imputation))
+      errors.push("La imputación debe ser un número entero entre 0 y 100.");
+    const expenseType = (
+      at("Tipo de gasto")
+        ? accountCode(
+            at("Tipo de gasto"),
+            EXPENSE_TYPE_GROUPS.flatMap((g) => g.options),
+          )
+        : "629"
+    ) as ExpenseType | null;
+    if (!expenseType || !EXPENSE_TYPES.has(expenseType))
+      errors.push(`Tipo de gasto desconocido: «${at("Tipo de gasto")}».`);
     const concept = at("Concepto");
     if (!concept) errors.push("Falta el concepto.");
     lockedError(date, ctx, errors);
@@ -648,7 +698,8 @@ function parseExpenses(body: { row: string[]; line: number }[], get: Getter, ctx
     const supplier = taxId
       ? contactsStore.all("supplier").find((c) => c.taxId && normalizeTaxId(c.taxId) === normalizeTaxId(taxId))
       : undefined;
-    const otherPayee: OtherPayee | undefined = !supplier && (taxId || name) ? { name, taxId: taxId.toUpperCase() } : undefined;
+    const otherPayee: OtherPayee | undefined =
+      !supplier && (taxId || name) ? { name, taxId: taxId.toUpperCase() } : undefined;
 
     const methodName = at("Método de pago");
     const methodType = at("Tipo de método de pago");
@@ -657,12 +708,13 @@ function parseExpenses(body: { row: string[]; line: number }[], get: Getter, ctx
       date,
       number: at("Número recibo"),
       concept,
-      amount: roundCents(amount ?? 0),
+      amount: eurosToCents(amount ?? 0),
       expenseType: expenseType ?? "629",
       imputation: imputation ?? 100,
       supplierId: supplier?.id ?? null,
       otherPayee,
-      payment: methodName || methodType ? { date, paymentMethodId: paymentMethodFor(methodName, methodType, warnings) } : null,
+      payment:
+        methodName || methodType ? { date, paymentMethodId: paymentMethodFor(methodName, methodType, warnings) } : null,
       rental: false,
       privateNotes: at("Notas privadas"),
     };
@@ -677,7 +729,7 @@ function parseExpenses(body: { row: string[]; line: number }[], get: Getter, ctx
       number: expense.number,
       date,
       contactName: supplier?.name ?? name,
-      total: errors.length ? 0 : expense.amount,
+      total: errors.length ? cents(0) : expense.amount,
       errors,
       warnings,
       commit: () => expensesStore.add(expense),

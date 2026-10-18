@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf";
+import type { Cents } from "@fiscalia/core";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import type { PnlRow } from "./pnl-rows";
 
@@ -12,7 +13,7 @@ const RIGHT = 210 - MARGIN;
 const COLUMNS = [RIGHT - 38, RIGHT];
 
 const pdfText = (text: string) => text.replace(/−/g, "-").replace(/[  ]/g, " ");
-const eur = (value: number) => pdfText(formatEUR(value));
+const eur = (amount: Cents) => pdfText(formatEUR(amount));
 
 export interface PnlPdf {
   business: string;

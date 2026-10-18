@@ -1,4 +1,4 @@
-import { roundCents } from "./invoices";
+import { applyRate, cents, eurosToCents, type Cents } from "./money";
 
 /*
  * Products and services of the catalog: their prices, and the stock of those
@@ -51,22 +51,22 @@ export function isCatalogUnit(code: string): code is CatalogUnit {
 
 export interface PriceBreakdown {
   /** Unit base after the discount. */
-  base: number;
-  vat: number;
-  surcharge: number;
+  base: Cents;
+  vat: Cents;
+  surcharge: Cents;
   /** What the buyer pays per unit (P.V.P.). */
-  total: number;
+  total: Cents;
 }
 
 /**
- * A unit price split into its parts. `discount`, `vatRate` and `surchargeRate`
+ * A unit price (decimal euros) split into its parts, in cents. `discount`, `vatRate` and `surchargeRate`
  * are fractions (0.1 for 10 %).
  */
 export function priceBreakdown(price: number, { discount = 0, vatRate = 0, surchargeRate = 0 } = {}): PriceBreakdown {
-  const base = roundCents(price * (1 - discount));
-  const vat = roundCents(base * vatRate);
-  const surcharge = roundCents(base * surchargeRate);
-  return { base, vat, surcharge, total: roundCents(base + vat + surcharge) };
+  const base = eurosToCents(price * (1 - discount));
+  const vat = applyRate(base, vatRate);
+  const surcharge = applyRate(base, surchargeRate);
+  return { base, vat, surcharge, total: cents(base + vat + surcharge) };
 }
 
 /**

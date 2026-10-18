@@ -3,6 +3,7 @@ import {
   WITHHOLDING_RATES,
   amortizableValue,
   amountOutstanding,
+  cents,
   deductibleAmounts,
   invoiceTotals,
   isOverdue,
@@ -11,6 +12,8 @@ import {
   type AmortizedAsset,
   type AssetCategory,
   type AssetCondition,
+  type Cents,
+  type DeductibleAmounts,
   type InvoiceTotals,
   type PurchaseOperationType,
 } from "@fiscalia/core";
@@ -51,7 +54,7 @@ export function purchaseStatus(doc: PurchaseInvoice, today: Date): PurchaseStatu
   return status;
 }
 
-export function outstanding(doc: PurchaseInvoice): number {
+export function outstanding(doc: PurchaseInvoice): Cents {
   return amountOutstanding(
     purchaseTotals(doc).total,
     doc.payments.map((p) => p.amount),
@@ -62,9 +65,9 @@ export function outstanding(doc: PurchaseInvoice): number {
  * Deductible base and VAT after the imputation percentages. An investment good's VAT is
  * deducted at once, but its base is no expense: it counts through its amortization.
  */
-export function deductible(doc: PurchaseInvoice) {
+export function deductible(doc: PurchaseInvoice): DeductibleAmounts {
   const amounts = deductibleAmounts(purchaseTotals(doc), doc.imputation, doc.vatImputation);
-  return doc.asset ? { ...amounts, base: 0 } : amounts;
+  return doc.asset ? { ...amounts, base: cents(0) } : amounts;
 }
 
 export const isAsset = (doc: Pick<PurchaseInvoice, "asset">) => Boolean(doc.asset);

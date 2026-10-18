@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ChevronsUpDown, FilePlus2, Search, type LucideIcon } from "lucide-react";
+import { centsToEuros, type Cents } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -134,9 +135,9 @@ export function EmptyState({ message, hint, action }: { message: string; hint: s
   );
 }
 
-/** Semicolon-separated with decimal commas, so Excel in Spanish opens it as-is. Numbers get two decimals. */
-export function downloadCsv(header: string[], rows: (string | number)[][], name: string) {
-  const cell = (c: string | number) => (typeof c === "number" ? c.toFixed(2).replace(".", ",") : c);
+/** Semicolon-separated with decimal commas, so Excel in Spanish opens it as-is. Amounts print as euros with two decimals. */
+export function downloadCsv(header: string[], rows: (string | Cents)[][], name: string) {
+  const cell = (c: string | Cents) => (typeof c === "number" ? centsToEuros(c).toFixed(2).replace(".", ",") : c);
   const lines = [header, ...rows].map((cells) =>
     cells.map((c) => `"${String(cell(c)).replaceAll('"', '""')}"`).join(";"),
   );

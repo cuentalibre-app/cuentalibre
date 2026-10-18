@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react";
-import { toIsoDate } from "@fiscalia/core";
+import { cents, toIsoDate } from "@fiscalia/core";
 import { expensesStore, useExpenses } from "@/features/purchases/expenses-store";
 import { purchasesStore, usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { salesStore, useSalesDocuments } from "@/features/sales/sales-store";
@@ -83,7 +83,7 @@ function settle(doc: PendingDocument, movement: BankMovement): string {
       return `sale:${doc.docId}`;
     case "purchase": {
       const invoice = purchasesStore.get(doc.docId)!;
-      const payment = { id: newId("pay"), date, amount: -doc.amount, paymentMethodId: methodId };
+      const payment = { id: newId("pay"), date, amount: cents(-doc.amount), paymentMethodId: methodId };
       purchasesStore.update(doc.docId, { payments: [...invoice.payments, payment] });
       return `purchase:${payment.id}`;
     }

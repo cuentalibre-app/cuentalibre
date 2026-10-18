@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { monthlyResults, periodDates, pnlLine, profitAndLoss, relativeChange, yearToQuarter } from "./reports";
+import { applyRate, cents, eurosToCents } from "./money";
 import type { TaxableExpense, TaxablePurchase, TaxableSale, TaxBooks } from "./tax-returns";
+
+const eur = eurosToCents;
+
+/* Fixtures take their amounts in euros, for readability. */
 
 function sale(date: string, base: number, rental = false, account?: string): TaxableSale {
   return {
@@ -8,8 +13,8 @@ function sale(date: string, base: number, rental = false, account?: string): Tax
     date,
     operation: "national",
     rectifying: false,
-    vatBreakdown: [{ rate: 0.21, base, vat: base * 0.21 }],
-    withholding: 0,
+    vatBreakdown: [{ rate: 0.21, base: eur(base), vat: applyRate(eur(base), 0.21) }],
+    withholding: cents(0),
     rental,
     account,
   };
@@ -22,9 +27,9 @@ function purchase(date: string, expense: number, account: string): TaxablePurcha
     operation: "national",
     creditNote: false,
     goods: false,
-    vatBreakdown: [{ rate: 0.21, base: expense, vat: expense * 0.21 }],
+    vatBreakdown: [{ rate: 0.21, base: eur(expense), vat: applyRate(eur(expense), 0.21) }],
     vatShare: 1,
-    expense,
+    expense: eur(expense),
     account,
   };
 }
@@ -32,7 +37,7 @@ function purchase(date: string, expense: number, account: string): TaxablePurcha
 const expense = (date: string, amount: number, account: string): TaxableExpense => ({
   id: date,
   date,
-  expense: amount,
+  expense: eur(amount),
   account,
 });
 
@@ -71,26 +76,26 @@ describe("profitAndLoss", () => {
   const pnl = profitAndLoss(books, "2026-01-01", "2026-03-31");
 
   it("sums income by account, rentals apart", () => {
-    expect(pnl.accounts["705"]).toBe(4_000.1);
-    expect(pnl.accounts["752"]).toBe(500);
-    expect(pnl.lines["70"]).toBe(4_000.1);
-    expect(pnl.lines["75"]).toBe(500);
-    expect(pnl.income).toBe(4_500.1);
+    expect(pnl.accounts["705"]).toBe(eur(4_000.1));
+    expect(pnl.accounts["752"]).toBe(eur(500));
+    expect(pnl.lines["70"]).toBe(eur(4_000.1));
+    expect(pnl.lines["75"]).toBe(eur(500));
+    expect(pnl.income).toBe(eur(4_500.1));
   });
 
   it("sums deductible expenses into their lines", () => {
-    expect(pnl.lines["62"]).toBe(192.5);
-    expect(pnl.lines["64"]).toBe(294);
-    expect(pnl.expenses).toBe(486.5);
-    expect(pnl.lines["68"]).toBe(100);
-    expect(pnl.lines["66"]).toBe(40);
+    expect(pnl.lines["62"]).toBe(eur(192.5));
+    expect(pnl.lines["64"]).toBe(eur(294));
+    expect(pnl.expenses).toBe(eur(486.5));
+    expect(pnl.lines["68"]).toBe(eur(100));
+    expect(pnl.lines["66"]).toBe(eur(40));
   });
 
   it("works out every result", () => {
-    expect(pnl.operating).toBe(4_013.6);
-    expect(pnl.exploitation).toBe(3_913.6);
-    expect(pnl.financial).toBe(-40);
-    expect(pnl.result).toBe(3_873.6);
+    expect(pnl.operating).toBe(eur(4_013.6));
+    expect(pnl.exploitation).toBe(eur(3_913.6));
+    expect(pnl.financial).toBe(eur(-40));
+    expect(pnl.result).toBe(eur(3_873.6));
   });
 
   it("uses the invoice's own income account", () => {
@@ -103,15 +108,15 @@ describe("profitAndLoss", () => {
       "2026-05-01",
       "2026-05-31",
     );
-    expect(own.lines["74"]).toBe(200);
-    expect(own.lines["76"]).toBe(50);
-    expect(own.income).toBe(200);
-    expect(own.financial).toBe(50);
-    expect(own.result).toBe(250);
+    expect(own.lines["74"]).toBe(eur(200));
+    expect(own.lines["76"]).toBe(eur(50));
+    expect(own.income).toBe(eur(200));
+    expect(own.financial).toBe(eur(50));
+    expect(own.result).toBe(eur(250));
   });
 
   it("leaves out documents outside the range", () => {
-    expect(profitAndLoss(books, "2026-04-01", "2026-06-30").income).toBe(9_999);
+    expect(profitAndLoss(books, "2026-04-01", "2026-06-30").income).toBe(eur(9_999));
     expect(profitAndLoss(books, "2025-01-01", "2025-12-31").result).toBe(0);
   });
 });
@@ -131,8 +136,8 @@ describe("monthlyResults", () => {
   it("returns twelve months on the report's basis", () => {
     const months = monthlyResults(books, 2026);
     expect(months).toHaveLength(12);
-    expect(months[0]).toEqual({ month: 0, income: 3_000, expenses: 414.5, profit: 2_585.5 });
-    expect(months[1]!.expenses).toBe(60);
+    expect(months[0]).toEqual({ month: 0, income: eur(3_000), expenses: eur(414.5), profit: eur(2_585.5) });
+    expect(months[1]!.expenses).toBe(eur(60));
     expect(months[11]!.income).toBe(0);
   });
 });

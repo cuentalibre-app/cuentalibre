@@ -1,3 +1,4 @@
+import { applyRate, cents, type Cents } from "./money";
 import { periodMonths, type Period } from "./period";
 
 /** General Spanish VAT rate. */
@@ -12,33 +13,39 @@ export const IRPF_INSTALLMENT_RATE = 0.2;
  */
 export const ROUGH_INCOME_TAX_RATE = 0.2;
 
-/** Bookkeeping totals for one month. Amounts are in euros, before VAT. */
+/** Bookkeeping totals for one month, before VAT. */
 export interface MonthTotals {
-  income: number;
-  expenses: number;
+  income: Cents;
+  expenses: Cents;
   /** VAT charged on issued invoices (IVA repercutido). */
-  outputVat: number;
+  outputVat: Cents;
   /** Deductible VAT paid on expenses (IVA soportado). */
-  inputVat: number;
+  inputVat: Cents;
   /** IRPF withheld by clients on issued invoices. */
-  withholdings: number;
+  withholdings: Cents;
 }
 
 /** Twelve months of a year; null for months without data yet. */
 export type YearTotals = (MonthTotals | null)[];
 
-export const EMPTY_TOTALS: MonthTotals = { income: 0, expenses: 0, outputVat: 0, inputVat: 0, withholdings: 0 };
+export const EMPTY_TOTALS: MonthTotals = {
+  income: cents(0),
+  expenses: cents(0),
+  outputVat: cents(0),
+  inputVat: cents(0),
+  withholdings: cents(0),
+};
 
 export function sumTotals(months: (MonthTotals | null | undefined)[]): MonthTotals {
   return months.reduce<MonthTotals>(
     (acc, m) =>
       m
         ? {
-            income: acc.income + m.income,
-            expenses: acc.expenses + m.expenses,
-            outputVat: acc.outputVat + m.outputVat,
-            inputVat: acc.inputVat + m.inputVat,
-            withholdings: acc.withholdings + m.withholdings,
+            income: cents(acc.income + m.income),
+            expenses: cents(acc.expenses + m.expenses),
+            outputVat: cents(acc.outputVat + m.outputVat),
+            inputVat: cents(acc.inputVat + m.inputVat),
+            withholdings: cents(acc.withholdings + m.withholdings),
           }
         : acc,
     EMPTY_TOTALS,
@@ -51,7 +58,7 @@ export function periodTotals(year: YearTotals, period: Period): MonthTotals {
 
 /** Rough split of what was invoiced (before VAT) into take-home, income tax and expenses. */
 export function takeHomeEstimate(totals: MonthTotals) {
-  const profit = totals.income - totals.expenses;
-  const incomeTax = Math.max(0, ROUGH_INCOME_TAX_RATE * profit);
-  return { profit, incomeTax, takeHome: profit - incomeTax };
+  const profit = cents(totals.income - totals.expenses);
+  const incomeTax = applyRate(cents(Math.max(0, profit)), ROUGH_INCOME_TAX_RATE);
+  return { profit, incomeTax, takeHome: cents(profit - incomeTax) };
 }

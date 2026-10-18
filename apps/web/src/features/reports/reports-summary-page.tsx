@@ -2,11 +2,14 @@ import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ArrowDownRight, ArrowUpRight, FileBarChart } from "lucide-react";
 import {
+  cents,
   monthlyResults,
   periodDates,
   periodMonths,
   profitAndLoss,
   relativeChange,
+  sumBy,
+  type Cents,
   type MonthResult,
   type Period,
 } from "@fiscalia/core";
@@ -89,7 +92,8 @@ function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthR
     [...inPeriod].reverse().find((m) => months[m]!.income || months[m]!.expenses) ?? inPeriod[0] ?? 0,
   );
   const peak = Math.max(0, ...months.flatMap((m) => [m.income, m.expenses]));
-  const max = Math.max(2000, Math.ceil(peak / 2000) * 2000);
+  // Steps of 2.000 €
+  const max = cents(Math.max(200_000, Math.ceil(peak / 200_000) * 200_000));
   const current = months[selected]!;
   const height = (v: number) => ({ height: `${(Math.max(0, v) / max) * 100}%` });
 
@@ -119,7 +123,7 @@ function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthR
           className="-mt-1.5 mb-6 flex h-[180px] min-w-10 flex-col justify-between text-right font-mono text-2xs text-muted-foreground"
         >
           <span>{formatThousands(max)}</span>
-          <span>{formatThousands(max / 2)}</span>
+          <span>{formatThousands(cents(max / 2))}</span>
           <span>0</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -187,12 +191,12 @@ function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthR
 }
 
 function MonthsTable({ months }: { months: MonthResult[] }) {
-  const totals = months.reduce(
-    (acc, m) => ({ income: acc.income + m.income, expenses: acc.expenses + m.expenses, profit: acc.profit + m.profit }),
-    { income: 0, expenses: 0, profit: 0 },
-  );
-  const margin = (m: { income: number; profit: number }) =>
-    m.income ? formatPercent((m.profit / m.income) * 100) : "—";
+  const totals = {
+    income: sumBy(months, (m) => m.income),
+    expenses: sumBy(months, (m) => m.expenses),
+    profit: sumBy(months, (m) => m.profit),
+  };
+  const margin = (m: { income: Cents; profit: Cents }) => (m.income ? formatPercent((m.profit / m.income) * 100) : "—");
   const th = cn(table.th, "text-right first:text-left");
   const td = cn(table.td, "text-right amount");
 

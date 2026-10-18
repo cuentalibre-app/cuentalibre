@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark } from "lucide-react";
-import { deductibleExpense, isDuplicateExpense, roundCents, toIsoDate } from "@fiscalia/core";
+import { cents, deductibleExpense, isDuplicateExpense, toIsoDate, type Cents } from "@fiscalia/core";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { TagsField } from "@/features/sales/document-editor";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
-import { MONTHS, formatDecimalInput, parseDecimal } from "@/lib/format";
+import { MONTHS, formatEurosInput, parseEuros } from "@/lib/format";
 import { settingsStore } from "@/features/settings/settings-store";
 import { SOCIAL_SECURITY, type Expense, type OtherPayee } from "@/mocks/expenses";
 import { paymentMethodOptions } from "@/features/settings/settings-model";
@@ -43,7 +43,7 @@ interface Preset {
   expenseType: ExpenseType;
   concept: (date: string) => string;
   /** Read when the preset is applied, so it follows the settings. */
-  amount?: () => number;
+  amount?: () => Cents;
   payee?: OtherPayee;
 }
 
@@ -115,7 +115,7 @@ function initialState(base: Expense | undefined, isCopy: boolean): FormState {
     date,
     number: isCopy ? "" : (base?.number ?? ""),
     concept: base?.concept ?? "",
-    amount: base ? formatDecimalInput(base.amount) : "",
+    amount: base ? formatEurosInput(base.amount) : "",
     expenseType: base?.expenseType ?? DEFAULT_EXPENSE_TYPE,
     imputation: String(base?.imputation ?? 100),
     payee: base?.supplierId ?? (base?.otherPayee ? OTHER_PAYEE : NO_PAYEE),
@@ -201,7 +201,7 @@ function ExpenseForm({
     if (key in ERROR_KEYS) clearError(key as ErrorKey);
   };
 
-  const amount = parseDecimal(form.amount);
+  const amount = parseEuros(form.amount);
   const imputation = parseImputation(form.imputation);
   const deductible = amount !== null && imputation !== null ? deductibleExpense(amount, imputation) : null;
   const title = existing ? "Editar gasto" : "Nuevo gasto";
@@ -224,7 +224,7 @@ function ExpenseForm({
       ...f,
       expenseType: preset.expenseType,
       concept: preset.concept(f.date),
-      amount: preset.amount ? formatDecimalInput(preset.amount()) : f.amount,
+      amount: preset.amount ? formatEurosInput(preset.amount()) : f.amount,
       ...(preset.payee && { payee: OTHER_PAYEE, otherName: preset.payee.name, otherTaxId: preset.payee.taxId }),
     }));
     setPrefill(false);
@@ -241,7 +241,7 @@ function ExpenseForm({
       date: form.date,
       number: form.number.trim(),
       concept: form.concept.trim(),
-      amount: roundCents(amount ?? 0),
+      amount: amount ?? cents(0),
       expenseType: form.expenseType,
       imputation: imputation ?? 0,
       supplierId,
@@ -262,7 +262,7 @@ function ExpenseForm({
     else if (lockedQuarterOf(form.date)) next.date = lockedMessage(lockedQuarterOf(form.date)!);
     if (!form.concept.trim()) next.concept = "Describe brevemente el gasto.";
     if (amount === null) next.amount = "Indica el importe pagado.";
-    else if (roundCents(amount) <= 0) next.amount = "El importe tiene que ser mayor que cero.";
+    else if (amount <= 0) next.amount = "El importe tiene que ser mayor que cero.";
     if (imputation === null) next.imputation = "Un número entero entre 0 y 100.";
     if (form.payee === OTHER_PAYEE && !form.otherName.trim()) next.otherName = "Indica a quién has pagado.";
     if (form.paid && !form.paidOn) next.paidOn = "Indica cuándo lo pagaste.";
@@ -685,7 +685,7 @@ const ERROR_KEYS: Record<ErrorKey, true> = {
 };
 
 /** What the expense lowers in the income tax, after imputation. No VAT: there is no invoice. */
-function DeductibleStrip({ amount, imputation }: { amount: number | null; imputation: number | null }) {
+function DeductibleStrip({ amount, imputation }: { amount: Cents | null; imputation: number | null }) {
   return (
     <div
       className="flex animate-rise-in flex-wrap items-center gap-x-6 gap-y-1 rounded-xl bg-muted px-4 py-3 text-sm"

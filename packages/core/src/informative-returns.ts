@@ -1,6 +1,7 @@
 import { EU_VAT_PREFIXES, normalizeTaxId } from "./contacts";
-import { roundCents, WITHHOLDING_RATES, type OperationType } from "./invoices";
+import { WITHHOLDING_RATES, type OperationType } from "./invoices";
 import { isInPeriod } from "./ledger";
+import { cents, sumBy, type Cents } from "./money";
 import type { Quarter } from "./period";
 import type { PurchaseOperationType } from "./purchases";
 import type { Boxes } from "./tax-returns";
@@ -27,11 +28,11 @@ export interface PartyOperation {
   operation: OperationType | PurchaseOperationType;
   /** Goods rather than services: form 349 tells deliveries and acquisitions of goods apart. */
   goods: boolean;
-  base: number;
+  base: Cents;
   /** Base plus VAT and surcharge, before withholding: what form 347 adds up. */
-  total: number;
+  total: Cents;
   /** IRPF withheld on the invoice. */
-  withholding: number;
+  withholding: Cents;
   /** Withholding rate as a fraction: 0.15 is 15 %. */
   withholdingRate: number;
   /** Property rental (forms 115 and 180). */
@@ -42,15 +43,13 @@ export interface PartyOperation {
   cadastralRef?: string;
   rentalLocation?: RentalLocation;
   /** Collected or paid in cash. */
-  cash: number;
+  cash: Cents;
 }
 
 export type RentalLocation = "spain" | "basqueCountry" | "navarre" | "noCadastralRef" | "abroad";
 
 const inQuarter = (date: string, year: number, quarter: Quarter) => isInPeriod(date, { year, quarter });
 const inYear = (date: string, year: number) => isInPeriod(date, { year, quarter: null });
-
-const sum = <T>(items: T[], value: (item: T) => number) => roundCents(items.reduce((acc, i) => acc + value(i), 0));
 
 function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
   const groups = new Map<string, T[]>();
@@ -84,8 +83,8 @@ export interface Perceptor {
   key: PerceptorKey190;
   /** Subkey of the key: G01 general rate, G02 reduced rate of new professionals, G04 Ceuta and Melilla. */
   subkey: string;
-  base: number;
-  withholding: number;
+  base: Cents;
+  withholding: Cents;
   /** Rate as a fraction when every document shares it; null when they differ. */
   rate: number | null;
   documentIds: string[];
@@ -115,8 +114,8 @@ function perceptors(ops: PartyOperation[]): Perceptor[] {
         contactId: group[0]!.contactId,
         key,
         subkey: subkeyOf(key, rate ?? group[0]!.withholdingRate),
-        base: sum(group, (o) => o.base),
-        withholding: sum(group, (o) => o.withholding),
+        base: sumBy(group, (o) => o.base),
+        withholding: sumBy(group, (o) => o.withholding),
         rate,
         documentIds: group.map((o) => o.id),
       };
@@ -142,16 +141,16 @@ export function model111(ops: PartyOperation[], year: number, quarter: Quarter):
 
   const boxes: Boxes = {
     "01": people(work),
-    "02": sum(work, (o) => o.base),
-    "03": sum(work, (o) => o.withholding),
+    "02": sumBy(work, (o) => o.base),
+    "03": sumBy(work, (o) => o.withholding),
     "07": people(activities),
-    "08": sum(activities, (o) => o.base),
-    "09": sum(activities, (o) => o.withholding),
+    "08": sumBy(activities, (o) => o.base),
+    "09": sumBy(activities, (o) => o.withholding),
     "25": 0,
     "26": 0,
     "27": 0,
   };
-  boxes["28"] = roundCents(boxes["03"]! + boxes["09"]! + boxes["27"]!);
+  boxes["28"] = cents(boxes["03"]! + boxes["09"]! + boxes["27"]!);
   // Box 29 only applies to supplementary returns
   boxes["30"] = boxes["28"]!;
   return { boxes, perceptors: perceptors(docs), documentIds: docs.map((o) => o.id) };
@@ -159,10 +158,10 @@ export function model111(ops: PartyOperation[], year: number, quarter: Quarter):
 
 export interface Model190 {
   perceptors: Perceptor[];
-  base: number;
-  withholding: number;
+  base: Cents;
+  withholding: Cents;
   /** What the four 111 of the year paid, which should match the withholding. */
-  paid: number[];
+  paid: Cents[];
 }
 
 /** Form 190: the year's withholdings, one record per perceptor and key. */
@@ -170,9 +169,9 @@ export function model190(ops: PartyOperation[], year: number): Model190 {
   const docs = withheldPurchases(ops).filter((o) => inYear(o.date, year));
   return {
     perceptors: perceptors(docs),
-    base: sum(docs, (o) => o.base),
-    withholding: sum(docs, (o) => o.withholding),
-    paid: ([1, 2, 3, 4] as const).map((q) => model111(ops, year, q).boxes["30"]!),
+    base: sumBy(docs, (o) => o.base),
+    withholding: sumBy(docs, (o) => o.withholding),
+    paid: ([1, 2, 3, 4] as const).map((q) => cents(model111(ops, year, q).boxes["30"]!)),
   };
 }
 
@@ -193,8 +192,8 @@ export function model115(ops: PartyOperation[], year: number, quarter: Quarter):
   const docs = rentals(ops).filter((o) => o.withholding !== 0 && inQuarter(o.date, year, quarter));
   const boxes: Boxes = {
     "01": new Set(docs.map((o) => o.contactId)).size,
-    "02": sum(docs, (o) => o.base),
-    "03": sum(docs, (o) => o.withholding),
+    "02": sumBy(docs, (o) => o.base),
+    "03": sumBy(docs, (o) => o.withholding),
     // Box 04 only applies to supplementary returns
     "04": 0,
   };
@@ -216,18 +215,18 @@ export interface Landlord {
   cadastralRef: string;
   /** Situation code of form 180 (1–4). */
   situation: string;
-  base: number;
-  withholding: number;
+  base: Cents;
+  withholding: Cents;
   rate: number | null;
   documentIds: string[];
 }
 
 export interface Model180 {
   landlords: Landlord[];
-  base: number;
-  withholding: number;
+  base: Cents;
+  withholding: Cents;
   /** What the four 115 of the year paid. */
-  paid: number[];
+  paid: Cents[];
   /** Rentals with a withholding rate other than 19 % (or 7,6 % in Ceuta and Melilla), zero included. */
   unusual: PartyOperation[];
 }
@@ -245,27 +244,27 @@ export function model180(ops: PartyOperation[], year: number): Model180 {
       contactId: group[0]!.contactId,
       cadastralRef: group[0]!.cadastralRef ?? "",
       situation: PROPERTY_SITUATION[group[0]!.rentalLocation ?? "spain"],
-      base: sum(group, (o) => o.base),
-      withholding: sum(group, (o) => o.withholding),
+      base: sumBy(group, (o) => o.base),
+      withholding: sumBy(group, (o) => o.withholding),
       rate: commonRate(group),
       documentIds: group.map((o) => o.id),
     }))
     .sort((a, b) => b.withholding - a.withholding);
   return {
     landlords,
-    base: sum(docs, (o) => o.base),
-    withholding: sum(docs, (o) => o.withholding),
-    paid: ([1, 2, 3, 4] as const).map((q) => model115(ops, year, q).boxes["05"]!),
+    base: sumBy(docs, (o) => o.base),
+    withholding: sumBy(docs, (o) => o.withholding),
+    paid: ([1, 2, 3, 4] as const).map((q) => cents(model115(ops, year, q).boxes["05"]!)),
     unusual: yearRentals.filter((o) => !RENTAL_RATES.some((r) => Math.abs(r - o.withholdingRate) < 1e-9)),
   };
 }
 
 /* ───────────────────── Form 347: operations with third parties ───────────────────── */
 
-/** Yearly total, VAT included, above which a client or supplier is reported. */
-export const THRESHOLD_347 = 3_005.06;
-/** Cash collected from one person above which the amount is reported too. */
-export const CASH_THRESHOLD_347 = 6_000;
+/** Yearly total, VAT included, above which a client or supplier is reported: 3.005,06 €. */
+export const THRESHOLD_347 = cents(300_506);
+/** Cash collected from one person above which the amount is reported too: 6.000 €. */
+export const CASH_THRESHOLD_347 = cents(600_000);
 
 /** Operations other forms already report: intra-EU (349), imports and exports (customs). */
 const OUTSIDE_347: (OperationType | PurchaseOperationType)[] = ["intraEu", "export", "import"];
@@ -288,11 +287,11 @@ export type Key347 = "A" | "B";
 export interface Declared347 {
   contactId: string;
   key: Key347;
-  total: number;
+  total: Cents;
   /** Total per quarter, as the form asks. */
-  quarters: [number, number, number, number];
+  quarters: [Cents, Cents, Cents, Cents];
   /** Cash collected, reported when above 6.000 €; zero otherwise. */
-  cash: number;
+  cash: Cents;
   documentIds: string[];
 }
 
@@ -323,19 +322,19 @@ export function model347(
   const all = [...groups.values()]
     .map((group): Declared347 => {
       const quarters = ([1, 2, 3, 4] as const).map((q) =>
-        sum(
+        sumBy(
           group.filter((o) => inQuarter(o.date, year, q)),
           (o) => o.total,
         ),
       ) as Declared347["quarters"];
       const key: Key347 = group[0]!.side === "sale" ? "B" : "A";
-      const cash = key === "B" ? sum(group, (o) => o.cash) : 0;
+      const cash = key === "B" ? sumBy(group, (o) => o.cash) : cents(0);
       return {
         contactId: group[0]!.contactId,
         key,
-        total: sum(group, (o) => o.total),
+        total: sumBy(group, (o) => o.total),
         quarters,
-        cash: cash > CASH_THRESHOLD_347 ? cash : 0,
+        cash: cash > CASH_THRESHOLD_347 ? cash : cents(0),
         documentIds: group.map((o) => o.id),
       };
     })
@@ -383,7 +382,7 @@ export function splitVatNumber(taxId: string, country?: string): { code: string;
 export interface Operation349 {
   contactId: string;
   key: Key349;
-  base: number;
+  base: Cents;
   documentIds: string[];
 }
 
@@ -392,7 +391,7 @@ export interface Model349 {
   /** Number of operators (box "número total de operadores"). */
   operators: number;
   /** Sum of the bases. */
-  total: number;
+  total: Cents;
 }
 
 export function model349(ops: PartyOperation[], period: Period349): Model349 {
@@ -406,14 +405,14 @@ export function model349(ops: PartyOperation[], period: Period349): Model349 {
     .map((group) => ({
       contactId: group[0]!.contactId,
       key: key349(group[0]!),
-      base: sum(group, (o) => o.base),
+      base: sumBy(group, (o) => o.base),
       documentIds: group.map((o) => o.id),
     }))
     .sort((a, b) => a.key.localeCompare(b.key) || b.base - a.base);
   return {
     operations,
     operators: new Set(operations.map((o) => `${o.contactId}|${o.key}`)).size,
-    total: sum(operations, (o) => o.base),
+    total: sumBy(operations, (o) => o.base),
   };
 }
 

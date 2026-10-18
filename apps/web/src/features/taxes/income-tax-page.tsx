@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { filingDeadline, incomeTaxYear, model130, type Quarter } from "@fiscalia/core";
+import { cents, filingDeadline, incomeTaxYear, model130, type Quarter } from "@fiscalia/core";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -103,19 +103,19 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
   const [showEmpty, setShowEmpty] = useState(false);
   const annual = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
   const [reduction, reductionBox] = useEditable(annual.reduction);
-  const [negativeCarry, negativeBox] = useEditable(0);
-  const [mortgage, mortgageBox] = useEditable(0);
+  const [negativeCarry, negativeBox] = useEditable(cents(0));
+  const [mortgage, mortgageBox] = useEditable(cents(0));
 
   const r = useMemo(() => {
     // Box 05 subtracts the positive installments of the earlier quarters, as computed
-    const previous = annual.quarters.slice(0, quarter - 1).map((q) => q.boxes["07"]!);
+    const previous = annual.quarters.slice(0, quarter - 1).map((q) => cents(q.boxes["07"]!));
     return model130(books, year, quarter, TAX_OPTIONS, previous, { reduction, negativeCarry, mortgage });
   }, [books, year, quarter, annual, reduction, negativeCarry, mortgage]);
   const documents = useIncomeDocuments(year, quarter * 3 - 1);
 
   const result: ResultSummary = {
     label: "Resultado de la declaración [19]",
-    amount: Math.max(0, r.result),
+    amount: cents(Math.max(0, r.result)),
     verdict: r.result > 0 ? "A ingresar" : "Negativa",
     tone: r.result > 0 ? "danger" : "neutral",
     detail:
@@ -147,7 +147,10 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
                 ...s,
                 rows: s.rows.map((row) =>
                   row.cells[0] === "02"
-                    ? { ...row, hint: `Incluye ${formatEUR(r.hardToJustify)} de gastos de difícil justificación (5 %, máximo 2.000 € al año).` }
+                    ? {
+                        ...row,
+                        hint: `Incluye ${formatEUR(r.hardToJustify)} de gastos de difícil justificación (5 %, máximo 2.000 € al año).`,
+                      }
                     : row,
                 ),
               }
@@ -180,7 +183,7 @@ function IncomeTax100({ year, today }: { year: number; today: Date }) {
   const [showEmpty, setShowEmpty] = useState(false);
   const { annual } = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
   const documents = useIncomeDocuments(year, 11);
-  const paid = annual.boxes["0598"]! + annual.boxes["0599"]! + annual.boxes["0604"]!;
+  const paid = cents(annual.boxes["0598"]! + annual.boxes["0599"]! + annual.boxes["0604"]!);
 
   const result: ResultSummary = {
     label: "Rendimiento neto de la actividad [0224]",
@@ -238,7 +241,9 @@ export function IncomeTaxPage() {
           <div className="flex flex-wrap items-center gap-2.5">
             <FormSwitch
               value={annual ? "100" : "130"}
-              onChange={(v) => setPeriod(v === "100" ? { year: period.year, quarter: null } : quarterOf(period.year, today))}
+              onChange={(v) =>
+                setPeriod(v === "100" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
+              }
               options={[
                 { value: "130", label: "130 · Trimestral" },
                 { value: "100", label: "100 · Anual" },
@@ -250,7 +255,12 @@ export function IncomeTaxPage() {
         {period.quarter === null ? (
           <IncomeTax100 key={period.year} year={period.year} today={today} />
         ) : (
-          <IncomeTax130 key={`${period.year}-${period.quarter}`} year={period.year} quarter={period.quarter} today={today} />
+          <IncomeTax130
+            key={`${period.year}-${period.quarter}`}
+            year={period.year}
+            quarter={period.quarter}
+            today={today}
+          />
         )}
       </div>
     </TooltipProvider>

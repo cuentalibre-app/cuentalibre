@@ -13,7 +13,7 @@ import {
   Unlink,
   Upload,
 } from "lucide-react";
-import { isInPeriod, periodKey, reconciliationStatus, type ReconciliationStatus } from "@fiscalia/core";
+import { isInPeriod, periodKey, reconciliationStatus, sumBy, type ReconciliationStatus } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
@@ -120,7 +120,7 @@ export function MovementsPage() {
         : sign * (a.movement.amount - b.movement.amount);
     });
   const filtered = q !== "" || status !== ALL || account !== ALL;
-  const sum = rows.reduce((acc, r) => acc + r.movement.amount, 0);
+  const sum = sumBy(rows, (r) => r.movement.amount);
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>

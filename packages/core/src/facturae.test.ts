@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { facturaePersonType, facturaeResidence, facturaeXml, type FacturaeInvoice } from "./facturae";
+import { eurosToCents } from "./money";
+
+const eur = eurosToCents;
 
 const invoice: FacturaeInvoice = {
   number: "2026-0009",
@@ -64,7 +67,7 @@ describe("facturaeXml", () => {
   });
 
   it("adds supplies outside the taxable base", () => {
-    const withSupplies = facturaeXml({ ...invoice, withholdingRate: 0, supplies: 30 });
+    const withSupplies = facturaeXml({ ...invoice, withholdingRate: 0, supplies: eur(30) });
     expect(tag(withSupplies, "InvoiceTotal")).toBe("728.65");
     expect(tag(withSupplies, "TotalOutstandingAmount")).toBe("758.65");
     expect(tag(withSupplies, "TotalReimbursableExpenses")).toBe("30.00");

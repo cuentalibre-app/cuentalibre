@@ -1,4 +1,5 @@
 import {
+  cents,
   daysUntil,
   incomeTaxYear,
   isEconomicallyDependent,
@@ -8,9 +9,12 @@ import {
   periodTotals,
   previousPeriod,
   rankCounterparties,
+  sumBy,
+  sumCents,
   takeHomeEstimate,
   upcomingDeadlines,
   vatReturns,
+  type Cents,
   type Deadline,
   type LedgerEntry,
   type Period,
@@ -35,24 +39,24 @@ export interface InvoiceSummary {
   /** ISO date (YYYY-MM-DD). */
   issuedOn: string;
   /** Taxable base, before VAT. */
-  base: number;
+  base: Cents;
   /** Total the client pays: base + VAT − withholding. */
-  total: number;
+  total: Cents;
   status: InvoiceStatus;
 }
 
 export interface MonthPoint {
   month: number;
-  income: number;
-  expenses: number;
-  profit: number;
-  cumulativeProfit: number;
+  income: Cents;
+  expenses: Cents;
+  profit: Cents;
+  cumulativeProfit: Cents;
 }
 
 export interface DeadlineItem {
   deadline: Deadline;
   /** Amount to pay, or null when it's an informative return. */
-  amount: number | null;
+  amount: Cents | null;
   detail: string;
 }
 
@@ -64,7 +68,7 @@ function change(current: number, previous: number): number | null {
 
 /** Quarterly results of forms 303 and 130 for a year, computed once per year. */
 function yearReturns(books: TaxBooks) {
-  const cache = new Map<number, { vat: number[]; irpf: number[] }>();
+  const cache = new Map<number, { vat: Cents[]; irpf: Cents[] }>();
   return (year: number) => {
     if (!cache.has(year)) {
       cache.set(year, {
@@ -80,13 +84,13 @@ function deadlineItem(deadline: Deadline, returns: ReturnType<typeof yearReturns
   const { kind, year, quarter } = deadline;
   switch (kind) {
     case "vat-303": {
-      const amount = quarter ? returns(year).vat[quarter - 1]! : 0;
+      const amount = quarter ? returns(year).vat[quarter - 1]! : cents(0);
       return { deadline, amount, detail: amount < 0 ? "A compensar" : "A ingresar" };
     }
     case "irpf-130":
       return {
         deadline,
-        amount: quarter ? Math.max(0, returns(year).irpf[quarter - 1]!) : null,
+        amount: quarter ? cents(Math.max(0, returns(year).irpf[quarter - 1]!)) : null,
         detail: "Pago fraccionado",
       };
     case "social-security":
@@ -112,16 +116,16 @@ function summarize(doc: SalesDocument, today: Date): InvoiceSummary {
 
 /** Invoices totalled by collection status (totals with VAT). */
 function collectionStatus(invoices: InvoiceSummary[]) {
-  const byStatus: Record<InvoiceStatus, { amount: number; count: number }> = {
-    paid: { amount: 0, count: 0 },
-    pending: { amount: 0, count: 0 },
-    overdue: { amount: 0, count: 0 },
+  const byStatus: Record<InvoiceStatus, { amount: Cents; count: number }> = {
+    paid: { amount: cents(0), count: 0 },
+    pending: { amount: cents(0), count: 0 },
+    overdue: { amount: cents(0), count: 0 },
   };
   for (const inv of invoices) {
-    byStatus[inv.status].amount += inv.total;
+    byStatus[inv.status].amount = cents(byStatus[inv.status].amount + inv.total);
     byStatus[inv.status].count += 1;
   }
-  return { byStatus, total: invoices.reduce((acc, i) => acc + i.total, 0), count: invoices.length };
+  return { byStatus, total: sumBy(invoices, (i) => i.total), count: invoices.length };
 }
 
 /**
@@ -144,17 +148,27 @@ export function buildHomeData(
     ...purchases.map((p) => ({ supplier: supplierOf(p).name, date: p.bookedOn, ...deductible(p) })),
     // Investment goods count through their quarterly amortization
     ...purchases.flatMap((p) =>
-      amortizationExpenses(p).map((a) => ({ supplier: supplierOf(p).name, date: a.date, base: a.expense, vat: 0 })),
+      amortizationExpenses(p).map((a) => ({
+        supplier: supplierOf(p).name,
+        date: a.date,
+        base: a.expense,
+        vat: cents(0),
+      })),
     ),
     // Without an invoice there is no VAT to deduct. Only saved suppliers enter the ranking
     ...otherExpenses.map((e) => ({
       supplier: e.supplierId ? payeeOf(e)!.name : null,
       date: e.date,
       base: deductibleOf(e),
-      vat: 0,
+      vat: cents(0),
     })),
   ];
-  const expenseEntries = expenses.map((e): LedgerEntry => ({ date: e.date, base: e.base, vat: e.vat, withholding: 0 }));
+  const expenseEntries = expenses.map((e): LedgerEntry => ({
+    date: e.date,
+    base: e.base,
+    vat: e.vat,
+    withholding: cents(0),
+  }));
 
   const yearCache = new Map<number, YearTotals>();
   const yearTotals = (y: number) => {
@@ -168,23 +182,24 @@ export function buildHomeData(
   const year = yearTotals(period.year);
   const months = periodMonths(period);
   const totals = periodTotals(year, period);
-  const profit = totals.income - totals.expenses;
+  const profit = cents(totals.income - totals.expenses);
 
   const previous = previousPeriod(period);
   const previousTotals = periodTotals(yearTotals(previous.year), previous);
-  const previousProfit = previousTotals.income - previousTotals.expenses;
+  const previousProfit = cents(previousTotals.income - previousTotals.expenses);
 
   // The same returns the tax pages show, so both add up
   const returns = yearReturns(toTaxBooks(documents, purchases, otherExpenses));
-  const quarters = (results: number[]) => (period.quarter ? [results[period.quarter - 1]!] : results);
-  const vat = quarters(returns(period.year).vat).reduce((acc, r) => acc + r, 0);
-  const irpf = quarters(returns(period.year).irpf).reduce((acc, r) => acc + Math.max(0, r), 0);
+  const quarters = (results: Cents[]) => (period.quarter ? [results[period.quarter - 1]!] : results);
+  const vat = sumCents(quarters(returns(period.year).vat));
+  const irpf = sumBy(quarters(returns(period.year).irpf), (r) => cents(Math.max(0, r)));
 
-  let running = 0;
+  let running = cents(0);
   const monthly: (MonthPoint | null)[] = year.map((m, month) => {
     if (!m) return null;
-    running += m.income - m.expenses;
-    return { month, income: m.income, expenses: m.expenses, profit: m.income - m.expenses, cumulativeProfit: running };
+    const profit = cents(m.income - m.expenses);
+    running = cents(running + profit);
+    return { month, income: m.income, expenses: m.expenses, profit, cumulativeProfit: running };
   });
 
   const lastMonthWithData = [...months].reverse().find((m) => monthly[m] != null) ?? months[0]!;
@@ -210,7 +225,7 @@ export function buildHomeData(
       expenses: change(totals.expenses, previousTotals.expenses),
       profit: change(profit, previousProfit),
     },
-    taxes: { vat, irpf, total: Math.max(0, vat) + irpf },
+    taxes: { vat, irpf, total: cents(Math.max(0, vat) + irpf) },
     takeHome: takeHomeEstimate(totals),
     months,
     monthly,
@@ -226,7 +241,7 @@ export function buildHomeData(
     /** Self-employed fees (PGC 6422) booked in the period, already counted as expenses. */
     socialSecurityBooked: otherExpenses
       .filter((e) => e.expenseType === "6422" && isInPeriod(e.date, period))
-      .reduce((acc, e) => acc + e.amount, 0),
+      .reduce((acc, e) => cents(acc + e.amount), cents(0)),
     economicallyDependent: isEconomicallyDependent(clients),
     collection: collectionStatus(periodInvoices),
   };

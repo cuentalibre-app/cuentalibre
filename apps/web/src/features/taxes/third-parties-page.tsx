@@ -1,7 +1,7 @@
 import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { Calendar, ChevronDown, Info } from "lucide-react";
-import { model347, obligation, THRESHOLD_347, type Declared347 } from "@fiscalia/core";
+import { model347, obligation, sumBy, THRESHOLD_347, type Declared347 } from "@fiscalia/core";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
@@ -137,7 +137,7 @@ export function ThirdPartiesPage() {
 
   const result: ResultSummary = {
     label: "Importe total declarado",
-    amount: r.declared.reduce((acc, d) => acc + d.total, 0),
+    amount: sumBy(r.declared, (d) => d.total),
     verdict: r.declared.length === 0 ? "No tienes que presentarlo" : "Informativo",
     tone: "neutral",
     detail:

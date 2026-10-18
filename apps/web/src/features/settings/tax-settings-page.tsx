@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ArrowDown, ArrowUp, Info, Plus, Search, Star, Trash2, TriangleAlert, UserPlus } from "lucide-react";
-import { roundCents } from "@fiscalia/core";
+import { cents } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
@@ -14,7 +14,7 @@ import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { IconAction } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, WITHHOLDING_GROUPS } from "@/features/sales/sales-model";
-import { formatDecimalInput, parseDecimal } from "@/lib/format";
+import { formatEurosInput, parseEuros } from "@/lib/format";
 import type { EconomicActivity, FiscalRegion, IncomeTaxMethod, TaxSetup, VatRegime } from "@/mocks/settings";
 import { ConfirmDialog, SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import {
@@ -324,8 +324,8 @@ function VariousClients({ value, onChange }: { value: string | null; onChange: (
 export function TaxSettingsPage() {
   const { tax: saved, profile } = useSettings();
   const { draft, set, dirty, justSaved, markSaved } = useDraft<TaxSetup>(saved);
-  const [fee, setFee] = useState(formatDecimalInput(saved.socialSecurityFee));
-  const parsedFee = parseDecimal(fee);
+  const [fee, setFee] = useState(formatEurosInput(saved.socialSecurityFee));
+  const parsedFee = parseEuros(fee);
   const feeError = parsedFee === null || parsedFee < 0 ? "Introduce un importe válido." : undefined;
   const notes = unsupportedSetup(draft);
 
@@ -443,7 +443,7 @@ export function TaxSettingsPage() {
             hint={
               feeError
                 ? undefined
-                : `Se propone al registrar la cuota como gasto y se muestra en el calendario fiscal. Al año: ${formatEUR((parsedFee ?? 0) * 12)}.`
+                : `Se propone al registrar la cuota como gasto y se muestra en el calendario fiscal. Al año: ${formatEUR(cents((parsedFee ?? 0) * 12))}.`
             }
             className="max-w-sm"
           >
@@ -455,10 +455,10 @@ export function TaxSettingsPage() {
                   value={fee}
                   onChange={(e) => {
                     setFee(e.target.value);
-                    const value = parseDecimal(e.target.value);
-                    if (value !== null && value >= 0) set("socialSecurityFee", roundCents(value));
+                    const value = parseEuros(e.target.value);
+                    if (value !== null && value >= 0) set("socialSecurityFee", value);
                   }}
-                  onBlur={() => parsedFee !== null && setFee(formatDecimalInput(parsedFee))}
+                  onBlur={() => parsedFee !== null && setFee(formatEurosInput(parsedFee))}
                   className="pr-8 text-right amount"
                 />
                 <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground">

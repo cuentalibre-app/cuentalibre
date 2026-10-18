@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { isInPeriod, ledgerYearTotals, type LedgerEntry } from "./ledger";
+import { applyRate, eurosToCents as eur } from "./money";
 
-const entry = (date: string, base: number, vat = base * 0.21, withholding = 0): LedgerEntry => ({
+const entry = (date: string, base: number, vat = applyRate(eur(base), 0.21) / 100, withholding = 0): LedgerEntry => ({
   date,
-  base,
-  vat,
-  withholding,
+  base: eur(base),
+  vat: eur(vat),
+  withholding: eur(withholding),
 });
 
 describe("isInPeriod", () => {
@@ -31,7 +32,13 @@ describe("ledgerYearTotals", () => {
       [entry("2026-03-10", 200, 42)],
       today,
     );
-    expect(year[2]).toEqual({ income: 1500, expenses: 200, outputVat: 210, inputVat: 42, withholdings: 150 });
+    expect(year[2]).toEqual({
+      income: eur(1500),
+      expenses: eur(200),
+      outputVat: eur(210),
+      inputVat: eur(42),
+      withholdings: eur(150),
+    });
   });
 
   it("ignores entries from other years", () => {
@@ -50,6 +57,6 @@ describe("ledgerYearTotals", () => {
   it("books future-dated entries anyway", () => {
     const year = ledgerYearTotals(2026, [entry("2026-11-02", 800)], [], today);
     expect(year[11]).toBeNull();
-    expect(year[10]?.income).toBe(800);
+    expect(year[10]?.income).toBe(eur(800));
   });
 });

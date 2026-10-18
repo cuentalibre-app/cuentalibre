@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Check, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
-import { calendarStatus, daysUntil, obligation, toIsoDate, type Boxes, type Quarter } from "@fiscalia/core";
+import {
+  calendarStatus,
+  cents,
+  centsToEuros,
+  daysUntil,
+  obligation,
+  sumBy,
+  toIsoDate,
+  type Boxes,
+  type Cents,
+  type Quarter,
+} from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Input } from "@fiscalia/ui/components/input";
@@ -10,7 +21,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
-import { daysLeftLabel, formatDate, parseDecimal } from "@/lib/format";
+import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
 import {
   AEAT_LINKS,
   CALENDAR_STATUS,
@@ -23,12 +34,19 @@ import {
 /* Building blocks of the tax form pages. Tooltips need a TooltipProvider above. */
 
 /** As the AEAT forms expect it: no thousands separator and a decimal comma. */
-export const clipboardValue = (value: number) => value.toFixed(2).replace(".", ",");
+const decimalText = (value: number) => value.toFixed(2).replace(".", ",");
+
+/** An amount as the AEAT forms expect it: euros without thousands separator and with a decimal comma. */
+export const clipboardValue = (amount: Cents) => decimalText(centsToEuros(amount));
 
 const formatPercent = (value: number) => `${value.toLocaleString("es-ES", { maximumFractionDigits: 2 })} %`;
 
+/** Money boxes hold cents; rate boxes a percentage and count boxes a number of people. */
 const formatBox = (value: number, percent: boolean, count?: boolean) =>
-  percent ? formatPercent(value) : count ? value.toLocaleString("es-ES") : formatEUR(value);
+  percent ? formatPercent(value) : count ? value.toLocaleString("es-ES") : formatEUR(cents(value));
+
+const boxClipboard = (value: number, percent: boolean, count: boolean) =>
+  count ? String(value) : percent ? decimalText(value) : clipboardValue(cents(value));
 
 export function useCopied(): [string | null, (key: string, text: string) => void] {
   const [copied, setCopied] = useState<string | null>(null);
@@ -103,11 +121,11 @@ export interface EditableBox {
 }
 
 /** An input box that starts on its computed value and can be corrected; empty counts as zero. */
-export function useEditable(computed: number): [number, EditableBox] {
+export function useEditable(computed: Cents): [Cents, EditableBox] {
   const [typed, setTyped] = useState<string>();
-  const parsed = typed === undefined ? null : parseDecimal(typed);
+  const parsed = typed === undefined ? null : parseEuros(typed);
   return [
-    parsed ?? (typed?.trim() === "" ? 0 : computed),
+    parsed ?? (typed?.trim() === "" ? cents(0) : computed),
     {
       value: typed ?? clipboardValue(computed),
       onChange: setTyped,
@@ -269,7 +287,7 @@ export function FormSections({
                                 strong={r.total}
                                 copied={copied === cell}
                                 onCopy={() =>
-                                  copy(cell, countBoxes.has(cell) ? String(value(cell)) : clipboardValue(value(cell)))
+                                  copy(cell, boxClipboard(value(cell), percentBoxes.has(cell), countBoxes.has(cell)))
                                 }
                               />
                             )}
@@ -303,7 +321,7 @@ function labelAbove(section: FormSection, target: FormSection["rows"][number]): 
 
 export interface ResultSummary {
   label: string;
-  amount: number;
+  amount: Cents;
   /** Short word under the amount: "A ingresar", "A compensar"… */
   verdict: string;
   tone: "danger" | "success" | "neutral";
@@ -442,7 +460,7 @@ export interface DocumentRow {
   number: string;
   contact: string;
   tag?: string;
-  amounts: number[];
+  amounts: Cents[];
 }
 
 export interface DocumentGroup {
@@ -457,7 +475,7 @@ export interface DocumentGroup {
 export function DocumentsPanel({ title, groups }: { title: string; groups: DocumentGroup[] }) {
   const [active, setActive] = useState(groups[0]!.key);
   const group = groups.find((g) => g.key === active) ?? groups[0]!;
-  const totals = group.columns.map((_, i) => group.rows.reduce((acc, r) => acc + (r.amounts[i] ?? 0), 0));
+  const totals = group.columns.map((_, i) => sumBy(group.rows, (r) => r.amounts[i] ?? cents(0)));
   const th = cn(table.th, "px-2.5");
   const td = cn(table.td, "px-2.5");
 
@@ -557,7 +575,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
                     </span>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-0.5">
-                    <span className="amount">{formatEUR(r.amounts[0] ?? 0)}</span>
+                    <span className="amount">{formatEUR(r.amounts[0] ?? cents(0))}</span>
                     {r.amounts.length > 1 && (
                       <span className="amount text-xs text-muted-foreground">
                         {group.columns[1]} {formatEUR(r.amounts[1]!)}
@@ -617,7 +635,7 @@ export function QuarterCards({
   form: "111" | "115";
   year: number;
   today: Date;
-  values: number[];
+  values: Cents[];
   to: (quarter: Quarter) => string;
 }) {
   return (

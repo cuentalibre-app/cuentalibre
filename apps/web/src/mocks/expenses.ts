@@ -1,3 +1,4 @@
+import { eurosToCents, type Cents } from "@fiscalia/core";
 import type { ExpenseType } from "./purchases";
 import type { Attachment, RentalLocation } from "./sales";
 
@@ -23,8 +24,8 @@ export interface Expense {
   /** Receipt or reference number; empty when there is none. */
   number: string;
   concept: string;
-  /** Euros, taxes included: without an invoice no VAT can be deducted. */
-  amount: number;
+  /** Taxes included: without an invoice no VAT can be deducted. */
+  amount: Cents;
   expenseType: ExpenseType;
   /** Whole percentage (0–100) that counts as an expense. */
   imputation: number;
@@ -64,6 +65,7 @@ const MONTH_NAMES = [
 function expense(
   date: string,
   concept: string,
+  /** Euros. */
   amount: number,
   expenseType: ExpenseType,
   extra: Partial<Expense> & { paidOn?: string | null; paymentMethodId?: string } = {},
@@ -74,7 +76,7 @@ function expense(
     date,
     number: "",
     concept,
-    amount,
+    amount: eurosToCents(amount),
     expenseType,
     imputation: 100,
     supplierId: null,

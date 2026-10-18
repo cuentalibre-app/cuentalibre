@@ -1,3 +1,5 @@
+import { applyRate, cents, eurosToCents, sumBy, type Cents } from "./money";
+
 /** Spanish VAT rates: general, reduced, super-reduced and exempt. */
 export const VAT_RATES = [0.21, 0.1, 0.04, 0] as const;
 
@@ -47,8 +49,9 @@ export const WITHHOLDING_RATES = {
 
 export type WithholdingKind = keyof typeof WITHHOLDING_RATES;
 
-/** One line of an invoice, quote or delivery note. Amounts are in euros, before VAT. */
+/** One line of an invoice, quote or delivery note, before VAT. */
 export interface InvoiceLine {
+  /** In euros, with any number of decimals (see money.ts). */
   unitPrice: number;
   quantity: number;
   /** Discount as a fraction: 0.1 is 10%. */
@@ -61,41 +64,35 @@ export interface InvoiceLine {
 
 export interface VatBreakdown {
   rate: number;
-  base: number;
-  vat: number;
+  base: Cents;
+  vat: Cents;
 }
 
 export interface InvoiceTotals {
   /** Taxable base (base imponible). */
-  base: number;
-  vat: number;
+  base: Cents;
+  vat: Cents;
   /** Equivalence surcharge. */
-  surcharge: number;
+  surcharge: Cents;
   /** IRPF withheld by the client. */
-  withholding: number;
+  withholding: Cents;
   /** Expenses paid on the client's behalf (suplidos): outside the taxable base. */
-  supplies: number;
+  supplies: Cents;
   /** What the client pays: base + VAT + surcharge − withholding + supplies. */
-  total: number;
+  total: Cents;
   /** Base and VAT per rate, highest rate first. Only rates in use appear. */
   vatBreakdown: VatBreakdown[];
 }
 
-/** Rounds to whole cents, half away from zero. */
-export function roundCents(value: number): number {
-  // toPrecision drops float noise first: 1.005 * 100 is 100.49999999999999
-  const cents = Math.round(Number((Math.abs(value) * 100).toPrecision(12)));
-  return (Math.sign(value) * cents) / 100 || 0;
+/** Price times quantity, less the discount, rounded to cents. */
+export function lineBase(line: InvoiceLine): Cents {
+  return eurosToCents(line.unitPrice * line.quantity * (1 - line.discount));
 }
 
-export function lineBase(line: InvoiceLine): number {
-  return roundCents(line.unitPrice * line.quantity * (1 - line.discount));
-}
-
-/** Sums line bases per rate and applies it: VAT or surcharge on the grouped bases. */
-function taxByRate(lines: InvoiceLine[], rateOf: (line: InvoiceLine) => number): Map<number, number> {
-  const byRate = new Map<number, number>();
-  for (const line of lines) byRate.set(rateOf(line), (byRate.get(rateOf(line)) ?? 0) + lineBase(line));
+/** Sums line bases per rate: VAT or surcharge are then applied on the grouped bases. */
+function baseByRate(lines: InvoiceLine[], rateOf: (line: InvoiceLine) => number): Map<number, Cents> {
+  const byRate = new Map<number, Cents>();
+  for (const line of lines) byRate.set(rateOf(line), cents((byRate.get(rateOf(line)) ?? 0) + lineBase(line)));
   return byRate;
 }
 
@@ -104,27 +101,25 @@ function taxByRate(lines: InvoiceLine[], rateOf: (line: InvoiceLine) => number):
  * (not line by line) and withholding on the whole taxable base, as the invoice
  * shows them. Supplies are added to the total without tax.
  */
-export function invoiceTotals(lines: InvoiceLine[], withholdingRate = 0, supplies = 0): InvoiceTotals {
-  const byRate = taxByRate(lines, (l) => l.vatRate);
-
-  const vatBreakdown = [...byRate]
+export function invoiceTotals(lines: InvoiceLine[], withholdingRate = 0, supplies = cents(0)): InvoiceTotals {
+  const vatBreakdown = [...baseByRate(lines, (l) => l.vatRate)]
     .sort(([a], [b]) => b - a)
-    .map(([rate, base]) => ({ rate, base: roundCents(base), vat: roundCents(base * rate) }));
+    .map(([rate, base]) => ({ rate, base, vat: applyRate(base, rate) }));
 
-  const base = roundCents(vatBreakdown.reduce((acc, r) => acc + r.base, 0));
-  const vat = roundCents(vatBreakdown.reduce((acc, r) => acc + r.vat, 0));
-  const surcharge = roundCents(
-    [...taxByRate(lines, (l) => l.surchargeRate ?? 0)].reduce((acc, [rate, b]) => acc + roundCents(b * rate), 0),
+  const base = sumBy(vatBreakdown, (r) => r.base);
+  const vat = sumBy(vatBreakdown, (r) => r.vat);
+  const surcharge = sumBy(
+    baseByRate(lines, (l) => l.surchargeRate ?? 0),
+    ([rate, b]) => applyRate(b, rate),
   );
-  const withholding = roundCents(base * withholdingRate);
-  supplies = roundCents(supplies);
+  const withholding = applyRate(base, withholdingRate);
   return {
     base,
     vat,
     surcharge,
     withholding,
     supplies,
-    total: roundCents(base + vat + surcharge - withholding + supplies),
+    total: cents(base + vat + surcharge - withholding + supplies),
     vatBreakdown,
   };
 }

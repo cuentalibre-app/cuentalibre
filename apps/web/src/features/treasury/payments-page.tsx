@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router";
 import { ArrowUpRight, ChevronDown, Download, Link2, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
-import { isInPeriod, periodKey, type ReconciliationStatus } from "@fiscalia/core";
+import { cents, isInPeriod, periodKey, sumBy, type ReconciliationStatus } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
@@ -110,8 +110,16 @@ export function PaymentsPage() {
           : sign * a.method.localeCompare(b.method, "es"),
     );
   const filtered = JSON.stringify(filters) !== JSON.stringify(NO_FILTERS);
-  const collected = rows.filter((r) => r.payment.amount > 0).reduce((s, r) => s + r.payment.amount, 0);
-  const paid = rows.filter((r) => r.payment.amount < 0).reduce((s, r) => s - r.payment.amount, 0);
+  const collected = sumBy(
+    rows.filter((r) => r.payment.amount > 0),
+    (r) => r.payment.amount,
+  );
+  const paid = cents(
+    -sumBy(
+      rows.filter((r) => r.payment.amount < 0),
+      (r) => r.payment.amount,
+    ),
+  );
   const unreconciled = rows.filter((r) => r.status === "none").length;
 
   const sortHeader = (key: SortKey, label: string, numeric?: boolean) => (
@@ -340,7 +348,7 @@ export function PaymentsPage() {
                         {rows.length} {rows.length === 1 ? "cobro o pago" : "cobros y pagos"}
                       </td>
                       <td className={cn(table.td, "text-right amount")}>
-                        <AnimatedAmount value={collected - paid} />
+                        <AnimatedAmount value={cents(collected - paid)} />
                       </td>
                       <td colSpan={3} className={table.td} />
                     </tr>

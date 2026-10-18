@@ -18,7 +18,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { roundCents } from "@fiscalia/core";
+import { sumBy, type Cents } from "@fiscalia/core";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -59,7 +59,7 @@ interface Row {
   place: string;
   activity: ActivityRow[];
   /** Invoiced over the contact's whole history (clients: issued invoices; suppliers: invoices and expenses). */
-  billed: number;
+  billed: Cents;
 }
 
 interface Filters {
@@ -109,7 +109,10 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
             .filter(Boolean)
             .join(", "),
           activity,
-          billed: roundCents(activity.filter((a) => billedKinds.includes(a.kind)).reduce((s, a) => s + a.total, 0)),
+          billed: sumBy(
+            activity.filter((a) => billedKinds.includes(a.kind)),
+            (a) => a.total,
+          ),
         };
       }),
     [contacts, role, sales, purchases, expenses, today],
@@ -421,9 +424,7 @@ function ContactsTable({
             <td colSpan={5} className={cn(td, "text-sm text-muted-foreground")}>
               {rows.length} {rows.length === 1 ? ROLES[role].singular.toLowerCase() : ROLES[role].title.toLowerCase()}
             </td>
-            <td className={cn(td, "text-right amount")}>
-              {formatEUR(roundCents(rows.reduce((s, r) => s + r.billed, 0)))}
-            </td>
+            <td className={cn(td, "text-right amount")}>{formatEUR(sumBy(rows, (r) => r.billed))}</td>
             <td className={td} />
           </tr>
         </tfoot>

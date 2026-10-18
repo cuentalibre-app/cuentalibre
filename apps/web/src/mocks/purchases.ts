@@ -2,7 +2,9 @@ import {
   WITHHOLDING_RATES,
   type AmortizationPlan,
   addDays,
+  eurosToCents,
   invoiceTotals,
+  type Cents,
   type PurchaseOperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
@@ -51,8 +53,8 @@ export interface Payment {
   id: string;
   /** ISO date (YYYY-MM-DD). */
   date: string;
-  /** Euros; a credit note has negative payments (refunds). */
-  amount: number;
+  /** A credit note has negative payments (refunds). */
+  amount: Cents;
   paymentMethodId: string;
 }
 
@@ -409,7 +411,7 @@ const assets: PurchaseInvoice[] = [
 ];
 
 const partial = occasional.find((p) => p.number === "TP-26-005102")!;
-partial.payments = [{ id: `pay${++seq}`, date: "2026-09-30", amount: 200, paymentMethodId: "transfer" }];
+partial.payments = [{ id: `pay${++seq}`, date: "2026-09-30", amount: eurosToCents(200), paymentMethodId: "transfer" }];
 
 /** Received invoices, newest first. */
 export const initialPurchaseInvoices: PurchaseInvoice[] = [...recurring, ...occasional, ...assets].sort((a, b) =>

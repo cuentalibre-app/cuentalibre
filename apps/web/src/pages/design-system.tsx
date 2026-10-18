@@ -1,10 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { eurosToCents } from "@fiscalia/core";
 import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Card, CardTitle } from "@fiscalia/ui/components/card";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
+
+/** Sample figures below are written in euros. */
+const eur = (euros: number) => formatEUR(eurosToCents(euros));
 
 const colorGroups: { title: string; tokens: string[] }[] = [
   { title: "Superficies", tokens: ["background", "card", "popover", "sidebar", "muted", "muted-strong", "accent"] },
@@ -22,9 +26,9 @@ const colorGroups: { title: string; tokens: string[] }[] = [
 ];
 
 const typeScale: { token: string; className: string; sample: string }[] = [
-  { token: "text-4xl · 30px", className: "text-4xl amount font-medium", sample: formatEUR(9476.4) },
+  { token: "text-4xl · 30px", className: "text-4xl amount font-medium", sample: eur(9476.4) },
   { token: "text-3xl · 28px", className: "text-3xl font-semibold tracking-tight", sample: "Inicio" },
-  { token: "text-2xl · 26px", className: "text-2xl amount font-medium", sample: formatEUR(21550) },
+  { token: "text-2xl · 26px", className: "text-2xl amount font-medium", sample: eur(21550) },
   { token: "text-xl · 18px", className: "text-xl font-semibold", sample: "20 OCT" },
   { token: "text-lg · 16px", className: "text-lg font-semibold", sample: "Últimas facturas emitidas" },
   { token: "text-md · 15px", className: "text-md", sample: "Cuerpo en móvil" },
@@ -219,7 +223,7 @@ export function DesignSystemPage() {
                 <span className="text-muted-foreground">{k.label}</span>
                 <span className={cn("text-xs font-semibold", k.tone)}>{k.delta}</span>
               </div>
-              <span className="amount text-2xl font-medium">{formatEUR(k.value)}</span>
+              <span className="amount text-2xl font-medium">{eur(k.value)}</span>
             </Card>
           ))}
         </div>
@@ -237,10 +241,7 @@ export function DesignSystemPage() {
                 <thead>
                   <tr className={table.headRow}>
                     {["Nº", "Cliente", "Fecha", "Total", "Estado"].map((h) => (
-                      <th
-                        key={h}
-                        className={cn(table.th, h === "Total" && "text-right")}
-                      >
+                      <th key={h} className={cn(table.th, h === "Total" && "text-right")}>
                         {h}
                       </th>
                     ))}
@@ -252,7 +253,7 @@ export function DesignSystemPage() {
                       <td className={cn(table.td, "font-mono text-sm")}>{inv.n}</td>
                       <td className={cn(table.td, "font-medium")}>{inv.c}</td>
                       <td className={cn(table.td, "text-muted-foreground")}>{inv.d}</td>
-                      <td className={cn(table.td, "amount text-right")}>{formatEUR(inv.t)}</td>
+                      <td className={cn(table.td, "text-right amount")}>{eur(inv.t)}</td>
                       <td className={table.td}>
                         <Badge tone={inv.tone}>{inv.s}</Badge>
                       </td>
@@ -266,12 +267,12 @@ export function DesignSystemPage() {
           <Card className="min-w-0 flex-[1_1_300px]">
             <div className="flex flex-col gap-1">
               <CardTitle>Neto después de impuestos</CardTitle>
-              <span className="text-sm text-muted-foreground">De {formatEUR(ingresos)} facturados sin IVA</span>
+              <span className="text-sm text-muted-foreground">De {eur(ingresos)} facturados sin IVA</span>
             </div>
-            <span className="amount text-4xl font-medium">{formatEUR(neto)}</span>
+            <span className="amount text-4xl font-medium">{eur(neto)}</span>
             <div
               role="img"
-              aria-label={parts.map((p) => `${p.label} ${formatEUR(p.value)}`).join(", ")}
+              aria-label={parts.map((p) => `${p.label} ${eur(p.value)}`).join(", ")}
               className="flex h-3.5 gap-0.5 overflow-hidden rounded-xs"
             >
               {parts.map((p) => (
@@ -283,7 +284,7 @@ export function DesignSystemPage() {
                 <li key={p.label} className="flex items-center gap-2.5">
                   <span className={cn("size-2.5 rounded-xs", p.className)} aria-hidden="true" />
                   <span className="flex-1">{p.label}</span>
-                  <span className="amount">{formatEUR(p.value)}</span>
+                  <span className="amount">{eur(p.value)}</span>
                 </li>
               ))}
             </ul>
@@ -304,7 +305,14 @@ function PlusIcon() {
 
 function BellIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4" />
     </svg>
   );

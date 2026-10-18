@@ -1,6 +1,7 @@
 import { Fragment, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Check, ChevronRight, Copy } from "lucide-react";
+import { cents, sumBy, type Cents } from "@fiscalia/core";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
@@ -14,7 +15,7 @@ import { clipboardValue, useCopied } from "./tax-form";
  * the AEAT form, and the documents behind it one click away.
  */
 
-export type RecordValue = { text: string; copy?: string; mono?: boolean; muted?: boolean } | { amount: number };
+export type RecordValue = { text: string; copy?: string; mono?: boolean; muted?: boolean } | { amount: Cents };
 
 export interface RecordColumn {
   label: string;
@@ -32,7 +33,7 @@ export interface RecordRow {
   documentIds: string[];
 }
 
-const isAmount = (v: RecordValue): v is { amount: number } => "amount" in v;
+const isAmount = (v: RecordValue): v is { amount: Cents } => "amount" in v;
 
 function CopyValue({ value, copied, onCopy }: { value: RecordValue; copied: boolean; onCopy: () => void }) {
   const text = isAmount(value) ? formatEUR(value.amount) : value.text;
@@ -131,7 +132,7 @@ export function RecordsTable({
     });
   const totals = columns.map((c, i) =>
     c.amount
-      ? rows.reduce((acc, r) => acc + (isAmount(r.values[i]!) ? (r.values[i] as { amount: number }).amount : 0), 0)
+      ? sumBy(rows, (r) => (isAmount(r.values[i]!) ? (r.values[i] as { amount: Cents }).amount : cents(0)))
       : null,
   );
   const firstAmount = columns.findIndex((c) => c.amount);

@@ -1,17 +1,17 @@
+import { cents, eurosToCents, type Cents } from "./money";
+
 /*
  * Treasury: bank movements, the payments recorded against documents, and how
- * they are reconciled. Amounts are in euros, signed: positive money in
- * (collections), negative money out (payments).
+ * they are reconciled. Amounts are signed: positive money in (collections),
+ * negative money out (payments).
  */
 
 export type ReconciliationStatus = "none" | "partial" | "full";
 
-const cents = (value: number) => Math.round(value * 100);
-
 /** How much of a movement is covered by the payments linked to it. */
-export function reconciliationStatus(amount: number, matched: number): ReconciliationStatus {
-  if (cents(matched) === 0) return "none";
-  return cents(matched) === cents(amount) ? "full" : "partial";
+export function reconciliationStatus(amount: Cents, matched: Cents): ReconciliationStatus {
+  if (matched === 0) return "none";
+  return matched === amount ? "full" : "partial";
 }
 
 /** Whole days from `from` to `to` (ISO dates); negative when `to` is earlier. */
@@ -22,7 +22,7 @@ export function daysBetween(from: string, to: string): number {
 export interface Flow {
   /** ISO date (YYYY-MM-DD). */
   date: string;
-  amount: number;
+  amount: Cents;
 }
 
 export interface Candidate extends Flow {
@@ -50,13 +50,13 @@ export function rankCandidates<T extends Candidate>(
   candidates: T[],
   windowDays = MATCH_WINDOW_DAYS,
 ): RankedCandidate<T>[] {
-  const target = cents(movement.amount);
+  const target = movement.amount;
   return candidates
-    .filter((c) => Math.sign(cents(c.amount)) === Math.sign(target) && target !== 0)
-    .filter((c) => Math.abs(cents(c.amount)) <= Math.abs(target))
+    .filter((c) => Math.sign(c.amount) === Math.sign(target) && target !== 0)
+    .filter((c) => Math.abs(c.amount) <= Math.abs(target))
     .map((candidate) => ({
       candidate,
-      exact: cents(candidate.amount) === target,
+      exact: candidate.amount === target,
       days: Math.abs(daysBetween(movement.date, candidate.date)),
     }))
     .filter((r) => r.days <= windowDays)
@@ -95,9 +95,9 @@ export interface MonthFlows {
   /** Zero-based month. */
   month: number;
   /** Money in, positive. */
-  collected: number;
+  collected: Cents;
   /** Money out, as a positive figure. */
-  paid: number;
+  paid: Cents;
 }
 
 /** Money in and out per month for the `count` months ending with the one of `today`, oldest first. */
@@ -105,14 +105,14 @@ export function monthlyFlows(flows: Flow[], today: Date, count = 12): MonthFlows
   const last = today.getFullYear() * 12 + today.getMonth();
   const months: MonthFlows[] = Array.from({ length: count }, (_, i) => {
     const index = last - count + 1 + i;
-    return { year: Math.floor(index / 12), month: index % 12, collected: 0, paid: 0 };
+    return { year: Math.floor(index / 12), month: index % 12, collected: cents(0), paid: cents(0) };
   });
   for (const flow of flows) {
     const [year, month] = flow.date.split("-").map(Number);
     const slot = months[year! * 12 + month! - 1 - (last - count + 1)];
     if (!slot) continue;
-    if (flow.amount >= 0) slot.collected += flow.amount;
-    else slot.paid -= flow.amount;
+    if (flow.amount >= 0) slot.collected = cents(slot.collected + flow.amount);
+    else slot.paid = cents(slot.paid - flow.amount);
   }
   return months;
 }
@@ -123,9 +123,9 @@ export interface StatementLine {
   /** ISO date (YYYY-MM-DD). */
   date: string;
   concept: string;
-  amount: number;
+  amount: Cents;
   /** Balance after the movement, when the bank includes it. */
-  balance: number | null;
+  balance: Cents | null;
   reference: string;
 }
 
@@ -170,8 +170,8 @@ function splitRow(row: string, delimiter: string): string[] {
   return cells.map((c) => c.trim());
 }
 
-/** "1.250,50", "-1250.5", "1 250,50 €" → number; null if it isn't one. */
-export function parseStatementAmount(input: string): number | null {
+/** "1.250,50", "-1250.5", "1 250,50 €" → cents; null if it isn't a number. */
+export function parseStatementAmount(input: string): Cents | null {
   let text = input.replace(/[\s€]|EUR/gi, "");
   if (text === "") return null;
   const comma = text.lastIndexOf(",");
@@ -180,7 +180,7 @@ export function parseStatementAmount(input: string): number | null {
   if (comma > dot) text = text.replace(/\./g, "").replace(",", ".");
   else if (dot > comma && comma !== -1) text = text.replace(/,/g, "");
   const value = Number(text);
-  return Number.isFinite(value) ? Math.round(value * 100) / 100 : null;
+  return Number.isFinite(value) ? eurosToCents(value) : null;
 }
 
 /** "28/09/2026", "28-09-26", "2026-09-28" → "2026-09-28"; null if it isn't a valid date. */
@@ -252,12 +252,12 @@ export function parseBankStatement(text: string): StatementParse {
     if (cells.every((c) => c === "")) continue;
 
     const date = parseStatementDate(cell("date"));
-    let amount: number | null;
+    let amount: Cents | null;
     if (columns.amount !== undefined) amount = parseStatementAmount(cell("amount"));
     else {
       const credit = parseStatementAmount(cell("credit")) ?? 0;
       const debit = parseStatementAmount(cell("debit")) ?? 0;
-      amount = cell("credit") || cell("debit") ? Math.round((credit - Math.abs(debit)) * 100) / 100 : null;
+      amount = cell("credit") || cell("debit") ? cents(credit - Math.abs(debit)) : null;
     }
 
     if (!date) errors.push({ line: i + 1, message: `Fecha no válida: «${cell("date")}».` });
@@ -280,9 +280,6 @@ export function isDuplicateMovement(
   existing: Pick<StatementLine, "date" | "amount" | "concept">[],
 ): boolean {
   return existing.some(
-    (m) =>
-      m.date === line.date &&
-      cents(m.amount) === cents(line.amount) &&
-      normalize(m.concept) === normalize(line.concept),
+    (m) => m.date === line.date && m.amount === line.amount && normalize(m.concept) === normalize(line.concept),
   );
 }

@@ -1,4 +1,4 @@
-import { roundCents } from "./invoices";
+import { cents, sumBy, type Cents } from "./money";
 import { periodMonths, type Period, type Quarter } from "./period";
 import type { TaxBooks } from "./tax-returns";
 
@@ -45,54 +45,53 @@ export interface ProfitAndLoss {
   /** ISO dates, both included. */
   from: string;
   to: string;
-  lines: Record<PnlLine, number>;
+  lines: Record<PnlLine, Cents>;
   /** Amount per account (705, 752, 6231…), for the extended version. */
-  accounts: Record<string, number>;
+  accounts: Record<string, Cents>;
   /** 1 – Ventas y otros ingresos. */
-  income: number;
+  income: Cents;
   /** 2 – Compras y otros gastos. */
-  expenses: number;
+  expenses: Cents;
   /** A – Resultado operativo: 1 − 2. */
-  operating: number;
+  operating: Cents;
   /** B – Resultado de la explotación: A − 68. */
-  exploitation: number;
+  exploitation: Cents;
   /** 3 – Ingresos y gastos financieros: 76 − 66. */
-  financial: number;
+  financial: Cents;
   /** Resultado del ejercicio: B + 3. */
-  result: number;
+  result: Cents;
 }
 
 const inRange = (date: string, from: string, to: string) => date >= from && date <= to;
 
 /** The report for documents dated from `from` to `to` (ISO dates, both included). */
 export function profitAndLoss(books: TaxBooks, from: string, to: string): ProfitAndLoss {
-  const accounts: Record<string, number> = {};
-  const add = (account: string, amount: number) => {
-    accounts[account] = (accounts[account] ?? 0) + amount;
+  const accounts: Record<string, Cents> = {};
+  const add = (account: string, amount: Cents) => {
+    accounts[account] = cents((accounts[account] ?? 0) + amount);
   };
 
   for (const s of books.sales.filter((s) => inRange(s.date, from, to))) {
     add(
       s.account ?? (s.rental ? RENTAL_ACCOUNT : SERVICES_ACCOUNT),
-      s.vatBreakdown.reduce((acc, r) => acc + r.base, 0),
+      sumBy(s.vatBreakdown, (r) => r.base),
     );
   }
   for (const p of books.purchases.filter((p) => inRange(p.date, from, to))) add(p.account, p.expense);
   for (const e of books.expenses.filter((e) => inRange(e.date, from, to))) add(e.account, e.expense);
 
-  const lines = Object.fromEntries(Object.keys(PNL_LABELS).map((k) => [k, 0])) as Record<PnlLine, number>;
+  const lines = Object.fromEntries(Object.keys(PNL_LABELS).map((k) => [k, 0])) as Record<PnlLine, Cents>;
   for (const [account, amount] of Object.entries(accounts)) {
-    accounts[account] = roundCents(amount);
-    lines[pnlLine(account)] += amount;
+    const line = pnlLine(account);
+    lines[line] = cents(lines[line] + amount);
   }
-  for (const key of Object.keys(lines) as PnlLine[]) lines[key] = roundCents(lines[key]);
 
-  const sum = (keys: readonly PnlLine[]) => roundCents(keys.reduce((acc, k) => acc + lines[k], 0));
+  const sum = (keys: readonly PnlLine[]) => sumBy(keys, (k) => lines[k]);
   const income = sum(PNL_INCOME_LINES);
   const expenses = sum(PNL_EXPENSE_LINES);
-  const operating = roundCents(income - expenses);
-  const exploitation = roundCents(operating - lines["68"]);
-  const financial = roundCents(lines["76"] - lines["66"]);
+  const operating = cents(income - expenses);
+  const exploitation = cents(operating - lines["68"]);
+  const financial = cents(lines["76"] - lines["66"]);
 
   return {
     from,
@@ -104,7 +103,7 @@ export function profitAndLoss(books: TaxBooks, from: string, to: string): Profit
     operating,
     exploitation,
     financial,
-    result: roundCents(exploitation + financial),
+    result: cents(exploitation + financial),
   };
 }
 
@@ -127,9 +126,9 @@ export function periodDates(period: Period): { from: string; to: string } {
 export interface MonthResult {
   /** Zero-based month. */
   month: number;
-  income: number;
-  expenses: number;
-  profit: number;
+  income: Cents;
+  expenses: Cents;
+  profit: Cents;
 }
 
 /** Income and deductible expenses of each month of a year, on the same basis as the report. */

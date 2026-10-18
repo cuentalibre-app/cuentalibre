@@ -1,4 +1,4 @@
-import { addDays, type InvoiceLine, type OperationType, type WithholdingKind } from "@fiscalia/core";
+import { addDays, type Cents, type InvoiceLine, type OperationType, type WithholdingKind } from "@fiscalia/core";
 
 /** Sample sales documents until there is a backend. Figures are made up. */
 
@@ -67,7 +67,7 @@ export interface SalesDocument {
   rectifiesId?: string;
   lines: SalesLine[];
   /** Expenses paid on the client's behalf (suplidos), outside the taxable base. */
-  supplies?: number;
+  supplies?: Cents;
   /** Collection date and method, for invoices marked as paid when created. */
   paidOn?: string;
   paymentMethodId?: string;

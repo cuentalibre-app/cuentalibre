@@ -5,7 +5,7 @@ import {
   isImmediate,
   isValidPlan,
   rateRange,
-  roundCents,
+  roundHundredths,
   yearsRange,
   type AmortizationMethod,
   type AmortizedAsset,
@@ -100,7 +100,7 @@ export function AssetSection({
   const changeMethod = (method: AmortizationMethod) => {
     const value = parseDecimal(draft.value);
     // Keep the same pace: 25 % a year is 4 years
-    const converted = value ? formatDecimalInput(roundCents(100 / value)) : draft.value;
+    const converted = value ? formatDecimalInput(roundHundredths(100 / value)) : draft.value;
     onChange({ ...draft, method, value: converted });
   };
 

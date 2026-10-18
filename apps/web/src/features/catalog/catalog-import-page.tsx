@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router";
 import { CircleAlert, CircleCheck, FileSpreadsheet, Info, List, TriangleAlert } from "lucide-react";
+import { eurosToCents } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
@@ -253,7 +254,9 @@ function Preview({
                   <td className={cn(table.td, "font-mono text-sm text-muted-foreground")}>{r.row}</td>
                   <td className={table.td}>{r.name || "—"}</td>
                   <td className={cn(table.td, "font-mono text-sm")}>{r.sku || "—"}</td>
-                  <td className={cn(table.td, "text-right amount")}>{r.price === null ? "—" : formatEUR(r.price)}</td>
+                  <td className={cn(table.td, "text-right amount")}>
+                    {r.price === null ? "—" : formatEUR(eurosToCents(r.price))}
+                  </td>
                   {withStock && (
                     <td className={cn(table.td, "text-right amount")}>
                       {r.stockChange ? `${r.stockChange > 0 ? "+" : ""}${formatQuantity(r.stockChange)}` : "—"}

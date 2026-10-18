@@ -12,10 +12,12 @@ import {
   yearsRange,
   type AmortizedAsset,
 } from "./assets";
-import { roundCents } from "./invoices";
+import { cents, eurosToCents, sumBy } from "./money";
+
+const eur = eurosToCents;
 
 const laptop: AmortizedAsset = {
-  value: 1000,
+  value: eur(1000),
   startsOn: "2026-01-01",
   plan: { category: "itEquipment", condition: "new", method: "rate", value: 26 },
 };
@@ -59,51 +61,51 @@ describe("isValidPlan", () => {
 
 describe("amortizableValue", () => {
   it("is the base when all the VAT is deductible", () => {
-    expect(amortizableValue(1000, 210, 100, null)).toBe(1000);
+    expect(amortizableValue(eur(1000), eur(210), 100, null)).toBe(eur(1000));
   });
 
   it("adds the VAT that can't be deducted and applies the business share", () => {
     // A car: 50 % business use, 50 % of its VAT deducted
-    expect(amortizableValue(20000, 4200, 50, null)).toBe(11050);
+    expect(amortizableValue(eur(20000), eur(4200), 50, null)).toBe(eur(11050));
     // No VAT deduction at all
-    expect(amortizableValue(1000, 210, 100, 0)).toBe(1210);
+    expect(amortizableValue(eur(1000), eur(210), 100, 0)).toBe(eur(1210));
   });
 });
 
 describe("accumulatedAmortization", () => {
   it("accrues the yearly rate day by day", () => {
     expect(accumulatedAmortization(laptop, "2025-12-31")).toBe(0);
-    expect(accumulatedAmortization(laptop, "2026-12-31")).toBe(260);
-    expect(accumulatedAmortization(laptop, "2026-03-31")).toBe(roundCents((1000 * 0.26 * 90) / 365));
+    expect(accumulatedAmortization(laptop, "2026-12-31")).toBe(eur(260));
+    expect(accumulatedAmortization(laptop, "2026-03-31")).toBe(cents((100_000 * 0.26 * 90) / 365));
   });
 
   it("never goes above the value", () => {
-    expect(accumulatedAmortization(laptop, "2040-01-01")).toBe(1000);
+    expect(accumulatedAmortization(laptop, "2040-01-01")).toBe(eur(1000));
   });
 
   it("counts only the days of use in the first year", () => {
     const fromJuly = { ...laptop, startsOn: "2026-07-01" };
-    expect(accumulatedAmortization(fromJuly, "2026-12-31")).toBe(roundCents((260 * 184) / 365));
+    expect(accumulatedAmortization(fromJuly, "2026-12-31")).toBe(cents((26_000 * 184) / 365));
   });
 
   it("takes everything on the start date for goods written off at once", () => {
     const tool = { ...laptop, plan: { ...laptop.plan, condition: "lowValue" as const } };
-    expect(accumulatedAmortization(tool, "2026-01-01")).toBe(1000);
+    expect(accumulatedAmortization(tool, "2026-01-01")).toBe(eur(1000));
   });
 });
 
 describe("amortizationBetween", () => {
   it("gives the amortization of a range of days", () => {
-    expect(amortizationBetween(laptop, "2026-01-01", "2026-12-31")).toBe(260);
-    expect(amortizationBetween(laptop, "2027-01-01", "2027-12-31")).toBe(260);
+    expect(amortizationBetween(laptop, "2026-01-01", "2026-12-31")).toBe(eur(260));
+    expect(amortizationBetween(laptop, "2027-01-01", "2027-12-31")).toBe(eur(260));
   });
 });
 
 describe("amortizationTable", () => {
   it("spreads the whole value over the years", () => {
     const table = amortizationTable(laptop);
-    expect(table.map((r) => r.amount)).toEqual([260, 260, 260, 220]);
-    expect(table.at(-1)).toEqual({ year: 2029, amount: 220, accumulated: 1000, pending: 0 });
+    expect(table.map((r) => r.amount)).toEqual([260, 260, 260, 220].map(eur));
+    expect(table.at(-1)).toEqual({ year: 2029, amount: eur(220), accumulated: eur(1000), pending: 0 });
     expect(lastAmortizationYear(laptop)).toBe(2029);
   });
 
@@ -115,7 +117,7 @@ describe("amortizationTable", () => {
     };
     const table = amortizationTable(fromJuly);
     expect(table.map((r) => r.year)).toEqual([2026, 2027, 2028, 2029, 2030]);
-    expect(roundCents(table.reduce((acc, r) => acc + r.amount, 0))).toBe(1000);
+    expect(sumBy(table, (r) => r.amount)).toBe(eur(1000));
   });
 });
 
@@ -123,8 +125,13 @@ describe("amortizationQuotas", () => {
   it("splits each year by quarter and adds up to the value", () => {
     const quotas = amortizationQuotas(laptop);
     expect(quotas[0]).toMatchObject({ date: "2026-03-31", year: 2026, quarter: 1 });
-    expect(roundCents(quotas.filter((q) => q.year === 2026).reduce((acc, q) => acc + q.amount, 0))).toBe(260);
-    expect(roundCents(quotas.reduce((acc, q) => acc + q.amount, 0))).toBe(1000);
+    expect(
+      sumBy(
+        quotas.filter((q) => q.year === 2026),
+        (q) => q.amount,
+      ),
+    ).toBe(eur(260));
+    expect(sumBy(quotas, (q) => q.amount)).toBe(eur(1000));
   });
 
   it("starts in the quarter the good starts being used", () => {
@@ -134,6 +141,6 @@ describe("amortizationQuotas", () => {
 
   it("puts goods written off at once in a single quarter", () => {
     const tool = { ...laptop, startsOn: "2026-05-10", plan: { ...laptop.plan, condition: "free" as const } };
-    expect(amortizationQuotas(tool)).toEqual([{ date: "2026-06-30", year: 2026, quarter: 2, amount: 1000 }]);
+    expect(amortizationQuotas(tool)).toEqual([{ date: "2026-06-30", year: 2026, quarter: 2, amount: eur(1000) }]);
   });
 });

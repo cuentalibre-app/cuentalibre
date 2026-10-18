@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
+  cents,
   filingDeadline,
   isInPeriod,
   model303,
@@ -93,14 +94,14 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
 
   const computed = useMemo(() => vatReturns(books, year)[quarter - 1]!, [books, year, quarter]);
   // Box 110 can be corrected; the page remounts per period, so the correction doesn't carry over
-  const [carry, carryBox] = useEditable(computed.boxes["110"]!);
+  const [carry, carryBox] = useEditable(cents(computed.boxes["110"]!));
   const r = useMemo(() => model303(books, year, quarter, carry), [books, year, quarter, carry]);
   const documents = useVatDocuments({ year, quarter });
 
   const negative = r.result < 0;
   const result: ResultSummary = {
     label: "Resultado de la liquidación [71]",
-    amount: Math.abs(r.result),
+    amount: cents(Math.abs(r.result)),
     verdict: !negative
       ? r.result > 0
         ? "A ingresar"
@@ -118,7 +119,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
           : "Lo descontarás en el 303 del próximo año."
         : "Lo descontarás en los siguientes trimestres."
       : r.boxes["78"]! > 0
-        ? `Ya descuenta ${formatEUR(r.boxes["78"]!)} de trimestres anteriores.`
+        ? `Ya descuenta ${formatEUR(cents(r.boxes["78"]!))} de trimestres anteriores.`
         : undefined,
   };
 
@@ -189,13 +190,23 @@ function Vat390({ year, today }: { year: number; today: Date }) {
     amount: r.result,
     verdict: "Informativo",
     tone: "neutral",
-    detail: `Ingresado en los 303 del año: ${formatEUR(r.boxes["95"]!)}`,
+    detail: `Ingresado en los 303 del año: ${formatEUR(cents(r.boxes["95"]!))}`,
   };
 
   return (
     <>
-      <ResultPanel form="390" year={year} quarter={null} deadline={filingDeadline(year, null)} today={today} result={result} />
-      <section aria-label="Resultados de los 303 del año" className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
+      <ResultPanel
+        form="390"
+        year={year}
+        quarter={null}
+        deadline={filingDeadline(year, null)}
+        today={today}
+        result={result}
+      />
+      <section
+        aria-label="Resultados de los 303 del año"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4"
+      >
         {r.quarters.map((q, i) => (
           <Link
             key={i}
@@ -204,7 +215,9 @@ function Vat390({ year, today }: { year: number; today: Date }) {
           >
             <span className="text-sm text-muted-foreground">303 · T{i + 1}</span>
             <span className="amount text-lg font-semibold">{formatEUR(q)}</span>
-            <span className="text-xs text-muted-foreground">{q > 0 ? "A ingresar" : q < 0 ? "A compensar" : "Sin resultado"}</span>
+            <span className="text-xs text-muted-foreground">
+              {q > 0 ? "A ingresar" : q < 0 ? "A compensar" : "Sin resultado"}
+            </span>
           </Link>
         ))}
       </section>
@@ -251,7 +264,9 @@ export function VatPage() {
           <div className="flex flex-wrap items-center gap-2.5">
             <FormSwitch
               value={annual ? "390" : "303"}
-              onChange={(v) => setPeriod(v === "390" ? { year: period.year, quarter: null } : quarterOf(period.year, today))}
+              onChange={(v) =>
+                setPeriod(v === "390" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
+              }
               options={[
                 { value: "303", label: "303 · Trimestral" },
                 { value: "390", label: "390 · Anual" },

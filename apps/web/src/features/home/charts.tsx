@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from "react";
+import { cents, eurosToCents, type Cents } from "@fiscalia/core";
 import { Card, CardTitle } from "@fiscalia/ui/components/card";
 import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
 import { cn } from "@fiscalia/ui/lib/cn";
@@ -7,8 +8,8 @@ import { formatThousands, MONTHS, MONTHS_INITIAL, MONTHS_SHORT } from "@/lib/for
 import type { HomeData } from "./home-data";
 
 /** Rounds `value` up to a multiple of `step`, never below `step`. */
-function niceMax(value: number, step: number) {
-  return Math.max(step, Math.ceil(value / step) * step);
+function niceMax(value: number, step: Cents): Cents {
+  return cents(Math.max(step, Math.ceil(value / step) * step));
 }
 
 function pct(value: number, max: number) {
@@ -46,17 +47,20 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
   const { monthly, months, period } = data;
   const points = monthly.filter((m) => m !== null);
 
-  const monthlyMax = niceMax(Math.max(0, ...points.flatMap((m) => [m.income, m.expenses])), 2000);
-  const cumulativeMax = niceMax(Math.max(0, ...points.map((m) => m.cumulativeProfit)), 5000);
+  const monthlyMax = niceMax(Math.max(0, ...points.flatMap((m) => [m.income, m.expenses])), eurosToCents(2_000));
+  const cumulativeMax = niceMax(Math.max(0, ...points.map((m) => m.cumulativeProfit)), eurosToCents(5_000));
   const max = view === "monthly" ? monthlyMax : cumulativeMax;
 
   const current = monthly[selected];
   const linePoints = points
-    .map((m) => `${(m.month + 0.5) * 100},${(200 - (Math.max(0, m.cumulativeProfit) / cumulativeMax) * 196).toFixed(1)}`)
+    .map(
+      (m) => `${(m.month + 0.5) * 100},${(200 - (Math.max(0, m.cumulativeProfit) / cumulativeMax) * 196).toFixed(1)}`,
+    )
     .join(" ");
   const first = points[0];
   const last = points.at(-1);
-  const areaPoints = first && last ? `${(first.month + 0.5) * 100},200 ${linePoints} ${(last.month + 0.5) * 100},200` : "";
+  const areaPoints =
+    first && last ? `${(first.month + 0.5) * 100},200 ${linePoints} ${(last.month + 0.5) * 100},200` : "";
 
   return (
     <Card aria-labelledby="cash-flow-title" className={className}>
@@ -118,7 +122,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
           className="-mt-1.5 mb-1.5 flex h-[200px] min-w-10 flex-col justify-between text-right font-mono text-2xs text-muted-foreground"
         >
           <span>{formatThousands(max)}</span>
-          <span>{formatThousands(max / 2)}</span>
+          <span>{formatThousands(cents(max / 2))}</span>
           <span>0</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -195,7 +199,9 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                       key={i}
                       type="button"
                       aria-label={
-                        m ? `${MONTHS[i]}: beneficio acumulado ${formatEUR(m.cumulativeProfit)}` : `${MONTHS[i]}: sin datos`
+                        m
+                          ? `${MONTHS[i]}: beneficio acumulado ${formatEUR(m.cumulativeProfit)}`
+                          : `${MONTHS[i]}: sin datos`
                       }
                       aria-pressed={i === selected}
                       onClick={() => setSelected(i)}
@@ -243,7 +249,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
 export function ProfitChart({ data, className }: { data: HomeData; className?: string }) {
   const [selected, setSelected] = useState(data.lastMonthWithData);
   const { monthly, months, period } = data;
-  const max = niceMax(Math.max(0, ...monthly.map((m) => m?.profit ?? 0)), 2000);
+  const max = niceMax(Math.max(0, ...monthly.map((m) => m?.profit ?? 0)), eurosToCents(2_000));
   const current = monthly[selected];
 
   return (

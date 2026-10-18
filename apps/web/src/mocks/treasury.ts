@@ -1,4 +1,4 @@
-import { addDays } from "@fiscalia/core";
+import { addDays, cents, eurosToCents, type Cents } from "@fiscalia/core";
 
 /** Sample bank movements until there is a backend and bank sync. Concepts and figures are made up. */
 
@@ -13,10 +13,10 @@ export interface BankMovement {
   /** As the bank writes it: "TRANSFERENCIA DE …", "RECIBO …". */
   concept: string;
   reference: string;
-  /** Euros, signed: positive money in, negative money out. */
-  amount: number;
+  /** Signed: positive money in, negative money out. */
+  amount: Cents;
   /** Balance after the movement, when the bank reports it. */
-  balance: number | null;
+  balance: Cents | null;
   source: MovementSource;
   /** Payments (see `TreasuryPayment.key`) this movement is reconciled with. */
   paymentKeys: string[];
@@ -27,7 +27,7 @@ export interface ManualPayment {
   id: string;
   date: string;
   /** Signed: positive for money in. */
-  amount: number;
+  amount: Cents;
   paymentMethodId: string;
   description: string;
 }
@@ -37,7 +37,7 @@ export interface SamplePayment {
   key: string;
   source: "sale" | "purchase" | "expense" | "manual";
   date: string;
-  amount: number;
+  amount: Cents;
   accountId: string | null;
   counterparty: string;
   reference: string;
@@ -48,13 +48,13 @@ const MAIN_ACCOUNT = "acc-main";
 const STATEMENT_FROM = "2026-04-01";
 /** Movements up to this date are already reconciled; later ones wait on the reconciliation page. */
 const RECONCILED_UNTIL = "2026-08-31";
-const OPENING_BALANCE = 9_450.32;
+const OPENING_BALANCE = eurosToCents(9_450.32);
 
 export const initialManualPayments: ManualPayment[] = [
   {
     id: "mp1",
     date: "2026-07-01",
-    amount: -1_500,
+    amount: eurosToCents(-1_500),
     paymentMethodId: "transfer",
     description: "Traspaso a la cuenta de ahorro para el IRPF",
   },
@@ -71,9 +71,9 @@ function conceptOf(payment: SamplePayment): string {
 
 /** Movements the bank adds on its own, never recorded in Fiscalia. */
 const UNRECORDED: Omit<BankMovement, "id" | "accountId" | "balance" | "source" | "paymentKeys">[] = [
-  { date: "2026-06-30", concept: "LIQUIDACION INTERESES", reference: "", amount: 0.42 },
-  { date: "2026-09-18", concept: "DEVOLUCION RECIBO COMISION TRANSFERENCIA", reference: "", amount: 2.5 },
-  { date: "2026-10-06", concept: "COMPRA TARJ. 4821 AMAZON EU SARL", reference: "", amount: -36.29 },
+  { date: "2026-06-30", concept: "LIQUIDACION INTERESES", reference: "", amount: eurosToCents(0.42) },
+  { date: "2026-09-18", concept: "DEVOLUCION RECIBO COMISION TRANSFERENCIA", reference: "", amount: eurosToCents(2.5) },
+  { date: "2026-10-06", concept: "COMPRA TARJ. 4821 AMAZON EU SARL", reference: "", amount: eurosToCents(-36.29) },
 ];
 
 /**
@@ -101,7 +101,7 @@ export function sampleMovements(payments: SamplePayment[], today: string): BankM
 
   let balance = OPENING_BALANCE;
   return sorted.map((m, i) => {
-    balance = Math.round((balance + m.amount) * 100) / 100;
+    balance = cents(balance + m.amount);
     return { ...m, id: `mv${i + 1}`, accountId: MAIN_ACCOUNT, balance, source: "import" as const };
   });
 }

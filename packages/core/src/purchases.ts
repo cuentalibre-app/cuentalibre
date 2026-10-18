@@ -1,4 +1,4 @@
-import { roundCents } from "./invoices";
+import { cents, sumCents, type Cents } from "./money";
 
 /**
  * How a received invoice is treated for VAT. Unlike sales there are imports
@@ -23,9 +23,9 @@ export function isValidImputation(value: number): boolean {
 
 export interface DeductibleAmounts {
   /** Part of the taxable base that counts as an expense for income tax. */
-  base: number;
+  base: Cents;
   /** Part of the input VAT that can be deducted in the VAT returns. */
-  vat: number;
+  vat: Cents;
 }
 
 /**
@@ -35,30 +35,30 @@ export interface DeductibleAmounts {
  * 0 % as an expense (it is amortized) but 50 % of its VAT.
  */
 export function deductibleAmounts(
-  totals: { base: number; vat: number },
+  totals: { base: Cents; vat: Cents },
   imputation: number,
   vatImputation: number | null = null,
 ): DeductibleAmounts {
   return {
-    base: roundCents((totals.base * imputation) / 100),
-    vat: roundCents((totals.vat * (vatImputation ?? imputation)) / 100),
+    base: cents((totals.base * imputation) / 100),
+    vat: cents((totals.vat * (vatImputation ?? imputation)) / 100),
   };
 }
 
 /** Pending (nothing paid), partial (some payments) or paid (payments cover the total). */
 export type PaymentStatus = "pending" | "partial" | "paid";
 
-export function paymentStatus(total: number, payments: number[]): PaymentStatus {
-  const paid = roundCents(payments.reduce((acc, p) => acc + p, 0));
+export function paymentStatus(total: Cents, payments: Cents[]): PaymentStatus {
+  const paid = sumCents(payments);
   if (paid === 0) return "pending";
   // Credit notes have a negative total: compare magnitudes
-  return Math.abs(paid) >= Math.abs(roundCents(total)) ? "paid" : "partial";
+  return Math.abs(paid) >= Math.abs(total) ? "paid" : "partial";
 }
 
 /** What is still to be paid; never negative (overpayments leave nothing pending). */
-export function amountOutstanding(total: number, payments: number[]): number {
-  const outstanding = roundCents(total - payments.reduce((acc, p) => acc + p, 0));
-  return Math.sign(outstanding) === Math.sign(total) ? outstanding : 0;
+export function amountOutstanding(total: Cents, payments: Cents[]): Cents {
+  const outstanding = cents(total - sumCents(payments));
+  return Math.sign(outstanding) === Math.sign(total) ? outstanding : cents(0);
 }
 
 /** Spanish quarter an ISO date falls in, keyed as "2026-T3". */
