@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePlus2, Plus, Star, Trash2 } from "lucide-react";
-import { formatIban, isValidIban, normalizeTaxId } from "@fiscalia/core";
+import { formatIban, isValidIban, newId, normalizeTaxId } from "@fiscalia/core";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -114,7 +114,7 @@ function ContactForm({
       requestAnimationFrame(() => document.querySelector<HTMLElement>("[aria-invalid=true]")?.focus());
       return;
     }
-    const contact = fromDraft(role, draft, existing?.id ?? crypto.randomUUID());
+    const contact = fromDraft(role, draft, existing?.id ?? newId());
     if (existing) contactsStore.update(role, existing.id, contact);
     else contactsStore.add(role, contact);
 
@@ -402,7 +402,7 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
     const isDefault = adding.isDefault || accounts.length === 0;
     onChange([
       ...accounts.map((a) => (isDefault ? { ...a, isDefault: false } : a)),
-      { id: crypto.randomUUID(), iban, bic: bic || undefined, notes: adding.notes.trim() || undefined, isDefault },
+      { id: newId(), iban, bic: bic || undefined, notes: adding.notes.trim() || undefined, isDefault },
     ]);
     setAdding(null);
   };

@@ -1,4 +1,5 @@
 import {
+  newId,
   WITHHOLDING_RATES,
   cents,
   centsToEuros,
@@ -324,7 +325,7 @@ class ContactResolver {
     if (found) return found;
     if (!name) return null;
     const contact: Contact = {
-      id: crypto.randomUUID(),
+      id: newId(),
       name,
       taxId: taxId.toUpperCase(),
       address: get(`${prefix} - Dirección`) || undefined,
@@ -391,7 +392,7 @@ function parseLines(
     if (from && !parseDate(from)) errors.push(`Inicio de servicio no válido en la ${at}.`);
     if (to && !parseDate(to)) errors.push(`Fin de servicio no válido en la ${at}.`);
     const line: SalesLine = {
-      id: crypto.randomUUID(),
+      id: newId(),
       concept,
       detail: get(row, "Concepto - Descripción detallada") || undefined,
       serviceFrom: parseDate(from) ?? undefined,
@@ -507,7 +508,7 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         : undefined;
 
       const doc: SalesDocument = {
-        id: crypto.randomUUID(),
+        id: newId(),
         kind: "invoice",
         number,
         series: rectifying ? "rectifying" : "normal",
@@ -609,7 +610,7 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
       if (amountText && amount === null) errors.push(`Importe de pago no válido: «${amountText}».`);
       if (!iso) continue;
       payments.push({
-        id: crypto.randomUUID(),
+        id: newId(),
         date: iso,
         amount: amount === null ? cents(totals.total - sumBy(payments, (p) => p.amount)) : eurosToCents(amount),
         paymentMethodId: paymentMethodFor(
@@ -621,7 +622,7 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
     }
     if (payments.length === 0 && isPaidStatus(at("Estado")) && issuedOn)
       payments.push({
-        id: crypto.randomUUID(),
+        id: newId(),
         date: issuedOn,
         amount: totals.total,
         paymentMethodId: defaultPaymentMethodId(),
@@ -631,7 +632,7 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
 
     const notes = [at("Notas privadas"), at("Notas en la factura")].filter(Boolean).join(" · ");
     const doc: PurchaseInvoice = {
-      id: crypto.randomUUID(),
+      id: newId(),
       supplierId: supplier?.id ?? "",
       number,
       issuedOn,
@@ -704,7 +705,7 @@ function parseExpenses(body: { row: string[]; line: number }[], get: Getter, ctx
     const methodName = at("Método de pago");
     const methodType = at("Tipo de método de pago");
     const expense: Expense = {
-      id: crypto.randomUUID(),
+      id: newId(),
       date,
       number: at("Número recibo"),
       concept,

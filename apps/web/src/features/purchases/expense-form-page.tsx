@@ -1,7 +1,7 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark } from "lucide-react";
-import { cents, deductibleExpense, isDuplicateExpense, toIsoDate, type Cents } from "@fiscalia/core";
+import { cents, deductibleExpense, isDuplicateExpense, newId, toIsoDate, type Cents } from "@fiscalia/core";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -237,7 +237,7 @@ function ExpenseForm({
     const other = form.payee === OTHER_PAYEE;
     const supplierId = form.payee === NO_PAYEE || other ? null : form.payee;
     return {
-      id: existing?.id ?? crypto.randomUUID(),
+      id: existing?.id ?? newId(),
       date: form.date,
       number: form.number.trim(),
       concept: form.concept.trim(),

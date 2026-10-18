@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { MoreHorizontal, Pencil, Plus, Power, RefreshCw, Trash2 } from "lucide-react";
-import { formatIban, isValidEmail, isValidIban } from "@fiscalia/core";
+import { formatIban, isValidEmail, isValidIban, newId } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -72,7 +72,7 @@ export function AccountDialog({
     if (account) settingsStore.updateAccount(account.id, { name: name.trim(), number: value });
     else
       settingsStore.addAccount({
-        id: `acc-${crypto.randomUUID().slice(0, 8)}`,
+        id: newId(),
         kind,
         name: name.trim(),
         number: value,

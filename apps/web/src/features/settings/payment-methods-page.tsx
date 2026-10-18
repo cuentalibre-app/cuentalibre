@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { MoreHorizontal, Pencil, Plus, Power, Search, Star, Trash2 } from "lucide-react";
+import { newId } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -68,7 +69,7 @@ function MethodDialog({
     let linked: string | null = accountId === NO_ACCOUNT ? null : accountId;
     // "Crear una nueva cuenta" opens an account of the matching kind with the method's details
     if (accountId === NEW_ACCOUNT) {
-      linked = `acc-${crypto.randomUUID().slice(0, 8)}`;
+      linked = newId();
       settingsStore.addAccount({
         id: linked,
         kind: ACCOUNT_KIND_FOR_METHOD[type],
@@ -79,7 +80,7 @@ function MethodDialog({
     }
     const values = { type, name: name.trim(), number: number.trim(), accountId: linked };
     if (method) settingsStore.updatePaymentMethod(method.id, values);
-    else settingsStore.addPaymentMethod({ id: `pm-${crypto.randomUUID().slice(0, 8)}`, ...values, active: true });
+    else settingsStore.addPaymentMethod({ id: newId(), ...values, active: true });
     onOpenChange(false);
   };
 

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { TimeEntry } from "@fiscalia/core";
+import { newId } from "@fiscalia/core";
 import { initialTimeEntries } from "@/mocks/working-hours";
 
 /** Clock-in/clock-out intervals, in memory until reload like the other stores. */
@@ -22,7 +23,7 @@ export function useTimeEntries(): TimeEntry[] {
 
 export const workingHoursStore = {
   get: () => entries,
-  add: (entry: Omit<TimeEntry, "id">) => commit([...entries, { ...entry, id: crypto.randomUUID() }]),
+  add: (entry: Omit<TimeEntry, "id">) => commit([...entries, { ...entry, id: newId() }]),
   update: (id: string, patch: Partial<Omit<TimeEntry, "id">>) =>
     commit(entries.map((e) => (e.id === id ? { ...e, ...patch } : e))),
   remove: (id: string) => commit(entries.filter((e) => e.id !== id)),

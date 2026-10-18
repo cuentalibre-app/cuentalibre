@@ -16,7 +16,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
+import { newId, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -693,7 +693,7 @@ function useExpenseActions(row: Row) {
       pickFiles((files) => {
         if (files.length === 0) return;
         const added = files.map((f) => ({
-          id: crypto.randomUUID(),
+          id: newId(),
           name: f.name,
           size: f.size,
           url: URL.createObjectURL(f),

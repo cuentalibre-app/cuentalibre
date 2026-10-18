@@ -13,6 +13,7 @@ import {
   Settings,
 } from "lucide-react";
 import {
+  newId,
   WITHHOLDING_RATES,
   addDays,
   applyRate,
@@ -378,7 +379,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         ? form.number.trim()
         : nextNumber(asKind, form.series, Number(form.issuedOn.slice(0, 4)), salesStore.all());
     const doc: SalesDocument = {
-      id: existing?.id ?? crypto.randomUUID(),
+      id: existing?.id ?? newId(),
       kind: asKind,
       number,
       series: form.series,
@@ -776,9 +777,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                 )
               }
               onDuplicate={(lineId) =>
-                setLines((lines) =>
-                  lines.flatMap((l) => (l.id === lineId ? [l, { ...l, id: crypto.randomUUID() }] : [l])),
-                )
+                setLines((lines) => lines.flatMap((l) => (l.id === lineId ? [l, { ...l, id: newId() }] : [l])))
               }
               onMove={(from, to) =>
                 setLines((lines) => {
@@ -1051,7 +1050,7 @@ function InvoiceNotes({ label, value, onChange }: { label: string; value: string
 
   const saveTemplate = () => {
     if (!editing?.title.trim()) return;
-    const template = { id: selected?.id ?? crypto.randomUUID(), title: editing.title.trim(), text: editing.text };
+    const template = { id: selected?.id ?? newId(), title: editing.title.trim(), text: editing.text };
     invoiceSettingsStore.update({
       noteTemplates: selected
         ? noteTemplates.map((t) => (t.id === selected.id ? template : t))

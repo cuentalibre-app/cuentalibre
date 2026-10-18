@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { MailCheck, MoreHorizontal, Pencil, Plus, Power, Send, Trash2, UserRound } from "lucide-react";
+import { newId } from "@fiscalia/core";
 import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -98,7 +99,7 @@ function UserDialog({
     if (user) usersStore.updateUser(user.id, values);
     else
       usersStore.addUser({
-        id: `u-${crypto.randomUUID().slice(0, 8)}`,
+        id: newId(),
         ...values,
         enabled: true,
         invited: true,

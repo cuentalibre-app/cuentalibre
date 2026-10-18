@@ -22,6 +22,7 @@ import {
 import {
   amortizationBetween,
   cents,
+  newId,
   periodKey,
   periodMonths,
   sumBy,
@@ -886,7 +887,7 @@ function usePurchaseActions(row: Row) {
       pickFiles((files) => {
         if (files.length === 0) return;
         const added = files.map((f) => ({
-          id: crypto.randomUUID(),
+          id: newId(),
           name: f.name,
           size: f.size,
           url: URL.createObjectURL(f),
@@ -919,7 +920,7 @@ function usePurchaseActions(row: Row) {
               payments: [
                 ...doc.payments,
                 {
-                  id: crypto.randomUUID(),
+                  id: newId(),
                   date: toIsoDate(new Date()),
                   amount: row.outstanding,
                   paymentMethodId: doc.payments.at(-1)?.paymentMethodId ?? "bank1",
