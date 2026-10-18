@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { PenLine, Plus } from "lucide-react";
+import type { DocumentKind } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Textarea } from "@fiscalia/ui/components/input";
@@ -9,7 +10,7 @@ import { SaveButton, SettingsHeader, useDraft } from "@/features/settings/settin
 import { CERTIFICATES_PATH, INVOICE_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { DefaultMark, LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
-import { documentSettingsStore, useDocumentSettings, type DocumentKind } from "./invoice-settings";
+import { documentSettingsStore, useDocumentSettings } from "./invoice-settings";
 import { KINDS } from "./sales-model";
 
 /** Wording that changes between drafts, quotes and delivery notes. */

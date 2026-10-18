@@ -8,6 +8,7 @@ import {
 } from "@fiscalia/core";
 import type { Expense, ExpenseType, PurchaseInvoice, SalesDocument } from "@fiscalia/contracts";
 import { deductibleOf } from "@/features/purchases/expenses-model";
+import { useFiledBoxes } from "@/features/closing/closing-store";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { assetOf, deductible, purchaseTotals } from "@/features/purchases/purchases-model";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
@@ -82,9 +83,14 @@ export function toTaxBooks(documents: SalesDocument[], purchases: PurchaseInvoic
   };
 }
 
+/** The books, with the returns already filed, which later quarters start from. */
 export function useTaxBooks(): TaxBooks {
   const documents = useSalesDocuments();
   const purchases = usePurchaseInvoices();
   const expenses = useExpenses();
-  return useMemo(() => toTaxBooks(documents, purchases, expenses), [documents, purchases, expenses]);
+  const filed = useFiledBoxes();
+  return useMemo(
+    () => ({ ...toTaxBooks(documents, purchases, expenses), filed }),
+    [documents, purchases, expenses, filed],
+  );
 }

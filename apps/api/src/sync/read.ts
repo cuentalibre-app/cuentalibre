@@ -1,12 +1,21 @@
-import { ENTITY_ROLES, type Change, type Changes, type Workspace } from "@fiscalia/contracts";
+import { ENTITY_ROLES, type Change, type Changes, type PlainEntity, type Workspace } from "@fiscalia/contracts";
 import { and, asc, eq, gt, max } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
 import { changeLog, type LoggedEntity } from "../db/schema";
-import { closedQuartersByPeriod, liveClosedQuarters, toClosedQuarter } from "./closing";
+import {
+  closedQuartersByPeriod,
+  filedReturnsById,
+  liveClosedQuarters,
+  liveFiledReturns,
+  toClosedQuarter,
+  toFiledReturn,
+} from "./closing";
 import { contactsById, liveContacts, toContact, type ContactRow } from "./contacts";
 import { expensesById, liveExpenses, toExpense } from "./expenses";
+import { livePlain, loggedAs, PLAIN_ENTITIES, plainById } from "./plain";
 import { livePurchaseInvoices, purchaseInvoicesById } from "./purchases";
 import { liveSalesDocuments, salesDocumentsById } from "./sales";
+import { readSettings, settingsBySection } from "./settings";
 
 const entityOf = (row: ContactRow) => (row.role === ENTITY_ROLES.clients ? "clients" : "suppliers");
 
@@ -27,6 +36,11 @@ export function readWorkspace(db: Db, organizationId: string): Promise<Workspace
         .select({ seq: max(changeLog.seq) })
         .from(changeLog)
         .where(eq(changeLog.organizationId, organizationId));
+      const plain = Object.fromEntries(
+        await Promise.all(
+          PLAIN_ENTITIES.map(async (entity) => [entity, await livePlain(tx, organizationId, entity)] as const),
+        ),
+      ) as unknown as Pick<Workspace, PlainEntity>;
       const workspace: Workspace = {
         cursor: last?.seq ?? 0,
         clients: [],
@@ -35,6 +49,9 @@ export function readWorkspace(db: Db, organizationId: string): Promise<Workspace
         purchaseInvoices: await livePurchaseInvoices(tx, organizationId),
         expenses: await liveExpenses(tx, organizationId),
         closedQuarters: (await liveClosedQuarters(tx, organizationId)).map(toClosedQuarter),
+        filedReturns: await liveFiledReturns(tx, organizationId),
+        ...plain,
+        settings: await readSettings(tx, organizationId),
       };
       for (const row of await liveContacts(tx, organizationId)) workspace[entityOf(row)].push(toContact(row));
       return workspace;
@@ -111,6 +128,22 @@ export async function changesFor(tx: Tx, organizationId: string, refs: RecordRef
         ? { op: "delete", entity: "closedQuarters", id: row.period }
         : { op: "upsert", entity: "closedQuarters", data: toClosedQuarter(row) },
     );
+  }
+  for (const row of await filedReturnsById(tx, organizationId, idsOf("filed_return")))
+    changes.set(`filed_return:${row.id}`, { op: "upsert", entity: "filedReturns", data: toFiledReturn(row) });
+  for (const row of await settingsBySection(tx, organizationId, idsOf("organization_setting")))
+    changes.set(`organization_setting:${row.section}`, {
+      op: "upsert",
+      entity: "settings",
+      data: { section: row.section, data: row.data },
+    });
+  for (const entity of PLAIN_ENTITIES) {
+    const logged = loggedAs(entity);
+    for (const { id, record } of await plainById(tx, organizationId, entity, idsOf(logged)))
+      changes.set(
+        `${logged}:${id}`,
+        record ? ({ op: "upsert", entity, data: record } as Change) : { op: "delete", entity, id },
+      );
   }
   return unique.flatMap((ref) => changes.get(`${ref.entity}:${ref.id}`) ?? []);
 }

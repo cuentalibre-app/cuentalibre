@@ -1,7 +1,7 @@
 import type { OperationType } from "./invoices";
 import { isInPeriod } from "./ledger";
 import { applyRate, cents, sumBy, sumCents, type Cents } from "./money";
-import { periodMonths, type Quarter } from "./period";
+import { periodKey, periodMonths, type Quarter } from "./period";
 import type { PurchaseOperationType } from "./purchases";
 import { GENERAL_VAT_RATE, IRPF_INSTALLMENT_RATE } from "./taxes";
 
@@ -12,8 +12,9 @@ import { GENERAL_VAT_RATE, IRPF_INSTALLMENT_RATE } from "./taxes";
  *
  * Scope, as in Contasimple: one activity, accrual basis, no proration, no
  * equivalence surcharge detail, no supplementary returns. Boxes the books
- * can't fill (previous returns, territorial splits…) are left at zero or
- * taken as an input.
+ * can't fill (territorial splits…) are left at zero or taken as an input.
+ * Returns already filed are taken as filed: later quarters start from their
+ * boxes, not from what the books say now.
  */
 
 /**
@@ -85,6 +86,26 @@ export interface TaxBooks {
   sales: TaxableSale[];
   purchases: TaxablePurchase[];
   expenses: TaxableExpense[];
+  /** Boxes of the returns already filed, which later quarters start from. */
+  filed?: FiledReturns;
+}
+
+/** Forms whose filed boxes carry into later quarters. */
+export type FiledForm = "303" | "130";
+
+/** Boxes of filed returns by form and period key ("2026-T1"). */
+export type FiledReturns = Partial<Record<FiledForm, Record<string, Boxes>>>;
+
+/** Filed returns as boxes by form and period. `returns` go oldest first: a later version replaces an earlier one. */
+export function filedReturnsOf(returns: readonly { form: FiledForm; period: string; boxes: Boxes }[]): FiledReturns {
+  const filed: FiledReturns = {};
+  for (const r of returns) filed[r.form] = { ...filed[r.form], [r.period]: r.boxes };
+  return filed;
+}
+
+/** The boxes filed for a quarter, if its return was filed. */
+export function filedBoxes(filed: FiledReturns | undefined, form: FiledForm, year: number, quarter: Quarter) {
+  return filed?.[form]?.[periodKey({ year, quarter })];
 }
 
 const SELF_ASSESSED: PurchaseOperationType[] = ["intraEu", "reverseCharge"];
@@ -274,15 +295,17 @@ function firstYear(books: Pick<TaxBooks, "sales" | "purchases">, fallback: numbe
 /**
  * The four 303 returns of a year, chaining what is pending to offset from quarter to quarter
  * (and from earlier years, since the first one with documents). A negative Q4 is assumed to be
- * carried forward, which is what the form proposes by default.
+ * carried forward, which is what the form proposes by default. A quarter already filed passes
+ * on what its filed return left pending.
  */
-export function vatReturns(books: Pick<TaxBooks, "sales" | "purchases">, year: number): Model303[] {
+export function vatReturns(books: Pick<TaxBooks, "sales" | "purchases" | "filed">, year: number): Model303[] {
   const result: Model303[] = [];
   let carry = cents(0);
   for (let y = firstYear(books, year); y <= year; y++) {
     for (const quarter of [1, 2, 3, 4] as const) {
       const r = model303(books, y, quarter, carry);
-      carry = cents(r.boxes["87"]! + Math.max(0, -r.result));
+      const boxes = filedBoxes(books.filed, "303", y, quarter) ?? r.boxes;
+      carry = cents((boxes["87"] ?? 0) + Math.max(0, -(boxes["71"] ?? 0)));
       if (y === year) result.push(r);
     }
   }
@@ -290,7 +313,11 @@ export function vatReturns(books: Pick<TaxBooks, "sales" | "purchases">, year: n
 }
 
 /** Box 110 of a quarter: what earlier returns left pending to offset. */
-export function vatCarryInto(books: Pick<TaxBooks, "sales" | "purchases">, year: number, quarter: Quarter): Cents {
+export function vatCarryInto(
+  books: Pick<TaxBooks, "sales" | "purchases" | "filed">,
+  year: number,
+  quarter: Quarter,
+): Cents {
   return cents(vatReturns(books, year)[quarter - 1]!.boxes["110"]!);
 }
 
@@ -627,6 +654,21 @@ export function model130(
 }
 
 /**
+ * The installments (box 07) of the quarters of the year before `quarter`, which its box 05
+ * subtracts: as filed for the quarters already filed, as computed (`returns`) for the rest.
+ */
+export function earlierInstallments(
+  books: Pick<TaxBooks, "filed">,
+  returns: Model130[],
+  year: number,
+  quarter: Quarter,
+): Cents[] {
+  return returns
+    .slice(0, quarter - 1)
+    .map((r) => cents((filedBoxes(books.filed, "130", year, r.quarter) ?? r.boxes)["07"] ?? 0));
+}
+
+/**
  * The four 130 returns of a year. The reduction of box 13 comes from the previous year's net
  * income when there are books for it (`previousYearNetIncome`), and applies to every quarter.
  */
@@ -640,14 +682,7 @@ export function incomeTaxReturns(
   const result: Model130[] = [];
   for (const quarter of [1, 2, 3, 4] as const) {
     result.push(
-      model130(
-        books,
-        year,
-        quarter,
-        options,
-        result.map((r) => cents(r.boxes["07"]!)),
-        { reduction },
-      ),
+      model130(books, year, quarter, options, earlierInstallments(books, result, year, quarter), { reduction }),
     );
   }
   return result;

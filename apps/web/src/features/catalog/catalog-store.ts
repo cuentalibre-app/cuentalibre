@@ -13,6 +13,7 @@ import {
 import type { CatalogSettings, Product, SalesDocument } from "@fiscalia/contracts";
 import type { Command, Entity } from "@/data/commands";
 import { createStore } from "@/data/store";
+import { listTarget, syncSettings, syncTarget } from "@/data/sync";
 import { initialCatalogSettings, initialFamilies, initialMovements, initialProducts } from "@/mocks/catalog";
 
 /**
@@ -40,6 +41,37 @@ const catalog = createStore<CatalogState>({
   movements: initialMovements,
   settings: initialCatalogSettings,
   taken: {},
+});
+
+const take = (changes: Partial<CatalogState>) => catalog.set({ ...catalog.get(), ...changes });
+
+syncSettings("catalogSettings", (settings) => take({ settings }));
+syncTarget(
+  "catalogFamilies",
+  listTarget(
+    () => catalog.get().families,
+    (families) => take({ families }),
+  ),
+);
+syncTarget(
+  "stockMovements",
+  listTarget(
+    () => catalog.get().movements,
+    (movements) => take({ movements }),
+  ),
+);
+const products = listTarget(
+  () => catalog.get().products,
+  (products) => take({ products }),
+);
+syncTarget<Product>("products", {
+  ...products,
+  // A deleted product is kept aside, so its stock movements still show a name
+  forget(id) {
+    const gone = catalog.get().products.find((p) => p.id === id);
+    if (gone)
+      take({ products: catalog.get().products.filter((p) => p.id !== id), removed: [...catalog.get().removed, gone] });
+  },
 });
 
 export function useCatalog(): CatalogState {

@@ -38,7 +38,7 @@ import { formatDate, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { quarterName, quarterToClose, useQuarterChecks, type QuarterCheck } from "./closing-model";
-import { closingStore, useClosedQuarters } from "./closing-store";
+import { closingStore, useClosedQuarters, useFiledReturn, type ReturnToFile } from "./closing-store";
 
 const QUARTERS = [1, 2, 3, 4] as const;
 
@@ -121,17 +121,28 @@ function Checks({ checks }: { checks: QuarterCheck[] }) {
   );
 }
 
-/** Forms 303 and 130 of the quarter, plus reminders of the forms Fiscalia doesn't prepare yet. */
-function Returns({ period, today }: { period: Period & { quarter: Quarter }; today: Date }) {
+/** Forms 303 and 130 of the quarter as the books give them now: what closing it files. */
+function useQuarterReturns({ year, quarter }: Period & { quarter: Quarter }): ReturnToFile[] {
   const books = useTaxBooks();
+  return useMemo(() => {
+    const vat = vatReturns(books, year)[quarter - 1]!;
+    const irpf = incomeTaxYear(books, year, TAX_OPTIONS).quarters[quarter - 1]!;
+    return [
+      { form: "303", boxes: vat.boxes, result: vat.result },
+      { form: "130", boxes: irpf.boxes, result: irpf.result },
+    ];
+  }, [books, year, quarter]);
+}
+
+/**
+ * Forms 303 and 130 of the quarter, as filed once it is closed, plus reminders of the forms
+ * Fiscalia doesn't prepare yet.
+ */
+function Returns({ period, today }: { period: Period & { quarter: Quarter }; today: Date }) {
   const inUse = useFormsInUse()(period.year);
-  const { vat, irpf } = useMemo(
-    () => ({
-      vat: vatReturns(books, period.year)[period.quarter - 1]!.result,
-      irpf: cents(Math.max(0, incomeTaxYear(books, period.year, TAX_OPTIONS).quarters[period.quarter - 1]!.result)),
-    }),
-    [books, period],
-  );
+  const [computedVat, computedIrpf] = useQuarterReturns(period);
+  const filedVat = useFiledReturn("303", period);
+  const filedIrpf = useFiledReturn("130", period);
   const status = FILING_STATUS[filingStatus(period.year, period.quarter, today)];
   const deadline = formatDate(toIsoDate(filingDeadline(period.year, period.quarter)));
   const others = [
@@ -141,8 +152,21 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
   ].filter(Boolean);
 
   const forms = [
-    { code: "303", title: "IVA", amount: vat, to: modelPath(VAT_PATH, period) },
-    { code: "130", title: "IRPF", amount: irpf, to: modelPath(INCOME_TAX_PATH, period) },
+    {
+      code: "303",
+      title: "IVA",
+      amount: (filedVat ?? computedVat!).result,
+      filedOn: filedVat?.filedOn,
+      to: modelPath(VAT_PATH, period),
+    },
+    {
+      code: "130",
+      title: "IRPF",
+      // A negative 130 is filed with nothing to pay
+      amount: cents(Math.max(0, (filedIrpf ?? computedIrpf!).result)),
+      filedOn: filedIrpf?.filedOn,
+      to: modelPath(INCOME_TAX_PATH, period),
+    },
   ];
 
   return (
@@ -163,7 +187,13 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
                   Modelo {f.code} · {f.title}
                 </span>
                 <span className={cn("amount", f.amount < 0 && "text-success")}>{formatEUR(f.amount)}</span>
-                {f.amount < 0 && <span className="text-2xs text-muted-foreground">a compensar</span>}
+                {(f.amount < 0 || f.filedOn) && (
+                  <span className="text-2xs text-muted-foreground">
+                    {[f.amount < 0 && "a compensar", f.filedOn && `presentado el ${formatDate(f.filedOn)}`]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                )}
               </span>
               <ArrowRight className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
             </Link>
@@ -231,6 +261,7 @@ function OpenQuarter({
   today: Date;
 }) {
   const checks = useQuarterChecks(period);
+  const returns = useQuarterReturns(period);
   const [confirming, setConfirming] = useState(false);
   const warnings = checks.filter((c) => c.tone === "warning").length;
   const name = quarterName(period);
@@ -280,11 +311,15 @@ function OpenQuarter({
         onOpenChange={setConfirming}
         title={`¿Cerrar el ${name}?`}
         confirmLabel="Cerrar trimestre"
-        onConfirm={() => closingStore.close(period, today)}
+        onConfirm={() => closingStore.close(period, today, returns)}
       >
         <p className="m-0">
           No podrás crear, editar ni eliminar facturas emitidas, facturas recibidas ni gastos con fecha del {name} (
           {periodRange(period)}). Podrás seguir marcándolos como cobrados o pagados desde las listas.
+        </p>
+        <p className="m-0">
+          Se guardan los modelos 303 y 130 tal como están ahora, como lo presentado: los trimestres siguientes parten de
+          esas cifras.
         </p>
         {state === "inProgress" && (
           <p className="m-0 font-medium text-warning">El trimestre todavía no ha terminado.</p>

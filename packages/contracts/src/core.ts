@@ -10,6 +10,7 @@ import {
   type AmortizationPlan,
   type CatalogFamily,
   type CatalogUnit,
+  type FiledForm,
   type InvoiceLine,
   type InvoiceTotals,
   type OperationType,
@@ -25,6 +26,9 @@ import { cents, fraction, id, localDateTime } from "./common";
 const keysOf = <K extends string>(record: Record<K, unknown>) => Object.keys(record) as [K, ...K[]];
 
 export const withholdingKindSchema = z.enum(keysOf(WITHHOLDING_RATES));
+
+/** Forms whose filed boxes later returns start from. */
+export const filedFormSchema = z.enum(["303", "130"]);
 
 export const operationTypeSchema = z.enum(["national", "exempt", "notSubject", "reverseCharge", "intraEu", "export"]);
 
@@ -105,6 +109,7 @@ type Assert<T extends true> = T;
 /** Fails to compile, on the offending line, when a schema no longer matches its core type. */
 export type CoreTypesMatch = [
   Assert<Mirrors<typeof withholdingKindSchema, WithholdingKind>>,
+  Assert<Mirrors<typeof filedFormSchema, FiledForm>>,
   Assert<Mirrors<typeof operationTypeSchema, OperationType>>,
   Assert<Mirrors<typeof purchaseOperationTypeSchema, PurchaseOperationType>>,
   Assert<Mirrors<typeof invoiceLineSchema, InvoiceLine>>,

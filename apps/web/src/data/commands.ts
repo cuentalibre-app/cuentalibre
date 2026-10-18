@@ -9,7 +9,7 @@
  * them.
  */
 
-import type { SalesDocument } from "@fiscalia/contracts";
+import type { FiledReturn, SalesDocument, SettingsSection as OrganizationSection } from "@fiscalia/contracts";
 
 /** Collections of records, named like the tables they will be stored in. */
 export type Entity =
@@ -29,19 +29,13 @@ export type Entity =
   | "paymentMethods"
   | "companyUsers";
 
-/** Settings stored as one document per section. */
+/**
+ * Settings stored as one document per section: the organization's (see
+ * `organizationSettingsSchema`), plus the ones the server doesn't store yet.
+ */
 export type SettingsSection =
-  | "businessProfile"
-  | "taxSetup"
-  | "defaultPaymentMethod"
-  | "invoiceSettings"
-  | "documentSettings"
-  | "catalogSettings"
-  | "contactSettings"
-  | "ledgerAccounts"
-  | "verifactu"
+  | OrganizationSection
   | "certificate"
-  | "signing"
   | "emailSettings"
   | "userProfile"
   | "notificationPrefs"
@@ -55,5 +49,6 @@ export type Command =
   | { type: "saveSettings"; section: SettingsSection; data: unknown }
   /** Issues an invoice, new or from a draft: the server numbers it, unless `number` keeps an imported one. */
   | { type: "issue"; data: SalesDocument; number?: string }
-  | { type: "closeQuarter"; period: string; closedOn: string }
+  /** Closes a quarter and stores its returns as filed. */
+  | { type: "closeQuarter"; period: string; closedOn: string; returns?: FiledReturn[] }
   | { type: "reopenQuarter"; period: string };

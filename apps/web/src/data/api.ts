@@ -1,7 +1,7 @@
 import type { Change, Changes, SyncCommand, Workspace } from "@fiscalia/contracts";
 import { setBackend, type Backend } from "./backend";
 import type { Command } from "./commands";
-import { applyChanges, applyWorkspace, isSynced } from "./sync";
+import { applyChanges, applyWorkspace, isSettingsSynced, isSynced } from "./sync";
 
 /** An error the API answered with. */
 export class ApiError extends Error {
@@ -111,9 +111,9 @@ function toWire(command: Command): SyncCommand[] {
       return isSynced("salesDocuments") ? [command as SyncCommand] : [];
     case "closeQuarter":
     case "reopenQuarter":
-      return isSynced("closedQuarters") ? [command] : [];
+      return isSynced("closedQuarters") ? [command as SyncCommand] : [];
     case "saveSettings":
-      return [];
+      return isSettingsSynced(command.section) ? [{ ...command, section: command.section }] : [];
     case "update": {
       if (!isSynced(command.entity)) return [];
       // JSON drops undefined, so a field being cleared is sent as null.

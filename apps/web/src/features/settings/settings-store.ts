@@ -8,6 +8,7 @@ import {
 } from "@/mocks/settings";
 import type { Command } from "@/data/commands";
 import { createStore } from "@/data/store";
+import { listTarget, syncSettings, syncTarget } from "@/data/sync";
 
 /**
  * Business profile, tax setup, treasury accounts and payment methods. Invoices, the PDF, the
@@ -28,6 +29,26 @@ const settings = createStore<Settings>({
   paymentMethods: initialPaymentMethods,
   defaultPaymentMethodId: initialDefaultPaymentMethodId,
 });
+
+const take = (changes: Partial<Settings>) => settings.set({ ...settings.get(), ...changes });
+
+syncSettings("businessProfile", (profile) => take({ profile }));
+syncSettings("taxSetup", (tax) => take({ tax }));
+syncSettings("defaultPaymentMethod", (defaultPaymentMethodId) => take({ defaultPaymentMethodId }));
+syncTarget(
+  "treasuryAccounts",
+  listTarget(
+    () => settings.get().accounts,
+    (accounts) => take({ accounts }),
+  ),
+);
+syncTarget(
+  "paymentMethods",
+  listTarget(
+    () => settings.get().paymentMethods,
+    (paymentMethods) => take({ paymentMethods }),
+  ),
+);
 
 export function useSettings(): Settings {
   return settings.use();

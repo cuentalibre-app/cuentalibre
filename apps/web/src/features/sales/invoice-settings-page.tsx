@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { ArrowLeft, Check, ImageUp, PenLine, Plus, Trash2 } from "lucide-react";
+import type { InvoiceSettings } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Textarea } from "@fiscalia/ui/components/input";
@@ -9,7 +10,7 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { CERTIFICATES_PATH } from "@/features/settings/settings-model";
 import { DefaultMark, LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
-import { invoiceSettingsStore, useInvoiceSettings, type InvoiceSettings } from "./invoice-settings";
+import { invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
 
 const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
 

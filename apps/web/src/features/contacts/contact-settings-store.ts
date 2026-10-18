@@ -1,16 +1,11 @@
+import { DEFAULT_ORGANIZATION_SETTINGS, type ContactSettings } from "@fiscalia/contracts";
 import { createStore } from "@/data/store";
+import { syncSettings } from "@/data/sync";
 
-/** Options of Configuración › Clientes y proveedores. */
-export interface ContactSettings {
-  /** Names of the two free fields of every client and supplier. */
-  customFieldNames: [string, string];
-  /** Look up the company's details from its NIF or name when creating a contact. */
-  autocomplete: boolean;
-}
+export const DEFAULT_CUSTOM_FIELD_NAMES = DEFAULT_ORGANIZATION_SETTINGS.contactSettings.customFieldNames;
 
-export const DEFAULT_CUSTOM_FIELD_NAMES: ContactSettings["customFieldNames"] = ["Personalizado 1", "Personalizado 2"];
-
-const settings = createStore<ContactSettings>({ customFieldNames: DEFAULT_CUSTOM_FIELD_NAMES, autocomplete: true });
+const settings = createStore<ContactSettings>(DEFAULT_ORGANIZATION_SETTINGS.contactSettings);
+syncSettings("contactSettings", settings.set);
 
 export function useContactSettings(): ContactSettings {
   return settings.use();

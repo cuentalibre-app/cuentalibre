@@ -1,4 +1,4 @@
-import type { ClosedQuarter } from "@fiscalia/contracts";
+import type { ClosedQuarter, FiledReturn } from "@fiscalia/contracts";
 
 /** Quarters already filed and closed in the sample data. */
 export const initialClosedQuarters: ClosedQuarter[] = [
@@ -9,3 +9,6 @@ export const initialClosedQuarters: ClosedQuarter[] = [
   { period: "2025-T2", closedOn: "2025-07-18" },
   { period: "2025-T1", closedOn: "2025-04-17" },
 ];
+
+/** The sample quarters were closed before returns were kept: their figures come from the books. */
+export const initialFiledReturns: FiledReturn[] = [];
