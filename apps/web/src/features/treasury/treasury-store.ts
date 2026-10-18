@@ -8,6 +8,7 @@ import { settingsStore, useSettings } from "@/features/settings/settings-store";
 import { initialManualPayments, sampleMovements } from "@/mocks/treasury";
 import type { Command } from "@/data/commands";
 import { createStore } from "@/data/store";
+import { listTarget, syncTarget } from "@/data/sync";
 import { collectPayments, methodForAccount, pendingDocuments, type PendingDocument } from "./treasury-model";
 
 /**
@@ -40,6 +41,26 @@ export function useTreasury(): TreasuryState {
 const write = (changes: Partial<TreasuryState>, commands: Command[]) =>
   treasury.write({ ...treasury.get(), ...changes }, commands);
 
+const byDate = (a: BankMovement, b: BankMovement) => a.date.localeCompare(b.date);
+
+const take = (changes: Partial<TreasuryState>) => treasury.set({ ...treasury.get(), ...changes });
+
+syncTarget(
+  "bankMovements",
+  listTarget(
+    () => treasury.get().movements,
+    (movements) => take({ movements }),
+    (movements) => [...movements].sort(byDate),
+  ),
+);
+syncTarget(
+  "manualPayments",
+  listTarget(
+    () => treasury.get().manualPayments,
+    (manualPayments) => take({ manualPayments }),
+  ),
+);
+
 /** Every recorded collection and payment, newest first. Recomputed only when a source changes. */
 export function usePayments() {
   const sales = useSalesDocuments();
@@ -59,8 +80,6 @@ export function usePendingDocuments() {
   const expenses = useExpenses();
   return useMemo(() => pendingDocuments({ sales, purchases, expenses }), [sales, purchases, expenses]);
 }
-
-const byDate = (a: BankMovement, b: BankMovement) => a.date.localeCompare(b.date);
 
 /**
  * Records the payment that settles a pending document, on the movement's date and through a

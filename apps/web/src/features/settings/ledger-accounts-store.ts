@@ -1,9 +1,12 @@
 import type { LedgerAccountSettings } from "@fiscalia/contracts";
 import { createStore } from "@/data/store";
+import { syncSettings } from "@/data/sync";
 import { initialLedgerAccounts } from "@/mocks/ledger-accounts";
 
 /** Ledger account numbers for the accounting export. */
 const settings = createStore<LedgerAccountSettings>(initialLedgerAccounts);
+
+syncSettings("ledgerAccounts", settings.set);
 
 export function useLedgerAccounts(): LedgerAccountSettings {
   return settings.use();

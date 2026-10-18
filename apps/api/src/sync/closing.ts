@@ -1,19 +1,48 @@
-import type { ClosedQuarter } from "@fiscalia/contracts";
+import type { ClosedQuarter, FiledReturn } from "@fiscalia/contracts";
 import { periodKey, quarterOfDate } from "@fiscalia/core";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { Tx } from "../db/client";
-import { closedQuarter } from "../db/schema";
+import { closedQuarter, filedReturn } from "../db/schema";
 import { ApiError } from "../errors";
+import { alreadyExists } from "./records";
 
 type ClosedQuarterRow = typeof closedQuarter.$inferSelect;
+type FiledReturnRow = typeof filedReturn.$inferSelect;
 
 export const toClosedQuarter = (row: ClosedQuarterRow): ClosedQuarter => ({
   period: row.period,
   closedOn: row.closedOn,
 });
 
-/** Closes a quarter, or updates the date of one already closed. */
-export async function closeQuarter(tx: Tx, organizationId: string, period: string, closedOn: string) {
+export const toFiledReturn = (row: FiledReturnRow): FiledReturn => ({
+  id: row.id,
+  form: row.form,
+  period: row.period,
+  boxes: row.boxes,
+  result: row.result as FiledReturn["result"],
+  filedOn: row.filedOn,
+});
+
+/**
+ * Closes a quarter, or updates the date of one already closed, and stores
+ * its returns as filed. Filed returns are never replaced: each close adds a
+ * new version.
+ */
+export async function closeQuarter(
+  tx: Tx,
+  organizationId: string,
+  period: string,
+  closedOn: string,
+  returns: FiledReturn[] = [],
+) {
+  const forms = new Set<string>();
+  for (const filed of returns) {
+    if (filed.period !== period)
+      throw new ApiError(400, "invalid_filed_return", `A return of ${filed.period} can't be filed closing ${period}.`);
+    if (forms.has(filed.form))
+      throw new ApiError(400, "invalid_filed_return", `Form ${filed.form} is filed twice for ${period}.`);
+    forms.add(filed.form);
+  }
   await tx
     .insert(closedQuarter)
     .values({ organizationId, period, closedOn })
@@ -21,6 +50,31 @@ export async function closeQuarter(tx: Tx, organizationId: string, period: strin
       target: [closedQuarter.organizationId, closedQuarter.period],
       set: { closedOn, deletedAt: null },
     });
+  if (returns.length === 0) return;
+  const stored = await tx
+    .insert(filedReturn)
+    .values(returns.map((filed) => ({ ...filed, organizationId })))
+    .onConflictDoNothing()
+    .returning({ id: filedReturn.id });
+  if (stored.length < returns.length) alreadyExists();
+}
+
+/** Every version of every filed return, oldest first. */
+export async function liveFiledReturns(tx: Tx, organizationId: string) {
+  const rows = await tx
+    .select()
+    .from(filedReturn)
+    .where(eq(filedReturn.organizationId, organizationId))
+    .orderBy(asc(filedReturn.createdAt), asc(filedReturn.id));
+  return rows.map(toFiledReturn);
+}
+
+export function filedReturnsById(tx: Tx, organizationId: string, ids: string[]) {
+  if (ids.length === 0) return Promise.resolve([]);
+  return tx
+    .select()
+    .from(filedReturn)
+    .where(and(eq(filedReturn.organizationId, organizationId), inArray(filedReturn.id, ids)));
 }
 
 export async function reopenQuarter(tx: Tx, organizationId: string, period: string) {

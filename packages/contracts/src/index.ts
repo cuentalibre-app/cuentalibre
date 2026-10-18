@@ -11,6 +11,7 @@ export * from "./purchases";
 export * from "./treasury";
 export * from "./catalog";
 export * from "./settings";
+export * from "./organization-settings";
 export * from "./user";
 export * from "./organizations";
 export * from "./sync";

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   expenseBox100,
+  filedReturnsOf,
   hardToJustify,
   incomeTaxReturns,
   incomeTaxYear,
@@ -213,6 +214,29 @@ describe("vatReturns", () => {
     expect(q2!.boxes).toMatchObject({ "110": eur(315), "78": eur(210), "71": 0 });
     expect(q3!.boxes).toMatchObject({ "110": eur(105), "78": eur(105), "71": eur(105) });
   });
+
+  it("starts from what a filed return left pending", () => {
+    const b = books({
+      sales: [sale("2026-04-10", eur(1_000))],
+      purchases: [purchase("2026-02-10", eur(1_000))],
+    });
+    // Q1 was filed before a purchase of 500 € was booked in it: only 105 € were left to offset
+    const filed = { "303": { "2026-T1": { "87": 0, "71": -eur(105) } } };
+    const [, q2] = vatReturns({ ...b, filed }, 2026);
+    expect(q2!.boxes).toMatchObject({ "110": eur(105), "78": eur(105), "71": eur(105) });
+  });
+});
+
+describe("filedReturnsOf", () => {
+  it("keeps the latest version of each return", () => {
+    expect(
+      filedReturnsOf([
+        { form: "303", period: "2026-T1", boxes: { "71": 100 } },
+        { form: "130", period: "2026-T1", boxes: { "07": 50 } },
+        { form: "303", period: "2026-T1", boxes: { "71": 120 } },
+      ]),
+    ).toEqual({ "303": { "2026-T1": { "71": 120 } }, "130": { "2026-T1": { "07": 50 } } });
+  });
 });
 
 describe("model390", () => {
@@ -333,6 +357,19 @@ describe("model130", () => {
     expect(q1!.result).toBe(eur(-100));
     // The negative installment doesn't count as paid
     expect(q2!.boxes).toMatchObject({ "04": eur(1_200), "05": eur(0), "06": eur(300), "19": eur(900) });
+  });
+
+  it("subtracts the installments as filed", () => {
+    const b = books({
+      sales: [
+        sale("2026-02-10", eur(10_000), { withholding: eur(500) }),
+        sale("2026-05-10", eur(10_000), { withholding: eur(500) }),
+      ],
+    });
+    const filed = { "130": { "2026-T1": { "07": eur(1_200) } } };
+    const [q1, q2] = incomeTaxReturns({ ...b, filed }, 2026, { simplified: false });
+    expect(q1!.result).toBe(eur(1_500));
+    expect(q2!.boxes).toMatchObject({ "05": eur(1_200), "07": eur(1_800) });
   });
 
   it("limits the reduction to the positive installment", () => {

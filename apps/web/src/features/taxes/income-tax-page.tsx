@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { cents, filingDeadline, incomeTaxYear, model130, type Quarter } from "@fiscalia/core";
+import { cents, earlierInstallments, filingDeadline, incomeTaxYear, model130, type Quarter } from "@fiscalia/core";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -107,8 +107,8 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
   const [mortgage, mortgageBox] = useEditable(cents(0));
 
   const r = useMemo(() => {
-    // Box 05 subtracts the positive installments of the earlier quarters, as computed
-    const previous = annual.quarters.slice(0, quarter - 1).map((q) => cents(q.boxes["07"]!));
+    // Box 05 subtracts the positive installments of the earlier quarters, as filed or computed
+    const previous = earlierInstallments(books, annual.quarters, year, quarter);
     return model130(books, year, quarter, TAX_OPTIONS, previous, { reduction, negativeCarry, mortgage });
   }, [books, year, quarter, annual, reduction, negativeCarry, mortgage]);
   const documents = useIncomeDocuments(year, quarter * 3 - 1);

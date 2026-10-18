@@ -1,5 +1,6 @@
 import type { Tag } from "@fiscalia/contracts";
 import { createCollection } from "@/data/collection";
+import { syncCollection } from "@/data/sync";
 import { initialTags } from "@/mocks/tags";
 
 /**
@@ -7,6 +8,7 @@ import { initialTags } from "@/mocks/tags";
  * here still works, it's just shown with the neutral color.
  */
 const tags = createCollection<Tag>("tags", initialTags);
+syncCollection("tags", tags);
 
 export function useTags(): Tag[] {
   return tags.use();

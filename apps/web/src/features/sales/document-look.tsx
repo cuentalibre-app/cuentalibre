@@ -1,10 +1,11 @@
 import type { CSSProperties } from "react";
 import { Check } from "lucide-react";
+import type { DocumentLook, InvoiceTemplate } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { Field, GroupedSelect, LocaleFields } from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
-import { DEFAULT_SETTINGS, FONTS, TEMPLATES, type DocumentLook, type InvoiceTemplate } from "./invoice-settings";
+import { DEFAULT_SETTINGS, FONTS, TEMPLATES } from "./invoice-settings";
 
 /* PDF look controls shared by the invoice settings and those of drafts, quotes and delivery notes. */
 

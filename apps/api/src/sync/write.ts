@@ -2,6 +2,7 @@ import {
   ENTITY_ROLES,
   type Change,
   type ContactEntity,
+  type PlainEntity,
   type RecordEntity,
   type SyncCommand,
 } from "@fiscalia/contracts";
@@ -11,9 +12,11 @@ import { changeLog, type LoggedEntity } from "../db/schema";
 import { closeQuarter, reopenQuarter } from "./closing";
 import { createContact, deleteContact, updateContact, type StoredContact } from "./contacts";
 import { createExpense, deleteExpense, updateExpense } from "./expenses";
+import { createPlain, deletePlain, loggedAs, PLAIN_ENTITIES, updatePlain } from "./plain";
 import { createPurchaseInvoice, deletePurchaseInvoice, updatePurchaseInvoice } from "./purchases";
 import { changesFor, type RecordRef } from "./read";
 import { createSalesDocument, deleteSalesDocument, issueInvoice, updateSalesDocument } from "./sales";
+import { saveSettings } from "./settings";
 
 export interface Scope {
   organizationId: string;
@@ -33,32 +36,42 @@ export function applyCommands(db: Db, scope: Scope, commands: SyncCommand[]): Pr
 
     const touched: RecordRef[] = [];
     for (const command of commands) {
-      const ref = await apply(tx, scope.organizationId, command);
-      await tx.insert(changeLog).values({
-        organizationId: scope.organizationId,
-        entity: ref.entity,
-        recordId: ref.id,
-        op: command.type,
-        userId: scope.userId,
-      });
-      touched.push(ref);
+      const refs = await apply(tx, scope.organizationId, command);
+      await tx.insert(changeLog).values(
+        refs.map((ref) => ({
+          organizationId: scope.organizationId,
+          entity: ref.entity,
+          recordId: ref.id,
+          op: command.type,
+          userId: scope.userId,
+        })),
+      );
+      touched.push(...refs);
     }
     return changesFor(tx, scope.organizationId, touched);
   });
 }
 
-/** Runs one command and returns the record it changed. */
-async function apply(tx: Tx, organizationId: string, command: SyncCommand): Promise<RecordRef> {
+/** Runs one command and returns the records it changed. */
+async function apply(tx: Tx, organizationId: string, command: SyncCommand): Promise<RecordRef[]> {
   switch (command.type) {
     case "issue":
       await issueInvoice(tx, organizationId, command.data, command.number);
-      return { entity: "sales_document", id: command.data.id };
-    case "closeQuarter":
-      await closeQuarter(tx, organizationId, command.period, command.closedOn);
-      return { entity: "closed_quarter", id: command.period };
+      return [{ entity: "sales_document", id: command.data.id }];
+    case "closeQuarter": {
+      const returns = command.returns ?? [];
+      await closeQuarter(tx, organizationId, command.period, command.closedOn, returns);
+      return [
+        { entity: "closed_quarter", id: command.period },
+        ...returns.map((filed): RecordRef => ({ entity: "filed_return", id: filed.id })),
+      ];
+    }
     case "reopenQuarter":
       await reopenQuarter(tx, organizationId, command.period);
-      return { entity: "closed_quarter", id: command.period };
+      return [{ entity: "closed_quarter", id: command.period }];
+    case "saveSettings":
+      await saveSettings(tx, organizationId, command.section, command.data);
+      return [{ entity: "organization_setting", id: command.section }];
   }
 
   const id = command.type === "create" ? command.data.id : command.id;
@@ -66,7 +79,7 @@ async function apply(tx: Tx, organizationId: string, command: SyncCommand): Prom
   if (command.type === "create") await service.create(tx, organizationId, command.data);
   else if (command.type === "update") await service.update(tx, organizationId, id, command.changes);
   else await service.remove(tx, organizationId, id);
-  return { entity: service.logged, id };
+  return [{ entity: service.logged, id }];
 }
 
 /** How each kind of record is created, updated and deleted, and the name it is logged under. */
@@ -84,7 +97,18 @@ const contactService = (entity: ContactEntity): RecordService => ({
   remove: (tx, organizationId, id) => deleteContact(tx, organizationId, ENTITY_ROLES[entity], id),
 });
 
+const plainService = (entity: PlainEntity): RecordService => ({
+  logged: loggedAs(entity),
+  create: (tx, organizationId, data) => createPlain(tx, organizationId, entity, data),
+  update: (tx, organizationId, id, changes) => updatePlain(tx, organizationId, entity, id, changes),
+  remove: (tx, organizationId, id) => deletePlain(tx, organizationId, entity, id),
+});
+
 const SERVICES: Record<RecordEntity, RecordService> = {
+  ...(Object.fromEntries(PLAIN_ENTITIES.map((entity) => [entity, plainService(entity)])) as Record<
+    PlainEntity,
+    RecordService
+  >),
   clients: contactService("clients"),
   suppliers: contactService("suppliers"),
   salesDocuments: {

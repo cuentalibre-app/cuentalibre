@@ -1,9 +1,20 @@
 import { z } from "zod";
+import { productSchema } from "./catalog";
 import { attachmentSchema, isoDate } from "./common";
 import { contactRoleSchema, contactSchema } from "./contacts";
+import { catalogFamilySchema, stockMovementSchema } from "./core";
+import { organizationSettingsSchema, settingsSectionSchema } from "./organization-settings";
 import { expenseSchema, paymentSchema, purchaseInvoiceSchema, purchaseLineSchema } from "./purchases";
 import { salesDocumentSchema, salesLineSchema } from "./sales";
-import { closedQuarterSchema } from "./settings";
+import {
+  closedQuarterSchema,
+  filedReturnSchema,
+  paymentMethodSchema,
+  quarterKeySchema,
+  tagSchema,
+  treasuryAccountSchema,
+} from "./settings";
+import { bankMovementSchema, manualPaymentSchema } from "./treasury";
 
 /*
  * What the web app and the API exchange to keep the client's copy of the data
@@ -19,6 +30,15 @@ export const syncedEntitySchema = z.enum([
   "purchaseInvoices",
   "expenses",
   "closedQuarters",
+  "filedReturns",
+  "tags",
+  "treasuryAccounts",
+  "paymentMethods",
+  "manualPayments",
+  "bankMovements",
+  "catalogFamilies",
+  "products",
+  "stockMovements",
 ]);
 export type SyncedEntity = z.infer<typeof syncedEntitySchema>;
 
@@ -31,7 +51,7 @@ export const ENTITY_ROLES = { clients: "client", suppliers: "supplier" } as cons
 >;
 
 /** Records whose entity the client may create, update and delete. */
-export const recordEntitySchema = syncedEntitySchema.exclude(["closedQuarters"]);
+export const recordEntitySchema = syncedEntitySchema.exclude(["closedQuarters", "filedReturns"]);
 export type RecordEntity = z.infer<typeof recordEntitySchema>;
 
 /**
@@ -67,11 +87,60 @@ export const storedExpenseSchema = expenseSchema.extend({
   attachments: storedAttachments,
 });
 
+/*
+ * Plain records: no legal effects and no quarter, so the server only checks
+ * their shape and that what they name belongs to the organization.
+ */
+
+export const storedTagSchema = tagSchema.extend({ id: z.uuid() });
+
+export const storedTreasuryAccountSchema = treasuryAccountSchema.extend({ id: z.uuid() });
+
+export const storedPaymentMethodSchema = paymentMethodSchema.extend({ id: z.uuid(), accountId: z.uuid().nullable() });
+
+export const storedManualPaymentSchema = manualPaymentSchema.extend({ id: z.uuid(), paymentMethodId: z.uuid() });
+
+export const storedBankMovementSchema = bankMovementSchema.extend({
+  id: z.uuid(),
+  accountId: z.uuid(),
+  paymentKeys: z.array(z.string()).max(1000),
+});
+
+export const storedCatalogFamilySchema = catalogFamilySchema.extend({ id: z.uuid(), parentId: z.uuid().nullable() });
+
+export const storedProductSchema = productSchema.extend({ id: z.uuid(), familyId: z.uuid().nullable() });
+
+export const storedStockMovementSchema = stockMovementSchema.extend({
+  id: z.uuid(),
+  productId: z.uuid(),
+  documentId: z.uuid().optional(),
+});
+
+export const storedFiledReturnSchema = filedReturnSchema.extend({ id: z.uuid() });
+
+/** Each plain record's schema, by entity. */
+export const plainRecordSchemas = {
+  tags: storedTagSchema,
+  treasuryAccounts: storedTreasuryAccountSchema,
+  paymentMethods: storedPaymentMethodSchema,
+  manualPayments: storedManualPaymentSchema,
+  bankMovements: storedBankMovementSchema,
+  catalogFamilies: storedCatalogFamilySchema,
+  products: storedProductSchema,
+  stockMovements: storedStockMovementSchema,
+} as const;
+export type PlainEntity = keyof typeof plainRecordSchemas;
+
+const plainCreate = <E extends PlainEntity>(entity: E) =>
+  z.object({ type: z.literal("create"), entity: z.literal(entity), data: plainRecordSchemas[entity] });
+const plainUpsert = <E extends PlainEntity>(entity: E) =>
+  z.object({ op: z.literal("upsert"), entity: z.literal(entity), data: plainRecordSchemas[entity] });
+
+/** A settings section as saved: its name and the whole document. */
+export const settingsChangeSchema = z.object({ section: settingsSectionSchema, data: z.unknown() });
+
 /** Position in an organization's change feed. 0 is before the first change. */
 export const cursorSchema = z.int().nonnegative();
-
-/** Period key of a quarter, "2026-T2". */
-const periodSchema = closedQuarterSchema.shape.period;
 
 export const commandSchema = z.union([
   z.object({ type: z.literal("create"), entity: contactEntitySchema, data: storedContactSchema }),
@@ -83,6 +152,14 @@ export const commandSchema = z.union([
   }),
   z.object({ type: z.literal("create"), entity: z.literal("purchaseInvoices"), data: storedPurchaseInvoiceSchema }),
   z.object({ type: z.literal("create"), entity: z.literal("expenses"), data: storedExpenseSchema }),
+  plainCreate("tags"),
+  plainCreate("treasuryAccounts"),
+  plainCreate("paymentMethods"),
+  plainCreate("manualPayments"),
+  plainCreate("bankMovements"),
+  plainCreate("catalogFamilies"),
+  plainCreate("products"),
+  plainCreate("stockMovements"),
   z.object({
     type: z.literal("update"),
     entity: recordEntitySchema,
@@ -102,9 +179,19 @@ export const commandSchema = z.union([
     /** Only for invoices issued elsewhere and imported: keep this number instead of taking the next one. */
     number: z.string().trim().min(1).optional(),
   }),
-  /** Freezes the books of a quarter: its invoices can't be issued or changed until it is reopened. */
-  z.object({ type: z.literal("closeQuarter"), period: periodSchema, closedOn: isoDate }),
-  z.object({ type: z.literal("reopenQuarter"), period: periodSchema }),
+  /**
+   * Freezes the books of a quarter: its invoices can't be issued or changed
+   * until it is reopened. `returns` are the quarter's returns as filed.
+   */
+  z.object({
+    type: z.literal("closeQuarter"),
+    period: quarterKeySchema,
+    closedOn: isoDate,
+    returns: z.array(storedFiledReturnSchema).max(10).optional(),
+  }),
+  z.object({ type: z.literal("reopenQuarter"), period: quarterKeySchema }),
+  /** Replaces a section of the organization's settings; `data` is the whole section. */
+  z.object({ type: z.literal("saveSettings"), section: settingsSectionSchema, data: z.unknown() }),
 ]);
 export type SyncCommand = z.infer<typeof commandSchema>;
 
@@ -115,6 +202,16 @@ export const changeSchema = z.union([
   z.object({ op: z.literal("upsert"), entity: z.literal("purchaseInvoices"), data: storedPurchaseInvoiceSchema }),
   z.object({ op: z.literal("upsert"), entity: z.literal("expenses"), data: storedExpenseSchema }),
   z.object({ op: z.literal("upsert"), entity: z.literal("closedQuarters"), data: closedQuarterSchema }),
+  z.object({ op: z.literal("upsert"), entity: z.literal("filedReturns"), data: storedFiledReturnSchema }),
+  plainUpsert("tags"),
+  plainUpsert("treasuryAccounts"),
+  plainUpsert("paymentMethods"),
+  plainUpsert("manualPayments"),
+  plainUpsert("bankMovements"),
+  plainUpsert("catalogFamilies"),
+  plainUpsert("products"),
+  plainUpsert("stockMovements"),
+  z.object({ op: z.literal("upsert"), entity: z.literal("settings"), data: settingsChangeSchema }),
   z.object({
     op: z.literal("delete"),
     entity: syncedEntitySchema,
@@ -133,6 +230,18 @@ export const workspaceSchema = z.object({
   purchaseInvoices: z.array(storedPurchaseInvoiceSchema),
   expenses: z.array(storedExpenseSchema),
   closedQuarters: z.array(closedQuarterSchema),
+  /** Every version, oldest first. */
+  filedReturns: z.array(storedFiledReturnSchema),
+  tags: z.array(storedTagSchema),
+  treasuryAccounts: z.array(storedTreasuryAccountSchema),
+  paymentMethods: z.array(storedPaymentMethodSchema),
+  manualPayments: z.array(storedManualPaymentSchema),
+  bankMovements: z.array(storedBankMovementSchema),
+  catalogFamilies: z.array(storedCatalogFamilySchema),
+  products: z.array(storedProductSchema),
+  stockMovements: z.array(storedStockMovementSchema),
+  /** Every section, the ones never saved with their defaults. */
+  settings: organizationSettingsSchema,
 });
 export type Workspace = z.infer<typeof workspaceSchema>;
 

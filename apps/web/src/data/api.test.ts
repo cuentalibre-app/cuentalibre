@@ -1,11 +1,18 @@
-import type { ClosedQuarter, Contact, SalesDocument } from "@fiscalia/contracts";
+import {
+  DEFAULT_ORGANIZATION_SETTINGS,
+  type ClosedQuarter,
+  type Contact,
+  type FiledReturn,
+  type SalesDocument,
+  type Tag,
+} from "@fiscalia/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApiBackend, ApiError } from "./api";
 import { localBackend, setBackend } from "./backend";
 import { createCollection } from "./collection";
 import { attachFile, attachmentUrl } from "./files";
 import { createStore } from "./store";
-import { syncCollection, syncTarget } from "./sync";
+import { listTarget, syncCollection, syncSettings, syncTarget } from "./sync";
 
 const norte: Contact = { id: "0199f0a0-0000-7000-8000-000000000001", name: "Estudio Norte S.L.", taxId: "B12345674" };
 const brisa: Contact = { id: "0199f0a0-0000-7000-8000-000000000002", name: "Agencia Brisa S.L.", taxId: "B87654323" };
@@ -151,6 +158,86 @@ describe("api backend", () => {
     );
     expect(calls[0]!.body).toEqual({
       commands: [{ type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15" }],
+    });
+  });
+
+  it("saves the organization's settings and takes the server's version of a section", async () => {
+    const { api, calls } = setup(
+      { body: { changes: [] } },
+      {
+        body: {
+          cursor: 1,
+          clients: [],
+          suppliers: [],
+          salesDocuments: [],
+          settings: {
+            ...DEFAULT_ORGANIZATION_SETTINGS,
+            signing: { invoice: "company", quote: "none", deliveryNote: "none" },
+          },
+        },
+      },
+    );
+    const signing = createStore(DEFAULT_ORGANIZATION_SETTINGS.signing);
+    syncSettings("signing", signing.set);
+    const data = { invoice: "none", quote: "company", deliveryNote: "none" } as const;
+    await signing.write(data, [
+      { type: "saveSettings", section: "signing", data },
+      // Not stored by the server yet
+      { type: "saveSettings", section: "emailSettings", data: {} },
+    ]);
+    expect(calls[0]!.body).toEqual({ commands: [{ type: "saveSettings", section: "signing", data }] });
+
+    await api.loadWorkspace();
+    expect(signing.get()).toEqual({ invoice: "company", quote: "none", deliveryNote: "none" });
+  });
+
+  it("keeps lists inside bigger stores in step with the server", async () => {
+    const recurring: Tag = { id: "0199f0a0-0000-7000-8000-000000000010", name: "Recurrente", color: "#1d4ed8" };
+    const urgent: Tag = { id: "0199f0a0-0000-7000-8000-000000000011", name: "Urgente", color: "#b91c1c" };
+    const { api } = setup({
+      body: {
+        cursor: 1,
+        changes: [
+          { op: "upsert", entity: "tags", data: { ...recurring, color: "#15803d" } },
+          { op: "upsert", entity: "tags", data: urgent },
+          { op: "delete", entity: "tags", id: recurring.id },
+        ],
+        hasMore: false,
+      },
+    });
+    const state = createStore({ tags: [recurring], other: 1 });
+    syncTarget(
+      "tags",
+      listTarget(
+        () => state.get().tags,
+        (tags) => state.set({ ...state.get(), tags }),
+      ),
+    );
+    await api.pull();
+    expect(state.get()).toEqual({ tags: [urgent], other: 1 });
+  });
+
+  it("files the quarter's returns when closing it", async () => {
+    const { calls } = setup({ body: { changes: [] } });
+    const quarters = createStore<ClosedQuarter[]>([]);
+    syncTarget<ClosedQuarter>("closedQuarters", {
+      receive: (quarter) => quarters.set([quarter]),
+      forget: () => quarters.set([]),
+      replace: quarters.set,
+    });
+    const returns = [
+      {
+        id: "0199f0a0-0000-7000-8000-000000000020",
+        form: "303" as const,
+        period: "2026-T3",
+        boxes: { "71": 21000 },
+        result: 21000 as FiledReturn["result"],
+        filedOn: "2026-10-15",
+      },
+    ];
+    await quarters.write([], [{ type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15", returns }]);
+    expect(calls[0]!.body).toEqual({
+      commands: [{ type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15", returns }],
     });
   });
 

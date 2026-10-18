@@ -1,10 +1,10 @@
+import type { ContactSettings } from "@fiscalia/contracts";
 import { Input } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import {
   DEFAULT_CUSTOM_FIELD_NAMES,
   contactSettingsStore,
   useContactSettings,
-  type ContactSettings,
 } from "@/features/contacts/contact-settings-store";
 import { CheckField, Field, Section } from "@/features/sales/form-fields";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";

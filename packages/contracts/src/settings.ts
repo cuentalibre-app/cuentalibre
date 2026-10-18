@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { cents, fraction, hexColor, id, isoDate, localDateTime } from "./common";
-import { withholdingKindSchema } from "./core";
+import { filedFormSchema, withholdingKindSchema } from "./core";
 
 export const businessKindSchema = z.enum(["selfEmployed", "company"]);
 export type BusinessKind = z.infer<typeof businessKindSchema>;
@@ -106,13 +106,34 @@ export const tagSchema = z.object({
 });
 export type Tag = z.infer<typeof tagSchema>;
 
+/** Period key of a quarter, "2026-T2". */
+export const quarterKeySchema = z.string().regex(/^\d{4}-T[1-4]$/);
+
 /** A closed quarter: its books are frozen until it is reopened. */
 export const closedQuarterSchema = z.object({
-  /** Period key, "2026-T2". */
-  period: z.string().regex(/^\d{4}-T[1-4]$/),
+  period: quarterKeySchema,
   closedOn: isoDate,
 });
 export type ClosedQuarter = z.infer<typeof closedQuarterSchema>;
+
+/**
+ * A return as it was filed, stored when its quarter is closed: later returns
+ * start from it (form 130 subtracts the installments filed, form 303 offsets
+ * what was left pending) and it stays as the record of what was declared.
+ * Never changed: closing the quarter again after reopening it stores a new
+ * version, and the latest one counts.
+ */
+export const filedReturnSchema = z.object({
+  id,
+  form: filedFormSchema,
+  period: quarterKeySchema,
+  /** Box number ("07", "110") to its value: cents, or a percentage for rate boxes. */
+  boxes: z.record(z.string().regex(/^\d{2,4}$/), z.number()),
+  /** The amount to pay (positive) or to offset or refund (negative). */
+  result: cents,
+  filedOn: isoDate,
+});
+export type FiledReturn = z.infer<typeof filedReturnSchema>;
 
 export const ledgerAccountKeySchema = z.enum([
   "customers",

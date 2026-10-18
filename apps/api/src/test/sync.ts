@@ -1,4 +1,4 @@
-import type { Changes, SyncCommand, Workspace } from "@fiscalia/contracts";
+import { DEFAULT_ORGANIZATION_SETTINGS, type Changes, type SyncCommand, type Workspace } from "@fiscalia/contracts";
 import { newId } from "@fiscalia/core";
 import { expect } from "vitest";
 import { createOrganization, signUp, type Client } from "./harness";
@@ -12,6 +12,16 @@ export const EMPTY: Workspace = {
   purchaseInvoices: [],
   expenses: [],
   closedQuarters: [],
+  filedReturns: [],
+  tags: [],
+  treasuryAccounts: [],
+  paymentMethods: [],
+  manualPayments: [],
+  bankMovements: [],
+  catalogFamilies: [],
+  products: [],
+  stockMovements: [],
+  settings: DEFAULT_ORGANIZATION_SETTINGS,
 };
 
 /** A signed-in user working in a new organization of their own. */
