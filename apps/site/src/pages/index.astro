@@ -1,0 +1,125 @@
+---
+import "../styles/global.css";
+
+const appUrl = (import.meta.env.PUBLIC_APP_URL ?? "http://localhost:5173").replace(/\/$/, "");
+const links = {
+  signIn: `${appUrl}/entrar`,
+  signUp: `${appUrl}/registro`,
+  demo: `${appUrl}/demo`,
+  source: "https://github.com/jesuspb2/fiscalia",
+};
+
+const title = "Fiscalia: contabilidad e impuestos para autónomos";
+const description =
+  "Facturas, gastos, IVA e IRPF en un solo sitio. Fiscalia calcula tus modelos 303 y 130, te avisa de cada plazo y es software libre.";
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
+const features = [
+  {
+    title: "Facturación",
+    text: "Facturas, presupuestos y albaranes con numeración correlativa y PDF listo para enviar.",
+  },
+  {
+    title: "Compras y gastos",
+    text: "Registra facturas recibidas y gastos deducibles con sus justificantes.",
+  },
+  {
+    title: "IVA e IRPF al día",
+    text: "Modelos 303, 130, 390, 111, 115 y 347 calculados casilla a casilla a partir de tus documentos.",
+  },
+  {
+    title: "Calendario fiscal",
+    text: "Cada plazo que te afecta, con el importe estimado antes de que llegue.",
+  },
+  {
+    title: "Informes",
+    text: "Pérdidas y ganancias, resumen del año y comparativa con el anterior.",
+  },
+  {
+    title: "Software libre",
+    text: "Código abierto bajo AGPL-3.0. Úsalo en la nube o instálalo en tu propio servidor.",
+  },
+];
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+  </head>
+  <body>
+    <header class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
+      <a href="/" class="text-md font-semibold text-foreground no-underline">Fiscalia</a>
+      <nav class="flex items-center gap-2">
+        <a href={links.signIn} class="rounded-lg px-3 py-2 font-medium text-foreground hover:bg-accent">Entrar</a>
+        <a
+          href={links.signUp}
+          class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground hover:bg-primary-hover"
+        >
+          Crear cuenta
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="mx-auto max-w-3xl px-4 pt-16 pb-20 text-center sm:px-6 sm:pt-24">
+        <h1 class="m-0 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+          La contabilidad y los impuestos de tu negocio, sin hojas de cálculo
+        </h1>
+        <p class="mx-auto mt-5 mb-0 max-w-xl text-lg text-pretty text-muted-foreground">
+          Fiscalia es la herramienta para autónomos en España: facturas, gastos, IVA e IRPF en un solo sitio, con cada
+          modelo calculado a partir de tus documentos.
+        </p>
+        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <a
+            href={links.signUp}
+            class="rounded-xl bg-primary px-6 py-3 text-md font-semibold text-primary-foreground hover:bg-primary-hover"
+          >
+            Crear cuenta gratis
+          </a>
+          <a
+            href={links.demo}
+            class="rounded-xl border border-input bg-secondary px-6 py-3 text-md font-medium text-secondary-foreground hover:bg-muted"
+          >
+            Probar la demo
+          </a>
+        </div>
+        <p class="mt-3 mb-0 text-sm text-muted-foreground">La demo usa datos de ejemplo y no necesita cuenta.</p>
+      </section>
+
+      <section class="border-t border-border bg-muted">
+        <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+          <h2 class="m-0 text-2xl font-semibold">Todo lo que necesitas cada trimestre</h2>
+          <ul class="m-0 mt-8 grid list-none gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
+            {
+              features.map((feature) => (
+                <li class="rounded-xl border border-border bg-card p-5 text-card-foreground">
+                  <h3 class="m-0 text-md font-semibold">{feature.title}</h3>
+                  <p class="mt-2 mb-0 text-muted-foreground">{feature.text}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer
+      class="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:justify-between sm:px-6"
+    >
+      <span>Fiscalia · Software libre bajo licencia AGPL-3.0</span>
+      <a href={links.source} class="text-muted-foreground hover:text-foreground">Código fuente en GitHub</a>
+    </footer>
+  </body>
+</html>

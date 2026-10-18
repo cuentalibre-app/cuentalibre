@@ -90,24 +90,29 @@ function toWire(command: Command): SyncCommand[] {
   return [{ ...command, entity: command.entity, changes }];
 }
 
+/** How connecting to the API went: the app runs on it only when "connected". */
+export type ConnectResult = "connected" | "signed-out" | "no-organization" | "unavailable";
+
 /**
  * Loads the workspace from the API and switches to it as the backend, then
  * keeps the data fresh when the window regains focus and every 30 seconds.
  * The stores must be loaded first, so their collections are registered.
- * Returns false, and leaves the sample data in place, if the API can't be used
- * (it's down, or nobody is signed in).
+ * Without a session, or without an active organization, the backend stays
+ * local and the result says what's missing.
  */
-export async function connectApi(baseUrl: string): Promise<boolean> {
+export async function connectApi(baseUrl: string): Promise<ConnectResult> {
   const api = createApiBackend(baseUrl);
   try {
     await api.loadWorkspace();
   } catch (error) {
-    console.warn("Fiscalia API not available, using the sample data:", error);
-    return false;
+    if (error instanceof ApiError && error.status === 401) return "signed-out";
+    if (error instanceof ApiError && error.status === 403) return "no-organization";
+    console.warn("Fiscalia API not available:", error);
+    return "unavailable";
   }
   setBackend(api);
   const pull = () => void api.pull().catch((error: unknown) => console.warn("Sync failed:", error));
   window.addEventListener("focus", pull);
   setInterval(pull, 30_000);
-  return true;
+  return "connected";
 }

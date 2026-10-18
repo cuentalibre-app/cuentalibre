@@ -16,6 +16,11 @@ import {
 import { CatalogSettingsPage } from "@/features/catalog/catalog-settings-page";
 import { ProductFormPage } from "@/features/catalog/product-form-page";
 import { StockPage } from "@/features/catalog/stock-page";
+import { OnboardingPage } from "@/features/auth/onboarding-page";
+import { GuestOnly, RequireSession } from "@/features/auth/session-gate";
+import { DEMO_PATH, ONBOARDING_PATH, SIGN_IN_PATH, SIGN_UP_PATH } from "@/features/auth/session";
+import { SignInPage } from "@/features/auth/sign-in-page";
+import { SignUpPage } from "@/features/auth/sign-up-page";
 import { CLOSING_PATH } from "@/features/closing/closing-model";
 import { QuarterClosePage } from "@/features/closing/quarter-close-page";
 import { ContactDetailPage } from "@/features/contacts/contact-detail-page";
@@ -235,7 +240,11 @@ const placeholders = [
 
 export const router = createBrowserRouter([
   {
-    element: <AppLayout />,
+    element: (
+      <RequireSession>
+        <AppLayout />
+      </RequireSession>
+    ),
     children: [
       { index: true, element: <HomePage /> },
       { path: "ventas", element: <Navigate to="/ventas/facturas" replace /> },
@@ -258,6 +267,25 @@ export const router = createBrowserRouter([
       { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
     ],
   },
+  {
+    path: SIGN_IN_PATH.slice(1),
+    element: (
+      <GuestOnly>
+        <SignInPage />
+      </GuestOnly>
+    ),
+  },
+  {
+    path: SIGN_UP_PATH.slice(1),
+    element: (
+      <GuestOnly>
+        <SignUpPage />
+      </GuestOnly>
+    ),
+  },
+  { path: ONBOARDING_PATH.slice(1), element: <OnboardingPage /> },
+  // startSession() has already started the demo; this only leaves the URL.
+  { path: DEMO_PATH.slice(1), element: <Navigate to="/" replace /> },
   // Design system reference, outside the app shell
   { path: "sistema-visual", element: <DesignSystemPage /> },
 ]);

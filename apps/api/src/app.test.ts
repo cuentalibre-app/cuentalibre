@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { session } from "./db/schema";
-import { app, createOrganization, db, signUp } from "./test/harness";
+import { app, createOrganization, db, env, signUp } from "./test/harness";
 
 describe("meta", () => {
   it("reports health", async () => {
@@ -62,6 +62,23 @@ describe("account", () => {
       organization: { id: created.id, name: "Estudio Ana", slug: created.slug },
       role: "owner",
     });
+  });
+
+  it("starts a new session in the user's organization", async () => {
+    const ana = await signUp("Ana");
+    const created = await createOrganization(ana, "Estudio Ana");
+
+    const response = await app.request(`${env.BETTER_AUTH_URL}/v1/auth/sign-in/email`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: env.BETTER_AUTH_URL },
+      body: JSON.stringify({ email: ana.email, password: "a-long-password" }),
+    });
+    expect(response.status).toBe(200);
+    const [stored] = await db
+      .select({ activeOrganizationId: session.activeOrganizationId })
+      .from(session)
+      .where(eq(session.token, ((await response.json()) as { token: string }).token));
+    expect(stored?.activeOrganizationId).toBe(created.id);
   });
 
   it("doesn't let a user switch to another user's organization", async () => {

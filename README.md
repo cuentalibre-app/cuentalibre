@@ -1,6 +1,6 @@
 # Fiscalia
 
-Open-source accounting and tax management for self-employed workers (*autónomos*) in Spain.
+Open-source accounting and tax management for self-employed workers (_autónomos_) in Spain.
 
 > Early stage: the app shell and the home dashboard are in place, running on sample data.
 
@@ -8,6 +8,7 @@ Open-source accounting and tax management for self-employed workers (*autónomos
 
 ```
 apps/web               Frontend (Vite + React + TypeScript + Tailwind CSS v4)
+apps/site              Public landing page (Astro, static), links to sign-in, sign-up and the demo
 apps/api               Backend (Hono + Drizzle + Postgres, Better Auth): auth and organizations so far
 packages/core          Domain logic shared by front and back: periods, tax calculations, filing calendar
 packages/contracts     zod schemas of the stored data, shared by front and back; types are inferred from them
@@ -24,13 +25,15 @@ Requires Node 22+ and pnpm 12.
 docker compose up -d   # Postgres on localhost:5432
 pnpm install
 pnpm --filter @fiscalia/api db:migrate
-pnpm dev          # web on http://localhost:5173, API on http://localhost:3000/v1
+pnpm dev          # web on http://localhost:5173, API on http://localhost:3000/v1, site on http://localhost:4321
 pnpm typecheck
 pnpm test         # API tests need the compose Postgres running
 pnpm build
 ```
 
 See [apps/api/README.md](apps/api/README.md) for the API.
+
+With `VITE_API_URL=http://localhost:3000` in `apps/web/.env.local`, the web app asks you to sign in (`/entrar`, `/registro`) and runs on your data. `/demo` opens it on the sample data without an account; without `VITE_API_URL` it always runs the demo.
 
 The design system reference page is at `/sistema-visual`.
 

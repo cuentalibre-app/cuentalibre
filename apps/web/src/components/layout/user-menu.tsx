@@ -18,6 +18,8 @@ import {
   initials,
 } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
+import { signOut } from "@/features/auth/auth-api";
+import { API_URL, SIGN_IN_PATH, leaveDemo, reloadAt, sessionState } from "@/features/auth/session";
 
 interface UserMenuProps {
   /** Custom trigger, a single button; defaults to the round avatar. */
@@ -70,11 +72,23 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
           Configuración
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        {/* There are no accounts until the backend exists */}
-        <DropdownMenuItem disabled>
-          <LogOut strokeWidth={1.8} aria-hidden="true" />
-          Cerrar sesión
-        </DropdownMenuItem>
+        {sessionState() === "connected" ? (
+          <DropdownMenuItem onSelect={() => void signOut().finally(() => reloadAt(SIGN_IN_PATH))}>
+            <LogOut strokeWidth={1.8} aria-hidden="true" />
+            Cerrar sesión
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            disabled={!API_URL}
+            onSelect={() => {
+              leaveDemo();
+              reloadAt(SIGN_IN_PATH);
+            }}
+          >
+            <LogOut strokeWidth={1.8} aria-hidden="true" />
+            Salir de la demo
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
