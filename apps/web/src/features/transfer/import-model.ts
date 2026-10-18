@@ -547,7 +547,7 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         total: errors.length ? cents(0) : documentTotals(doc).total,
         errors,
         warnings,
-        commit: () => salesStore.add(doc),
+        commit: () => salesStore.issue(doc, { imported: true }),
       };
     },
   );

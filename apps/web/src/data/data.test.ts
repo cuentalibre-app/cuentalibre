@@ -75,6 +75,19 @@ describe("createCollection", () => {
     expect(items.get("a")).toEqual({ ...a, name: "Renamed" });
   });
 
+  it("writes a record with its own commands and restores it when they are rejected", async () => {
+    const backend = fakeBackend();
+    const items = createCollection<Item>("tags", [a]);
+    await items.write({ ...a, count: 3 }, [{ type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15" }]);
+    expect(items.all()).toEqual([{ ...a, count: 3 }]);
+    expect(backend.sent).toEqual([[{ type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15" }]]);
+
+    backend.fail();
+    await items.write({ ...a, count: 9 }, [{ type: "reopenQuarter", period: "2026-T3" }]);
+    await items.write(b, [{ type: "reopenQuarter", period: "2026-T3" }]);
+    expect(items.all()).toEqual([{ ...a, count: 3 }]);
+  });
+
   it("puts a record back where it was when its delete is rejected", async () => {
     fakeBackend().fail();
     const items = createCollection<Item>("tags", [a, b]);

@@ -155,6 +155,51 @@ export function nextDocumentNumber(prefix: string, year: number, previous: strin
   return `${head}${String(last + 1).padStart(4, "0")}`;
 }
 
+/** Prefix of each invoice series: rectifying invoices are numbered apart, "R-2026-0001". */
+export const INVOICE_SERIES_PREFIX = { normal: "", rectifying: "R-" } as const;
+
+export type InvoiceSeriesKey = keyof typeof INVOICE_SERIES_PREFIX;
+
+/** An invoice already issued, as numbering needs it. */
+export interface IssuedInvoiceRef {
+  number: string;
+  series: InvoiceSeriesKey;
+  issuedOn: string;
+}
+
+/**
+ * Number of the next invoice of a series, from the year of its date. Invoice
+ * numbers are correlative and gapless within a series and year, so only the
+ * server assigns them; the app shows this one as a forecast.
+ */
+export function nextInvoiceNumber(series: InvoiceSeriesKey, issuedOn: string, issued: IssuedInvoiceRef[]): string {
+  return nextDocumentNumber(
+    INVOICE_SERIES_PREFIX[series],
+    Number(issuedOn.slice(0, 4)),
+    issued.map((invoice) => invoice.number),
+  );
+}
+
+/**
+ * The latest invoice of the same series and year dated after `issuedOn`, if
+ * any. Numbers must follow the dates, so a new invoice can't be issued with an
+ * earlier date than one that already has a lower number.
+ */
+export function laterInvoiceInSeries(
+  series: InvoiceSeriesKey,
+  issuedOn: string,
+  issued: IssuedInvoiceRef[],
+): IssuedInvoiceRef | undefined {
+  const year = issuedOn.slice(0, 4);
+  return issued
+    .filter((invoice) => invoice.series === series && invoice.issuedOn.slice(0, 4) === year)
+    .filter((invoice) => invoice.issuedOn > issuedOn)
+    .reduce<IssuedInvoiceRef | undefined>(
+      (latest, invoice) => (!latest || invoice.issuedOn > latest.issuedOn ? invoice : latest),
+      undefined,
+    );
+}
+
 /** How an operation is treated for VAT, which decides whether the invoice charges it. */
 export type OperationType = "national" | "exempt" | "notSubject" | "reverseCharge" | "intraEu" | "export";
 

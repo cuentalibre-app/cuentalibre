@@ -1,5 +1,5 @@
 import { send } from "./backend";
-import type { Entity } from "./commands";
+import type { Command, Entity } from "./commands";
 import { createStore } from "./store";
 
 export interface Collection<T extends { id: string }> {
@@ -10,6 +10,12 @@ export interface Collection<T extends { id: string }> {
   add: (item: T) => Promise<void>;
   update: (id: string, changes: Partial<T>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  /**
+   * Puts a record in place, new or replacing its current version, and sends
+   * the given commands instead of a plain create or update: for changes with
+   * legal effects, such as issuing an invoice. A rejection restores the record.
+   */
+  write: (item: T, commands: Command[]) => Promise<void>;
   /** Takes the server's version of a record, without sending anything back. */
   receive: (item: T) => void;
   /** Drops a record the server deleted, without sending anything back. */
@@ -67,6 +73,15 @@ export function createCollection<T extends { id: string }>(
       return send([{ type: "update", entity, id, changes }], () =>
         set(items().map((item) => (item.id === id ? { ...item, ...previous } : item))),
       );
+    },
+
+    write(item, commands) {
+      const before = items().find((other) => other.id === item.id);
+      set(before ? items().map((other) => (other.id === item.id ? item : other)) : insert(item));
+      return send(commands, () => {
+        if (!before) set(items().filter((other) => other.id !== item.id));
+        else set(items().map((other) => (other.id === item.id ? before : other)));
+      });
     },
 
     remove(id) {

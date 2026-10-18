@@ -2,13 +2,22 @@ import { useMemo } from "react";
 import { lockedQuarter, periodKey, toIsoDate, type Period } from "@fiscalia/core";
 import type { ClosedQuarter } from "@fiscalia/contracts";
 import { createStore } from "@/data/store";
+import { syncTarget } from "@/data/sync";
 import { initialClosedQuarters } from "@/mocks/closing";
 
 /**
- * Closed quarters. Closing is enforced by the forms and lists; the backend will
- * enforce it too, which is why closing and reopening are commands of their own.
+ * Closed quarters. Closing is enforced by the forms and lists, and by the API,
+ * which is why closing and reopening are commands of their own.
  */
 const closed = createStore<ClosedQuarter[]>(initialClosedQuarters);
+
+const newestFirst = (quarters: ClosedQuarter[]) => [...quarters].sort((a, b) => b.period.localeCompare(a.period));
+
+syncTarget<ClosedQuarter>("closedQuarters", {
+  receive: (quarter) => closed.set(newestFirst([quarter, ...closed.get().filter((c) => c.period !== quarter.period)])),
+  forget: (period) => closed.set(closed.get().filter((c) => c.period !== period)),
+  replace: (quarters) => closed.set(newestFirst(quarters)),
+});
 
 export function useClosedQuarters(): ClosedQuarter[] {
   return closed.use();

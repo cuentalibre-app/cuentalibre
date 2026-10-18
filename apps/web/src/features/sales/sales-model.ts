@@ -8,7 +8,9 @@ import {
   invoiceTotals,
   lineBase,
   isOverdue,
+  laterInvoiceInSeries,
   nextDocumentNumber,
+  nextInvoiceNumber,
   periodKey,
   quarterOfMonth,
   type InvoiceTotals,
@@ -139,17 +141,21 @@ export function displayStatus(doc: SalesDocument, today: Date): StatusKey {
   return doc.status;
 }
 
-export function documentTotals(doc: Pick<SalesDocument, "lines" | "withholding" | "supplies">): InvoiceTotals {
-  return invoiceTotals(doc.lines, WITHHOLDING_RATES[doc.withholding], doc.supplies);
+/** Totals of a document; an issued invoice keeps the ones frozen when it was issued. */
+export function documentTotals(
+  doc: Pick<SalesDocument, "lines" | "withholding" | "supplies"> & { issued?: SalesDocument["issued"] },
+): InvoiceTotals {
+  return doc.issued?.totals ?? invoiceTotals(doc.lines, WITHHOLDING_RATES[doc.withholding], doc.supplies);
 }
 
+/** The client of a document; an issued invoice keeps the fiscal data it was issued with. */
 export function clientOf(doc: SalesDocument): Contact {
   // Drafts and quotes can be saved without a client
   if (!doc.clientId) return { id: "", name: "Sin cliente", taxId: "" };
-  return contactsStore.get("client", doc.clientId) ?? { id: doc.clientId, name: "Cliente eliminado", taxId: "" };
+  const current = contactsStore.get("client", doc.clientId);
+  if (doc.issued) return { ...current, id: doc.clientId, ...doc.issued.client };
+  return current ?? { id: doc.clientId, name: "Cliente eliminado", taxId: "" };
 }
-
-const SERIES_PREFIX: Record<InvoiceSeries, string> = { normal: "", rectifying: "R-" };
 
 /** "2026-0046-estudio-norte-s-l.pdf": number (or draft date) and client, for downloads. */
 export function documentFileName(doc: SalesDocument, extension: string) {
@@ -160,10 +166,23 @@ export function documentFileName(doc: SalesDocument, extension: string) {
   return `${doc.number ?? `borrador-${doc.issuedOn}`}-${slug.replace(/[^a-z0-9]+/g, "-").replace(/-$/, "")}.${extension}`;
 }
 
-export function nextNumber(kind: SalesKind, series: InvoiceSeries, year: number, docs: SalesDocument[]): string {
-  const prefix = kind === "invoice" ? SERIES_PREFIX[series] : KINDS[kind].numberPrefix;
+/** Issued invoices, as numbering needs them. */
+const issuedInvoices = (docs: SalesDocument[]) =>
+  docs.filter((d) => d.kind === "invoice" && d.number !== null) as (SalesDocument & { number: string })[];
+
+/**
+ * Next number of a kind. For invoices it's a forecast of the one the server
+ * will assign on issuing; the other kinds keep the number they are given.
+ */
+export function nextNumber(kind: SalesKind, series: InvoiceSeries, issuedOn: string, docs: SalesDocument[]): string {
+  if (kind === "invoice") return nextInvoiceNumber(series, issuedOn, issuedInvoices(docs));
   const numbers = docs.filter((d) => d.number !== null).map((d) => d.number!);
-  return nextDocumentNumber(prefix, year, numbers);
+  return nextDocumentNumber(KINDS[kind].numberPrefix, Number(issuedOn.slice(0, 4)), numbers);
+}
+
+/** The invoice of the series dated after `issuedOn` that keeps a new one from being issued, if any. */
+export function laterInvoice(series: InvoiceSeries, issuedOn: string, docs: SalesDocument[]) {
+  return laterInvoiceInSeries(series, issuedOn, issuedInvoices(docs));
 }
 
 /**

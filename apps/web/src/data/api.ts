@@ -22,13 +22,14 @@ export interface ApiBackend extends Backend {
 }
 
 /**
- * The backend that talks to the API. Commands for collections the server
- * stores are sent in one request and its answer replaces the optimistic
- * records; the rest stay local until their part of the API exists.
+ * The backend that talks to the API. Commands for data the server stores are
+ * sent in one request and its answer replaces the optimistic records; the rest
+ * stay local until their part of the API exists.
  */
 export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetch): ApiBackend {
   let cursor = 0;
   let pulling: Promise<void> | undefined;
+  let queue = Promise.resolve();
 
   async function request<R>(path: string, init: RequestInit = {}): Promise<R> {
     const response = await fetchImpl(`${baseUrl}${path}`, {
@@ -58,14 +59,19 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
   }
 
   return {
-    async send(commands) {
+    send(commands) {
       const synced = commands.flatMap(toWire);
-      if (synced.length === 0) return;
-      const { changes } = await request<{ changes: Change[] }>("/v1/commands", {
-        method: "POST",
-        body: JSON.stringify({ commands: synced }),
+      if (synced.length === 0) return Promise.resolve();
+      // One request at a time, in order: an invoice must not reach the server before the client it names
+      const sent = queue.then(async () => {
+        const { changes } = await request<{ changes: Change[] }>("/v1/commands", {
+          method: "POST",
+          body: JSON.stringify({ commands: synced }),
+        });
+        applyChanges(changes);
       });
-      applyChanges(changes);
+      queue = sent.catch(() => undefined);
+      return sent;
     },
 
     async loadWorkspace() {
@@ -81,14 +87,28 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
   };
 }
 
-/** The command as the API takes it, or nothing if the server doesn't store that collection yet. */
+/** The command as the API takes it, or nothing if the server doesn't store that data yet. */
 function toWire(command: Command): SyncCommand[] {
-  if (!("entity" in command) || !isSynced(command.entity)) return [];
-  if (command.type !== "update") return [command as SyncCommand];
-  // JSON drops undefined, so a field being cleared is sent as null.
-  const changes = Object.fromEntries(Object.entries(command.changes).map(([key, value]) => [key, value ?? null]));
-  return [{ ...command, entity: command.entity, changes }];
+  switch (command.type) {
+    case "issue":
+      return isSynced("salesDocuments") ? [command as SyncCommand] : [];
+    case "closeQuarter":
+    case "reopenQuarter":
+      return isSynced("closedQuarters") ? [command] : [];
+    case "saveSettings":
+      return [];
+    case "update": {
+      if (!isSynced(command.entity)) return [];
+      // JSON drops undefined, so a field being cleared is sent as null.
+      const changes = Object.fromEntries(Object.entries(command.changes).map(([key, value]) => [key, value ?? null]));
+      return [{ ...command, entity: command.entity as SyncedUpdate["entity"], changes }];
+    }
+    default:
+      return isSynced(command.entity) ? [command as SyncCommand] : [];
+  }
 }
+
+type SyncedUpdate = Extract<SyncCommand, { type: "update" }>;
 
 /** How connecting to the API went: the app runs on it only when "connected". */
 export type ConnectResult = "connected" | "signed-out" | "no-organization" | "unavailable";

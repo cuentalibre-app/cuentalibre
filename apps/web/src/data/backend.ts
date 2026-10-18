@@ -24,9 +24,9 @@ type ErrorListener = (error: unknown, commands: Command[]) => void;
 const errorListeners = new Set<ErrorListener>();
 
 /** Called when the backend rejects a change, after the store has undone it. */
-export function onCommandError(listener: ErrorListener) {
+export function onCommandError(listener: ErrorListener): () => void {
   errorListeners.add(listener);
-  return () => errorListeners.delete(listener);
+  return () => void errorListeners.delete(listener);
 }
 
 /**
