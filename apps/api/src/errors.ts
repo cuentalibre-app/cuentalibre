@@ -20,3 +20,14 @@ export const errorContent = (description: string) => ({
   description,
   content: { "application/json": { schema: errorSchema } },
 });
+
+/** Thrown by services to answer with a JSON error; `app.onError` turns it into the response. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: ContentfulStatusCode,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}

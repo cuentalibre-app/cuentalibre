@@ -1,4 +1,4 @@
-import { afterAll } from "vitest";
+import { afterAll, expect } from "vitest";
 import { createApp } from "../app";
 import { createAuth } from "../auth";
 import { createDb } from "../db/client";
@@ -60,4 +60,12 @@ function storeCookies(cookies: Map<string, string>, response: Response) {
     if (value) cookies.set(name, value);
     else cookies.delete(name);
   }
+}
+
+/** Creates an organization as the client's user, which makes it their active one. */
+export async function createOrganization(client: Client, name: string) {
+  const slug = `${name.toLowerCase().replace(/\W+/g, "-")}-${crypto.randomUUID().slice(0, 8)}`;
+  const response = await client.request("/v1/auth/organization/create", { method: "POST", body: { name, slug } });
+  expect(response.status).toBe(200);
+  return (await response.json()) as { id: string; name: string; slug: string };
 }

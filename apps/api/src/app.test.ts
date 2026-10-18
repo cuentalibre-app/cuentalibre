@@ -1,14 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { session } from "./db/schema";
-import { app, db, signUp, type Client } from "./test/harness";
-
-async function createOrganization(client: Client, name: string) {
-  const slug = `${name.toLowerCase().replace(/\W+/g, "-")}-${crypto.randomUUID().slice(0, 8)}`;
-  const response = await client.request("/v1/auth/organization/create", { method: "POST", body: { name, slug } });
-  expect(response.status).toBe(200);
-  return (await response.json()) as { id: string; name: string; slug: string };
-}
+import { app, createOrganization, db, signUp } from "./test/harness";
 
 describe("meta", () => {
   it("reports health", async () => {

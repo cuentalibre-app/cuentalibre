@@ -1,0 +1,221 @@
+import type { Changes, SyncCommand, Workspace } from "@fiscalia/contracts";
+import { newId } from "@fiscalia/core";
+import { eq } from "drizzle-orm";
+import { describe, expect, it } from "vitest";
+import { changeLog } from "./db/schema";
+import { createOrganization, db, signUp, type Client } from "./test/harness";
+
+/** A signed-in user working in a new organization of their own. */
+async function member(name = "Ana") {
+  const client = await signUp(name);
+  const organization = await createOrganization(client, `${name} SL`);
+  return Object.assign(client, { organizationId: organization.id });
+}
+
+const client = (fields: Record<string, unknown> = {}) => ({
+  id: newId(),
+  name: "Estudio Norte S.L.",
+  taxId: "B12345674",
+  ...fields,
+});
+
+async function send(user: Client, commands: SyncCommand[]) {
+  return user.request("/v1/commands", { method: "POST", body: { commands } });
+}
+
+async function workspace(user: Client) {
+  const response = await user.request("/v1/workspace");
+  expect(response.status).toBe(200);
+  return (await response.json()) as Workspace;
+}
+
+async function changes(user: Client, since: number, limit?: number) {
+  const response = await user.request(`/v1/sync?since=${since}${limit ? `&limit=${limit}` : ""}`);
+  expect(response.status).toBe(200);
+  return (await response.json()) as Changes;
+}
+
+const errorCode = async (response: Response) => ((await response.json()) as { error: { code: string } }).error.code;
+
+describe("sync", () => {
+  it("starts with an empty workspace", async () => {
+    const ana = await member();
+    expect(await workspace(ana)).toEqual({ cursor: 0, clients: [], suppliers: [] });
+  });
+
+  it("applies commands and returns the authoritative records", async () => {
+    const ana = await member();
+    const norte = client({ email: "facturas@estudionorte.es", discount: 5, tags: ["Recurrente"] });
+    const response = await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ changes: [{ op: "upsert", entity: "clients", data: norte }] });
+
+    const after = await workspace(ana);
+    expect(after.clients).toEqual([norte]);
+    expect(after.suppliers).toEqual([]);
+    expect(after.cursor).toBeGreaterThan(0);
+  });
+
+  it("merges updates and clears fields sent as null", async () => {
+    const ana = await member();
+    const norte = client({ email: "a@norte.es", notes: "Old" });
+    await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+    const response = await send(ana, [
+      { type: "update", entity: "clients", id: norte.id, changes: { city: "Bilbao", notes: null } },
+    ]);
+    expect(response.status).toBe(200);
+    expect((await workspace(ana)).clients).toEqual([
+      { id: norte.id, name: norte.name, taxId: norte.taxId, email: "a@norte.es", city: "Bilbao" },
+    ]);
+  });
+
+  it("validates the record that results from an update", async () => {
+    const ana = await member();
+    const norte = client();
+    await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+    const response = await send(ana, [{ type: "update", entity: "clients", id: norte.id, changes: { name: "" } }]);
+    expect(response.status).toBe(400);
+    expect(await errorCode(response)).toBe("invalid_contact");
+    expect((await workspace(ana)).clients).toEqual([norte]);
+  });
+
+  it("saves all the commands of a call or none", async () => {
+    const ana = await member();
+    const response = await send(ana, [
+      { type: "create", entity: "clients", data: client() },
+      { type: "update", entity: "clients", id: newId(), changes: { city: "Bilbao" } },
+    ]);
+    expect(response.status).toBe(404);
+    expect(await workspace(ana)).toEqual({ cursor: 0, clients: [], suppliers: [] });
+    expect(await db.select().from(changeLog).where(eq(changeLog.organizationId, ana.organizationId))).toEqual([]);
+  });
+
+  it("rejects reusing an ID", async () => {
+    const ana = await member();
+    const norte = client();
+    await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+    const response = await send(ana, [{ type: "create", entity: "suppliers", data: norte }]);
+    expect(response.status).toBe(409);
+  });
+
+  it("keeps clients and suppliers apart", async () => {
+    const ana = await member();
+    const norte = client();
+    await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+    const response = await send(ana, [{ type: "delete", entity: "suppliers", id: norte.id }]);
+    expect(response.status).toBe(404);
+  });
+
+  it("rejects malformed commands", async () => {
+    const ana = await member();
+    const response = await send(ana, [{ type: "create", entity: "clients", data: client({ id: "c1" }) }]);
+    expect(response.status).toBe(400);
+    expect(await errorCode(response)).toBe("invalid_request");
+  });
+
+  it("feeds changes after a cursor, once per record with its latest state", async () => {
+    const ana = await member();
+    const norte = client();
+    const brisa = client({ name: "Agencia Brisa S.L." });
+    await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+    const { cursor } = await workspace(ana);
+
+    await send(ana, [
+      { type: "create", entity: "suppliers", data: brisa },
+      { type: "update", entity: "clients", id: norte.id, changes: { city: "Bilbao" } },
+    ]);
+    await send(ana, [{ type: "update", entity: "clients", id: norte.id, changes: { city: "Getxo" } }]);
+    await send(ana, [{ type: "delete", entity: "suppliers", id: brisa.id }]);
+
+    const feed = await changes(ana, cursor);
+    expect(feed.hasMore).toBe(false);
+    expect(feed.changes).toEqual([
+      { op: "delete", entity: "suppliers", id: brisa.id },
+      { op: "upsert", entity: "clients", data: { ...norte, city: "Getxo" } },
+    ]);
+    expect(feed.cursor).toBe(cursor + 4);
+    expect(await changes(ana, feed.cursor)).toEqual({ cursor: feed.cursor, changes: [], hasMore: false });
+  });
+
+  it("pages the feed", async () => {
+    const ana = await member();
+    const records = [client(), client(), client()];
+    await send(
+      ana,
+      records.map((data) => ({ type: "create", entity: "clients", data }) as const),
+    );
+
+    const first = await changes(ana, 0, 2);
+    expect(first.changes.map((change) => change.op === "upsert" && change.data.id)).toEqual([
+      records[0]!.id,
+      records[1]!.id,
+    ]);
+    expect(first.hasMore).toBe(true);
+    const second = await changes(ana, first.cursor, 2);
+    expect(second.changes.map((change) => change.op === "upsert" && change.data.id)).toEqual([records[2]!.id]);
+    expect(second.hasMore).toBe(false);
+  });
+
+  it("isolates organizations", async () => {
+    const ana = await member("Ana");
+    const luis = await member("Luis");
+    const norte = client();
+    await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+
+    expect(await workspace(luis)).toEqual({ cursor: 0, clients: [], suppliers: [] });
+    expect((await changes(luis, 0)).changes).toEqual([]);
+    expect(
+      (await send(luis, [{ type: "update", entity: "clients", id: norte.id, changes: { name: "Mine" } }])).status,
+    ).toBe(404);
+    expect((await send(luis, [{ type: "delete", entity: "clients", id: norte.id }])).status).toBe(404);
+    expect((await luis.request(`/v1/contacts/${norte.id}`)).status).toBe(404);
+    expect((await workspace(ana)).clients).toEqual([norte]);
+  });
+
+  it("needs an active organization", async () => {
+    const ana = await signUp();
+    expect((await ana.request("/v1/workspace")).status).toBe(403);
+    expect((await send(ana, [{ type: "create", entity: "clients", data: client() }])).status).toBe(403);
+  });
+});
+
+describe("contacts", () => {
+  it("creates, lists, updates and deletes", async () => {
+    const ana = await member();
+    const created = await ana.request("/v1/contacts", {
+      method: "POST",
+      body: { role: "supplier", name: "Papelería Sol", taxId: "B11111111" },
+    });
+    expect(created.status).toBe(201);
+    const sol = (await created.json()) as { id: string };
+    expect(sol).toEqual({
+      id: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      role: "supplier",
+      name: "Papelería Sol",
+      taxId: "B11111111",
+    });
+
+    const listed = await ana.request("/v1/contacts?role=supplier");
+    expect(await listed.json()).toEqual({ contacts: [sol] });
+    expect(await (await ana.request("/v1/contacts?role=client")).json()).toEqual({ contacts: [] });
+
+    const updated = await ana.request(`/v1/contacts/${sol.id}`, { method: "PATCH", body: { city: "Sevilla" } });
+    expect(updated.status).toBe(200);
+    expect(await updated.json()).toEqual({ ...sol, city: "Sevilla" });
+
+    const moved = await ana.request(`/v1/contacts/${sol.id}`, { method: "PATCH", body: { role: "client" } });
+    expect(moved.status).toBe(400);
+
+    expect((await ana.request(`/v1/contacts/${sol.id}`, { method: "DELETE" })).status).toBe(204);
+    expect((await ana.request(`/v1/contacts/${sol.id}`)).status).toBe(404);
+    expect((await workspace(ana)).suppliers).toEqual([]);
+  });
+
+  it("documents the routes", async () => {
+    const ana = await member();
+    const doc = (await (await ana.request("/v1/openapi.json")).json()) as { paths: Record<string, unknown> };
+    expect(Object.keys(doc.paths)).toEqual(
+      expect.arrayContaining(["/v1/workspace", "/v1/sync", "/v1/commands", "/v1/contacts", "/v1/contacts/{id}"]),
+    );
+  });
+});

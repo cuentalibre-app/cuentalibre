@@ -8,6 +8,13 @@
       "when": 1792330297348,
       "tag": "0000_auth_and_organizations",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792331701093,
+      "tag": "0001_contacts_and_change_log",
+      "breakpoints": true
     }
   ]
 }
