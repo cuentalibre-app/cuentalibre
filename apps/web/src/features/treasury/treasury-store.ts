@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo } from "react";
 import { cents, newId, toIsoDate } from "@fiscalia/core";
 import type { BankMovement, ManualPayment } from "@fiscalia/contracts";
 import { expensesStore, useExpenses } from "@/features/purchases/expenses-store";
@@ -6,11 +6,13 @@ import { purchasesStore, usePurchaseInvoices } from "@/features/purchases/purcha
 import { salesStore, useSalesDocuments } from "@/features/sales/sales-store";
 import { settingsStore, useSettings } from "@/features/settings/settings-store";
 import { initialManualPayments, sampleMovements } from "@/mocks/treasury";
+import type { Command } from "@/data/commands";
+import { createStore } from "@/data/store";
 import { collectPayments, methodForAccount, pendingDocuments, type PendingDocument } from "./treasury-model";
 
 /**
- * Bank movements and manual payments, in memory until reload like the other stores. Payments of
- * invoices and expenses live in their own stores; this one only links them to movements.
+ * Bank movements and manual payments. Payments of invoices and expenses live in their own
+ * stores; this one only links them to movements.
  */
 interface TreasuryState {
   /** Oldest first, so an account's running balance reads in order. */
@@ -26,25 +28,17 @@ const books = () => ({
   methods: settingsStore.get().paymentMethods,
 });
 
-let state: TreasuryState = {
+const treasury = createStore<TreasuryState>({
   movements: sampleMovements(collectPayments(books()), toIsoDate(new Date())),
   manualPayments: initialManualPayments,
-};
-const listeners = new Set<() => void>();
-
-function commit(changes: Partial<TreasuryState>) {
-  state = { ...state, ...changes };
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+});
 
 export function useTreasury(): TreasuryState {
-  return useSyncExternalStore(subscribe, () => state);
+  return treasury.use();
 }
+
+const write = (changes: Partial<TreasuryState>, commands: Command[]) =>
+  treasury.write({ ...treasury.get(), ...changes }, commands);
 
 /** Every recorded collection and payment, newest first. Recomputed only when a source changes. */
 export function usePayments() {
@@ -94,40 +88,63 @@ function settle(doc: PendingDocument, movement: BankMovement): string {
 }
 
 const updateMovement = (id: string, changes: Partial<BankMovement>) =>
-  commit({ movements: state.movements.map((m) => (m.id === id ? { ...m, ...changes } : m)) });
+  write({ movements: treasury.get().movements.map((m) => (m.id === id ? { ...m, ...changes } : m)) }, [
+    { type: "update", entity: "bankMovements", id, changes },
+  ]);
 
 export const treasuryStore = {
-  get: () => state,
+  get: treasury.get,
 
-  addMovements: (movements: Omit<BankMovement, "id" | "paymentKeys">[]) =>
-    commit({
-      movements: [...state.movements, ...movements.map((m) => ({ ...m, id: newId(), paymentKeys: [] }))].sort(byDate),
-    }),
-  removeMovement: (id: string) => commit({ movements: state.movements.filter((m) => m.id !== id) }),
+  addMovements(movements: Omit<BankMovement, "id" | "paymentKeys">[]) {
+    const added = movements.map((m) => ({ ...m, id: newId(), paymentKeys: [] }));
+    return write(
+      { movements: [...treasury.get().movements, ...added].sort(byDate) },
+      added.map((data): Command => ({ type: "create", entity: "bankMovements", data })),
+    );
+  },
+  removeMovement: (id: string) =>
+    write({ movements: treasury.get().movements.filter((m) => m.id !== id) }, [
+      { type: "delete", entity: "bankMovements", id },
+    ]),
 
   /** Links recorded payments and settles pending documents, all against one movement. */
   reconcile: (movementId: string, paymentKeys: string[], pending: PendingDocument[] = []) => {
-    const movement = state.movements.find((m) => m.id === movementId);
+    const movement = treasury.get().movements.find((m) => m.id === movementId);
     if (!movement) return;
     const settled = pending.map((doc) => settle(doc, movement));
     const keys = [...new Set([...movement.paymentKeys, ...paymentKeys, ...settled])];
-    updateMovement(movementId, { paymentKeys: keys });
+    return updateMovement(movementId, { paymentKeys: keys });
   },
   /** Undoes the links; the payments themselves stay recorded. */
   unreconcile: (movementId: string) => updateMovement(movementId, { paymentKeys: [] }),
 
   addManualPayment: (payment: Omit<ManualPayment, "id">): string => {
-    const id = newId();
-    commit({ manualPayments: [...state.manualPayments, { ...payment, id }] });
-    return `manual:${id}`;
+    const created = { ...payment, id: newId() };
+    void write({ manualPayments: [...treasury.get().manualPayments, created] }, [
+      { type: "create", entity: "manualPayments", data: created },
+    ]);
+    return `manual:${created.id}`;
   },
   removeManualPayment: (id: string) => {
     const key = `manual:${id}`;
-    commit({
-      manualPayments: state.manualPayments.filter((p) => p.id !== id),
-      movements: state.movements.map((m) =>
-        m.paymentKeys.includes(key) ? { ...m, paymentKeys: m.paymentKeys.filter((k) => k !== key) } : m,
-      ),
-    });
+    const { manualPayments, movements } = treasury.get();
+    const unlinked = movements
+      .filter((m) => m.paymentKeys.includes(key))
+      .map((m) => ({ ...m, paymentKeys: m.paymentKeys.filter((k) => k !== key) }));
+    return write(
+      {
+        manualPayments: manualPayments.filter((p) => p.id !== id),
+        movements: movements.map((m) => unlinked.find((u) => u.id === m.id) ?? m),
+      },
+      [
+        ...unlinked.map((m): Command => ({
+          type: "update",
+          entity: "bankMovements",
+          id: m.id,
+          changes: { paymentKeys: m.paymentKeys },
+        })),
+        { type: "delete", entity: "manualPayments", id },
+      ],
+    );
   },
 };

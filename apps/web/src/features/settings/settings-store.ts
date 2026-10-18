@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from "react";
 import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@fiscalia/contracts";
 import {
   initialAccounts,
@@ -7,10 +6,12 @@ import {
   initialProfile,
   initialTaxSetup,
 } from "@/mocks/settings";
+import type { Command } from "@/data/commands";
+import { createStore } from "@/data/store";
 
 /**
- * Business profile, tax setup, treasury accounts and payment methods, in memory until reload
- * like the other stores. Invoices, the PDF, the tax pages and the sidebar read them from here.
+ * Business profile, tax setup, treasury accounts and payment methods. Invoices, the PDF, the
+ * tax pages and the sidebar read them from here.
  */
 export interface Settings {
   profile: BusinessProfile;
@@ -20,50 +21,74 @@ export interface Settings {
   defaultPaymentMethodId: string;
 }
 
-let settings: Settings = {
+const settings = createStore<Settings>({
   profile: initialProfile,
   tax: initialTaxSetup,
   accounts: initialAccounts,
   paymentMethods: initialPaymentMethods,
   defaultPaymentMethodId: initialDefaultPaymentMethodId,
-};
-const listeners = new Set<() => void>();
-
-function commit(changes: Partial<Settings>) {
-  settings = { ...settings, ...changes };
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+});
 
 export function useSettings(): Settings {
-  return useSyncExternalStore(subscribe, () => settings);
+  return settings.use();
 }
+
+const write = (changes: Partial<Settings>, ...commands: Command[]) =>
+  settings.write({ ...settings.get(), ...changes }, commands);
 
 const replace = <T extends { id: string }>(items: T[], id: string, changes: Partial<T>) =>
   items.map((item) => (item.id === id ? { ...item, ...changes } : item));
 
 export const settingsStore = {
-  get: () => settings,
-  updateProfile: (profile: BusinessProfile) => commit({ profile }),
-  updateTax: (tax: TaxSetup) => commit({ tax }),
+  get: settings.get,
+  updateProfile: (profile: BusinessProfile) =>
+    write({ profile }, { type: "saveSettings", section: "businessProfile", data: profile }),
+  updateTax: (tax: TaxSetup) => write({ tax }, { type: "saveSettings", section: "taxSetup", data: tax }),
 
-  addAccount: (account: TreasuryAccount) => commit({ accounts: [...settings.accounts, account] }),
+  addAccount: (account: TreasuryAccount) =>
+    write(
+      { accounts: [...settings.get().accounts, account] },
+      { type: "create", entity: "treasuryAccounts", data: account },
+    ),
   updateAccount: (id: string, changes: Partial<TreasuryAccount>) =>
-    commit({ accounts: replace(settings.accounts, id, changes) }),
+    write(
+      { accounts: replace(settings.get().accounts, id, changes) },
+      { type: "update", entity: "treasuryAccounts", id, changes },
+    ),
   /** Methods linked to a removed account keep working, unlinked. */
-  removeAccount: (id: string) =>
-    commit({
-      accounts: settings.accounts.filter((a) => a.id !== id),
-      paymentMethods: settings.paymentMethods.map((m) => (m.accountId === id ? { ...m, accountId: null } : m)),
-    }),
+  removeAccount(id: string) {
+    const { accounts, paymentMethods } = settings.get();
+    const linked = paymentMethods.filter((m) => m.accountId === id);
+    return write(
+      {
+        accounts: accounts.filter((a) => a.id !== id),
+        paymentMethods: paymentMethods.map((m) => (m.accountId === id ? { ...m, accountId: null } : m)),
+      },
+      ...linked.map((m): Command => ({
+        type: "update",
+        entity: "paymentMethods",
+        id: m.id,
+        changes: { accountId: null },
+      })),
+      { type: "delete", entity: "treasuryAccounts", id },
+    );
+  },
 
-  addPaymentMethod: (method: PaymentMethod) => commit({ paymentMethods: [...settings.paymentMethods, method] }),
+  addPaymentMethod: (method: PaymentMethod) =>
+    write(
+      { paymentMethods: [...settings.get().paymentMethods, method] },
+      { type: "create", entity: "paymentMethods", data: method },
+    ),
   updatePaymentMethod: (id: string, changes: Partial<PaymentMethod>) =>
-    commit({ paymentMethods: replace(settings.paymentMethods, id, changes) }),
-  removePaymentMethod: (id: string) => commit({ paymentMethods: settings.paymentMethods.filter((m) => m.id !== id) }),
-  setDefaultPaymentMethod: (id: string) => commit({ defaultPaymentMethodId: id }),
+    write(
+      { paymentMethods: replace(settings.get().paymentMethods, id, changes) },
+      { type: "update", entity: "paymentMethods", id, changes },
+    ),
+  removePaymentMethod: (id: string) =>
+    write(
+      { paymentMethods: settings.get().paymentMethods.filter((m) => m.id !== id) },
+      { type: "delete", entity: "paymentMethods", id },
+    ),
+  setDefaultPaymentMethod: (id: string) =>
+    write({ defaultPaymentMethodId: id }, { type: "saveSettings", section: "defaultPaymentMethod", data: id }),
 };

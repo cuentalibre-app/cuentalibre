@@ -21,7 +21,7 @@ export const DEFAULT_LIST_PREFERENCES: ListPreferences = {
 /** Statuses a quote or delivery note is still pending in. */
 export const OPEN_STATUSES: SalesDocument["status"][] = ["created", "sent", "accepted"];
 
-/** In memory until reload, like the other settings. */
+/** In memory until reload: a view preference of this browser, never sent to the backend. */
 let preferences = DEFAULT_LIST_PREFERENCES;
 const listeners = new Set<() => void>();
 

@@ -1,33 +1,18 @@
-import { useSyncExternalStore } from "react";
 import type { Expense } from "@fiscalia/contracts";
+import { createCollection } from "@/data/collection";
 import { initialExpenses } from "@/mocks/expenses";
 
-/**
- * In-memory expenses. Changes apply instantly and last until reload;
- * this is where the API cache will go once there is a backend.
- */
-let expenses = initialExpenses;
-const listeners = new Set<() => void>();
-
-function commit(next: Expense[]) {
-  expenses = next;
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+/** Expenses. Changes apply instantly and are sent to the backend (see `@/data`). */
+const expenses = createCollection<Expense>("expenses", initialExpenses, { addAt: "start" });
 
 export function useExpenses(): Expense[] {
-  return useSyncExternalStore(subscribe, () => expenses);
+  return expenses.use();
 }
 
 export const expensesStore = {
-  get: (id: string) => expenses.find((e) => e.id === id),
-  all: () => expenses,
-  add: (expense: Expense) => commit([expense, ...expenses]),
-  update: (id: string, changes: Partial<Expense>) =>
-    commit(expenses.map((e) => (e.id === id ? { ...e, ...changes } : e))),
-  remove: (id: string) => commit(expenses.filter((e) => e.id !== id)),
+  get: expenses.get,
+  all: expenses.all,
+  add: expenses.add,
+  update: expenses.update,
+  remove: expenses.remove,
 };

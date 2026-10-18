@@ -1,36 +1,25 @@
-import { useSyncExternalStore } from "react";
 import type { Tag } from "@fiscalia/contracts";
+import { createCollection } from "@/data/collection";
 import { initialTags } from "@/mocks/tags";
 
 /**
  * The tag list with its colors. Documents and contacts store tag names; a name that isn't
  * here still works, it's just shown with the neutral color.
  */
-let tags = initialTags;
-const listeners = new Set<() => void>();
-
-function commit(next: Tag[]) {
-  tags = next;
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+const tags = createCollection<Tag>("tags", initialTags);
 
 export function useTags(): Tag[] {
-  return useSyncExternalStore(subscribe, () => tags);
+  return tags.use();
 }
 
 const key = (name: string) => name.trim().toLocaleLowerCase("es");
 
 export const tagsStore = {
-  get: () => tags,
-  find: (name: string) => tags.find((t) => key(t.name) === key(name)),
-  add: (tag: Tag) => commit([...tags, tag]),
-  update: (id: string, changes: Partial<Tag>) => commit(tags.map((t) => (t.id === id ? { ...t, ...changes } : t))),
-  remove: (id: string) => commit(tags.filter((t) => t.id !== id)),
+  get: tags.all,
+  find: (name: string) => tags.all().find((t) => key(t.name) === key(name)),
+  add: tags.add,
+  update: tags.update,
+  remove: tags.remove,
 };
 
 /** Black or white text, whichever reads better on the background (WCAG relative luminance). */

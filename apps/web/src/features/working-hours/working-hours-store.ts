@@ -1,30 +1,17 @@
-import { useSyncExternalStore } from "react";
-import type { TimeEntry } from "@fiscalia/core";
-import { newId } from "@fiscalia/core";
+import { newId, type TimeEntry } from "@fiscalia/core";
+import { createCollection } from "@/data/collection";
 import { initialTimeEntries } from "@/mocks/working-hours";
 
-/** Clock-in/clock-out intervals, in memory until reload like the other stores. */
-let entries = initialTimeEntries;
-const listeners = new Set<() => void>();
-
-function commit(next: TimeEntry[]) {
-  entries = next;
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
+/** Clock-in/clock-out intervals. Changes apply instantly and are sent to the backend (see `@/data`). */
+const entries = createCollection<TimeEntry>("timeEntries", initialTimeEntries);
 
 export function useTimeEntries(): TimeEntry[] {
-  return useSyncExternalStore(subscribe, () => entries);
+  return entries.use();
 }
 
 export const workingHoursStore = {
-  get: () => entries,
-  add: (entry: Omit<TimeEntry, "id">) => commit([...entries, { ...entry, id: newId() }]),
-  update: (id: string, patch: Partial<Omit<TimeEntry, "id">>) =>
-    commit(entries.map((e) => (e.id === id ? { ...e, ...patch } : e))),
-  remove: (id: string) => commit(entries.filter((e) => e.id !== id)),
+  get: entries.all,
+  add: (entry: Omit<TimeEntry, "id">) => entries.add({ ...entry, id: newId() }),
+  update: (id: string, patch: Partial<Omit<TimeEntry, "id">>) => entries.update(id, patch),
+  remove: entries.remove,
 };
