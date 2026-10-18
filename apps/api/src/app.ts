@@ -4,10 +4,12 @@ import type { Auth } from "./auth";
 import type { AppEnv } from "./context";
 import type { Db } from "./db/client";
 import type { Env } from "./env";
-import { errorResponse } from "./errors";
+import { ApiError, errorResponse } from "./errors";
 import { loadSession } from "./middleware";
 import { accountRoutes } from "./routes/account";
+import { contactRoutes } from "./routes/contacts";
 import { metaRoutes } from "./routes/meta";
+import { syncRoutes } from "./routes/sync";
 
 interface Deps {
   db: Db;
@@ -33,12 +35,17 @@ export function createApp({ db, auth, env }: Deps) {
 
   app.notFound((c) => errorResponse(c, 404, "not_found", "Not found."));
   app.onError((error, c) => {
+    if (error instanceof ApiError) return errorResponse(c, error.status, error.code, error.message);
     console.error(error);
     return errorResponse(c, 500, "internal_error", "Something went wrong.");
   });
 
   // Not basePath(): OpenAPIHono's copy of the app drops the notFound handler.
-  const routes = app.route("/v1", metaRoutes).route("/v1", accountRoutes);
+  const routes = app
+    .route("/v1", metaRoutes)
+    .route("/v1", accountRoutes)
+    .route("/v1", syncRoutes)
+    .route("/v1", contactRoutes);
   routes.doc31("/v1/openapi.json", {
     openapi: "3.1.0",
     info: { title: "Fiscalia API", version: "1" },

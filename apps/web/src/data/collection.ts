@@ -10,6 +10,12 @@ export interface Collection<T extends { id: string }> {
   add: (item: T) => Promise<void>;
   update: (id: string, changes: Partial<T>) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  /** Takes the server's version of a record, without sending anything back. */
+  receive: (item: T) => void;
+  /** Drops a record the server deleted, without sending anything back. */
+  forget: (id: string) => void;
+  /** Replaces every record with the server's, e.g. after downloading the workspace. */
+  replace: (items: T[]) => void;
   subscribe: (listener: () => void) => () => void;
 }
 
@@ -28,14 +34,27 @@ export function createCollection<T extends { id: string }>(
   const items = store.get;
   const set = store.set;
 
+  const insert = (item: T) => (addAt === "start" ? [item, ...items()] : [...items(), item]);
+
   return {
     all: items,
     get: (id) => items().find((item) => item.id === id),
     use: store.use,
     subscribe: store.subscribe,
 
+    receive(item) {
+      const known = items().some((other) => other.id === item.id);
+      set(known ? items().map((other) => (other.id === item.id ? item : other)) : insert(item));
+    },
+
+    forget(id) {
+      if (items().some((item) => item.id === id)) set(items().filter((item) => item.id !== id));
+    },
+
+    replace: set,
+
     add(item) {
-      set(addAt === "start" ? [item, ...items()] : [...items(), item]);
+      set(insert(item));
       return send([{ type: "create", entity, data: item }], () => set(items().filter((other) => other.id !== item.id)));
     },
 

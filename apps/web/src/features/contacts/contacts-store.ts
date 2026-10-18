@@ -1,5 +1,6 @@
 import type { Contact, ContactRole } from "@fiscalia/contracts";
 import { createCollection } from "@/data/collection";
+import { syncCollection } from "@/data/sync";
 import { initialClients, initialSuppliers } from "@/mocks/contacts";
 
 /** Clients and suppliers. Changes apply instantly and are sent to the backend (see `@/data`). */
@@ -7,6 +8,8 @@ const contacts = {
   client: createCollection<Contact>("clients", initialClients),
   supplier: createCollection<Contact>("suppliers", initialSuppliers),
 };
+syncCollection("clients", contacts.client);
+syncCollection("suppliers", contacts.supplier);
 
 export function useContacts(role: ContactRole): Contact[] {
   return contacts[role].use();

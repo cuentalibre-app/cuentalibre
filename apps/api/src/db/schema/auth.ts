@@ -8,13 +8,7 @@
  */
 import { relations } from "drizzle-orm";
 import { boolean, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
-
-const createdAt = () => timestamp({ withTimezone: true }).defaultNow().notNull();
-const updatedAt = () =>
-  timestamp({ withTimezone: true })
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull();
+import { createdAt, updatedAt } from "./columns";
 
 export const user = pgTable("user", {
   id: uuid().primaryKey(),
