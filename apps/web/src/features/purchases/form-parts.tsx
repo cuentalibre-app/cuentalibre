@@ -5,8 +5,9 @@ import { Input } from "@fiscalia/ui/components/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { parseDecimal } from "@/lib/format";
-import { isValidImputation, newId } from "@fiscalia/core";
+import { isValidImputation } from "@fiscalia/core";
 import type { Attachment } from "@fiscalia/contracts";
+import { attachFile, attachmentUrl, filesAreStored } from "@/data/files";
 
 /* Form building blocks shared by received invoices and expenses. Tooltips need a TooltipProvider above. */
 
@@ -47,15 +48,15 @@ export function PercentInput({
 }
 
 /**
- * The supplier's PDF or a photo of the receipt. Files stay in this browser tab (object URLs) until
- * there is file storage; reading the data from them (OCR) needs the backend too.
+ * The supplier's PDF or a photo of the receipt. Picked files upload in the background when there is
+ * an API; otherwise they stay in this browser tab. Reading the data from them (OCR) comes later.
  */
 export function ReceiptDrop({
   attachments,
   onChange,
   prompt = "Arrastra aquí la factura del proveedor",
   label = "Justificante",
-  note = "PDF o imagen. Se guarda solo en esta sesión; la lectura automática de datos (OCR) llegará más adelante.",
+  note,
   accept = "application/pdf,image/*",
 }: {
   attachments: Attachment[];
@@ -69,15 +70,7 @@ export function ReceiptDrop({
   const inputRef = useRef<HTMLInputElement>(null);
   const add = (files: FileList | null) => {
     if (!files?.length) return;
-    onChange([
-      ...attachments,
-      ...Array.from(files).map((f) => ({
-        id: newId(),
-        name: f.name,
-        size: f.size,
-        url: URL.createObjectURL(f),
-      })),
-    ]);
+    onChange([...attachments, ...Array.from(files).map(attachFile)]);
   };
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -111,7 +104,10 @@ export function ReceiptDrop({
         </p>
         <p className="m-0 flex items-center gap-1.5 text-xs text-muted-foreground">
           <ScanText className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
-          {note}
+          {note ??
+            (filesAreStored()
+              ? "PDF o imagen. La lectura automática de datos (OCR) llegará más adelante."
+              : "PDF o imagen. Se guarda solo en esta sesión; la lectura automática de datos (OCR) llegará más adelante.")}
         </p>
         <input
           ref={inputRef}
@@ -128,44 +124,47 @@ export function ReceiptDrop({
       </div>
       {attachments.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
-          {attachments.map((a) => (
-            <li key={a.id} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
-              <Paperclip className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-              <span className="min-w-0 flex-1 truncate">{a.name}</span>
-              <span className="text-xs text-muted-foreground">{formatSize(a.size)}</span>
-              {a.url ? (
-                <a
-                  href={a.url}
-                  target="_blank"
-                  rel="noopener"
-                  aria-label={`Abrir ${a.name}`}
-                  className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "size-8 px-0")}
+          {attachments.map((a) => {
+            const url = attachmentUrl(a);
+            return (
+              <li key={a.id} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                <Paperclip className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate">{a.name}</span>
+                <span className="text-xs text-muted-foreground">{formatSize(a.size)}</span>
+                {url ? (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener"
+                    aria-label={`Abrir ${a.name}`}
+                    className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "size-8 px-0")}
+                  >
+                    <ExternalLink strokeWidth={1.8} aria-hidden="true" />
+                  </a>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0} className="text-xs text-muted-foreground">
+                        No disponible
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      El archivo se adjuntó en otra sesión y no se guardó; vuelve a adjuntarlo.
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Quitar ${a.name}`}
+                  onClick={() => onChange(attachments.filter((x) => x.id !== a.id))}
+                  className="size-8 px-0 text-muted-foreground hover:text-destructive"
                 >
-                  <ExternalLink strokeWidth={1.8} aria-hidden="true" />
-                </a>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0} className="text-xs text-muted-foreground">
-                      No disponible
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    El archivo se adjuntó en otra sesión; hará falta almacenamiento para verlo.
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label={`Quitar ${a.name}`}
-                onClick={() => onChange(attachments.filter((x) => x.id !== a.id))}
-                className="size-8 px-0 text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 strokeWidth={1.8} aria-hidden="true" />
-              </Button>
-            </li>
-          ))}
+                  <Trash2 strokeWidth={1.8} aria-hidden="true" />
+                </Button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

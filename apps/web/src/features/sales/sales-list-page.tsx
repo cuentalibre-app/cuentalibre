@@ -26,7 +26,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { cents, newId, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
+import { cents, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
 import type { SalesDocument, SalesKind } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
@@ -43,6 +43,7 @@ import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
+import { attachFile } from "@/data/files";
 import {
   KINDS,
   STATUS,
@@ -503,7 +504,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     run: () =>
       pickFiles((files) => {
         if (files.length === 0) return;
-        const added = files.map((f) => ({ id: newId(), name: f.name, size: f.size }));
+        const added = files.map(attachFile);
         salesStore.update(doc.id, { attachments: [...attachments, ...added] });
       }),
   };

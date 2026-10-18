@@ -30,12 +30,14 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
   let cursor = 0;
   let pulling: Promise<void> | undefined;
   let queue = Promise.resolve();
+  const uploads = new Set<Promise<void>>();
 
   async function request<R>(path: string, init: RequestInit = {}): Promise<R> {
     const response = await fetchImpl(`${baseUrl}${path}`, {
       ...init,
       credentials: "include",
-      headers: init.body ? { "content-type": "application/json" } : undefined,
+      // Form data sets its own type, with the multipart boundary
+      headers: typeof init.body === "string" ? { "content-type": "application/json" } : undefined,
     });
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { error?: { code: string; message: string } } | null;
@@ -64,6 +66,8 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
       if (synced.length === 0) return Promise.resolve();
       // One request at a time, in order: an invoice must not reach the server before the client it names
       const sent = queue.then(async () => {
+        // A record may name files still uploading. If one failed, the server rejects the record.
+        await Promise.all(uploads);
         const { changes } = await request<{ changes: Change[] }>("/v1/commands", {
           method: "POST",
           body: JSON.stringify({ commands: synced }),
@@ -73,6 +77,19 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
       queue = sent.catch(() => undefined);
       return sent;
     },
+
+    upload(id, file) {
+      const form = new FormData();
+      form.set("id", id);
+      form.set("file", file);
+      const uploading = request("/v1/files", { method: "POST", body: form })
+        .then(() => undefined)
+        .catch((error: unknown) => console.warn(`Upload of ${file.name} failed:`, error))
+        .finally(() => uploads.delete(uploading));
+      uploads.add(uploading);
+    },
+
+    fileUrl: (id) => `${baseUrl}/v1/files/${id}`,
 
     async loadWorkspace() {
       const workspace = await request<Workspace>("/v1/workspace");

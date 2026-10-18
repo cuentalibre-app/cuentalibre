@@ -4,6 +4,8 @@ import type { z } from "zod";
 import { contact } from "../db/schema";
 import { ApiError } from "../errors";
 import type { Tx } from "../db/client";
+import { checkAttachments } from "./files";
+import { alreadyExists } from "./records";
 
 export type StoredContact = z.infer<typeof storedContactSchema>;
 export type ContactRow = typeof contact.$inferSelect;
@@ -39,12 +41,13 @@ function notFound(): never {
 export async function createContact(tx: Tx, organizationId: string, role: ContactRole, data: StoredContact) {
   const parsed = storedContactSchema.safeParse(data);
   if (!parsed.success) invalid(parsed.error);
+  await checkAttachments(tx, organizationId, parsed.data.attachments);
   const [row] = await tx
     .insert(contact)
     .values({ ...toColumns(parsed.data), organizationId, role })
     .onConflictDoNothing()
     .returning({ id: contact.id });
-  if (!row) throw new ApiError(409, "already_exists", "A record with this ID already exists.");
+  if (!row) alreadyExists();
 }
 
 /** Applies the changes over the stored record and validates the result as a whole. */
@@ -70,6 +73,7 @@ export async function updateContact(
   }
   const parsed = storedContactSchema.safeParse(merged);
   if (!parsed.success) invalid(parsed.error);
+  await checkAttachments(tx, organizationId, parsed.data.attachments, row.attachments ?? []);
   await tx
     .update(contact)
     .set(toColumns(parsed.data))
@@ -125,4 +129,13 @@ export async function findContact(tx: Tx, organizationId: string, id: string) {
     .from(contact)
     .where(and(eq(contact.organizationId, organizationId), eq(contact.id, id), isNull(contact.deletedAt)));
   return row;
+}
+
+/** A supplier the record names must be one of the organization's suppliers that isn't deleted. */
+export async function checkSupplier(tx: Tx, organizationId: string, supplierId: string, code: string) {
+  const [row] = await tx
+    .select({ id: contact.id })
+    .from(contact)
+    .where(live(organizationId, "supplier", supplierId));
+  if (!row) throw new ApiError(400, code, "supplierId: no such supplier.");
 }

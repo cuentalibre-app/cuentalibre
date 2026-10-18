@@ -6,6 +6,13 @@ import type { Command } from "./commands";
  */
 export interface Backend {
   send(commands: Command[]): Promise<void>;
+  /**
+   * Stores a file picked as an attachment, under the attachment's ID. Commands
+   * sent later wait for it. Without it, files stay in this browser tab.
+   */
+  upload?(id: string, file: File): void;
+  /** Where to open a stored file. */
+  fileUrl?(id: string): string;
 }
 
 /** Until there is an API, data lives only in memory and every change is accepted. */
@@ -14,6 +21,9 @@ export const localBackend: Backend = {
 };
 
 let backend: Backend = localBackend;
+
+/** The backend in use, for the file helpers in `files.ts`. */
+export const currentBackend = () => backend;
 
 /** Switches the backend: the API client once there is one, or a fake in tests. */
 export function setBackend(next: Backend) {

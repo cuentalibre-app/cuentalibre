@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { isoDate } from "./common";
+import { attachmentSchema, isoDate } from "./common";
 import { contactRoleSchema, contactSchema } from "./contacts";
+import { expenseSchema, paymentSchema, purchaseInvoiceSchema, purchaseLineSchema } from "./purchases";
 import { salesDocumentSchema, salesLineSchema } from "./sales";
 import { closedQuarterSchema } from "./settings";
 
@@ -11,7 +12,14 @@ import { closedQuarterSchema } from "./settings";
  */
 
 /** Collections the server stores so far, named like the client's collections. */
-export const syncedEntitySchema = z.enum(["clients", "suppliers", "salesDocuments", "closedQuarters"]);
+export const syncedEntitySchema = z.enum([
+  "clients",
+  "suppliers",
+  "salesDocuments",
+  "purchaseInvoices",
+  "expenses",
+  "closedQuarters",
+]);
 export type SyncedEntity = z.infer<typeof syncedEntitySchema>;
 
 export const contactEntitySchema = z.enum(["clients", "suppliers"]);
@@ -22,14 +30,41 @@ export const ENTITY_ROLES = { clients: "client", suppliers: "supplier" } as cons
   z.infer<typeof contactRoleSchema>
 >;
 
+/** Records whose entity the client may create, update and delete. */
+export const recordEntitySchema = syncedEntitySchema.exclude(["closedQuarters"]);
+export type RecordEntity = z.infer<typeof recordEntitySchema>;
+
+/**
+ * An attachment as the server stores it: its ID is the uploaded file's
+ * (`POST /v1/files`). The browser's object URL is dropped.
+ */
+export const storedAttachmentSchema = attachmentSchema.omit({ url: true }).extend({ id: z.uuid() });
+const storedAttachments = z.array(storedAttachmentSchema).max(100).optional();
+
 /** A record as the server stores it: IDs are UUIDs, created on the client. */
-export const storedContactSchema = contactSchema.extend({ id: z.uuid() });
+export const storedContactSchema = contactSchema.extend({ id: z.uuid(), attachments: storedAttachments });
 
 export const storedSalesDocumentSchema = salesDocumentSchema.extend({
   id: z.uuid(),
   clientId: z.uuid().or(z.literal("")),
   rectifiesId: z.uuid().optional(),
   lines: z.array(salesLineSchema).max(1000),
+  attachments: storedAttachments,
+});
+
+export const storedPurchaseInvoiceSchema = purchaseInvoiceSchema.extend({
+  id: z.uuid(),
+  supplierId: z.uuid(),
+  rectifiesId: z.uuid().optional(),
+  lines: z.array(purchaseLineSchema).max(1000),
+  payments: z.array(paymentSchema).max(1000),
+  attachments: storedAttachments,
+});
+
+export const storedExpenseSchema = expenseSchema.extend({
+  id: z.uuid(),
+  supplierId: z.uuid().nullable(),
+  attachments: storedAttachments,
 });
 
 /** Position in an organization's change feed. 0 is before the first change. */
@@ -46,14 +81,16 @@ export const commandSchema = z.union([
     /** Drafts, quotes and delivery notes. Invoices come into being by issuing them. */
     data: storedSalesDocumentSchema,
   }),
+  z.object({ type: z.literal("create"), entity: z.literal("purchaseInvoices"), data: storedPurchaseInvoiceSchema }),
+  z.object({ type: z.literal("create"), entity: z.literal("expenses"), data: storedExpenseSchema }),
   z.object({
     type: z.literal("update"),
-    entity: z.enum(["clients", "suppliers", "salesDocuments"]),
+    entity: recordEntitySchema,
     id: z.uuid(),
     /** Fields to change. `null` clears an optional field. */
     changes: z.record(z.string(), z.unknown()),
   }),
-  z.object({ type: z.literal("delete"), entity: z.enum(["clients", "suppliers", "salesDocuments"]), id: z.uuid() }),
+  z.object({ type: z.literal("delete"), entity: recordEntitySchema, id: z.uuid() }),
   z.object({
     type: z.literal("issue"),
     /**
@@ -75,6 +112,8 @@ export type SyncCommand = z.infer<typeof commandSchema>;
 export const changeSchema = z.union([
   z.object({ op: z.literal("upsert"), entity: contactEntitySchema, data: storedContactSchema }),
   z.object({ op: z.literal("upsert"), entity: z.literal("salesDocuments"), data: storedSalesDocumentSchema }),
+  z.object({ op: z.literal("upsert"), entity: z.literal("purchaseInvoices"), data: storedPurchaseInvoiceSchema }),
+  z.object({ op: z.literal("upsert"), entity: z.literal("expenses"), data: storedExpenseSchema }),
   z.object({ op: z.literal("upsert"), entity: z.literal("closedQuarters"), data: closedQuarterSchema }),
   z.object({
     op: z.literal("delete"),
@@ -91,6 +130,8 @@ export const workspaceSchema = z.object({
   clients: z.array(storedContactSchema),
   suppliers: z.array(storedContactSchema),
   salesDocuments: z.array(storedSalesDocumentSchema),
+  purchaseInvoices: z.array(storedPurchaseInvoiceSchema),
+  expenses: z.array(storedExpenseSchema),
   closedQuarters: z.array(closedQuarterSchema),
 });
 export type Workspace = z.infer<typeof workspaceSchema>;
@@ -102,3 +143,13 @@ export const changesSchema = z.object({
   hasMore: z.boolean(),
 });
 export type Changes = z.infer<typeof changesSchema>;
+
+/** A file uploaded to `POST /v1/files`, which attachments name by its ID. */
+export const storedFileSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  /** Bytes. */
+  size: z.int().nonnegative(),
+  contentType: z.string(),
+});
+export type StoredFile = z.infer<typeof storedFileSchema>;

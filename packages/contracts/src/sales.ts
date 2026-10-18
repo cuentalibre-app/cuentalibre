@@ -93,7 +93,7 @@ export const salesDocumentSchema = z.object({
   publicNotes: z.string(),
   /** Only visible in Fiscalia. */
   privateNotes: z.string(),
-  /** Supporting files (contracts, delivery proofs…). Names only until there is a backend. */
+  /** Supporting files (contracts, delivery proofs…). */
   attachments: z.array(attachmentSchema).optional(),
   /** Issued invoices only. */
   issued: issuedSnapshotSchema.optional(),

@@ -56,6 +56,7 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
+import { attachFile, attachmentUrl } from "@/data/files";
 import {
   ASSETS_PATH,
   ASSET_CATEGORY_LABELS,
@@ -877,7 +878,7 @@ function usePurchaseActions(row: Row) {
   const lockedQuarterOf = useLockedQuarter();
   const { doc } = row;
   const attachments = doc.attachments ?? [];
-  const viewable = attachments.find((a) => a.url);
+  const viewable = attachments.map(attachmentUrl).find(Boolean);
 
   const attach: Action = {
     label: attachments.length > 0 ? `Adjuntar archivos (${attachments.length})` : "Adjuntar archivos",
@@ -885,20 +886,19 @@ function usePurchaseActions(row: Row) {
     run: () =>
       pickFiles((files) => {
         if (files.length === 0) return;
-        const added = files.map((f) => ({
-          id: newId(),
-          name: f.name,
-          size: f.size,
-          url: URL.createObjectURL(f),
-        }));
+        const added = files.map(attachFile);
         purchasesStore.update(doc.id, { attachments: [...attachments, ...added] });
       }),
   };
 
   const view: Action = {
-    label: viewable ? "Ver justificante" : "Sin justificante adjunto en esta sesión",
+    label: viewable
+      ? "Ver justificante"
+      : attachments.length > 0
+        ? "Justificante no disponible en esta sesión"
+        : "Sin justificante adjunto",
     icon: ExternalLink,
-    run: viewable ? () => window.open(viewable.url, "_blank", "noopener") : undefined,
+    run: viewable ? () => window.open(viewable, "_blank", "noopener") : undefined,
   };
 
   const primary: Action =

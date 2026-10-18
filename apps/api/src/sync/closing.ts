@@ -1,4 +1,5 @@
 import type { ClosedQuarter } from "@fiscalia/contracts";
+import { periodKey, quarterOfDate } from "@fiscalia/core";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { closedQuarter } from "../db/schema";
@@ -53,4 +54,28 @@ export function closedQuartersByPeriod(tx: Tx, organizationId: string, periods: 
     .select()
     .from(closedQuarter)
     .where(and(eq(closedQuarter.organizationId, organizationId), inArray(closedQuarter.period, periods)));
+}
+
+/** Rejects a write dated in a closed quarter. */
+export async function checkQuarterOpen(tx: Tx, organizationId: string, isoDate: string) {
+  if (await isQuarterClosed(tx, organizationId, isoDate))
+    throw new ApiError(
+      409,
+      "quarter_closed",
+      `Quarter ${periodKey(quarterOfDate(isoDate))} is closed; reopen it first.`,
+    );
+}
+
+export async function isQuarterClosed(tx: Tx, organizationId: string, isoDate: string) {
+  const [closed] = await tx
+    .select({ period: closedQuarter.period })
+    .from(closedQuarter)
+    .where(
+      and(
+        eq(closedQuarter.organizationId, organizationId),
+        eq(closedQuarter.period, periodKey(quarterOfDate(isoDate))),
+        isNull(closedQuarter.deletedAt),
+      ),
+    );
+  return closed !== undefined;
 }

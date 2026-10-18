@@ -16,7 +16,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import { newId, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
+import { periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
 import type { Expense, OtherPayee } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
@@ -44,6 +44,7 @@ import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/l
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { paymentMethodName } from "@/features/settings/settings-model";
+import { attachFile, attachmentUrl } from "@/data/files";
 import {
   EXPENSES_PATH,
   EXPENSE_STATUS,
@@ -684,7 +685,7 @@ function useExpenseActions(row: Row) {
   const lockedQuarterOf = useLockedQuarter();
   const { doc } = row;
   const attachments = doc.attachments ?? [];
-  const viewable = attachments.find((a) => a.url);
+  const viewable = attachments.map(attachmentUrl).find(Boolean);
 
   const attach: Action = {
     label: attachments.length > 0 ? `Adjuntar archivos (${attachments.length})` : "Adjuntar archivos",
@@ -692,20 +693,19 @@ function useExpenseActions(row: Row) {
     run: () =>
       pickFiles((files) => {
         if (files.length === 0) return;
-        const added = files.map((f) => ({
-          id: newId(),
-          name: f.name,
-          size: f.size,
-          url: URL.createObjectURL(f),
-        }));
+        const added = files.map(attachFile);
         expensesStore.update(doc.id, { attachments: [...attachments, ...added] });
       }),
   };
 
   const view: Action = {
-    label: viewable ? "Ver justificante" : "Sin justificante adjunto en esta sesión",
+    label: viewable
+      ? "Ver justificante"
+      : attachments.length > 0
+        ? "Justificante no disponible en esta sesión"
+        : "Sin justificante adjunto",
     icon: ExternalLink,
-    run: viewable ? () => window.open(viewable.url, "_blank", "noopener") : undefined,
+    run: viewable ? () => window.open(viewable, "_blank", "noopener") : undefined,
   };
 
   const primary: Action = doc.payment

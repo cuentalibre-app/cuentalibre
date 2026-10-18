@@ -4,7 +4,15 @@ import { expect } from "vitest";
 import { createOrganization, signUp, type Client } from "./harness";
 
 /** The workspace of an organization with no data. */
-export const EMPTY: Workspace = { cursor: 0, clients: [], suppliers: [], salesDocuments: [], closedQuarters: [] };
+export const EMPTY: Workspace = {
+  cursor: 0,
+  clients: [],
+  suppliers: [],
+  salesDocuments: [],
+  purchaseInvoices: [],
+  expenses: [],
+  closedQuarters: [],
+};
 
 /** A signed-in user working in a new organization of their own. */
 export async function member(name = "Ana") {

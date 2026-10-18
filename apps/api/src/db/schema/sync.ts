@@ -2,7 +2,7 @@ import type { SyncCommand } from "@fiscalia/contracts";
 import { bigint, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth";
 
-export type LoggedEntity = "contact" | "sales_document" | "closed_quarter";
+export type LoggedEntity = "contact" | "sales_document" | "purchase_invoice" | "expense" | "closed_quarter";
 
 /**
  * Append-only log of every change to an organization's data: the feed clients

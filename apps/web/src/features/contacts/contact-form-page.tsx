@@ -19,6 +19,7 @@ import { CLIENT_DEFAULT, Field, GroupedSelect, LocaleFields, Section } from "@/f
 import { defaultNumberFormat } from "@/features/sales/invoice-locale";
 import { WITHHOLDING_GROUPS } from "@/features/sales/sales-model";
 import { paymentMethodOptions } from "@/features/settings/settings-model";
+import { filesAreStored } from "@/data/files";
 import {
   NO_DEFAULT,
   fromDraft,
@@ -370,7 +371,7 @@ function ContactForm({
               onChange={(a) => set("attachments", a)}
               label="Documentos adjuntos"
               prompt="Arrastra aquí contratos, mandatos SEPA u otros documentos"
-              note="Se guardan solo en esta sesión hasta que haya almacenamiento de archivos."
+              note={filesAreStored() ? "Cualquier tipo de archivo." : "Se guardan solo en esta sesión."}
               accept=""
             />
           </Section>

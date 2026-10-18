@@ -5,15 +5,16 @@ import {
   invoiceTotals,
   laterInvoiceInSeries,
   nextInvoiceNumber,
-  quarterOfDate,
-  periodKey,
   type Cents,
 } from "@fiscalia/core";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
-import { closedQuarter, contact, salesDocument, salesLine } from "../db/schema";
+import { contact, salesDocument, salesLine } from "../db/schema";
 import { ApiError } from "../errors";
+import { checkQuarterOpen } from "./closing";
+import { checkAttachments } from "./files";
+import { alreadyExists, mergeChanges, parseOr, touchedFields } from "./records";
 
 export type StoredSalesDocument = z.infer<typeof storedSalesDocumentSchema>;
 type DocumentRow = typeof salesDocument.$inferSelect;
@@ -23,7 +24,8 @@ type LineRow = typeof salesLine.$inferSelect;
 const FIELDS = (Object.keys(storedSalesDocumentSchema.shape) as (keyof StoredSalesDocument)[]).filter(
   (field) => field !== "lines" && field !== "issued",
 );
-const LINE_FIELDS = [
+/** Columns of a line, as the record names them. */
+export const LINE_FIELDS = [
   "id",
   "concept",
   "detail",
@@ -88,25 +90,11 @@ function toColumns(record: StoredSalesDocument) {
   return { ...columns, clientId: record.clientId || null } as Omit<typeof salesDocument.$inferInsert, "organizationId">;
 }
 
-/** JSON with sorted keys, to compare values regardless of key order. */
-const canonical = (value: unknown) =>
-  JSON.stringify(value, (_, inner: unknown) =>
-    inner && typeof inner === "object" && !Array.isArray(inner)
-      ? Object.fromEntries(Object.entries(inner).sort(([a], [b]) => a.localeCompare(b)))
-      : inner,
-  );
-
 function invalid(message: string): never {
   throw new ApiError(400, "invalid_document", message);
 }
 
-function parse(data: unknown): StoredSalesDocument {
-  const parsed = storedSalesDocumentSchema.safeParse(data);
-  if (parsed.success) return parsed.data;
-  const issue = parsed.error.issues[0];
-  const where = issue?.path.length ? `${issue.path.join(".")}: ` : "";
-  invalid(`${where}${issue?.message ?? "Invalid document."}`);
-}
+const parse = (data: unknown): StoredSalesDocument => parseOr(storedSalesDocumentSchema, data, "invalid_document");
 
 function notFound(): never {
   throw new ApiError(404, "not_found", "Sales document not found.");
@@ -183,12 +171,13 @@ export async function createSalesDocument(tx: Tx, organizationId: string, data: 
   const { issued: _, ...record } = parse(data);
   if (record.kind === "invoice") invalid("kind: invoices are created by issuing them.");
   await checkClient(tx, organizationId, record.clientId);
+  await checkAttachments(tx, organizationId, record.attachments);
   const [row] = await tx
     .insert(salesDocument)
     .values({ ...toColumns(record), organizationId })
     .onConflictDoNothing()
     .returning({ id: salesDocument.id });
-  if (!row) throw new ApiError(409, "already_exists", "A record with this ID already exists.");
+  if (!row) alreadyExists();
   await writeLines(tx, organizationId, record);
 }
 
@@ -208,19 +197,12 @@ export async function updateSalesDocument(
   if (!row) notFound();
   const current = toSalesDocument(row, (await linesOf(tx, organizationId, [id])).get(id) ?? []);
 
-  const merged: Record<string, unknown> = { ...current };
-  for (const [field, value] of Object.entries(changes)) {
-    if (value === null) delete merged[field];
-    else merged[field] = value;
-  }
-  const { issued: _, ...record } = parse(merged);
+  const { issued: _, ...record } = parse(mergeChanges(storedSalesDocumentSchema, current, changes));
+  await checkAttachments(tx, organizationId, record.attachments, current.attachments);
 
   if (current.kind === "invoice") {
-    // Fields sent with the value they already have are no change
-    const touched = Object.keys(changes).filter(
-      (field) => canonical(record[field as keyof typeof record]) !== canonical(current[field as keyof typeof current]),
-    );
-    if (touched.some((field) => !MUTABLE_WHEN_ISSUED.has(field))) issuedError();
+    if (touchedFields<StoredSalesDocument>(current, record, changes).some((field) => !MUTABLE_WHEN_ISSUED.has(field)))
+      issuedError();
     if (record.status !== "pending" && record.status !== "paid") invalid("status: an invoice is pending or paid.");
     await tx
       .update(salesDocument)
@@ -271,8 +253,9 @@ export async function issueInvoice(tx: Tx, organizationId: string, data: unknown
       .select({ id: salesDocument.id })
       .from(salesDocument)
       .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, record.id)));
-    if (deleted) throw new ApiError(409, "already_exists", "A record with this ID already exists.");
+    if (deleted) alreadyExists();
   }
+  await checkAttachments(tx, organizationId, record.attachments, existing ? (existing.attachments ?? []) : []);
 
   if (!record.clientId) invalid("clientId: an invoice needs a client.");
   const client = (await checkClient(tx, organizationId, record.clientId))!;
@@ -365,21 +348,6 @@ async function issuedInvoices(tx: Tx, organizationId: string) {
     .from(salesDocument)
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.kind, "invoice")));
   return rows.map((row) => ({ ...row, number: row.number! }));
-}
-
-async function checkQuarterOpen(tx: Tx, organizationId: string, isoDate: string) {
-  const period = periodKey(quarterOfDate(isoDate));
-  const [closed] = await tx
-    .select({ period: closedQuarter.period })
-    .from(closedQuarter)
-    .where(
-      and(
-        eq(closedQuarter.organizationId, organizationId),
-        eq(closedQuarter.period, period),
-        isNull(closedQuarter.deletedAt),
-      ),
-    );
-  if (closed) throw new ApiError(409, "quarter_closed", `Quarter ${period} is closed; reopen it first.`);
 }
 
 /** Documents of the organization that aren't deleted, with their lines, oldest first. */

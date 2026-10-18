@@ -1,21 +1,36 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterAll, expect } from "vitest";
 import { createApp } from "../app";
 import { createAuth } from "../auth";
 import { createDb } from "../db/client";
 import { loadEnv } from "../env";
+import { diskStorage } from "../storage/disk";
 import { testDatabaseUrl } from "./database";
 
-export const env = loadEnv({ NODE_ENV: "test", DATABASE_URL: testDatabaseUrl });
-export const db = createDb(env.DATABASE_URL);
-export const app = createApp({ db, auth: createAuth(db, env), env });
+const storageDir = mkdtempSync(join(tmpdir(), "fiscalia-files-"));
 
-afterAll(() => db.$client.end());
+export const env = loadEnv({
+  NODE_ENV: "test",
+  DATABASE_URL: testDatabaseUrl,
+  STORAGE_DIR: storageDir,
+  FILE_MAX_BYTES: String(1024 * 1024),
+});
+export const db = createDb(env.DATABASE_URL);
+export const app = createApp({ db, auth: createAuth(db, env), env, storage: diskStorage(storageDir) });
+
+afterAll(async () => {
+  await db.$client.end();
+  rmSync(storageDir, { recursive: true, force: true });
+});
 
 const origin = env.BETTER_AUTH_URL;
 
 /** A signed-in user: sends requests with their session cookie. */
 export interface Client {
-  request(path: string, init?: { method?: string; body?: unknown }): Promise<Response>;
+  /** `body` is sent as JSON; `form` as multipart/form-data. */
+  request(path: string, init?: { method?: string; body?: unknown; form?: FormData }): Promise<Response>;
 }
 
 let counter = 0;
@@ -42,7 +57,7 @@ export async function signUp(name = "Ana"): Promise<Client & { email: string }> 
           origin,
           ...(init.body ? { "content-type": "application/json" } : {}),
         },
-        body: init.body ? JSON.stringify(init.body) : undefined,
+        body: init.form ?? (init.body ? JSON.stringify(init.body) : undefined),
       });
       // Better Auth refreshes the session cookies on some calls (e.g. switching organization).
       storeCookies(cookies, res);
