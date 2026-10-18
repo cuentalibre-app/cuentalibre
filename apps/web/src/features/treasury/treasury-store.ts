@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from "react";
-import { cents, toIsoDate } from "@fiscalia/core";
+import { cents, newId, toIsoDate } from "@fiscalia/core";
 import { expensesStore, useExpenses } from "@/features/purchases/expenses-store";
 import { purchasesStore, usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { salesStore, useSalesDocuments } from "@/features/sales/sales-store";
@@ -66,7 +66,6 @@ export function usePendingDocuments() {
 }
 
 const byDate = (a: BankMovement, b: BankMovement) => a.date.localeCompare(b.date);
-const newId = (prefix: string) => `${prefix}${crypto.randomUUID().slice(0, 8)}`;
 
 /**
  * Records the payment that settles a pending document, on the movement's date and through a
@@ -83,7 +82,7 @@ function settle(doc: PendingDocument, movement: BankMovement): string {
       return `sale:${doc.docId}`;
     case "purchase": {
       const invoice = purchasesStore.get(doc.docId)!;
-      const payment = { id: newId("pay"), date, amount: cents(-doc.amount), paymentMethodId: methodId };
+      const payment = { id: newId(), date, amount: cents(-doc.amount), paymentMethodId: methodId };
       purchasesStore.update(doc.docId, { payments: [...invoice.payments, payment] });
       return `purchase:${payment.id}`;
     }
@@ -101,9 +100,7 @@ export const treasuryStore = {
 
   addMovements: (movements: Omit<BankMovement, "id" | "paymentKeys">[]) =>
     commit({
-      movements: [...state.movements, ...movements.map((m) => ({ ...m, id: newId("mv"), paymentKeys: [] }))].sort(
-        byDate,
-      ),
+      movements: [...state.movements, ...movements.map((m) => ({ ...m, id: newId(), paymentKeys: [] }))].sort(byDate),
     }),
   removeMovement: (id: string) => commit({ movements: state.movements.filter((m) => m.id !== id) }),
 
@@ -119,7 +116,7 @@ export const treasuryStore = {
   unreconcile: (movementId: string) => updateMovement(movementId, { paymentKeys: [] }),
 
   addManualPayment: (payment: Omit<ManualPayment, "id">): string => {
-    const id = newId("mp");
+    const id = newId();
     commit({ manualPayments: [...state.manualPayments, { ...payment, id }] });
     return `manual:${id}`;
   },

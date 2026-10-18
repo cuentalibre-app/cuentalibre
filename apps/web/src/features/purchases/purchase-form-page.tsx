@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import {
   ASSET_CATEGORIES,
+  newId,
   WITHHOLDING_RATES,
   addDays,
   amortizableValue,
@@ -461,7 +462,7 @@ function PurchaseForm({
     }
 
     const doc: PurchaseInvoice = {
-      id: existing?.id ?? crypto.randomUUID(),
+      id: existing?.id ?? newId(),
       supplierId: form.supplierId,
       number: form.number.trim(),
       issuedOn: form.issuedOn,
@@ -851,9 +852,7 @@ function PurchaseForm({
                 )
               }
               onDuplicate={(lineId) =>
-                setLines((lines) =>
-                  lines.flatMap((l) => (l.id === lineId ? [l, { ...l, id: crypto.randomUUID() }] : [l])),
-                )
+                setLines((lines) => lines.flatMap((l) => (l.id === lineId ? [l, { ...l, id: newId() }] : [l])))
               }
               onMove={(from, to) =>
                 setLines((lines) => {
@@ -1200,7 +1199,7 @@ function Payments({
     onChange((list) => [
       ...list,
       {
-        id: crypto.randomUUID(),
+        id: newId(),
         // Today, unless the invoice is dated later
         date: [toIsoDate(new Date()), issuedOn].sort().at(-1)!,
         amount: formatEurosInput(pending),

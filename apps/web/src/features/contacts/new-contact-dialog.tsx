@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { newId } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
@@ -71,7 +72,7 @@ function QuickForm({
       requestAnimationFrame(() => document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus());
       return;
     }
-    const contact = fromDraft(role, draft, crypto.randomUUID());
+    const contact = fromDraft(role, draft, newId());
     contactsStore.add(role, contact);
     onCreated(contact);
   };

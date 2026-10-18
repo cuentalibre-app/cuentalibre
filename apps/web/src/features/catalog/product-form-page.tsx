@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePlus2, FolderTree, X } from "lucide-react";
-import { cents, isCatalogUnit, priceBreakdown, stockOf, surchargeFitsVat, type Cents } from "@fiscalia/core";
+import { cents, isCatalogUnit, newId, priceBreakdown, stockOf, surchargeFitsVat, type Cents } from "@fiscalia/core";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -229,7 +229,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
       requestAnimationFrame(() => document.querySelector<HTMLElement>("[aria-invalid=true]")?.focus());
       return;
     }
-    const product = fromDraft(draft, existing?.id ?? crypto.randomUUID());
+    const product = fromDraft(draft, existing?.id ?? newId());
     const initial = parseDecimal(draft.initialStock || "0") ?? 0;
     if (existing) catalogStore.updateProduct(existing.id, product, initial);
     else catalogStore.addProduct(product, initial);

@@ -18,7 +18,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { sumBy, type Cents } from "@fiscalia/core";
+import { newId, sumBy, type Cents } from "@fiscalia/core";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
@@ -486,7 +486,7 @@ export function useContactActions(
       pickFiles((files) => {
         if (files.length === 0) return;
         const added = files.map((f) => ({
-          id: crypto.randomUUID(),
+          id: newId(),
           name: f.name,
           size: f.size,
           url: URL.createObjectURL(f),

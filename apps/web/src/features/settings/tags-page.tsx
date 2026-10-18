@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { newId } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
@@ -32,7 +33,7 @@ function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open
     if (nameError) return;
     const values = { name: name.trim(), color };
     if (tag) tagsStore.update(tag.id, values);
-    else tagsStore.add({ id: `tag-${crypto.randomUUID().slice(0, 8)}`, ...values });
+    else tagsStore.add({ id: newId(), ...values });
     onOpenChange(false);
   };
 

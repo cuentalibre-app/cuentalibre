@@ -1,6 +1,7 @@
 import {
   familyPath,
   isCatalogUnit,
+  newId,
   parseAmount,
   parsePercent,
   parseYesNo,
@@ -387,7 +388,7 @@ export function previewCatalogImport(kind: CatalogImportKind, table: string[][])
     const product: Product | undefined =
       errors.length === 0
         ? {
-            id: existing?.id ?? crypto.randomUUID(),
+            id: existing?.id ?? newId(),
             familyId: existing?.familyId ?? null,
             name,
             description,
@@ -447,7 +448,7 @@ export function commitCatalogImport(preview: CatalogImportPreview): { created: n
 
   for (const row of preview.rows) {
     if (!row.product) continue;
-    const { id, created: made } = resolveFamilyPath(families, row.familyNames, () => crypto.randomUUID());
+    const { id, created: made } = resolveFamilyPath(families, row.familyNames, () => newId());
     families = [...families, ...made];
     newFamilies.push(...made);
     const product = { ...row.product, familyId: row.familyNames.length ? id : row.product.familyId };
@@ -457,7 +458,7 @@ export function commitCatalogImport(preview: CatalogImportPreview): { created: n
 
     if (product.stock && row.stockChange)
       movements.push({
-        id: crypto.randomUUID(),
+        id: newId(),
         productId: product.id,
         quantity: row.stockChange,
         at,

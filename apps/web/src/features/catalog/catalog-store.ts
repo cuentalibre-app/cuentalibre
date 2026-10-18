@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import {
   documentTakesStock,
+  newId,
   quantitiesByProduct,
   stockChanges,
   stockOf,
@@ -65,7 +66,7 @@ const movement = (
   productId: string,
   quantity: number,
   fields: Omit<StockMovement, "id" | "productId" | "quantity" | "at">,
-) => ({ id: crypto.randomUUID(), productId, quantity, at: now(), ...fields }) satisfies StockMovement;
+) => ({ id: newId(), productId, quantity, at: now(), ...fields }) satisfies StockMovement;
 
 export const catalogStore = {
   get: () => state,
@@ -115,7 +116,7 @@ export const catalogStore = {
   },
 
   addFamily(name: string, parentId: string | null): CatalogFamily {
-    const family = { id: crypto.randomUUID(), name: name.trim(), parentId };
+    const family = { id: newId(), name: name.trim(), parentId };
     commit({ families: [...state.families, family] });
     return family;
   },

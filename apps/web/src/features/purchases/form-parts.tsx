@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components
 import { cn } from "@fiscalia/ui/lib/cn";
 import { parseDecimal } from "@/lib/format";
 import type { Attachment } from "@/mocks/sales";
-import { isValidImputation } from "@fiscalia/core";
+import { isValidImputation, newId } from "@fiscalia/core";
 
 /* Form building blocks shared by received invoices and expenses. Tooltips need a TooltipProvider above. */
 
@@ -72,7 +72,7 @@ export function ReceiptDrop({
     onChange([
       ...attachments,
       ...Array.from(files).map((f) => ({
-        id: crypto.randomUUID(),
+        id: newId(),
         name: f.name,
         size: f.size,
         url: URL.createObjectURL(f),

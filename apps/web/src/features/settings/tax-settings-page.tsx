@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ArrowDown, ArrowUp, Info, Plus, Search, Star, Trash2, TriangleAlert, UserPlus } from "lucide-react";
-import { cents } from "@fiscalia/core";
+import { cents, newId } from "@fiscalia/core";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
@@ -124,7 +124,7 @@ function ActivityDialog({
                   type="button"
                   disabled={added}
                   onClick={() => {
-                    onAdd({ id: crypto.randomUUID(), type, code, name });
+                    onAdd({ id: newId(), type, code, name });
                     onOpenChange(false);
                   }}
                   className="flex w-full cursor-pointer items-baseline gap-3 border-0 bg-transparent px-4 py-2.5 text-left text-foreground transition-colors duration-150 hover:bg-accent disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent"
@@ -299,7 +299,7 @@ function VariousClients({ value, onChange }: { value: string | null; onChange: (
           <Button
             variant="secondary"
             onClick={() => {
-              const id = `c-${crypto.randomUUID().slice(0, 8)}`;
+              const id = newId();
               contactsStore.add("client", { id, name: "Clientes varios", taxId: "" });
               onChange(id);
             }}

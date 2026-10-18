@@ -1,6 +1,7 @@
 import { useId, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Copy, EllipsisVertical, Minus, Package, Plus, Trash2, X } from "lucide-react";
 import {
+  newId,
   WITHHOLDING_RATES,
   applyRate,
   cents,
@@ -51,7 +52,7 @@ export interface LineDraft {
 
 /** A blank line; `discount` is the contact's default, as typed in the form. */
 export const emptyLine = (vatRate = 0.21, discount = "0"): LineDraft => ({
-  id: crypto.randomUUID(),
+  id: newId(),
   concept: "",
   unitPrice: "",
   quantity: "1",
@@ -76,7 +77,7 @@ export const isBlank = (line: LineDraft) => !line.concept.trim() && !line.unitPr
 /** A stored line as editable text; `negate` flips the quantity, for credit notes. */
 export function toLineDraft(line: SalesLine, negate = false): LineDraft {
   return {
-    id: crypto.randomUUID(),
+    id: newId(),
     concept: line.concept,
     unitPrice: formatDecimalInput(line.unitPrice),
     quantity: formatDecimalInput(negate ? -line.quantity : line.quantity),

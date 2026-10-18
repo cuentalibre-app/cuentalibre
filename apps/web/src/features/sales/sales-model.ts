@@ -1,5 +1,6 @@
 import {
   INVOICE_VAT_RATES,
+  newId,
   SURCHARGE_RATES,
   WITHHOLDING_RATES,
   centsToEuros,
@@ -180,7 +181,7 @@ export function groupLinesByTax(doc: SalesDocument): SalesLine[] {
     if (group) group.unitPrice = centsToEuros(eurosToCents(group.unitPrice + centsToEuros(lineBase(line))));
     else
       groups.set(key, {
-        id: crypto.randomUUID(),
+        id: newId(),
         concept: name,
         unitPrice: centsToEuros(lineBase(line)),
         quantity: 1,
