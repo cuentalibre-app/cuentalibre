@@ -12,3 +12,4 @@ export * from "./treasury";
 export * from "./catalog";
 export * from "./settings";
 export * from "./user";
+export * from "./organizations";

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: fiscalia
+          POSTGRES_PASSWORD: fiscalia
+          POSTGRES_DB: fiscalia
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fiscalia"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgres://fiscalia:fiscalia@localhost:5432/fiscalia_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Check the migrations match the schema
+        run: |
+          pnpm --filter @fiscalia/api db:generate
+          git diff --exit-code --stat -- apps/api/drizzle
+          test -z "$(git status --porcelain -- apps/api/drizzle)"
