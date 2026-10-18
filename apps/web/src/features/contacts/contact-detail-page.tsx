@@ -30,6 +30,7 @@ import { MONTHS_SHORT, formatDate, periodCode } from "@/lib/format";
 import { availableYears } from "@/mocks/data";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import { TagChip } from "@/features/settings/tag-chip";
+import { filesAreStored } from "@/data/files";
 import { ContactNotFound } from "./contact-form-page";
 import {
   ACTIVITY_KIND_LABELS,
@@ -181,7 +182,7 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
               onChange={(a) => contactsStore.update(role, contact.id, { attachments: a.length ? a : undefined })}
               label="Documentos adjuntos"
               prompt="Arrastra aquí contratos, mandatos SEPA u otros documentos"
-              note="Se guardan solo en esta sesión hasta que haya almacenamiento de archivos."
+              note={filesAreStored() ? "Cualquier tipo de archivo." : "Se guardan solo en esta sesión."}
               accept=""
             />
           )}

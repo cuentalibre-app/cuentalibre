@@ -4,6 +4,8 @@ import type { Db, Tx } from "../db/client";
 import { changeLog, type LoggedEntity } from "../db/schema";
 import { closedQuartersByPeriod, liveClosedQuarters, toClosedQuarter } from "./closing";
 import { contactsById, liveContacts, toContact, type ContactRow } from "./contacts";
+import { expensesById, liveExpenses, toExpense } from "./expenses";
+import { livePurchaseInvoices, purchaseInvoicesById } from "./purchases";
 import { liveSalesDocuments, salesDocumentsById } from "./sales";
 
 const entityOf = (row: ContactRow) => (row.role === ENTITY_ROLES.clients ? "clients" : "suppliers");
@@ -30,6 +32,8 @@ export function readWorkspace(db: Db, organizationId: string): Promise<Workspace
         clients: [],
         suppliers: [],
         salesDocuments: await liveSalesDocuments(tx, organizationId),
+        purchaseInvoices: await livePurchaseInvoices(tx, organizationId),
+        expenses: await liveExpenses(tx, organizationId),
         closedQuarters: (await liveClosedQuarters(tx, organizationId)).map(toClosedQuarter),
       };
       for (const row of await liveContacts(tx, organizationId)) workspace[entityOf(row)].push(toContact(row));
@@ -82,6 +86,22 @@ export async function changesFor(tx: Tx, organizationId: string, refs: RecordRef
       doc.deleted
         ? { op: "delete", entity: "salesDocuments", id: doc.id }
         : { op: "upsert", entity: "salesDocuments", data: doc.record },
+    );
+  }
+  for (const invoice of await purchaseInvoicesById(tx, organizationId, idsOf("purchase_invoice"))) {
+    changes.set(
+      `purchase_invoice:${invoice.id}`,
+      invoice.deleted
+        ? { op: "delete", entity: "purchaseInvoices", id: invoice.id }
+        : { op: "upsert", entity: "purchaseInvoices", data: invoice.record },
+    );
+  }
+  for (const row of await expensesById(tx, organizationId, idsOf("expense"))) {
+    changes.set(
+      `expense:${row.id}`,
+      row.deletedAt
+        ? { op: "delete", entity: "expenses", id: row.id }
+        : { op: "upsert", entity: "expenses", data: toExpense(row) },
     );
   }
   for (const row of await closedQuartersByPeriod(tx, organizationId, idsOf("closed_quarter"))) {

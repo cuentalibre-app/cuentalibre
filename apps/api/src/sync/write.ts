@@ -1,9 +1,17 @@
-import { ENTITY_ROLES, type Change, type SyncCommand } from "@fiscalia/contracts";
+import {
+  ENTITY_ROLES,
+  type Change,
+  type ContactEntity,
+  type RecordEntity,
+  type SyncCommand,
+} from "@fiscalia/contracts";
 import { sql } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
-import { changeLog } from "../db/schema";
+import { changeLog, type LoggedEntity } from "../db/schema";
 import { closeQuarter, reopenQuarter } from "./closing";
-import { createContact, deleteContact, updateContact } from "./contacts";
+import { createContact, deleteContact, updateContact, type StoredContact } from "./contacts";
+import { createExpense, deleteExpense, updateExpense } from "./expenses";
+import { createPurchaseInvoice, deletePurchaseInvoice, updatePurchaseInvoice } from "./purchases";
 import { changesFor, type RecordRef } from "./read";
 import { createSalesDocument, deleteSalesDocument, issueInvoice, updateSalesDocument } from "./sales";
 
@@ -54,16 +62,42 @@ async function apply(tx: Tx, organizationId: string, command: SyncCommand): Prom
   }
 
   const id = command.type === "create" ? command.data.id : command.id;
-  if (command.entity === "salesDocuments") {
-    if (command.type === "create") await createSalesDocument(tx, organizationId, command.data);
-    else if (command.type === "update") await updateSalesDocument(tx, organizationId, id, command.changes);
-    else await deleteSalesDocument(tx, organizationId, id);
-    return { entity: "sales_document", id };
-  }
-
-  const role = ENTITY_ROLES[command.entity];
-  if (command.type === "create") await createContact(tx, organizationId, role, command.data);
-  else if (command.type === "update") await updateContact(tx, organizationId, role, id, command.changes);
-  else await deleteContact(tx, organizationId, role, id);
-  return { entity: "contact", id };
+  const service = SERVICES[command.entity];
+  if (command.type === "create") await service.create(tx, organizationId, command.data);
+  else if (command.type === "update") await service.update(tx, organizationId, id, command.changes);
+  else await service.remove(tx, organizationId, id);
+  return { entity: service.logged, id };
 }
+
+/** How each kind of record is created, updated and deleted, and the name it is logged under. */
+interface RecordService {
+  logged: LoggedEntity;
+  create: (tx: Tx, organizationId: string, data: unknown) => Promise<void>;
+  update: (tx: Tx, organizationId: string, id: string, changes: Record<string, unknown>) => Promise<void>;
+  remove: (tx: Tx, organizationId: string, id: string) => Promise<void>;
+}
+
+const contactService = (entity: ContactEntity): RecordService => ({
+  logged: "contact",
+  create: (tx, organizationId, data) => createContact(tx, organizationId, ENTITY_ROLES[entity], data as StoredContact),
+  update: (tx, organizationId, id, changes) => updateContact(tx, organizationId, ENTITY_ROLES[entity], id, changes),
+  remove: (tx, organizationId, id) => deleteContact(tx, organizationId, ENTITY_ROLES[entity], id),
+});
+
+const SERVICES: Record<RecordEntity, RecordService> = {
+  clients: contactService("clients"),
+  suppliers: contactService("suppliers"),
+  salesDocuments: {
+    logged: "sales_document",
+    create: createSalesDocument,
+    update: updateSalesDocument,
+    remove: deleteSalesDocument,
+  },
+  purchaseInvoices: {
+    logged: "purchase_invoice",
+    create: createPurchaseInvoice,
+    update: updatePurchaseInvoice,
+    remove: deletePurchaseInvoice,
+  },
+  expenses: { logged: "expense", create: createExpense, update: updateExpense, remove: deleteExpense },
+};

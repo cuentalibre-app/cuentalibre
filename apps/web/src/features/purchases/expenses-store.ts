@@ -1,9 +1,11 @@
 import type { Expense } from "@fiscalia/contracts";
 import { createCollection } from "@/data/collection";
+import { syncCollection } from "@/data/sync";
 import { initialExpenses } from "@/mocks/expenses";
 
 /** Expenses. Changes apply instantly and are sent to the backend (see `@/data`). */
 const expenses = createCollection<Expense>("expenses", initialExpenses, { addAt: "start" });
+syncCollection("expenses", expenses);
 
 export function useExpenses(): Expense[] {
   return expenses.use();

@@ -18,7 +18,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { newId, sumBy, type Cents } from "@fiscalia/core";
+import { sumBy, type Cents } from "@fiscalia/core";
 import type { Contact, ContactRole } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -45,6 +45,7 @@ import {
 import { KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { TagChip } from "@/features/settings/tag-chip";
+import { attachFile } from "@/data/files";
 import { customFieldLabels } from "./contact-settings-store";
 import { contactActivity, type ActivityRow } from "./contacts-activity";
 import { ROLES, contactPath, countryOf, downloadVCard, editContactPath, formatAddress } from "./contacts-model";
@@ -485,12 +486,7 @@ export function useContactActions(
     run: () =>
       pickFiles((files) => {
         if (files.length === 0) return;
-        const added = files.map((f) => ({
-          id: newId(),
-          name: f.name,
-          size: f.size,
-          url: URL.createObjectURL(f),
-        }));
+        const added = files.map(attachFile);
         contactsStore.update(role, contact.id, { attachments: [...attachments, ...added] });
       }),
   };

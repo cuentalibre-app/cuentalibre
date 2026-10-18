@@ -30,8 +30,27 @@ import { organization } from "./auth";
 import { createdAt, updatedAt } from "./columns";
 import { contact } from "./contacts";
 
-const day = () => date({ mode: "string" });
-const amount = () => bigint({ mode: "number" });
+export const day = () => date({ mode: "string" });
+export const amount = () => bigint({ mode: "number" });
+
+/** Columns of a document line, shared by sales and purchases. Prices and quantities keep up to six decimals. */
+export const lineColumns = () => ({
+  /** The line's own ID, from the client. */
+  id: text().notNull(),
+  concept: text().notNull(),
+  detail: text(),
+  /** Euros. */
+  unitPrice: numeric({ precision: 18, scale: 6, mode: "number" }).notNull(),
+  quantity: numeric({ precision: 18, scale: 6, mode: "number" }).notNull(),
+  /** Fractions: 0.21 is 21 %. */
+  discount: numeric({ precision: 9, scale: 6, mode: "number" }).notNull(),
+  vatRate: numeric({ precision: 6, scale: 4, mode: "number" }).notNull(),
+  surchargeRate: numeric({ precision: 6, scale: 4, mode: "number" }),
+  serviceFrom: day(),
+  serviceTo: day(),
+  productId: text(),
+  unit: text(),
+});
 
 /**
  * Invoices, drafts, quotes and delivery notes. An invoice is issued once: it
@@ -111,28 +130,14 @@ export const salesDocument = pgTable(
   ],
 );
 
-/** Lines of a sales document, in order. Prices and quantities keep up to six decimals. */
+/** Lines of a sales document, in order. */
 export const salesLine = pgTable(
   "sales_line",
   {
     organizationId: uuid().notNull(),
     documentId: uuid().notNull(),
     position: integer().notNull(),
-    /** The line's own ID, from the client. */
-    id: text().notNull(),
-    concept: text().notNull(),
-    detail: text(),
-    /** Euros. */
-    unitPrice: numeric({ precision: 18, scale: 6, mode: "number" }).notNull(),
-    quantity: numeric({ precision: 18, scale: 6, mode: "number" }).notNull(),
-    /** Fractions: 0.21 is 21 %. */
-    discount: numeric({ precision: 9, scale: 6, mode: "number" }).notNull(),
-    vatRate: numeric({ precision: 6, scale: 4, mode: "number" }).notNull(),
-    surchargeRate: numeric({ precision: 6, scale: 4, mode: "number" }),
-    serviceFrom: day(),
-    serviceTo: day(),
-    productId: text(),
-    unit: text(),
+    ...lineColumns(),
   },
   (table) => [
     primaryKey({ columns: [table.organizationId, table.documentId, table.position] }),

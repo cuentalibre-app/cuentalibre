@@ -83,6 +83,18 @@ describe("sales documents", () => {
     expect(await salesDocuments(ana)).toEqual([draft]);
   });
 
+  it("clears an optional field with null and keeps null in a nullable one", async () => {
+    const ana = await seller();
+    const draft = document(ana.norte.id, { cadastralRef: "1234" });
+    await send(ana, [{ type: "create", entity: "salesDocuments", data: draft }]);
+    const response = await send(ana, [
+      { type: "update", entity: "salesDocuments", id: draft.id, changes: { dueOn: null, cadastralRef: null } },
+    ]);
+    expect(response.status).toBe(200);
+    const { cadastralRef: _, ...rest } = draft;
+    expect(await salesDocuments(ana)).toEqual([{ ...rest, dueOn: null }]);
+  });
+
   it("only takes the organization's own clients", async () => {
     const ana = await seller();
     const luis = await seller();

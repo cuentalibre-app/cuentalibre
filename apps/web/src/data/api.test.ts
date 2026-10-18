@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createApiBackend, ApiError } from "./api";
 import { localBackend, setBackend } from "./backend";
 import { createCollection } from "./collection";
+import { attachFile, attachmentUrl } from "./files";
 import { createStore } from "./store";
 import { syncCollection, syncTarget } from "./sync";
 
@@ -39,7 +40,8 @@ interface Call {
 function fakeFetch(...responses: { status?: number; body: unknown }[]) {
   const calls: Call[] = [];
   const fetchImpl = (async (url: string, init: RequestInit = {}) => {
-    calls.push({ url, method: init.method ?? "GET", body: init.body ? JSON.parse(init.body as string) : undefined });
+    const body = typeof init.body === "string" ? JSON.parse(init.body) : init.body;
+    calls.push({ url, method: init.method ?? "GET", body });
     const next = responses.shift();
     if (!next) throw new Error(`Unexpected request to ${url}`);
     return new Response(JSON.stringify(next.body), { status: next.status ?? 200 });
@@ -164,6 +166,20 @@ describe("api backend", () => {
       norte.id,
       brisa.id,
     ]);
+  });
+
+  it("uploads attached files and sends the record that names them once they are stored", async () => {
+    const { calls, clients } = setup({ status: 201, body: {} }, { body: { changes: [] } });
+    URL.createObjectURL = () => "blob:local";
+    const attachment = attachFile(new File(["%PDF"], "contrato.pdf", { type: "application/pdf" }));
+    expect(attachment).toMatchObject({ name: "contrato.pdf", size: 4, url: "blob:local" });
+    await clients.add({ ...norte, attachments: [attachment] });
+
+    expect(calls.map((call) => [call.method, call.url])).toEqual([
+      ["POST", "http://api/v1/files"],
+      ["POST", "http://api/v1/commands"],
+    ]);
+    expect(attachmentUrl({ ...attachment, url: undefined })).toBe(`http://api/v1/files/${attachment.id}`);
   });
 
   it("undoes a change the server rejects", async () => {

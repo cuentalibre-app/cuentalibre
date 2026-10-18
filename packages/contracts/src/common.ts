@@ -31,7 +31,10 @@ export const attachmentSchema = z.object({
   name: z.string(),
   /** Bytes. */
   size: z.int().nonnegative(),
-  /** Object URL of the file picked in this session; lost on reload until there is file storage. */
+  /**
+   * Object URL of the file picked in this session. Only the browser keeps it:
+   * the server stores the file under the attachment's ID (see `/v1/files`).
+   */
   url: z.string().optional(),
 });
 export type Attachment = z.infer<typeof attachmentSchema>;
