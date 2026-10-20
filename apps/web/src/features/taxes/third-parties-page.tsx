@@ -14,6 +14,7 @@ import { usePartyBooks, type PartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
 import { Assumptions, ResultPanel, type ResultSummary } from "./tax-form";
 import { ModuleBreadcrumb } from "./tax-intro";
+import { SettingsLink } from "@/features/settings/settings-parts";
 
 const COLUMNS: RecordColumn[] = [
   { label: "NIF" },
@@ -215,9 +216,9 @@ export function ThirdPartiesPage() {
           <Info className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <span>
             Si agrupas las ventas a clientes sin identificar en un cliente ficticio, elígelo en{" "}
-            <Link to={TAX_SETTINGS_PATH} className="text-primary">
+            <SettingsLink from="Operaciones con terceras personas" to={TAX_SETTINGS_PATH} className="text-primary">
               Configuración › Impuestos
-            </Link>{" "}
+            </SettingsLink>{" "}
             para que no aparezca aquí.
           </span>
         </p>

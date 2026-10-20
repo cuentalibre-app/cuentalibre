@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, useLocation, type LinkProps } from "react-router";
 import { ArrowLeft, Check } from "lucide-react";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -8,6 +8,20 @@ import { sameValue } from "@/lib/same-value";
 import { SETTINGS_PATH } from "./settings-model";
 
 /* Building blocks shared by the settings pages. */
+
+/** The page a settings page was opened from: its back button returns there. */
+interface Origin {
+  path: string;
+  /** Where the back button goes, as in "Volver a Bancos". */
+  label: string;
+}
+
+/** A link into a settings page from elsewhere in the app. That page's back button comes back here. */
+export function SettingsLink({ from, ...props }: LinkProps & { from: string }) {
+  const { pathname, search } = useLocation();
+  const origin: Origin = { path: pathname + search, label: from };
+  return <Link {...props} state={{ from: origin }} />;
+}
 
 export function SettingsHeader({
   title,
@@ -21,12 +35,15 @@ export function SettingsHeader({
   /** Actions at the end of the header, such as the save button. */
   children?: ReactNode;
 }) {
+  const origin = (useLocation().state as { from?: Origin } | null)?.from;
+  const backLabel = `Volver a ${origin?.label ?? "configuración"}`;
   return (
     <header className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex min-w-0 items-center gap-3">
         <Link
-          to={back}
-          aria-label="Volver a configuración"
+          to={origin?.path ?? back}
+          aria-label={backLabel}
+          title={backLabel}
           className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
         >
           <ArrowLeft strokeWidth={1.8} aria-hidden="true" />

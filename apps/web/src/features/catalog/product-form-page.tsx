@@ -32,6 +32,7 @@ import {
 } from "./catalog-model";
 import { catalogStore, useCatalog } from "./catalog-store";
 import { FamilyDialog } from "./family-dialog";
+import { SettingsLink } from "@/features/settings/settings-parts";
 
 const DEFAULT_HELP =
   "Este valor es el que se marcará por defecto al introducir este producto en una factura. Se puede modificar en la propia factura.";
@@ -565,12 +566,13 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
             </div>
             <p className="m-0 text-sm text-muted-foreground">
               Cambia sus nombres en la{" "}
-              <Link
+              <SettingsLink
+                from="el producto"
                 to={CATALOG_SETTINGS_PATH}
                 className="font-medium text-primary no-underline hover:text-primary-hover"
               >
                 configuración del catálogo
-              </Link>
+              </SettingsLink>
               .
             </p>
           </Section>
@@ -588,9 +590,13 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                   <p className="m-0 rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning">
                     Todavía no has elegido en qué documentos se descuenta el stock, así que solo cambiará cuando lo
                     regularices a mano. Configúralo en la{" "}
-                    <Link to={CATALOG_SETTINGS_PATH} className="font-medium text-warning underline underline-offset-2">
+                    <SettingsLink
+                      from="el producto"
+                      to={CATALOG_SETTINGS_PATH}
+                      className="font-medium text-warning underline underline-offset-2"
+                    >
                       configuración del catálogo
-                    </Link>
+                    </SettingsLink>
                     .
                   </p>
                 )}

@@ -69,7 +69,8 @@ import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros, periodLabel } from "@/lib/format";
-import { paymentMethodOptions } from "@/features/settings/settings-model";
+import { ACCOUNTS_PATH, paymentMethodOptions } from "@/features/settings/settings-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import {
   ASSETS_PATH,
   EXPENSE_TYPE_GROUPS,
@@ -1295,12 +1296,13 @@ function Payments({
             Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
           </TooltipContent>
         </Tooltip>
-        <Link
-          to="/configuracion/metodos-de-pago"
+        <SettingsLink
+          from="la factura recibida"
+          to={ACCOUNTS_PATH}
           className="ml-auto text-sm font-medium text-primary no-underline hover:text-primary-hover"
         >
           Gestionar métodos de pago
-        </Link>
+        </SettingsLink>
       </div>
       {payments.length === 0 && total !== 0 && (
         <p className="m-0 text-xs text-muted-foreground">

@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { FileDown, FileUp, TriangleAlert } from "lucide-react";
 import {
   isDuplicateMovement,
@@ -25,6 +24,7 @@ import {
   maskNumber,
   paymentMethodOptions,
 } from "@/features/settings/settings-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";
@@ -113,9 +113,13 @@ function NoAccounts() {
   return (
     <p className="m-0 rounded-lg bg-muted px-4 py-3 text-sm">
       Todavía no tienes cuentas activas.{" "}
-      <Link to={ACCOUNTS_PATH} className="font-medium text-primary no-underline hover:text-primary-hover">
+      <SettingsLink
+        from="Bancos"
+        to={ACCOUNTS_PATH}
+        className="font-medium text-primary no-underline hover:text-primary-hover"
+      >
         Crea una en Configuración
-      </Link>
+      </SettingsLink>
       .
     </p>
   );

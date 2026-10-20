@@ -40,15 +40,25 @@ interface PlainKind {
   references?: Reference[];
   /** Further checks on the record about to be stored. */
   check?: (tx: Tx, organizationId: string, record: Record<string, unknown>) => Promise<void>;
+  /** Live records that name this one and keep it from being deleted. */
+  usedBy?: { entity: PlainEntity; field: string }[];
 }
 
 const KINDS: Record<PlainEntity, PlainKind> = {
   tags: { table: tag, logged: "tag" },
-  treasuryAccounts: { table: treasuryAccount, logged: "treasury_account" },
+  treasuryAccounts: {
+    table: treasuryAccount,
+    logged: "treasury_account",
+    usedBy: [
+      { entity: "paymentMethods", field: "accountId" },
+      { entity: "bankMovements", field: "accountId" },
+    ],
+  },
   paymentMethods: {
     table: paymentMethod,
     logged: "payment_method",
     references: [{ field: "accountId", table: treasuryAccount }],
+    usedBy: [{ entity: "manualPayments", field: "paymentMethodId" }],
   },
   manualPayments: {
     table: manualPayment,
@@ -193,6 +203,16 @@ export async function updatePlain(
 export async function deletePlain(tx: Tx, organizationId: string, entity: PlainEntity, id: string) {
   const kind = KINDS[entity];
   if (!(await liveRow(tx, kind, organizationId, id))) notFound();
+  for (const use of kind.usedBy ?? []) {
+    const { table } = KINDS[use.entity];
+    const column = (table as unknown as Record<string, PgColumn>)[use.field]!;
+    const [found] = await tx
+      .select({ id: table.id })
+      .from(table)
+      .where(and(eq(table.organizationId, organizationId), eq(column, id), isNull(table.deletedAt)))
+      .limit(1);
+    if (found) throw new ApiError(409, "in_use", `Still named by ${use.entity}.${use.field}.`);
+  }
   await tx
     .update(kind.table)
     .set({ deletedAt: new Date() })

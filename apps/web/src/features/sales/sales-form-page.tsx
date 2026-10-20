@@ -47,7 +47,8 @@ import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
-import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
+import { ACCOUNTS_PATH, defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import { settingsStore } from "@/features/settings/settings-store";
 import {
   LinesEditor,
@@ -983,13 +984,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                         />
                       )}
                     </Field>
-                    <Link
-                      to="/configuracion/metodos-de-pago"
+                    <SettingsLink
+                      from="la factura"
+                      to={ACCOUNTS_PATH}
                       className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "text-primary no-underline")}
                     >
                       <Plus aria-hidden="true" />
                       Nuevo método
-                    </Link>
+                    </SettingsLink>
                   </div>
                 )}
               </div>
