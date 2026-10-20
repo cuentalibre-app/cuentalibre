@@ -43,6 +43,16 @@ export function normalizeTaxId(value: string): string {
   return value.toUpperCase().replace(/[\s.\-/]/g, "");
 }
 
+/**
+ * A contact's tax ID as it is stored. Spanish and EU VAT numbers lose their
+ * separators, as their canonical form has none; other countries keep theirs
+ * (a US EIN is written 86-1696045), with spaces collapsed.
+ */
+export function storedTaxId(value: string, country: string): string {
+  if (country === SPAIN || country in EU_VAT_PREFIXES) return normalizeTaxId(value);
+  return value.trim().toUpperCase().replace(/\s+/g, " ");
+}
+
 export type SpanishTaxIdKind = "nif" | "nie" | "cif";
 
 export type TaxIdCheck =

@@ -3,7 +3,7 @@ import {
   isDuplicateTaxId,
   isOtherEuCountry,
   isValidEmail,
-  normalizeTaxId,
+  storedTaxId,
   type WithholdingKind,
 } from "@fiscalia/core";
 import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@fiscalia/contracts";
@@ -95,7 +95,7 @@ export function fromDraft(role: ContactRole, draft: ContactDraft, id: string): C
   ) as EInvoiceCodes;
   return {
     id,
-    taxId: normalizeTaxId(draft.taxId),
+    taxId: storedTaxId(draft.taxId, draft.country),
     name: draft.name.trim(),
     country: draft.country,
     vies: isOtherEuCountry(draft.country) && draft.vies ? true : undefined,

@@ -10,6 +10,7 @@ import {
   isValidEmail,
   isValidIban,
   normalizeTaxId,
+  storedTaxId,
   provinceFromPostalCode,
 } from "./contacts";
 
@@ -141,6 +142,18 @@ describe("isDuplicateTaxId", () => {
 describe("normalizeTaxId", () => {
   it("drops separators and upper-cases", () => {
     expect(normalizeTaxId(" b-12.345 674 ")).toBe("B12345674");
+  });
+});
+
+describe("storedTaxId", () => {
+  it("drops separators from Spanish and EU VAT numbers", () => {
+    expect(storedTaxId(" b-12.345 674 ", "España")).toBe("B12345674");
+    expect(storedTaxId("fr 40 303265045", "Francia")).toBe("FR40303265045");
+  });
+
+  it("keeps the separators of other countries' IDs", () => {
+    expect(storedTaxId(" 86-1696045 ", "Estados Unidos")).toBe("86-1696045");
+    expect(storedTaxId("gb  123 4567 89", "Reino Unido")).toBe("GB 123 4567 89");
   });
 });
 
