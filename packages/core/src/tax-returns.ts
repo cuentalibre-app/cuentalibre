@@ -120,13 +120,15 @@ function selfAssessed(purchase: TaxablePurchase): RateAmounts[] {
   );
 }
 
-/** The deductible part of a purchase's VAT, per rate. */
+/** The deductible part of a purchase's VAT, per rate. Lines without VAT have nothing to deduct. */
 function deductiblePart(purchase: TaxablePurchase): RateAmounts[] {
-  return selfAssessed(purchase).map((r) => ({
-    rate: r.rate,
-    base: applyRate(r.base, purchase.vatShare),
-    vat: applyRate(r.vat, purchase.vatShare),
-  }));
+  return selfAssessed(purchase)
+    .filter((r) => r.rate > 0)
+    .map((r) => ({
+      rate: r.rate,
+      base: applyRate(r.base, purchase.vatShare),
+      vat: applyRate(r.vat, purchase.vatShare),
+    }));
 }
 
 const sumBases = (rates: RateAmounts[]) => sumBy(rates, (r) => r.base);
