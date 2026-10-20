@@ -1,11 +1,14 @@
 import type { ComponentProps } from "react";
+import { MAX_DATE, MIN_DATE } from "@fiscalia/core";
 import { cn } from "../lib/cn";
 
 const fieldClass =
   "w-full min-w-0 rounded-lg border border-input bg-background px-3 text-foreground transition-colors duration-150 outline-none placeholder:text-muted-foreground hover:border-muted-strong focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 aria-invalid:border-destructive";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
-  return <input className={cn(fieldClass, "h-10", className)} {...props} />;
+  // Without bounds browsers let the year run to six digits (20269-01-21)
+  const bounds = props.type === "date" ? { min: MIN_DATE, max: MAX_DATE } : undefined;
+  return <input className={cn(fieldClass, "h-10", className)} {...bounds} {...props} />;
 }
 
 export function Textarea({ className, rows = 3, ...props }: ComponentProps<"textarea">) {

@@ -3,6 +3,7 @@ import {
   addDays,
   invoiceTotals,
   isOverdue,
+  isSupportedDate,
   laterInvoiceInSeries,
   lineBase,
   nextDocumentNumber,
@@ -144,5 +145,20 @@ describe("operationChargesVat", () => {
     expect(operationChargesVat("national")).toBe(true);
     expect(operationChargesVat("intraEu")).toBe(false);
     expect(operationChargesVat("export")).toBe(false);
+  });
+});
+
+describe("isSupportedDate", () => {
+  it("accepts real dates between 1900 and 2100", () => {
+    expect(isSupportedDate("2026-01-21")).toBe(true);
+    expect(isSupportedDate("2028-02-29")).toBe(true);
+  });
+
+  it("rejects five-digit years, out-of-range years and impossible days", () => {
+    expect(isSupportedDate("20269-01-21")).toBe(false);
+    expect(isSupportedDate("0026-01-21")).toBe(false);
+    expect(isSupportedDate("2101-01-01")).toBe(false);
+    expect(isSupportedDate("2026-02-30")).toBe(false);
+    expect(isSupportedDate("")).toBe(false);
   });
 });
