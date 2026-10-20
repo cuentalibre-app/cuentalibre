@@ -2,6 +2,7 @@ import {
   DEFAULT_ORGANIZATION_SETTINGS,
   documentFontSchema,
   type DocumentKind,
+  type DocumentLook,
   type DocumentSettings,
   type InvoiceSeriesDefinition,
   type InvoiceSettings,
@@ -87,8 +88,9 @@ export function useUploadDefaults(kind: SalesKind): Pick<DocumentSettings, "uplo
   return kind === "invoice" ? invoice : documents[kind];
 }
 
-/** What the PDF of a document prints, from its kind's settings. */
+/** What the PDF of a document prints and how it looks, from its kind's settings. */
 export interface PrintOptions {
+  look: DocumentLook;
   showProductUnits: boolean;
   showServicePeriod: boolean;
   showPrices: boolean;
@@ -101,6 +103,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
   if (kind === "invoice") {
     const s = settings.get();
     return {
+      look: lookOf(s),
       showProductUnits: s.showProductUnits,
       showServicePeriod: s.showServicePeriod,
       showPrices: true,
@@ -111,6 +114,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
   }
   const s = documentSettings.get()[kind];
   return {
+    look: lookOf(s),
     showProductUnits: s.showProductUnits,
     showServicePeriod: s.showServicePeriod,
     showPrices: s.showPrices,
@@ -119,3 +123,13 @@ export function printOptions(kind: SalesKind): PrintOptions {
     footer: s.footer,
   };
 }
+
+const lookOf = ({ template, font, textColor, lineColor, backgroundColor, language, numberFormat }: DocumentLook) => ({
+  template,
+  font,
+  textColor,
+  lineColor,
+  backgroundColor,
+  language,
+  numberFormat,
+});
