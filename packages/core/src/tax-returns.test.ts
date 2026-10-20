@@ -396,6 +396,12 @@ describe("model130", () => {
     expect(q2!.boxes).toMatchObject({ "05": eur(1_200), "07": eur(1_800) });
   });
 
+  it("takes the earlier installments the taxpayer enters", () => {
+    const b = books({ sales: [sale("2026-02-10", eur(5_000), { withholding: cents(0) })] });
+    const r = model130(b, 2026, 2, { simplified: false }, [eur(1_000)], { paid: eur(800) });
+    expect(r.boxes).toMatchObject({ "05": eur(800), "07": eur(200), "19": eur(200) });
+  });
+
   it("limits the reduction to the positive installment", () => {
     const b = books({ sales: [sale("2026-02-10", eur(300), { withholding: cents(0) })] });
     const r = model130(b, 2026, 1, { simplified: false }, [], { reduction: eur(100) });

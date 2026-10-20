@@ -190,7 +190,12 @@ export const LAYOUT_303: FormSection[] = [
         "30",
         "31",
       ),
-      info("Por cuotas soportadas en las importaciones de bienes corrientes", "IVA pagado en la aduana al importar bienes de fuera de la UE.", "32", "33"),
+      info(
+        "Por cuotas soportadas en las importaciones de bienes corrientes",
+        "IVA pagado en la aduana al importar bienes de fuera de la UE.",
+        "32",
+        "33",
+      ),
       row("Por cuotas soportadas en las importaciones de bienes de inversión", "34", "35"),
       info(
         "En adquisiciones intracomunitarias de bienes y servicios corrientes",
@@ -524,6 +529,7 @@ export const LAYOUT_130: FormSection[] = [
           text: [
             "Suma de las casillas **[07] positivas** de los 130 anteriores de este año.",
             "Si en esos trimestres rellenaste la casilla **[16]** por el préstamo de tu vivienda habitual, resta aquí la suma de esas deducciones.",
+            "Fiscalia la calcula con los trimestres cerrados tal como se presentaron y el resto con tus datos actuales. Si pagaste otra cantidad, escribe aquí lo que pagaste de verdad.",
           ],
         },
         "05",
@@ -640,7 +646,11 @@ export function layout100(simplified: boolean): FormSection[] {
         row("Ingresos financieros por aplazamiento o fraccionamiento de operaciones de la actividad", "0172"),
         row("Ingresos por subvenciones corrientes", "0173"),
         row("Imputación de ingresos por subvenciones de capital", "0174"),
-        info("Autoconsumo de bienes y servicios", "Si tienes ingresos de este tipo, ajusta esta casilla a mano.", "0175"),
+        info(
+          "Autoconsumo de bienes y servicios",
+          "Si tienes ingresos de este tipo, ajusta esta casilla a mano.",
+          "0175",
+        ),
         info(
           "IVA devengado (recargo de equivalencia, compensaciones de agricultura, ganadería y pesca)",
           "Si tienes ingresos de este tipo, ajusta esta casilla a mano.",
