@@ -13,10 +13,9 @@ import {
   Plus,
   Search,
   Trash2,
-  Undo2,
   X,
 } from "lucide-react";
-import { periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
+import { periodKey, periodMonths, sumBy, type Cents, type Period } from "@fiscalia/core";
 import type { Expense, OtherPayee } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
@@ -35,15 +34,17 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import { defaultPaymentMethodId, paymentMethodName } from "@/features/settings/settings-model";
+import { paymentMethodName } from "@/features/settings/settings-model";
 import { attachmentUrl } from "@/data/files";
 import { AttachmentsDialog } from "./form-parts";
+import { ExpenseLink } from "./expense-detail";
+import { ExpensePaymentDialog } from "./payment-dialogs";
 import {
-  EXPENSES_PATH,
   EXPENSE_STATUS,
   EXPENSE_STATUS_ORDER,
   NEW_EXPENSE_PATH,
   deductibleOf,
+  expensePath,
   expenseStatus,
   payeeKey,
   payeeOf,
@@ -492,8 +493,6 @@ function nextSort(current: Sort, key: SortKey): Sort {
   return { key, dir: key === "date" || key === "amount" || key === "deductible" ? "desc" : "asc" };
 }
 
-const editPath = (doc: Expense) => `${EXPENSES_PATH}/${doc.id}`;
-
 function ExpensesTable({
   rows,
   sort,
@@ -533,13 +532,13 @@ function ExpensesTable({
               <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>{formatDate(r.doc.date)}</td>
               <td className={td}>
                 <div className="flex min-w-0 flex-col">
-                  <Link
-                    to={editPath(r.doc)}
+                  <ExpenseLink
+                    doc={r.doc}
                     title={r.doc.concept}
                     className="block max-w-48 truncate font-medium text-foreground no-underline hover:text-primary"
                   >
                     {r.doc.concept}
-                  </Link>
+                  </ExpenseLink>
                   {r.doc.number && <span className="font-mono text-xs text-muted-foreground">{r.doc.number}</span>}
                 </div>
               </td>
@@ -643,7 +642,7 @@ function ExpensesList({ rows }: { rows: Row[] }) {
           style={{ "--i": i } as CSSProperties}
         >
           <Link
-            to={editPath(r.doc)}
+            to={expensePath(r.doc)}
             className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60"
           >
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -680,21 +679,25 @@ function useExpenseActions(row: Row) {
   const attachments = doc.attachments ?? [];
   const viewable = attachments.map(attachmentUrl).find(Boolean);
 
-  const [documentsOpen, setDocumentsOpen] = useState(false);
+  const [dialog, setDialog] = useState<"documents" | "payment" | null>(null);
   const attach: Action = {
     label: attachments.length > 0 ? `Documentos adjuntos (${attachments.length})` : "Adjuntar documentos",
     icon: Paperclip,
-    run: () => setDocumentsOpen(true),
+    run: () => setDialog("documents"),
   };
-  const dialogs = documentsOpen && (
-    <AttachmentsDialog
-      title={`Documentos del gasto «${doc.concept}»`}
-      attachments={attachments}
-      examples="El ticket o el recibo, el justificante de pago…"
-      onChange={(next) => expensesStore.update(doc.id, { attachments: next })}
-      onOpenChange={setDocumentsOpen}
-    />
-  );
+  const close = (open: boolean) => !open && setDialog(null);
+  const dialogs =
+    dialog === "documents" ? (
+      <AttachmentsDialog
+        title={`Documentos del gasto «${doc.concept}»`}
+        attachments={attachments}
+        examples="El ticket o el recibo, el justificante de pago…"
+        onChange={(next) => expensesStore.update(doc.id, { attachments: next })}
+        onOpenChange={close}
+      />
+    ) : dialog === "payment" ? (
+      <ExpensePaymentDialog doc={doc} onOpenChange={close} />
+    ) : null;
 
   const view: Action = {
     label: viewable
@@ -706,22 +709,13 @@ function useExpenseActions(row: Row) {
     run: viewable ? () => window.open(viewable, "_blank", "noopener") : undefined,
   };
 
-  const methodId = defaultPaymentMethodId();
-  const primary: Action = doc.payment
-    ? { label: "Marcar como pendiente", icon: Undo2, run: () => expensesStore.update(doc.id, { payment: null }) }
-    : {
-        label: "Marcar como pagado",
-        icon: CircleDollarSign,
-        // Without a payment method there is nothing to book the payment into
-        run: methodId
-          ? () => expensesStore.update(doc.id, { payment: { date: toIsoDate(new Date()), paymentMethodId: methodId } })
-          : undefined,
-      };
+  // As with issued invoices, the dollar opens the payment: nothing is booked without confirming it
+  const primary: Action = { label: "Gestionar el pago", icon: CircleDollarSign, run: () => setDialog("payment") };
 
   const locked = lockedQuarterOf(doc.date) !== null;
   const groups: Action[][] = [
     [
-      { label: locked ? "Ver gasto" : "Editar gasto", icon: Pencil, run: () => navigate(editPath(doc)) },
+      { label: locked ? "Ver gasto" : "Editar gasto", icon: Pencil, run: () => navigate(expensePath(doc)) },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${NEW_EXPENSE_PATH}?desde=${doc.id}`) },
     ],
     [primary, attach, view],

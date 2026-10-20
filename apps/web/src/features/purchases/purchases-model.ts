@@ -27,6 +27,10 @@ export const NEW_PURCHASE_PATH = "/compras/facturas/nueva";
 export const ASSETS_PATH = "/compras/bienes-de-inversion";
 export const NEW_ASSET_PATH = "/compras/bienes-de-inversion/nuevo";
 
+/** Edit form of a received invoice, or of an investment good. */
+export const purchasePath = (doc: Pick<PurchaseInvoice, "id" | "asset">) =>
+  `${doc.asset ? ASSETS_PATH : PURCHASES_PATH}/${doc.id}`;
+
 /** What the list shows: the payment status, with "overdue" derived from the due date. */
 export type PurchaseStatus = "pending" | "partial" | "paid" | "overdue";
 

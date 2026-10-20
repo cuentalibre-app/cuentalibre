@@ -15,21 +15,9 @@ import {
   ScanText,
   Search,
   Trash2,
-  Undo2,
-  Wallet,
   X,
 } from "lucide-react";
-import {
-  amortizationBetween,
-  cents,
-  newId,
-  periodKey,
-  periodMonths,
-  sumBy,
-  toIsoDate,
-  type Cents,
-  type Period,
-} from "@fiscalia/core";
+import { amortizationBetween, cents, periodKey, periodMonths, sumBy, type Cents, type Period } from "@fiscalia/core";
 import type { Contact, ExpenseType, PurchaseInvoice } from "@fiscalia/contracts";
 import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
@@ -49,15 +37,14 @@ import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/l
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { attachmentUrl } from "@/data/files";
-import { defaultPaymentMethodId } from "@/features/settings/settings-model";
 import { AttachmentsDialog } from "./form-parts";
+import { PurchaseLink } from "./purchase-detail";
+import { PurchasePaymentsDialog } from "./payment-dialogs";
 import {
-  ASSETS_PATH,
   ASSET_CATEGORY_LABELS,
   EXPENSE_TYPE_GROUPS,
   NEW_ASSET_PATH,
   NEW_PURCHASE_PATH,
-  PURCHASES_PATH,
   PURCHASE_STATUS,
   PURCHASE_STATUS_ORDER,
   assetOf,
@@ -65,6 +52,7 @@ import {
   expenseTypeLabel,
   outstanding,
   purchaseStatus,
+  purchasePath,
   purchaseTotals,
   supplierOf,
   type PurchaseStatus,
@@ -634,7 +622,6 @@ function nextSort(current: Sort, key: SortKey): Sort {
   return { key, dir: key === "supplier" || key === "status" ? "asc" : "desc" };
 }
 
-const editPath = (doc: PurchaseInvoice) => `${doc.asset ? ASSETS_PATH : PURCHASES_PATH}/${doc.id}`;
 const newPathFor = (doc: PurchaseInvoice) => (doc.asset ? NEW_ASSET_PATH : NEW_PURCHASE_PATH);
 
 /** "Vence el 02 oct 2026 · contabilizada el 06 oct 2026" */
@@ -692,9 +679,9 @@ function PurchasesTable({
                 style={{ "--i": i } as CSSProperties}
               >
                 <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>
-                  <Link to={editPath(r.doc)} className="text-foreground no-underline hover:text-primary">
+                  <PurchaseLink doc={r.doc} className="text-foreground no-underline hover:text-primary">
                     {r.doc.number}
-                  </Link>
+                  </PurchaseLink>
                   {r.doc.asset && (
                     <span
                       className="block max-w-44 truncate font-sans text-xs text-muted-foreground"
@@ -837,7 +824,7 @@ function PurchasesList({ rows }: { rows: Row[] }) {
           style={{ "--i": i } as CSSProperties}
         >
           <Link
-            to={editPath(r.doc)}
+            to={purchasePath(r.doc)}
             className="flex min-h-11 min-w-0 flex-1 items-center gap-3 py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60"
           >
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -874,21 +861,25 @@ function usePurchaseActions(row: Row) {
   const attachments = doc.attachments ?? [];
   const viewable = attachments.map(attachmentUrl).find(Boolean);
 
-  const [documentsOpen, setDocumentsOpen] = useState(false);
+  const [dialog, setDialog] = useState<"documents" | "payments" | null>(null);
   const attach: Action = {
     label: attachments.length > 0 ? `Documentos adjuntos (${attachments.length})` : "Adjuntar documentos",
     icon: Paperclip,
-    run: () => setDocumentsOpen(true),
+    run: () => setDialog("documents"),
   };
-  const dialogs = documentsOpen && (
-    <AttachmentsDialog
-      title={`Documentos de la factura ${doc.number}`}
-      attachments={attachments}
-      examples="La factura del proveedor, el justificante de pago…"
-      onChange={(next) => purchasesStore.update(doc.id, { attachments: next })}
-      onOpenChange={setDocumentsOpen}
-    />
-  );
+  const close = (open: boolean) => !open && setDialog(null);
+  const dialogs =
+    dialog === "documents" ? (
+      <AttachmentsDialog
+        title={`Documentos de la factura ${doc.number}`}
+        attachments={attachments}
+        examples="La factura del proveedor, el justificante de pago…"
+        onChange={(next) => purchasesStore.update(doc.id, { attachments: next })}
+        onOpenChange={close}
+      />
+    ) : dialog === "payments" ? (
+      <PurchasePaymentsDialog doc={doc} onOpenChange={close} />
+    ) : null;
 
   const view: Action = {
     label: viewable
@@ -900,44 +891,16 @@ function usePurchaseActions(row: Row) {
     run: viewable ? () => window.open(viewable, "_blank", "noopener") : undefined,
   };
 
-  const methodId = doc.payments.at(-1)?.paymentMethodId ?? defaultPaymentMethodId();
-  const primary: Action =
-    row.status === "paid"
-      ? {
-          label: "Marcar como pendiente",
-          icon: Undo2,
-          run: () => {
-            if (doc.payments.length < 2 || window.confirm(`¿Quitar los ${doc.payments.length} pagos registrados?`))
-              purchasesStore.update(doc.id, { payments: [] });
-          },
-        }
-      : {
-          label: row.status === "partial" ? "Pagar lo pendiente" : "Marcar como pagada",
-          icon: CircleDollarSign,
-          // Without a payment method there is nothing to book the payment into
-          run: methodId
-            ? () =>
-                purchasesStore.update(doc.id, {
-                  payments: [
-                    ...doc.payments,
-                    { id: newId(), date: toIsoDate(new Date()), amount: row.outstanding, paymentMethodId: methodId },
-                  ],
-                })
-            : undefined,
-        };
+  // As with issued invoices, the dollar opens the payments: nothing is booked without confirming it
+  const primary: Action = { label: "Gestionar los pagos", icon: CircleDollarSign, run: () => setDialog("payments") };
 
   const locked = lockedQuarterOf(doc.bookedOn) !== null;
   const groups: Action[][] = [
     [
-      { label: locked ? "Ver factura" : "Editar factura", icon: Pencil, run: () => navigate(editPath(doc)) },
+      { label: locked ? "Ver factura" : "Editar factura", icon: Pencil, run: () => navigate(purchasePath(doc)) },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${newPathFor(doc)}?desde=${doc.id}`) },
     ],
-    [
-      primary,
-      { label: "Gestionar los pagos", icon: Wallet, run: () => navigate(`${editPath(doc)}#pagos`) },
-      attach,
-      view,
-    ],
+    [primary, attach, view],
     [
       {
         label: "Registrar un abono de esta factura",
