@@ -421,7 +421,7 @@ export const LAYOUT_130: FormSection[] = [
       {
         label: "Minoración por rendimientos bajos (art. 110.3 c RIRPF)",
         cells: ["13"],
-        hint: "Hasta 100 € por trimestre si tu rendimiento neto del año anterior no pasó de 12.000 €. Se calcula con tus datos del año anterior.",
+        hint: "Hasta 100 € por trimestre si tu rendimiento neto del año anterior no pasó de 12.000 €. Es opcional: rellénala tú si quieres aplicarla.",
       },
       total("Diferencia ([12] − [13])", "14"),
       {

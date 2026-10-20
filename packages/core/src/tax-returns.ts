@@ -677,21 +677,13 @@ export function earlierInstallments(
 }
 
 /**
- * The four 130 returns of a year. The reduction of box 13 comes from the previous year's net
- * income when there are books for it (`previousYearNetIncome`), and applies to every quarter.
+ * The four 130 returns of a year. The reduction of box 13 is optional, so it is left at zero:
+ * the taxpayer enters it if they want to pay less in advance.
  */
-export function incomeTaxReturns(
-  books: TaxBooks,
-  year: number,
-  options: IncomeTaxOptions,
-  previousYearNetIncome: Cents | null = null,
-): Model130[] {
-  const reduction = installmentReduction(previousYearNetIncome);
+export function incomeTaxReturns(books: TaxBooks, year: number, options: IncomeTaxOptions): Model130[] {
   const result: Model130[] = [];
   for (const quarter of [1, 2, 3, 4] as const) {
-    result.push(
-      model130(books, year, quarter, options, earlierInstallments(books, result, year, quarter), { reduction }),
-    );
+    result.push(model130(books, year, quarter, options, earlierInstallments(books, result, year, quarter)));
   }
   return result;
 }
@@ -823,17 +815,17 @@ export function hasBooks(books: TaxBooks, year: number): boolean {
 }
 
 /**
- * Income tax returns of a year with the reduction of box 13 worked out from the previous year,
- * when there are books for it.
+ * Income tax returns of a year, with the reduction of box 13 that the previous year's net income
+ * would allow, when there are books for it. It is only suggested: the returns leave it at zero.
  */
 export function incomeTaxYear(books: TaxBooks, year: number, options: IncomeTaxOptions) {
   const previousNet = hasBooks(books, year - 1) ? model100(books, year - 1, options).netIncome : null;
-  const quarters = incomeTaxReturns(books, year, options, previousNet);
+  const quarters = incomeTaxReturns(books, year, options);
   const annual = model100(
     books,
     year,
     options,
     quarters.map((q) => q.result),
   );
-  return { quarters, annual, previousNet, reduction: installmentReduction(previousNet) };
+  return { quarters, annual, previousNet, suggestedReduction: installmentReduction(previousNet) };
 }
