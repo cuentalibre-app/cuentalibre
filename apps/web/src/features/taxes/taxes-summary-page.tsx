@@ -427,7 +427,7 @@ function OtherForms({ year }: { year: number }) {
               <div className="mt-auto flex flex-wrap gap-1.5">
                 {quarterly ? (
                   <Link
-                    to={quarterly === "349" ? f.path : modelPath(f.path, quarter)}
+                    to={modelPath(f.path, quarter)}
                     className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
                   >
                     Trimestral · {quarterly}

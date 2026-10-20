@@ -22,6 +22,7 @@ import { FormInfo } from "./form-info";
 import { usePartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
 import { Assumptions, Notice, ResultPanel, type ResultSummary } from "./tax-form";
+import { ModuleBreadcrumb } from "./tax-intro";
 
 const KEY_LABEL: Record<Key349, string> = {
   E: "E · Entregas de bienes",
@@ -179,6 +180,7 @@ export function IntraEuPage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
+            <ModuleBreadcrumb module="intraEu" form="349" />
             <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Operaciones intracomunitarias</h1>
             <p className="m-0 text-sm text-muted-foreground">
               Modelo 349: compras y ventas con empresas de otros países de la UE inscritas en el VIES.

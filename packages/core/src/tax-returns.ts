@@ -155,6 +155,13 @@ const OUTPUT_303: Record<number, [string, string, string]> = {
   [rateKey(0.21)]: ["07", "08", "09"],
 };
 
+/**
+ * Rates the form prints on its equivalence surcharge rows (in percent). The books don't break the
+ * surcharge down, so their amounts stay at zero; the rates withdrawn in 2025 (boxes 166 and 154,
+ * and box 17 of the surcharge) print as zero too.
+ */
+const SURCHARGE_RATES_303: Record<string, number> = { "157": 1.75, "169": 0.5, "20": 1.4, "23": 5.2 };
+
 export interface Model303 {
   year: number;
   quarter: Quarter;
@@ -183,6 +190,7 @@ export function model303(
   const purchases = books.purchases.filter((p) => inQuarter(p.date, year, quarter));
 
   for (const [rate, [, rateBox]] of Object.entries(OUTPUT_303)) b.add(rateBox, Number(rate) / 100);
+  for (const [box, rate] of Object.entries(SURCHARGE_RATES_303)) b.add(box, rate);
 
   for (const sale of sales) {
     const base = sumBases(sale.vatBreakdown);

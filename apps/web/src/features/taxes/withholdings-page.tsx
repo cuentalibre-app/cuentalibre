@@ -21,6 +21,7 @@ import {
   type ResultSummary,
 } from "./tax-form";
 import { COUNT_BOXES_111, LAYOUT_111, modelPath, quarterOf, WITHHOLDINGS_PATH } from "./taxes-model";
+import { ModuleBreadcrumb } from "./tax-intro";
 
 const KEY_LABEL = { F: "Rendimientos del trabajo (cursos, conferencias)", G: "Actividades profesionales" };
 
@@ -221,6 +222,7 @@ export function WithholdingsPage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
+            <ModuleBreadcrumb module="withholdings" form={annual ? "190" : "111"} />
             <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Retenciones</h1>
             <p className="m-0 text-sm text-muted-foreground">
               {annual
