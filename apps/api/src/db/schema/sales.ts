@@ -123,7 +123,7 @@ export const salesDocument = pgTable(
     check("sales_document_kind_check", sql`${table.kind} in ('invoice', 'draft', 'quote', 'deliveryNote')`),
     check(
       "sales_document_invoice_check",
-      sql`${table.kind} <> 'invoice' or (${table.number} is not null and ${table.issuedAt} is not null and ${table.deletedAt} is null)`,
+      sql`${table.kind} <> 'invoice' or (${table.number} is not null and ${table.issuedAt} is not null)`,
     ),
   ],
 );

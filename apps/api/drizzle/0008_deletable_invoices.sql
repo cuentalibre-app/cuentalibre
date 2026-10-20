@@ -1,0 +1,2 @@
+ALTER TABLE "sales_document" DROP CONSTRAINT "sales_document_invoice_check";--> statement-breakpoint
+ALTER TABLE "sales_document" ADD CONSTRAINT "sales_document_invoice_check" CHECK ("sales_document"."kind" <> 'invoice' or ("sales_document"."number" is not null and "sales_document"."issued_at" is not null));

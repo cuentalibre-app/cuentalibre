@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { Lock } from "lucide-react";
 import type { SalesDocument, VerifactuStatus } from "@fiscalia/contracts";
 import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
+import { useCompliance } from "@/features/settings/compliance-store";
 import { KINDS } from "./sales-model";
 
 const VERIFACTU_STATUS: Record<VerifactuStatus, { label: string; tone: BadgeProps["tone"] }> = {
@@ -11,15 +12,21 @@ const VERIFACTU_STATUS: Record<VerifactuStatus, { label: string; tone: BadgeProp
   rejected: { label: "Rechazada por la AEAT", tone: "danger" },
 };
 
-/** Shown on an issued invoice: it can be read but not changed, only corrected with a rectifying invoice. */
+/**
+ * Shown on an issued invoice: it can be read but not changed, only corrected
+ * with a rectifying invoice. A business exempt from VERI*FACTU can still delete it.
+ */
 export function IssuedNotice({ invoice }: { invoice: SalesDocument }) {
   const verifactu = invoice.issued?.verifactu;
+  const exempt = useCompliance().verifactu.system === "exempt" && !verifactu;
   return (
     <div role="status" className="flex flex-col gap-2 rounded-lg bg-muted px-4 py-3 text-sm">
       <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1">
         <Lock className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         <span>
-          Esta factura está emitida: no se puede modificar ni eliminar.
+          {exempt
+            ? "Esta factura está emitida: no se puede modificar, pero sí eliminar desde el listado."
+            : "Esta factura está emitida: no se puede modificar ni eliminar."}
           {invoice.series === "normal" && " Para corregirla, genera una factura rectificativa."}
         </span>
         {invoice.series === "normal" && (
