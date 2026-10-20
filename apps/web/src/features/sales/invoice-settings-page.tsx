@@ -8,6 +8,7 @@ import { Textarea } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { CERTIFICATES_PATH } from "@/features/settings/settings-model";
+import { sameValue } from "@/lib/same-value";
 import { DefaultMark, LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
 import { invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
@@ -24,7 +25,7 @@ export function InvoiceSettingsPage() {
   const saved = useInvoiceSettings();
   const [draft, setDraft] = useState<InvoiceSettings>(saved);
   const [justSaved, setJustSaved] = useState(false);
-  const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+  const dirty = !sameValue(draft, saved);
   const set = <K extends keyof InvoiceSettings>(key: K, value: InvoiceSettings[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
     setJustSaved(false);
