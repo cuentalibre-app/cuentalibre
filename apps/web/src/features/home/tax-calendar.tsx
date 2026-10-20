@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { buttonVariants } from "@fiscalia/ui/components/button";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { formatEUR } from "@fiscalia/ui/lib/format";
-import { closingPath, quarterToClose, useQuarterChecks } from "@/features/closing/closing-model";
+import { closingPath, quarterToClose, useQuarterChecks, useQuarterIsEmpty } from "@/features/closing/closing-model";
 import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
 import { daysLeftLabel, deadlineTitle, MONTHS_SHORT } from "@/lib/format";
@@ -26,7 +26,9 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
   const daysLeft = data.nextFilingDays;
   const toClose = quarterToClose(today, useClosedQuarters());
   const checks = useQuarterChecks(toClose);
-  const reviewed = checks.filter((c) => c.tone === "ok").length;
+  // An untouched quarter has nothing to review yet: it shouldn't read as done
+  const empty = useQuarterIsEmpty(toClose);
+  const reviewed = empty ? 0 : checks.filter((c) => c.tone === "ok").length;
   const progress = (reviewed / checks.length) * 100;
 
   return (
@@ -68,7 +70,7 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
         <div className="flex justify-between text-sm">
           <span className="font-medium">Cierre del T{toClose.quarter}</span>
           <span className="text-muted-foreground">
-            {reviewed} de {checks.length} revisados
+            {empty ? "Sin movimientos" : `${reviewed} de ${checks.length} revisados`}
           </span>
         </div>
         <div
