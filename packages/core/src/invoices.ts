@@ -131,6 +131,18 @@ export function addDays(isoDate: string, days: number): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** The range of dates the app accepts; date inputs use it as their min and max. */
+export const MIN_DATE = "1900-01-01";
+export const MAX_DATE = "2100-12-31";
+
+/** Whether a value is a real calendar date (YYYY-MM-DD) within MIN_DATE and MAX_DATE. */
+export function isSupportedDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < MIN_DATE || value > MAX_DATE) return false;
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(y!, m! - 1, d!));
+  return date.getUTCMonth() === m! - 1 && date.getUTCDate() === d;
+}
+
 /** Local calendar date as ISO (YYYY-MM-DD). */
 export function toIsoDate(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");

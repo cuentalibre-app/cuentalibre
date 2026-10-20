@@ -1,7 +1,15 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark, Plus } from "lucide-react";
-import { cents, deductibleExpense, isDuplicateExpense, newId, toIsoDate, type Cents } from "@fiscalia/core";
+import {
+  cents,
+  deductibleExpense,
+  isDuplicateExpense,
+  isSupportedDate,
+  newId,
+  toIsoDate,
+  type Cents,
+} from "@fiscalia/core";
 import type { Attachment, Expense, ExpenseType, OtherPayee, RentalLocation } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
@@ -260,6 +268,7 @@ function ExpenseForm({
   function validate(doc: Expense): Errors {
     const next: Errors = {};
     if (!form.date) next.date = "Indica la fecha del gasto.";
+    else if (!isSupportedDate(form.date)) next.date = "Fecha no válida: revisa el año.";
     else if (lockedQuarterOf(form.date)) next.date = lockedMessage(lockedQuarterOf(form.date)!);
     if (!form.concept.trim()) next.concept = "Describe brevemente el gasto.";
     if (amount === null) next.amount = "Indica el importe pagado.";
@@ -267,6 +276,7 @@ function ExpenseForm({
     if (imputation === null) next.imputation = "Un número entero entre 0 y 100.";
     if (form.payee === OTHER_PAYEE && !form.otherName.trim()) next.otherName = "Indica a quién has pagado.";
     if (form.paid && !form.paidOn) next.paidOn = "Indica cuándo lo pagaste.";
+    else if (form.paid && !isSupportedDate(form.paidOn)) next.paidOn = "Fecha no válida: revisa el año.";
     if (form.paid && !form.paymentMethodId) next.paymentMethodId = "Elige el método con el que lo pagaste.";
     if (
       !next.date &&

@@ -19,6 +19,7 @@ import {
   applyRate,
   cents,
   invoiceTotals,
+  isSupportedDate,
   lineBase,
   operationChargesVat,
   toIsoDate,
@@ -355,6 +356,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     const next: Errors = {};
     if (KINDS[asKind].clientRequired && !form.clientId) next.clientId = "Elige un cliente.";
     if (!form.issuedOn) next.issuedOn = "Indica la fecha.";
+    else if (!isSupportedDate(form.issuedOn)) next.issuedOn = "Fecha no válida: revisa el año.";
     else if (asKind === "invoice" && lockedQuarterOf(form.issuedOn))
       next.issuedOn = lockedMessage(lockedQuarterOf(form.issuedOn)!);
     else if (asKind === "invoice") {

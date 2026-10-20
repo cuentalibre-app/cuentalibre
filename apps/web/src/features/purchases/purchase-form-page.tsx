@@ -24,6 +24,7 @@ import {
   invoiceTotals,
   isBookedLate,
   isDuplicatePurchase,
+  isSupportedDate,
   isValidBookingDate,
   lineBase,
   paymentStatus,
@@ -434,7 +435,9 @@ function PurchaseForm({
     )
       next.number = "Ya has registrado una factura de este proveedor con este número este año.";
     if (!form.issuedOn) next.issuedOn = "Indica la fecha de la factura.";
+    else if (!isSupportedDate(form.issuedOn)) next.issuedOn = "Fecha no válida: revisa el año.";
     if (!form.bookedOn) next.bookedOn = "Indica la fecha contable.";
+    else if (!isSupportedDate(form.bookedOn)) next.bookedOn = "Fecha no válida: revisa el año.";
     else if (form.issuedOn && !isValidBookingDate(form.issuedOn, form.bookedOn))
       next.bookedOn = "No puede ser anterior a la fecha de la factura.";
     else if (lockedQuarterOf(form.bookedOn)) next.bookedOn = lockedMessage(lockedQuarterOf(form.bookedOn)!);
