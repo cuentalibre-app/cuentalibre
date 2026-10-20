@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react";
-import { cents, earlierInstallments, filingDeadline, incomeTaxYear, model130, type Quarter } from "@fiscalia/core";
+import {
+  cents,
+  earlierInstallments,
+  filingDeadline,
+  incomeTaxYear,
+  model130,
+  sumCents,
+  type Quarter,
+} from "@fiscalia/core";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -106,15 +114,20 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
   const books = useTaxBooks();
   const [showEmpty, setShowEmpty] = useState(false);
   const annual = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
+  // Box 05 subtracts the positive installments of the earlier quarters, as filed or computed
+  const previous = useMemo(
+    () => earlierInstallments(books, annual.quarters, year, quarter),
+    [books, annual, year, quarter],
+  );
+  const [paid, paidBox] = useEditable(sumCents(previous.filter((p) => p > 0)));
   const [reduction, reductionBox] = useEditable(cents(0));
   const [negativeCarry, negativeBox] = useEditable(cents(0));
   const [mortgage, mortgageBox] = useEditable(cents(0));
 
-  const r = useMemo(() => {
-    // Box 05 subtracts the positive installments of the earlier quarters, as filed or computed
-    const previous = earlierInstallments(books, annual.quarters, year, quarter);
-    return model130(books, year, quarter, TAX_OPTIONS, previous, { reduction, negativeCarry, mortgage });
-  }, [books, year, quarter, annual, reduction, negativeCarry, mortgage]);
+  const r = useMemo(
+    () => model130(books, year, quarter, TAX_OPTIONS, previous, { paid, reduction, negativeCarry, mortgage }),
+    [books, year, quarter, previous, paid, reduction, negativeCarry, mortgage],
+  );
   const documents = useIncomeDocuments(year, quarter * 3 - 1);
 
   const result: ResultSummary = {
@@ -162,7 +175,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
         )}
         boxes={r.boxes}
         showEmpty={showEmpty}
-        editable={{ "13": reductionBox, "15": negativeBox, "16": mortgageBox }}
+        editable={{ "05": paidBox, "13": reductionBox, "15": negativeBox, "16": mortgageBox }}
       />
       <DocumentsPanel title="Documentos desde el 1 de enero" groups={documents} />
       <FormInfo form="130" />

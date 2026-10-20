@@ -596,6 +596,8 @@ export interface Model130 {
 }
 
 export interface Model130Inputs {
+  /** Box 05: installments paid in earlier quarters, when the taxpayer enters them instead. */
+  paid?: Cents;
   /** Box 13: reduction for low incomes. Defaults to none. */
   reduction?: Cents;
   /** Box 15: negative results of earlier quarters of the year still to deduct. */
@@ -624,7 +626,7 @@ export function model130(
   const expenses = cents(ytd.expenses + extra);
   const net = cents(ytd.income - expenses);
   const installment = net > 0 ? applyRate(net, IRPF_INSTALLMENT_RATE) : cents(0);
-  const paid = sumCents(previous.filter((p) => p > 0));
+  const paid = inputs.paid ?? sumCents(previous.filter((p) => p > 0));
   const withheld = cents(ytd.withholdings + ytd.rentalWithholdings);
   const before = cents(installment - paid - withheld);
   const reduction = cents(Math.min(inputs.reduction ?? 0, Math.max(0, before)));
