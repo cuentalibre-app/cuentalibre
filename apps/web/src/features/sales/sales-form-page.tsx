@@ -114,7 +114,7 @@ interface FormState {
   numberFormat: string;
 }
 
-type Errors = Partial<Record<"clientId" | "number" | "rectifiesId" | "issuedOn" | "lines", string>>;
+type Errors = Partial<Record<"clientId" | "number" | "rectifiesId" | "issuedOn" | "lines" | "paymentMethodId", string>>;
 
 /** What happens after saving, from the create button's menu. */
 type AfterSave = "list" | "edit" | "send" | "receipt";
@@ -261,6 +261,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     setForm((f) => ({ ...f, [key]: value }));
     if (key === "clientId" || key === "number" || key === "rectifiesId" || key === "issuedOn" || key === "lines")
       clearError(key);
+    if (key === "paymentMethodId" || key === "markPaid") clearError("paymentMethodId");
   };
   const setLines = (update: (lines: LineDraft[]) => LineDraft[]) => {
     setForm((f) => ({ ...f, lines: update(f.lines) }));
@@ -366,6 +367,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         next.number = "Ya existe un documento con este número.";
     }
     if (rectifying && !existing && !form.rectifiesId) next.rectifiesId = "Elige la factura que rectifica.";
+    if (asKind === "invoice" && form.markPaid && !form.paymentMethodId)
+      next.paymentMethodId = "Elige el método por el que lo cobraste.";
     next.lines =
       linesError(form.lines) ??
       stockShortageMessage({ id: existing?.id ?? "", kind: asKind, lines: toLines(form.lines) }, originKind(asKind));
@@ -974,7 +977,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                         <Input {...p} type="date" value={form.paidOn} onChange={(e) => set("paidOn", e.target.value)} />
                       )}
                     </Field>
-                    <Field label="Método de cobro" className="w-56">
+                    <Field label="Método de cobro" required error={errors.paymentMethodId} className="w-56">
                       {(p) => (
                         <GroupedSelect
                           {...p}
