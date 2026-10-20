@@ -18,6 +18,7 @@ import {
   ReceiptText,
   Search,
   Send,
+  Settings,
   Tag,
   ThumbsDown,
   ThumbsUp,
@@ -36,6 +37,13 @@ import { table } from "@fiscalia/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { useCompliance } from "@/features/settings/compliance-store";
+import {
+  DELIVERY_NOTE_SETTINGS_PATH,
+  DRAFT_SETTINGS_PATH,
+  INVOICE_SETTINGS_PATH,
+  QUOTE_SETTINGS_PATH,
+} from "@/features/settings/settings-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
@@ -93,6 +101,13 @@ function sum(rows: Row[], key: "base" | "vat" | "withholding" | "total" | "outst
   return sumBy(rows, (r) => r[key]);
 }
 
+const SETTINGS_PATHS: Record<SalesKind, string> = {
+  invoice: INVOICE_SETTINGS_PATH,
+  draft: DRAFT_SETTINGS_PATH,
+  quote: QUOTE_SETTINGS_PATH,
+  deliveryNote: DELIVERY_NOTE_SETTINGS_PATH,
+};
+
 export function SalesListPage({ kind }: { kind: SalesKind }) {
   const config = KINDS[kind];
   const today = useMemo(() => new Date(), []);
@@ -142,10 +157,21 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
     <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{config.title}</h1>
-        <Link to={config.newPath} className={cn(buttonVariants(), "hidden no-underline lg:inline-flex")}>
-          <Plus strokeWidth={2} aria-hidden="true" />
-          {config.newLabel}
-        </Link>
+        <div className="flex items-center gap-2.5">
+          <SettingsLink
+            to={SETTINGS_PATHS[kind]}
+            from={config.title.toLowerCase()}
+            aria-label={`Configurar ${config.title.toLowerCase()}`}
+            title={`Configurar ${config.title.toLowerCase()}`}
+            className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
+          >
+            <Settings strokeWidth={1.8} aria-hidden="true" />
+          </SettingsLink>
+          <Link to={config.newPath} className={cn(buttonVariants(), "hidden no-underline lg:inline-flex")}>
+            <Plus strokeWidth={2} aria-hidden="true" />
+            {config.newLabel}
+          </Link>
+        </div>
       </header>
 
       {kind === "invoice" && <InvoiceSummary rows={periodRows} />}

@@ -9,6 +9,7 @@ import {
   invoiceTotals,
   laterInvoiceInSeries,
   nextInvoiceNumber,
+  outOfOrderInSeries,
   parseSeriesNumber,
   paymentStatus,
   type Cents,
@@ -52,6 +53,8 @@ export const LINE_FIELDS = [
 
 /** What can still change once an invoice is issued: its collections and the app's own bookkeeping. */
 const MUTABLE_WHEN_ISSUED = new Set<string>(["status", "payments", "tags", "attachments", "privateNotes"]);
+/** What never changes on an issued invoice, even where it can be revised: its place in the numbering. */
+const FIXED_WHEN_REVISED = new Set<string>(["kind", "number", "series", "seriesId", "rectifiesId"]);
 
 /** The record as the API returns it: optional fields that are empty are left out. */
 export function toSalesDocument(
@@ -234,7 +237,7 @@ export async function createSalesDocument(tx: Tx, organizationId: string, data: 
 /**
  * Applies the changes over the stored record and validates the result as a
  * whole. An issued invoice only takes changes to its collection, tags,
- * attachments and private notes.
+ * attachments and private notes, unless it can be revised (see `reviseInvoice`).
  */
 export async function updateSalesDocument(
   tx: Tx,
@@ -252,8 +255,11 @@ export async function updateSalesDocument(
   await checkAttachments(tx, organizationId, record.attachments, current.attachments);
 
   if (current.kind === "invoice") {
-    if (touchedFields<StoredSalesDocument>(current, record, changes).some((field) => !MUTABLE_WHEN_ISSUED.has(field)))
-      issuedError();
+    const touched = touchedFields<StoredSalesDocument>(current, record, changes);
+    if (touched.some((field) => !MUTABLE_WHEN_ISSUED.has(field))) {
+      await reviseInvoice(tx, organizationId, current, record, touched);
+      return;
+    }
     if (record.status !== "pending" && record.status !== "paid") invalid("status: an invoice is pending or paid.");
     await tx
       .update(salesDocument)
@@ -277,6 +283,57 @@ export async function updateSalesDocument(
     .set(toColumns(record))
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, id)));
   if ("lines" in changes) await writeLines(tx, organizationId, record);
+}
+
+/**
+ * Rewrites an issued invoice, as a business exempt from VERI*FACTU may while
+ * the invoice has no record and its quarter is open, like deleting it. Its
+ * number and series stay; a new date must keep it in order within them.
+ */
+async function reviseInvoice(
+  tx: Tx,
+  organizationId: string,
+  current: StoredSalesDocument,
+  record: StoredSalesDocument,
+  touched: string[],
+) {
+  const settings = await readSettings(tx, organizationId);
+  if (settings.verifactu.system !== "exempt" || (await recordInfoByInvoice(tx, organizationId, [current.id])).size > 0)
+    issuedError();
+  const fixed = touched.find((field) => FIXED_WHEN_REVISED.has(field));
+  if (fixed) invalid(`${fixed}: can't be changed on an issued invoice.`);
+  await checkQuarterOpen(tx, organizationId, current.issuedOn);
+  if (!record.clientId) invalid("clientId: an invoice needs a client.");
+  const client = (await checkClient(tx, organizationId, record.clientId))!;
+  if (record.lines.length === 0) invalid("lines: an invoice needs at least one line.");
+
+  if (record.issuedOn !== current.issuedOn) {
+    await checkQuarterOpen(tx, organizationId, record.issuedOn);
+    if (record.issuedOn.slice(0, 4) !== current.issuedOn.slice(0, 4))
+      invalid("issuedOn: can't move to another year, which is part of the number.");
+    const series = invoiceSeriesOf(record, settings.invoiceSettings.series ?? []);
+    const jumped =
+      series &&
+      outOfOrderInSeries(
+        series.mask,
+        { number: record.number!, issuedOn: record.issuedOn },
+        await issuedInvoices(tx, organizationId),
+      );
+    if (jumped)
+      throw new ApiError(
+        409,
+        "date_out_of_order",
+        `Invoice ${jumped.number} of this series is dated ${jumped.issuedOn}; this one would be out of order.`,
+      );
+  }
+
+  await tx
+    .update(salesDocument)
+    .set(toColumns(record))
+    .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, record.id)));
+  await writeLines(tx, organizationId, record);
+  await writePayments(tx, organizationId, record);
+  await freezeInvoice(tx, organizationId, record, client);
 }
 
 /**
@@ -374,7 +431,35 @@ export async function issueInvoice(
   await writeLines(tx, organizationId, invoice);
   await writePayments(tx, organizationId, invoice);
 
-  // Totals from the lines as stored, so they match what the record returns
+  const lines = await freezeInvoice(tx, organizationId, invoice, client);
+
+  // Invoices issued elsewhere and imported were recorded by the software that issued them
+  if (number === undefined && usesVerifactu(settings, invoice.issuedOn))
+    await registerInvoice(
+      tx,
+      organizationId,
+      settings,
+      {
+        ...invoice,
+        number: invoice.number,
+        lines: lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
+      },
+      client,
+      verifactuEnvironment,
+    );
+}
+
+/**
+ * Stores what an issued invoice keeps as it was: its client's fiscal data and
+ * its totals, from the lines as stored so they match what the record returns.
+ * Answers the stored lines.
+ */
+async function freezeInvoice(
+  tx: Tx,
+  organizationId: string,
+  invoice: StoredSalesDocument,
+  client: NonNullable<Awaited<ReturnType<typeof checkClient>>>,
+) {
   const lines = (await detailsOf(tx, organizationId, [invoice.id])).lines.get(invoice.id) ?? [];
   const totals = invoiceTotals(
     lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
@@ -402,21 +487,7 @@ export async function issueInvoice(
       status: collectionStatus(totals.total, invoice.payments),
     })
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, invoice.id)));
-
-  // Invoices issued elsewhere and imported were recorded by the software that issued them
-  if (number === undefined && usesVerifactu(settings, invoice.issuedOn))
-    await registerInvoice(
-      tx,
-      organizationId,
-      settings,
-      {
-        ...invoice,
-        number: invoice.number,
-        lines: lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
-      },
-      client,
-      verifactuEnvironment,
-    );
+  return lines;
 }
 
 /** A rectifying invoice names an issued invoice of the normal series; imported ones may predate the app. */

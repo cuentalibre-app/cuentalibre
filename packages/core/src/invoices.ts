@@ -303,6 +303,26 @@ export function laterInvoiceInSeries<T extends IssuedInvoiceRef>(
     );
 }
 
+/**
+ * When an issued invoice's date changes, the invoice of its series and year
+ * the new date would put out of order, if any: one with a lower number dated
+ * later, or one with a higher number dated earlier. The year can't change, as
+ * it is part of the number.
+ */
+export function outOfOrderInSeries<T extends IssuedInvoiceRef>(
+  mask: string,
+  invoice: IssuedInvoiceRef,
+  issued: T[],
+): T | undefined {
+  const own = parseSeriesNumber(mask, invoice.number);
+  if (!own) return undefined;
+  return issued.find((other) => {
+    const parsed = parseSeriesNumber(mask, other.number);
+    if (!parsed || parsed.year !== own.year || other.number === invoice.number) return false;
+    return parsed.counter < own.counter ? other.issuedOn > invoice.issuedOn : other.issuedOn < invoice.issuedOn;
+  });
+}
+
 /** How an operation is treated for VAT, which decides whether the invoice charges it. */
 export type OperationType = "national" | "exempt" | "notSubject" | "reverseCharge" | "intraEu" | "export";
 

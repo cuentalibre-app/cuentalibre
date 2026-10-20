@@ -10,6 +10,7 @@ import {
   nextDocumentNumber,
   nextInvoiceNumber,
   operationChargesVat,
+  outOfOrderInSeries,
   parseSeriesNumber,
   sameSeriesFormat,
   seriesMaskProblem,
@@ -213,5 +214,32 @@ describe("isSupportedDate", () => {
     expect(isSupportedDate("2101-01-01")).toBe(false);
     expect(isSupportedDate("2026-02-30")).toBe(false);
     expect(isSupportedDate("")).toBe(false);
+  });
+});
+
+describe("outOfOrderInSeries", () => {
+  const issued = [
+    { number: "2026-0046", issuedOn: "2026-10-02" },
+    { number: "2026-0047", issuedOn: "2026-10-09" },
+    { number: "2026-0048", issuedOn: "2026-10-15" },
+    { number: "R-2026-0001", issuedOn: "2026-10-01" },
+  ];
+
+  it("allows any date between its neighbours, both included", () => {
+    for (const issuedOn of ["2026-10-02", "2026-10-05", "2026-10-15"])
+      expect(outOfOrderInSeries("AAAA-####", { number: "2026-0047", issuedOn }, issued)).toBeUndefined();
+  });
+
+  it("finds the invoice a date before the previous one or after the next one would jump", () => {
+    expect(outOfOrderInSeries("AAAA-####", { number: "2026-0047", issuedOn: "2026-10-01" }, issued)?.number).toBe(
+      "2026-0046",
+    );
+    expect(outOfOrderInSeries("AAAA-####", { number: "2026-0047", issuedOn: "2026-10-16" }, issued)?.number).toBe(
+      "2026-0048",
+    );
+  });
+
+  it("ignores other series", () => {
+    expect(outOfOrderInSeries("AAAA-####", { number: "2026-0046", issuedOn: "2026-09-30" }, issued)).toBeUndefined();
   });
 });
