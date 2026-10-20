@@ -5,6 +5,7 @@ import { afterAll, expect } from "vitest";
 import { createApp } from "../app";
 import { createAuth } from "../auth";
 import { createDb } from "../db/client";
+import type { Mailer, OutgoingEmail } from "../email/mailer";
 import { loadEnv } from "../env";
 import { diskStorage } from "../storage/disk";
 import { testDatabaseUrl } from "./database";
@@ -18,7 +19,20 @@ export const env = loadEnv({
   FILE_MAX_BYTES: String(1024 * 1024),
 });
 export const db = createDb(env.DATABASE_URL);
-export const app = createApp({ db, auth: createAuth(db, env), env, storage: diskStorage(storageDir) });
+export const storage = diskStorage(storageDir);
+
+/** Emails the app sent, in order. */
+export const sentEmails: OutgoingEmail[] = [];
+/** Makes the next sends fail with this error, until cleared. */
+export const mailerFailure: { error: Error | null } = { error: null };
+export const mailer: Mailer = {
+  async send(email) {
+    if (mailerFailure.error) throw mailerFailure.error;
+    sentEmails.push(email);
+  },
+};
+
+export const app = createApp({ db, auth: createAuth(db, env), env, storage, mailer });
 
 afterAll(async () => {
   await db.$client.end();
@@ -83,4 +97,16 @@ export async function createOrganization(client: Client, name: string) {
   const response = await client.request("/v1/auth/organization/create", { method: "POST", body: { name, slug } });
   expect(response.status).toBe(200);
   return (await response.json()) as { id: string; name: string; slug: string };
+}
+
+/** A script or agent: sends requests with an API key instead of a session. */
+export function withApiKey(key: string): Client {
+  return {
+    request: async (path, init = {}) =>
+      app.request(`${origin}${path}`, {
+        method: init.method ?? "GET",
+        headers: { authorization: `Bearer ${key}`, ...(init.body ? { "content-type": "application/json" } : {}) },
+        body: init.form ?? (init.body ? JSON.stringify(init.body) : undefined),
+      }),
+  };
 }

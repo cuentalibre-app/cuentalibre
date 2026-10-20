@@ -2,7 +2,7 @@ import { changeSchema, changesSchema, commandSchema, cursorSchema, workspaceSche
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { AppEnv } from "../context";
 import { errorContent } from "../errors";
-import { requireOrganization } from "../middleware";
+import { requireOrganization, scopeOf } from "../middleware";
 import { readChanges, readWorkspace } from "../sync/read";
 import { applyCommands } from "../sync/write";
 
@@ -78,7 +78,6 @@ export const syncRoutes = new OpenAPIHono<AppEnv>()
     return c.json(await readChanges(c.get("db"), c.get("organizationId"), since, limit), 200);
   })
   .openapi(commands, async (c) => {
-    const scope = { organizationId: c.get("organizationId"), userId: c.get("user")!.id };
-    const changes = await applyCommands(c.get("db"), scope, c.req.valid("json").commands);
+    const changes = await applyCommands(c.get("db"), scopeOf(c), c.req.valid("json").commands);
     return c.json({ changes }, 200);
   });

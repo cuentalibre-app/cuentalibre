@@ -76,6 +76,8 @@ import {
   nextNumber,
   periodKeyOf,
 } from "./sales-model";
+import { canSendEmail } from "@/data/email";
+import { SendDialog, sendWithMailClient } from "./document-dialogs";
 import { IssuedNotice } from "./issued-notice";
 import { salesStore } from "./sales-store";
 
@@ -236,6 +238,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   });
   const clients = useContacts("client");
   const [creatingClient, setCreatingClient] = useState(false);
+  /** The document just saved to be sent, and where to go after. */
+  const [sending, setSending] = useState<{ doc: SalesDocument; next: string } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const lockedQuarterOf = useLockedQuarter();
   // Issued invoices are read-only: they are corrected with a rectifying invoice
@@ -427,13 +431,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       navigate(`${KINDS[asKind].path}/${doc.id}`);
       return;
     }
-    if (after === "send") {
-      // No email backend yet: download the PDF and open the mail client to attach it
-      void import("./sales-pdf").then((m) => m.downloadDocumentPdf(doc));
-      const email = clientOf(doc).email ?? "";
-      window.location.href = `mailto:${email}?subject=${encodeURIComponent(`${KINDS[asKind].singular} ${doc.number}`)}`;
+    const next = after === "receipt" ? "/bancos" : `${KINDS[asKind].path}?periodo=${periodKeyOf(doc.issuedOn)}`;
+    if (after === "send" && canSendEmail()) {
+      // Leave once the email is sent or the dialog closed
+      setSending({ doc, next });
+      return;
     }
-    navigate(after === "receipt" ? "/bancos" : `${KINDS[asKind].path}?periodo=${periodKeyOf(doc.issuedOn)}`);
+    if (after === "send") sendWithMailClient(doc);
+    navigate(next);
   }
 
   const submit = (e: FormEvent) => {
@@ -537,6 +542,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         </header>
 
         {locked ? <LockedNotice period={locked} noun="Esta factura" /> : issued && <IssuedNotice invoice={existing} />}
+        {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
 
         {source && !existing && (
           <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">

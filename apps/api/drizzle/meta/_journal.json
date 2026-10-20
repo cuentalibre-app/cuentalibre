@@ -36,6 +36,20 @@
       "when": 1792347645522,
       "tag": "0004_settings_filed_returns_and_plain_records",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792348795173,
+      "tag": "0005_verifactu_outbox_and_email",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792349547898,
+      "tag": "0006_api_keys",
+      "breakpoints": true
     }
   ]
 }

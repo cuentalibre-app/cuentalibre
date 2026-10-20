@@ -1,4 +1,4 @@
-import { storedSalesDocumentSchema, type IssuedSnapshot } from "@fiscalia/contracts";
+import { storedSalesDocumentSchema, type IssuedSnapshot, type VerifactuRecordInfo } from "@fiscalia/contracts";
 import {
   INVOICE_SERIES_PREFIX,
   WITHHOLDING_RATES,
@@ -6,15 +6,18 @@ import {
   laterInvoiceInSeries,
   nextInvoiceNumber,
   type Cents,
+  type VerifactuEnvironment,
 } from "@fiscalia/core";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
 import { contact, salesDocument, salesLine } from "../db/schema";
 import { ApiError } from "../errors";
+import { recordInfoByInvoice, registerInvoice, usesVerifactu } from "../verifactu/record";
 import { checkQuarterOpen } from "./closing";
 import { checkAttachments } from "./files";
 import { alreadyExists, mergeChanges, parseOr, touchedFields } from "./records";
+import { readSettings } from "./settings";
 
 export type StoredSalesDocument = z.infer<typeof storedSalesDocumentSchema>;
 type DocumentRow = typeof salesDocument.$inferSelect;
@@ -51,7 +54,11 @@ const MUTABLE_WHEN_ISSUED = new Set<string>([
 ]);
 
 /** The record as the API returns it: optional fields that are empty are left out. */
-export function toSalesDocument(row: DocumentRow, lines: LineRow[]): StoredSalesDocument {
+export function toSalesDocument(
+  row: DocumentRow,
+  lines: LineRow[],
+  verifactu?: VerifactuRecordInfo,
+): StoredSalesDocument {
   const out: Record<string, unknown> = {};
   for (const field of FIELDS) {
     const value = row[field as keyof DocumentRow];
@@ -79,6 +86,7 @@ export function toSalesDocument(row: DocumentRow, lines: LineRow[]): StoredSales
         total: row.total as Cents,
         vatBreakdown: row.vatBreakdown!,
       },
+      ...(verifactu && { verifactu }),
     } satisfies IssuedSnapshot;
   }
   return out as StoredSalesDocument;
@@ -242,7 +250,13 @@ export async function deleteSalesDocument(tx: Tx, organizationId: string, id: st
  * next number of its series (or `number`, for an imported invoice), and its
  * client data and totals are frozen.
  */
-export async function issueInvoice(tx: Tx, organizationId: string, data: unknown, number?: string) {
+export async function issueInvoice(
+  tx: Tx,
+  organizationId: string,
+  data: unknown,
+  number: string | undefined,
+  verifactuEnvironment: VerifactuEnvironment,
+) {
   const { issued: _, ...record } = parse(data);
   const existing = await liveRow(tx, organizationId, record.id);
   if (existing?.kind === "invoice") throw new ApiError(409, "already_issued", "This invoice is already issued.");
@@ -322,6 +336,22 @@ export async function issueInvoice(tx: Tx, organizationId: string, data: unknown
       vatBreakdown: totals.vatBreakdown,
     })
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, invoice.id)));
+
+  // Invoices issued elsewhere and imported were recorded by the software that issued them
+  const settings = await readSettings(tx, organizationId);
+  if (number === undefined && usesVerifactu(settings, invoice.issuedOn))
+    await registerInvoice(
+      tx,
+      organizationId,
+      settings,
+      {
+        ...invoice,
+        number: invoice.number,
+        lines: lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
+      },
+      client,
+      verifactuEnvironment,
+    );
 }
 
 /** A rectifying invoice names an issued invoice of the normal series; imported ones may predate the app. */
@@ -358,7 +388,8 @@ export async function liveSalesDocuments(tx: Tx, organizationId: string) {
     .where(and(eq(salesDocument.organizationId, organizationId), isNull(salesDocument.deletedAt)))
     .orderBy(salesDocument.id);
   const lines = await linesOf(tx, organizationId);
-  return rows.map((row) => toSalesDocument(row, lines.get(row.id) ?? []));
+  const records = await recordInfoByInvoice(tx, organizationId);
+  return rows.map((row) => toSalesDocument(row, lines.get(row.id) ?? [], records.get(row.id)));
 }
 
 /** Current rows, tombstones included, for the given IDs, with their lines. */
@@ -373,9 +404,14 @@ export async function salesDocumentsById(tx: Tx, organizationId: string, ids: st
     organizationId,
     rows.filter((row) => !row.deletedAt).map((row) => row.id),
   );
+  const records = await recordInfoByInvoice(
+    tx,
+    organizationId,
+    rows.filter((row) => row.issuedAt).map((row) => row.id),
+  );
   return rows.map((row) => ({
     id: row.id,
     deleted: row.deletedAt !== null,
-    record: toSalesDocument(row, lines.get(row.id) ?? []),
+    record: toSalesDocument(row, lines.get(row.id) ?? [], records.get(row.id)),
   }));
 }

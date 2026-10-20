@@ -55,7 +55,8 @@ import {
   periodKeyOf,
   type StatusKey,
 } from "./sales-model";
-import { PaymentDialog, TagsDialog } from "./document-dialogs";
+import { canSendEmail } from "@/data/email";
+import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, pickFiles, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
@@ -491,7 +492,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
 /** Every operation available on a document, grouped so the menu can split them with separators. */
 function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const navigate = useNavigate();
-  const [dialog, setDialog] = useState<"payment" | "tags" | null>(null);
+  const [dialog, setDialog] = useState<"payment" | "tags" | "send" | null>(null);
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
@@ -549,12 +550,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     send: {
       label: `Enviar ${config.singular.toLowerCase()}`,
       icon: Mail,
-      // No email backend yet: download the PDF and open the mail client to attach it
-      run: () => {
-        void import("./sales-pdf").then((m) => m.downloadDocumentPdf(doc));
-        const subject = `${config.singular} ${doc.number ?? ""}`.trim();
-        window.location.href = `mailto:${clientOf(doc).email ?? ""}?subject=${encodeURIComponent(subject)}`;
-      },
+      run: () => (canSendEmail() ? setDialog("send") : sendWithMailClient(doc)),
     },
   } satisfies Record<string, Action>;
 
@@ -664,6 +660,8 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       <PaymentDialog doc={doc} onOpenChange={close} />
     ) : dialog === "tags" ? (
       <TagsDialog doc={doc} title={`${config.noun} ${label}`} onOpenChange={close} />
+    ) : dialog === "send" ? (
+      <SendDialog doc={doc} onOpenChange={close} />
     ) : null;
 
   return {

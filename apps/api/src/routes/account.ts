@@ -64,7 +64,7 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
     return c.json(
       {
         user: { id: user.id, name: user.name, email: user.email },
-        activeOrganizationId: c.get("session")?.activeOrganizationId ?? null,
+        activeOrganizationId: c.get("activeOrganizationId"),
         memberships: rows.map((row) => ({ ...row, role: row.role as MembershipRole })),
       },
       200,

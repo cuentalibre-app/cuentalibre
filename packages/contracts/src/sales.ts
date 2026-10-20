@@ -40,6 +40,23 @@ export type SalesLine = z.infer<typeof salesLineSchema>;
  * totals. Editing the contact, or changing how core rounds, never alters an
  * issued invoice. Set by the server; the app never sends it.
  */
+/**
+ * Where the invoice's VERI*FACTU record stands with the AEAT: waiting to be
+ * sent, accepted (maybe with errors to fix), or rejected.
+ */
+export const verifactuStatusSchema = z.enum(["pending", "accepted", "acceptedWithErrors", "rejected"]);
+export type VerifactuStatus = z.infer<typeof verifactuStatusSchema>;
+
+/** The invoice's VERI*FACTU record, when the business uses the system. */
+export const verifactuRecordInfoSchema = z.object({
+  status: verifactuStatusSchema,
+  /** What the QR code printed on the invoice encodes. */
+  qrUrl: z.url(),
+  /** The AEAT's error, or why the record couldn't be sent yet. */
+  error: z.string().optional(),
+});
+export type VerifactuRecordInfo = z.infer<typeof verifactuRecordInfoSchema>;
+
 export const issuedSnapshotSchema = z.object({
   client: contactSchema.pick({
     name: true,
@@ -51,6 +68,7 @@ export const issuedSnapshotSchema = z.object({
     country: true,
   }),
   totals: invoiceTotalsSchema,
+  verifactu: verifactuRecordInfoSchema.optional(),
 });
 export type IssuedSnapshot = z.infer<typeof issuedSnapshotSchema>;
 

@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { zipSync } from "fflate";
+import qrcode from "qrcode-generator";
 import { cents, eurosToCents, lineBase, WITHHOLDING_RATES, type Cents } from "@fiscalia/core";
 import type { SalesDocument } from "@fiscalia/contracts";
 import { formatEUR } from "@fiscalia/ui/lib/format";
@@ -43,6 +44,18 @@ function render(doc: SalesDocument): jsPDF {
   y += 7;
   pdf.text(`Fecha: ${formatDate(doc.issuedOn)}`, MARGIN, y);
   if (config.dueLabel && doc.dueOn) pdf.text(`${config.dueLabel}: ${formatDate(doc.dueOn)}`, MARGIN + 50, y);
+
+  // Under VERI*FACTU the invoice carries the QR code of its record, between 30 and 40 mm wide
+  const verifactu = doc.issued?.verifactu;
+  if (verifactu) {
+    drawQr(pdf, verifactu.qrUrl, RIGHT - QR_SIZE, MARGIN - 4);
+    pdf.setFont("helvetica", "normal").setFontSize(7).setTextColor(90);
+    pdf.text("QR tributario:", RIGHT - QR_SIZE, MARGIN - 5.5);
+    pdf.text("VERI*FACTU", RIGHT - QR_SIZE / 2, MARGIN + QR_SIZE - 1, { align: "center" });
+    pdf.setFontSize(9).setTextColor(100);
+    // Room for the code before the parties
+    y = Math.max(y, MARGIN + QR_SIZE - 12);
+  }
 
   // Issuer and client side by side
   y += 12;
@@ -165,11 +178,31 @@ function render(doc: SalesDocument): jsPDF {
   return pdf;
 }
 
+const QR_SIZE = 32;
+
+/** A QR code with medium error correction, as square modules drawn in black. */
+function drawQr(pdf: jsPDF, text: string, x: number, y: number) {
+  const qr = qrcode(0, "M");
+  qr.addData(text);
+  qr.make();
+  const count = qr.getModuleCount();
+  const module = QR_SIZE / count;
+  pdf.setFillColor(0, 0, 0);
+  for (let row = 0; row < count; row++)
+    for (let col = 0; col < count; col++)
+      if (qr.isDark(row, col)) pdf.rect(x + col * module, y + row * module, module, module, "F");
+}
+
 function save(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   Object.assign(document.createElement("a"), { href: url, download: name }).click();
   // Give the browser a moment to start the download before freeing the blob
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
+}
+
+/** The document's PDF as a file, to attach it to an email. */
+export function documentPdfFile(doc: SalesDocument): File {
+  return new File([render(doc).output("blob")], documentFileName(doc, "pdf"), { type: "application/pdf" });
 }
 
 export function downloadDocumentPdf(doc: SalesDocument) {

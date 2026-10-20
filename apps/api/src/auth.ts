@@ -1,4 +1,5 @@
 import { newId } from "@fiscalia/core";
+import { apiKey } from "@better-auth/api-key";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
@@ -7,10 +8,13 @@ import type { Db } from "./db/client";
 import * as schema from "./db/schema";
 import type { Env } from "./env";
 
+/** Every API key starts with it, so leaked keys are easy to spot. */
+export const API_KEY_PREFIX = "fsk_";
+
 /**
  * Authentication with Better Auth: email and password sign-in, sessions in
  * Postgres, and organizations. Users belong to organizations through
- * `membership`, which carries their role.
+ * `membership`, which carries their role. Scripts and agents use API keys.
  */
 export function createAuth(db: Db, env: Env) {
   return betterAuth({
@@ -21,7 +25,15 @@ export function createAuth(db: Db, env: Env) {
     trustedOrigins: [env.WEB_ORIGIN],
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true },
-    plugins: [organization({ schema: { member: { modelName: "membership" } } })],
+    plugins: [
+      organization({ schema: { member: { modelName: "membership" } } }),
+      // Keys are created and checked through our own routes and middleware (`routes/api-keys.ts`)
+      apiKey({
+        defaultPrefix: API_KEY_PREFIX,
+        enableMetadata: true,
+        rateLimit: { enabled: true, timeWindow: 60_000, maxRequests: 600 },
+      }),
+    ],
     databaseHooks: {
       session: {
         create: {

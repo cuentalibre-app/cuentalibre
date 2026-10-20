@@ -15,3 +15,5 @@ export * from "./organization-settings";
 export * from "./user";
 export * from "./organizations";
 export * from "./sync";
+export * from "./email";
+export * from "./api-keys";
