@@ -1,0 +1,58 @@
+name: Bug
+description: Something in the app does not work as it should
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The shortest sequence of steps that triggers it, starting from a known state (empty account, demo…).
+      placeholder: |
+        1. Go to /ventas/facturas/nueva
+        2. …
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "p1: data is lost or wrong (amounts, taxes, numbering)"
+        - "p2: blocks or derails a flow"
+        - "p3: annoyance or cosmetic"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Sales (invoices, quotes, delivery notes)
+        - Collections and payments
+        - Purchases and expenses
+        - Contacts
+        - Taxes and quarter close
+        - Settings
+        - Layout and navigation
+        - API
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Console or API errors, screenshots, URLs. Paste errors as text.
+      render: text
+  - type: textarea
+    id: cause
+    attributes:
+      label: Suspected cause
+      description: Optional. Files or functions involved, if known.
