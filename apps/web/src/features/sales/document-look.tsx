@@ -6,6 +6,7 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { Field, GroupedSelect, LocaleFields } from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
 import { DEFAULT_SETTINGS, FONTS, TEMPLATES } from "./invoice-settings";
+import { TEMPLATE_STYLES } from "./pdf-look";
 
 /* PDF look controls shared by the invoice settings and those of drafts, quotes and delivery notes. */
 
@@ -119,9 +120,7 @@ function TemplateCard({
   look: DocumentLook;
   onSelect: () => void;
 }) {
-  const traditional = template.endsWith("Traditional");
-  const centered = template.startsWith("elegant");
-  const banded = template.startsWith("modern") || template === "avantGarde";
+  const { family, traditional } = TEMPLATE_STYLES[template];
   const paper = {
     "--ink": look.textColor,
     "--rule": look.lineColor,
@@ -130,6 +129,13 @@ function TemplateCard({
   } as CSSProperties;
   const bar = (w: string, extra?: string) => (
     <span className={cn("block h-1 rounded-full bg-(--ink) opacity-60", extra)} style={{ width: w }} />
+  );
+  const filledHeader = family === "professional" || family === "avantGarde";
+  const totals = (
+    <span className={cn("flex flex-col items-end gap-1", !traditional && "mt-auto")}>
+      {bar("30%")}
+      {bar("40%", "h-1.5 opacity-90")}
+    </span>
   );
   return (
     <button
@@ -147,22 +153,42 @@ function TemplateCard({
         style={paper}
         className="flex aspect-[1/1.414] w-full flex-col gap-1.5 overflow-hidden rounded-sm border border-border bg-(--paper) p-2 shadow-sm"
       >
-        {banded && (
-          <span className={cn("-mx-2 -mt-2 mb-1 block h-4 bg-(--rule)", template === "avantGarde" && "h-7")} />
-        )}
-        <span className={cn("flex", centered ? "justify-center" : "justify-between")}>
-          {bar("40%")}
-          {!centered && bar("25%")}
+        {/* The VERI*FACTU code, top right */}
+        <span className="block size-3 self-end bg-(--ink) opacity-70" />
+        {family === "avantGarde" && <span className="block h-1 bg-(--rule)" />}
+        <span className="flex justify-between gap-2">
+          <span className="flex w-1/2 flex-col gap-1">
+            {bar("80%")}
+            {bar("60%")}
+          </span>
+          <span
+            className={cn(
+              "flex w-1/2 flex-col gap-1",
+              family === "professional" && "border-l-2 border-(--rule) pl-1",
+              family === "classic" && "border border-(--rule) p-0.5",
+            )}
+          >
+            {bar("80%")}
+            {bar("60%")}
+          </span>
         </span>
-        {bar("30%", centered ? "self-center" : undefined)}
-        <span className={cn("mt-1 block border-t border-(--rule)", traditional && "border-t-2")} />
-        {[70, 55, 62].map((w) => (
-          <span key={w} className={cn("flex justify-between", traditional && "border-b border-(--rule) pb-1")}>
+        {family === "classic" && bar("30%", "self-center")}
+        {family === "modern" && bar("45%", "h-2 opacity-80")}
+        <span
+          className={cn(
+            "mt-1 block h-1.5",
+            filledHeader && "bg-(--rule)",
+            family === "classic" && "border border-(--rule)",
+            family === "modern" && "border-b border-(--rule)",
+          )}
+        />
+        {[70, 55].map((w) => (
+          <span key={w} className="flex justify-between">
             {bar(`${w}%`)}
             {bar("15%")}
           </span>
         ))}
-        <span className="mt-auto flex justify-end">{bar("35%", "h-1.5 opacity-90")}</span>
+        {totals}
       </span>
       <span className="text-sm font-medium text-foreground">{label}</span>
     </button>
