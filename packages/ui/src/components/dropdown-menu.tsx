@@ -5,13 +5,20 @@ import { cn } from "../lib/cn";
 export const DropdownMenu = Primitive.Root;
 export const DropdownMenuTrigger = Primitive.Trigger;
 
-export function DropdownMenuContent({ className, sideOffset = 6, ...props }: ComponentProps<typeof Primitive.Content>) {
+/** Fits the space left on screen and scrolls when its items don't fit. */
+export function DropdownMenuContent({
+  className,
+  sideOffset = 6,
+  collisionPadding = 8,
+  ...props
+}: ComponentProps<typeof Primitive.Content>) {
   return (
     <Primitive.Portal>
       <Primitive.Content
         sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
         className={cn(
-          "popover-motion z-50 min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
+          "popover-motion z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-48 origin-(--radix-dropdown-menu-content-transform-origin) overflow-y-auto overscroll-contain rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
           className,
         )}
         {...props}
