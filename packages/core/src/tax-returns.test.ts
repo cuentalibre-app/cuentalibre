@@ -147,6 +147,21 @@ describe("model303", () => {
     expect(r.boxes).toMatchObject({ "28": eur(50), "29": eur(10.5) });
   });
 
+  it("leaves purchases without VAT out of the deduction bases", () => {
+    const r = model303(
+      books({
+        purchases: [
+          purchase("2026-07-12", eur(100)),
+          purchase("2026-07-13", eur(21.78), { vatBreakdown: [{ rate: 0, base: eur(21.78), vat: cents(0) }] }),
+        ],
+      }),
+      2026,
+      3,
+    );
+    expect(r.boxes).toMatchObject({ "28": eur(100), "29": eur(21) });
+    expect(r.unmappedBase).toBe(0);
+  });
+
   it("reports rectifying invoices and credit notes as modifications", () => {
     const r = model303(
       books({
@@ -276,6 +291,15 @@ describe("model390", () => {
     });
     expect(r.boxes).toMatchObject({ "64": eur(37.8), "65": eur(189), "86": eur(189) });
     expect(r.boxes).toMatchObject({ "99": eur(1_000), "103": eur(4_000), "108": eur(5_000) });
+  });
+
+  it("leaves purchases without VAT out of the deduction bases", () => {
+    const b = books({
+      purchases: [purchase("2026-03-01", eur(50), { vatBreakdown: [{ rate: 0, base: eur(50), vat: cents(0) }] })],
+    });
+    const r = model390(b, 2026);
+    expect(r.boxes["605"] ?? 0).toBe(0);
+    expect(r.unmappedBase).toBe(0);
   });
 
   it("takes the quarterly results and what was pending when the year started", () => {
