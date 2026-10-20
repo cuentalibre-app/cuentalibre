@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { cents, hexColor, id } from "./common";
 import { catalogSettingsSchema, type CatalogSettings } from "./catalog";
-import { customInvoiceSeriesSchema, noteTemplateSchema, salesKindSchema } from "./sales";
+import {
+  invoiceSeriesList,
+  invoiceSeriesSchema,
+  noteTemplateSchema,
+  salesKindSchema,
+  storedInvoiceSeriesSchema,
+} from "./sales";
 import {
   businessProfileSchema,
   ledgerAccountKeySchema,
@@ -51,24 +57,42 @@ export const documentLookSchema = z.object({
 });
 export type DocumentLook = z.infer<typeof documentLookSchema>;
 
-export const invoiceSettingsSchema = documentLookSchema.extend({
-  showProductUnits: z.boolean(),
-  hideZeroTaxes: z.boolean(),
-  hideWatermark: z.boolean(),
-  showServicePeriod: z.boolean(),
-  showOperationDate: z.boolean(),
-  /** Fixed text printed on the side of every invoice (registry details, GDPR…). */
-  footer: z.string(),
-  /** Link in the footer so the recipient can import the invoice. */
-  allowImport: z.boolean(),
-  /** Check intra-EU clients against VIES when issuing. */
-  validateVies: z.boolean(),
-  uploadToDropbox: z.boolean(),
-  uploadToDrive: z.boolean(),
-  noteTemplates: z.array(noteTemplateSchema),
-  /** Numbering series created by the organization, besides BUILT_IN_INVOICE_SERIES. Absent until one is created. */
-  series: customInvoiceSeriesSchema.optional(),
-});
+export const invoiceSettingsSchema = documentLookSchema
+  .extend({
+    showProductUnits: z.boolean(),
+    hideZeroTaxes: z.boolean(),
+    hideWatermark: z.boolean(),
+    showServicePeriod: z.boolean(),
+    showOperationDate: z.boolean(),
+    /** Fixed text printed on the side of every invoice (registry details, GDPR…). */
+    footer: z.string(),
+    /** Link in the footer so the recipient can import the invoice. */
+    allowImport: z.boolean(),
+    /** Check intra-EU clients against VIES when issuing. */
+    validateVies: z.boolean(),
+    uploadToDropbox: z.boolean(),
+    uploadToDrive: z.boolean(),
+    noteTemplates: z.array(noteTemplateSchema),
+    /**
+     * Numbering series created by the organization, and the built-in ones it
+     * changed (see BUILT_IN_INVOICE_SERIES). Absent until there is one.
+     */
+    series: storedInvoiceSeriesSchema.optional(),
+    /** Series of new invoices of each type; absent means the built-in one. */
+    defaultSeries: z.partialRecord(invoiceSeriesSchema, z.string()).optional(),
+  })
+  .superRefine((settings, ctx) => {
+    const all = invoiceSeriesList(settings.series);
+    for (const [type, seriesId] of Object.entries(settings.defaultSeries ?? {})) {
+      const series = all.find((s) => s.id === seriesId);
+      if (!series || series.type !== type || series.active === false)
+        ctx.addIssue({
+          code: "custom",
+          path: ["defaultSeries", type],
+          message: `The default ${type} series must be an active ${type} series.`,
+        });
+    }
+  });
 export type InvoiceSettings = z.infer<typeof invoiceSettingsSchema>;
 
 export const documentKindSchema = salesKindSchema.exclude(["invoice"]);

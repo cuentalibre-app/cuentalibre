@@ -176,15 +176,15 @@ const MASK_LITERAL = /^[A-Za-z/._-]+$/;
 /** What makes a series mask unusable, or null when it is valid. */
 export type SeriesMaskProblem = "year" | "counter" | "characters";
 
+type MaskPart = string | { year: 2 | 4 } | { counter: number };
+
 /**
- * Parts of a series mask: AAAA is the year, a run of # the counter with its
- * width, and anything else is printed as is ("AAAA-B-####" → "2026-B-0001").
+ * Parts of a series mask: AAAA is the year, AA its last two digits, a run of #
+ * the counter with its width, and anything else is printed as is
+ * ("AAAA-B-####" → "2026-B-0001", "F-AA-###" → "F-26-001").
  */
-function maskParts(mask: string): {
-  parts: (string | { year: true } | { counter: number })[];
-  problem: SeriesMaskProblem | null;
-} {
-  const parts: (string | { year: true } | { counter: number })[] = [];
+function maskParts(mask: string): { parts: MaskPart[]; problem: SeriesMaskProblem | null } {
+  const parts: MaskPart[] = [];
   let years = 0;
   let counters = 0;
   let badLiteral = false;
@@ -192,10 +192,10 @@ function maskParts(mask: string): {
     if (run[0] === "#") {
       counters++;
       parts.push({ counter: run.length });
-    } else if (run[0] === "A" && run.length >= 4) {
-      // Exactly AAAA is the year; a longer run of A's can't be read either way
-      years += run.length === 4 ? 1 : 2;
-      parts.push({ year: true });
+    } else if (run[0] === "A" && run.length > 1) {
+      // AAAA or AA is the year; other runs of A's can't be read either way
+      years += run.length === 4 || run.length === 2 ? 1 : 2;
+      parts.push({ year: run.length === 2 ? 2 : 4 });
     } else {
       if (!MASK_LITERAL.test(run)) badLiteral = true;
       parts.push(run);
@@ -207,8 +207,8 @@ function maskParts(mask: string): {
 }
 
 /**
- * Whether a series mask can number invoices: it holds the year (AAAA) once,
- * one counter (####), and only letters and the separators - / . _ besides.
+ * Whether a series mask can number invoices: it holds the year (AAAA or AA)
+ * once, one counter (####), and only letters and the separators - / . _ besides.
  */
 export function seriesMaskProblem(mask: string): SeriesMaskProblem | null {
   return maskParts(mask).problem;
@@ -228,25 +228,36 @@ const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\/-]/g, "\\
 export function parseSeriesNumber(mask: string, number: string): { year: number; counter: number } | null {
   const { parts, problem } = maskParts(mask);
   if (problem) return null;
+  let yearDigits = 4;
   const groups: ("year" | "counter")[] = [];
   const source = parts
     .map((part) => {
       if (typeof part === "string") return escapeRegExp(part);
-      groups.push("year" in part ? "year" : "counter");
-      return "year" in part ? "(\\d{4})" : "(\\d+)";
+      if ("counter" in part) {
+        groups.push("counter");
+        return "(\\d+)";
+      }
+      groups.push("year");
+      yearDigits = part.year;
+      return `(\\d{${part.year}})`;
     })
     .join("");
   const match = new RegExp(`^${source}$`).exec(number);
   if (!match) return null;
   const value = (group: "year" | "counter") => Number(match[groups.indexOf(group) + 1]);
-  return { year: value("year"), counter: value("counter") };
+  // Two-digit years are of this century
+  return { year: value("year") + (yearDigits === 2 ? 2000 : 0), counter: value("counter") };
 }
 
 /** The number `counter` of `year` in a series: ("AAAA-B-####", 2026, 1) → "2026-B-0001". */
 export function formatSeriesNumber(mask: string, year: number, counter: number): string {
   return maskParts(mask)
     .parts.map((part) =>
-      typeof part === "string" ? part : "year" in part ? String(year) : String(counter).padStart(part.counter, "0"),
+      typeof part === "string"
+        ? part
+        : "year" in part
+          ? String(year).slice(-part.year).padStart(part.year, "0")
+          : String(counter).padStart(part.counter, "0"),
     )
     .join("");
 }

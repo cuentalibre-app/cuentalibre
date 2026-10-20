@@ -22,8 +22,10 @@ import {
   type WithholdingKind,
 } from "@fiscalia/core";
 import {
-  BUILT_IN_INVOICE_SERIES,
+  invoiceSeriesList as allInvoiceSeries,
   invoiceSeriesOf,
+  isBuiltInSeries,
+  type InvoiceSeries,
   type Contact,
   type IncomeType,
   type InvoiceSeriesDefinition,
@@ -212,26 +214,41 @@ export type SeriesRef = Pick<SalesDocument, "series" | "seriesId">;
 
 /** Every invoice series: the built-in ones, then those created in the settings. */
 export function invoiceSeriesList(
-  custom: readonly InvoiceSeriesDefinition[] = invoiceSettingsStore.get().series ?? [],
+  stored: readonly InvoiceSeriesDefinition[] | undefined = invoiceSettingsStore.get().series,
 ): InvoiceSeriesDefinition[] {
-  return [...BUILT_IN_INVOICE_SERIES, ...custom];
+  return allInvoiceSeries(stored);
 }
 
 /** The series of a document; the server keeps a series in use from being removed, so it's always there. */
 export function seriesOf(ref: SeriesRef): InvoiceSeriesDefinition {
-  return invoiceSeriesOf(ref, invoiceSettingsStore.get().series ?? []) ?? invoiceSeriesOf({ series: ref.series }, [])!;
+  return invoiceSeriesOf(ref, invoiceSettingsStore.get().series) ?? invoiceSeriesOf({ series: ref.series })!;
+}
+
+/** The series new invoices of a type are numbered in. */
+export function defaultSeries(type: InvoiceSeries): InvoiceSeriesDefinition {
+  const { series, defaultSeries } = invoiceSettingsStore.get();
+  return (
+    invoiceSeriesOf({ series: type, seriesId: defaultSeries?.[type] }, series) ?? invoiceSeriesOf({ series: type })!
+  );
+}
+
+/** Invoices and drafts numbered in a series: they keep it from being removed or changing its mask. */
+export function seriesUsage(series: InvoiceSeriesDefinition, docs: SalesDocument[]): number {
+  return docs.filter((d) => (d.kind === "invoice" || d.kind === "draft") && (d.seriesId ?? d.series) === series.id)
+    .length;
 }
 
 /** How a document names its series, built-in series by their type and custom ones by their id. */
 export function seriesRefOf(series: InvoiceSeriesDefinition): SeriesRef {
-  const builtIn = BUILT_IN_INVOICE_SERIES.some((s) => s.id === series.id);
-  return { series: series.type, seriesId: builtIn ? undefined : series.id };
+  return { series: series.type, seriesId: isBuiltInSeries(series.id) ? undefined : series.id };
 }
 
-/** The series of a select, grouped by type, with the value each option stands for. */
-export function seriesGroups(list: InvoiceSeriesDefinition[]): OptionGroup[] {
+/** The active series of a select, and `current` even if it's inactive, grouped by type. */
+export function seriesGroups(list: InvoiceSeriesDefinition[], current?: string): OptionGroup[] {
   const options = (type: InvoiceSeriesDefinition["type"]) =>
-    list.filter((s) => s.type === type).map((s) => ({ value: s.id, label: s.name }));
+    list
+      .filter((s) => s.type === type && (s.active !== false || s.id === current))
+      .map((s) => ({ value: s.id, label: s.active === false ? `${s.name} (inactiva)` : s.name }));
   return [
     { label: "Series normales", options: options("normal") },
     { label: "Series rectificativas", options: options("rectifying") },

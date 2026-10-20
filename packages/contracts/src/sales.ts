@@ -19,42 +19,61 @@ export const invoiceSeriesSchema = z.enum(["normal", "rectifying"]);
 export type InvoiceSeries = z.infer<typeof invoiceSeriesSchema>;
 
 /**
- * A numbering series of invoices. The mask writes the year as AAAA and the
- * counter as a run of # as wide as it is: "AAAA-B-####" → "2026-B-0001".
+ * A numbering series of invoices. The mask writes the year as AAAA (or AA)
+ * and the counter as a run of # as wide as it is: "AAAA-B-####" → "2026-B-0001".
  */
 export const invoiceSeriesDefinitionSchema = z.object({
   id,
   type: invoiceSeriesSchema,
   name: z.string().trim().min(1),
   mask: z.string().refine((mask) => seriesMaskProblem(mask) === null, "Not a valid series mask."),
+  /** An inactive series takes no new invoices. Absent means active. */
+  active: z.boolean().optional(),
 });
 export type InvoiceSeriesDefinition = z.infer<typeof invoiceSeriesDefinitionSchema>;
 
-/** Series every organization has, which aren't stored; their ids are the series types. */
+/**
+ * Series every organization has; their ids are the series types, and
+ * documents without a `seriesId` are numbered in them. They can be renamed,
+ * given another mask or deactivated (stored under their id), but not removed.
+ */
 export const BUILT_IN_INVOICE_SERIES: readonly InvoiceSeriesDefinition[] = [
   { id: "normal", type: "normal", name: "Facturas normales", mask: "AAAA-####" },
   { id: "rectifying", type: "rectifying", name: "Facturas rectificativas", mask: "R-AAAA-####" },
 ];
 
-/** Series created by the organization: ids are unique, and no two series (built-in ones included) share a format. */
-export const customInvoiceSeriesSchema = z.array(invoiceSeriesDefinitionSchema).superRefine((list, ctx) => {
+export const isBuiltInSeries = (seriesId: string) => BUILT_IN_INVOICE_SERIES.some((s) => s.id === seriesId);
+
+/** Every series of an organization from the stored ones: the built-in series, as changed, then the created ones. */
+export function invoiceSeriesList(stored: readonly InvoiceSeriesDefinition[] = []): InvoiceSeriesDefinition[] {
+  return [
+    ...BUILT_IN_INVOICE_SERIES.map((builtIn) => stored.find((s) => s.id === builtIn.id) ?? builtIn),
+    ...stored.filter((s) => !isBuiltInSeries(s.id)),
+  ];
+}
+
+/** Stored series: ids are unique, built-in ones keep their type, and no two series share a format. */
+export const storedInvoiceSeriesSchema = z.array(invoiceSeriesDefinitionSchema).superRefine((list, ctx) => {
   list.forEach((series, i) => {
-    const before = [...BUILT_IN_INVOICE_SERIES, ...list.slice(0, i)];
-    if (before.some((other) => other.id === series.id))
+    if (list.slice(0, i).some((other) => other.id === series.id))
       ctx.addIssue({ code: "custom", path: [i, "id"], message: "Duplicate series id." });
-    if (before.some((other) => sameSeriesFormat(other.mask, series.mask)))
-      ctx.addIssue({ code: "custom", path: [i, "mask"], message: "Another series already numbers with this mask." });
+    const builtIn = BUILT_IN_INVOICE_SERIES.find((s) => s.id === series.id);
+    if (builtIn && builtIn.type !== series.type)
+      ctx.addIssue({ code: "custom", path: [i, "type"], message: "A built-in series keeps its type." });
+  });
+  const all = invoiceSeriesList(list);
+  all.forEach((series, i) => {
+    if (all.slice(0, i).some((other) => sameSeriesFormat(other.mask, series.mask)))
+      ctx.addIssue({ code: "custom", path: [], message: `Another series already numbers with ${series.mask}.` });
   });
 });
 
-/** The series a document is numbered in: its custom series, or the built-in one of its type. */
+/** The series a document is numbered in: its own `seriesId`, or the built-in one of its type. */
 export function invoiceSeriesOf(
   doc: { series: InvoiceSeries; seriesId?: string },
-  custom: readonly InvoiceSeriesDefinition[],
+  stored: readonly InvoiceSeriesDefinition[] = [],
 ): InvoiceSeriesDefinition | undefined {
-  return doc.seriesId === undefined
-    ? BUILT_IN_INVOICE_SERIES.find((series) => series.id === doc.series)
-    : custom.find((series) => series.id === doc.seriesId);
+  return invoiceSeriesList(stored).find((series) => series.id === (doc.seriesId ?? doc.series));
 }
 
 /** Income account in the Spanish chart of accounts (PGC), group 7. */

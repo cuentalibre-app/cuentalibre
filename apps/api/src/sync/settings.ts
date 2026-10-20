@@ -1,11 +1,13 @@
 import {
   DEFAULT_ORGANIZATION_SETTINGS,
+  invoiceSeriesList,
+  isBuiltInSeries,
   organizationSettingsSchema,
   type InvoiceSettings,
   type OrganizationSettings,
   type SettingsSection,
 } from "@fiscalia/contracts";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { organizationSetting, paymentMethod, salesDocument } from "../db/schema";
 import { ApiError } from "../errors";
@@ -36,27 +38,32 @@ async function checkPaymentMethod(tx: Tx, organizationId: string, id: string) {
 }
 
 /**
- * A series that numbers documents keeps its type and mask, or their numbers
- * would no longer follow it; it can only be renamed.
+ * A series that numbers invoices or drafts keeps its type and mask, or their
+ * numbers would no longer follow it: it can be renamed or deactivated, but not
+ * removed. Built-in series number the documents without a `seriesId`.
  */
 async function checkUsedSeries(tx: Tx, organizationId: string, next: InvoiceSettings) {
   const { invoiceSettings } = await readSettings(tx, organizationId);
-  const changed = (invoiceSettings.series ?? []).filter((before) => {
-    const after = next.series?.find((series) => series.id === before.id);
-    return !after || after.type !== before.type || after.mask !== before.mask;
+  const after = invoiceSeriesList(next.series);
+  const changed = invoiceSeriesList(invoiceSettings.series).filter((before) => {
+    const now = after.find((series) => series.id === before.id);
+    return !now || now.type !== before.type || now.mask !== before.mask;
   });
   if (changed.length === 0) return;
+  const custom = changed.filter((series) => !isBuiltInSeries(series.id)).map((series) => series.id);
+  const builtIn = changed.filter((series) => isBuiltInSeries(series.id)).map((series) => series.type);
   const [used] = await tx
-    .select({ seriesId: salesDocument.seriesId })
+    .select({ id: salesDocument.id })
     .from(salesDocument)
     .where(
       and(
         eq(salesDocument.organizationId, organizationId),
-        inArray(
-          salesDocument.seriesId,
-          changed.map((series) => series.id),
-        ),
         isNull(salesDocument.deletedAt),
+        inArray(salesDocument.kind, ["invoice", "draft"]),
+        or(
+          custom.length > 0 ? inArray(salesDocument.seriesId, custom) : undefined,
+          builtIn.length > 0 ? and(isNull(salesDocument.seriesId), inArray(salesDocument.series, builtIn)) : undefined,
+        ),
       ),
     )
     .limit(1);
@@ -64,7 +71,7 @@ async function checkUsedSeries(tx: Tx, organizationId: string, next: InvoiceSett
     throw new ApiError(
       409,
       "series_in_use",
-      "A series that numbers documents can't be removed or change its type or mask.",
+      "A series that numbers invoices or drafts can't be removed or change its type or mask.",
     );
 }
 

@@ -80,12 +80,14 @@ import {
   RENTAL_LOCATIONS,
   WITHHOLDING_GROUPS,
   clientOf,
+  defaultSeries,
   groupLinesByTax,
   invoiceSeriesList,
   laterInvoice,
   nextNumber,
   periodKeyOf,
   seriesGroups,
+  seriesOf,
   seriesRefOf,
   type SeriesRef,
 } from "./sales-model";
@@ -136,13 +138,30 @@ type Errors = Partial<Record<"clientId" | "number" | "rectifiesId" | "issuedOn" 
 /** What happens after saving, from the create button's menu. */
 type AfterSave = "list" | "edit" | "send" | "receipt";
 
+/**
+ * Invoices and drafts keep the series they have; a new one, a rectifying one,
+ * and a copy or a draft in an inactive series take the default series of
+ * their type. The other kinds have a single series of their own.
+ */
+function initialSeries(kind: SalesKind, base: SalesDocument | undefined, isCopy: boolean, rectify: boolean): SeriesRef {
+  if (kind !== "invoice" && kind !== "draft") return { series: "normal" };
+  if (rectify) return seriesRefOf(defaultSeries("rectifying"));
+  if (base && (base.kind === "invoice" || base.kind === "draft")) {
+    const own = seriesOf(base);
+    // Drafts don't show their series, so they can't stay in one deactivated since
+    return (isCopy || base.kind === "draft") && own.active === false
+      ? seriesRefOf(defaultSeries(own.type))
+      : seriesRefOf(own);
+  }
+  return seriesRefOf(defaultSeries("normal"));
+}
+
 /** The form starts from an existing document (edit), a source to copy (duplicate, rectify, convert) or blank. */
 function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: boolean, rectify: boolean): FormState {
   const today = toIsoDate(new Date());
   const issuedOn = isCopy || !base ? today : base.issuedOn;
   // Only invoices have rectifying series; the other kinds have a single series of their own
-  const series: InvoiceSeries = rectify ? "rectifying" : kind === "invoice" ? (base?.series ?? "normal") : "normal";
-  const seriesId = !rectify && kind === "invoice" ? base?.seriesId : undefined;
+  const { series, seriesId } = initialSeries(kind, base, isCopy, rectify);
   const dueOn = KINDS[kind].dueLabel === null ? null : isCopy || !base ? addDays(issuedOn, 30) : base.dueOn;
   // Invoicing a delivery note copies its lines or, if the settings say so, one line per tax rate
   const groupedOnInvoice =
@@ -261,7 +280,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   const [creatingClient, setCreatingClient] = useState(false);
   const [creatingMethod, setCreatingMethod] = useState(false);
   const [creatingSeries, setCreatingSeries] = useState(false);
-  const customSeries = useInvoiceSettings().series;
+  const storedSeries = useInvoiceSettings().series;
   /** The document just saved to be sent, and where to go after. */
   const [sending, setSending] = useState<{ doc: SalesDocument; next: string } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
@@ -349,7 +368,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     // "Crear nueva serie" opens its dialog in place, so nothing typed is lost
     if (value === NEW_SERIES) setCreatingSeries(true);
     else if (!isInvoice) set("series", value as InvoiceSeries);
-    else pickSeries(invoiceSeriesList(customSeries).find((s) => s.id === value)!);
+    else pickSeries(invoiceSeriesList(storedSeries).find((s) => s.id === value)!);
   };
 
   const changeOperationType = (operationType: OperationType) => {
@@ -688,12 +707,12 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                 {(p) => (
                   <GroupedSelect
                     {...p}
-                    value={form.seriesId ?? form.series}
+                    value={isInvoice ? (form.seriesId ?? form.series) : "normal"}
                     onChange={changeSeries}
                     groups={
                       isInvoice
                         ? [
-                            ...seriesGroups(invoiceSeriesList(customSeries)),
+                            ...seriesGroups(invoiceSeriesList(storedSeries), form.seriesId ?? form.series),
                             { label: "Opciones", options: [{ value: NEW_SERIES, label: "Crear nueva serie" }] },
                           ]
                         : [{ options: [{ value: "normal", label: config.seriesLabel }] }]
