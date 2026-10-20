@@ -1,4 +1,4 @@
-import { applyRate, cents, type Cents } from "./money";
+import { cents, type Cents } from "./money";
 import { periodMonths, type Period } from "./period";
 
 /** General Spanish VAT rate. */
@@ -6,12 +6,6 @@ export const GENERAL_VAT_RATE = 0.21;
 
 /** Rate applied to cumulative net income in form 130 (direct estimation). */
 export const IRPF_INSTALLMENT_RATE = 0.2;
-
-/**
- * Flat rate used for the "how much is yours" estimate. Real IRPF is
- * progressive and settled yearly (form 100); this is only a rough guide.
- */
-export const ROUGH_INCOME_TAX_RATE = 0.2;
 
 /** Bookkeeping totals for one month, before VAT. */
 export interface MonthTotals {
@@ -54,11 +48,4 @@ export function sumTotals(months: (MonthTotals | null | undefined)[]): MonthTota
 
 export function periodTotals(year: YearTotals, period: Period): MonthTotals {
   return sumTotals(periodMonths(period).map((m) => year[m]));
-}
-
-/** Rough split of what was invoiced (before VAT) into take-home, income tax and expenses. */
-export function takeHomeEstimate(totals: MonthTotals) {
-  const profit = cents(totals.income - totals.expenses);
-  const incomeTax = applyRate(cents(Math.max(0, profit)), ROUGH_INCOME_TAX_RATE);
-  return { profit, incomeTax, takeHome: cents(profit - incomeTax) };
 }
