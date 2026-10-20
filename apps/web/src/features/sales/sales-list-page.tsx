@@ -548,7 +548,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   } satisfies Record<string, Action>;
 
   const issueDraft = () => {
-    const later = laterInvoice(doc.series, doc.issuedOn, salesStore.all());
+    const later = laterInvoice(doc, doc.issuedOn, salesStore.all());
     if (later) {
       window.alert(
         `No se puede emitir: la factura ${later.number} de esta serie es del ${formatDate(later.issuedOn)} y este borrador tiene una fecha anterior. Cambia su fecha antes de emitirlo.`,
@@ -559,7 +559,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       ...doc,
       kind: "invoice",
       status: "pending",
-      number: nextNumber("invoice", doc.series, doc.issuedOn, salesStore.all()),
+      number: nextNumber("invoice", doc, doc.issuedOn, salesStore.all()),
     });
     navigate(`${KINDS.invoice.path}?periodo=${periodKeyOf(doc.issuedOn)}`);
   };

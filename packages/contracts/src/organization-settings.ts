@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { cents, hexColor, id } from "./common";
 import { catalogSettingsSchema, type CatalogSettings } from "./catalog";
-import { noteTemplateSchema, salesKindSchema } from "./sales";
+import { customInvoiceSeriesSchema, noteTemplateSchema, salesKindSchema } from "./sales";
 import {
   businessProfileSchema,
   ledgerAccountKeySchema,
@@ -66,6 +66,8 @@ export const invoiceSettingsSchema = documentLookSchema.extend({
   uploadToDropbox: z.boolean(),
   uploadToDrive: z.boolean(),
   noteTemplates: z.array(noteTemplateSchema),
+  /** Numbering series created by the organization, besides BUILT_IN_INVOICE_SERIES. Absent until one is created. */
+  series: customInvoiceSeriesSchema.optional(),
 });
 export type InvoiceSettings = z.infer<typeof invoiceSettingsSchema>;
 

@@ -12,6 +12,7 @@ import {
   normalizeTaxId,
   operationChargesVat,
   parseAmount,
+  parseSeriesNumber,
   parseDate,
   parsePercent,
   paymentStatus,
@@ -44,7 +45,14 @@ import { EXPENSES_PATH, expenseIdentity } from "@/features/purchases/expenses-mo
 import { expensesStore } from "@/features/purchases/expenses-store";
 import { EXPENSE_TYPE_GROUPS, PURCHASES_PATH, PURCHASE_OPERATION_TYPES } from "@/features/purchases/purchases-model";
 import { purchasesStore } from "@/features/purchases/purchases-store";
-import { INCOME_TYPE_GROUPS, KINDS, OPERATION_TYPES, documentTotals } from "@/features/sales/sales-model";
+import {
+  INCOME_TYPE_GROUPS,
+  KINDS,
+  OPERATION_TYPES,
+  documentTotals,
+  invoiceSeriesList,
+  seriesRefOf,
+} from "@/features/sales/sales-model";
 import { salesStore } from "@/features/sales/sales-store";
 import { METHOD_TYPES, defaultPaymentMethodId } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
@@ -464,7 +472,14 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
       const issuedOn = requiredDate(at("Fecha factura"), "fecha de la factura", errors);
       const dueOn = optionalDate(at("Fecha vencimiento"), "Fecha de vencimiento", errors);
       const operationOn = optionalDate(at("Fecha operación"), "Fecha de operación", errors);
-      const rectifying = norm(at("Serie")).includes("rectificativa");
+      // A series of the settings by its name; otherwise the built-in series that the name suggests
+      const named = invoiceSeriesList().find((series) => norm(series.name) === norm(at("Serie")));
+      const rectifying = named ? named.type === "rectifying" : norm(at("Serie")).includes("rectificativa");
+      const seriesRef = named
+        ? seriesRefOf(named)
+        : { series: rectifying ? ("rectifying" as const) : ("normal" as const) };
+      if (named && seriesRef.seriesId && number && !parseSeriesNumber(named.mask, number))
+        errors.push(`El número ${number} no sigue la máscara ${named.mask} de la serie «${named.name}».`);
       const operationType: OperationType | null = at("Tipo operación")
         ? operationFor(at("Tipo operación"), OPERATION_TYPES)
         : "national";
@@ -540,7 +555,7 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         id: newId(),
         kind: "invoice",
         number,
-        series: rectifying ? "rectifying" : "normal",
+        ...seriesRef,
         clientId: client?.id ?? "",
         issuedOn,
         dueOn,

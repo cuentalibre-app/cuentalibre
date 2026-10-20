@@ -1,0 +1,1 @@
+ALTER TABLE "sales_document" ADD COLUMN "series_id" uuid;

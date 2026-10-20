@@ -1,10 +1,15 @@
-import { storedSalesDocumentSchema, type IssuedSnapshot, type VerifactuRecordInfo } from "@fiscalia/contracts";
 import {
-  INVOICE_SERIES_PREFIX,
+  invoiceSeriesOf,
+  storedSalesDocumentSchema,
+  type IssuedSnapshot,
+  type VerifactuRecordInfo,
+} from "@fiscalia/contracts";
+import {
   WITHHOLDING_RATES,
   invoiceTotals,
   laterInvoiceInSeries,
   nextInvoiceNumber,
+  parseSeriesNumber,
   paymentStatus,
   type Cents,
   type VerifactuEnvironment,
@@ -326,15 +331,23 @@ export async function issueInvoice(
   await checkQuarterOpen(tx, organizationId, record.issuedOn);
   await checkRectified(tx, organizationId, record, number !== undefined);
 
+  const settings = await readSettings(tx, organizationId);
+  const series = invoiceSeriesOf(record, settings.invoiceSettings.series ?? []);
+  if (!series) invalid("seriesId: no such series in the invoice settings.");
+  if (series.type !== record.series) invalid(`seriesId: ${series.name} isn't a series of ${record.series} invoices.`);
+
   const issued = await issuedInvoices(tx, organizationId);
   if (number !== undefined) {
-    // Rectifying numbers carry their prefix; anything else belongs to the normal series
-    const series = number.startsWith(INVOICE_SERIES_PREFIX.rectifying) ? "rectifying" : "normal";
-    if (series !== record.series) invalid(`number: ${number} isn't a number of the ${record.series} series.`);
+    // Imported numbers of a custom series follow its mask; the built-in series only tell rectifying ones by "R-"
+    const fits =
+      record.seriesId !== undefined
+        ? parseSeriesNumber(series.mask, number) !== null
+        : number.startsWith("R-") === (record.series === "rectifying");
+    if (!fits) invalid(`number: ${number} isn't a number of the ${series.name} series.`);
     if (issued.some((invoice) => invoice.number === number))
       throw new ApiError(409, "number_taken", `Invoice ${number} already exists.`);
   } else {
-    const later = laterInvoiceInSeries(record.series, record.issuedOn, issued);
+    const later = laterInvoiceInSeries(series.mask, record.issuedOn, issued);
     if (later)
       throw new ApiError(
         409,
@@ -346,7 +359,7 @@ export async function issueInvoice(
   const invoice = {
     ...record,
     kind: "invoice" as const,
-    number: number ?? nextInvoiceNumber(record.series, record.issuedOn, issued),
+    number: number ?? nextInvoiceNumber(series.mask, record.issuedOn, issued),
   };
   const values = { ...toColumns(invoice), organizationId, issuedAt: new Date() };
   if (existing)
@@ -388,7 +401,6 @@ export async function issueInvoice(
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, invoice.id)));
 
   // Invoices issued elsewhere and imported were recorded by the software that issued them
-  const settings = await readSettings(tx, organizationId);
   if (number === undefined && usesVerifactu(settings, invoice.issuedOn))
     await registerInvoice(
       tx,
@@ -425,7 +437,7 @@ async function checkRectified(tx: Tx, organizationId: string, record: StoredSale
 /** Invoices that aren't deleted: a deleted invoice frees its number for the next one. */
 async function issuedInvoices(tx: Tx, organizationId: string) {
   const rows = await tx
-    .select({ number: salesDocument.number, series: salesDocument.series, issuedOn: salesDocument.issuedOn })
+    .select({ number: salesDocument.number, issuedOn: salesDocument.issuedOn })
     .from(salesDocument)
     .where(
       and(

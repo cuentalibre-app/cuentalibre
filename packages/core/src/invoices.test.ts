@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addDays,
+  formatSeriesNumber,
   invoiceTotals,
   isOverdue,
   isSupportedDate,
@@ -9,6 +10,9 @@ import {
   nextDocumentNumber,
   nextInvoiceNumber,
   operationChargesVat,
+  parseSeriesNumber,
+  sameSeriesFormat,
+  seriesMaskProblem,
   type InvoiceLine,
 } from "./invoices";
 import { cents } from "./money";
@@ -109,34 +113,75 @@ describe("nextDocumentNumber", () => {
   });
 });
 
+describe("seriesMaskProblem", () => {
+  it("accepts the year once, one counter and letters or separators", () => {
+    expect(seriesMaskProblem("AAAA-####")).toBeNull();
+    expect(seriesMaskProblem("FRA/AAAA/B-###")).toBeNull();
+    expect(seriesMaskProblem("A-AAAA-####")).toBeNull();
+  });
+
+  it("names what is wrong", () => {
+    expect(seriesMaskProblem("B-####")).toBe("year");
+    expect(seriesMaskProblem("AAAAA-####")).toBe("year");
+    expect(seriesMaskProblem("AAAA-AAAA-####")).toBe("year");
+    expect(seriesMaskProblem("AAAA-B")).toBe("counter");
+    expect(seriesMaskProblem("AAAA-##-##")).toBe("counter");
+    expect(seriesMaskProblem("AAAA-2-####")).toBe("characters");
+    expect(seriesMaskProblem("AAAA B ####")).toBe("characters");
+  });
+});
+
+describe("series numbers", () => {
+  it("writes and reads numbers with the mask", () => {
+    expect(formatSeriesNumber("AAAA-B-####", 2026, 1)).toBe("2026-B-0001");
+    expect(formatSeriesNumber("R-AAAA-##", 2026, 123)).toBe("R-2026-123");
+    expect(parseSeriesNumber("AAAA-B-####", "2026-B-0012")).toEqual({ year: 2026, counter: 12 });
+    expect(parseSeriesNumber("AAAA####", "202600012")).toEqual({ year: 2026, counter: 12 });
+    expect(parseSeriesNumber("AAAA-####", "2026-B-0012")).toBeNull();
+    expect(parseSeriesNumber("AAAA-####", "R-2026-0012")).toBeNull();
+  });
+
+  it("tells masks that number the same invoices", () => {
+    expect(sameSeriesFormat("AAAA-B-####", "AAAA-B-##")).toBe(true);
+    expect(sameSeriesFormat("AAAA-B-####", "AAAA-####")).toBe(false);
+  });
+});
+
 describe("nextInvoiceNumber", () => {
   const issued = [
-    { number: "2026-0046", series: "normal", issuedOn: "2026-10-02" },
-    { number: "R-2026-0001", series: "rectifying", issuedOn: "2026-10-05" },
-  ] as const;
+    { number: "2026-0046", issuedOn: "2026-10-02" },
+    { number: "R-2026-0001", issuedOn: "2026-10-05" },
+    { number: "2026-B-0003", issuedOn: "2026-10-06" },
+  ];
 
   it("numbers each series apart, by the year of the date", () => {
-    expect(nextInvoiceNumber("normal", "2026-10-18", [...issued])).toBe("2026-0047");
-    expect(nextInvoiceNumber("rectifying", "2026-10-18", [...issued])).toBe("R-2026-0002");
-    expect(nextInvoiceNumber("normal", "2027-01-02", [...issued])).toBe("2027-0001");
+    expect(nextInvoiceNumber("AAAA-####", "2026-10-18", issued)).toBe("2026-0047");
+    expect(nextInvoiceNumber("R-AAAA-####", "2026-10-18", issued)).toBe("R-2026-0002");
+    expect(nextInvoiceNumber("AAAA-####", "2027-01-02", issued)).toBe("2027-0001");
+  });
+
+  it("goes on from the invoices already written with the mask", () => {
+    expect(nextInvoiceNumber("AAAA-B-####", "2026-10-18", issued)).toBe("2026-B-0004");
+    expect(nextInvoiceNumber("AAAA-C-##", "2026-10-18", issued)).toBe("2026-C-01");
   });
 });
 
 describe("laterInvoiceInSeries", () => {
   const issued = [
-    { number: "2026-0046", series: "normal", issuedOn: "2026-10-02" },
-    { number: "2026-0047", series: "normal", issuedOn: "2026-10-09" },
-    { number: "R-2026-0001", series: "rectifying", issuedOn: "2026-10-20" },
-  ] as const;
+    { number: "2026-0046", issuedOn: "2026-10-02" },
+    { number: "2026-0047", issuedOn: "2026-10-09" },
+    { number: "R-2026-0001", issuedOn: "2026-10-20" },
+  ];
 
   it("finds the latest invoice of the series dated after the new one", () => {
-    expect(laterInvoiceInSeries("normal", "2026-10-01", [...issued])?.number).toBe("2026-0047");
+    expect(laterInvoiceInSeries("AAAA-####", "2026-10-01", issued)?.number).toBe("2026-0047");
   });
 
   it("allows the same date or a later one, and ignores other series and years", () => {
-    expect(laterInvoiceInSeries("normal", "2026-10-09", [...issued])).toBeUndefined();
-    expect(laterInvoiceInSeries("rectifying", "2026-10-25", [...issued])).toBeUndefined();
-    expect(laterInvoiceInSeries("normal", "2025-12-31", [...issued])).toBeUndefined();
+    expect(laterInvoiceInSeries("AAAA-####", "2026-10-09", issued)).toBeUndefined();
+    expect(laterInvoiceInSeries("R-AAAA-####", "2026-10-25", issued)).toBeUndefined();
+    expect(laterInvoiceInSeries("AAAA-B-####", "2026-10-01", issued)).toBeUndefined();
+    expect(laterInvoiceInSeries("AAAA-####", "2025-12-31", issued)).toBeUndefined();
   });
 });
 

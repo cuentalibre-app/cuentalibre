@@ -279,6 +279,70 @@ describe("rectifying invoices", () => {
   });
 });
 
+describe("custom series", () => {
+  const serieB = { id: newId(), type: "normal" as const, name: "Serie B", mask: "AAAA-B-####" };
+
+  async function withSeries(user: Client, series = [serieB]) {
+    return send(user, [
+      {
+        type: "saveSettings",
+        section: "invoiceSettings",
+        data: { ...DEFAULT_ORGANIZATION_SETTINGS.invoiceSettings, series },
+      },
+    ]);
+  }
+
+  it("number their invoices with their mask, apart from the built-in series", async () => {
+    const ana = await seller();
+    expect((await withSeries(ana)).status).toBe(200);
+    await issued(ana, document(ana.norte.id));
+    const invoice = await issued(ana, document(ana.norte.id, { seriesId: serieB.id }));
+    expect(invoice).toMatchObject({ number: "2026-B-0001", seriesId: serieB.id });
+    expect((await issued(ana, document(ana.norte.id, { seriesId: serieB.id }))).number).toBe("2026-B-0002");
+    expect((await issued(ana, document(ana.norte.id))).number).toBe("2026-0002");
+  });
+
+  it("take imported numbers that follow their mask", async () => {
+    const ana = await seller();
+    await withSeries(ana);
+    expect((await issue(ana, document(ana.norte.id, { seriesId: serieB.id }), "2026-B-0007")).status).toBe(200);
+    expect((await issued(ana, document(ana.norte.id, { seriesId: serieB.id }))).number).toBe("2026-B-0008");
+    const off = await issue(ana, document(ana.norte.id, { seriesId: serieB.id }), "2026-0009");
+    expect(off.status).toBe(400);
+  });
+
+  it("must exist and match the type of the invoice", async () => {
+    const ana = await seller();
+    const unknown = await issue(ana, document(ana.norte.id, { seriesId: newId() }));
+    expect(unknown.status).toBe(400);
+    await withSeries(ana);
+    const original = await issued(ana, document(ana.norte.id));
+    const rectifying = document(ana.norte.id, { series: "rectifying", rectifiesId: original.id, seriesId: serieB.id });
+    expect((await issue(ana, rectifying)).status).toBe(400);
+  });
+
+  it("can't share the format of another series", async () => {
+    const ana = await seller();
+    const clash = { ...serieB, id: newId(), mask: "AAAA-##" };
+    const response = await withSeries(ana, [clash]);
+    expect(response.status).toBe(400);
+    expect(await errorCode(response)).toBe("invalid_settings");
+  });
+
+  it("keep their mask once they number an invoice", async () => {
+    const ana = await seller();
+    await withSeries(ana);
+    expect((await withSeries(ana, [{ ...serieB, mask: "AAAA-C-####" }])).status).toBe(200);
+    await withSeries(ana);
+    await issued(ana, document(ana.norte.id, { seriesId: serieB.id }));
+    expect((await withSeries(ana, [{ ...serieB, name: "Serie B (tienda)" }])).status).toBe(200);
+    const changed = await withSeries(ana, [{ ...serieB, mask: "AAAA-C-####" }]);
+    expect(changed.status).toBe(409);
+    expect(await errorCode(changed)).toBe("series_in_use");
+    expect((await withSeries(ana, [])).status).toBe(409);
+  });
+});
+
 describe("closed quarters", () => {
   it("lock issuing invoices dated in them until they are reopened", async () => {
     const ana = await seller();

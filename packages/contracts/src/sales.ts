@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sameSeriesFormat, seriesMaskProblem } from "@fiscalia/core";
 import { attachmentSchema, cents, id, isoDate, paymentSchema, rentalLocationSchema } from "./common";
 import { contactSchema } from "./contacts";
 import { invoiceLineSchema, invoiceTotalsSchema, operationTypeSchema, withholdingKindSchema } from "./core";
@@ -16,6 +17,45 @@ export type SalesStatus = z.infer<typeof salesStatusSchema>;
 
 export const invoiceSeriesSchema = z.enum(["normal", "rectifying"]);
 export type InvoiceSeries = z.infer<typeof invoiceSeriesSchema>;
+
+/**
+ * A numbering series of invoices. The mask writes the year as AAAA and the
+ * counter as a run of # as wide as it is: "AAAA-B-####" → "2026-B-0001".
+ */
+export const invoiceSeriesDefinitionSchema = z.object({
+  id,
+  type: invoiceSeriesSchema,
+  name: z.string().trim().min(1),
+  mask: z.string().refine((mask) => seriesMaskProblem(mask) === null, "Not a valid series mask."),
+});
+export type InvoiceSeriesDefinition = z.infer<typeof invoiceSeriesDefinitionSchema>;
+
+/** Series every organization has, which aren't stored; their ids are the series types. */
+export const BUILT_IN_INVOICE_SERIES: readonly InvoiceSeriesDefinition[] = [
+  { id: "normal", type: "normal", name: "Facturas normales", mask: "AAAA-####" },
+  { id: "rectifying", type: "rectifying", name: "Facturas rectificativas", mask: "R-AAAA-####" },
+];
+
+/** Series created by the organization: ids are unique, and no two series (built-in ones included) share a format. */
+export const customInvoiceSeriesSchema = z.array(invoiceSeriesDefinitionSchema).superRefine((list, ctx) => {
+  list.forEach((series, i) => {
+    const before = [...BUILT_IN_INVOICE_SERIES, ...list.slice(0, i)];
+    if (before.some((other) => other.id === series.id))
+      ctx.addIssue({ code: "custom", path: [i, "id"], message: "Duplicate series id." });
+    if (before.some((other) => sameSeriesFormat(other.mask, series.mask)))
+      ctx.addIssue({ code: "custom", path: [i, "mask"], message: "Another series already numbers with this mask." });
+  });
+});
+
+/** The series a document is numbered in: its custom series, or the built-in one of its type. */
+export function invoiceSeriesOf(
+  doc: { series: InvoiceSeries; seriesId?: string },
+  custom: readonly InvoiceSeriesDefinition[],
+): InvoiceSeriesDefinition | undefined {
+  return doc.seriesId === undefined
+    ? BUILT_IN_INVOICE_SERIES.find((series) => series.id === doc.series)
+    : custom.find((series) => series.id === doc.seriesId);
+}
 
 /** Income account in the Spanish chart of accounts (PGC), group 7. */
 export const incomeTypeSchema = z.enum(["700", "705", "7098", "7099", "740", "746", "747", "752", "769"]);
@@ -79,6 +119,8 @@ export const salesDocumentSchema = z.object({
   /** Drafts are numbered in their own series (BOR-); issuing one gives it an invoice number. Null on older drafts. */
   number: z.string().nullable(),
   series: invoiceSeriesSchema,
+  /** Custom series (`invoiceSettings.series`) of an invoice or draft; absent means the built-in series of `series`. */
+  seriesId: id.optional(),
   /** Empty on drafts and quotes saved without a client. */
   clientId: id.or(z.literal("")),
   issuedOn: isoDate,

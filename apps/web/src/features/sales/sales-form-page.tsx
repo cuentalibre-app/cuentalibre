@@ -27,7 +27,15 @@ import {
   type OperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
-import type { Contact, IncomeType, InvoiceSeries, RentalLocation, SalesDocument, SalesKind } from "@fiscalia/contracts";
+import type {
+  Contact,
+  IncomeType,
+  InvoiceSeries,
+  InvoiceSeriesDefinition,
+  RentalLocation,
+  SalesDocument,
+  SalesKind,
+} from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -70,14 +78,18 @@ import {
   KINDS,
   OPERATION_TYPES,
   RENTAL_LOCATIONS,
-  SERIES_GROUPS,
   WITHHOLDING_GROUPS,
   clientOf,
   groupLinesByTax,
+  invoiceSeriesList,
   laterInvoice,
   nextNumber,
   periodKeyOf,
+  seriesGroups,
+  seriesRefOf,
+  type SeriesRef,
 } from "./sales-model";
+import { SeriesDialog } from "./series-dialog";
 import { canSendEmail } from "@/data/email";
 import { SendDialog, sendWithMailClient } from "./document-dialogs";
 import { IssuedNotice } from "./issued-notice";
@@ -85,6 +97,8 @@ import { salesStore } from "./sales-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
 const SETTINGS_PATH = "/configuracion/facturas";
+/** Value of the "Crear nueva serie" entry of the series select; series ids are UUIDs or the series types. */
+const NEW_SERIES = "new";
 /** Radix Select can't hold an empty value: this stands for "no client". */
 const NO_CLIENT = "none";
 
@@ -92,6 +106,8 @@ interface FormState {
   clientId: string;
   number: string;
   series: InvoiceSeries;
+  /** Custom series of an invoice; absent for the built-in one of `series`. */
+  seriesId?: string;
   rectifiesId: string;
   issuedOn: string;
   dueOn: string | null;
@@ -126,6 +142,7 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
   const issuedOn = isCopy || !base ? today : base.issuedOn;
   // Only invoices have rectifying series; the other kinds have a single series of their own
   const series: InvoiceSeries = rectify ? "rectifying" : kind === "invoice" ? (base?.series ?? "normal") : "normal";
+  const seriesId = !rectify && kind === "invoice" ? base?.seriesId : undefined;
   const dueOn = KINDS[kind].dueLabel === null ? null : isCopy || !base ? addDays(issuedOn, 30) : base.dueOn;
   // Invoicing a delivery note copies its lines or, if the settings say so, one line per tax rate
   const groupedOnInvoice =
@@ -133,12 +150,14 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     isCopy &&
     base?.kind === "deliveryNote" &&
     !documentSettingsStore.get("deliveryNote").keepLinesOnInvoice;
-  const number = base && !isCopy && base.number ? base.number : nextNumber(kind, series, issuedOn, salesStore.all());
+  const number =
+    base && !isCopy && base.number ? base.number : nextNumber(kind, { series, seriesId }, issuedOn, salesStore.all());
 
   return {
     clientId: base?.clientId ?? "",
     number,
     series,
+    seriesId,
     rectifiesId: rectify && base ? base.id : (base?.rectifiesId ?? ""),
     issuedOn,
     dueOn,
@@ -241,6 +260,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   const clients = useContacts("client");
   const [creatingClient, setCreatingClient] = useState(false);
   const [creatingMethod, setCreatingMethod] = useState(false);
+  const [creatingSeries, setCreatingSeries] = useState(false);
+  const customSeries = useInvoiceSettings().series;
   /** The document just saved to be sent, and where to go after. */
   const [sending, setSending] = useState<{ doc: SalesDocument; next: string } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
@@ -312,22 +333,23 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     }));
   };
 
-  const suggestedNumber = (series: InvoiceSeries) =>
+  const suggestedNumber = (series: SeriesRef) =>
     nextNumber(kind, series, form.issuedOn || toIsoDate(new Date()), salesStore.all());
   // The server numbers invoices when they are issued: a new one shows the number it will most likely get
   const invoiceNumber = (asKind: SalesKind) =>
     asKind === "invoice" && !issued
-      ? nextNumber("invoice", form.series, form.issuedOn || toIsoDate(new Date()), salesStore.all())
+      ? nextNumber("invoice", form, form.issuedOn || toIsoDate(new Date()), salesStore.all())
       : null;
 
+  const pickSeries = (series: InvoiceSeriesDefinition) => {
+    const ref = seriesRefOf(series);
+    setForm((f) => ({ ...f, ...ref, number: existing ? f.number : suggestedNumber(ref) }));
+  };
   const changeSeries = (value: string) => {
-    // The "Opciones" entries lead to the series settings
-    if (value === "new" || value === "settings") {
-      navigate(`${SETTINGS_PATH}#series`);
-      return;
-    }
-    const series = value as InvoiceSeries;
-    setForm((f) => ({ ...f, series, number: existing ? f.number : suggestedNumber(series) }));
+    // "Crear nueva serie" opens its dialog in place, so nothing typed is lost
+    if (value === NEW_SERIES) setCreatingSeries(true);
+    else if (!isInvoice) set("series", value as InvoiceSeries);
+    else pickSeries(invoiceSeriesList(customSeries).find((s) => s.id === value)!);
   };
 
   const changeOperationType = (operationType: OperationType) => {
@@ -360,7 +382,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     else if (asKind === "invoice" && lockedQuarterOf(form.issuedOn))
       next.issuedOn = lockedMessage(lockedQuarterOf(form.issuedOn)!);
     else if (asKind === "invoice") {
-      const later = laterInvoice(form.series, form.issuedOn, salesStore.all());
+      const later = laterInvoice(form, form.issuedOn, salesStore.all());
       if (later)
         next.issuedOn = `La factura ${later.number} de esta serie es del ${formatDate(later.issuedOn)}: esta no puede tener una fecha anterior.`;
     }
@@ -395,12 +417,13 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     const paid = asInvoice && form.markPaid;
     const number =
       invoiceNumber(asKind) ??
-      (asKind === kind ? form.number.trim() : nextNumber(asKind, form.series, form.issuedOn, salesStore.all()));
+      (asKind === kind ? form.number.trim() : nextNumber(asKind, form, form.issuedOn, salesStore.all()));
     const doc: SalesDocument = {
       id: existing?.id ?? newId(),
       kind: asKind,
       number,
       series: form.series,
+      seriesId: form.seriesId,
       rectifiesId: rectifying ? form.rectifiesId || undefined : undefined,
       clientId: form.clientId,
       issuedOn: form.issuedOn,
@@ -643,7 +666,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                   action={
                     <button
                       type="button"
-                      onClick={() => set("number", suggestedNumber(form.series))}
+                      onClick={() => set("number", suggestedNumber(form))}
                       className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
                     >
                       Obtener número
@@ -665,18 +688,16 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                 {(p) => (
                   <GroupedSelect
                     {...p}
-                    value={form.series}
+                    value={form.seriesId ?? form.series}
                     onChange={changeSeries}
-                    groups={[
-                      ...(isInvoice ? SERIES_GROUPS : [{ options: [{ value: "normal", label: config.seriesLabel }] }]),
-                      {
-                        label: "Opciones",
-                        options: [
-                          { value: "new", label: "Crear nueva serie" },
-                          { value: "settings", label: "Configurar series" },
-                        ],
-                      },
-                    ]}
+                    groups={
+                      isInvoice
+                        ? [
+                            ...seriesGroups(invoiceSeriesList(customSeries)),
+                            { label: "Opciones", options: [{ value: NEW_SERIES, label: "Crear nueva serie" }] },
+                          ]
+                        : [{ options: [{ value: "normal", label: config.seriesLabel }] }]
+                    }
                   />
                 )}
               </Field>
@@ -1057,6 +1078,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             clearError("clientId");
           }}
         />
+        {creatingSeries && (
+          <SeriesDialog open onOpenChange={setCreatingSeries} type={form.series} onCreated={pickSeries} />
+        )}
         {creatingMethod && (
           <MethodDialog
             open
