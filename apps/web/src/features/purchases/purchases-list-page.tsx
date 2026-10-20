@@ -646,12 +646,12 @@ function PurchasesTable({
   onSort: (sort: Sort) => void;
   onFilterSupplier: (supplierId: string) => void;
 }) {
-  // Tighter than the default so nine columns fit on a laptop screen.
-  const th = cn(table.th, "px-2.5");
-  const td = cn(table.td, "px-2.5");
+  // Tighter than the default so ten columns fit on a laptop screen.
+  const th = cn(table.th, "px-2");
+  const td = cn(table.td, "px-2");
   return (
     <div className="hidden overflow-x-auto lg:block">
-      <table className="w-full min-w-[980px] border-collapse">
+      <table className="w-full min-w-[1020px] border-collapse">
         <thead>
           <tr className={table.headRow}>
             {(kind === "asset" ? ASSET_COLUMNS : COLUMNS).map((c) => (
@@ -664,6 +664,9 @@ function PurchasesTable({
                 className={th}
               />
             ))}
+            <th scope="col" className={cn(th, "text-right")}>
+              Imputable
+            </th>
             <th scope="col" className={cn(th, "text-center")}>
               Acciones
             </th>
@@ -734,7 +737,6 @@ function PurchasesTable({
                 </td>
                 <td className={cn(td, "text-right")}>
                   <span className="amount">{formatEUR(r.base)}</span>
-                  <Imputation row={r} />
                 </td>
                 <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
                 {kind === "asset" ? (
@@ -747,6 +749,9 @@ function PurchasesTable({
                   </td>
                 )}
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
+                <td className={cn(td, "text-right")}>
+                  <Imputation row={r} />
+                </td>
                 <td className={cn(td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
                   <QuickActions row={r} />
                 </td>
@@ -772,6 +777,12 @@ function PurchasesTable({
             <td className={cn(td, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "total")} />
             </td>
+            <td className={cn(td, "text-right")}>
+              <ImputableAmounts
+                base={kind === "asset" ? null : sum(rows, "deductibleBase")}
+                vat={sum(rows, "deductibleVat")}
+              />
+            </td>
             <td className={td} />
           </tr>
         </tfoot>
@@ -795,22 +806,27 @@ function StatusBadge({ row }: { row: Row }) {
   );
 }
 
-/** Partial imputation, under the base: what share counts, with the deductible amounts behind a tooltip. */
+/** What share of the invoice counts for taxes, and the deductible amounts it leaves. */
 function Imputation({ row }: { row: Row }) {
   const { imputation, vatImputation } = row.doc;
-  if (imputation === 100 && (vatImputation === null || vatImputation === 100)) return null;
+  const partial = imputation !== 100 || (vatImputation !== null && vatImputation !== 100);
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={0} className="block cursor-default text-xs font-medium whitespace-nowrap text-warning">
-          Deducible {imputation} %
-          {vatImputation !== null && vatImputation !== imputation && ` · IVA ${vatImputation} %`}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        Deducible: base {formatEUR(row.deductibleBase)} · IVA {formatEUR(row.deductibleVat)}
-      </TooltipContent>
-    </Tooltip>
+    <>
+      <span className={cn("block text-sm font-medium whitespace-nowrap", partial && "text-warning")}>
+        {imputation} %{vatImputation !== null && vatImputation !== imputation && ` · IVA ${vatImputation} %`}
+      </span>
+      {/* Investment goods deduct their base through the amortization, not here */}
+      <ImputableAmounts base={row.doc.asset ? null : row.deductibleBase} vat={row.deductibleVat} />
+    </>
+  );
+}
+
+function ImputableAmounts({ base, vat }: { base: Cents | null; vat: Cents }) {
+  return (
+    <span className="block text-xs leading-tight font-normal whitespace-nowrap text-muted-foreground">
+      {base !== null && <span className="block amount">B.I. {formatEUR(base)}</span>}
+      <span className="block amount">IVA {formatEUR(vat)}</span>
+    </span>
   );
 }
 
