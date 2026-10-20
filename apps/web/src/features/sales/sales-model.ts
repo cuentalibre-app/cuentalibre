@@ -21,18 +21,21 @@ import {
   type OperationType,
   type WithholdingKind,
 } from "@fiscalia/core";
-import type {
-  Contact,
-  IncomeType,
-  InvoiceSeries,
-  Payment,
-  RentalLocation,
-  SalesDocument,
-  SalesKind,
-  SalesLine,
+import {
+  BUILT_IN_INVOICE_SERIES,
+  invoiceSeriesOf,
+  type Contact,
+  type IncomeType,
+  type InvoiceSeriesDefinition,
+  type Payment,
+  type RentalLocation,
+  type SalesDocument,
+  type SalesKind,
+  type SalesLine,
 } from "@fiscalia/contracts";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import { contactsStore } from "@/features/contacts/contacts-store";
+import { invoiceSettingsStore } from "./invoice-settings";
 
 export interface KindConfig {
   title: string;
@@ -204,19 +207,50 @@ export function documentFileName(doc: SalesDocument, extension: string) {
 const issuedInvoices = (docs: SalesDocument[]) =>
   docs.filter((d) => d.kind === "invoice" && d.number !== null) as (SalesDocument & { number: string })[];
 
+/** Which series a document is numbered in, as documents and the form carry it. */
+export type SeriesRef = Pick<SalesDocument, "series" | "seriesId">;
+
+/** Every invoice series: the built-in ones, then those created in the settings. */
+export function invoiceSeriesList(
+  custom: readonly InvoiceSeriesDefinition[] = invoiceSettingsStore.get().series ?? [],
+): InvoiceSeriesDefinition[] {
+  return [...BUILT_IN_INVOICE_SERIES, ...custom];
+}
+
+/** The series of a document; the server keeps a series in use from being removed, so it's always there. */
+export function seriesOf(ref: SeriesRef): InvoiceSeriesDefinition {
+  return invoiceSeriesOf(ref, invoiceSettingsStore.get().series ?? []) ?? invoiceSeriesOf({ series: ref.series }, [])!;
+}
+
+/** How a document names its series, built-in series by their type and custom ones by their id. */
+export function seriesRefOf(series: InvoiceSeriesDefinition): SeriesRef {
+  const builtIn = BUILT_IN_INVOICE_SERIES.some((s) => s.id === series.id);
+  return { series: series.type, seriesId: builtIn ? undefined : series.id };
+}
+
+/** The series of a select, grouped by type, with the value each option stands for. */
+export function seriesGroups(list: InvoiceSeriesDefinition[]): OptionGroup[] {
+  const options = (type: InvoiceSeriesDefinition["type"]) =>
+    list.filter((s) => s.type === type).map((s) => ({ value: s.id, label: s.name }));
+  return [
+    { label: "Series normales", options: options("normal") },
+    { label: "Series rectificativas", options: options("rectifying") },
+  ];
+}
+
 /**
  * Next number of a kind. For invoices it's a forecast of the one the server
  * will assign on issuing; the other kinds keep the number they are given.
  */
-export function nextNumber(kind: SalesKind, series: InvoiceSeries, issuedOn: string, docs: SalesDocument[]): string {
-  if (kind === "invoice") return nextInvoiceNumber(series, issuedOn, issuedInvoices(docs));
+export function nextNumber(kind: SalesKind, series: SeriesRef, issuedOn: string, docs: SalesDocument[]): string {
+  if (kind === "invoice") return nextInvoiceNumber(seriesOf(series).mask, issuedOn, issuedInvoices(docs));
   const numbers = docs.filter((d) => d.number !== null).map((d) => d.number!);
   return nextDocumentNumber(KINDS[kind].numberPrefix, Number(issuedOn.slice(0, 4)), numbers);
 }
 
 /** The invoice of the series dated after `issuedOn` that keeps a new one from being issued, if any. */
-export function laterInvoice(series: InvoiceSeries, issuedOn: string, docs: SalesDocument[]) {
-  return laterInvoiceInSeries(series, issuedOn, issuedInvoices(docs));
+export function laterInvoice(series: SeriesRef, issuedOn: string, docs: SalesDocument[]) {
+  return laterInvoiceInSeries(seriesOf(series).mask, issuedOn, issuedInvoices(docs));
 }
 
 /**
@@ -266,16 +300,6 @@ export interface OptionGroup<T extends string = string> {
   label?: string;
   options: Option<T>[];
 }
-
-export const SERIES_OPTIONS: Option<InvoiceSeries>[] = [
-  { value: "normal", label: "Facturas normales" },
-  { value: "rectifying", label: "Facturas rectificativas" },
-];
-
-export const SERIES_GROUPS: OptionGroup<InvoiceSeries>[] = [
-  { label: "Series normales", options: [SERIES_OPTIONS[0]!] },
-  { label: "Series rectificativas", options: [SERIES_OPTIONS[1]!] },
-];
 
 /** Accounts of group 7 of the PGC, under their subgroup. */
 export const INCOME_TYPE_GROUPS: OptionGroup<IncomeType>[] = [

@@ -33,11 +33,11 @@ import {
 import {
   INCOME_TYPE_GROUPS,
   OPERATION_TYPES,
-  SERIES_OPTIONS,
   STATUS,
   clientOf,
   displayStatus,
   documentTotals,
+  seriesOf,
 } from "@/features/sales/sales-model";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import type { Cell, Sheet } from "@/lib/xlsx";
@@ -141,7 +141,7 @@ function issuedRows(doc: SalesDocument): Cell[][] {
     quarterCode(doc.issuedOn),
     date(doc.issuedOn),
     date(doc.operationOn),
-    SERIES_OPTIONS.find((s) => s.value === doc.series)?.label ?? "",
+    seriesOf(doc).name,
     doc.number ?? "",
     client.taxId,
     client.name,
@@ -693,7 +693,7 @@ export function advancedSheets(data: AdvancedData, options: AdvancedOptions, ran
         header: [...SALES_LISTING_HEADER, "Serie", "Tipo de ingreso", "Tipo de operación"],
         rows: salesListing(issued, today).map((row, i) => [
           ...row,
-          SERIES_OPTIONS.find((s) => s.value === issued[i]!.series)?.label ?? "",
+          seriesOf(issued[i]!).name,
           incomeTypeLabel(issued[i]!.incomeType),
           operationLabel(issued[i]!.operationType),
         ]),

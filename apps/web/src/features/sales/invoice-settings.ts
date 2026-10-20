@@ -3,6 +3,7 @@ import {
   documentFontSchema,
   type DocumentKind,
   type DocumentSettings,
+  type InvoiceSeriesDefinition,
   type InvoiceSettings,
   type InvoiceTemplate,
   type SalesKind,
@@ -40,6 +41,9 @@ export const invoiceSettingsStore = {
   update(changes: Partial<InvoiceSettings>) {
     const next = { ...settings.get(), ...changes };
     return settings.write(next, [{ type: "saveSettings", section: "invoiceSettings", data: next }]);
+  },
+  addSeries(series: InvoiceSeriesDefinition) {
+    return invoiceSettingsStore.update({ series: [...(settings.get().series ?? []), series] });
   },
 };
 

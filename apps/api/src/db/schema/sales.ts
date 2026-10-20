@@ -68,6 +68,8 @@ export const salesDocument = pgTable(
     kind: text().$type<SalesKind>().notNull(),
     number: text(),
     series: text().$type<InvoiceSeries>().notNull(),
+    /** Custom series in the invoice settings; null for the built-in one of `series`. */
+    seriesId: uuid(),
     /** Null on drafts and quotes without a client. */
     clientId: uuid(),
     issuedOn: day().notNull(),

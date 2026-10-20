@@ -68,6 +68,7 @@ export const storedSalesDocumentSchema = salesDocumentSchema.extend({
   id: z.uuid(),
   clientId: z.uuid().or(z.literal("")),
   rectifiesId: z.uuid().optional(),
+  seriesId: z.uuid().optional(),
   lines: z.array(salesLineSchema).max(1000),
   payments: z.array(paymentSchema).max(1000).optional(),
   attachments: storedAttachments,

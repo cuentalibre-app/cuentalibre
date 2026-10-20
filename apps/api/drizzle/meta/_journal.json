@@ -64,6 +64,13 @@
       "when": 1792495402078,
       "tag": "0008_deletable_invoices",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792507217351,
+      "tag": "0009_custom_invoice_series",
+      "breakpoints": true
     }
   ]
 }

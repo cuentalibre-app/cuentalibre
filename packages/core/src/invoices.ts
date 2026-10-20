@@ -167,29 +167,109 @@ export function nextDocumentNumber(prefix: string, year: number, previous: strin
   return `${head}${String(last + 1).padStart(4, "0")}`;
 }
 
-/** Prefix of each invoice series: rectifying invoices are numbered apart, "R-2026-0001". */
-export const INVOICE_SERIES_PREFIX = { normal: "", rectifying: "R-" } as const;
+/** Invoices are numbered in normal series or, apart from them, in rectifying series. */
+export type InvoiceSeriesKey = "normal" | "rectifying";
 
-export type InvoiceSeriesKey = keyof typeof INVOICE_SERIES_PREFIX;
+/** Characters a series mask may print besides the year and the counter; digits would blur the counter. */
+const MASK_LITERAL = /^[A-Za-z/._-]+$/;
+
+/** What makes a series mask unusable, or null when it is valid. */
+export type SeriesMaskProblem = "year" | "counter" | "characters";
+
+/**
+ * Parts of a series mask: AAAA is the year, a run of # the counter with its
+ * width, and anything else is printed as is ("AAAA-B-####" → "2026-B-0001").
+ */
+function maskParts(mask: string): {
+  parts: (string | { year: true } | { counter: number })[];
+  problem: SeriesMaskProblem | null;
+} {
+  const parts: (string | { year: true } | { counter: number })[] = [];
+  let years = 0;
+  let counters = 0;
+  let badLiteral = false;
+  for (const [run] of mask.matchAll(/A+|#+|[^A#]+/g)) {
+    if (run[0] === "#") {
+      counters++;
+      parts.push({ counter: run.length });
+    } else if (run[0] === "A" && run.length >= 4) {
+      // Exactly AAAA is the year; a longer run of A's can't be read either way
+      years += run.length === 4 ? 1 : 2;
+      parts.push({ year: true });
+    } else {
+      if (!MASK_LITERAL.test(run)) badLiteral = true;
+      parts.push(run);
+    }
+  }
+  const problem =
+    years !== 1 ? "year" : counters !== 1 ? "counter" : badLiteral || mask.length > 30 ? "characters" : null;
+  return { parts, problem };
+}
+
+/**
+ * Whether a series mask can number invoices: it holds the year (AAAA) once,
+ * one counter (####), and only letters and the separators - / . _ besides.
+ */
+export function seriesMaskProblem(mask: string): SeriesMaskProblem | null {
+  return maskParts(mask).problem;
+}
+
+/**
+ * Two masks that only differ in the width of their counter number the same
+ * invoices, so a series can't share the format of another one.
+ */
+export function sameSeriesFormat(a: string, b: string): boolean {
+  return a.replace(/#+/g, "#") === b.replace(/#+/g, "#");
+}
+
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\/-]/g, "\\$&");
+
+/** Year and counter of a number written with `mask`, or null when it isn't one of its numbers. */
+export function parseSeriesNumber(mask: string, number: string): { year: number; counter: number } | null {
+  const { parts, problem } = maskParts(mask);
+  if (problem) return null;
+  const groups: ("year" | "counter")[] = [];
+  const source = parts
+    .map((part) => {
+      if (typeof part === "string") return escapeRegExp(part);
+      groups.push("year" in part ? "year" : "counter");
+      return "year" in part ? "(\\d{4})" : "(\\d+)";
+    })
+    .join("");
+  const match = new RegExp(`^${source}$`).exec(number);
+  if (!match) return null;
+  const value = (group: "year" | "counter") => Number(match[groups.indexOf(group) + 1]);
+  return { year: value("year"), counter: value("counter") };
+}
+
+/** The number `counter` of `year` in a series: ("AAAA-B-####", 2026, 1) → "2026-B-0001". */
+export function formatSeriesNumber(mask: string, year: number, counter: number): string {
+  return maskParts(mask)
+    .parts.map((part) =>
+      typeof part === "string" ? part : "year" in part ? String(year) : String(counter).padStart(part.counter, "0"),
+    )
+    .join("");
+}
 
 /** An invoice already issued, as numbering needs it. */
 export interface IssuedInvoiceRef {
   number: string;
-  series: InvoiceSeriesKey;
   issuedOn: string;
 }
 
 /**
  * Number of the next invoice of a series, from the year of its date. Invoice
  * numbers are correlative and gapless within a series and year, so only the
- * server assigns them; the app shows this one as a forecast.
+ * server assigns them; the app shows this one as a forecast. Every invoice
+ * written with the series' mask counts, whichever series it was filed under.
  */
-export function nextInvoiceNumber(series: InvoiceSeriesKey, issuedOn: string, issued: IssuedInvoiceRef[]): string {
-  return nextDocumentNumber(
-    INVOICE_SERIES_PREFIX[series],
-    Number(issuedOn.slice(0, 4)),
-    issued.map((invoice) => invoice.number),
-  );
+export function nextInvoiceNumber(mask: string, issuedOn: string, issued: IssuedInvoiceRef[]): string {
+  const year = Number(issuedOn.slice(0, 4));
+  const last = issued
+    .map((invoice) => parseSeriesNumber(mask, invoice.number))
+    .filter((parsed) => parsed?.year === year)
+    .reduce((max, parsed) => Math.max(max, parsed!.counter), 0);
+  return formatSeriesNumber(mask, year, last + 1);
 }
 
 /**
@@ -197,16 +277,16 @@ export function nextInvoiceNumber(series: InvoiceSeriesKey, issuedOn: string, is
  * any. Numbers must follow the dates, so a new invoice can't be issued with an
  * earlier date than one that already has a lower number.
  */
-export function laterInvoiceInSeries(
-  series: InvoiceSeriesKey,
+export function laterInvoiceInSeries<T extends IssuedInvoiceRef>(
+  mask: string,
   issuedOn: string,
-  issued: IssuedInvoiceRef[],
-): IssuedInvoiceRef | undefined {
+  issued: T[],
+): T | undefined {
   const year = issuedOn.slice(0, 4);
   return issued
-    .filter((invoice) => invoice.series === series && invoice.issuedOn.slice(0, 4) === year)
+    .filter((invoice) => invoice.issuedOn.slice(0, 4) === year && parseSeriesNumber(mask, invoice.number))
     .filter((invoice) => invoice.issuedOn > issuedOn)
-    .reduce<IssuedInvoiceRef | undefined>(
+    .reduce<T | undefined>(
       (latest, invoice) => (!latest || invoice.issuedOn > latest.issuedOn ? invoice : latest),
       undefined,
     );
