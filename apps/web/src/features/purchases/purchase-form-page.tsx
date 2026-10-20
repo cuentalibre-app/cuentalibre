@@ -69,7 +69,7 @@ import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros, periodLabel } from "@/lib/format";
-import { ACCOUNTS_PATH, paymentMethodOptions } from "@/features/settings/settings-model";
+import { ACCOUNTS_PATH, defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { SettingsLink } from "@/features/settings/settings-parts";
 import {
   ASSETS_PATH,
@@ -445,8 +445,12 @@ function PurchaseForm({
       next.customsDocument = "Las importaciones con IVA necesitan el número del DUA o H7.";
     next.lines = linesError(form.lines);
     if (isAssetForm) next.asset = assetError;
-    if (form.payments.some((p) => !p.date || parseEuros(p.amount) === null || parseEuros(p.amount) === 0))
-      next.payments = "Cada pago necesita fecha e importe.";
+    if (
+      form.payments.some(
+        (p) => !p.date || parseEuros(p.amount) === null || parseEuros(p.amount) === 0 || !p.paymentMethodId,
+      )
+    )
+      next.payments = "Cada pago necesita fecha, importe y método de pago.";
     else if (Math.abs(sumCents(paymentAmounts)) > Math.abs(totals.total))
       next.payments = `Los pagos suman más que el total de la factura (${formatEUR(totals.total)}).`;
     return next;
@@ -1202,7 +1206,7 @@ function Payments({
         // Today, unless the invoice is dated later
         date: [toIsoDate(new Date()), issuedOn].sort().at(-1)!,
         amount: formatEurosInput(pending),
-        paymentMethodId: list.at(-1)?.paymentMethodId ?? "bank1",
+        paymentMethodId: list.at(-1)?.paymentMethodId ?? defaultPaymentMethodId(),
       },
     ]);
   const summary =
@@ -1257,6 +1261,7 @@ function Payments({
                 <GroupedSelect
                   id={`${p.id}-method-select`}
                   aria-labelledby={`${p.id}-method`}
+                  aria-invalid={error && !p.paymentMethodId ? true : undefined}
                   value={p.paymentMethodId}
                   onChange={(v) => update(p.id, { paymentMethodId: v })}
                   groups={[{ options: paymentMethodOptions(p.paymentMethodId) }]}

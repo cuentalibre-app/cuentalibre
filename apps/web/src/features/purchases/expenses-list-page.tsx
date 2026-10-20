@@ -35,7 +35,7 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import { paymentMethodName } from "@/features/settings/settings-model";
+import { defaultPaymentMethodId, paymentMethodName } from "@/features/settings/settings-model";
 import { attachmentUrl } from "@/data/files";
 import { AttachmentsDialog } from "./form-parts";
 import {
@@ -706,15 +706,16 @@ function useExpenseActions(row: Row) {
     run: viewable ? () => window.open(viewable, "_blank", "noopener") : undefined,
   };
 
+  const methodId = defaultPaymentMethodId();
   const primary: Action = doc.payment
     ? { label: "Marcar como pendiente", icon: Undo2, run: () => expensesStore.update(doc.id, { payment: null }) }
     : {
         label: "Marcar como pagado",
         icon: CircleDollarSign,
-        run: () =>
-          expensesStore.update(doc.id, {
-            payment: { date: toIsoDate(new Date()), paymentMethodId: "bank1" },
-          }),
+        // Without a payment method there is nothing to book the payment into
+        run: methodId
+          ? () => expensesStore.update(doc.id, { payment: { date: toIsoDate(new Date()), paymentMethodId: methodId } })
+          : undefined,
       };
 
   const locked = lockedQuarterOf(doc.date) !== null;
