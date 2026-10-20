@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark } from "lucide-react";
+import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark, Plus } from "lucide-react";
 import { cents, deductibleExpense, isDuplicateExpense, newId, toIsoDate, type Cents } from "@fiscalia/core";
 import type { Attachment, Expense, ExpenseType, OtherPayee, RentalLocation } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
@@ -26,8 +26,8 @@ import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
 import { MONTHS, formatEurosInput, parseEuros } from "@/lib/format";
 import { settingsStore } from "@/features/settings/settings-store";
 import { SOCIAL_SECURITY } from "@/mocks/expenses";
-import { ACCOUNTS_PATH, defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
-import { SettingsLink } from "@/features/settings/settings-parts";
+import { MethodDialog } from "@/features/settings/method-dialog";
+import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH, expenseIdentity, payeeOf } from "./expenses-model";
 import { expensesStore } from "./expenses-store";
 import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
@@ -187,6 +187,7 @@ function ExpenseForm({
   });
   const suppliers = useContacts("supplier");
   const [creatingSupplier, setCreatingSupplier] = useState(false);
+  const [creatingMethod, setCreatingMethod] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const lockedQuarterOf = useLockedQuarter();
   const locked = existing ? lockedQuarterOf(existing.date) : null;
@@ -599,13 +600,16 @@ function ExpenseForm({
                   Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
                 </TooltipContent>
               </Tooltip>
-              <SettingsLink
-                from="el gasto"
-                to={ACCOUNTS_PATH}
-                className="ml-auto text-sm font-medium text-primary no-underline hover:text-primary-hover"
+              <Button
+                type="button"
+                variant="ghost"
+                size="md"
+                className="ml-auto text-primary"
+                onClick={() => setCreatingMethod(true)}
               >
-                Gestionar métodos de pago
-              </SettingsLink>
+                <Plus aria-hidden="true" />
+                Nuevo método
+              </Button>
             </div>
           </Section>
 
@@ -671,6 +675,14 @@ function ExpenseForm({
             clearError("otherName");
           }}
         />
+        {creatingMethod && (
+          <MethodDialog
+            open
+            onOpenChange={setCreatingMethod}
+            method={null}
+            onCreated={(id) => set("paymentMethodId", id)}
+          />
+        )}
       </form>
     </TooltipProvider>
   );

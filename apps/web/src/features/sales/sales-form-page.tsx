@@ -47,8 +47,8 @@ import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
-import { ACCOUNTS_PATH, defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
-import { SettingsLink } from "@/features/settings/settings-parts";
+import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
+import { MethodDialog } from "@/features/settings/method-dialog";
 import { settingsStore } from "@/features/settings/settings-store";
 import {
   LinesEditor,
@@ -239,6 +239,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   });
   const clients = useContacts("client");
   const [creatingClient, setCreatingClient] = useState(false);
+  const [creatingMethod, setCreatingMethod] = useState(false);
   /** The document just saved to be sent, and where to go after. */
   const [sending, setSending] = useState<{ doc: SalesDocument; next: string } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
@@ -987,14 +988,16 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                         />
                       )}
                     </Field>
-                    <SettingsLink
-                      from="la factura"
-                      to={ACCOUNTS_PATH}
-                      className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "text-primary no-underline")}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="lg"
+                      className="text-primary"
+                      onClick={() => setCreatingMethod(true)}
                     >
                       <Plus aria-hidden="true" />
                       Nuevo método
-                    </SettingsLink>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -1041,6 +1044,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             clearError("clientId");
           }}
         />
+        {creatingMethod && (
+          <MethodDialog
+            open
+            onOpenChange={setCreatingMethod}
+            method={null}
+            onCreated={(id) => set("paymentMethodId", id)}
+          />
+        )}
       </form>
     </TooltipProvider>
   );

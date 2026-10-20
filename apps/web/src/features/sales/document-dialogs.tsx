@@ -3,21 +3,19 @@ import { Loader2, Paperclip, Plus, Trash2 } from "lucide-react";
 import { amountOutstanding, newId, toIsoDate } from "@fiscalia/core";
 import type { EmailMessage, Payment, SalesDocument } from "@fiscalia/contracts";
 import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input, Textarea } from "@fiscalia/ui/components/input";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { emailsOf, sendEmail } from "@/data/email";
 import {
-  ACCOUNTS_PATH,
   businessName,
   defaultPaymentMethodId,
   paymentMethodName,
   paymentMethodOptions,
 } from "@/features/settings/settings-model";
-import { SettingsLink } from "@/features/settings/settings-parts";
+import { MethodDialog } from "@/features/settings/method-dialog";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";
 import { TagsField } from "./document-editor";
@@ -55,6 +53,7 @@ export function PaymentDialog({ doc, onOpenChange }: DialogProps) {
   const [date, setDate] = useState(toIsoDate(new Date()));
   const [methodId, setMethodId] = useState(payments.at(-1)?.paymentMethodId ?? defaultPaymentMethodId());
   const [submitted, setSubmitted] = useState(false);
+  const [creatingMethod, setCreatingMethod] = useState(false);
 
   const parsed = parseEuros(amount);
   const error =
@@ -137,14 +136,16 @@ export function PaymentDialog({ doc, onOpenChange }: DialogProps) {
                         groups={[{ options: paymentMethodOptions(methodId) }]}
                       />
                     </div>
-                    <SettingsLink
-                      from="la factura"
-                      to={ACCOUNTS_PATH}
-                      className={cn(buttonVariants({ variant: "ghost", size: "md" }), "shrink-0 px-2.5 text-primary")}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="md"
+                      className="shrink-0 px-2.5 text-primary"
+                      onClick={() => setCreatingMethod(true)}
                     >
                       <Plus aria-hidden="true" />
                       Nuevo método
-                    </SettingsLink>
+                    </Button>
                   </div>
                 )}
               </Field>
@@ -209,6 +210,7 @@ export function PaymentDialog({ doc, onOpenChange }: DialogProps) {
             <Button variant="secondary">Cerrar</Button>
           </DialogClose>
         </div>
+        {creatingMethod && <MethodDialog open onOpenChange={setCreatingMethod} method={null} onCreated={setMethodId} />}
       </DialogContent>
     </Dialog>
   );
