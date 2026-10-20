@@ -742,7 +742,7 @@ function useExpenseActions(row: Row) {
     ],
   ];
 
-  return { attach, primary, groups, dialogs, attachments: attachments.length, label: `el gasto ${doc.concept}` };
+  return { attach, primary, groups, dialogs, attachments: attachments.length, label: `gasto ${doc.concept}` };
 }
 
 /** Desktop: the usual operations one click away, the rest behind the arrow. */
@@ -759,7 +759,7 @@ function QuickActions({ row }: { row: Row }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 px-0" aria-label={`Más acciones de ${label}`}>
+                <Button variant="ghost" size="sm" className="size-8 px-0" aria-label={`Más acciones del ${label}`}>
                   <ChevronDown strokeWidth={1.8} aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
@@ -782,7 +782,7 @@ function RowActions({ row }: { row: Row }) {
         groups={groups}
         trigger={
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
+            <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones del ${label}`}>
               <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
