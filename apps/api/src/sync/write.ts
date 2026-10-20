@@ -6,6 +6,7 @@ import {
   type RecordEntity,
   type SyncCommand,
 } from "@fiscalia/contracts";
+import type { VerifactuEnvironment } from "@fiscalia/core";
 import { sql } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
 import { changeLog, type LoggedEntity } from "../db/schema";
@@ -20,7 +21,18 @@ import { saveSettings } from "./settings";
 
 export interface Scope {
   organizationId: string;
-  userId: string;
+  /** Null for work the server does by itself. */
+  userId: string | null;
+  /** Which AEAT environment VERI*FACTU records are made for: it decides where their QR code points. */
+  verifactuEnvironment: VerifactuEnvironment;
+}
+
+/**
+ * Serializes writes per organization, so the change feed's sequence follows commit order.
+ * It also makes invoice numbering and the VERI*FACTU chain race-free.
+ */
+export async function lockOrganization(tx: Tx, organizationId: string) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${organizationId}, 0))`);
 }
 
 /**
@@ -30,13 +42,11 @@ export interface Scope {
  */
 export function applyCommands(db: Db, scope: Scope, commands: SyncCommand[]): Promise<Change[]> {
   return db.transaction(async (tx) => {
-    // Serializes writes per organization, so the change feed's sequence follows commit order.
-    // It also makes invoice numbering race-free: two invoices can't take the same next number.
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${scope.organizationId}, 0))`);
+    await lockOrganization(tx, scope.organizationId);
 
     const touched: RecordRef[] = [];
     for (const command of commands) {
-      const refs = await apply(tx, scope.organizationId, command);
+      const refs = await apply(tx, scope, command);
       await tx.insert(changeLog).values(
         refs.map((ref) => ({
           organizationId: scope.organizationId,
@@ -53,10 +63,11 @@ export function applyCommands(db: Db, scope: Scope, commands: SyncCommand[]): Pr
 }
 
 /** Runs one command and returns the records it changed. */
-async function apply(tx: Tx, organizationId: string, command: SyncCommand): Promise<RecordRef[]> {
+async function apply(tx: Tx, scope: Scope, command: SyncCommand): Promise<RecordRef[]> {
+  const { organizationId } = scope;
   switch (command.type) {
     case "issue":
-      await issueInvoice(tx, organizationId, command.data, command.number);
+      await issueInvoice(tx, organizationId, command.data, command.number, scope.verifactuEnvironment);
       return [{ entity: "sales_document", id: command.data.id }];
     case "closeQuarter": {
       const returns = command.returns ?? [];

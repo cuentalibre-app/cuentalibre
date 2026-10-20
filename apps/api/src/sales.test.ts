@@ -2,38 +2,7 @@ import type { SalesDocument } from "@fiscalia/contracts";
 import { newId } from "@fiscalia/core";
 import { describe, expect, it } from "vitest";
 import type { Client } from "./test/harness";
-import { changes, client, errorCode, member, send, workspace } from "./test/sync";
-
-const line = (fields: Record<string, unknown> = {}) => ({
-  id: newId(),
-  concept: "Diseño web",
-  unitPrice: 1000,
-  quantity: 1,
-  discount: 0,
-  vatRate: 0.21,
-  ...fields,
-});
-
-const document = (clientId: string, fields: Partial<SalesDocument> = {}): SalesDocument => ({
-  id: newId(),
-  kind: "draft",
-  number: "BOR-2026-0001",
-  series: "normal",
-  clientId,
-  issuedOn: "2026-10-05",
-  dueOn: "2026-11-04",
-  incomeType: "705",
-  withholding: "professional",
-  operationType: "national",
-  operationOn: null,
-  cashBasis: false,
-  rental: false,
-  lines: [line()],
-  status: "pending",
-  publicNotes: "",
-  privateNotes: "",
-  ...fields,
-});
+import { changes, client, document, errorCode, line, member, send, workspace } from "./test/sync";
 
 /** A member with one client, ready to invoice. */
 async function seller() {

@@ -48,6 +48,7 @@ import { AccountsPage } from "@/features/settings/accounts-page";
 import { BusinessPage } from "@/features/settings/business-page";
 import { CertificatesPage } from "@/features/settings/certificates-page";
 import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
+import { ApiKeysPage } from "@/features/settings/api-keys-page";
 import { EmailSettingsPage } from "@/features/settings/email-settings-page";
 import { LedgerAccountsPage } from "@/features/settings/ledger-accounts-page";
 import { PaymentMethodsPage } from "@/features/settings/payment-methods-page";
@@ -62,6 +63,7 @@ import {
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
   EMAIL_SETTINGS_PATH,
+  API_KEYS_PATH,
   INVOICE_SETTINGS_PATH,
   LEDGER_ACCOUNTS_PATH,
   PAYMENT_METHODS_PATH,
@@ -207,6 +209,7 @@ const settingsRoutes = [
   { path: TAGS_PATH.slice(1), element: <TagsPage /> },
   { path: PREFERENCES_PATH.slice(1), element: <PreferencesPage /> },
   { path: EMAIL_SETTINGS_PATH.slice(1), element: <EmailSettingsPage /> },
+  { path: API_KEYS_PATH.slice(1), element: <ApiKeysPage /> },
 ];
 
 const transferRoutes = [

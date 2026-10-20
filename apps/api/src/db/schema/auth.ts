@@ -7,7 +7,7 @@
  * and port the differences here.
  */
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "./columns";
 
 export const user = pgTable("user", {
@@ -117,6 +117,45 @@ export const verification = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [index().on(table.identifier)],
+);
+
+/**
+ * API keys, for scripts and agents (Better Auth's api-key plugin). Each one
+ * acts as the user who created it, in the organization named in its
+ * `metadata` (JSON), and stops working if the user leaves it. Only a hash of
+ * the key is stored.
+ */
+export const apikey = pgTable(
+  "apikey",
+  {
+    id: uuid().primaryKey(),
+    configId: text().default("default").notNull(),
+    name: text(),
+    /** First characters of the key, to recognize it in a list. */
+    start: text(),
+    /** The user it belongs to. */
+    referenceId: uuid()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    prefix: text(),
+    key: text().notNull(),
+    refillInterval: integer(),
+    refillAmount: integer(),
+    lastRefillAt: timestamp({ withTimezone: true }),
+    enabled: boolean().default(true),
+    rateLimitEnabled: boolean().default(true),
+    rateLimitTimeWindow: integer(),
+    rateLimitMax: integer(),
+    requestCount: integer().default(0),
+    remaining: integer(),
+    lastRequest: timestamp({ withTimezone: true }),
+    expiresAt: timestamp({ withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    permissions: text(),
+    metadata: text(),
+  },
+  (table) => [index().on(table.configId), index().on(table.referenceId), index().on(table.key)],
 );
 
 export const userRelations = relations(user, ({ many }) => ({

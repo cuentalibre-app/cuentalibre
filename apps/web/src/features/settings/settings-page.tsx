@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import {
   ArrowDownWideNarrow,
   BookText,
+  Bot,
   Building2,
   ChevronRight,
   ClipboardList,
@@ -34,6 +35,7 @@ import { useCompliance } from "./compliance-store";
 import {
   ACCESS_PATH,
   ACCOUNTS_PATH,
+  API_KEYS_PATH,
   BUSINESS_PATH,
   businessName,
   CERTIFICATES_PATH,
@@ -273,6 +275,12 @@ export function SettingsPage() {
           description: "Desde qué dirección se envían tus facturas por email.",
           to: EMAIL_SETTINGS_PATH,
           icon: Mail,
+        },
+        {
+          title: "API y agentes",
+          description: "Claves para que tus scripts y asistentes de IA trabajen con tus datos.",
+          to: API_KEYS_PATH,
+          icon: Bot,
         },
         {
           title: "Importaciones",

@@ -1,4 +1,10 @@
-import { DEFAULT_ORGANIZATION_SETTINGS, type Changes, type SyncCommand, type Workspace } from "@fiscalia/contracts";
+import {
+  DEFAULT_ORGANIZATION_SETTINGS,
+  type Changes,
+  type SalesDocument,
+  type SyncCommand,
+  type Workspace,
+} from "@fiscalia/contracts";
 import { newId } from "@fiscalia/core";
 import { expect } from "vitest";
 import { createOrganization, signUp, type Client } from "./harness";
@@ -56,3 +62,36 @@ export async function changes(user: Client, since: number, limit?: number) {
 
 export const errorCode = async (response: Response) =>
   ((await response.json()) as { error: { code: string } }).error.code;
+
+/** A sales line of 1000 € at 21 % VAT. */
+export const line = (fields: Record<string, unknown> = {}) => ({
+  id: newId(),
+  concept: "Diseño web",
+  unitPrice: 1000,
+  quantity: 1,
+  discount: 0,
+  vatRate: 0.21,
+  ...fields,
+});
+
+/** A draft for the client, dated 5 October 2026. */
+export const document = (clientId: string, fields: Partial<SalesDocument> = {}): SalesDocument => ({
+  id: newId(),
+  kind: "draft",
+  number: "BOR-2026-0001",
+  series: "normal",
+  clientId,
+  issuedOn: "2026-10-05",
+  dueOn: "2026-11-04",
+  incomeType: "705",
+  withholding: "professional",
+  operationType: "national",
+  operationOn: null,
+  cashBasis: false,
+  rental: false,
+  lines: [line()],
+  status: "pending",
+  publicNotes: "",
+  privateNotes: "",
+  ...fields,
+});

@@ -1,4 +1,13 @@
-import type { Change, Changes, SyncCommand, Workspace } from "@fiscalia/contracts";
+import type {
+  ApiKey,
+  Change,
+  Changes,
+  CreatedApiKey,
+  EmailMessage,
+  StoredFile,
+  SyncCommand,
+  Workspace,
+} from "@fiscalia/contracts";
 import { setBackend, type Backend } from "./backend";
 import type { Command } from "./commands";
 import { applyChanges, applyWorkspace, isSettingsSynced, isSynced } from "./sync";
@@ -47,6 +56,8 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
         body?.error?.message ?? response.statusText,
       );
     }
+    // 204 No Content, e.g. after a delete
+    if (response.status === 204) return undefined as R;
     return (await response.json()) as R;
   }
 
@@ -90,6 +101,30 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
     },
 
     fileUrl: (id) => `${baseUrl}/v1/files/${id}`,
+
+    async sendEmail(email, files) {
+      const attachments = await Promise.all(
+        files.map(async (file) => {
+          const form = new FormData();
+          form.set("file", file);
+          return (await request<StoredFile>("/v1/files", { method: "POST", body: form })).id;
+        }),
+      );
+      return request<EmailMessage>("/v1/emails", {
+        method: "POST",
+        body: JSON.stringify({ ...email, attachments }),
+      });
+    },
+
+    async emailsOf(documentId) {
+      return (await request<{ emails: EmailMessage[] }>(`/v1/emails?documentId=${documentId}`)).emails;
+    },
+
+    apiKeys: {
+      list: async () => (await request<{ apiKeys: ApiKey[] }>("/v1/api-keys")).apiKeys,
+      create: (key) => request<CreatedApiKey>("/v1/api-keys", { method: "POST", body: JSON.stringify(key) }),
+      revoke: (id) => request(`/v1/api-keys/${id}`, { method: "DELETE" }),
+    },
 
     async loadWorkspace() {
       const workspace = await request<Workspace>("/v1/workspace");

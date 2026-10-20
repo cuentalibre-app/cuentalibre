@@ -29,6 +29,21 @@ const envSchema = z
       .int()
       .positive()
       .default(25 * 1024 * 1024),
+    /**
+     * VERI*FACTU: records are always chained when a business uses the system;
+     * they are only sent to the AEAT's test or production service when set.
+     */
+    VERIFACTU_ENV: z.enum(["off", "test", "production"]).default("off"),
+    /** Client certificate (PKCS#12) the AEAT authenticates submissions with. */
+    VERIFACTU_CERT_FILE: z.string().min(1).optional(),
+    VERIFACTU_CERT_PASSWORD: z.string().optional(),
+    /** Who produces the invoicing software, as records name it. */
+    VERIFACTU_PRODUCER_NAME: z.string().min(1).optional(),
+    VERIFACTU_PRODUCER_TAX_ID: z.string().min(1).optional(),
+    /** Outgoing email server, e.g. `smtps://user:password@smtp.example.com:465`. Without it, email is off. */
+    SMTP_URL: z.url().optional(),
+    /** Address emails are sent from; the business's name goes as the sender's name. */
+    EMAIL_FROM: z.email().optional(),
   })
   .refine((env) => env.NODE_ENV !== "production" || env.BETTER_AUTH_SECRET !== devSecret, {
     message: "BETTER_AUTH_SECRET must be set in production",
@@ -42,7 +57,21 @@ const envSchema = z
       message: "The s3 storage driver needs S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY",
       path: ["STORAGE_DRIVER"],
     },
-  );
+  )
+
+  .refine(
+    (env) =>
+      env.VERIFACTU_ENV === "off" ||
+      (env.VERIFACTU_CERT_FILE && env.VERIFACTU_PRODUCER_NAME && env.VERIFACTU_PRODUCER_TAX_ID),
+    {
+      message: "Sending to VERI*FACTU needs VERIFACTU_CERT_FILE, VERIFACTU_PRODUCER_NAME and VERIFACTU_PRODUCER_TAX_ID",
+      path: ["VERIFACTU_ENV"],
+    },
+  )
+  .refine((env) => !env.SMTP_URL || env.EMAIL_FROM, {
+    message: "SMTP_URL needs EMAIL_FROM",
+    path: ["EMAIL_FROM"],
+  });
 
 export type Env = z.infer<typeof envSchema>;
 

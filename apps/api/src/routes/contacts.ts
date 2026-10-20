@@ -4,7 +4,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import type { AppEnv } from "../context";
 import { ApiError, errorContent } from "../errors";
-import { requireOrganization } from "../middleware";
+import { requireOrganization, scopeOf } from "../middleware";
 import { findContact, liveContacts, toContact } from "../sync/contacts";
 import { applyCommands } from "../sync/write";
 
@@ -112,7 +112,7 @@ export const contactRoutes = new OpenAPIHono<AppEnv>()
   .openapi(create, async (c) => {
     const { role, ...data } = c.req.valid("json");
     const record = { ...data, id: data.id ?? newId() };
-    await applyCommands(c.get("db"), scope(c), [{ type: "create", entity: ENTITIES[role], data: record }]);
+    await applyCommands(c.get("db"), scopeOf(c), [{ type: "create", entity: ENTITIES[role], data: record }]);
     return c.json(await read(c, record.id), 201);
   })
   .openapi(update, async (c) => {
@@ -124,20 +124,16 @@ export const contactRoutes = new OpenAPIHono<AppEnv>()
       throw new ApiError(400, "invalid_contact", "role: can't be changed.");
     }
     delete changes.role;
-    await applyCommands(c.get("db"), scope(c), [{ type: "update", entity: ENTITIES[existing.role], id, changes }]);
+    await applyCommands(c.get("db"), scopeOf(c), [{ type: "update", entity: ENTITIES[existing.role], id, changes }]);
     return c.json(await read(c, id), 200);
   })
   .openapi(remove, async (c) => {
     const { id } = c.req.valid("param");
     const existing = await findContact(c.get("db"), c.get("organizationId"), id);
     if (!existing) throw notFound();
-    await applyCommands(c.get("db"), scope(c), [{ type: "delete", entity: ENTITIES[existing.role], id }]);
+    await applyCommands(c.get("db"), scopeOf(c), [{ type: "delete", entity: ENTITIES[existing.role], id }]);
     return c.body(null, 204);
   });
-
-function scope(c: Context<AppEnv>) {
-  return { organizationId: c.get("organizationId"), userId: c.get("user")!.id };
-}
 
 async function read(c: Context<AppEnv>, id: string) {
   const row = await findContact(c.get("db"), c.get("organizationId"), id);
