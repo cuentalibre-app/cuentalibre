@@ -69,8 +69,8 @@ import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros, periodLabel } from "@/lib/format";
-import { ACCOUNTS_PATH, defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
-import { SettingsLink } from "@/features/settings/settings-parts";
+import { MethodDialog } from "@/features/settings/method-dialog";
+import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import {
   ASSETS_PATH,
   EXPENSE_TYPE_GROUPS,
@@ -1196,6 +1196,7 @@ function Payments({
   issuedOn: string;
   onChange: (update: (payments: PaymentDraft[]) => PaymentDraft[]) => void;
 }) {
+  const [creatingMethod, setCreatingMethod] = useState(false);
   const update = (id: string, changes: Partial<PaymentDraft>) =>
     onChange((list) => list.map((p) => (p.id === id ? { ...p, ...changes } : p)));
   const addPayment = () =>
@@ -1301,14 +1302,28 @@ function Payments({
             Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
           </TooltipContent>
         </Tooltip>
-        <SettingsLink
-          from="la factura recibida"
-          to={ACCOUNTS_PATH}
-          className="ml-auto text-sm font-medium text-primary no-underline hover:text-primary-hover"
+        <Button
+          type="button"
+          variant="ghost"
+          size="md"
+          className="ml-auto text-primary"
+          onClick={() => setCreatingMethod(true)}
         >
-          Gestionar métodos de pago
-        </SettingsLink>
+          <Plus aria-hidden="true" />
+          Nuevo método
+        </Button>
       </div>
+      {creatingMethod && (
+        <MethodDialog
+          open
+          onOpenChange={setCreatingMethod}
+          method={null}
+          // The new method goes to the payment being entered, the last one
+          onCreated={(id) =>
+            onChange((list) => list.map((p, i) => (i === list.length - 1 ? { ...p, paymentMethodId: id } : p)))
+          }
+        />
+      )}
       {payments.length === 0 && total !== 0 && (
         <p className="m-0 text-xs text-muted-foreground">
           «Marcar como pagada» añade un pago por {formatEUR(pending)}; cambia el importe si solo has pagado una parte.

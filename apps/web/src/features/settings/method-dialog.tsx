@@ -20,11 +20,14 @@ export function MethodDialog({
   onOpenChange,
   method,
   accountId: presetAccountId = null,
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   method: PaymentMethod | null;
   accountId?: string | null;
+  /** Called with the id of a newly created method, so a form can select it. */
+  onCreated?: (id: string) => void;
 }) {
   const { accounts, paymentMethods } = useSettings();
   const preset = accounts.find((a) => a.id === presetAccountId);
@@ -50,7 +53,11 @@ export function MethodDialog({
     const values = { type, name: name.trim(), number: number.trim(), accountId: account?.id ?? null };
     if (method) settingsStore.updatePaymentMethod(method.id, values);
     // A method added to an inactive account waits for it
-    else settingsStore.addPaymentMethod({ id: newId(), ...values, active: account?.active ?? true });
+    else {
+      const id = newId();
+      settingsStore.addPaymentMethod({ id, ...values, active: account?.active ?? true });
+      onCreated?.(id);
+    }
     onOpenChange(false);
   };
 
@@ -66,7 +73,9 @@ export function MethodDialog({
           className="flex flex-col gap-4"
           noValidate
           onSubmit={(e) => {
+            // The dialog is portalled, but React still bubbles submit to a form around it
             e.preventDefault();
+            e.stopPropagation();
             save();
           }}
         >
