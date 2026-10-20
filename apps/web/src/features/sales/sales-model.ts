@@ -5,14 +5,18 @@ import {
   WITHHOLDING_RATES,
   centsToEuros,
   eurosToCents,
+  amountOutstanding,
   invoiceTotals,
   lineBase,
   isOverdue,
   laterInvoiceInSeries,
   nextDocumentNumber,
   nextInvoiceNumber,
+  paymentStatus,
   periodKey,
   quarterOfMonth,
+  sumCents,
+  type Cents,
   type InvoiceTotals,
   type OperationType,
   type WithholdingKind,
@@ -21,6 +25,7 @@ import type {
   Contact,
   IncomeType,
   InvoiceSeries,
+  Payment,
   RentalLocation,
   SalesDocument,
   SalesKind,
@@ -68,7 +73,7 @@ export const KINDS: Record<SalesKind, KindConfig> = {
     seriesLabel: "Facturas normales",
     clientRequired: true,
     clientPlaceholder: "Selecciona el cliente",
-    statuses: ["pending", "overdue", "paid"],
+    statuses: ["pending", "partial", "overdue", "paid"],
   },
   draft: {
     title: "Borradores",
@@ -120,12 +125,13 @@ export const KINDS: Record<SalesKind, KindConfig> = {
   },
 };
 
-/** What the list shows: the stored status, with "overdue" derived for unpaid invoices. */
-export type StatusKey = SalesDocument["status"] | "overdue" | "draft";
+/** What the list shows: the stored status, with "partial" and "overdue" derived for unpaid invoices. */
+export type StatusKey = SalesDocument["status"] | "partial" | "overdue" | "draft";
 
 export const STATUS: Record<StatusKey, { label: string; tone: BadgeProps["tone"] }> = {
   draft: { label: "Borrador", tone: "neutral" },
   pending: { label: "Pendiente", tone: "neutral" },
+  partial: { label: "Cobro parcial", tone: "warning" },
   overdue: { label: "Vencida", tone: "danger" },
   paid: { label: "Cobrada", tone: "success" },
   created: { label: "Creado", tone: "neutral" },
@@ -138,7 +144,35 @@ export const STATUS: Record<StatusKey, { label: string; tone: BadgeProps["tone"]
 export function displayStatus(doc: SalesDocument, today: Date): StatusKey {
   if (doc.kind === "draft") return "draft";
   if (doc.kind === "invoice" && isOverdue(doc.dueOn, doc.status === "paid", today)) return "overdue";
+  if (doc.kind === "invoice" && doc.status === "pending" && doc.payments?.length) return "partial";
   return doc.status;
+}
+
+/** What has been collected of an invoice; a rectifying invoice's refunds are negative. */
+export const collectedOf = (doc: SalesDocument): Cents => sumCents((doc.payments ?? []).map((p) => p.amount));
+
+/** What is still to be collected; never negative. */
+export const outstandingOf = (doc: SalesDocument): Cents =>
+  amountOutstanding(
+    documentTotals(doc).total,
+    (doc.payments ?? []).map((p) => p.amount),
+  );
+
+/**
+ * The changes that set an invoice's collections: it is paid once they cover
+ * the total. The server derives the same status.
+ */
+export function withPayments(doc: SalesDocument, payments: Payment[]): Pick<SalesDocument, "payments" | "status"> {
+  const status = paymentStatus(
+    documentTotals(doc).total,
+    payments.map((p) => p.amount),
+  );
+  return { payments, status: status === "paid" ? "paid" : "pending" };
+}
+
+/** A collection of what is still pending, today, by the method last used or the default one. */
+export function settlingPayment(doc: SalesDocument, date: string, paymentMethodId: string): Payment {
+  return { id: newId(), date, amount: outstandingOf(doc), paymentMethodId };
 }
 
 /** Totals of a document; an issued invoice keeps the ones frozen when it was issued. */

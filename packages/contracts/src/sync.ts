@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { productSchema } from "./catalog";
-import { attachmentSchema, isoDate } from "./common";
+import { attachmentSchema, isoDate, paymentSchema } from "./common";
 import { contactRoleSchema, contactSchema } from "./contacts";
 import { catalogFamilySchema, stockMovementSchema } from "./core";
 import { organizationSettingsSchema, settingsSectionSchema } from "./organization-settings";
-import { expenseSchema, paymentSchema, purchaseInvoiceSchema, purchaseLineSchema } from "./purchases";
+import { expenseSchema, purchaseInvoiceSchema, purchaseLineSchema } from "./purchases";
 import { salesDocumentSchema, salesLineSchema } from "./sales";
 import {
   closedQuarterSchema,
@@ -69,6 +69,7 @@ export const storedSalesDocumentSchema = salesDocumentSchema.extend({
   clientId: z.uuid().or(z.literal("")),
   rectifiesId: z.uuid().optional(),
   lines: z.array(salesLineSchema).max(1000),
+  payments: z.array(paymentSchema).max(1000).optional(),
   attachments: storedAttachments,
 });
 

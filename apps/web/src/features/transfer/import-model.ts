@@ -14,6 +14,7 @@ import {
   parseAmount,
   parseDate,
   parsePercent,
+  paymentStatus,
   purchaseCarriesVat,
   sumBy,
   surchargeRateFromPercent,
@@ -504,17 +505,36 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         errors.push(`La factura ${number} está repetida en el archivo.`);
       lockedError(issuedOn, ctx, errors);
 
-      // The last payment row gives the collection; invoices here hold a single one
-      const paymentRow = [...rows].reverse().find((r) => get(r, "Cobro - Fecha"));
-      const paidOn = paymentRow ? optionalDate(get(paymentRow, "Cobro - Fecha"), "Fecha de cobro", errors) : null;
-      const paid = Boolean(paidOn) || isPaidStatus(at("Estado"));
-      const paymentMethodId = paid
-        ? paymentMethodFor(
-            paymentRow ? get(paymentRow, "Cobro - Método de cobro") : "",
-            paymentRow ? get(paymentRow, "Cobro - Tipo de método de cobro") : "",
+      // Each row with a date is a collection; without an amount it collects what is left
+      const total = invoiceTotals(lines, WITHHOLDING_RATES[withholding]).total;
+      const payments: Payment[] = [];
+      for (const row of rows) {
+        const date = get(row, "Cobro - Fecha");
+        if (!date) continue;
+        const iso = optionalDate(date, "Fecha de cobro", errors);
+        const amountText = get(row, "Cobro - Importe");
+        const amount = amountText ? parseAmount(amountText) : null;
+        if (amountText && amount === null) errors.push(`Importe de cobro no válido: «${amountText}».`);
+        if (!iso) continue;
+        const collected = amount === null ? cents(total - sumBy(payments, (p) => p.amount)) : eurosToCents(amount);
+        if (collected === 0) continue;
+        payments.push({
+          id: newId(),
+          date: iso,
+          amount: collected,
+          paymentMethodId: paymentMethodFor(
+            get(row, "Cobro - Método de cobro"),
+            get(row, "Cobro - Tipo de método de cobro"),
             warnings,
-          )
-        : undefined;
+          ),
+        });
+      }
+      if (payments.length === 0 && isPaidStatus(at("Estado")) && issuedOn)
+        payments.push({ id: newId(), date: issuedOn, amount: total, paymentMethodId: defaultPaymentMethodId() });
+      const paid = paymentStatus(
+        total,
+        payments.map((p) => p.amount),
+      );
 
       const doc: SalesDocument = {
         id: newId(),
@@ -532,9 +552,8 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         rental: incomeType === "752",
         rectifiesId,
         lines,
-        status: paid ? "paid" : "pending",
-        paidOn: paid ? (paidOn ?? issuedOn) : undefined,
-        paymentMethodId,
+        status: paid === "paid" ? "paid" : "pending",
+        payments: payments.length ? payments : undefined,
         publicNotes: at("Notas en la factura"),
         privateNotes: at("Notas privadas"),
       };

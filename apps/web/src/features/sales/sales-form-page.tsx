@@ -149,8 +149,8 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     rentalLocation: base?.rentalLocation ?? "spain",
     cadastralRef: base?.cadastralRef ?? "",
     markPaid: !isCopy && base?.status === "paid",
-    paidOn: (!isCopy && base?.paidOn) || issuedOn,
-    paymentMethodId: base?.paymentMethodId ?? defaultPaymentMethodId(),
+    paidOn: (!isCopy && base?.payments?.at(-1)?.date) || issuedOn,
+    paymentMethodId: base?.payments?.at(-1)?.paymentMethodId ?? defaultPaymentMethodId(),
     lines: (groupedOnInvoice ? groupLinesByTax(base!) : base?.lines)?.map((l) => toLineDraft(l, rectify)) ?? [
       emptyLine(settingsStore.get().tax.defaultVatRate),
     ],
@@ -410,8 +410,17 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
           ? "paid"
           : "pending"
         : (existing?.status ?? (asKind === "draft" ? "pending" : "created")),
-      paidOn: paid ? form.paidOn || form.issuedOn : undefined,
-      paymentMethodId: paid ? form.paymentMethodId : undefined,
+      // Marked as collected when issued: one collection of the whole total
+      payments: paid
+        ? [
+            {
+              id: newId(),
+              date: form.paidOn || form.issuedOn,
+              amount: totals.total,
+              paymentMethodId: form.paymentMethodId,
+            },
+          ]
+        : undefined,
       publicNotes: form.publicNotes.trim(),
       privateNotes: form.privateNotes.trim(),
       tags: form.tags.length ? form.tags : undefined,

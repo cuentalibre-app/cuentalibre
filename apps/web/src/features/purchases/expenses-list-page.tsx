@@ -30,21 +30,14 @@ import { table } from "@fiscalia/ui/lib/table";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
-import {
-  ActionsMenu,
-  EmptyState,
-  IconAction,
-  SortHeader,
-  downloadCsv,
-  pickFiles,
-  type Action,
-} from "@/features/sales/list-parts";
+import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { paymentMethodName } from "@/features/settings/settings-model";
-import { attachFile, attachmentUrl } from "@/data/files";
+import { attachmentUrl } from "@/data/files";
+import { AttachmentsDialog } from "./form-parts";
 import {
   EXPENSES_PATH,
   EXPENSE_STATUS,
@@ -687,16 +680,21 @@ function useExpenseActions(row: Row) {
   const attachments = doc.attachments ?? [];
   const viewable = attachments.map(attachmentUrl).find(Boolean);
 
+  const [documentsOpen, setDocumentsOpen] = useState(false);
   const attach: Action = {
-    label: attachments.length > 0 ? `Adjuntar archivos (${attachments.length})` : "Adjuntar archivos",
+    label: attachments.length > 0 ? `Documentos adjuntos (${attachments.length})` : "Adjuntar documentos",
     icon: Paperclip,
-    run: () =>
-      pickFiles((files) => {
-        if (files.length === 0) return;
-        const added = files.map(attachFile);
-        expensesStore.update(doc.id, { attachments: [...attachments, ...added] });
-      }),
+    run: () => setDocumentsOpen(true),
   };
+  const dialogs = documentsOpen && (
+    <AttachmentsDialog
+      title={`Documentos del gasto «${doc.concept}»`}
+      attachments={attachments}
+      examples="El ticket o el recibo, el justificante de pago…"
+      onChange={(next) => expensesStore.update(doc.id, { attachments: next })}
+      onOpenChange={setDocumentsOpen}
+    />
+  );
 
   const view: Action = {
     label: viewable
@@ -743,14 +741,15 @@ function useExpenseActions(row: Row) {
     ],
   ];
 
-  return { attach, primary, groups, attachments: attachments.length, label: `el gasto ${doc.concept}` };
+  return { attach, primary, groups, dialogs, attachments: attachments.length, label: `el gasto ${doc.concept}` };
 }
 
 /** Desktop: the usual operations one click away, the rest behind the arrow. */
 function QuickActions({ row }: { row: Row }) {
-  const { attach, primary, groups, attachments, label } = useExpenseActions(row);
+  const { attach, primary, groups, dialogs, attachments, label } = useExpenseActions(row);
   return (
     <div className="flex items-center justify-center gap-0.5">
+      {dialogs}
       <IconAction action={attach} badge={attachments} />
       <IconAction action={primary} />
       <ActionsMenu
@@ -774,18 +773,21 @@ function QuickActions({ row }: { row: Row }) {
 
 /** Mobile: everything in one menu. */
 function RowActions({ row }: { row: Row }) {
-  const { groups, label } = useExpenseActions(row);
+  const { groups, dialogs, label } = useExpenseActions(row);
   return (
-    <ActionsMenu
-      groups={groups}
-      trigger={
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
-            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-      }
-    />
+    <>
+      {dialogs}
+      <ActionsMenu
+        groups={groups}
+        trigger={
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
+              <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+        }
+      />
+    </>
   );
 }
 

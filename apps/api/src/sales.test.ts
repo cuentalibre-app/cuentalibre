@@ -1,5 +1,5 @@
 import type { SalesDocument } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import { newId, type Cents } from "@fiscalia/core";
 import { describe, expect, it } from "vitest";
 import type { Client } from "./test/harness";
 import { changes, client, document, errorCode, line, member, send, workspace } from "./test/sync";
@@ -170,25 +170,67 @@ describe("issued invoices", () => {
     expect(await salesDocuments(ana)).toEqual([invoice]);
   });
 
-  it("still take their collection, tags and private notes", async () => {
+  it("still take their collections, tags and private notes", async () => {
     const ana = await seller();
     const invoice = await issued(ana, document(ana.norte.id));
-    const paid = { status: "paid", paidOn: "2026-10-20", tags: ["t1"], privateNotes: "Pagada por transferencia" };
+    const total = invoice.issued!.totals.total;
+    const half = { id: newId(), date: "2026-10-20", amount: total / 2, paymentMethodId: "bank1" };
+    const partial = { payments: [half], tags: ["t1"], privateNotes: "Pagada por transferencia" };
     const response = await send(ana, [
       // Unchanged fields sent along are fine
-      { type: "update", entity: "salesDocuments", id: invoice.id, changes: { ...paid, issuedOn: invoice.issuedOn } },
+      { type: "update", entity: "salesDocuments", id: invoice.id, changes: { ...partial, issuedOn: invoice.issuedOn } },
     ]);
     expect(response.status).toBe(200);
-    expect(await salesDocuments(ana)).toEqual([{ ...invoice, ...paid }]);
+    // Part of the total collected: still pending
+    expect(await salesDocuments(ana)).toEqual([{ ...invoice, ...partial, status: "pending" }]);
+
+    const rest = { ...half, id: newId(), date: "2026-10-27" };
+    // The status follows the collections, whatever the client sends
+    await send(ana, [
+      {
+        type: "update",
+        entity: "salesDocuments",
+        id: invoice.id,
+        changes: { payments: [half, rest], status: "pending" },
+      },
+    ]);
+    expect((await salesDocuments(ana))[0]).toMatchObject({ status: "paid", payments: [half, rest] });
 
     const back = await send(ana, [
-      { type: "update", entity: "salesDocuments", id: invoice.id, changes: { status: "pending", paidOn: null } },
+      { type: "update", entity: "salesDocuments", id: invoice.id, changes: { payments: [], status: "pending" } },
     ]);
     expect(back.status).toBe(200);
+    expect((await salesDocuments(ana))[0]).toMatchObject({ status: "pending" });
+    expect((await salesDocuments(ana))[0]?.payments).toBeUndefined();
     const invalid = await send(ana, [
       { type: "update", entity: "salesDocuments", id: invoice.id, changes: { status: "accepted" } },
     ]);
     expect(invalid.status).toBe(400);
+  });
+
+  it("are paid when issued with collections that cover the total", async () => {
+    const ana = await seller();
+    const draft = document(ana.norte.id);
+    const invoice = await issued(ana, {
+      ...draft,
+      payments: [{ id: newId(), date: draft.issuedOn, amount: 106_000 as Cents, paymentMethodId: "bank1" }],
+    });
+    expect(invoice.status).toBe("paid");
+  });
+
+  it("are the only documents that take collections", async () => {
+    const ana = await seller();
+    const response = await send(ana, [
+      {
+        type: "create",
+        entity: "salesDocuments",
+        data: {
+          ...document(ana.norte.id, { kind: "quote", status: "created" }),
+          payments: [{ id: newId(), date: "2026-10-20", amount: 100 as Cents, paymentMethodId: "bank1" }],
+        },
+      },
+    ]);
+    expect(response.status).toBe(400);
   });
 });
 

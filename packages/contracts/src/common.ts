@@ -39,6 +39,16 @@ export const attachmentSchema = z.object({
 });
 export type Attachment = z.infer<typeof attachmentSchema>;
 
+/** A payment of a received invoice, or a collection of an issued one. */
+export const paymentSchema = z.object({
+  id,
+  date: isoDate,
+  /** A credit note or rectifying invoice has negative payments (refunds). */
+  amount: cents,
+  paymentMethodId: id,
+});
+export type Payment = z.infer<typeof paymentSchema>;
+
 /** Where a rented property is, as forms 115 and 180 ask. */
 export const rentalLocationSchema = z.enum(["spain", "basqueCountry", "navarre", "noCadastralRef", "abroad"]);
 export type RentalLocation = z.infer<typeof rentalLocationSchema>;

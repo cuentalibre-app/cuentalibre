@@ -37,7 +37,7 @@ const NO_ACCOUNT = "none";
 /** Documents and contacts that use a method: removing it would leave them pointing nowhere. */
 function methodUsage(id: string): number {
   return (
-    salesStore.all().filter((d) => d.paymentMethodId === id).length +
+    salesStore.all().filter((d) => d.payments?.some((x) => x.paymentMethodId === id)).length +
     purchasesStore.all().filter((p) => p.payments.some((x) => x.paymentMethodId === id)).length +
     expensesStore.all().filter((e) => e.payment?.paymentMethodId === id).length +
     [...contactsStore.all("client"), ...contactsStore.all("supplier")].filter((c) => c.paymentMethodId === id).length

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { attachmentSchema, cents, id, isoDate, rentalLocationSchema } from "./common";
+import { attachmentSchema, cents, id, isoDate, paymentSchema, rentalLocationSchema } from "./common";
 import { contactSchema } from "./contacts";
 import { invoiceLineSchema, invoiceTotalsSchema, operationTypeSchema, withholdingKindSchema } from "./core";
 
@@ -7,8 +7,9 @@ export const salesKindSchema = z.enum(["invoice", "draft", "quote", "deliveryNot
 export type SalesKind = z.infer<typeof salesKindSchema>;
 
 /**
- * Stored status. Invoices are pending or paid ("overdue" is derived from the
- * due date); quotes and delivery notes follow their own workflow.
+ * Stored status. Invoices are paid once their collections cover the total and
+ * pending until then ("partial" and "overdue" are derived from the collections
+ * and the due date); quotes and delivery notes follow their own workflow.
  */
 export const salesStatusSchema = z.enum(["pending", "paid", "created", "sent", "accepted", "rejected", "invoiced"]);
 export type SalesStatus = z.infer<typeof salesStatusSchema>;
@@ -99,9 +100,8 @@ export const salesDocumentSchema = z.object({
   lines: z.array(salesLineSchema),
   /** Expenses paid on the client's behalf (suplidos), outside the taxable base. */
   supplies: cents.optional(),
-  /** Collection date and method, for invoices marked as paid when created. */
-  paidOn: isoDate.optional(),
-  paymentMethodId: id.optional(),
+  /** Collections of an invoice, oldest first. A rectifying invoice's refunds are negative. */
+  payments: z.array(paymentSchema).optional(),
   tags: z.array(id).optional(),
   /** Document language and number format; empty means the client's default. */
   language: z.string().optional(),

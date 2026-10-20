@@ -57,7 +57,10 @@ function fromSale(doc: SalesDocument, contacts: Map<string, Contact>, cash: Set<
     account: doc.incomeType,
     cadastralRef: doc.cadastralRef,
     rentalLocation: doc.rentalLocation,
-    cash: doc.paidOn && cash.has(doc.paymentMethodId ?? "") ? total : cents(0),
+    cash: sumBy(
+      (doc.payments ?? []).filter((p) => cash.has(p.paymentMethodId)),
+      (p) => p.amount,
+    ),
   };
 }
 

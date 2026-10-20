@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { attachmentSchema, cents, id, isoDate, percentage, rentalLocationSchema } from "./common";
+import { attachmentSchema, cents, id, isoDate, paymentSchema, percentage, rentalLocationSchema } from "./common";
 import { amortizationPlanSchema, purchaseOperationTypeSchema, withholdingKindSchema } from "./core";
 import { salesLineSchema } from "./sales";
 
@@ -42,15 +42,6 @@ export type ExpenseType = z.infer<typeof expenseTypeSchema>;
 
 export const purchaseLineSchema = salesLineSchema;
 export type PurchaseLine = z.infer<typeof purchaseLineSchema>;
-
-export const paymentSchema = z.object({
-  id,
-  date: isoDate,
-  /** A credit note has negative payments (refunds). */
-  amount: cents,
-  paymentMethodId: id,
-});
-export type Payment = z.infer<typeof paymentSchema>;
 
 /** What turns a received invoice into an investment good: how it is amortized. */
 export const investmentAssetSchema = amortizationPlanSchema.extend({
