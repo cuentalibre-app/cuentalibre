@@ -252,6 +252,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
   );
   const [reordering, setReordering] = useState(false);
+  // The collection date follows the invoice date until the user picks another one
+  const [paidOnFollows, setPaidOnFollows] = useState(() => form.paidOn === form.issuedOn);
   const [dueTerm, setDueTerm] = useState<number | null | "custom">(() =>
     form.dueOn === null ? null : (DUE_TERMS.find((d) => addDays(form.issuedOn, d) === form.dueOn) ?? "custom"),
   );
@@ -305,6 +307,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       ...f,
       issuedOn,
       dueOn: typeof dueTerm === "number" && issuedOn ? addDays(issuedOn, dueTerm) : f.dueOn,
+      paidOn: paidOnFollows && issuedOn ? issuedOn : f.paidOn,
     }));
   };
 
@@ -975,7 +978,15 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                   <div className="flex flex-wrap items-end gap-3 pl-7.5">
                     <Field label="Fecha de cobro" className="w-44">
                       {(p) => (
-                        <Input {...p} type="date" value={form.paidOn} onChange={(e) => set("paidOn", e.target.value)} />
+                        <Input
+                          {...p}
+                          type="date"
+                          value={form.paidOn}
+                          onChange={(e) => {
+                            set("paidOn", e.target.value);
+                            setPaidOnFollows(false);
+                          }}
+                        />
                       )}
                     </Field>
                     <Field label="Método de cobro" required error={errors.paymentMethodId} className="w-56">
