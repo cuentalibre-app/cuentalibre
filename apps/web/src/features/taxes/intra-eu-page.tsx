@@ -22,6 +22,7 @@ import { FormInfo } from "./form-info";
 import { usePartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
 import { Assumptions, Notice, ResultPanel, type ResultSummary } from "./tax-form";
+import { ONLY_RECORDED } from "./taxes-model";
 import { ModuleBreadcrumb } from "./tax-intro";
 
 const KEY_LABEL: Record<Key349, string> = {
@@ -282,10 +283,12 @@ export function IntraEuPage() {
         <Assumptions
           items={[
             "Recoge solo las facturas con el tipo de operación Intracomunitaria, sea cual sea el país del cliente o proveedor.",
-            "El código de país sale del prefijo del NIF-IVA y, si no lo tiene, del país de la ficha del contacto.",
+            "El código de país sale del prefijo del NIF-IVA y, si no lo tiene, del país de la ficha del contacto. Si falta el país en alguna operación, escribe el NIF-IVA con su prefijo (por ejemplo, FR12345678901) o completa el país en la ficha.",
             "Las ventas de la cuenta 700 y las compras de las cuentas 600 y 602 son bienes (claves E y A); el resto, servicios (S e I).",
             "Las rectificaciones de periodos anteriores no se separan: se suman en el periodo de la factura rectificativa.",
             "Se calcula como una única declaración, sin sustitutivas.",
+            "La periodicidad es trimestral; pasa a mensual si las entregas y prestaciones a la UE superan 50.000 € (sin IVA) en el trimestre o en alguno de los cuatro anteriores.",
+            ONLY_RECORDED,
           ]}
         />
       </div>

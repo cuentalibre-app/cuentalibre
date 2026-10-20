@@ -30,6 +30,7 @@ import {
   type FormAnswer,
   type FormCode,
   type FormSection,
+  type Hint,
 } from "./taxes-model";
 
 /* Building blocks of the tax form pages. Tooltips need a TooltipProvider above. */
@@ -175,6 +176,71 @@ const isBox = (cell: Cell): cell is string => typeof cell === "string";
 
 const cellKey = (cell: Cell) => (cell === null || isBox(cell) ? cell : (cell.box ?? cell.text));
 
+/** The box numbers of a cell: none for a blank or a fixed text that isn't a box. */
+const boxOf = (cell: Cell): string[] => (cell === null ? [] : isBox(cell) ? [cell] : cell.box ? [cell.box] : []);
+
+/** "Casilla 13", "Casillas 28 y 29", "Casillas 01, 02 y 03" */
+function boxesTitle(boxes: string[]): string {
+  if (boxes.length === 0) return "Más información";
+  if (boxes.length === 1) return `Casilla ${boxes[0]}`;
+  return `Casillas ${boxes.slice(0, -1).join(", ")} y ${boxes.at(-1)}`;
+}
+
+/** A help text with **words** in bold. */
+function RichText({ text }: { text: string }) {
+  return text.split(/\*\*(.+?)\*\*/).map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
+}
+
+/** The help of a row of boxes, titled with its boxes as on the form. */
+function BoxHint({ boxes, hint }: { boxes: string[]; hint: Hint }) {
+  const { text, table: helpTable, after = [] } = typeof hint === "string" ? { text: [hint] } : hint;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button type="button" aria-label="Más información" className="cursor-help text-muted-foreground">
+          <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="block max-w-80 px-3.5 py-3 font-normal leading-snug">
+        <p className="m-0 mb-1.5 text-center font-semibold">{boxesTitle(boxes)}</p>
+        <div className="flex flex-col gap-2">
+          {text.map((t, i) => (
+            <p key={i} className="m-0">
+              <RichText text={t} />
+            </p>
+          ))}
+          {helpTable && (
+            <table className="w-full border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-background/30">
+                  {helpTable.columns.map((c, i) => (
+                    <th key={c} className={cn("py-1 font-semibold", i === 0 ? "text-left" : "text-right")}>
+                      {c}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {helpTable.rows.map(([label, value]) => (
+                  <tr key={label}>
+                    <td className="py-0.5">{label}</td>
+                    <td className="py-0.5 text-right font-semibold whitespace-nowrap">{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {after.map((t, i) => (
+            <p key={i} className="m-0">
+              <RichText text={t} />
+            </p>
+          ))}
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 const NO_BOXES = new Set<string>();
 
 /** The form's sections, box by box. Rows whose boxes are all zero hide unless `showEmpty`. */
@@ -256,20 +322,7 @@ export function FormSections({
                         )}
                       >
                         {source}
-                        {r.hint && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button
-                                type="button"
-                                aria-label="Más información"
-                                className="cursor-help text-muted-foreground"
-                              >
-                                <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-72">{r.hint}</TooltipContent>
-                          </Tooltip>
-                        )}
+                        {r.hint && <BoxHint boxes={r.cells.flatMap(boxOf)} hint={r.hint} />}
                       </span>
                       {r.cells.map((cell, c) =>
                         cell === null ? (

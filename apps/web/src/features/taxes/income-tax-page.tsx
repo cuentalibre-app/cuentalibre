@@ -25,7 +25,7 @@ import {
   type DocumentGroup,
   type ResultSummary,
 } from "./tax-form";
-import { answers100, LAYOUT_130, layout100, quarterOf } from "./taxes-model";
+import { ACTIVITY_SCOPE, answers100, LAYOUT_130, layout100, ONLY_RECORDED, quarterOf } from "./taxes-model";
 import { FormInfo } from "./form-info";
 import { ModuleBreadcrumb } from "./tax-intro";
 
@@ -179,6 +179,9 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
               : `La minoración de la casilla 13 queda a cero: con tu rendimiento neto de ${year - 1} (${formatEUR(annual.previousNet)}) no te corresponde.`,
           "Las facturas recibidas y los gastos cuentan por su parte deducible. La cuota de autónomos cuenta como gasto.",
           "Si más del 70 % de tus ingresos llevan retención puedes pedir no presentar el 130 (modelo 036 o 037).",
+          ACTIVITY_SCOPE,
+          ONLY_RECORDED,
+          "Se calcula como una única declaración, sin complementarias.",
         ]}
       />
     </>
@@ -224,7 +227,10 @@ function IncomeTax100({ year, today }: { year: number; today: Date }) {
         items={[
           "Solo el apartado de la actividad económica (D1) y sus retenciones: el resto de la renta (trabajo, ahorro, deducciones…) se completa en Renta WEB.",
           "Una sola actividad. Cada gasto va a la casilla que le corresponde por su tipo de gasto.",
-          "La reducción por inicio de actividad y las de discapacidad no se aplican: márcalas en Renta WEB si te corresponden.",
+          "La reducción por inicio de actividad y las de discapacidad no se aplican: márcalas en Renta WEB si te corresponden (la de discapacidad, en las casillas 0231 a 0235).",
+          "La casilla 0165 (quién realiza la actividad) la rellena Renta WEB al elegir la modalidad, después de indicar el código de actividad en la 0166.",
+          ACTIVITY_SCOPE,
+          ONLY_RECORDED,
         ]}
       />
     </>
