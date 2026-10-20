@@ -379,14 +379,17 @@ function columns(s: Sheet): Column[] {
     return options.showProductUnits && line.unit ? `${quantity} ${line.unit}` : quantity;
   };
   const vat = (line: SalesLine) => applyRate(lineBase(line), line.vatRate);
-  const discount: Column = { label: t.discount, width: 14, value: (line) => f.percent(line.discount) };
+  // Only when some line has a discount: a column of 0 % says nothing
+  const discount: Column[] = s.doc.lines.some((line) => line.discount)
+    ? [{ label: t.discount, width: 14, value: (line) => f.percent(line.discount) }]
+    : [];
   const taxes = options.showTaxes;
 
   if (s.style.traditional) {
     if (!options.showPrices) return [{ label: t.quantity, width: 24, value: units }];
     const columns: Column[] = [
       { label: t.quantity, width: 30, value: (line) => `${units(line)} x ${f.money(eurosToCents(line.unitPrice))}` },
-      discount,
+      ...discount,
       { label: t.baseShort, width: 25, value: (line) => f.money(lineBase(line)) },
     ];
     if (taxes)
@@ -398,7 +401,7 @@ function columns(s: Sheet): Column[] {
   const columns: Column[] = [
     { label: t.units, width: 13, value: units },
     { label: t.unitBase, width: 23, value: (line) => f.money(eurosToCents(line.unitPrice)) },
-    discount,
+    ...discount,
     { label: t.lineBase, width: 25, value: (line) => f.money(lineBase(line)) },
   ];
   if (taxes)
@@ -659,7 +662,8 @@ function classicFoot(s: Sheet, breakdown: BreakdownRow[], totals: TotalRow[]) {
   totals.forEach(([label, value], i) => {
     const last = i === totals.length - 1;
     s.y += last ? 5.5 : 4.4;
-    write(s, label, RIGHT - 25, s.y, { size: last ? 10 : 8, bold: true, align: "right" });
+    // Labels start at the box's edge, in line with the "Tipo impuesto" column above
+    write(s, label, boxX + 1.5, s.y, { size: last ? 10 : 8, bold: true });
     write(s, value, RIGHT - 1.5, s.y, { size: last ? 10 : 8, bold: true, align: "right" });
   });
   s.y += 2;
@@ -726,11 +730,12 @@ function boxedFoot(s: Sheet, breakdown: BreakdownRow[], totals: TotalRow[]) {
 
   const x = 115;
   fill(s, x, top, RIGHT - x, row, s.rule);
-  write(s, s.t.totals, (x + RIGHT) / 2, top + 3.6, { color: s.paper, align: "center" });
+  // Labels start at one edge, under the heading, whatever their length
+  write(s, s.t.totals, x + 1.5, top + 3.6, { color: s.paper });
   totals.forEach(([label, value], i) => {
     const last = i === totals.length - 1;
     const y = top + row * (i + 1);
-    write(s, label, 167, y + 3.6, { size: last ? 9.5 : 8.5, bold: last, align: "right" });
+    write(s, label, x + 1.5, y + 3.6, { size: last ? 9.5 : 8.5, bold: last });
     write(s, value, RIGHT - 1.5, y + 3.6, { size: last ? 9.5 : 8.5, bold: last, align: "right" });
     if (grid) {
       frame(s, x, y, RIGHT - x, row);
@@ -742,22 +747,25 @@ function boxedFoot(s: Sheet, breakdown: BreakdownRow[], totals: TotalRow[]) {
   s.y = top + row * (Math.max(breakdown.length, totals.length) + 1);
 }
 
-/** "A pagar por transferencia bancaria en la cuenta ES91…", from the client's method or the default one. */
+/**
+ * "A pagar por transferencia bancaria en la cuenta ES91…", from the client's method or the default one.
+ * Cash says nothing worth printing.
+ */
 function paymentLine(s: Sheet): string | null {
   if (s.doc.kind !== "invoice" && s.doc.kind !== "draft") return null;
   const { paymentMethods, defaultPaymentMethodId } = settingsStore.get();
   const id = s.client.paymentMethodId ?? defaultPaymentMethodId;
   const method = paymentMethods.find((m) => m.id === id);
-  return method ? paymentText(s.t, method) : null;
+  return method && method.type !== "cash" ? paymentText(s.t, method) : null;
 }
 
 /* ───────────────────────── Notes and footer ───────────────────────── */
 
-/** Legal mention of the operation and the document's public notes. */
+/** The document's public notes. */
 function drawNotes(s: Sheet) {
-  const notes = [s.t.operations[s.doc.operationType], s.doc.publicNotes].filter(Boolean) as string[];
-  if (!notes.length) return;
-  const text = wrap(s, notes.join("\n"), RIGHT - LEFT, 8);
+  const notes = s.doc.publicNotes.trim();
+  if (!notes) return;
+  const text = wrap(s, notes, RIGHT - LEFT, 8);
   if (s.y + text.length * 3.8 > FOOT) newPage(s);
   write(s, text, LEFT, s.y, { size: 8, color: s.muted });
   s.y += text.length * 3.8 + 4;

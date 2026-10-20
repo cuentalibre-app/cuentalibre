@@ -1,4 +1,4 @@
-import { centsToEuros, type Cents, type OperationType } from "@fiscalia/core";
+import { centsToEuros, type Cents } from "@fiscalia/core";
 import type { DocumentFont, InvoiceTemplate, PaymentMethodType, SalesKind } from "@fiscalia/contracts";
 
 /*
@@ -95,6 +95,18 @@ export interface PdfFormat {
   date: (isoDate: string) => string;
 }
 
+/**
+ * "€4,600.00" → "€ 4,600.00": the built-in fonts draw a leading euro sign
+ * touching the first digit, so it gets a space as a trailing one already has.
+ */
+function spaceCurrency(parts: Intl.NumberFormatPart[]): string {
+  return parts
+    .map((part, i) =>
+      part.type === "currency" && parts[i + 1] && parts[i + 1]!.type !== "literal" ? `${part.value} ` : part.value,
+    )
+    .join("");
+}
+
 function intlLocale({ language, region }: DocumentLocale): string {
   const tag = region ? `${language}-${region}` : language;
   try {
@@ -118,7 +130,7 @@ export function pdfFormat(locale: DocumentLocale): PdfFormat {
   const quantity = new Intl.NumberFormat(tag, { maximumFractionDigits: 4 });
   const date = new Intl.DateTimeFormat(tag, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" });
   return {
-    money: (amount) => pdfText(money.format(centsToEuros(amount))),
+    money: (amount) => pdfText(spaceCurrency(money.formatToParts(centsToEuros(amount)))),
     percent: (rate) => pdfText(percent.format(rate)),
     quantity: (value) => pdfText(quantity.format(value)),
     date: (isoDate) => {
@@ -174,8 +186,6 @@ export interface PdfLabels {
   /** Appended to `payBy` when the method has an account: " en la cuenta {account}". */
   payToAccount: string;
   period: string;
-  /** Legal mention for operations without Spanish VAT. */
-  operations: Partial<Record<OperationType, string>>;
 }
 
 export const PDF_LABELS: Record<string, PdfLabels> = {
@@ -201,8 +211,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     unitBase: "Base Ud.",
     discount: "% Dto",
     lineBase: "Base Total",
-    vatRate: "% I.V.A.",
-    vat: "I.V.A.",
+    vatRate: "% IVA",
+    vat: "IVA",
     quantity: "Cantidad",
     baseShort: "Base imp.",
     taxBase: "Base Imponible",
@@ -211,7 +221,7 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     totals: "Totales",
     totalBase: "Total B.I.",
     totalBaseLong: "Total Base Imponible",
-    totalVat: "Total I.V.A.",
+    totalVat: "Total IVA",
     surcharge: "Recargo de equivalencia",
     withholding: "Retención IRPF",
     supplies: "Suplidos",
@@ -228,13 +238,6 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     },
     payToAccount: " en la cuenta {account}",
     period: "Periodo",
-    operations: {
-      exempt: "Operación exenta de IVA.",
-      notSubject: "Operación no sujeta a IVA.",
-      reverseCharge: "Inversión del sujeto pasivo.",
-      intraEu: "Operación intracomunitaria sin IVA: inversión del sujeto pasivo.",
-      export: "Exportación exenta de IVA.",
-    },
   },
   ca: {
     kinds: { invoice: "Factura", draft: "Factura esborrany", quote: "Pressupost", deliveryNote: "Albarà" },
@@ -258,8 +261,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     unitBase: "Base Ut.",
     discount: "% Dte",
     lineBase: "Base Total",
-    vatRate: "% I.V.A.",
-    vat: "I.V.A.",
+    vatRate: "% IVA",
+    vat: "IVA",
     quantity: "Quantitat",
     baseShort: "Base imp.",
     taxBase: "Base Imposable",
@@ -268,7 +271,7 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     totals: "Totals",
     totalBase: "Total B.I.",
     totalBaseLong: "Total Base Imposable",
-    totalVat: "Total I.V.A.",
+    totalVat: "Total IVA",
     surcharge: "Recàrrec d'equivalència",
     withholding: "Retenció IRPF",
     supplies: "Suplerts",
@@ -285,13 +288,6 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     },
     payToAccount: " al compte {account}",
     period: "Període",
-    operations: {
-      exempt: "Operació exempta d'IVA.",
-      notSubject: "Operació no subjecta a IVA.",
-      reverseCharge: "Inversió del subjecte passiu.",
-      intraEu: "Operació intracomunitària sense IVA: inversió del subjecte passiu.",
-      export: "Exportació exempta d'IVA.",
-    },
   },
   gl: {
     kinds: { invoice: "Factura", draft: "Factura borrador", quote: "Orzamento", deliveryNote: "Albará" },
@@ -315,8 +311,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     unitBase: "Base Ud.",
     discount: "% Dto",
     lineBase: "Base Total",
-    vatRate: "% I.V.E.",
-    vat: "I.V.E.",
+    vatRate: "% IVE",
+    vat: "IVE",
     quantity: "Cantidade",
     baseShort: "Base imp.",
     taxBase: "Base Impoñible",
@@ -325,7 +321,7 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     totals: "Totais",
     totalBase: "Total B.I.",
     totalBaseLong: "Total Base Impoñible",
-    totalVat: "Total I.V.E.",
+    totalVat: "Total IVE",
     surcharge: "Recargo de equivalencia",
     withholding: "Retención IRPF",
     supplies: "Suplidos",
@@ -342,13 +338,6 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     },
     payToAccount: " na conta {account}",
     period: "Período",
-    operations: {
-      exempt: "Operación exenta de IVE.",
-      notSubject: "Operación non suxeita a IVE.",
-      reverseCharge: "Investimento do suxeito pasivo.",
-      intraEu: "Operación intracomunitaria sen IVE: investimento do suxeito pasivo.",
-      export: "Exportación exenta de IVE.",
-    },
   },
   eu: {
     kinds: { invoice: "Faktura", draft: "Faktura zirriborroa", quote: "Aurrekontua", deliveryNote: "Albarana" },
@@ -399,13 +388,6 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     },
     payToAccount: ". Kontua: {account}",
     period: "Aldia",
-    operations: {
-      exempt: "BEZetik salbuetsitako eragiketa.",
-      notSubject: "BEZaren mende ez dagoen eragiketa.",
-      reverseCharge: "Subjektu pasiboaren inbertsioa.",
-      intraEu: "BEZik gabeko Erkidego barneko eragiketa: subjektu pasiboaren inbertsioa.",
-      export: "BEZetik salbuetsitako esportazioa.",
-    },
   },
   en: {
     kinds: { invoice: "Invoice", draft: "Draft invoice", quote: "Quote", deliveryNote: "Delivery note" },
@@ -437,7 +419,7 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     taxType: "Tax type",
     tax: "Tax",
     totals: "Totals",
-    totalBase: "Total net",
+    totalBase: "Total Net",
     totalBaseLong: "Total tax base",
     totalVat: "Total VAT",
     surcharge: "Equivalence surcharge",
@@ -456,13 +438,6 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     },
     payToAccount: " to account {account}",
     period: "Period",
-    operations: {
-      exempt: "VAT exempt transaction.",
-      notSubject: "Transaction not subject to VAT.",
-      reverseCharge: "Reverse charge.",
-      intraEu: "Intra-Community supply exempt from VAT: reverse charge.",
-      export: "Export exempt from VAT.",
-    },
   },
   de: {
     kinds: { invoice: "Rechnung", draft: "Rechnungsentwurf", quote: "Angebot", deliveryNote: "Lieferschein" },
@@ -513,13 +488,6 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     },
     payToAccount: " auf das Konto {account}",
     period: "Zeitraum",
-    operations: {
-      exempt: "Steuerbefreiter Umsatz.",
-      notSubject: "Nicht steuerbarer Umsatz.",
-      reverseCharge: "Steuerschuldnerschaft des Leistungsempfängers.",
-      intraEu: "Steuerfreie innergemeinschaftliche Lieferung: Steuerschuldnerschaft des Leistungsempfängers.",
-      export: "Steuerfreie Ausfuhr.",
-    },
   },
   fr: {
     kinds: { invoice: "Facture", draft: "Brouillon de facture", quote: "Devis", deliveryNote: "Bon de livraison" },
@@ -570,13 +538,6 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     },
     payToAccount: " sur le compte {account}",
     period: "Période",
-    operations: {
-      exempt: "Opération exonérée de TVA.",
-      notSubject: "Opération non soumise à la TVA.",
-      reverseCharge: "Autoliquidation.",
-      intraEu: "Livraison intracommunautaire exonérée de TVA : autoliquidation.",
-      export: "Exportation exonérée de TVA.",
-    },
   },
 };
 
