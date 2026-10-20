@@ -54,6 +54,7 @@ import {
   type StatusKey,
 } from "./sales-model";
 import { canSendEmail } from "@/data/email";
+import { SalesDocumentLink } from "./document-detail";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
 import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
@@ -253,7 +254,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         ) : (
           <>
             {/* Keyed by period so the rows replay their entrance when it changes, like the dashboard */}
-            <DocumentsTable key={`table-${periodKey(period)}`} kind={kind} rows={rows} sort={sort} onSort={setSort} />
+            <DocumentsTable key={`table-${periodKey(period)}`} rows={rows} sort={sort} onSort={setSort} />
             <DocumentsList key={`list-${periodKey(period)}`} rows={rows} />
           </>
         )}
@@ -360,17 +361,7 @@ function nextSort(current: Sort, key: SortKey): Sort {
   return { key, dir: textual && key !== "number" ? "asc" : "desc" };
 }
 
-function DocumentsTable({
-  kind,
-  rows,
-  sort,
-  onSort,
-}: {
-  kind: SalesKind;
-  rows: Row[];
-  sort: Sort;
-  onSort: (sort: Sort) => void;
-}) {
+function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSort: (sort: Sort) => void }) {
   // Tighter than the default so nine columns fit on a laptop screen.
   const th = cn(table.th, "px-3");
   const td = cn(table.td, "px-3");
@@ -403,12 +394,9 @@ function DocumentsTable({
                 style={{ "--i": i } as CSSProperties}
               >
                 <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>
-                  <Link
-                    to={`${KINDS[kind].path}/${r.doc.id}`}
-                    className="text-foreground no-underline hover:text-primary"
-                  >
+                  <SalesDocumentLink doc={r.doc} className="text-foreground no-underline hover:text-primary">
                     {r.doc.number ?? <span className="font-sans text-muted-foreground">Sin número</span>}
-                  </Link>
+                  </SalesDocumentLink>
                 </td>
                 <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>{formatDate(r.doc.issuedOn)}</td>
                 <td className={td}>

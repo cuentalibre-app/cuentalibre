@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { Loader2, Paperclip, Plus, Trash2 } from "lucide-react";
-import { amountOutstanding, newId, toIsoDate } from "@fiscalia/core";
-import type { EmailMessage, Payment, SalesDocument } from "@fiscalia/contracts";
+import { Loader2, Paperclip } from "lucide-react";
+import type { EmailMessage, SalesDocument } from "@fiscalia/contracts";
 import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
 import { Button } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -9,28 +8,14 @@ import { Input, Textarea } from "@fiscalia/ui/components/input";
 import { formatEUR } from "@fiscalia/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { emailsOf, sendEmail } from "@/data/email";
-import {
-  businessName,
-  defaultPaymentMethodId,
-  paymentMethodName,
-  paymentMethodOptions,
-} from "@/features/settings/settings-model";
-import { MethodDialog } from "@/features/settings/method-dialog";
+import { businessName } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
-import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { TagsField } from "./document-editor";
-import { Field, GroupedSelect } from "./form-fields";
-import {
-  STATUS,
-  clientOf,
-  displayStatus,
-  documentFileName,
-  documentTotals,
-  KINDS,
-  outstandingOf,
-  withPayments,
-} from "./sales-model";
+import { Field } from "./form-fields";
+import { STATUS, clientOf, displayStatus, documentFileName, documentTotals, KINDS, withPayments } from "./sales-model";
 import { salesStore, useSalesDocuments } from "./sales-store";
+import { PaymentsDialog } from "./payments-dialog";
 
 /* Dialogs opened from a document's actions menu in the lists. */
 
@@ -39,180 +24,21 @@ interface DialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/**
- * Collections of an invoice, as in the reference app: register what was collected (all of
- * it, or part), see the collections so far and remove a wrong one. Changes apply at once.
- */
+/** Collections of an invoice. Changes apply at once. */
 export function PaymentDialog({ doc, onOpenChange }: DialogProps) {
   const current = useSalesDocuments().find((d) => d.id === doc.id) ?? doc;
-  const payments = current.payments ?? [];
-  const pending = outstandingOf(current);
   const { total } = documentTotals(current);
-  const status = displayStatus(current, new Date());
-  const [amount, setAmount] = useState(formatEurosInput(pending));
-  const [date, setDate] = useState(toIsoDate(new Date()));
-  const [methodId, setMethodId] = useState(payments.at(-1)?.paymentMethodId ?? defaultPaymentMethodId());
-  const [submitted, setSubmitted] = useState(false);
-  const [creatingMethod, setCreatingMethod] = useState(false);
-
-  const parsed = parseEuros(amount);
-  const error =
-    parsed === null || parsed === 0
-      ? "Indica la cantidad cobrada."
-      : Math.sign(parsed) !== Math.sign(total) || Math.abs(parsed) > Math.abs(pending)
-        ? `No puede superar lo pendiente de cobro (${formatEUR(pending)}).`
-        : undefined;
-
-  const save = (next: Payment[]) => {
-    salesStore.update(current.id, withPayments(current, next));
-    setAmount(
-      formatEurosInput(
-        amountOutstanding(
-          total,
-          next.map((p) => p.amount),
-        ),
-      ),
-    );
-    setSubmitted(false);
-  };
-  const register = () => {
-    setSubmitted(true);
-    if (error || parsed === null || !date || !methodId) return;
-    save([...payments, { id: newId(), date, amount: parsed, paymentMethodId: methodId }]);
-  };
-
+  const status = STATUS[displayStatus(current, new Date())];
   return (
-    <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogTitle>Gestión de cobros</DialogTitle>
-        <DialogDescription>
-          Cobros de la factura {current.number}, por un total de {formatEUR(total)}. Registra lo cobrado, todo o una
-          parte.
-        </DialogDescription>
-        {pending === 0 ? (
-          <p className="m-0 rounded-lg bg-success-soft px-3 py-2.5 text-sm text-success">
-            La factura está cobrada por completo. Si un cobro está mal, quítalo y vuelve a registrarlo.
-          </p>
-        ) : (
-          <form
-            className="flex flex-col gap-4"
-            noValidate
-            onSubmit={(e) => {
-              e.preventDefault();
-              register();
-            }}
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Cantidad cobrada" required error={submitted ? error : undefined}>
-                {(p) => (
-                  <span className="relative flex items-center">
-                    <Input
-                      {...p}
-                      inputMode="decimal"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="pr-7 text-right amount"
-                    />
-                    <span
-                      className="pointer-events-none absolute right-3 text-sm text-muted-foreground"
-                      aria-hidden="true"
-                    >
-                      €
-                    </span>
-                  </span>
-                )}
-              </Field>
-              <Field label="Fecha" required>
-                {(p) => <Input {...p} type="date" required value={date} onChange={(e) => setDate(e.target.value)} />}
-              </Field>
-              <Field label="Método de cobro" required>
-                {(p) => (
-                  <div className="flex items-center gap-1">
-                    <div className="min-w-0 flex-1 [&>*]:w-full">
-                      <GroupedSelect
-                        {...p}
-                        value={methodId}
-                        onChange={setMethodId}
-                        groups={[{ options: paymentMethodOptions(methodId) }]}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="md"
-                      className="shrink-0 px-2.5 text-primary"
-                      onClick={() => setCreatingMethod(true)}
-                    >
-                      <Plus aria-hidden="true" />
-                      Nuevo método
-                    </Button>
-                  </div>
-                )}
-              </Field>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-sm font-medium">Estado de la factura</span>
-                <span className="flex min-h-10 flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <Badge tone={STATUS[status].tone}>{STATUS[status].label}</Badge>
-                  {pending !== 0 && pending !== total && <span>Quedan {formatEUR(pending)}</span>}
-                </span>
-              </div>
-            </div>
-            <div className="flex justify-center">
-              <Button type="submit">Registrar</Button>
-            </div>
-          </form>
-        )}
-
-        <section aria-labelledby="cobros-realizados" className="overflow-hidden rounded-lg border border-border">
-          <h3 id="cobros-realizados" className="m-0 border-b border-border px-3 py-2.5 text-sm font-semibold">
-            Cobros realizados hasta la fecha
-          </h3>
-          {payments.length === 0 ? (
-            <p className="m-0 px-3 py-4 text-center text-sm text-muted-foreground">Todavía no hay cobros.</p>
-          ) : (
-            <table className="w-full border-collapse text-sm">
-              <thead className="bg-muted text-xs text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2 text-left font-medium">Fecha</th>
-                  <th className="px-3 py-2 text-right font-medium">Cantidad</th>
-                  <th className="px-3 py-2 text-left font-medium">Método de cobro</th>
-                  <th className="w-12 px-3 py-2">
-                    <span className="sr-only">Operaciones</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((p) => (
-                  <tr key={p.id} className="border-t border-border">
-                    <td className="px-3 py-1.5">{formatDate(p.date)}</td>
-                    <td className="px-3 py-1.5 text-right amount">{formatEUR(p.amount)}</td>
-                    <td className="px-3 py-1.5">{paymentMethodName(p.paymentMethodId) ?? "Sin método"}</td>
-                    <td className="px-1.5 py-1 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        aria-label={`Quitar el cobro del ${formatDate(p.date)}`}
-                        onClick={() => save(payments.filter((x) => x.id !== p.id))}
-                        className="size-8 px-0 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 strokeWidth={1.8} aria-hidden="true" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-
-        <div className="flex justify-end">
-          <DialogClose asChild>
-            <Button variant="secondary">Cerrar</Button>
-          </DialogClose>
-        </div>
-        {creatingMethod && <MethodDialog open onOpenChange={setCreatingMethod} method={null} onCreated={setMethodId} />}
-      </DialogContent>
-    </Dialog>
+    <PaymentsDialog
+      side="collection"
+      description={`Cobros de la factura ${current.number}, por un total de ${formatEUR(total)}. Registra lo cobrado, todo o una parte.`}
+      total={total}
+      payments={current.payments ?? []}
+      status={<Badge tone={status.tone}>{status.label}</Badge>}
+      onChange={(next) => salesStore.update(current.id, withPayments(current, next))}
+      onOpenChange={onOpenChange}
+    />
   );
 }
 

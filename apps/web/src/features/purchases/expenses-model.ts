@@ -5,6 +5,7 @@ import { contactsStore } from "@/features/contacts/contacts-store";
 
 export const EXPENSES_PATH = "/compras/gastos";
 export const NEW_EXPENSE_PATH = "/compras/gastos/nuevo";
+export const expensePath = (expense: Pick<Expense, "id">) => `${EXPENSES_PATH}/${expense.id}`;
 
 export type ExpenseStatus = "pending" | "paid";
 
