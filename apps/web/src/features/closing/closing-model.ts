@@ -142,6 +142,20 @@ export function useQuarterChecks(period: Period): QuarterCheck[] {
   }, [documents, purchases, expenses, period]);
 }
 
+/** True when nothing has been recorded in the quarter yet: no invoices, drafts, purchases or expenses. */
+export function useQuarterIsEmpty(period: Period): boolean {
+  const documents = useSalesDocuments();
+  const purchases = usePurchaseInvoices();
+  const expenses = useExpenses();
+  return useMemo(
+    () =>
+      !documents.some((d) => (d.kind === "invoice" || d.kind === "draft") && isInPeriod(d.issuedOn, period)) &&
+      !purchases.some((p) => isInPeriod(p.bookedOn, period)) &&
+      !expenses.some((e) => isInPeriod(e.date, period)),
+    [documents, purchases, expenses, period],
+  );
+}
+
 /**
  * The quarter to close next: the last one that has ended, unless it's closed already, in which
  * case the one in progress.
