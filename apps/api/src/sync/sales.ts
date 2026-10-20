@@ -274,10 +274,20 @@ export async function updateSalesDocument(
   if ("lines" in changes) await writeLines(tx, organizationId, record);
 }
 
+/**
+ * Deletes a document. An issued invoice can only be deleted by a business
+ * exempt from VERI*FACTU, never once it has a record, and while its quarter
+ * is open.
+ */
 export async function deleteSalesDocument(tx: Tx, organizationId: string, id: string) {
   const row = await liveRow(tx, organizationId, id);
   if (!row) notFound();
-  if (row.kind === "invoice") issuedError();
+  if (row.kind === "invoice") {
+    const settings = await readSettings(tx, organizationId);
+    if (settings.verifactu.system !== "exempt" || (await recordInfoByInvoice(tx, organizationId, [id])).size > 0)
+      issuedError();
+    await checkQuarterOpen(tx, organizationId, row.issuedOn);
+  }
   await tx
     .update(salesDocument)
     .set({ deletedAt: new Date() })
@@ -412,11 +422,18 @@ async function checkRectified(tx: Tx, organizationId: string, record: StoredSale
     invalid("rectifiesId: must be an issued invoice of the normal series.");
 }
 
+/** Invoices that aren't deleted: a deleted invoice frees its number for the next one. */
 async function issuedInvoices(tx: Tx, organizationId: string) {
   const rows = await tx
     .select({ number: salesDocument.number, series: salesDocument.series, issuedOn: salesDocument.issuedOn })
     .from(salesDocument)
-    .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.kind, "invoice")));
+    .where(
+      and(
+        eq(salesDocument.organizationId, organizationId),
+        eq(salesDocument.kind, "invoice"),
+        isNull(salesDocument.deletedAt),
+      ),
+    );
   return rows.map((row) => ({ ...row, number: row.number! }));
 }
 

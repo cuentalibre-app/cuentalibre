@@ -1,4 +1,4 @@
-import type { SalesDocument } from "@fiscalia/contracts";
+import { DEFAULT_ORGANIZATION_SETTINGS, type SalesDocument } from "@fiscalia/contracts";
 import { newId, type Cents } from "@fiscalia/core";
 import { describe, expect, it } from "vitest";
 import type { Client } from "./test/harness";
@@ -168,6 +168,24 @@ describe("issued invoices", () => {
     const deleted = await send(ana, [{ type: "delete", entity: "salesDocuments", id: invoice.id }]);
     expect(deleted.status).toBe(409);
     expect(await salesDocuments(ana)).toEqual([invoice]);
+  });
+
+  it("can be deleted by a business exempt from VERI*FACTU while the quarter is open", async () => {
+    const ana = await seller();
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt" as const };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
+    const first = await issued(ana, document(ana.norte.id, { issuedOn: "2026-10-20" }));
+    expect((await send(ana, [{ type: "delete", entity: "salesDocuments", id: first.id }])).status).toBe(200);
+    expect(await salesDocuments(ana)).toEqual([]);
+    // Its number and date are free again
+    const next = await issued(ana, document(ana.norte.id, { issuedOn: "2026-10-19" }));
+    expect(next.number).toBe("2026-0001");
+
+    const old = await issued(ana, document(ana.norte.id, { issuedOn: "2026-10-21" }));
+    await send(ana, [{ type: "closeQuarter", period: "2026-T4", closedOn: "2027-01-15" }]);
+    const closed = await send(ana, [{ type: "delete", entity: "salesDocuments", id: old.id }]);
+    expect(closed.status).toBe(409);
+    expect(await errorCode(closed)).toBe("quarter_closed");
   });
 
   it("still take their collections, tags and private notes", async () => {

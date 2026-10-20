@@ -35,6 +35,7 @@ import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { useLockedQuarter } from "@/features/closing/closing-store";
+import { useCompliance } from "@/features/settings/compliance-store";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
@@ -503,8 +504,10 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
-  // Drafts can't be issued into a closed quarter
+  // Drafts can't be issued into a closed quarter, nor invoices deleted from one
   const lockedQuarter = useLockedQuarter()(doc.issuedOn);
+  // An invoice already recorded under VERI*FACTU stays, even if the business is exempt now
+  const deletable = useCompliance().verifactu.system === "exempt" && !doc.issued?.verifactu;
 
   const attach: Action = {
     label: attachments.length > 0 ? `Documentos adjuntos (${attachments.length})` : "Adjuntar documentos",
@@ -623,17 +626,23 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
           },
         ]
       : [],
-    // Issued invoices are never deleted: they are corrected with a rectifying invoice
-    isInvoice
+    // Under VERI*FACTU issued invoices are never deleted: they are corrected with a rectifying invoice
+    isInvoice && !deletable
       ? []
       : [
           {
-            label: `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim(),
+            label:
+              `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim() +
+              (isInvoice && lockedQuarter ? " (trimestre cerrado)" : ""),
             icon: Trash2,
             danger: true,
-            run: () => {
-              if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`)) salesStore.remove(doc.id);
-            },
+            run:
+              isInvoice && lockedQuarter
+                ? undefined
+                : () => {
+                    if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`))
+                      salesStore.remove(doc.id);
+                  },
           },
         ],
   ].filter((g) => g.length > 0);
