@@ -1,3 +1,4 @@
+import { newId } from "@fiscalia/core";
 import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@fiscalia/contracts";
 import {
   initialAccounts,
@@ -9,6 +10,8 @@ import {
 import type { Command } from "@/data/commands";
 import { createStore } from "@/data/store";
 import { listTarget, syncSettings, syncTarget } from "@/data/sync";
+import * as accountMethods from "./account-methods";
+import type { MethodBookChange } from "./account-methods";
 
 /**
  * Business profile, tax setup, treasury accounts and payment methods. Invoices, the PDF, the
@@ -57,6 +60,13 @@ export function useSettings(): Settings {
 const write = (changes: Partial<Settings>, ...commands: Command[]) =>
   settings.write({ ...settings.get(), ...changes }, commands);
 
+const methodBook = () => {
+  const { accounts, paymentMethods, defaultPaymentMethodId } = settings.get();
+  return { accounts, paymentMethods, defaultPaymentMethodId };
+};
+
+const change = ({ commands, ...changes }: MethodBookChange) => write(changes, ...commands);
+
 const replace = <T extends { id: string }>(items: T[], id: string, changes: Partial<T>) =>
   items.map((item) => (item.id === id ? { ...item, ...changes } : item));
 
@@ -66,34 +76,18 @@ export const settingsStore = {
     write({ profile }, { type: "saveSettings", section: "businessProfile", data: profile }),
   updateTax: (tax: TaxSetup) => write({ tax }, { type: "saveSettings", section: "taxSetup", data: tax }),
 
-  addAccount: (account: TreasuryAccount) =>
-    write(
-      { accounts: [...settings.get().accounts, account] },
-      { type: "create", entity: "treasuryAccounts", data: account },
-    ),
-  updateAccount: (id: string, changes: Partial<TreasuryAccount>) =>
+  /** Opens the account with a method of its own. */
+  addAccount: (account: TreasuryAccount) => change(accountMethods.addAccount(methodBook(), account, newId())),
+  /** Name and number only; `setAccountActive` switches it on and off. */
+  updateAccount: (id: string, changes: Pick<TreasuryAccount, "name" | "number">) =>
     write(
       { accounts: replace(settings.get().accounts, id, changes) },
       { type: "update", entity: "treasuryAccounts", id, changes },
     ),
-  /** Methods linked to a removed account keep working, unlinked. */
-  removeAccount(id: string) {
-    const { accounts, paymentMethods } = settings.get();
-    const linked = paymentMethods.filter((m) => m.accountId === id);
-    return write(
-      {
-        accounts: accounts.filter((a) => a.id !== id),
-        paymentMethods: paymentMethods.map((m) => (m.accountId === id ? { ...m, accountId: null } : m)),
-      },
-      ...linked.map((m): Command => ({
-        type: "update",
-        entity: "paymentMethods",
-        id: m.id,
-        changes: { accountId: null },
-      })),
-      { type: "delete", entity: "treasuryAccounts", id },
-    );
-  },
+  setAccountActive: (id: string, active: boolean) => change(accountMethods.setAccountActive(methodBook(), id, active)),
+  /** `isUsed` tells the methods some document names: those stay, unlinked and inactive. */
+  removeAccount: (id: string, isUsed: (methodId: string) => boolean) =>
+    change(accountMethods.removeAccount(methodBook(), id, isUsed)),
 
   addPaymentMethod: (method: PaymentMethod) =>
     write(

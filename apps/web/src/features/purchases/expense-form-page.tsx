@@ -26,7 +26,8 @@ import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
 import { MONTHS, formatEurosInput, parseEuros } from "@/lib/format";
 import { settingsStore } from "@/features/settings/settings-store";
 import { SOCIAL_SECURITY } from "@/mocks/expenses";
-import { paymentMethodOptions } from "@/features/settings/settings-model";
+import { ACCOUNTS_PATH, paymentMethodOptions } from "@/features/settings/settings-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH, expenseIdentity, payeeOf } from "./expenses-model";
 import { expensesStore } from "./expenses-store";
 import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
@@ -597,12 +598,13 @@ function ExpenseForm({
                   Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
                 </TooltipContent>
               </Tooltip>
-              <Link
-                to="/configuracion/metodos-de-pago"
+              <SettingsLink
+                from="el gasto"
+                to={ACCOUNTS_PATH}
                 className="ml-auto text-sm font-medium text-primary no-underline hover:text-primary-hover"
               >
                 Gestionar métodos de pago
-              </Link>
+              </SettingsLink>
             </div>
           </Section>
 

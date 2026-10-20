@@ -16,6 +16,7 @@ export const SETTINGS_PATH = "/configuracion";
 export const BUSINESS_PATH = "/configuracion/empresa";
 export const TAX_SETTINGS_PATH = "/configuracion/impuestos";
 export const ACCOUNTS_PATH = "/configuracion/cuentas";
+/** Old address of the payment methods, which now live with their accounts. */
 export const PAYMENT_METHODS_PATH = "/configuracion/metodos-de-pago";
 export const INVOICE_SETTINGS_PATH = "/configuracion/facturas";
 export const PROFILE_PATH = "/configuracion/datos-personales";
@@ -178,16 +179,6 @@ export const METHOD_TYPES: Option<PaymentMethodType>[] = [
 ];
 
 export const methodTypeLabel = (type: PaymentMethodType) => label(METHOD_TYPES, type);
-
-/** Account kind a new method of each type usually books into. */
-export const ACCOUNT_KIND_FOR_METHOD: Record<PaymentMethodType, AccountKind> = {
-  cash: "cash",
-  card: "card",
-  transfer: "bank",
-  directDebit: "bank",
-  promissory: "bank",
-  paypal: "paypal",
-};
 
 export const ACTIVE_STATUS: Record<"active" | "inactive", { label: string; tone: BadgeProps["tone"] }> = {
   active: { label: "Activo", tone: "success" },

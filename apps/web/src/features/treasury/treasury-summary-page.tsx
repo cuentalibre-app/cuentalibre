@@ -10,6 +10,7 @@ import { AnimatedAmount } from "@/components/animated-amount";
 import { ACCOUNT_ICONS } from "@/features/settings/account-icons";
 import { AccountDialog } from "@/features/settings/accounts-page";
 import { ACCOUNTS_PATH, ACCOUNT_KINDS } from "@/features/settings/settings-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { MONTHS, MONTHS_SHORT, formatDate, formatThousands } from "@/lib/format";
 import { ImportDialog, MovementDialog, PageHeader, accountNumber } from "./treasury-parts";
@@ -53,7 +54,11 @@ export function TreasurySummaryPage() {
 
       <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
         {[
-          { label: "Saldo en cuentas", value: total, detail: `${active.length} cuentas activas` },
+          {
+            label: "Saldo en cuentas",
+            value: total,
+            detail: `${active.length} ${active.length === 1 ? "cuenta activa" : "cuentas activas"}`,
+          },
           { label: "Cobrado · 12 meses", value: collected, detail: "Facturas cobradas y cobros manuales" },
           { label: "Pagado · 12 meses", value: paid, detail: "Facturas recibidas, gastos y pagos" },
         ].map((s) => (
@@ -132,13 +137,14 @@ export function TreasurySummaryPage() {
               <Plus className="size-[18px] text-muted-foreground" strokeWidth={2} aria-hidden="true" />
               Nueva cuenta
             </button>
-            <Link
+            <SettingsLink
+              from="Bancos"
               to={ACCOUNTS_PATH}
               className="flex items-center gap-3 rounded-xl border border-border px-4 font-medium text-foreground no-underline transition-colors duration-150 hover:bg-accent"
             >
               <Settings className="size-[18px] text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
               Configuración de cuentas
-            </Link>
+            </SettingsLink>
           </li>
         </ul>
       </section>

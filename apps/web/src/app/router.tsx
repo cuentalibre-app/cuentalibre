@@ -51,7 +51,6 @@ import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
 import { ApiKeysPage } from "@/features/settings/api-keys-page";
 import { EmailSettingsPage } from "@/features/settings/email-settings-page";
 import { LedgerAccountsPage } from "@/features/settings/ledger-accounts-page";
-import { PaymentMethodsPage } from "@/features/settings/payment-methods-page";
 import { PreferencesPage } from "@/features/settings/preferences-page";
 import { ProfilePage } from "@/features/settings/profile-page";
 import {
@@ -233,7 +232,7 @@ const settingsRoutes = [
   { path: BUSINESS_PATH.slice(1), element: <BusinessPage /> },
   { path: TAX_SETTINGS_PATH.slice(1), element: <TaxSettingsPage /> },
   { path: ACCOUNTS_PATH.slice(1), element: <AccountsPage /> },
-  { path: PAYMENT_METHODS_PATH.slice(1), element: <PaymentMethodsPage /> },
+  { path: PAYMENT_METHODS_PATH.slice(1), element: <Navigate to={ACCOUNTS_PATH} replace /> },
   { path: INVOICE_SETTINGS_PATH.slice(1), element: <InvoiceSettingsPage /> },
   { path: CATALOG_SETTINGS_PATH.slice(1), element: <CatalogSettingsPage /> },
   { path: PROFILE_PATH.slice(1), element: <ProfilePage /> },

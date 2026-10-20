@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { Loader2, Paperclip, Plus, Trash2 } from "lucide-react";
 import { amountOutstanding, newId, toIsoDate } from "@fiscalia/core";
 import type { EmailMessage, Payment, SalesDocument } from "@fiscalia/contracts";
@@ -12,11 +11,13 @@ import { formatEUR } from "@fiscalia/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { emailsOf, sendEmail } from "@/data/email";
 import {
+  ACCOUNTS_PATH,
   businessName,
   defaultPaymentMethodId,
   paymentMethodName,
   paymentMethodOptions,
 } from "@/features/settings/settings-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";
 import { TagsField } from "./document-editor";
@@ -136,13 +137,14 @@ export function PaymentDialog({ doc, onOpenChange }: DialogProps) {
                         groups={[{ options: paymentMethodOptions(methodId) }]}
                       />
                     </div>
-                    <Link
-                      to="/configuracion/metodos-de-pago"
+                    <SettingsLink
+                      from="la factura"
+                      to={ACCOUNTS_PATH}
                       className={cn(buttonVariants({ variant: "ghost", size: "md" }), "shrink-0 px-2.5 text-primary")}
                     >
                       <Plus aria-hidden="true" />
                       Nuevo método
-                    </Link>
+                    </SettingsLink>
                   </div>
                 )}
               </Field>

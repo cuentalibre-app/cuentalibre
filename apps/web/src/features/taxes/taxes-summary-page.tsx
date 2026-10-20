@@ -44,6 +44,7 @@ import {
   VAT_PATH,
   WITHHOLDINGS_PATH,
 } from "./taxes-model";
+import { SettingsLink } from "@/features/settings/settings-parts";
 
 const QUARTERS = [1, 2, 3, 4] as const;
 
@@ -472,10 +473,14 @@ export function TaxesSummaryPage() {
               <Calendar strokeWidth={1.8} aria-hidden="true" />
               Calendario fiscal
             </Link>
-            <Link to={TAX_SETTINGS_PATH} className={cn(buttonVariants({ variant: "ghost" }), "no-underline")}>
+            <SettingsLink
+              from="Impuestos"
+              to={TAX_SETTINGS_PATH}
+              className={cn(buttonVariants({ variant: "ghost" }), "no-underline")}
+            >
               <Settings strokeWidth={1.8} aria-hidden="true" />
               Configurar impuestos
-            </Link>
+            </SettingsLink>
             <Select
               value={String(year)}
               onValueChange={(y) =>

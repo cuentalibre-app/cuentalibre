@@ -85,6 +85,17 @@ describe("plain records", () => {
     expect(stored.manualPayments).toEqual([payment]);
     expect(stored.bankMovements).toEqual([movement]);
 
+    // An account can't go while a method or a movement still names it
+    const blocked = await send(ana, [{ type: "delete", entity: "treasuryAccounts", id: main.id }]);
+    expect(blocked.status).toBe(409);
+    expect(await errorCode(blocked)).toBe("in_use");
+    const used = await send(ana, [{ type: "delete", entity: "paymentMethods", id: method.id }]);
+    expect(await errorCode(used)).toBe("in_use");
+    await send(ana, [
+      { type: "delete", entity: "manualPayments", id: payment.id },
+      { type: "delete", entity: "bankMovements", id: movement.id },
+    ]);
+
     // Unlinking a method from its account before deleting the account
     await send(ana, [
       { type: "update", entity: "paymentMethods", id: method.id, changes: { accountId: null } },
