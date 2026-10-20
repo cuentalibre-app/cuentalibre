@@ -13,7 +13,7 @@ import {
   BUSINESS_PATH,
   PROFILE_PATH,
   SETTINGS_PATH,
-  businessName,
+  accountName,
   incomeTaxMethodLabel,
   initials,
 } from "@/features/settings/settings-model";
@@ -33,7 +33,7 @@ interface UserMenuProps {
 export function UserMenu({ children, side = "bottom", align = "end", className }: UserMenuProps) {
   const navigate = useNavigate();
   const { profile, tax } = useSettings();
-  const name = businessName(profile);
+  const name = accountName(profile);
 
   return (
     <DropdownMenu>
@@ -41,21 +41,23 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
         {children ?? (
           <button
             type="button"
-            aria-label={`Cuenta de ${name}`}
+            aria-label={name ? `Cuenta de ${name}` : "Tu cuenta"}
             className={cn(
               "grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-muted-strong text-sm font-semibold text-foreground transition-[scale,opacity] duration-150 hover:opacity-85 active:scale-[0.96]",
               className,
             )}
           >
-            {initials(name)}
+            {name ? initials(name) : <UserRound className="size-4.5" strokeWidth={1.8} aria-hidden="true" />}
           </button>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent side={side} align={align} className="w-64">
         <div className="flex flex-col gap-0.5 px-3 pt-2 pb-2.5">
-          <span className="truncate font-semibold">{name}</span>
+          <span className="truncate font-semibold">{name || "Tu cuenta"}</span>
           <span className="truncate text-xs text-muted-foreground">
-            {profile.email.trim() || incomeTaxMethodLabel(tax.incomeTaxMethod)}
+            {name && name !== profile.email.trim()
+              ? profile.email.trim() || incomeTaxMethodLabel(tax.incomeTaxMethod)
+              : "Completa los datos de tu negocio"}
           </span>
         </div>
         <DropdownMenuSeparator className="mt-0" />

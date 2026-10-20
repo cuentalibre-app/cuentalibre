@@ -48,6 +48,9 @@ export function fullName(profile: BusinessProfile): string {
 /** The name printed on invoices and reports. */
 export const businessName = (profile: BusinessProfile) => profile.tradeName.trim() || fullName(profile);
 
+/** The name on the account menu: the business name, or the email until the profile is filled in. */
+export const accountName = (profile: BusinessProfile) => businessName(profile) || profile.email.trim();
+
 /** "Calle del Pez 12, 3º B · 28004 Madrid", for the invoice header. */
 export function addressLine(profile: BusinessProfile): string {
   const town = [profile.postalCode, profile.city]

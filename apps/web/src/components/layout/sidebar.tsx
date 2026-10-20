@@ -1,6 +1,6 @@
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
-import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react";
+import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, UserRound } from "lucide-react";
 import { Button } from "@fiscalia/ui/components/button";
 import {
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
 } from "@fiscalia/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
-import { businessName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
+import { accountName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { CreateMenu } from "./create-menu";
 import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
@@ -187,7 +187,7 @@ interface SidebarProps {
 export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
   const badges = useNavBadges();
   const { profile, tax } = useSettings();
-  const name = businessName(profile);
+  const name = accountName(profile);
   const ToggleIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
 
   return (
@@ -274,20 +274,20 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
 
         <div className="shrink-0 border-t border-sidebar-border pt-3">
           <UserMenu side={collapsed ? "right" : "top"} align={collapsed ? "end" : "start"}>
-            <RailTooltip enabled={collapsed} label={name}>
+            <RailTooltip enabled={collapsed} label={name || "Tu cuenta"}>
               <button
                 type="button"
-                aria-label={`Cuenta de ${name}`}
+                aria-label={name ? `Cuenta de ${name}` : "Tu cuenta"}
                 className="flex w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-lg p-1.5 text-left transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98] data-[state=open]:bg-sidebar-accent"
               >
                 <div
                   className="grid size-8 shrink-0 place-items-center rounded-md bg-muted-strong text-xs font-semibold"
                   aria-hidden="true"
                 >
-                  {initials(name)}
+                  {name ? initials(name) : <UserRound className="size-4" strokeWidth={1.8} />}
                 </div>
                 <div className={cn("flex min-w-0 flex-col gap-0.5 whitespace-nowrap", labelClass(collapsed))}>
-                  <span className="truncate font-semibold">{name}</span>
+                  <span className="truncate font-semibold">{name || "Tu cuenta"}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {incomeTaxMethodLabel(tax.incomeTaxMethod)}
                   </span>
