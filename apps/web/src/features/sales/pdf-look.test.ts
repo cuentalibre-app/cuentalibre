@@ -28,7 +28,7 @@ describe("pdfFormat", () => {
     expect(es.date("2026-03-05")).toBe("05/03/2026");
 
     const en = pdfFormat({ language: "en", region: "GB" });
-    expect(en.money(cents(487_600))).toBe("€4,876.00");
+    expect(en.money(cents(487_600))).toBe("€ 4,876.00");
     expect(en.date("2026-03-05")).toBe("05/03/2026");
     expect(pdfFormat({ language: "en", region: "US" }).date("2026-03-05")).toBe("03/05/2026");
   });
