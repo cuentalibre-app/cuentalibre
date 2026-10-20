@@ -22,7 +22,7 @@ import {
   type DocumentGroup,
   type ResultSummary,
 } from "./tax-form";
-import { COUNT_BOXES_115, LAYOUT_115, modelPath, quarterOf, RENTALS_PATH } from "./taxes-model";
+import { COUNT_BOXES_115, LAYOUT_115, modelPath, ONLY_RECORDED, quarterOf, RENTALS_PATH } from "./taxes-model";
 import { MissingProvinces } from "./withholdings-page";
 import { ModuleBreadcrumb } from "./tax-intro";
 
@@ -149,6 +149,7 @@ function Form115({ year, quarter, today }: { year: number; quarter: Quarter; tod
         items={[
           "Tiene en cuenta las facturas recibidas marcadas como alquiler de inmueble que llevan retención.",
           "Cuenta la fecha de contabilización de cada factura.",
+          ONLY_RECORDED,
           "Se calcula como una única declaración, sin complementarias.",
         ]}
       />
@@ -231,6 +232,8 @@ function Form180({ year, today }: { year: number; today: Date }) {
           "Un registro por arrendador e inmueble: si el mismo arrendador te alquila varios, se separan por su referencia catastral.",
           "Supone que el alquiler se paga en dinero, no en especie.",
           "La situación del inmueble y la referencia catastral salen de cada factura; revísalas si están vacías.",
+          "La provincia de cada arrendador es obligatoria: si falta en la ficha del proveedor, complétala antes de presentar.",
+          ONLY_RECORDED,
         ]}
       />
     </>

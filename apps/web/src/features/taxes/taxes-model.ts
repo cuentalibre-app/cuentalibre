@@ -80,6 +80,13 @@ export const ONLINE_ONLY_FORMS = new Set<FormCode>(["190", "180", "347"]);
 
 export type FormCode = keyof typeof AEAT_LINKS;
 
+/** Shared caveat of every calculation: it only knows what was recorded. */
+export const ONLY_RECORDED =
+  "Solo cuenta lo que has registrado en Fiscalia: si tienes otras actividades fuera de la app o usas otro método de estimación, ajusta las cifras antes de presentar.";
+
+/** Who the VAT and income tax calculations are for. */
+export const ACTIVITY_SCOPE = "No sirve para actividades agrícolas, ganaderas, forestales o pesqueras.";
+
 /*
  * Layout of each form: sections of rows, each row a label and its cells. A cell is a box of
  * the form (by number), a fixed text (a rate that isn't a box) or nothing.
@@ -87,10 +94,20 @@ export type FormCode = keyof typeof AEAT_LINKS;
 
 export type Cell = string | { text: string; unit?: string; box?: string } | null;
 
+/** Help of a row, shown under the title "Casilla N". In its texts, **words** are shown in bold. */
+export type Hint =
+  | string
+  | {
+      text: string[];
+      table?: { columns: [string, string]; rows: [string, string][] };
+      /** Paragraphs after the table. */
+      after?: string[];
+    };
+
 export interface FormRow {
   label: string;
   cells: Cell[];
-  hint?: string;
+  hint?: Hint;
   /** Totals and results: always shown and set apart. */
   total?: boolean;
 }
@@ -108,6 +125,9 @@ export const PERCENT_BOXES_303 = new Set(["151", "166", "02", "154", "05", "08",
 
 const row = (label: string, ...cells: Cell[]): FormRow => ({ label, cells });
 const total = (label: string, ...cells: Cell[]): FormRow => ({ label, cells, total: true });
+/** A row with an explanation of what goes in its boxes. */
+const info = (label: string, hint: Hint, ...cells: Cell[]): FormRow => ({ label, cells, hint });
+const totalInfo = (label: string, hint: Hint, ...cells: Cell[]): FormRow => ({ label, cells, hint, total: true });
 const rate = (text: string): Cell => ({ text, unit: "%" });
 /** A box of the form that is left blank. */
 const leave = (box: string): Cell => ({ text: "Dejar en blanco", box });
@@ -123,9 +143,27 @@ export const LAYOUT_303: FormSection[] = [
       row("", "153", "154", "155"),
       row("", "04", "05", "06"),
       row("", "07", "08", "09"),
-      row("Adquisiciones intracomunitarias de bienes y servicios", "10", null, "11"),
-      row("Otras operaciones con inversión del sujeto pasivo (excepto adq. intracom.)", "12", null, "13"),
-      row("Modificación de bases y cuotas", "14", null, "15"),
+      info(
+        "Adquisiciones intracomunitarias de bienes y servicios",
+        "Compras a empresas de otro país de la UE inscritas en el VIES: te repercutes el IVA aquí y lo deduces en [36] y [37] (o [38] y [39] si es un bien de inversión).",
+        "10",
+        null,
+        "11",
+      ),
+      info(
+        "Otras operaciones con inversión del sujeto pasivo (excepto adq. intracom.)",
+        "Compras en las que pagas tú el IVA en lugar del proveedor, como los servicios de empresas de fuera de la UE: te repercutes el IVA aquí y lo deduces en [28] y [29].",
+        "12",
+        null,
+        "13",
+      ),
+      info(
+        "Modificación de bases y cuotas",
+        "Facturas rectificativas emitidas en el trimestre que corrigen ventas de periodos anteriores.",
+        "14",
+        null,
+        "15",
+      ),
       row("Recargo de equivalencia", "156", "157", "158"),
       row("", "168", "169", "170"),
       row("", "16", "17", "18"),
@@ -134,30 +172,67 @@ export const LAYOUT_303: FormSection[] = [
       row("Modificación de bases y cuotas del recargo de equivalencia", "25", null, "26"),
       total("Total cuota devengada", null, null, "27"),
     ],
-    note: "Los tipos del 2 %, 5 % y 7,5 % y sus recargos ya no existen desde 2025: sus casillas quedan a cero. El recargo de equivalencia no se desglosa: si lo repercutes, ajústalo a mano en la sede de la AEAT.",
+    note: "Los tipos del 2 %, 5 % y 7,5 % y sus recargos ya no existen desde 2025: sus casillas quedan a cero. El recargo de equivalencia no se desglosa y el recargo al 0 % se trata como si no hubiera recargo: si lo repercutes, ajústalo a mano en la sede de la AEAT. En criterio de caja, los cobros de esos tipos antiguos se introducen a mano en la casilla [108] al presentar.",
   },
   {
     title: "IVA deducible",
     columns: ["Base", "Cuota"],
     rows: [
-      row("Por cuotas soportadas en operaciones interiores corrientes", "28", "29"),
-      row("Por cuotas soportadas en operaciones interiores con bienes de inversión", "30", "31"),
-      row("Por cuotas soportadas en las importaciones de bienes corrientes", "32", "33"),
+      info(
+        "Por cuotas soportadas en operaciones interiores corrientes",
+        "IVA de tus facturas recibidas de proveedores españoles, en la parte imputada a la actividad, más el IVA que te repercutes en [13].",
+        "28",
+        "29",
+      ),
+      info(
+        "Por cuotas soportadas en operaciones interiores con bienes de inversión",
+        "IVA de las compras de bienes de inversión (ordenadores, mobiliario, vehículos…) a proveedores españoles.",
+        "30",
+        "31",
+      ),
+      info("Por cuotas soportadas en las importaciones de bienes corrientes", "IVA pagado en la aduana al importar bienes de fuera de la UE.", "32", "33"),
       row("Por cuotas soportadas en las importaciones de bienes de inversión", "34", "35"),
-      row("En adquisiciones intracomunitarias de bienes y servicios corrientes", "36", "37"),
+      info(
+        "En adquisiciones intracomunitarias de bienes y servicios corrientes",
+        "El IVA que te repercutes en [11] se deduce aquí en la misma proporción que el resto de la factura.",
+        "36",
+        "37",
+      ),
       row("En adquisiciones intracomunitarias de bienes de inversión", "38", "39"),
-      row("Rectificación de deducciones", "40", "41"),
+      info(
+        "Rectificación de deducciones",
+        "Facturas rectificativas recibidas que corrigen compras de periodos anteriores.",
+        "40",
+        "41",
+      ),
       total("Total a deducir", null, "45"),
-      total("Resultado régimen general ([27] − [45])", null, "46"),
+      totalInfo(
+        "Resultado régimen general ([27] − [45])",
+        "IVA que has cobrado menos el que puedes deducir. Si es negativo, Hacienda te debe esa diferencia.",
+        null,
+        "46",
+      ),
     ],
   },
   {
     title: "Información adicional",
     rows: [
-      row("Entregas intracomunitarias de bienes y servicios", "59"),
-      row("Exportaciones y operaciones asimiladas", "60"),
-      row("Operaciones no sujetas por reglas de localización (excepto las incluidas en la casilla 123)", "120"),
-      row("Operaciones sujetas con inversión del sujeto pasivo", "122"),
+      info(
+        "Entregas intracomunitarias de bienes y servicios",
+        "Ventas sin IVA a empresas de otro país de la UE inscritas en el VIES (tipo de operación Intracomunitaria). También se declaran en el 349.",
+        "59",
+      ),
+      info("Exportaciones y operaciones asimiladas", "Ventas de bienes que salen fuera de la UE.", "60"),
+      info(
+        "Operaciones no sujetas por reglas de localización (excepto las incluidas en la casilla 123)",
+        "Ventas que no tributan en España por el lugar donde se prestan, como servicios a empresas de fuera de la UE.",
+        "120",
+      ),
+      info(
+        "Operaciones sujetas con inversión del sujeto pasivo",
+        "Ventas en las que es tu cliente quien declara el IVA, por ejemplo algunas obras y entregas de inmuebles.",
+        "122",
+      ),
     ],
   },
   {
@@ -177,19 +252,53 @@ export const LAYOUT_303: FormSection[] = [
     title: "Resultado",
     rows: [
       total("Suma de resultados", "64"),
-      row("Atribuible a la Administración del Estado (%)", "65"),
+      info(
+        "Atribuible a la Administración del Estado (%)",
+        "Es el 100 %, salvo si tienes el domicilio fiscal en Navarra o el País Vasco: entonces indica el porcentaje que corresponda y ajusta el resto de casillas.",
+        "65",
+      ),
       row("Atribuible a la Administración del Estado", "66"),
       {
         label: "Cuotas a compensar pendientes de periodos anteriores",
         cells: ["110"],
-        hint: "Lo que dejaron a compensar los 303 anteriores, calculado con tus datos. Puedes corregirlo.",
+        hint: {
+          text: [
+            "Si el 303 del periodo anterior salió negativo y lo dejaste **a compensar**, ese importe va aquí para descontarlo.",
+            "Fiscalia lo calcula con tus datos; puedes corregirlo.",
+          ],
+        },
       },
-      row("Cuotas a compensar de periodos anteriores aplicadas en este periodo", "78"),
-      row("Cuotas a compensar de periodos previos pendientes para periodos posteriores ([110] − [78])", "87"),
+      info(
+        "Cuotas a compensar de periodos anteriores aplicadas en este periodo",
+        "La parte de [110] que se descuenta este trimestre: como mucho, lo que sale a ingresar en [66].",
+        "78",
+      ),
+      info(
+        "Cuotas a compensar de periodos previos pendientes para periodos posteriores ([110] − [78])",
+        "Lo que queda de [110] para los trimestres siguientes. No incluye lo que este trimestre deja a compensar.",
+        "87",
+      ),
       row("Resultado ([66] − [78] + [68])", "69"),
-      row("Resultados a ingresar de anteriores autoliquidaciones del mismo periodo", leave("70")),
-      row("Devoluciones acordadas por anteriores autoliquidaciones del mismo periodo", leave("109")),
-      total("Resultado de la liquidación ([69] − [70] + [109])", "71"),
+      info(
+        "Resultados a ingresar de anteriores autoliquidaciones del mismo periodo",
+        "Solo en declaraciones complementarias: lo que ya ingresaste en declaraciones anteriores de este mismo periodo.",
+        leave("70"),
+      ),
+      info(
+        "Devoluciones acordadas por anteriores autoliquidaciones del mismo periodo",
+        "Solo en declaraciones complementarias: lo que Hacienda ya te devolvió por declaraciones anteriores de este mismo periodo.",
+        leave("109"),
+      ),
+      totalInfo(
+        "Resultado de la liquidación ([69] − [70] + [109])",
+        {
+          text: [
+            "**Negativo en el 1T, 2T o 3T:** queda a compensar en el trimestre siguiente.",
+            "**Negativo en el 4T:** puedes pedir la devolución, con el IBAN de tu cuenta, o compensarlo el año siguiente. El fichero lo propone a compensar; puedes cambiarlo en la sede.",
+          ],
+        },
+        "71",
+      ),
     ],
   },
 ];
@@ -346,7 +455,7 @@ export const LAYOUT_390: FormSection[] = [
       {
         label: "Compensación de cuotas del ejercicio anterior",
         cells: ["85"],
-        hint: "Lo que el último 303 del año anterior dejó a compensar.",
+        hint: "Si el 303 del 4T del año anterior salió negativo y no pediste la devolución, el importe pendiente de compensar va aquí, en positivo.",
       },
       total("Resultado de la liquidación ([84] + [659] − [85])", "86"),
     ],
@@ -357,13 +466,13 @@ export const LAYOUT_390: FormSection[] = [
       {
         label: "Total resultados a ingresar en las autoliquidaciones de IVA del ejercicio",
         cells: ["95"],
-        hint: "Suma de los resultados positivos de los cuatro 303 del año; los negativos no cuentan.",
+        hint: "Suma de los resultados [71] de los cuatro 303 del año que salieron a ingresar. Los negativos no cuentan: no es un error.",
         total: true,
       },
       {
         label: "Resultado a compensar de la autoliquidación del último periodo",
         cells: ["97"],
-        hint: "Si el 303 del cuarto trimestre salió negativo y se dejó a compensar.",
+        hint: "Si el 303 del 4T salió negativo y lo dejaste a compensar. Si pediste la devolución, va en la casilla de devolución de la sede.",
       },
       row("Cuotas pendientes de compensación generadas en el ejercicio y distintas de las de la casilla [97]", "662"),
     ],
@@ -409,8 +518,21 @@ export const LAYOUT_130: FormSection[] = [
       },
       total("Rendimiento neto ([01] − [02])", "03"),
       row("20 % del rendimiento neto, si es positivo", "04"),
-      row("Pagos fraccionados de trimestres anteriores del año (suma de los [07] positivos)", "05"),
-      row("Retenciones e ingresos a cuenta desde el 1 de enero", "06"),
+      info(
+        "Pagos fraccionados de trimestres anteriores del año (suma de los [07] positivos)",
+        {
+          text: [
+            "Suma de las casillas **[07] positivas** de los 130 anteriores de este año.",
+            "Si en esos trimestres rellenaste la casilla **[16]** por el préstamo de tu vivienda habitual, resta aquí la suma de esas deducciones.",
+          ],
+        },
+        "05",
+      ),
+      info(
+        "Retenciones e ingresos a cuenta desde el 1 de enero",
+        "Retenciones que te han aplicado tus clientes en las facturas emitidas desde el 1 de enero hasta el final del trimestre.",
+        "06",
+      ),
       total("Pago fraccionado previo del trimestre ([04] − [05] − [06])", "07"),
     ],
   },
@@ -421,24 +543,63 @@ export const LAYOUT_130: FormSection[] = [
       {
         label: "Minoración por rendimientos bajos (art. 110.3 c RIRPF)",
         cells: ["13"],
-        hint: "Hasta 100 € por trimestre si tu rendimiento neto del año anterior no pasó de 12.000 €. Es opcional: rellénala tú si quieres aplicarla.",
+        hint: {
+          text: [
+            "Opcional: Fiscalia la deja **en blanco** para que la rellenes tú, en positivo, si quieres aplicarla.",
+            "Te corresponde si tu rendimiento neto de actividades del año anterior fue **igual o inferior a 12.000 €**. Si no tuviste actividad, cuenta como cero. El importe sale de esta tabla:",
+          ],
+          table: {
+            columns: ["Rendimiento neto del año anterior", "Minoración"],
+            rows: [
+              ["Igual o inferior a 9.000 €", "100 €"],
+              ["Entre 9.000,01 y 10.000 €", "75 €"],
+              ["Entre 10.000,01 y 11.000 €", "50 €"],
+              ["Entre 11.000,01 y 12.000 €", "25 €"],
+            ],
+          },
+          after: [
+            "**No es un ahorro:** solo adelantas menos, y la diferencia la pagas en la renta. En caso de duda, déjala en blanco.",
+          ],
+        },
       },
       total("Diferencia ([12] − [13])", "14"),
       {
         label: "Resultados negativos de trimestres anteriores",
         cells: ["15"],
-        hint: "Solo si en un trimestre anterior de este año el resultado fue negativo y aún no lo has descontado.",
+        hint: {
+          text: [
+            "Solo si **[14] es positiva**: resultados negativos de los 130 anteriores de este año que aún no hayas descontado.",
+            "No puedes descontar más que el importe de [14].",
+          ],
+        },
       },
       {
         label: "Por pagos de préstamos para la vivienda habitual",
         cells: ["16"],
-        hint: "Solo para préstamos anteriores a 2013 que ya daban derecho a la deducción.",
+        hint: {
+          text: [
+            "Solo si **[14] es positiva** y pagas un préstamo para comprar o rehabilitar tu **vivienda habitual**, contratado antes de 2013 y que ya daba derecho a la deducción.",
+            "Puedes deducir el **2 % de [03]**, con un máximo de **660,14 € por trimestre**. Consulta las excepciones en las instrucciones del modelo.",
+          ],
+        },
       },
       total("Total ([14] − [15] − [16])", "17"),
-      total("Resultado de la declaración", "19"),
+      totalInfo(
+        "Resultado de la declaración",
+        {
+          text: [
+            "**A ingresar:** puedes domiciliar el pago o pagarlo con un NRC de tu banco al presentar.",
+            "**Negativo:** no pagas nada y puedes descontarlo en la casilla [15] de los siguientes trimestres del año.",
+          ],
+        },
+        "19",
+      ),
     ],
   },
 ];
+
+/** Expense boxes of form 100 that the books don't fill: they're adjusted by hand. */
+const MANUAL_EXPENSE_BOXES_100 = new Set(["0182", "0183", "0188", "0189", "0198", "0205"]);
 
 const EXPENSE_LABELS_100: Record<(typeof EXPENSE_BOXES_100)[number], string> = {
   "0181": "Compras de existencias",
@@ -479,18 +640,37 @@ export function layout100(simplified: boolean): FormSection[] {
         row("Ingresos financieros por aplazamiento o fraccionamiento de operaciones de la actividad", "0172"),
         row("Ingresos por subvenciones corrientes", "0173"),
         row("Imputación de ingresos por subvenciones de capital", "0174"),
-        row("Autoconsumo de bienes y servicios", "0175"),
-        row("IVA devengado (recargo de equivalencia, compensaciones de agricultura, ganadería y pesca)", "0176"),
-        row("Variación de existencias (incremento de existencias finales)", "0177"),
+        info("Autoconsumo de bienes y servicios", "Si tienes ingresos de este tipo, ajusta esta casilla a mano.", "0175"),
+        info(
+          "IVA devengado (recargo de equivalencia, compensaciones de agricultura, ganadería y pesca)",
+          "Si tienes ingresos de este tipo, ajusta esta casilla a mano.",
+          "0176",
+        ),
+        info(
+          "Variación de existencias (incremento de existencias finales)",
+          "Si tienes ingresos de este tipo, ajusta esta casilla a mano.",
+          "0177",
+        ),
         row("Otros ingresos", "0178"),
-        row("Exceso de amortización de elementos con libertad de amortización (DA 30ª LIRPF)", "0179"),
+        info(
+          "Exceso de amortización de elementos con libertad de amortización (DA 30ª LIRPF)",
+          "Si has vendido elementos que se amortizaron con libertad de amortización, ajusta esta casilla a mano.",
+          "0179",
+        ),
         total("Total ingresos computables ([0171] a [0179])", "0180"),
       ],
       note: "Las casillas 0172 a 0179 no se calculan con tus facturas: si tienes ingresos de ese tipo, ajústalas en Renta WEB.",
     },
     {
       title: "Gastos fiscalmente deducibles",
-      rows: [...EXPENSE_BOXES_100.map((box) => row(EXPENSE_LABELS_100[box], box)), total("Suma de gastos", "0218")],
+      rows: [
+        ...EXPENSE_BOXES_100.map((box) =>
+          MANUAL_EXPENSE_BOXES_100.has(box)
+            ? info(EXPENSE_LABELS_100[box], "Si tienes gastos de este tipo, ajusta esta casilla a mano.", box)
+            : row(EXPENSE_LABELS_100[box], box),
+        ),
+        total("Suma de gastos", "0218"),
+      ],
     },
     ...(simplified
       ? [
@@ -522,19 +702,31 @@ export function layout100(simplified: boolean): FormSection[] {
       title: "Rendimiento neto",
       rows: [
         total("Rendimiento neto", "0224"),
-        row("Reducciones por rendimientos irregulares", "0225"),
+        info(
+          "Reducciones por rendimientos irregulares",
+          "Rendimientos generados en más de dos años u obtenidos de forma notoriamente irregular.",
+          "0225",
+        ),
         total("Rendimiento neto reducido", "0226"),
       ],
     },
     {
       title: "Retenciones y pagos a cuenta",
       rows: [
-        row("Retenciones por arrendamientos de inmuebles urbanos", "0598"),
-        row("Retenciones por rendimientos de actividades económicas", "0599"),
+        info(
+          "Retenciones por arrendamientos de inmuebles urbanos",
+          "Se rellena desde el apartado D1, en la ventana que se abre al pulsar la casilla 0171. Se supone que todos tus ingresos por alquiler son de inmuebles urbanos; si no, ajústalo: solo es informativo y no cambia el resultado.",
+          "0598",
+        ),
+        info(
+          "Retenciones por rendimientos de actividades económicas",
+          "Se rellena desde el apartado D1, en la ventana que se abre al pulsar la casilla 0171.",
+          "0599",
+        ),
         {
           label: "Pagos fraccionados ingresados (modelo 130)",
           cells: ["0604"],
-          hint: "Suma de los resultados positivos de los cuatro 130 del año.",
+          hint: "Suma de lo que has pagado con los cuatro 130 del año. Si no los presentaste, pon 0.",
         },
       ],
     },
@@ -553,8 +745,15 @@ export const LAYOUT_111: FormSection[] = [
         cells: ["01", "02", "03"],
         hint: "Facturas de servicios esporádicos (cuenta 6231: cursos, conferencias, seminarios) con retención.",
       },
-      row("Rendimientos en especie", "04", "05", "06"),
+      info(
+        "Rendimientos en especie",
+        "Fiscalia no los calcula: si pagas a trabajadores en especie, añádelos a mano en la sede.",
+        "04",
+        "05",
+        "06",
+      ),
     ],
+    note: "Las retenciones de las nóminas de tus trabajadores también van aquí: Fiscalia no las calcula, añádelas a mano en la sede.",
   },
   {
     title: "II. Rendimientos de actividades económicas",
@@ -576,9 +775,21 @@ export const LAYOUT_111: FormSection[] = [
   {
     title: "Total liquidación",
     rows: [
-      total("Suma de retenciones e ingresos a cuenta", "28"),
-      row("A deducir (solo en declaraciones complementarias)", "29"),
-      total("Resultado a ingresar ([28] − [29])", "30"),
+      totalInfo(
+        "Suma de retenciones e ingresos a cuenta",
+        "Si has practicado retenciones por otros conceptos (premios, otros rendimientos…), decláralos también en el 111 y ajusta los totales.",
+        "28",
+      ),
+      info(
+        "A deducir (solo en declaraciones complementarias)",
+        "Lo que ingresaste en la declaración anterior del mismo periodo.",
+        "29",
+      ),
+      totalInfo(
+        "Resultado a ingresar ([28] − [29])",
+        "Si es cero, preséntalo igualmente eligiendo el tipo de declaración «Resultado cero / sin actividad».",
+        "30",
+      ),
     ],
   },
 ];
@@ -591,11 +802,23 @@ export const LAYOUT_115: FormSection[] = [
   {
     title: "Retenciones e ingresos a cuenta",
     rows: [
-      row("Nº de perceptores", "01"),
-      row("Base de las retenciones e ingresos a cuenta", "02"),
-      row("Retenciones e ingresos a cuenta", "03"),
-      row("A deducir (solo en declaraciones complementarias)", "04"),
-      total("Resultado a ingresar ([03] − [04])", "05"),
+      info("Nº de perceptores", "Número de arrendadores a los que has practicado retención en el trimestre.", "01"),
+      info(
+        "Base de las retenciones e ingresos a cuenta",
+        "Base imponible de las facturas de alquiler de inmuebles urbanos con retención.",
+        "02",
+      ),
+      info("Retenciones e ingresos a cuenta", "Retenciones de esas facturas, normalmente al 19 %.", "03"),
+      info(
+        "A deducir (solo en declaraciones complementarias)",
+        "Lo que ingresaste en la declaración anterior del mismo periodo. En una declaración normal, ignora esta casilla.",
+        "04",
+      ),
+      totalInfo(
+        "Resultado a ingresar ([03] − [04])",
+        "Si es cero y estás dado de alta en el 115, preséntalo igualmente.",
+        "05",
+      ),
     ],
   },
 ];

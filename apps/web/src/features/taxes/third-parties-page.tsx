@@ -13,6 +13,7 @@ import { FormInfo } from "./form-info";
 import { usePartyBooks, type PartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
 import { Assumptions, ResultPanel, type ResultSummary } from "./tax-form";
+import { ONLY_RECORDED } from "./taxes-model";
 import { ModuleBreadcrumb } from "./tax-intro";
 import { SettingsLink } from "@/features/settings/settings-parts";
 
@@ -232,6 +233,7 @@ export function ThirdPartiesPage() {
             "Los gastos sin factura cuentan si están asociados a un proveedor.",
             "El importe en metálico solo se informa cuando lo cobrado en efectivo a una persona supera 6.000 €.",
             "Se calcula como una única declaración, sin sustitutivas.",
+            ONLY_RECORDED,
           ]}
         />
       </div>

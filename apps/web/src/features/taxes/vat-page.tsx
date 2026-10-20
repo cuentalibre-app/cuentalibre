@@ -35,12 +35,14 @@ import {
   type ResultSummary,
 } from "./tax-form";
 import {
+  ACTIVITY_SCOPE,
   activities390,
   answers303,
   answers390,
   LAYOUT_303,
   LAYOUT_390,
   modelPath,
+  ONLY_RECORDED,
   PERCENT_BOXES_303,
   quarterOf,
   VAT_PATH,
@@ -187,6 +189,9 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         items={[
           "Régimen general del IVA con criterio de devengo: cuenta la fecha de expedición de las facturas emitidas y la de contabilización de las recibidas.",
           "Sin prorrata, sin recargo de equivalencia desglosado y sin ventanilla única (OSS).",
+          ACTIVITY_SCOPE,
+          ONLY_RECORDED,
+          "Si llevas los libros registro del IVA por el SII, o solo alquilas inmuebles urbanos y tributas en la península o Baleares (no en Navarra ni el País Vasco), no presentas el 390, pero en el 303 del 4T tienes que rellenar en la sede un apartado extra con el resumen del año.",
           "En las compras intracomunitarias y con inversión del sujeto pasivo se autorrepercute el IVA al 21 % y se deduce en la misma proporción que el resto del IVA de la factura.",
           "Solo se deduce el porcentaje de IVA imputado a la actividad en cada factura recibida. Los gastos sin factura no llevan IVA deducible.",
           "Se calcula como una única declaración, sin complementarias. Un 4T negativo se propone a compensar, como hace el formulario de la AEAT.",
@@ -262,7 +267,12 @@ function Vat390({ year, today }: { year: number; today: Date }) {
           "Resume todo el año: si empezaste a facturar antes de usar Fiscalia, registra también esas facturas.",
           "Las adquisiciones intracomunitarias de mercaderías (cuentas 600 y 602) se declaran como bienes; el resto, como servicios.",
           "Los datos estadísticos (actividad y epígrafe) y los del representante se completan en la sede de la AEAT.",
-          "Si llevas el SII o solo alquilas inmuebles urbanos, no presentas el 390.",
+          "Si llevas el SII o solo alquilas inmuebles urbanos, no presentas el 390: en su lugar rellenas el apartado de información adicional del 303 del 4T.",
+          "Revisa antes el 303 del 4T: sus resultados pasan a este resumen.",
+          "Las actividades se listan de mayor a menor volumen de operaciones, en el orden de Configuración › Impuestos. Si no sabes en cuáles estás de alta, míralo en el modelo 036 o 037 que presentaste.",
+          "El apartado de tributación conjunta con Navarra o el País Vasco solo se rellena si, además de tu domicilio en territorio común, tienes un establecimiento allí.",
+          ACTIVITY_SCOPE,
+          ONLY_RECORDED,
         ]}
       />
     </>
