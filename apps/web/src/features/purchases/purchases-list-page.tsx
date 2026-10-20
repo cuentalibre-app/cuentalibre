@@ -49,6 +49,7 @@ import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/l
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { attachmentUrl } from "@/data/files";
+import { defaultPaymentMethodId } from "@/features/settings/settings-model";
 import { AttachmentsDialog } from "./form-parts";
 import {
   ASSETS_PATH,
@@ -899,6 +900,7 @@ function usePurchaseActions(row: Row) {
     run: viewable ? () => window.open(viewable, "_blank", "noopener") : undefined,
   };
 
+  const methodId = doc.payments.at(-1)?.paymentMethodId ?? defaultPaymentMethodId();
   const primary: Action =
     row.status === "paid"
       ? {
@@ -912,18 +914,16 @@ function usePurchaseActions(row: Row) {
       : {
           label: row.status === "partial" ? "Pagar lo pendiente" : "Marcar como pagada",
           icon: CircleDollarSign,
-          run: () =>
-            purchasesStore.update(doc.id, {
-              payments: [
-                ...doc.payments,
-                {
-                  id: newId(),
-                  date: toIsoDate(new Date()),
-                  amount: row.outstanding,
-                  paymentMethodId: doc.payments.at(-1)?.paymentMethodId ?? "bank1",
-                },
-              ],
-            }),
+          // Without a payment method there is nothing to book the payment into
+          run: methodId
+            ? () =>
+                purchasesStore.update(doc.id, {
+                  payments: [
+                    ...doc.payments,
+                    { id: newId(), date: toIsoDate(new Date()), amount: row.outstanding, paymentMethodId: methodId },
+                  ],
+                })
+            : undefined,
         };
 
   const locked = lockedQuarterOf(doc.bookedOn) !== null;

@@ -26,7 +26,7 @@ import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
 import { MONTHS, formatEurosInput, parseEuros } from "@/lib/format";
 import { settingsStore } from "@/features/settings/settings-store";
 import { SOCIAL_SECURITY } from "@/mocks/expenses";
-import { ACCOUNTS_PATH, paymentMethodOptions } from "@/features/settings/settings-model";
+import { ACCOUNTS_PATH, defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { SettingsLink } from "@/features/settings/settings-parts";
 import { EXPENSES_PATH, NEW_EXPENSE_PATH, expenseIdentity, payeeOf } from "./expenses-model";
 import { expensesStore } from "./expenses-store";
@@ -86,7 +86,7 @@ interface FormState {
   attachments: Attachment[];
 }
 
-type ErrorKey = "date" | "number" | "concept" | "amount" | "imputation" | "otherName" | "paidOn";
+type ErrorKey = "date" | "number" | "concept" | "amount" | "imputation" | "otherName" | "paidOn" | "paymentMethodId";
 type Errors = Partial<Record<ErrorKey, string>>;
 
 /** What happens after creating, from the create button's menu. */
@@ -124,7 +124,7 @@ function initialState(base: Expense | undefined, isCopy: boolean): FormState {
     // Most expenses are paid on the spot
     paid: isCopy || !base ? true : base.payment !== null,
     paidOn: (!isCopy && base?.payment?.date) || date,
-    paymentMethodId: base?.payment?.paymentMethodId ?? "bank1",
+    paymentMethodId: base?.payment?.paymentMethodId ?? defaultPaymentMethodId(),
     rental: base?.rental ?? false,
     rentalLocation: base?.rentalLocation ?? "spain",
     cadastralRef: base?.cadastralRef ?? "",
@@ -266,6 +266,7 @@ function ExpenseForm({
     if (imputation === null) next.imputation = "Un número entero entre 0 y 100.";
     if (form.payee === OTHER_PAYEE && !form.otherName.trim()) next.otherName = "Indica a quién has pagado.";
     if (form.paid && !form.paidOn) next.paidOn = "Indica cuándo lo pagaste.";
+    if (form.paid && !form.paymentMethodId) next.paymentMethodId = "Elige el método con el que lo pagaste.";
     if (
       !next.date &&
       !next.concept &&
@@ -574,7 +575,7 @@ function ExpenseForm({
                     />
                   )}
                 </Field>
-                <Field label="Método de pago">
+                <Field label="Método de pago" required error={errors.paymentMethodId}>
                   {(p) => (
                     <GroupedSelect
                       {...p}
@@ -683,6 +684,7 @@ const ERROR_KEYS: Record<ErrorKey, true> = {
   imputation: true,
   otherName: true,
   paidOn: true,
+  paymentMethodId: true,
 };
 
 /** What the expense lowers in the income tax, after imputation. No VAT: there is no invoice. */
