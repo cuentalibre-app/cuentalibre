@@ -1,4 +1,5 @@
 import { defaultPeriod, EXPENSE_BOXES_100, type CalendarStatus, type FilingStatus, type Period } from "@fiscalia/core";
+import type { TaxSetup } from "@fiscalia/contracts";
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 
 export const TAXES_PATH = "/impuestos";
@@ -84,7 +85,7 @@ export type FormCode = keyof typeof AEAT_LINKS;
  * the form (by number), a fixed text (a rate that isn't a box) or nothing.
  */
 
-export type Cell = string | { text: string } | null;
+export type Cell = string | { text: string; unit?: string; box?: string } | null;
 
 export interface FormRow {
   label: string;
@@ -103,11 +104,13 @@ export interface FormSection {
 }
 
 /** Boxes of form 303 holding a percentage rather than an amount. Box numbers repeat across forms. */
-export const PERCENT_BOXES_303 = new Set(["151", "02", "05", "08", "65"]);
+export const PERCENT_BOXES_303 = new Set(["151", "166", "02", "154", "05", "08", "157", "169", "17", "20", "23", "65"]);
 
 const row = (label: string, ...cells: Cell[]): FormRow => ({ label, cells });
 const total = (label: string, ...cells: Cell[]): FormRow => ({ label, cells, total: true });
-const rate = (text: string): Cell => ({ text });
+const rate = (text: string): Cell => ({ text, unit: "%" });
+/** A box of the form that is left blank. */
+const leave = (box: string): Cell => ({ text: "Dejar en blanco", box });
 
 export const LAYOUT_303: FormSection[] = [
   {
@@ -115,15 +118,23 @@ export const LAYOUT_303: FormSection[] = [
     columns: ["Base imponible", "Tipo %", "Cuota"],
     rows: [
       row("Régimen general", "150", "151", "152"),
+      row("", "165", "166", "167"),
       row("", "01", "02", "03"),
+      row("", "153", "154", "155"),
       row("", "04", "05", "06"),
       row("", "07", "08", "09"),
       row("Adquisiciones intracomunitarias de bienes y servicios", "10", null, "11"),
       row("Otras operaciones con inversión del sujeto pasivo (excepto adq. intracom.)", "12", null, "13"),
       row("Modificación de bases y cuotas", "14", null, "15"),
+      row("Recargo de equivalencia", "156", "157", "158"),
+      row("", "168", "169", "170"),
+      row("", "16", "17", "18"),
+      row("", "19", "20", "21"),
+      row("", "22", "23", "24"),
+      row("Modificación de bases y cuotas del recargo de equivalencia", "25", null, "26"),
       total("Total cuota devengada", null, null, "27"),
     ],
-    note: "El recargo de equivalencia no se desglosa: si lo repercutes, ajústalo a mano en la sede de la AEAT.",
+    note: "Los tipos del 2 %, 5 % y 7,5 % y sus recargos ya no existen desde 2025: sus casillas quedan a cero. El recargo de equivalencia no se desglosa: si lo repercutes, ajústalo a mano en la sede de la AEAT.",
   },
   {
     title: "IVA deducible",
@@ -145,9 +156,22 @@ export const LAYOUT_303: FormSection[] = [
     rows: [
       row("Entregas intracomunitarias de bienes y servicios", "59"),
       row("Exportaciones y operaciones asimiladas", "60"),
-      row("Operaciones no sujetas por reglas de localización", "120"),
+      row("Operaciones no sujetas por reglas de localización (excepto las incluidas en la casilla 123)", "120"),
       row("Operaciones sujetas con inversión del sujeto pasivo", "122"),
     ],
+  },
+  {
+    title: "Criterio de caja",
+    columns: ["Base imponible", "Cuota"],
+    rows: [
+      row(
+        "Entregas y prestaciones en criterio de caja que se habrían devengado por la regla general (art. 75 LIVA)",
+        "62",
+        "63",
+      ),
+      row("Adquisiciones a las que se aplica o afecta el régimen especial del criterio de caja", "74", "75"),
+    ],
+    note: "Solo para quienes están acogidos al régimen especial del criterio de caja o son destinatarios de operaciones afectadas por él.",
   },
   {
     title: "Resultado",
@@ -162,8 +186,10 @@ export const LAYOUT_303: FormSection[] = [
       },
       row("Cuotas a compensar de periodos anteriores aplicadas en este periodo", "78"),
       row("Cuotas a compensar de periodos previos pendientes para periodos posteriores ([110] − [78])", "87"),
-      row("Resultado ([66] − [78])", "69"),
-      total("Resultado de la liquidación", "71"),
+      row("Resultado ([66] − [78] + [68])", "69"),
+      row("Resultados a ingresar de anteriores autoliquidaciones del mismo periodo", leave("70")),
+      row("Devoluciones acordadas por anteriores autoliquidaciones del mismo periodo", leave("109")),
+      total("Resultado de la liquidación ([69] − [70] + [109])", "71"),
     ],
   },
 ];
@@ -183,6 +209,16 @@ export const LAYOUT_390: FormSection[] = [
           ["01", "02"],
           ["03", "04"],
           ["05", "06"],
+        ],
+        ["0", "4", "10", "21"],
+      ),
+      ...ratesRows(
+        "Régimen especial del criterio de caja",
+        [
+          ["708", "709"],
+          ["643", "644"],
+          ["645", "646"],
+          ["647", "648"],
         ],
         ["0", "4", "10", "21"],
       ),
@@ -209,6 +245,17 @@ export const LAYOUT_390: FormSection[] = [
       row("IVA devengado en otros supuestos de inversión del sujeto pasivo", "27", null, "28"),
       row("Modificación de bases y cuotas", "29", null, "30"),
       total("Total bases y cuotas IVA", "33", null, "34"),
+      ...ratesRows(
+        "Recargo de equivalencia",
+        [
+          ["35", "36"],
+          ["599", "600"],
+          ["601", "602"],
+          ["41", "42"],
+        ],
+        ["0,5", "1,4", "5,2", "1,75"],
+      ),
+      row("Modificación recargo de equivalencia", "43", null, "44"),
       total("Total cuotas IVA y recargo de equivalencia", null, null, "47"),
     ],
   },
@@ -279,6 +326,12 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row(
+        "Cuotas deducibles en virtud de resolución administrativa o sentencia firmes con tipos no vigentes",
+        "660",
+        null,
+        "661",
+      ),
       row("Rectificación de deducciones", "639", null, "62"),
       total("Suma de deducciones", null, null, "64"),
       total("Resultado régimen general ([47] − [64])", null, null, "65"),
@@ -287,25 +340,59 @@ export const LAYOUT_390: FormSection[] = [
   {
     title: "Resultado liquidación anual",
     rows: [
-      row("Suma de resultados", "84"),
+      row("Regularización de cuotas del art. 80.Cinco.5ª LIVA", "658"),
+      row("Suma de resultados ([65] + [658])", "84"),
+      row("IVA a la importación liquidado por la Aduana", "659"),
       {
         label: "Compensación de cuotas del ejercicio anterior",
         cells: ["85"],
         hint: "Lo que el último 303 del año anterior dejó a compensar.",
       },
-      total("Resultado de la liquidación ([84] − [85])", "86"),
+      total("Resultado de la liquidación ([84] + [659] − [85])", "86"),
+    ],
+  },
+  {
+    title: "Resultado de las liquidaciones",
+    rows: [
+      {
+        label: "Total resultados a ingresar en las autoliquidaciones de IVA del ejercicio",
+        cells: ["95"],
+        hint: "Suma de los resultados positivos de los cuatro 303 del año; los negativos no cuentan.",
+        total: true,
+      },
+      {
+        label: "Resultado a compensar de la autoliquidación del último periodo",
+        cells: ["97"],
+        hint: "Si el 303 del cuarto trimestre salió negativo y se dejó a compensar.",
+      },
+      row("Cuotas pendientes de compensación generadas en el ejercicio y distintas de las de la casilla [97]", "662"),
     ],
   },
   {
     title: "Volumen de operaciones",
     rows: [
       row("Operaciones en régimen general", "99"),
+      row("Operaciones en criterio de caja que se habrían devengado por la regla general (art. 75 LIVA)", "653"),
       row("Entregas intracomunitarias de bienes y servicios", "103"),
       row("Exportaciones y otras operaciones exentas con derecho a deducción", "104"),
       row("Operaciones exentas sin derecho a deducción", "105"),
-      row("Operaciones no sujetas por reglas de localización", "110"),
+      row("Operaciones no sujetas por reglas de localización (excepto las incluidas en la casilla 126)", "110"),
       row("Operaciones sujetas con inversión del sujeto pasivo", "125"),
       total("Total volumen de operaciones", "108"),
+    ],
+  },
+  {
+    title: "Operaciones específicas",
+    columns: ["Base imponible", "Cuota"],
+    rows: [
+      row("Adquisiciones interiores exentas", "230", null),
+      row("Bases imponibles del IVA soportado no deducible", "232", null),
+      row(
+        "Entregas y prestaciones en criterio de caja que se habrían devengado por la regla general (art. 75 LIVA)",
+        "654",
+        "655",
+      ),
+      row("Adquisiciones a las que se aplica o afecta el régimen especial del criterio de caja", "656", "657"),
     ],
   },
 ];
@@ -315,7 +402,11 @@ export const LAYOUT_130: FormSection[] = [
     title: "Actividades en estimación directa",
     rows: [
       row("Ingresos computables desde el 1 de enero", "01"),
-      row("Gastos fiscalmente deducibles desde el 1 de enero", "02"),
+      {
+        label: "Gastos fiscalmente deducibles desde el 1 de enero",
+        cells: ["02"],
+        hint: "En estimación directa simplificada incluyen el 5 % de gastos de difícil justificación, con un máximo de 2.000 € al año.",
+      },
       total("Rendimiento neto ([01] − [02])", "03"),
       row("20 % del rendimiento neto, si es positivo", "04"),
       row("Pagos fraccionados de trimestres anteriores del año (suma de los [07] positivos)", "05"),
@@ -383,13 +474,36 @@ export function layout100(simplified: boolean): FormSection[] {
   return [
     {
       title: "Ingresos íntegros",
-      rows: [row("Ingresos de explotación", "0171"), total("Total ingresos computables", "0180")],
-      note: "Subvenciones, autoconsumo y otros ingresos (casillas 0172 a 0179) no se calculan: añádelos en Renta WEB si los tienes.",
+      rows: [
+        row("Ingresos de explotación", "0171"),
+        row("Ingresos financieros por aplazamiento o fraccionamiento de operaciones de la actividad", "0172"),
+        row("Ingresos por subvenciones corrientes", "0173"),
+        row("Imputación de ingresos por subvenciones de capital", "0174"),
+        row("Autoconsumo de bienes y servicios", "0175"),
+        row("IVA devengado (recargo de equivalencia, compensaciones de agricultura, ganadería y pesca)", "0176"),
+        row("Variación de existencias (incremento de existencias finales)", "0177"),
+        row("Otros ingresos", "0178"),
+        row("Exceso de amortización de elementos con libertad de amortización (DA 30ª LIRPF)", "0179"),
+        total("Total ingresos computables ([0171] a [0179])", "0180"),
+      ],
+      note: "Las casillas 0172 a 0179 no se calculan con tus facturas: si tienes ingresos de ese tipo, ajústalas en Renta WEB.",
     },
     {
       title: "Gastos fiscalmente deducibles",
       rows: [...EXPENSE_BOXES_100.map((box) => row(EXPENSE_LABELS_100[box], box)), total("Suma de gastos", "0218")],
     },
+    ...(simplified
+      ? [
+          {
+            title: "Estimación directa normal",
+            rows: [
+              row("Provisiones fiscalmente deducibles", leave("0219")),
+              row("Total gastos deducibles ([0218] + [0219])", leave("0220")),
+            ],
+            note: "Solo para la modalidad normal: en la simplificada se dejan en blanco.",
+          },
+        ]
+      : []),
     {
       title: simplified ? "Estimación directa simplificada" : "Estimación directa normal",
       rows: simplified
@@ -485,3 +599,113 @@ export const LAYOUT_115: FormSection[] = [
     ],
   },
 ];
+
+/* Questions of the forms that the books don't answer, with what to answer from the tax setup. */
+
+export interface FormAnswer {
+  label: string;
+  answer: string;
+  /** Box or key of the form, when it has one. */
+  box?: string;
+}
+
+const yesNo = (yes: boolean) => (yes ? "SÍ" : "NO");
+const BLANK = "Dejar en blanco";
+const UNCHECKED = "Dejar desmarcado";
+
+export function answers303(tax: TaxSetup): FormAnswer[] {
+  return [
+    { label: "Sujeto pasivo inscrito en el Registro de devolución mensual (art. 30 RIVA)", answer: "NO" },
+    {
+      label: "Sujeto pasivo que tributa exclusivamente en régimen simplificado",
+      answer: yesNo(tax.vatRegime === "simplified"),
+    },
+    { label: "Autoliquidación conjunta", answer: "NO" },
+    {
+      label: "Sujeto pasivo acogido al régimen especial del criterio de caja (art. 163 undecies LIVA)",
+      answer: yesNo(tax.vatRegime === "cashBasis"),
+    },
+    {
+      label: "Sujeto pasivo destinatario de operaciones acogidas al régimen especial del criterio de caja",
+      answer: "NO",
+    },
+    { label: "Opción por la aplicación de la prorrata especial (art. 103.Dos.1º LIVA)", answer: BLANK },
+    {
+      label: "Revocación de la opción por la aplicación de la prorrata especial (art. 103.Dos.1º LIVA)",
+      answer: BLANK,
+    },
+    { label: "Sujeto pasivo declarado en concurso de acreedores en el presente periodo de liquidación", answer: "NO" },
+    { label: "Sujeto pasivo acogido voluntariamente al SII", answer: "NO" },
+    { label: "Sujeto pasivo exonerado de la Declaración-resumen anual del IVA, modelo 390", answer: "NO" },
+    { label: "Sujeto pasivo con volumen anual de operaciones distinto de cero (art. 121 LIVA)", answer: BLANK },
+  ];
+}
+
+export function answers390(tax: TaxSetup): FormAnswer[] {
+  return [
+    { label: "Registro de devolución mensual en algún periodo del ejercicio", answer: UNCHECKED },
+    { label: "Régimen especial del grupo de entidades en algún periodo del ejercicio", answer: UNCHECKED },
+    { label: "¿Ha sido declarado en concurso de acreedores en este ejercicio?", answer: "NO" },
+    {
+      label: "¿Ha optado por el régimen especial del criterio de caja (art. 163 undecies LIVA)?",
+      answer: yesNo(tax.vatRegime === "cashBasis"),
+    },
+    {
+      label: "¿Ha sido destinatario de operaciones a las que aplique el régimen especial del criterio de caja?",
+      answer: "NO",
+    },
+  ];
+}
+
+/** Statistical data of form 390: the activities, main one first, ordered by volume. */
+export function activities390(tax: TaxSetup): FormAnswer[] {
+  return tax.activities.map((a, i) => ({
+    label: `${i === 0 ? "Principal · " : ""}${i + 1}. ${activityTypeLabel(a.type)}`,
+    answer: a.code ? `${a.code} ${a.name}` : a.name,
+  }));
+}
+
+export function answers100(tax: TaxSetup): FormAnswer[] {
+  const main = tax.activities[0];
+  return [
+    {
+      label: "Contribuyente que realiza la actividad",
+      answer: "Se elige en la Modalidad de Renta WEB al indicar la actividad",
+      box: "0165",
+    },
+    {
+      label: "Código y tipo de actividad",
+      answer: main ? activityTypeLabel(main.type) : "Configúralo en Impuestos",
+      box: "0166",
+    },
+    {
+      label: "Grupo o epígrafe del IAE",
+      answer: main?.code ? `${main.code} ${main.name}` : (main?.name ?? "Configúralo en Impuestos"),
+      box: "0167",
+    },
+    {
+      label: "Modalidad del método de estimación directa",
+      answer: tax.incomeTaxMethod === "normal" ? "N (normal)" : "S (simplificada)",
+      box: "0168",
+    },
+    { label: "Imputación temporal por el criterio de cobros y pagos", answer: BLANK, box: "0169" },
+    { label: "Imputación del anticipo de derechos de autor a medida que se devenguen", answer: BLANK, box: "0170" },
+  ];
+}
+
+const ACTIVITY_TYPE_NAMES: Record<string, string> = {
+  A01: "Arrendadores de bienes inmuebles",
+  A02: "Ganadería independiente",
+  A03: "Resto de actividades empresariales",
+  A04: "Actividades profesionales de carácter artístico o deportivo",
+  A05: "Resto de actividades profesionales",
+  B01: "Actividad agrícola",
+  B02: "Actividad ganadera dependiente",
+  B03: "Actividad forestal",
+  B04: "Producción de mejillón en batea",
+  B05: "Actividad pesquera",
+  B06: "Otras actividades no sujetas al IAE",
+  C: "Actividades no iniciadas",
+};
+
+const activityTypeLabel = (type: string) => (ACTIVITY_TYPE_NAMES[type] ? `${type} ${ACTIVITY_TYPE_NAMES[type]}` : type);

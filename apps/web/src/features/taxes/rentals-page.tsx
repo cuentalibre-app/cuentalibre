@@ -24,6 +24,7 @@ import {
 } from "./tax-form";
 import { COUNT_BOXES_115, LAYOUT_115, modelPath, quarterOf, RENTALS_PATH } from "./taxes-model";
 import { MissingProvinces } from "./withholdings-page";
+import { ModuleBreadcrumb } from "./tax-intro";
 
 const SITUATION_LABEL: Record<string, string> = {
   "1": "1 · España con ref. catastral",
@@ -246,6 +247,7 @@ export function RentalsPage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
+            <ModuleBreadcrumb module="rentals" form={annual ? "180" : "115"} />
             <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Retenciones de alquileres</h1>
             <p className="m-0 text-sm text-muted-foreground">
               {annual

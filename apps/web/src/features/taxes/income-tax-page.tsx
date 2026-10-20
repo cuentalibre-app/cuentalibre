@@ -9,6 +9,7 @@ import { deductible, expenseTypeShortLabel, PURCHASES_PATH, supplierOf } from "@
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { clientOf, documentTotals, KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
+import { useSettings } from "@/features/settings/settings-store";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
@@ -16,6 +17,7 @@ import {
   Assumptions,
   DocumentsPanel,
   EmptyBoxesToggle,
+  FormAnswers,
   FormSections,
   FormSwitch,
   ResultPanel,
@@ -23,7 +25,9 @@ import {
   type DocumentGroup,
   type ResultSummary,
 } from "./tax-form";
-import { LAYOUT_130, layout100, quarterOf } from "./taxes-model";
+import { answers100, LAYOUT_130, layout100, quarterOf } from "./taxes-model";
+import { FormInfo } from "./form-info";
+import { ModuleBreadcrumb } from "./tax-intro";
 
 /** Documents from January to the end of `lastMonth` (0-based) of a year. */
 function useIncomeDocuments(year: number, lastMonth: number): DocumentGroup[] {
@@ -161,6 +165,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
         editable={{ "13": reductionBox, "15": negativeBox, "16": mortgageBox }}
       />
       <DocumentsPanel title="Documentos desde el 1 de enero" groups={documents} />
+      <FormInfo form="130" />
       <Assumptions
         items={[
           "Estimación directa con criterio de devengo: las cifras se acumulan desde el 1 de enero hasta el final del trimestre.",
@@ -180,6 +185,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
 
 function IncomeTax100({ year, today }: { year: number; today: Date }) {
   const books = useTaxBooks();
+  const { tax } = useSettings();
   const [showEmpty, setShowEmpty] = useState(false);
   const { annual } = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
   const documents = useIncomeDocuments(year, 11);
@@ -208,8 +214,10 @@ function IncomeTax100({ year, today }: { year: number; today: Date }) {
         <h2 className="m-0 text-md font-semibold">Apartado D1 y pagos a cuenta</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
+      <FormAnswers title="Actividades realizadas" rows={answers100(tax)} />
       <FormSections sections={layout100(TAX_OPTIONS.simplified)} boxes={annual.boxes} showEmpty={showEmpty} />
       <DocumentsPanel title="Documentos del año" groups={documents} />
+      <FormInfo form="100" />
       <Assumptions
         items={[
           "Solo el apartado de la actividad económica (D1) y sus retenciones: el resto de la renta (trabajo, ahorro, deducciones…) se completa en Renta WEB.",
@@ -231,6 +239,7 @@ export function IncomeTaxPage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
+            <ModuleBreadcrumb module="incomeTax" form={annual ? "100" : "130"} />
             <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">IRPF</h1>
             <p className="m-0 text-sm text-muted-foreground">
               {annual

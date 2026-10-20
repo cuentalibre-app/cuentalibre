@@ -18,6 +18,7 @@ import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { PURCHASES_PATH } from "@/features/purchases/purchases-model";
 import { clientOf, documentTotals, KINDS, OPERATION_TYPES } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
+import { useSettings } from "@/features/settings/settings-store";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { useTaxBooks } from "./tax-books";
@@ -25,6 +26,7 @@ import {
   Assumptions,
   DocumentsPanel,
   EmptyBoxesToggle,
+  FormAnswers,
   FormSections,
   FormSwitch,
   ResultPanel,
@@ -32,7 +34,19 @@ import {
   type DocumentGroup,
   type ResultSummary,
 } from "./tax-form";
-import { LAYOUT_303, LAYOUT_390, modelPath, PERCENT_BOXES_303, quarterOf, VAT_PATH } from "./taxes-model";
+import {
+  activities390,
+  answers303,
+  answers390,
+  LAYOUT_303,
+  LAYOUT_390,
+  modelPath,
+  PERCENT_BOXES_303,
+  quarterOf,
+  VAT_PATH,
+} from "./taxes-model";
+import { FormInfo } from "./form-info";
+import { ModuleBreadcrumb } from "./tax-intro";
 
 const SALES_OPERATION = new Map(OPERATION_TYPES.map((o) => [o.value, o.label]));
 const PURCHASE_OPERATION = new Map(PURCHASE_OPERATION_TYPES.map((o) => [o.value, o.label]));
@@ -89,6 +103,7 @@ function useVatDocuments(period: Period): DocumentGroup[] {
 
 function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; today: Date }) {
   const books = useTaxBooks();
+  const { tax } = useSettings();
   const [showEmpty, setShowEmpty] = useState(false);
   const [refund, setRefund] = useState(false);
 
@@ -158,6 +173,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         <h2 className="m-0 text-md font-semibold">Casillas del modelo 303</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
+      <FormAnswers title="Identificación" rows={answers303(tax)} />
       <FormSections
         sections={LAYOUT_303}
         boxes={r.boxes}
@@ -166,6 +182,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         editable={{ "110": carryBox }}
       />
       <DocumentsPanel title="Documentos del trimestre" groups={documents} />
+      <FormInfo form="303" />
       <Assumptions
         items={[
           "Régimen general del IVA con criterio de devengo: cuenta la fecha de expedición de las facturas emitidas y la de contabilización de las recibidas.",
@@ -181,6 +198,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
 
 function Vat390({ year, today }: { year: number; today: Date }) {
   const books = useTaxBooks();
+  const { tax } = useSettings();
   const [showEmpty, setShowEmpty] = useState(false);
   const r = useMemo(() => model390(books, year), [books, year]);
   const documents = useVatDocuments({ year, quarter: null });
@@ -230,8 +248,15 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         <h2 className="m-0 text-md font-semibold">Casillas del modelo 390</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
+      <FormAnswers title="Sujeto pasivo y devengo" rows={answers390(tax)} />
+      <FormAnswers
+        title="Datos estadísticos · Actividades económicas"
+        rows={activities390(tax)}
+        note="Ordenadas de mayor a menor volumen de operaciones, como en Configuración › Impuestos. Marca la casilla [D] solo si tienes que presentar el modelo 347. Los datos del representante se completan en la sede de la AEAT."
+      />
       <FormSections sections={LAYOUT_390} boxes={r.boxes} showEmpty={showEmpty} />
       <DocumentsPanel title="Documentos del año" groups={documents} />
+      <FormInfo form="390" />
       <Assumptions
         items={[
           "Resume todo el año: si empezaste a facturar antes de usar Fiscalia, registra también esas facturas.",
@@ -254,6 +279,7 @@ export function VatPage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
+            <ModuleBreadcrumb module="vat" form={annual ? "390" : "303"} />
             <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">IVA</h1>
             <p className="m-0 text-sm text-muted-foreground">
               {annual

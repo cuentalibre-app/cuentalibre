@@ -13,6 +13,7 @@ import { FormInfo } from "./form-info";
 import { usePartyBooks, type PartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
 import { Assumptions, ResultPanel, type ResultSummary } from "./tax-form";
+import { ModuleBreadcrumb } from "./tax-intro";
 
 const COLUMNS: RecordColumn[] = [
   { label: "NIF" },
@@ -151,6 +152,7 @@ export function ThirdPartiesPage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">
+            <ModuleBreadcrumb module="thirdParties" form="347" />
             <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Operaciones con terceras personas</h1>
             <p className="m-0 text-sm text-muted-foreground">
               Modelo 347: clientes y proveedores con los que has superado {formatEUR(THRESHOLD_347)} en el año, IVA

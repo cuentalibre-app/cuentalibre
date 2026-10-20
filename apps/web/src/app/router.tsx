@@ -86,6 +86,7 @@ import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
 import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
 import { IntraEuPage } from "@/features/taxes/intra-eu-page";
 import { RentalsPage } from "@/features/taxes/rentals-page";
+import { TaxModulePage } from "@/features/taxes/tax-intro";
 import {
   CALENDAR_PATH,
   INCOME_TAX_PATH,
@@ -159,12 +160,54 @@ const catalogRoutes = [
 const taxRoutes = [
   { path: TAXES_PATH.slice(1), element: <TaxesSummaryPage /> },
   { path: CALENDAR_PATH.slice(1), element: <FiscalCalendarPage /> },
-  { path: VAT_PATH.slice(1), element: <VatPage /> },
-  { path: INCOME_TAX_PATH.slice(1), element: <IncomeTaxPage /> },
-  { path: WITHHOLDINGS_PATH.slice(1), element: <WithholdingsPage /> },
-  { path: RENTALS_PATH.slice(1), element: <RentalsPage /> },
-  { path: THIRD_PARTIES_PATH.slice(1), element: <ThirdPartiesPage /> },
-  { path: INTRA_EU_PATH.slice(1), element: <IntraEuPage /> },
+  {
+    path: VAT_PATH.slice(1),
+    element: (
+      <TaxModulePage module="vat">
+        <VatPage />
+      </TaxModulePage>
+    ),
+  },
+  {
+    path: INCOME_TAX_PATH.slice(1),
+    element: (
+      <TaxModulePage module="incomeTax">
+        <IncomeTaxPage />
+      </TaxModulePage>
+    ),
+  },
+  {
+    path: WITHHOLDINGS_PATH.slice(1),
+    element: (
+      <TaxModulePage module="withholdings">
+        <WithholdingsPage />
+      </TaxModulePage>
+    ),
+  },
+  {
+    path: RENTALS_PATH.slice(1),
+    element: (
+      <TaxModulePage module="rentals">
+        <RentalsPage />
+      </TaxModulePage>
+    ),
+  },
+  {
+    path: THIRD_PARTIES_PATH.slice(1),
+    element: (
+      <TaxModulePage module="thirdParties">
+        <ThirdPartiesPage />
+      </TaxModulePage>
+    ),
+  },
+  {
+    path: INTRA_EU_PATH.slice(1),
+    element: (
+      <TaxModulePage module="intraEu">
+        <IntraEuPage />
+      </TaxModulePage>
+    ),
+  },
 ];
 
 const treasuryRoutes = [
