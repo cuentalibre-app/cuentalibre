@@ -3,8 +3,6 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   ArrowLeft,
   ChevronDown,
-  CircleHelp,
-  EllipsisVertical,
   FilePen,
   Landmark,
   Mail,
@@ -575,24 +573,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
           </div>
           <div className="flex items-center gap-2.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="Opciones"
-                className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10")}
-              >
-                <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => navigate(SETTINGS_PATH)}>
-                  <Settings aria-hidden="true" />
-                  Configurar {config.singular.toLowerCase()}
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => navigate("/ayuda")}>
-                  <CircleHelp aria-hidden="true" />
-                  Ayuda
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link
+              to={SETTINGS_PATH}
+              aria-label={`Configurar ${config.singular.toLowerCase()}`}
+              title={`Configurar ${config.singular.toLowerCase()}`}
+              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
+            >
+              <Settings strokeWidth={1.8} aria-hidden="true" />
+            </Link>
             {!issued && (
               <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
                 Nuevo cliente

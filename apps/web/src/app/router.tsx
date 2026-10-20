@@ -279,7 +279,6 @@ const builtPaths = new Set(
 
 const placeholders = [
   ...allNavLeaves.filter((leaf) => leaf.to !== "/"),
-  { label: "Ayuda", to: "/ayuda" },
   ...createActions.flat().map((action) => ({ label: `Crear ${action.label.toLowerCase()}`, to: action.to })),
 ].filter((p) => !builtPaths.has(p.to));
 

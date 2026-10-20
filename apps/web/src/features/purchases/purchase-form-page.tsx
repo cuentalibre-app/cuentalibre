@@ -3,8 +3,6 @@ import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } 
 import {
   ArrowLeft,
   ChevronDown,
-  CircleHelp,
-  EllipsisVertical,
   FilePen,
   FilePlus2,
   Landmark,
@@ -569,20 +567,6 @@ function PurchaseForm({
             <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
           </div>
           <div className="flex items-center gap-2.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="Opciones"
-                className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10")}
-              >
-                <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => navigate("/ayuda")}>
-                  <CircleHelp aria-hidden="true" />
-                  Ayuda
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             {!locked && (
               <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingSupplier(true)}>
                 Nuevo proveedor
