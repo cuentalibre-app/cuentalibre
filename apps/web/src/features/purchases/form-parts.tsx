@@ -1,6 +1,7 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { ExternalLink, Paperclip, ScanText, Trash2, Upload } from "lucide-react";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { Input } from "@fiscalia/ui/components/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
@@ -168,6 +169,48 @@ export function ReceiptDrop({
         </ul>
       )}
     </section>
+  );
+}
+
+/**
+ * The files kept with a record, as in the reference app: drop or pick them, then open or
+ * remove the ones already attached. Each change is saved at once through `onChange`.
+ */
+export function AttachmentsDialog({
+  title,
+  attachments,
+  examples,
+  onChange,
+  onOpenChange,
+}: {
+  /** "Documentos de la factura 2026-0046". */
+  title: string;
+  attachments: Attachment[];
+  /** What usually goes here: "Contratos, albaranes firmados…". */
+  examples: string;
+  onChange: (attachments: Attachment[] | undefined) => void;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl">
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>Los archivos se guardan en cuanto los añades.</DialogDescription>
+        <ReceiptDrop
+          attachments={attachments}
+          onChange={(next) => onChange(next.length ? next : undefined)}
+          label="Documentos adjuntos"
+          prompt="Arrastra aquí los archivos"
+          accept=""
+          note={filesAreStored() ? examples : `${examples} Se guardan solo en esta sesión.`}
+        />
+        <div className="flex justify-end">
+          <DialogClose asChild>
+            <Button variant="secondary">Cerrar</Button>
+          </DialogClose>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

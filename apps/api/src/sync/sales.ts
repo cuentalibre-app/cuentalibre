@@ -5,13 +5,14 @@ import {
   invoiceTotals,
   laterInvoiceInSeries,
   nextInvoiceNumber,
+  paymentStatus,
   type Cents,
   type VerifactuEnvironment,
 } from "@fiscalia/core";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
-import { contact, salesDocument, salesLine } from "../db/schema";
+import { contact, salesDocument, salesLine, salesPayment } from "../db/schema";
 import { ApiError } from "../errors";
 import { recordInfoByInvoice, registerInvoice, usesVerifactu } from "../verifactu/record";
 import { checkQuarterOpen } from "./closing";
@@ -22,10 +23,11 @@ import { readSettings } from "./settings";
 export type StoredSalesDocument = z.infer<typeof storedSalesDocumentSchema>;
 type DocumentRow = typeof salesDocument.$inferSelect;
 type LineRow = typeof salesLine.$inferSelect;
+type PaymentRow = typeof salesPayment.$inferSelect;
 
 /** Fields stored as columns of `sales_document`, as the record names them. */
 const FIELDS = (Object.keys(storedSalesDocumentSchema.shape) as (keyof StoredSalesDocument)[]).filter(
-  (field) => field !== "lines" && field !== "issued",
+  (field) => field !== "lines" && field !== "payments" && field !== "issued",
 );
 /** Columns of a line, as the record names them. */
 export const LINE_FIELDS = [
@@ -43,20 +45,14 @@ export const LINE_FIELDS = [
   "unit",
 ] as const;
 
-/** What can still change once an invoice is issued: its collection and the app's own bookkeeping. */
-const MUTABLE_WHEN_ISSUED = new Set<string>([
-  "status",
-  "paidOn",
-  "paymentMethodId",
-  "tags",
-  "attachments",
-  "privateNotes",
-]);
+/** What can still change once an invoice is issued: its collections and the app's own bookkeeping. */
+const MUTABLE_WHEN_ISSUED = new Set<string>(["status", "payments", "tags", "attachments", "privateNotes"]);
 
 /** The record as the API returns it: optional fields that are empty are left out. */
 export function toSalesDocument(
   row: DocumentRow,
   lines: LineRow[],
+  payments: PaymentRow[],
   verifactu?: VerifactuRecordInfo,
 ): StoredSalesDocument {
   const out: Record<string, unknown> = {};
@@ -74,6 +70,13 @@ export function toSalesDocument(
     for (const field of LINE_FIELDS) if (line[field] != null) record[field] = line[field];
     return record;
   });
+  if (payments.length > 0)
+    out.payments = payments.map((payment) => ({
+      id: payment.id,
+      date: payment.date,
+      amount: payment.amount as Cents,
+      paymentMethodId: payment.paymentMethodId,
+    }));
   if (row.issuedAt) {
     out.issued = {
       client: row.clientSnapshot!,
@@ -123,10 +126,12 @@ async function liveRow(tx: Tx, organizationId: string, id: string) {
   return row;
 }
 
-/** Lines of the given documents, or of every document when no IDs are given, by document. */
-async function linesOf(tx: Tx, organizationId: string, documentIds?: string[]) {
-  if (documentIds?.length === 0) return new Map<string, LineRow[]>();
-  const rows = await tx
+/** Lines and collections of the given documents, or of every document when no IDs are given, by document. */
+async function detailsOf(tx: Tx, organizationId: string, documentIds?: string[]) {
+  const lines = new Map<string, LineRow[]>();
+  const payments = new Map<string, PaymentRow[]>();
+  if (documentIds?.length === 0) return { lines, payments };
+  const lineRows = await tx
     .select()
     .from(salesLine)
     .where(
@@ -136,10 +141,41 @@ async function linesOf(tx: Tx, organizationId: string, documentIds?: string[]) {
       ),
     )
     .orderBy(asc(salesLine.documentId), asc(salesLine.position));
-  const byDocument = new Map<string, LineRow[]>();
-  for (const row of rows) byDocument.set(row.documentId, [...(byDocument.get(row.documentId) ?? []), row]);
-  return byDocument;
+  for (const row of lineRows) lines.set(row.documentId, [...(lines.get(row.documentId) ?? []), row]);
+  const paymentRows = await tx
+    .select()
+    .from(salesPayment)
+    .where(
+      and(
+        eq(salesPayment.organizationId, organizationId),
+        documentIds ? inArray(salesPayment.documentId, documentIds) : undefined,
+      ),
+    )
+    .orderBy(asc(salesPayment.documentId), asc(salesPayment.position));
+  for (const row of paymentRows) payments.set(row.documentId, [...(payments.get(row.documentId) ?? []), row]);
+  return { lines, payments };
 }
+
+async function writePayments(tx: Tx, organizationId: string, record: StoredSalesDocument) {
+  await tx
+    .delete(salesPayment)
+    .where(and(eq(salesPayment.organizationId, organizationId), eq(salesPayment.documentId, record.id)));
+  if (!record.payments?.length) return;
+  await tx
+    .insert(salesPayment)
+    .values(
+      record.payments.map((payment, position) => ({ organizationId, documentId: record.id, position, ...payment })),
+    );
+}
+
+/** An invoice is paid once its collections cover the total, and pending until then. */
+const collectionStatus = (total: number, payments: StoredSalesDocument["payments"]) =>
+  paymentStatus(
+    total as Cents,
+    (payments ?? []).map((p) => p.amount),
+  ) === "paid"
+    ? "paid"
+    : "pending";
 
 async function writeLines(tx: Tx, organizationId: string, record: StoredSalesDocument) {
   await tx
@@ -178,6 +214,7 @@ async function checkClient(tx: Tx, organizationId: string, clientId: string) {
 export async function createSalesDocument(tx: Tx, organizationId: string, data: unknown) {
   const { issued: _, ...record } = parse(data);
   if (record.kind === "invoice") invalid("kind: invoices are created by issuing them.");
+  if (record.payments?.length) invalid("payments: only invoices are collected.");
   await checkClient(tx, organizationId, record.clientId);
   await checkAttachments(tx, organizationId, record.attachments);
   const [row] = await tx
@@ -203,7 +240,8 @@ export async function updateSalesDocument(
   if ("id" in changes && changes.id !== id) invalid("id: can't be changed.");
   const row = await liveRow(tx, organizationId, id);
   if (!row) notFound();
-  const current = toSalesDocument(row, (await linesOf(tx, organizationId, [id])).get(id) ?? []);
+  const { lines, payments } = await detailsOf(tx, organizationId, [id]);
+  const current = toSalesDocument(row, lines.get(id) ?? [], payments.get(id) ?? []);
 
   const { issued: _, ...record } = parse(mergeChanges(storedSalesDocumentSchema, current, changes));
   await checkAttachments(tx, organizationId, record.attachments, current.attachments);
@@ -215,17 +253,18 @@ export async function updateSalesDocument(
     await tx
       .update(salesDocument)
       .set({
-        status: record.status,
-        paidOn: record.paidOn ?? null,
-        paymentMethodId: record.paymentMethodId ?? null,
+        // Follows the collections, whatever status was sent
+        status: collectionStatus(row.total!, record.payments),
         tags: record.tags ?? null,
         attachments: record.attachments ?? null,
         privateNotes: record.privateNotes,
       })
       .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, id)));
+    if ("payments" in changes) await writePayments(tx, organizationId, record);
     return;
   }
 
+  if (record.payments?.length) invalid("payments: only invoices are collected.");
   if (record.kind !== current.kind) invalid("kind: can't be changed; issue the draft to make it an invoice.");
   if (record.clientId !== current.clientId) await checkClient(tx, organizationId, record.clientId);
   await tx
@@ -274,7 +313,6 @@ export async function issueInvoice(
   if (!record.clientId) invalid("clientId: an invoice needs a client.");
   const client = (await checkClient(tx, organizationId, record.clientId))!;
   if (record.lines.length === 0) invalid("lines: an invoice needs at least one line.");
-  if (record.status !== "pending" && record.status !== "paid") record.status = "pending";
   await checkQuarterOpen(tx, organizationId, record.issuedOn);
   await checkRectified(tx, organizationId, record, number !== undefined);
 
@@ -308,9 +346,10 @@ export async function issueInvoice(
       .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, invoice.id)));
   else await tx.insert(salesDocument).values(values);
   await writeLines(tx, organizationId, invoice);
+  await writePayments(tx, organizationId, invoice);
 
   // Totals from the lines as stored, so they match what the record returns
-  const lines = (await linesOf(tx, organizationId, [invoice.id])).get(invoice.id) ?? [];
+  const lines = (await detailsOf(tx, organizationId, [invoice.id])).lines.get(invoice.id) ?? [];
   const totals = invoiceTotals(
     lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
     WITHHOLDING_RATES[invoice.withholding],
@@ -334,6 +373,7 @@ export async function issueInvoice(
       totalWithholding: totals.withholding,
       total: totals.total,
       vatBreakdown: totals.vatBreakdown,
+      status: collectionStatus(totals.total, invoice.payments),
     })
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, invoice.id)));
 
@@ -387,9 +427,11 @@ export async function liveSalesDocuments(tx: Tx, organizationId: string) {
     .from(salesDocument)
     .where(and(eq(salesDocument.organizationId, organizationId), isNull(salesDocument.deletedAt)))
     .orderBy(salesDocument.id);
-  const lines = await linesOf(tx, organizationId);
+  const { lines, payments } = await detailsOf(tx, organizationId);
   const records = await recordInfoByInvoice(tx, organizationId);
-  return rows.map((row) => toSalesDocument(row, lines.get(row.id) ?? [], records.get(row.id)));
+  return rows.map((row) =>
+    toSalesDocument(row, lines.get(row.id) ?? [], payments.get(row.id) ?? [], records.get(row.id)),
+  );
 }
 
 /** Current rows, tombstones included, for the given IDs, with their lines. */
@@ -399,7 +441,7 @@ export async function salesDocumentsById(tx: Tx, organizationId: string, ids: st
     .select()
     .from(salesDocument)
     .where(and(eq(salesDocument.organizationId, organizationId), inArray(salesDocument.id, ids)));
-  const lines = await linesOf(
+  const { lines, payments } = await detailsOf(
     tx,
     organizationId,
     rows.filter((row) => !row.deletedAt).map((row) => row.id),
@@ -412,6 +454,6 @@ export async function salesDocumentsById(tx: Tx, organizationId: string, ids: st
   return rows.map((row) => ({
     id: row.id,
     deleted: row.deletedAt !== null,
-    record: toSalesDocument(row, lines.get(row.id) ?? [], records.get(row.id)),
+    record: toSalesDocument(row, lines.get(row.id) ?? [], payments.get(row.id) ?? [], records.get(row.id)),
   }));
 }

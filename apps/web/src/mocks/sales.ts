@@ -1,4 +1,4 @@
-import { addDays } from "@fiscalia/core";
+import { WITHHOLDING_RATES, addDays, cents, invoiceTotals } from "@fiscalia/core";
 import type { SalesDocument, SalesKind, SalesLine, SalesStatus } from "@fiscalia/contracts";
 
 /** Sample sales documents until there is a backend. Figures are made up. */
@@ -56,7 +56,10 @@ const invoices: SalesDocument[] = [
     [retainer("octubre 2026"), ln("Horas de consultoría", 65, 12)],
     "pending",
   ),
-  doc("invoice", "2026-0046", "c2", "2026-09-28", [ln("Campaña de lanzamiento: diseño de piezas", 1_750)], "pending"),
+  // Half collected
+  doc("invoice", "2026-0046", "c2", "2026-09-28", [ln("Campaña de lanzamiento: diseño de piezas", 1_750)], "pending", {
+    payments: [{ id: "pay-2026-0046", date: "2026-10-08", amount: cents(92_750), paymentMethodId: "transfer" }],
+  }),
   doc("invoice", "2026-0045", "c3", "2026-09-10", [ln("Rediseño de catálogo", 875, 1, 0.21, 0.1)], "pending"),
   doc("invoice", "2026-0044", "c6", "2026-09-04", [ln("UX audit · mobile app", 3_200, 1, 0)], "paid", intl),
   doc(
@@ -238,9 +241,21 @@ const deliveryNotes: SalesDocument[] = [
   }),
 ];
 
-/** Paid invoices are collected by transfer about two weeks after they are issued. */
+/** Paid invoices are collected in full by transfer about two weeks after they are issued. */
 const collected = invoices.map((d) =>
-  d.status === "paid" && !d.paidOn ? { ...d, paidOn: addDays(d.issuedOn, 12), paymentMethodId: "transfer" } : d,
+  d.status === "paid" && !d.payments
+    ? {
+        ...d,
+        payments: [
+          {
+            id: d.id,
+            date: addDays(d.issuedOn, 12),
+            amount: invoiceTotals(d.lines, WITHHOLDING_RATES[d.withholding], d.supplies).total,
+            paymentMethodId: "transfer",
+          },
+        ],
+      }
+    : d,
 );
 
 export const initialSalesDocuments: SalesDocument[] = [...collected, ...drafts, ...quotes, ...deliveryNotes];

@@ -10,7 +10,6 @@ import {
   FileCode2,
   FileDown,
   FileX2,
-  HandCoins,
   Mail,
   MoreHorizontal,
   Paperclip,
@@ -23,7 +22,6 @@ import {
   ThumbsDown,
   ThumbsUp,
   Trash2,
-  Undo2,
   X,
 } from "lucide-react";
 import { cents, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@fiscalia/core";
@@ -37,13 +35,11 @@ import { formatEUR } from "@fiscalia/ui/lib/format";
 import { table } from "@fiscalia/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
 import { useLockedQuarter } from "@/features/closing/closing-store";
-import { defaultPaymentMethodId } from "@/features/settings/settings-model";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import { attachFile } from "@/data/files";
 import {
   KINDS,
   STATUS,
@@ -52,13 +48,15 @@ import {
   documentTotals,
   laterInvoice,
   nextNumber,
+  outstandingOf,
   periodKeyOf,
   type StatusKey,
 } from "./sales-model";
 import { canSendEmail } from "@/data/email";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
+import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
-import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, pickFiles, type Action } from "./list-parts";
+import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
 
 const ALL = "all";
@@ -73,6 +71,8 @@ interface Row {
   vat: Cents;
   withholding: Cents;
   total: Cents;
+  /** What is still to be collected of an invoice. */
+  outstanding: Cents;
 }
 
 const MONTH_NAME = new Intl.DateTimeFormat("es-ES", { month: "long" });
@@ -84,7 +84,7 @@ function inPeriod(isoDate: string, period: Period): boolean {
   return year === period.year && periodMonths(period).includes(month! - 1);
 }
 
-function sum(rows: Row[], key: "base" | "vat" | "withholding" | "total") {
+function sum(rows: Row[], key: "base" | "vat" | "withholding" | "total" | "outstanding") {
   return sumBy(rows, (r) => r[key]);
 }
 
@@ -109,7 +109,13 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           (d) => d.kind === kind && (thisMonth ? d.issuedOn.startsWith(monthPrefix) : inPeriod(d.issuedOn, period)),
         )
         .sort((a, b) => b.issuedOn.localeCompare(a.issuedOn) || (b.number ?? "").localeCompare(a.number ?? ""))
-        .map((doc): Row => ({ doc, client: clientOf(doc), status: displayStatus(doc, today), ...documentTotals(doc) })),
+        .map((doc): Row => ({
+          doc,
+          client: clientOf(doc),
+          status: displayStatus(doc, today),
+          ...documentTotals(doc),
+          outstanding: doc.kind === "invoice" ? outstandingOf(doc) : cents(0),
+        })),
     [documents, kind, period, today, thisMonth, monthPrefix],
   );
 
@@ -263,8 +269,9 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
   const of = (statuses: StatusKey[]) => rows.filter((r) => statuses.includes(r.status));
   const invoices = (n: number) => (n === 1 ? "1 factura" : `${n} facturas`);
   const total = sum(rows, "total");
-  const paid = sum(of(["paid"]), "total");
-  const overdue = sum(of(["overdue"]), "total");
+  const pending = sum(rows, "outstanding");
+  const paid = cents(total - pending);
+  const overdue = sum(of(["overdue"]), "outstanding");
   const stats: { label: string; value: Cents; detail: ReactNode }[] = [
     {
       label: "Ingresos",
@@ -283,12 +290,12 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
     },
     {
       label: "Pendiente de cobro",
-      value: sum(of(["pending", "overdue"]), "total"),
+      value: pending,
       detail:
         overdue > 0 ? (
           <span className="text-destructive">{formatEUR(overdue)} vencido</span>
         ) : (
-          `${invoices(of(["pending"]).length)} en plazo`
+          `${invoices(of(["pending", "partial"]).length)} en plazo`
         ),
     },
   ];
@@ -492,7 +499,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
 /** Every operation available on a document, grouped so the menu can split them with separators. */
 function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const navigate = useNavigate();
-  const [dialog, setDialog] = useState<"payment" | "tags" | "send" | null>(null);
+  const [dialog, setDialog] = useState<"payment" | "attachments" | "tags" | "send" | null>(null);
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
@@ -500,14 +507,9 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const lockedQuarter = useLockedQuarter()(doc.issuedOn);
 
   const attach: Action = {
-    label: attachments.length > 0 ? `Adjuntar archivos (${attachments.length})` : "Adjuntar archivos",
+    label: attachments.length > 0 ? `Documentos adjuntos (${attachments.length})` : "Adjuntar documentos",
     icon: Paperclip,
-    run: () =>
-      pickFiles((files) => {
-        if (files.length === 0) return;
-        const added = files.map(attachFile);
-        salesStore.update(doc.id, { attachments: [...attachments, ...added] });
-      }),
+    run: () => setDialog("attachments"),
   };
 
   const pdf: Action = {
@@ -529,7 +531,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     },
     payments: {
       label: "Gestionar el cobro",
-      icon: HandCoins,
+      icon: CircleDollarSign,
       run: () => setDialog("payment"),
     },
     tags: {
@@ -574,19 +576,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const workflow = doc.kind === "quote" || doc.kind === "deliveryNote";
   let primary: Action | null = null;
   if (doc.kind === "invoice") {
-    primary =
-      doc.status === "paid"
-        ? { label: "Marcar como pendiente", icon: Undo2, run: () => salesStore.update(doc.id, { status: "pending" }) }
-        : {
-            label: "Marcar como cobrada",
-            icon: CircleDollarSign,
-            run: () =>
-              salesStore.update(doc.id, {
-                status: "paid",
-                paidOn: toIsoDate(new Date()),
-                paymentMethodId: doc.paymentMethodId ?? defaultPaymentMethodId(),
-              }),
-          };
+    primary = extras.payments;
   } else if (doc.kind === "draft") {
     primary = lockedQuarter
       ? { label: "Emitir factura (trimestre cerrado)", icon: ReceiptText }
@@ -622,13 +612,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
     ],
-    [
-      // Invoices manage the collection in a dialog; the one-click toggle stays among the quick actions
-      ...(isInvoice ? [extras.payments] : primary ? [primary] : []),
-      ...transitions,
-      attach,
-      extras.tags,
-    ],
+    [...(primary ? [primary] : []), ...transitions, attach, extras.tags],
     [pdf, ...(isInvoice ? [extras.facturae] : []), extras.send],
     isInvoice && doc.series === "normal"
       ? [
@@ -658,6 +642,14 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const dialogs =
     dialog === "payment" ? (
       <PaymentDialog doc={doc} onOpenChange={close} />
+    ) : dialog === "attachments" ? (
+      <AttachmentsDialog
+        title={`Documentos de ${config.noun} ${label}`}
+        attachments={attachments}
+        examples="Contratos, albaranes firmados, pedidos del cliente…"
+        onChange={(next) => salesStore.update(doc.id, { attachments: next })}
+        onOpenChange={close}
+      />
     ) : dialog === "tags" ? (
       <TagsDialog doc={doc} title={`${config.noun} ${label}`} onOpenChange={close} />
     ) : dialog === "send" ? (

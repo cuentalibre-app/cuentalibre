@@ -3,6 +3,7 @@ import { cents, newId, toIsoDate } from "@fiscalia/core";
 import type { BankMovement, ManualPayment } from "@fiscalia/contracts";
 import { expensesStore, useExpenses } from "@/features/purchases/expenses-store";
 import { purchasesStore, usePurchaseInvoices } from "@/features/purchases/purchases-store";
+import { withPayments } from "@/features/sales/sales-model";
 import { salesStore, useSalesDocuments } from "@/features/sales/sales-store";
 import { settingsStore, useSettings } from "@/features/settings/settings-store";
 import { initialManualPayments, sampleMovements } from "@/mocks/treasury";
@@ -91,9 +92,12 @@ function settle(doc: PendingDocument, movement: BankMovement): string {
     methodForAccount(movement.accountId, paymentMethods, defaultPaymentMethodId) ?? defaultPaymentMethodId;
   const date = movement.date;
   switch (doc.source) {
-    case "sale":
-      salesStore.update(doc.docId, { status: "paid", paidOn: date, paymentMethodId: methodId });
-      return `sale:${doc.docId}`;
+    case "sale": {
+      const invoice = salesStore.get(doc.docId)!;
+      const payment = { id: newId(), date, amount: doc.amount, paymentMethodId: methodId };
+      salesStore.update(doc.docId, withPayments(invoice, [...(invoice.payments ?? []), payment]));
+      return `sale:${payment.id}`;
+    }
     case "purchase": {
       const invoice = purchasesStore.get(doc.docId)!;
       const payment = { id: newId(), date, amount: cents(-doc.amount), paymentMethodId: methodId };

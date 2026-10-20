@@ -727,19 +727,17 @@ export function advancedSheets(data: AdvancedData, options: AdvancedOptions, ran
             "Importe",
             "Método de cobro",
           ],
-          rows: issued
-            .filter((d) => d.status === "paid")
-            .map((d) => {
-              const client = clientOf(d);
-              return [
-                d.number ?? "",
-                client.taxId,
-                client.name,
-                date(d.paidOn),
-                eur(documentTotals(d).total),
-                methodName(d.paymentMethodId),
-              ];
-            }),
+          rows: issued.flatMap((d) => {
+            const client = clientOf(d);
+            return (d.payments ?? []).map((p) => [
+              d.number ?? "",
+              client.taxId,
+              client.name,
+              date(p.date),
+              eur(p.amount),
+              methodName(p.paymentMethodId),
+            ]);
+          }),
         },
         {
           name: "Pagos",

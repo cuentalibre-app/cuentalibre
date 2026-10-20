@@ -128,7 +128,7 @@ export function facturaeProblems(doc: SalesDocument): string[] {
 export function downloadFacturae(doc: SalesDocument) {
   const { profile, paymentMethods } = settingsStore.get();
   const client = clientOf(doc);
-  const method = paymentMethods.find((m) => m.id === (doc.paymentMethodId ?? client.paymentMethodId));
+  const method = paymentMethods.find((m) => m.id === (doc.payments?.at(-1)?.paymentMethodId ?? client.paymentMethodId));
   const corrected = doc.rectifiesId ? salesStore.all().find((d) => d.id === doc.rectifiesId) : undefined;
 
   const xml = facturaeXml({

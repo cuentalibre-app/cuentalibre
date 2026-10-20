@@ -12,7 +12,7 @@ import type {
 import type { BadgeProps } from "@fiscalia/ui/components/badge";
 import { EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { PURCHASES_PATH, outstanding, supplierOf } from "@/features/purchases/purchases-model";
-import { KINDS, clientOf, documentTotals } from "@/features/sales/sales-model";
+import { KINDS, clientOf, outstandingOf } from "@/features/sales/sales-model";
 
 export const TREASURY_PATH = "/bancos";
 export const MOVEMENTS_PATH = "/bancos/movimientos";
@@ -43,7 +43,7 @@ export const RECONCILIATION_ORDER: ReconciliationStatus[] = ["none", "partial", 
  * received invoice or an expense, or a manual one. Signed like bank movements.
  */
 export interface TreasuryPayment {
-  /** Stable across renders: "sale:<id>", "purchase:<payment id>", "expense:<id>", "manual:<id>". */
+  /** Stable across renders: "sale:<payment id>", "purchase:<payment id>", "expense:<id>", "manual:<id>". */
   key: string;
   source: PaymentSource;
   /** Number of the linked document, or the manual payment's description. */
@@ -89,19 +89,20 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
   const payments: TreasuryPayment[] = [];
 
   for (const doc of sales) {
-    if (doc.kind !== "invoice" || doc.status !== "paid") continue;
-    const methodId = doc.paymentMethodId ?? "";
-    payments.push({
-      key: `sale:${doc.id}`,
-      source: "sale",
-      reference: doc.number ?? "",
-      counterparty: clientOf(doc).name,
-      date: doc.paidOn ?? doc.issuedOn,
-      amount: documentTotals(doc).total,
-      paymentMethodId: methodId,
-      accountId: accountOf(methodId),
-      href: saleHref(doc.id),
-    });
+    if (doc.kind !== "invoice" || !doc.payments) continue;
+    const counterparty = clientOf(doc).name;
+    for (const p of doc.payments)
+      payments.push({
+        key: `sale:${p.id}`,
+        source: "sale",
+        reference: doc.number ?? "",
+        counterparty,
+        date: p.date,
+        amount: p.amount,
+        paymentMethodId: p.paymentMethodId,
+        accountId: accountOf(p.paymentMethodId),
+        href: saleHref(doc.id),
+      });
   }
 
   for (const doc of purchases) {
@@ -163,7 +164,7 @@ export function pendingDocuments({ sales, purchases, expenses }: Omit<Books, "ma
       reference: doc.number ?? "",
       counterparty: clientOf(doc).name,
       date: doc.dueOn ?? doc.issuedOn,
-      amount: documentTotals(doc).total,
+      amount: outstandingOf(doc),
       href: saleHref(doc.id),
     });
   }

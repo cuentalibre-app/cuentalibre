@@ -83,8 +83,6 @@ export const salesDocument = pgTable(
     rectifiesId: uuid(),
     /** Cents. */
     supplies: amount(),
-    paidOn: day(),
-    paymentMethodId: text(),
     tags: text().array(),
     language: text(),
     numberFormat: text(),
@@ -138,6 +136,29 @@ export const salesLine = pgTable(
     documentId: uuid().notNull(),
     position: integer().notNull(),
     ...lineColumns(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.organizationId, table.documentId, table.position] }),
+    foreignKey({
+      columns: [table.organizationId, table.documentId],
+      foreignColumns: [salesDocument.organizationId, salesDocument.id],
+    }).onDelete("cascade"),
+  ],
+);
+
+/** Collections of an issued invoice, in order. A rectifying invoice's refunds are negative. */
+export const salesPayment = pgTable(
+  "sales_payment",
+  {
+    organizationId: uuid().notNull(),
+    documentId: uuid().notNull(),
+    position: integer().notNull(),
+    /** The collection's own ID, from the client. */
+    id: text().notNull(),
+    date: day().notNull(),
+    /** Cents. */
+    amount: amount().notNull(),
+    paymentMethodId: text().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.organizationId, table.documentId, table.position] }),
