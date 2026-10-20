@@ -335,6 +335,9 @@ export async function issueInvoice(
   const series = invoiceSeriesOf(record, settings.invoiceSettings.series ?? []);
   if (!series) invalid("seriesId: no such series in the invoice settings.");
   if (series.type !== record.series) invalid(`seriesId: ${series.name} isn't a series of ${record.series} invoices.`);
+  // Invoices issued elsewhere may still be imported into a series that takes no new ones
+  if (series.active === false && number === undefined)
+    throw new ApiError(409, "series_inactive", `${series.name} is inactive and takes no new invoices.`);
 
   const issued = await issuedInvoices(tx, organizationId);
   if (number !== undefined) {

@@ -282,12 +282,12 @@ describe("rectifying invoices", () => {
 describe("custom series", () => {
   const serieB = { id: newId(), type: "normal" as const, name: "Serie B", mask: "AAAA-B-####" };
 
-  async function withSeries(user: Client, series = [serieB]) {
+  async function withSeries(user: Client, series: object[] = [serieB], defaultSeries?: object) {
     return send(user, [
       {
         type: "saveSettings",
         section: "invoiceSettings",
-        data: { ...DEFAULT_ORGANIZATION_SETTINGS.invoiceSettings, series },
+        data: { ...DEFAULT_ORGANIZATION_SETTINGS.invoiceSettings, series, defaultSeries },
       },
     ]);
   }
@@ -340,6 +340,54 @@ describe("custom series", () => {
     expect(changed.status).toBe(409);
     expect(await errorCode(changed)).toBe("series_in_use");
     expect((await withSeries(ana, [])).status).toBe(409);
+  });
+});
+
+describe("series settings", () => {
+  const serieB = { id: newId(), type: "normal" as const, name: "Serie B", mask: "AAAA-B-####" };
+  const save = (user: Client, series: object[], defaultSeries?: object) =>
+    send(user, [
+      {
+        type: "saveSettings",
+        section: "invoiceSettings",
+        data: { ...DEFAULT_ORGANIZATION_SETTINGS.invoiceSettings, series, defaultSeries },
+      },
+    ]);
+
+  it("can be removed while no invoice or draft uses them", async () => {
+    const ana = await seller();
+    await save(ana, [serieB]);
+    expect((await save(ana, [])).status).toBe(200);
+    await save(ana, [serieB]);
+    const draft = document(ana.norte.id, { kind: "draft", number: null, seriesId: serieB.id });
+    await send(ana, [{ type: "create", entity: "salesDocuments", data: draft }]);
+    expect((await save(ana, [])).status).toBe(409);
+  });
+
+  it("take no new invoices while inactive, but still imported ones", async () => {
+    const ana = await seller();
+    await save(ana, [{ ...serieB, active: false }]);
+    const response = await issue(ana, document(ana.norte.id, { seriesId: serieB.id }));
+    expect(response.status).toBe(409);
+    expect(await errorCode(response)).toBe("series_inactive");
+    expect((await issue(ana, document(ana.norte.id, { seriesId: serieB.id }), "2026-B-0004")).status).toBe(200);
+  });
+
+  it("let built-in series change their mask until they number an invoice, but not their type", async () => {
+    const ana = await seller();
+    const normal = { id: "normal", type: "normal", name: "Ordinarias", mask: "F-AA-###" };
+    expect((await save(ana, [normal])).status).toBe(200);
+    expect((await issued(ana, document(ana.norte.id))).number).toBe("F-26-001");
+    expect((await save(ana, [{ ...normal, mask: "AAAA-####" }])).status).toBe(409);
+    expect((await save(ana, [{ ...normal, name: "Facturas" }])).status).toBe(200);
+    expect((await save(ana, [{ ...normal, type: "rectifying" }])).status).toBe(400);
+  });
+
+  it("propose an active default series of each type", async () => {
+    const ana = await seller();
+    expect((await save(ana, [serieB], { normal: serieB.id })).status).toBe(200);
+    expect((await save(ana, [{ ...serieB, active: false }], { normal: serieB.id })).status).toBe(400);
+    expect((await save(ana, [serieB], { rectifying: serieB.id })).status).toBe(400);
   });
 });
 

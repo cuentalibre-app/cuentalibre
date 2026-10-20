@@ -6,39 +6,47 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Input } from "@fiscalia/ui/components/input";
 import { Field, GroupedSelect } from "./form-fields";
 import { invoiceSettingsStore } from "./invoice-settings";
-import { invoiceSeriesList } from "./sales-model";
+import { invoiceSeriesList, seriesUsage } from "./sales-model";
+import { salesStore } from "./sales-store";
 
-const TYPES: { value: InvoiceSeries; label: string }[] = [
+export const SERIES_TYPES: { value: InvoiceSeries; label: string }[] = [
   { value: "normal", label: "Normal" },
   { value: "rectifying", label: "Rectificativa" },
 ];
 
 const MASK_PROBLEMS: Record<SeriesMaskProblem, string> = {
-  year: "Incluye el año una sola vez, como AAAA.",
+  year: "Incluye el año una sola vez, como AAAA o AA.",
   counter: "Incluye un único contador, como ####.",
   characters: "Usa solo letras y los separadores - / . _ (sin cifras ni espacios), hasta 30 caracteres.",
 };
 
-/** Creates an invoice series; a form opening it selects the new series. */
+/**
+ * Creates an invoice series, or edits one: its type is fixed once created, and
+ * its mask once it numbers an invoice or a draft. A form opening it selects the
+ * new series.
+ */
 export function SeriesDialog({
   open,
   onOpenChange,
+  series = null,
   type: presetType = "normal",
   onCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  series?: InvoiceSeriesDefinition | null;
   type?: InvoiceSeries;
   onCreated?: (series: InvoiceSeriesDefinition) => void;
 }) {
-  const [type, setType] = useState<InvoiceSeries>(presetType);
-  const [name, setName] = useState("");
-  const [mask, setMask] = useState("AAAA-B-####");
+  const [type, setType] = useState<InvoiceSeries>(series?.type ?? presetType);
+  const [name, setName] = useState(series?.name ?? "");
+  const [mask, setMask] = useState(series?.mask ?? "AAAA-B-####");
   const [submitted, setSubmitted] = useState(false);
+  const uses = series ? seriesUsage(series, salesStore.all()) : 0;
 
   const trimmedMask = mask.trim();
   const problem = seriesMaskProblem(trimmedMask);
-  const taken = invoiceSeriesList().find((s) => sameSeriesFormat(s.mask, trimmedMask));
+  const taken = invoiceSeriesList().find((s) => s.id !== series?.id && sameSeriesFormat(s.mask, trimmedMask));
   const nameError = name.trim() ? undefined : "Ponle un nombre a la serie.";
   const maskError = problem
     ? MASK_PROBLEMS[problem]
@@ -49,19 +57,25 @@ export function SeriesDialog({
   const save = () => {
     setSubmitted(true);
     if (nameError || maskError) return;
-    const series: InvoiceSeriesDefinition = { id: newId(), type, name: name.trim(), mask: trimmedMask };
-    void invoiceSettingsStore.addSeries(series);
-    onCreated?.(series);
+    const saved: InvoiceSeriesDefinition = {
+      ...series,
+      id: series?.id ?? newId(),
+      type,
+      name: name.trim(),
+      mask: trimmedMask,
+    };
+    void invoiceSettingsStore.saveSeries(saved);
+    if (!series) onCreated?.(saved);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <DialogTitle>Nueva serie de facturas</DialogTitle>
+        <DialogTitle>{series ? "Editar serie de facturas" : "Nueva serie de facturas"}</DialogTitle>
         <DialogDescription>
-          Cada serie numera sus facturas por separado, de forma correlativa y empezando cada año en 1. Una vez emitas
-          facturas en ella, su tipo y su máscara ya no se pueden cambiar.
+          Cada serie numera sus facturas por separado, de forma correlativa y empezando cada año en 1. Una vez numere
+          facturas o borradores, su máscara ya no se puede cambiar.
         </DialogDescription>
         <form
           className="flex flex-col gap-4"
@@ -74,13 +88,14 @@ export function SeriesDialog({
           }}
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Tipo" required>
+            <Field label="Tipo" required hint={series ? "El tipo no cambia una vez creada la serie." : undefined}>
               {(p) => (
                 <GroupedSelect
                   {...p}
                   value={type}
                   onChange={(v) => setType(v as InvoiceSeries)}
-                  groups={[{ options: TYPES }]}
+                  groups={[{ options: SERIES_TYPES }]}
+                  disabled={series !== null}
                 />
               )}
             </Field>
@@ -100,14 +115,19 @@ export function SeriesDialog({
             label="Máscara"
             required
             error={maskError}
-            hint={`Primera factura: ${formatSeriesNumber(trimmedMask, new Date().getFullYear(), 1)}`}
-            help="AAAA es el año y #### el contador, con tantas cifras como almohadillas."
+            hint={
+              uses > 0
+                ? `Numera ${uses} ${uses === 1 ? "factura o borrador" : "facturas o borradores"}: la máscara ya no cambia.`
+                : `Ejemplo: ${formatSeriesNumber(trimmedMask, new Date().getFullYear(), 1)}`
+            }
+            help="AAAA es el año con cuatro cifras y AA con dos; #### es el contador, con tantas cifras como almohadillas. El resto se mantiene tal cual: F-AA-### numera F-26-001, F-26-002…"
           >
             {(p) => (
               <Input
                 {...p}
                 value={mask}
                 spellCheck={false}
+                readOnly={uses > 0}
                 onChange={(e) => setMask(e.target.value)}
                 className="font-mono"
               />
@@ -117,7 +137,7 @@ export function SeriesDialog({
             <DialogClose asChild>
               <Button variant="secondary">Cancelar</Button>
             </DialogClose>
-            <Button type="submit">Crear serie</Button>
+            <Button type="submit">{series ? "Guardar" : "Crear serie"}</Button>
           </div>
         </form>
       </DialogContent>

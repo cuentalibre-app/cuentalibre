@@ -118,12 +118,15 @@ describe("seriesMaskProblem", () => {
     expect(seriesMaskProblem("AAAA-####")).toBeNull();
     expect(seriesMaskProblem("FRA/AAAA/B-###")).toBeNull();
     expect(seriesMaskProblem("A-AAAA-####")).toBeNull();
+    expect(seriesMaskProblem("F-AA-###")).toBeNull();
   });
 
   it("names what is wrong", () => {
     expect(seriesMaskProblem("B-####")).toBe("year");
     expect(seriesMaskProblem("AAAAA-####")).toBe("year");
     expect(seriesMaskProblem("AAAA-AAAA-####")).toBe("year");
+    expect(seriesMaskProblem("AAA-####")).toBe("year");
+    expect(seriesMaskProblem("AA-AAAA-####")).toBe("year");
     expect(seriesMaskProblem("AAAA-B")).toBe("counter");
     expect(seriesMaskProblem("AAAA-##-##")).toBe("counter");
     expect(seriesMaskProblem("AAAA-2-####")).toBe("characters");
@@ -135,6 +138,8 @@ describe("series numbers", () => {
   it("writes and reads numbers with the mask", () => {
     expect(formatSeriesNumber("AAAA-B-####", 2026, 1)).toBe("2026-B-0001");
     expect(formatSeriesNumber("R-AAAA-##", 2026, 123)).toBe("R-2026-123");
+    expect(formatSeriesNumber("F-AA-###", 2026, 2)).toBe("F-26-002");
+    expect(parseSeriesNumber("F-AA-###", "F-26-002")).toEqual({ year: 2026, counter: 2 });
     expect(parseSeriesNumber("AAAA-B-####", "2026-B-0012")).toEqual({ year: 2026, counter: 12 });
     expect(parseSeriesNumber("AAAA####", "202600012")).toEqual({ year: 2026, counter: 12 });
     expect(parseSeriesNumber("AAAA-####", "2026-B-0012")).toBeNull();
@@ -163,6 +168,9 @@ describe("nextInvoiceNumber", () => {
   it("goes on from the invoices already written with the mask", () => {
     expect(nextInvoiceNumber("AAAA-B-####", "2026-10-18", issued)).toBe("2026-B-0004");
     expect(nextInvoiceNumber("AAAA-C-##", "2026-10-18", issued)).toBe("2026-C-01");
+    expect(nextInvoiceNumber("F-AA-###", "2026-10-18", [{ number: "F-26-009", issuedOn: "2026-10-01" }])).toBe(
+      "F-26-010",
+    );
   });
 });
 

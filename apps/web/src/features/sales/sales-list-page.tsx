@@ -47,7 +47,10 @@ import {
   clientOf,
   displayStatus,
   documentTotals,
+  defaultSeries,
   laterInvoice,
+  seriesOf,
+  seriesRefOf,
   nextNumber,
   outstandingOf,
   periodKeyOf,
@@ -548,7 +551,10 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   } satisfies Record<string, Action>;
 
   const issueDraft = () => {
-    const later = laterInvoice(doc, doc.issuedOn, salesStore.all());
+    // Drafts don't show their series: one deactivated since goes to the default series of its type
+    const own = seriesOf(doc);
+    const draft = own.active === false ? { ...doc, ...seriesRefOf(defaultSeries(own.type)) } : doc;
+    const later = laterInvoice(draft, doc.issuedOn, salesStore.all());
     if (later) {
       window.alert(
         `No se puede emitir: la factura ${later.number} de esta serie es del ${formatDate(later.issuedOn)} y este borrador tiene una fecha anterior. Cambia su fecha antes de emitirlo.`,
@@ -556,10 +562,10 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       return;
     }
     salesStore.issue({
-      ...doc,
+      ...draft,
       kind: "invoice",
       status: "pending",
-      number: nextNumber("invoice", doc, doc.issuedOn, salesStore.all()),
+      number: nextNumber("invoice", draft, doc.issuedOn, salesStore.all()),
     });
     navigate(`${KINDS.invoice.path}?periodo=${periodKeyOf(doc.issuedOn)}`);
   };

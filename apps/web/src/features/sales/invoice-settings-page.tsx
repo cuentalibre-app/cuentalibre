@@ -1,19 +1,17 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ArrowLeft, Check, ImageUp, PenLine, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, ImageUp, PenLine, Trash2 } from "lucide-react";
 import type { InvoiceSettings } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Textarea } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { CERTIFICATES_PATH } from "@/features/settings/settings-model";
 import { sameValue } from "@/lib/same-value";
-import { DefaultMark, LookFields } from "./document-look";
+import { LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
 import { invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
-import { invoiceSeriesList } from "./sales-model";
-import { SeriesDialog } from "./series-dialog";
+import { SeriesTable } from "./series-table";
 
 const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
 
@@ -22,10 +20,9 @@ export function InvoiceSettingsPage() {
   const saved = useInvoiceSettings();
   const [draft, setDraft] = useState<InvoiceSettings>(saved);
   const [justSaved, setJustSaved] = useState(false);
-  const [creatingSeries, setCreatingSeries] = useState(false);
-  // Series are saved as soon as they are created, apart from the draft
-  const { series: _, ...draftWithoutSeries } = draft;
-  const { series: savedSeries, ...savedWithoutSeries } = saved;
+  // Series are saved as soon as they change, apart from the draft
+  const { series: _, defaultSeries: _default, ...draftWithoutSeries } = draft;
+  const { series: _saved, defaultSeries: _savedDefault, ...savedWithoutSeries } = saved;
   const dirty = !sameValue(draftWithoutSeries, savedWithoutSeries);
   const set = <K extends keyof InvoiceSettings>(key: K, value: InvoiceSettings[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -77,45 +74,7 @@ export function InvoiceSettingsPage() {
               Las series de numeración definen los formatos de numeración de las facturas y permiten proponer el
               siguiente número disponible de cada serie al crear una factura.
             </p>
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
-                <thead className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
-                  <tr>
-                    {[
-                      "Estado",
-                      "Tipo",
-                      "Nombre",
-                      "Por defecto en normales",
-                      "Por defecto en rectificativas",
-                      "Máscara",
-                    ].map((h) => (
-                      <th key={h} scope="col" className="px-3 py-2.5 font-medium">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoiceSeriesList(savedSeries).map((s) => (
-                    <tr key={s.id} className="border-t border-divider">
-                      <td className="px-3 py-2.5">
-                        <Badge tone="success">Activa</Badge>
-                      </td>
-                      <td className="px-3 py-2.5">{s.type === "normal" ? "Normal" : "Rectificativa"}</td>
-                      <td className="px-3 py-2.5 font-medium">{s.name}</td>
-                      <td className="px-3 py-2.5">{s.id === "normal" && <DefaultMark />}</td>
-                      <td className="px-3 py-2.5">{s.id === "rectifying" && <DefaultMark />}</td>
-                      <td className="px-3 py-2.5 font-mono">{s.mask}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Button variant="secondary" size="md" className="self-start" onClick={() => setCreatingSeries(true)}>
-              <Plus aria-hidden="true" />
-              Nueva serie
-            </Button>
-            {creatingSeries && <SeriesDialog open onOpenChange={setCreatingSeries} />}
+            <SeriesTable />
           </Section>
         </div>
 

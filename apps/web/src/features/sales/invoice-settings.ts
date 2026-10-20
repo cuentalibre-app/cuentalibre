@@ -42,8 +42,21 @@ export const invoiceSettingsStore = {
     const next = { ...settings.get(), ...changes };
     return settings.write(next, [{ type: "saveSettings", section: "invoiceSettings", data: next }]);
   },
-  addSeries(series: InvoiceSeriesDefinition) {
-    return invoiceSettingsStore.update({ series: [...(settings.get().series ?? []), series] });
+  /** Creates a series or changes one; a built-in series is stored once it changes. */
+  saveSeries(series: InvoiceSeriesDefinition) {
+    const stored = settings.get().series ?? [];
+    const exists = stored.some((s) => s.id === series.id);
+    return invoiceSettingsStore.update({
+      series: exists ? stored.map((s) => (s.id === series.id ? series : s)) : [...stored, series],
+    });
+  },
+  removeSeries(id: string) {
+    return invoiceSettingsStore.update({ series: (settings.get().series ?? []).filter((s) => s.id !== id) });
+  },
+  setDefaultSeries(series: InvoiceSeriesDefinition) {
+    return invoiceSettingsStore.update({
+      defaultSeries: { ...settings.get().defaultSeries, [series.type]: series.id },
+    });
   },
 };
 
