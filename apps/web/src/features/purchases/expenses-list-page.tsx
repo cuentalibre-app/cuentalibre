@@ -465,7 +465,7 @@ const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
   { key: "type", label: "Tipo de gasto" },
   { key: "status", label: "Estado" },
   { key: "amount", label: "Importe", numeric: true },
-  { key: "deductible", label: "Deducible", numeric: true },
+  { key: "deductible", label: "Imputable", numeric: true },
 ];
 
 const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
@@ -582,12 +582,15 @@ function ExpensesTable({
               </td>
               <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.amount)}</td>
               <td className={cn(td, "text-right")}>
-                <span className="amount text-muted-foreground">{formatEUR(r.deductible)}</span>
-                {r.doc.imputation !== 100 && (
-                  <span className="block text-xs font-medium whitespace-nowrap text-warning">
-                    Deducible {r.doc.imputation} %
-                  </span>
-                )}
+                <span
+                  className={cn(
+                    "block text-sm font-medium whitespace-nowrap",
+                    r.doc.imputation !== 100 && "text-warning",
+                  )}
+                >
+                  {r.doc.imputation} %
+                </span>
+                <span className="block amount text-xs text-muted-foreground">{formatEUR(r.deductible)}</span>
               </td>
               <td className={cn(td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
                 <QuickActions row={r} />
