@@ -188,6 +188,35 @@ describe("issued invoices", () => {
     expect(await errorCode(closed)).toBe("quarter_closed");
   });
 
+  it("can be revised by a business exempt from VERI*FACTU while the quarter is open", async () => {
+    const ana = await seller();
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt" as const };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
+    const first = await issued(ana, document(ana.norte.id, { issuedOn: "2026-10-05" }));
+    const second = await issued(ana, document(ana.norte.id, { issuedOn: "2026-10-10" }));
+    const update = (id: string, changes: Record<string, unknown>) =>
+      send(ana, [{ type: "update", entity: "salesDocuments", id, changes }]);
+
+    const lines = [line({ unitPrice: 2000 })];
+    expect((await update(first.id, { lines, issuedOn: "2026-10-08", publicNotes: "Revisada" })).status).toBe(200);
+    const revised = (await salesDocuments(ana)).find((d) => d.id === first.id)!;
+    // Same number, new totals: 2000 + 21 % VAT - 15 % withholding
+    expect(revised).toMatchObject({ number: first.number, issuedOn: "2026-10-08", publicNotes: "Revisada" });
+    expect(revised.issued!.totals.total).toBe(212_000);
+
+    // Its number and its place in the series stay
+    expect((await update(first.id, { number: "2026-0009" })).status).toBe(400);
+    const late = await update(first.id, { issuedOn: "2026-10-11" });
+    expect(late.status).toBe(409);
+    expect(await errorCode(late)).toBe("date_out_of_order");
+    expect((await update(second.id, { issuedOn: "2027-01-04" })).status).toBe(400);
+
+    await send(ana, [{ type: "closeQuarter", period: "2026-T4", closedOn: "2027-01-15" }]);
+    const closed = await update(second.id, { publicNotes: "Tarde" });
+    expect(closed.status).toBe(409);
+    expect(await errorCode(closed)).toBe("quarter_closed");
+  });
+
   it("still take their collections, tags and private notes", async () => {
     const ana = await seller();
     const invoice = await issued(ana, document(ana.norte.id));

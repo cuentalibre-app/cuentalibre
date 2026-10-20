@@ -1,15 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import {
-  ArrowLeft,
-  ChevronDown,
-  FilePen,
-  Landmark,
-  Mail,
-  Pencil,
-  Plus,
-  Settings,
-} from "lucide-react";
+import { ArrowLeft, ChevronDown, FilePen, Landmark, Mail, Pencil, Plus, Settings } from "lucide-react";
 import {
   newId,
   WITHHOLDING_RATES,
@@ -50,12 +41,14 @@ import { stockShortageMessage } from "@/features/catalog/catalog-store";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
+import { useCompliance } from "@/features/settings/compliance-store";
 import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
 import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { MethodDialog } from "@/features/settings/method-dialog";
+import { SettingsLink } from "@/features/settings/settings-parts";
 import { settingsStore } from "@/features/settings/settings-store";
 import {
   LinesEditor,
@@ -82,6 +75,7 @@ import {
   groupLinesByTax,
   invoiceSeriesList,
   laterInvoice,
+  outOfOrderInvoice,
   nextNumber,
   periodKeyOf,
   seriesGroups,
@@ -283,10 +277,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   const [sending, setSending] = useState<{ doc: SalesDocument; next: string } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
   const lockedQuarterOf = useLockedQuarter();
-  // Issued invoices are read-only: they are corrected with a rectifying invoice
+  const verifactuSystem = useCompliance().verifactu.system;
   const issued = existing?.kind === "invoice";
   // Drafts, quotes and delivery notes are not booked, so only invoices belong to a closed quarter
   const locked = issued ? lockedQuarterOf(existing.issuedOn) : null;
+  // Issued invoices are corrected with a rectifying invoice, unless they could be deleted
+  // anyway: without VERI*FACTU, while the quarter is open, they can be revised too
+  const revisable = issued && verifactuSystem === "exempt" && !existing.issued?.verifactu && !locked;
+  const readOnly = issued && !revisable;
   const [advanced, setAdvanced] = useState(
     () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
   );
@@ -398,7 +396,15 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     else if (!isSupportedDate(form.issuedOn)) next.issuedOn = "Fecha no válida: revisa el año.";
     else if (asKind === "invoice" && lockedQuarterOf(form.issuedOn))
       next.issuedOn = lockedMessage(lockedQuarterOf(form.issuedOn)!);
-    else if (asKind === "invoice") {
+    else if (issued && form.issuedOn !== existing.issuedOn) {
+      if (form.issuedOn.slice(0, 4) !== existing.issuedOn.slice(0, 4))
+        next.issuedOn = "El año forma parte del número de la factura: no se puede cambiar.";
+      else {
+        const jumped = outOfOrderInvoice({ ...existing, number: existing.number! }, form.issuedOn, salesStore.all());
+        if (jumped)
+          next.issuedOn = `La factura ${jumped.number} de esta serie es del ${formatDate(jumped.issuedOn)}: con esta fecha quedaría fuera de orden.`;
+      }
+    } else if (asKind === "invoice" && !issued) {
       const later = laterInvoice(form, form.issuedOn, salesStore.all());
       if (later)
         next.issuedOn = `La factura ${later.number} de esta serie es del ${formatDate(later.issuedOn)}: esta no puede tener una fecha anterior.`;
@@ -421,7 +427,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   }
 
   function save(asKind: SalesKind, after: AfterSave = "list") {
-    if (issued) return;
+    if (readOnly) return;
     const found = validate(asKind);
     setErrors(found);
     if (Object.values(found).some(Boolean)) {
@@ -479,7 +485,15 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       attachments: existing?.attachments,
     };
 
-    if (asInvoice) salesStore.issue(doc, { origin: originKind(asKind) });
+    // A revised invoice keeps its collections; the server freezes its client and totals again
+    if (issued)
+      salesStore.update(existing.id, {
+        ...doc,
+        payments: existing.payments,
+        status: existing.status,
+        issued: undefined,
+      });
+    else if (asInvoice) salesStore.issue(doc, { origin: originKind(asKind) });
     else if (existing) salesStore.update(existing.id, doc);
     else salesStore.add(doc, originKind(asKind));
     // Invoicing a quote or delivery note closes it
@@ -573,24 +587,29 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
           </div>
           <div className="flex items-center gap-2.5">
-            <Link
+            <SettingsLink
               to={SETTINGS_PATH}
+              from={title[0]!.toLowerCase() + title.slice(1)}
               aria-label={`Configurar ${config.singular.toLowerCase()}`}
               title={`Configurar ${config.singular.toLowerCase()}`}
               className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
             >
               <Settings strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            {!issued && (
+            </SettingsLink>
+            {!readOnly && (
               <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
                 Nuevo cliente
               </Button>
             )}
-            {!issued && actions("hidden lg:flex")}
+            {!readOnly && actions("hidden lg:flex")}
           </div>
         </header>
 
-        {locked ? <LockedNotice period={locked} noun="Esta factura" /> : issued && <IssuedNotice invoice={existing} />}
+        {locked ? (
+          <LockedNotice period={locked} noun="Esta factura" />
+        ) : (
+          readOnly && <IssuedNotice invoice={existing} />
+        )}
         {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
 
         {source && !existing && (
@@ -602,7 +621,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         )}
 
         <fieldset
-          disabled={issued}
+          disabled={readOnly}
           className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
         >
           <Section title={infoTitle(config.noun)} index={1}>
@@ -697,6 +716,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                     {...p}
                     value={isInvoice ? (form.seriesId ?? form.series) : "normal"}
                     onChange={changeSeries}
+                    disabled={issued}
                     groups={
                       isInvoice
                         ? [
@@ -712,7 +732,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               {rectifying && (
                 <Field label="Rectifica la factura" required error={errors.rectifiesId}>
                   {(p) => (
-                    <Select value={form.rectifiesId} onValueChange={(v) => set("rectifiesId", v)}>
+                    <Select value={form.rectifiesId} onValueChange={(v) => set("rectifiesId", v)} disabled={issued}>
                       <SelectTrigger {...p} className="w-full font-normal aria-invalid:border-destructive">
                         <span className="min-w-0 flex-1 truncate text-left">
                           <SelectValue placeholder="No se ha seleccionado ninguna factura" />
@@ -998,48 +1018,53 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                     </Field>
                   </div>
                 )}
-                <CheckField
-                  label="Marcar factura como cobrada"
-                  help="Registra el cobro con su fecha y el método por el que lo recibiste."
-                  checked={form.markPaid}
-                  onChange={(v) => set("markPaid", v)}
-                />
-                {form.markPaid && (
-                  <div className="flex flex-wrap items-end gap-3 pl-7.5">
-                    <Field label="Fecha de cobro" className="w-44">
-                      {(p) => (
-                        <Input
-                          {...p}
-                          type="date"
-                          value={form.paidOn}
-                          onChange={(e) => {
-                            set("paidOn", e.target.value);
-                            setPaidOnFollows(false);
-                          }}
-                        />
-                      )}
-                    </Field>
-                    <Field label="Método de cobro" required error={errors.paymentMethodId} className="w-56">
-                      {(p) => (
-                        <GroupedSelect
-                          {...p}
-                          value={form.paymentMethodId}
-                          onChange={(v) => set("paymentMethodId", v)}
-                          groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
-                        />
-                      )}
-                    </Field>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="lg"
-                      className="text-primary"
-                      onClick={() => setCreatingMethod(true)}
-                    >
-                      <Plus aria-hidden="true" />
-                      Nuevo método
-                    </Button>
-                  </div>
+                {/* An issued invoice's collections are managed from the list */}
+                {!issued && (
+                  <>
+                    <CheckField
+                      label="Marcar factura como cobrada"
+                      help="Registra el cobro con su fecha y el método por el que lo recibiste."
+                      checked={form.markPaid}
+                      onChange={(v) => set("markPaid", v)}
+                    />
+                    {form.markPaid && (
+                      <div className="flex flex-wrap items-end gap-3 pl-7.5">
+                        <Field label="Fecha de cobro" className="w-44">
+                          {(p) => (
+                            <Input
+                              {...p}
+                              type="date"
+                              value={form.paidOn}
+                              onChange={(e) => {
+                                set("paidOn", e.target.value);
+                                setPaidOnFollows(false);
+                              }}
+                            />
+                          )}
+                        </Field>
+                        <Field label="Método de cobro" required error={errors.paymentMethodId} className="w-56">
+                          {(p) => (
+                            <GroupedSelect
+                              {...p}
+                              value={form.paymentMethodId}
+                              onChange={(v) => set("paymentMethodId", v)}
+                              groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
+                            />
+                          )}
+                        </Field>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="lg"
+                          className="text-primary"
+                          onClick={() => setCreatingMethod(true)}
+                        >
+                          <Plus aria-hidden="true" />
+                          Nuevo método
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </Section>
@@ -1075,7 +1100,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         </fieldset>
 
         {/* Mobile: actions at the end of the form */}
-        {!issued && actions("lg:hidden")}
+        {!readOnly && actions("lg:hidden")}
         <NewContactDialog
           role="client"
           open={creatingClient}

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ArrowLeft, Check, ImageUp, PenLine, Trash2 } from "lucide-react";
+import { Check, ImageUp, PenLine, Trash2 } from "lucide-react";
 import type { InvoiceSettings } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Textarea } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { CERTIFICATES_PATH } from "@/features/settings/settings-model";
+import { SettingsHeader } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
@@ -42,31 +43,17 @@ export function InvoiceSettingsPage() {
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              to="/ventas/facturas/nueva"
-              aria-label="Volver a nueva factura"
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">
-              Configuración de facturas
-            </h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {justSaved && !dirty && (
-              <span role="status" className="flex items-center gap-1.5 text-sm text-success">
-                <Check className="size-4" aria-hidden="true" />
-                Cambios guardados
-              </span>
-            )}
-            <Button onClick={save} disabled={!dirty}>
-              Guardar cambios
-            </Button>
-          </div>
-        </header>
+        <SettingsHeader title="Configuración de facturas">
+          {justSaved && !dirty && (
+            <span role="status" className="flex items-center gap-1.5 text-sm text-success">
+              <Check className="size-4" aria-hidden="true" />
+              Cambios guardados
+            </span>
+          )}
+          <Button onClick={save} disabled={!dirty}>
+            Guardar cambios
+          </Button>
+        </SettingsHeader>
 
         <div id="series" className="scroll-mt-6">
           <Section title="Sistema de auto-numeración" index={1}>

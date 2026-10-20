@@ -10,6 +10,7 @@ import {
   lineBase,
   isOverdue,
   laterInvoiceInSeries,
+  outOfOrderInSeries,
   nextDocumentNumber,
   nextInvoiceNumber,
   paymentStatus,
@@ -268,6 +269,11 @@ export function nextNumber(kind: SalesKind, series: SeriesRef, issuedOn: string,
 /** The invoice of the series dated after `issuedOn` that keeps a new one from being issued, if any. */
 export function laterInvoice(series: SeriesRef, issuedOn: string, docs: SalesDocument[]) {
   return laterInvoiceInSeries(seriesOf(series).mask, issuedOn, issuedInvoices(docs));
+}
+
+/** The invoice of the series that moving an issued invoice to `issuedOn` would put out of order, if any. */
+export function outOfOrderInvoice(invoice: SeriesRef & { number: string }, issuedOn: string, docs: SalesDocument[]) {
+  return outOfOrderInSeries(seriesOf(invoice).mask, { number: invoice.number, issuedOn }, issuedInvoices(docs));
 }
 
 /**
