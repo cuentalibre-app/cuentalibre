@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
 import { cn } from "@fiscalia/ui/lib/cn";
+import { sameValue } from "@/lib/same-value";
 import { SETTINGS_PATH } from "./settings-model";
 
 /* Building blocks shared by the settings pages. */
@@ -55,7 +56,7 @@ export function useDraft<T>(saved: T) {
     draft,
     setDraft,
     set,
-    dirty: JSON.stringify(draft) !== JSON.stringify(saved),
+    dirty: !sameValue(draft, saved),
     justSaved,
     markSaved: () => setJustSaved(true),
   };
