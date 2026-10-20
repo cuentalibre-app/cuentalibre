@@ -418,21 +418,21 @@ describe("model100", () => {
 });
 
 describe("incomeTaxYear", () => {
-  it("applies the reduction from the previous year's net income", () => {
+  it("suggests the reduction from the previous year's net income without applying it", () => {
     const b = books({
       sales: [
         sale("2025-06-10", eur(8_000), { withholding: cents(0) }),
         sale("2026-02-10", eur(5_000), { withholding: cents(0) }),
       ],
     });
-    const { quarters, previousNet, reduction } = incomeTaxYear(b, 2026, { simplified: false });
+    const { quarters, previousNet, suggestedReduction } = incomeTaxYear(b, 2026, { simplified: false });
     expect(previousNet).toBe(eur(8_000));
-    expect(reduction).toBe(eur(100));
-    expect(quarters[0]!.boxes).toMatchObject({ "07": eur(1_000), "13": eur(100), "19": eur(900) });
+    expect(suggestedReduction).toBe(eur(100));
+    expect(quarters[0]!.boxes).toMatchObject({ "07": eur(1_000), "13": 0, "19": eur(1_000) });
   });
 
-  it("has no reduction without books for the previous year", () => {
+  it("suggests no reduction without books for the previous year", () => {
     const b = books({ sales: [sale("2026-02-10", eur(5_000), { withholding: cents(0) })] });
-    expect(incomeTaxYear(b, 2026, { simplified: false }).reduction).toBe(0);
+    expect(incomeTaxYear(b, 2026, { simplified: false }).suggestedReduction).toBe(0);
   });
 });

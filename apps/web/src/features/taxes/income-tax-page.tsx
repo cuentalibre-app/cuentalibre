@@ -106,7 +106,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
   const books = useTaxBooks();
   const [showEmpty, setShowEmpty] = useState(false);
   const annual = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
-  const [reduction, reductionBox] = useEditable(annual.reduction);
+  const [reduction, reductionBox] = useEditable(cents(0));
   const [negativeCarry, negativeBox] = useEditable(cents(0));
   const [mortgage, mortgageBox] = useEditable(cents(0));
 
@@ -173,8 +173,10 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
             ? "Estimación directa simplificada: los gastos incluyen un 5 % de gastos de difícil justificación, con un máximo de 2.000 € al año."
             : "Estimación directa normal: no se añaden gastos de difícil justificación.",
           annual.previousNet === null
-            ? "No hay datos del año anterior para calcular la minoración de la casilla 13: indícala a mano si te corresponde."
-            : `La minoración de la casilla 13 sale del rendimiento neto de ${year - 1} (${formatEUR(annual.previousNet)}).`,
+            ? "La minoración de la casilla 13 queda a cero: indícala a mano si te corresponde."
+            : annual.suggestedReduction > 0
+              ? `La minoración de la casilla 13 queda a cero: indícala a mano si quieres aplicarla. Con tu rendimiento neto de ${year - 1} (${formatEUR(annual.previousNet)}) te corresponderían ${formatEUR(annual.suggestedReduction)} por trimestre.`
+              : `La minoración de la casilla 13 queda a cero: con tu rendimiento neto de ${year - 1} (${formatEUR(annual.previousNet)}) no te corresponde.`,
           "Las facturas recibidas y los gastos cuentan por su parte deducible. La cuota de autónomos cuenta como gasto.",
           "Si más del 70 % de tus ingresos llevan retención puedes pedir no presentar el 130 (modelo 036 o 037).",
         ]}
