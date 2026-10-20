@@ -1,6 +1,7 @@
 import {
   cents,
   daysUntil,
+  estimateIncomeTax,
   incomeTaxYear,
   isEconomicallyDependent,
   isInPeriod,
@@ -192,6 +193,9 @@ export function buildHomeData(
   const vat = sumCents(quarters(returns(period.year).vat));
   const irpf = sumBy(quarters(returns(period.year).irpf), (r) => cents(Math.max(0, r)));
 
+  // The progressive scale needs the whole year: its rate is spread over the period
+  const incomeTax = estimateIncomeTax(year, period.year, TAX_OPTIONS.simplified);
+
   let running = cents(0);
   const monthly: (MonthPoint | null)[] = year.map((m, month) => {
     if (!m) return null;
@@ -224,7 +228,8 @@ export function buildHomeData(
       profit: change(profit, previousProfit),
     },
     taxes: { vat, irpf, total: cents(Math.max(0, vat) + irpf) },
-    takeHome: takeHomeEstimate(totals),
+    incomeTax,
+    takeHome: takeHomeEstimate(totals, incomeTax.rate),
     months,
     monthly,
     lastMonthWithData,

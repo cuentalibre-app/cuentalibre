@@ -2,6 +2,7 @@ export * from "./ids";
 export * from "./money";
 export * from "./period";
 export * from "./taxes";
+export * from "./income-tax";
 export * from "./deadlines";
 export * from "./invoices";
 export * from "./concentration";
