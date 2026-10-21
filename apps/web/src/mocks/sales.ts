@@ -48,6 +48,34 @@ const retainer = (month: string, fee = 2_400) => ln(`Diseño y mantenimiento web
 const intl = { withholding: "none", operationType: "intraEu" } as const;
 
 const invoices: SalesDocument[] = [
+  // November and December 2026 are ahead: issued in advance, not collected yet
+  doc(
+    "invoice",
+    "2026-0052",
+    "c6",
+    "2026-12-14",
+    [ln("Accessibility review · web platform", 2_400, 1, 0)],
+    "pending",
+    intl,
+  ),
+  doc(
+    "invoice",
+    "2026-0051",
+    "c1",
+    "2026-12-01",
+    [retainer("diciembre 2026"), ln("Horas de consultoría", 65, 14)],
+    "pending",
+  ),
+  doc("invoice", "2026-0050", "c4", "2026-11-23", [ln("Mantenimiento anual de servidores", 1_650)], "pending"),
+  doc("invoice", "2026-0049", "c2", "2026-11-12", [ln("Campaña navideña: piezas gráficas", 1_400)], "pending"),
+  doc(
+    "invoice",
+    "2026-0048",
+    "c1",
+    "2026-11-02",
+    [retainer("noviembre 2026"), ln("Horas de consultoría", 65, 18)],
+    "pending",
+  ),
   doc(
     "invoice",
     "2026-0047",
@@ -198,7 +226,7 @@ const quotes: SalesDocument[] = [
     "sent",
     { dueOn: "2026-11-07" },
   ),
-  doc("quote", "P-2026-0008", "c2", "2026-09-24", [ln("Campaña navideña: piezas gráficas", 1_400)], "accepted", {
+  doc("quote", "P-2026-0008", "c2", "2026-09-24", [ln("Campaña navideña: piezas gráficas", 1_400)], "invoiced", {
     dueOn: "2026-10-24",
   }),
   doc("quote", "P-2026-0007", "c5", "2026-09-12", [ln("Web para cafetería", 1_250)], "rejected", {
