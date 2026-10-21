@@ -22,6 +22,8 @@ To point the web app at the API, set `VITE_API_URL=http://localhost:3000` in `ap
 
 Every push to `main` that passes CI deploys it (the `deploy-api` job): the image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
 
+`deploy/backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
+
 ## Layout
 
 ```
