@@ -8,6 +8,7 @@ import { settingsStore } from "@/features/settings/settings-store";
 import { printOptions, type PrintOptions } from "./invoice-settings";
 import {
   documentLocale,
+  fitWithin,
   hexToRgb,
   mix,
   paymentText,
@@ -38,6 +39,8 @@ const RIGHT = PAGE_WIDTH - LEFT;
 /** Lowest point anything but the side footer reaches. */
 const FOOT = PAGE_HEIGHT - 12;
 const QR_SIZE = 32;
+/** Room for the logo, top left: the proportions of the largest one stored, as tall as the QR code. */
+const LOGO_BOX = { width: 52, height: QR_SIZE };
 const LINE = 4;
 
 type Align = "left" | "right" | "center";
@@ -104,7 +107,7 @@ function render(doc: SalesDocument): jsPDF {
   };
 
   paintPaper(s);
-  s.y = drawQrCode(s);
+  s.y = Math.max(drawQrCode(s), drawLogo(s));
   HEADERS[s.style.family](s);
   drawLines(s);
   if (s.style.traditional) {
@@ -190,10 +193,19 @@ function dueLabel({ doc, t }: Sheet, short = false) {
   return short ? t.due : t.dueDate;
 }
 
+/** The organization's logo, top left. Returns where the content starts. */
+function drawLogo(s: Sheet): number {
+  const { logo } = s.options;
+  if (!logo) return LEFT + 3;
+  const image = s.pdf.getImageProperties(logo);
+  const { width, height } = fitWithin(image, LOGO_BOX);
+  s.pdf.addImage(logo, "PNG", LEFT, 13, width, height);
+  return 13 + height + 9;
+}
+
 /**
  * Under VERI*FACTU the invoice carries the QR code of its record, between 30 and
- * 40 mm wide, top right. Returns where the content starts. The top left is the
- * logo's place once the organization can upload one.
+ * 40 mm wide, top right. Returns where the content starts.
  */
 function drawQrCode(s: Sheet): number {
   const verifactu = s.doc.issued?.verifactu;

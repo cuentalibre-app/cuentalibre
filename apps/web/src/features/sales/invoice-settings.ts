@@ -97,6 +97,8 @@ export interface PrintOptions {
   showTaxes: boolean;
   hideZeroTaxes: boolean;
   footer: string;
+  /** Shared by every kind; set in the invoice settings. */
+  logo?: string;
 }
 
 export function printOptions(kind: SalesKind): PrintOptions {
@@ -110,6 +112,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
       showTaxes: true,
       hideZeroTaxes: s.hideZeroTaxes,
       footer: s.footer,
+      logo: s.logo,
     };
   }
   const s = documentSettings.get()[kind];
@@ -121,6 +124,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
     showTaxes: kind === "deliveryNote" || s.showTaxes,
     hideZeroTaxes: kind !== "deliveryNote" && s.hideZeroTaxes,
     footer: s.footer,
+    logo: settings.get().logo,
   };
 }
 
