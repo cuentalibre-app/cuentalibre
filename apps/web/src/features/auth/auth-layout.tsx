@@ -1,5 +1,6 @@
 import type { FormEvent, ReactNode } from "react";
 import { Button } from "@fiscalia/ui/components/button";
+import { LogoMark } from "@/components/logo";
 
 interface AuthLayoutProps {
   title: string;
@@ -13,7 +14,10 @@ interface AuthLayoutProps {
 export function AuthLayout({ title, description, children, footer }: AuthLayoutProps) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 py-10">
-      <span className="text-lg font-semibold">Fiscalia</span>
+      <span className="flex items-baseline gap-2.5">
+        <LogoMark className="h-6" />
+        <span className="text-xl font-semibold tracking-tight">cuentalibre</span>
+      </span>
       <div className="flex w-full max-w-sm flex-col gap-5 rounded-xl border border-border bg-card p-6 text-card-foreground">
         <div className="flex flex-col gap-1">
           <h1 className="m-0 text-xl font-semibold">{title}</h1>
