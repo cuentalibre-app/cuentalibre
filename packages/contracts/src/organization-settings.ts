@@ -78,7 +78,10 @@ export const invoiceSettingsSchema = documentLookSchema
       .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/)
       .max(512 * 1024)
       .optional(),
-    /** Link in the footer so the recipient can import the invoice. */
+    /**
+     * Link in the footer so the recipient can import the invoice. Not offered in the
+     * settings yet: the link needs a public import URL, which needs the backend.
+     */
     allowImport: z.boolean(),
     /** Check intra-EU clients against VIES when issuing. */
     validateVies: z.boolean(),
