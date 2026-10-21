@@ -26,6 +26,9 @@ export const owner = {
 /** Price of the Cloud plan, VAT included. */
 export const cloudPrice = "4,99 €";
 
+/** Price of the Cloud plan paid yearly. */
+export const cloudYearlyPrice = "34,99 €";
+
 /** The legal pages, in the order the footers list them. */
 export const legalPages = [
   { path: "/aviso-legal", label: "Aviso legal" },
