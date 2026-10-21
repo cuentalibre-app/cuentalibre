@@ -1,0 +1,173 @@
+---
+import Legal from "../layouts/Legal.astro";
+import { appLinks, cloudPrice, legalUpdated, owner, sourceUrl } from "../site";
+
+const mail = `mailto:${owner.email}`;
+---
+
+<Legal
+  title="Términos del servicio"
+  description="Las condiciones de uso de cuentalibre Cloud, incluido el contrato de encargo del tratamiento de datos."
+  updated={legalUpdated}
+>
+  <p>
+    Estos términos regulan el uso de cuentalibre Cloud, la versión de cuentalibre que alojamos en <code>app.cuentalibre.es</code>, y forman un contrato entre tú y {owner.name} (NIF {owner.taxId}), en adelante
+    «cuentalibre» o «nosotros». Al crear una cuenta los aceptas. Léelos junto con la <a href="/privacidad">política de privacidad</a>.
+  </p>
+
+  <h2>1. Quién puede usar el servicio</h2>
+  <p>
+    cuentalibre Cloud está pensado para autónomos, profesionales y empresas que lo usan en su actividad económica. Para
+    crear una cuenta tienes que ser mayor de edad y, si actúas en nombre de una empresa, tener poder para obligarla.
+    Como el servicio se contrata para una actividad profesional, no se aplica la normativa de defensa de consumidores
+    y usuarios.
+  </p>
+
+  <h2>2. Tu cuenta</h2>
+  <ul>
+    <li>Los datos que nos des al registrarte deben ser verdaderos y estar al día.</li>
+    <li>Eres responsable de guardar tu contraseña y tus claves de API, y de lo que se haga con ellas. Si sospechas que alguien las conoce, cámbialas y avísanos.</li>
+    <li>Si invitas a otras personas a tu empresa, eres responsable de los permisos que les das.</li>
+  </ul>
+
+  <h2>3. Precio y pago</h2>
+  <p>
+    cuentalibre Cloud cuesta <strong>{cloudPrice} al mes, IVA incluido</strong>, por cuenta. Se paga por meses
+    adelantados y te enviaremos la factura de cada cobro.
+  </p>
+  <p>
+    <strong>Todavía no cobramos.</strong> Antes de empezar a hacerlo te avisaremos por correo con al menos 30 días de
+    antelación. Hasta entonces puedes usar el servicio sin coste. Si cuando llegue el momento no quieres pagar, podrás
+    exportar tus datos y eliminar tu cuenta sin ningún cargo.
+  </p>
+  <p>
+    Si cambiamos el precio, también te avisaremos con 30 días de antelación; el nuevo precio se aplicará a partir del
+    siguiente periodo. Puedes darte de baja cuando quieras: conservarás el acceso hasta el final del mes pagado y no
+    devolvemos los meses empezados.
+  </p>
+
+  <h2>4. Qué hace cuentalibre y qué te corresponde a ti</h2>
+  <p>
+    cuentalibre te ayuda a llevar tu facturación y tu contabilidad y calcula tus impuestos a partir de los datos que
+    introduces. Es una herramienta, no un servicio de asesoría:
+  </p>
+  <ul>
+    <li>Eres responsable de la exactitud de los datos que introduces y de las facturas que emites.</li>
+    <li>Revisa siempre los modelos calculados antes de presentarlos. La presentación ante la Agencia Tributaria y sus consecuencias te corresponden a ti.</li>
+    <li>Ponemos todo el cuidado en que los cálculos sigan la normativa vigente y corregimos los errores en cuanto los conocemos, pero no podemos garantizar que no los haya.</li>
+  </ul>
+  <p>
+    Si activas VERI*FACTU, la aplicación genera y envía a la Agencia Tributaria los registros de tus facturas en tu
+    nombre. Tú sigues siendo el obligado tributario y el responsable del contenido de las facturas.
+  </p>
+
+  <h2>5. Tus datos son tuyos</h2>
+  <p>
+    Todo lo que introduces en cuentalibre te pertenece. Puedes <a href={appLinks.export}>exportarlo</a> en cualquier
+    momento en formatos abiertos, y llevarlo a otra aplicación o a una instalación propia de cuentalibre. No usamos tus
+    datos para nada distinto de prestarte el servicio.
+  </p>
+
+  <h2>6. Disponibilidad y copias de seguridad</h2>
+  <p>
+    Trabajamos para que el servicio esté disponible siempre, pero no garantizamos un nivel concreto: puede haber
+    interrupciones por mantenimiento, actualizaciones o causas ajenas a nosotros. Hacemos una copia de seguridad cada
+    noche y la conservamos 30 días. Aun así, te recomendamos exportar tus datos de vez en cuando.
+  </p>
+
+  <h2>7. Uso aceptable</h2>
+  <p>No puedes usar cuentalibre Cloud para:</p>
+  <ul>
+    <li>Actividades ilegales, como emitir facturas falsas o defraudar a la Hacienda Pública.</li>
+    <li>Intentar acceder a datos de otros usuarios o eludir las medidas de seguridad.</li>
+    <li>Sobrecargar el servicio, por ejemplo con peticiones automáticas que superen los límites de la API.</li>
+    <li>Revender el acceso al servicio sin nuestro permiso.</li>
+  </ul>
+
+  <h2>8. Responsabilidad</h2>
+  <p>
+    Respondemos de los daños que te causemos por incumplir estos términos. Salvo en caso de dolo o culpa grave, nuestra
+    responsabilidad total se limita a lo que nos hayas pagado en los 12 meses anteriores al hecho que la cause, y no
+    cubre el lucro cesante, la pérdida de negocio ni las sanciones derivadas de datos o declaraciones que no hayas
+    revisado.
+  </p>
+
+  <h2>9. Baja y fin del servicio</h2>
+  <ul>
+    <li>
+      <strong>Puedes darte de baja cuando quieras</strong> eliminando tu cuenta desde tu perfil. Se borrarán tus datos y
+      los de las empresas de las que eres el único miembro; las copias de seguridad desaparecen en un máximo de 31 días.
+      Exporta antes lo que necesites conservar.
+    </li>
+    <li>
+      <strong>Podemos suspender o cerrar tu cuenta</strong> si incumples gravemente estos términos o dejas de pagar,
+      avisándote antes salvo que haya un riesgo para la seguridad del servicio. Siempre te daremos al menos 30 días para
+      exportar tus datos, salvo que una ley o una autoridad lo impidan.
+    </li>
+    <li>
+      <strong>Si dejamos de prestar el servicio,</strong> te avisaremos con al menos 60 días de antelación para que
+      puedas exportar tus datos. Como cuentalibre es software libre, siempre podrás seguir usándolo en tu propio
+      servidor.
+    </li>
+  </ul>
+
+  <h2 id="encargo">10. Contrato de encargo del tratamiento</h2>
+  <p>
+    Esta cláusula cumple el artículo 28 del RGPD y regula cómo tratamos, por tu cuenta, los datos personales que
+    introduces en el servicio.
+  </p>
+  <h3>Objeto, duración y naturaleza</h3>
+  <ul>
+    <li><strong>Responsable:</strong> tú, o la empresa en cuyo nombre usas el servicio.</li>
+    <li><strong>Encargado:</strong> cuentalibre.</li>
+    <li><strong>Objeto y finalidad:</strong> alojar, guardar, organizar, consultar y comunicar los datos lo necesario para prestarte el servicio de facturación, contabilidad e impuestos: por ejemplo, enviar una factura a tu cliente cuando lo pides o remitir registros a la Agencia Tributaria si activas VERI*FACTU.</li>
+    <li><strong>Duración:</strong> la misma que tu cuenta.</li>
+    <li><strong>Tipos de datos:</strong> identificativos y de contacto (nombre, NIF, dirección, correo, teléfono), económicos y de facturación (importes, cuentas bancarias, facturas, gastos) y los que contengan los documentos que subas.</li>
+    <li><strong>Interesados:</strong> tus clientes, proveedores, empleados y demás contactos, y las personas que invites a tu empresa.</li>
+  </ul>
+  <h3>Nuestras obligaciones</h3>
+  <ul>
+    <li>Tratar los datos solo siguiendo tus instrucciones, que son estos términos y lo que hagas en la aplicación. Si una instrucción nos parece contraria a la normativa de protección de datos, te lo diremos.</li>
+    <li>No usar los datos para fines propios ni comunicarlos a terceros, salvo a los subencargados indicados más abajo o cuando una ley nos obligue.</li>
+    <li>Garantizar que quien acceda a los datos se ha comprometido a guardar confidencialidad.</li>
+    <li>Aplicar las medidas de seguridad del artículo 32 del RGPD descritas en la <a href="/privacidad">política de privacidad</a>.</li>
+    <li>Ayudarte a atender los derechos de los interesados, a evaluar el impacto de los tratamientos y a cumplir tus obligaciones de seguridad, en la medida en que la naturaleza del servicio lo permita.</li>
+    <li>Avisarte sin dilación indebida, y en todo caso en un plazo de 48 horas desde que la conozcamos, de cualquier brecha de seguridad que afecte a tus datos, con la información necesaria para que puedas notificarla.</li>
+    <li>Ponerte a disposición la información necesaria para demostrar que cumplimos esta cláusula y permitir auditorías razonables, con preaviso y a tu cargo.</li>
+    <li>Al terminar el servicio, permitirte exportar los datos y suprimirlos después, incluidas las copias, salvo que una ley nos obligue a conservarlos.</li>
+  </ul>
+  <h3>Subencargados</h3>
+  <p>
+    Nos autorizas a recurrir a los proveedores enumerados en la <a href="/privacidad">política de privacidad</a>, con
+    los que hemos firmado contratos que les imponen las mismas obligaciones que esta cláusula. Te avisaremos con 30 días
+    de antelación de cualquier cambio; si no estás de acuerdo, puedes darte de baja antes de que entre en vigor.
+  </p>
+  <h3>Tus obligaciones</h3>
+  <p>
+    Como responsable, debes tener una base legal para tratar los datos que introduces e informar a sus titulares, y
+    no introducir datos que no necesites para tu actividad.
+  </p>
+
+  <h2>11. Software libre y marca</h2>
+  <p>
+    El código de cuentalibre se publica bajo la licencia AGPL-3.0 en <a href={sourceUrl}>GitHub</a>, y puedes usarlo en
+    los términos de esa licencia. Estos términos regulan solo el servicio alojado por nosotros. El nombre y el logotipo
+    de cuentalibre no forman parte de la licencia.
+  </p>
+
+  <h2>12. Cambios en estos términos</h2>
+  <p>
+    Si cambiamos estos términos de forma relevante, te avisaremos por correo al menos 30 días antes de que el cambio
+    entre en vigor. Si no estás de acuerdo, puedes darte de baja antes de esa fecha; si sigues usando el servicio, se
+    entenderá que aceptas los nuevos términos.
+  </p>
+
+  <h2>13. Ley aplicable y jurisdicción</h2>
+  <p>
+    Estos términos se rigen por la ley española. Para cualquier controversia, las partes se someten a los juzgados y
+    tribunales de Cádiz.
+  </p>
+
+  <h2>Contacto</h2>
+  <p>Para cualquier cuestión sobre estos términos, escríbenos a <a href={mail}>{owner.email}</a>.</p>
+</Legal>

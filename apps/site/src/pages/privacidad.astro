@@ -1,0 +1,182 @@
+---
+import Legal from "../layouts/Legal.astro";
+import { appLinks, legalUpdated, owner } from "../site";
+
+const mail = `mailto:${owner.email}`;
+---
+
+<Legal
+  title="Política de privacidad"
+  description="Qué datos trata cuentalibre, para qué, con quién los comparte y cómo ejercer tus derechos."
+  updated={legalUpdated}
+>
+  <p>
+    Esta política explica cómo tratamos los datos personales en cuentalibre Cloud (<code>app.cuentalibre.es</code>) y en
+    este sitio web, conforme al Reglamento (UE) 2016/679 (RGPD) y a la Ley Orgánica 3/2018 (LOPDGDD). La resumimos en
+    tres ideas: solo tratamos lo necesario para prestarte el servicio, tus datos se guardan en servidores de la Unión
+    Europea y nunca los vendemos ni los usamos para publicidad.
+  </p>
+
+  <h2>Responsable del tratamiento</h2>
+  <table>
+    <tbody>
+      <tr><th scope="row">Responsable</th><td>{owner.name}</td></tr>
+      <tr><th scope="row">NIF</th><td>{owner.taxId}</td></tr>
+      <tr><th scope="row">Domicilio</th><td>{owner.address}</td></tr>
+      <tr><th scope="row">Contacto</th><td><a href={mail}>{owner.email}</a></td></tr>
+    </tbody>
+  </table>
+
+  <h2>Dos tipos de datos, dos papeles distintos</h2>
+  <p>
+    <strong>Los datos de tu cuenta</strong> (tu nombre, tu correo, cómo usas el servicio) los tratamos como <em>responsables</em>: decidimos para qué y cómo, y esta política los describe.
+  </p>
+  <p>
+    <strong>Los datos de tu negocio</strong> (facturas, gastos, clientes, proveedores, empleados y los documentos que
+    subes) son tuyos. Respecto a ellos tú eres el responsable y nosotros actuamos como <em>encargados del
+    tratamiento</em>: solo los tratamos para prestarte el servicio y siguiendo tus instrucciones, en los términos del
+    contrato de encargo incluido en los <a href="/terminos#encargo">términos del servicio</a>. Si una persona cuyos datos
+    has introducido quiere ejercer sus derechos, debe dirigirse a ti; te ayudaremos a atenderla.
+  </p>
+
+  <h2>Qué datos tratamos</h2>
+  <ul>
+    <li><strong>Cuenta:</strong> nombre, correo electrónico y contraseña. La contraseña se guarda cifrada con un hash; nadie puede leerla, tampoco nosotros.</li>
+    <li><strong>Sesiones:</strong> dirección IP, navegador y fecha de cada inicio de sesión, para mantenerla abierta y detectar accesos extraños.</li>
+    <li><strong>Perfil y preferencias:</strong> los datos que añadas en tu perfil y tus preferencias de notificaciones.</li>
+    <li><strong>Registros técnicos:</strong> los servidores anotan cada petición (IP, fecha, ruta y resultado) para detectar errores y ataques.</li>
+    <li><strong>Comunicaciones:</strong> los mensajes que nos envíes al pedir ayuda.</li>
+    <li><strong>Pago:</strong> cuando activemos los cobros, los datos de facturación que nos des. Los datos de la tarjeta los gestiona directamente el proveedor de pagos; nosotros no los vemos.</li>
+  </ul>
+  <p>
+    Este sitio web no recoge ningún dato personal más allá de los registros técnicos de la red que lo sirve. No usamos
+    herramientas de analítica ni de publicidad. Consulta la <a href="/cookies">política de cookies</a>.
+  </p>
+
+  <h2>Para qué los usamos y con qué base legal</h2>
+  <table>
+    <thead>
+      <tr><th>Finalidad</th><th>Base legal (RGPD)</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Crear y mantener tu cuenta y prestarte el servicio, incluidos los avisos necesarios sobre él (plazos, seguridad, cambios en las condiciones).</td>
+        <td>Ejecución del contrato (art. 6.1.b)</td>
+      </tr>
+      <tr>
+        <td>Proteger el servicio: detectar accesos no autorizados, abusos y errores.</td>
+        <td>Interés legítimo en la seguridad del servicio y de tus datos (art. 6.1.f)</td>
+      </tr>
+      <tr>
+        <td>Cobrar el servicio, emitir facturas y cumplir obligaciones fiscales y contables.</td>
+        <td>Obligación legal (art. 6.1.c) y ejecución del contrato</td>
+      </tr>
+      <tr>
+        <td>Enviarte novedades y mensajes promocionales.</td>
+        <td>Tu consentimiento (art. 6.1.a), que puedes retirar en cualquier momento desde tu perfil</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>No tomamos decisiones automatizadas que te afecten ni elaboramos perfiles.</p>
+
+  <h2>Cuánto tiempo los conservamos</h2>
+  <ul>
+    <li><strong>Mientras tengas cuenta,</strong> conservamos sus datos y los de tu negocio.</li>
+    <li>
+      <strong>Si eliminas tu cuenta,</strong> borramos al momento sus datos y los de las empresas de las que eras el único
+      miembro. Las copias de seguridad, que no se pueden modificar, desaparecen en un máximo de 31 días.
+    </li>
+    <li><strong>Las sesiones</strong> caducan a los 7 días sin uso.</li>
+    <li><strong>Los registros técnicos</strong> se sobrescriben automáticamente por tamaño, normalmente en pocas semanas.</li>
+    <li>
+      <strong>Las facturas que te emitamos</strong> y sus datos de cobro, durante los 6 años que exige el Código de
+      Comercio, aunque elimines tu cuenta.
+    </li>
+  </ul>
+  <p>
+    Ten en cuenta que la normativa tributaria te obliga a conservar tus propias facturas durante al menos 4 años.
+    Exporta tus datos antes de eliminar la cuenta.
+  </p>
+
+  <h2>Con quién los compartimos</h2>
+  <p>
+    No vendemos ni cedemos tus datos. Los tratan, por nuestra cuenta y con un contrato de encargo que les obliga a
+    protegerlos, estos proveedores:
+  </p>
+  <table>
+    <thead>
+      <tr><th>Proveedor</th><th>Para qué</th><th>Dónde</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Hetzner Online GmbH</td>
+        <td>Servidor, base de datos, documentos y copias de seguridad</td>
+        <td>Alemania (UE)</td>
+      </tr>
+      <tr>
+        <td>Cloudflare, Inc.</td>
+        <td>Red de distribución, DNS y protección frente a ataques; el tráfico pasa cifrado por su red</td>
+        <td>Global, con sede en EE. UU.</td>
+      </tr>
+      <tr>
+        <td>Sendinblue SAS (Brevo)</td>
+        <td>Envío de correos: avisos del servicio y las facturas que mandas a tus clientes</td>
+        <td>Francia (UE)</td>
+      </tr>
+      <tr>
+        <td>Stripe Payments Europe, Ltd.</td>
+        <td>Cobro de la suscripción, cuando activemos los pagos</td>
+        <td>Irlanda (UE)</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    Si activas VERI*FACTU, la aplicación envía en tu nombre los registros de tus facturas a la Agencia Estatal de
+    Administración Tributaria, como exige la normativa. También comunicaremos datos a las autoridades cuando una ley
+    nos obligue.
+  </p>
+
+  <h2>Transferencias fuera de la Unión Europea</h2>
+  <p>
+    Tus datos se almacenan en la Unión Europea. Cloudflare es una empresa estadounidense y el tráfico puede pasar por
+    servidores fuera de la UE. Está adherida al Marco de Privacidad de Datos UE-EE. UU. y, además, hemos suscrito con
+    ella las cláusulas contractuales tipo de la Comisión Europea.
+  </p>
+
+  <h2>Cómo protegemos tus datos</h2>
+  <ul>
+    <li>Todas las conexiones van cifradas (HTTPS).</li>
+    <li>Las contraseñas se guardan con hash y nunca en claro.</li>
+    <li>Los datos de cada empresa están separados de los de las demás.</li>
+    <li>El acceso a los servidores está restringido y solo es posible con clave criptográfica.</li>
+    <li>Hacemos copias de seguridad cada noche, protegidas contra el borrado durante 30 días.</li>
+  </ul>
+  <p>
+    Si sufriéramos una brecha de seguridad que afecte a tus datos, lo notificaremos a la Agencia Española de Protección
+    de Datos en un máximo de 72 horas y te avisaremos si supone un riesgo alto para ti.
+  </p>
+
+  <h2>Tus derechos</h2>
+  <p>Puedes ejercer en cualquier momento estos derechos:</p>
+  <ul>
+    <li><strong>Acceso:</strong> saber qué datos tuyos tratamos.</li>
+    <li><strong>Rectificación:</strong> corregirlos. La mayoría puedes cambiarlos tú en <a href={appLinks.profile}>tu perfil</a>.</li>
+    <li><strong>Supresión:</strong> borrarlos. Puedes eliminar tu cuenta tú mismo desde tu perfil.</li>
+    <li><strong>Portabilidad:</strong> llevártelos en un formato estándar. Puedes <a href={appLinks.export}>exportarlos</a> cuando quieras.</li>
+    <li><strong>Oposición y limitación:</strong> pedirnos que dejemos de tratarlos o que lo limitemos.</li>
+    <li><strong>Retirar tu consentimiento</strong> para mensajes promocionales, sin que afecte a lo anterior.</li>
+  </ul>
+  <p>
+    Para lo que no puedas hacer desde la aplicación, escríbenos a <a href={mail}>{owner.email}</a> desde el correo de
+    tu cuenta. Te responderemos en un plazo máximo de un mes. Si crees que no hemos atendido bien tu solicitud, puedes
+    reclamar ante la <a href="https://www.aepd.es">Agencia Española de Protección de Datos</a>.
+  </p>
+
+  <h2>Menores</h2>
+  <p>cuentalibre es un servicio para profesionales y no está dirigido a menores de 18 años.</p>
+
+  <h2>Cambios en esta política</h2>
+  <p>
+    Si cambiamos esta política de forma relevante, te avisaremos por correo antes de que el cambio entre en vigor.
+  </p>
+</Legal>

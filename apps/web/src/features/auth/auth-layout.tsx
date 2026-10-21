@@ -1,5 +1,6 @@
 import type { FormEvent, ReactNode } from "react";
 import { Button } from "@cuentalibre/ui/components/button";
+import { LegalLinks } from "@/components/legal-links";
 import { LogoMark } from "@/components/logo";
 
 interface AuthLayoutProps {
@@ -26,6 +27,7 @@ export function AuthLayout({ title, description, children, footer }: AuthLayoutP
         {children}
       </div>
       {footer && <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">{footer}</div>}
+      <LegalLinks className="justify-center" />
     </main>
   );
 }

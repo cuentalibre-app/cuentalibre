@@ -29,6 +29,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { CATALOG_SETTINGS_PATH } from "@/features/catalog/catalog-model";
 import { isVerifactuMandatory, verifactuMandatoryFrom } from "@cuentalibre/core";
 import { IMPORT_PATH } from "@/features/transfer/transfer-model";
+import { LegalLinks } from "@/components/legal-links";
 import { formatDate } from "@/lib/format";
 import { useCompliance } from "./compliance-store";
 import {
@@ -291,7 +292,9 @@ export function SettingsPage() {
     <div className="flex flex-col gap-6 px-5 pt-6 pb-8 lg:px-8">
       <header className="flex flex-col gap-1">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Configuración</h1>
-        <p className="m-0 text-sm text-muted-foreground">Los datos de tu negocio y cómo trabaja cuentalibre con ellos.</p>
+        <p className="m-0 text-sm text-muted-foreground">
+          Los datos de tu negocio y cómo trabaja cuentalibre con ellos.
+        </p>
       </header>
 
       <section aria-label="Facturación verificable" className="flex flex-col gap-3">
@@ -311,6 +314,8 @@ export function SettingsPage() {
           </div>
         </section>
       ))}
+
+      <LegalLinks className="pt-2" />
     </div>
   );
 }

@@ -1,0 +1,61 @@
+---
+import Legal from "../layouts/Legal.astro";
+import { legalUpdated, owner, sourceUrl } from "../site";
+---
+
+<Legal
+  title="Aviso legal"
+  description="Quién está detrás de cuentalibre y en qué condiciones puedes usar este sitio web."
+  updated={legalUpdated}
+>
+  <h2>Titular</h2>
+  <p>
+    En cumplimiento del artículo 10 de la Ley 34/2002, de servicios de la sociedad de la información y de comercio
+    electrónico (LSSI), te informamos de que este sitio web y el servicio cuentalibre Cloud pertenecen a:
+  </p>
+  <table>
+    <tbody>
+      <tr><th scope="row">Titular</th><td>{owner.name}</td></tr>
+      <tr><th scope="row">NIF</th><td>{owner.taxId}</td></tr>
+      <tr><th scope="row">Domicilio</th><td>{owner.address}</td></tr>
+      <tr><th scope="row">Correo electrónico</th><td><a href={`mailto:${owner.email}`}>{owner.email}</a></td></tr>
+    </tbody>
+  </table>
+  <p>
+    El titular es un profesional autónomo. Su actividad no requiere inscripción en el Registro Mercantil ni autorización
+    administrativa previa.
+  </p>
+
+  <h2>Objeto</h2>
+  <p>
+    Este sitio presenta cuentalibre, una aplicación de contabilidad e impuestos para autónomos en España, y da acceso a
+    su versión alojada (cuentalibre Cloud) en <code>app.cuentalibre.es</code>. El uso de la aplicación se rige por los <a href="/terminos">términos del servicio</a>, y el tratamiento de datos personales por la <a href="/privacidad">política de privacidad</a>.
+  </p>
+
+  <h2>Propiedad intelectual e industrial</h2>
+  <p>
+    El código fuente de cuentalibre es software libre, publicado bajo la licencia <a href="https://www.gnu.org/licenses/agpl-3.0.html">GNU Affero General Public License v3.0</a> en <a href={sourceUrl}>GitHub</a>. Puedes usarlo, estudiarlo, modificarlo y distribuirlo en los términos de esa licencia.
+  </p>
+  <p>
+    La licencia no cubre el nombre «cuentalibre», su logotipo ni su identidad visual. No puedes usarlos para presentar
+    como oficial un servicio que no lo es. Si instalas cuentalibre en tu servidor, eres tú quien presta ese servicio a
+    tus usuarios, con tus propios textos legales.
+  </p>
+
+  <h2>Responsabilidad</h2>
+  <p>
+    cuentalibre calcula impuestos y modelos a partir de los datos que introduces. Es una herramienta, no un servicio de
+    asesoría fiscal: revisa siempre los resultados antes de presentar una declaración. Los textos informativos del sitio
+    y de la aplicación sobre normativa tributaria son orientativos y pueden quedar desactualizados.
+  </p>
+  <p>
+    Procuramos que el sitio esté disponible y libre de errores, pero no podemos garantizarlo. Los enlaces a sitios de
+    terceros se ofrecen por comodidad; no somos responsables de su contenido.
+  </p>
+
+  <h2>Legislación aplicable</h2>
+  <p>
+    Este aviso se rige por la ley española. Para cualquier controversia, las partes se someten a los juzgados y
+    tribunales de Cádiz, salvo que la ley establezca otro fuero de forma imperativa.
+  </p>
+</Legal>

@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { ChevronRight } from "lucide-react";
 import { mainNav, secondaryNav } from "@/components/layout/nav";
+import { LegalLinks } from "@/components/legal-links";
 
 // Sections that don't fit in the mobile tab bar
 const groups = [
@@ -16,7 +17,9 @@ export function MorePage() {
       <h1 className="m-0 text-2xl font-semibold tracking-tight">Más</h1>
       {groups.map((group) => (
         <section key={group.title} className="flex flex-col">
-          <h2 className="m-0 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">{group.title}</h2>
+          <h2 className="m-0 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {group.title}
+          </h2>
           {group.links.map((link) => (
             <Link
               key={link.to}
@@ -29,6 +32,7 @@ export function MorePage() {
           ))}
         </section>
       ))}
+      <LegalLinks className="pb-6" />
     </div>
   );
 }
