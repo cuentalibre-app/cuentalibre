@@ -9,7 +9,7 @@
  * them.
  */
 
-import type { FiledReturn, SalesDocument, SettingsSection as OrganizationSection } from "@fiscalia/contracts";
+import type { FiledReturn, SalesDocument, SettingsSection as OrganizationSection } from "@cuentalibre/contracts";
 
 /** Collections of records, named like the tables they will be stored in. */
 export type Entity =

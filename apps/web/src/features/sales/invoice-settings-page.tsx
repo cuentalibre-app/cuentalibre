@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Check, ImageUp, PenLine, Trash2 } from "lucide-react";
-import { LOGO_MAX_SIZE, type InvoiceSettings } from "@fiscalia/contracts";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Textarea } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { LOGO_MAX_SIZE, type InvoiceSettings } from "@cuentalibre/contracts";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Textarea } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { CERTIFICATES_PATH } from "@/features/settings/settings-model";
 import { SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";

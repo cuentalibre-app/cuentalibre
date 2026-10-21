@@ -1,5 +1,5 @@
-import { toIsoDate } from "@fiscalia/core";
-import type { CompanyUser, EmailSettings, UserRole } from "@fiscalia/contracts";
+import { toIsoDate } from "@cuentalibre/core";
+import type { CompanyUser, EmailSettings, UserRole } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { createStore } from "@/data/store";
 import { initialEmailSettings, initialUsers } from "@/mocks/users";

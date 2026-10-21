@@ -1,11 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Check, KeyRound, ShieldCheck } from "lucide-react";
-import type { LinkedProvider } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import type { LinkedProvider } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { Field, Section } from "@/features/sales/form-fields";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { userStore, useUserSettings } from "./user-store";
@@ -31,7 +31,7 @@ export function AccessPage() {
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
-        <SettingsHeader title="Credenciales de acceso" description="Configura cómo accedes a Fiscalia." />
+        <SettingsHeader title="Credenciales de acceso" description="Configura cómo accedes a cuentalibre." />
 
         {notice && (
           <p role="status" className="m-0 flex items-center gap-2 text-sm text-success">
@@ -88,7 +88,7 @@ export function AccessPage() {
 
         <Section title="Cuentas vinculadas" index={1}>
           <p className="m-0 max-w-3xl text-muted-foreground">
-            Si lo prefieres, puedes vincular tu cuenta de Google o Apple para entrar a Fiscalia en un solo clic.
+            Si lo prefieres, puedes vincular tu cuenta de Google o Apple para entrar a cuentalibre en un solo clic.
           </p>
           <dl className="m-0 flex flex-col divide-y divide-divider">
             {PROVIDERS.map(({ value, label }) => {
@@ -351,7 +351,7 @@ function LinkDialog({
       <DialogContent className="max-w-md">
         <DialogTitle>Vincular tu cuenta de {name}</DialogTitle>
         <DialogDescription>
-          Se abrirá la ventana de {name} para que inicies sesión y autorices a Fiscalia. Después podrás entrar con un
+          Se abrirá la ventana de {name} para que inicies sesión y autorices a cuentalibre. Después podrás entrar con un
           solo clic.
         </DialogDescription>
         <div className="flex justify-end gap-2.5 pt-1">

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { SalesDocument } from "@fiscalia/contracts";
+import type { SalesDocument } from "@cuentalibre/contracts";
 
 /** Filters the quote and delivery note lists open with; the user can still clear them. */
 export interface ListFilterDefaults {

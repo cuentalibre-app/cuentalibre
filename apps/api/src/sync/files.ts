@@ -1,4 +1,4 @@
-import type { StoredFile } from "@fiscalia/contracts";
+import type { StoredFile } from "@cuentalibre/contracts";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { file } from "../db/schema";

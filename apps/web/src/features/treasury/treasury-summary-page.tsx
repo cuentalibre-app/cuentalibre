@@ -1,11 +1,11 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Plus, Settings, Upload } from "lucide-react";
-import { cents, monthlyFlows, reconciliationStatus, sumBy } from "@fiscalia/core";
-import { Button } from "@fiscalia/ui/components/button";
-import { Card, CardTitle } from "@fiscalia/ui/components/card";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { cents, monthlyFlows, reconciliationStatus, sumBy } from "@cuentalibre/core";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { ACCOUNT_ICONS } from "@/features/settings/account-icons";
 import { AccountDialog } from "@/features/settings/accounts-page";

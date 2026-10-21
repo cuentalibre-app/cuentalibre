@@ -1,8 +1,8 @@
 import { jsPDF } from "jspdf";
 import { zipSync } from "fflate";
 import qrcode from "qrcode-generator";
-import { applyRate, cents, eurosToCents, lineBase, WITHHOLDING_RATES, type InvoiceTotals } from "@fiscalia/core";
-import type { SalesDocument, SalesLine } from "@fiscalia/contracts";
+import { applyRate, cents, eurosToCents, lineBase, WITHHOLDING_RATES, type InvoiceTotals } from "@cuentalibre/core";
+import type { SalesDocument, SalesLine } from "@cuentalibre/contracts";
 import { businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
 import { printOptions, type PrintOptions } from "./invoice-settings";

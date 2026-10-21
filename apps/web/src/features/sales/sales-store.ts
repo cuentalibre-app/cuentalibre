@@ -1,4 +1,4 @@
-import type { SalesDocument, SalesKind } from "@fiscalia/contracts";
+import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { syncCollection } from "@/data/sync";
 import { releaseDocumentStock, syncDocumentStock } from "@/features/catalog/catalog-store";

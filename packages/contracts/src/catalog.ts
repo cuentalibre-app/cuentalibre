@@ -27,7 +27,7 @@ export const productSchema = z.object({
   name: z.string().min(1),
   /** Printed on documents when the settings ask for it. */
   description: z.string(),
-  /** Only visible in Fiscalia. */
+  /** Only visible in cuentalibre. */
   privateNotes: z.string(),
   unit: catalogUnitSchema.nullable(),
   tags: z.array(id),

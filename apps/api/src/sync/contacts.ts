@@ -1,4 +1,4 @@
-import { storedContactSchema, type ContactRole } from "@fiscalia/contracts";
+import { storedContactSchema, type ContactRole } from "@cuentalibre/contracts";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import { contact } from "../db/schema";

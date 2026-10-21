@@ -9,14 +9,14 @@ import {
   sumBy,
   type Cents,
   type ReconciliationStatus,
-} from "@fiscalia/core";
-import type { BankMovement } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Checkbox } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/core";
+import type { BankMovement } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Checkbox } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { EmptyState } from "@/features/sales/list-parts";
 import { useSettings } from "@/features/settings/settings-store";

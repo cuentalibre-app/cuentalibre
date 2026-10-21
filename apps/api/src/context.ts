@@ -1,5 +1,5 @@
-import type { MembershipRole } from "@fiscalia/contracts";
-import type { VerifactuEnvironment } from "@fiscalia/core";
+import type { MembershipRole } from "@cuentalibre/contracts";
+import type { VerifactuEnvironment } from "@cuentalibre/core";
 import type { Auth } from "./auth";
 import type { Mailer } from "./email/mailer";
 import type { Db } from "./db/client";

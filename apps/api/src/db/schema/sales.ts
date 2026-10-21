@@ -6,8 +6,8 @@ import type {
   RentalLocation,
   SalesKind,
   SalesStatus,
-} from "@fiscalia/contracts";
-import type { OperationType, VatBreakdown, WithholdingKind } from "@fiscalia/core";
+} from "@cuentalibre/contracts";
+import type { OperationType, VatBreakdown, WithholdingKind } from "@cuentalibre/core";
 import { sql } from "drizzle-orm";
 import {
   bigint,

@@ -1,7 +1,7 @@
 import { Calendar, ChevronDown } from "lucide-react";
-import { parsePeriod, periodKey, quarterOfMonth, type Period } from "@fiscalia/core";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { parsePeriod, periodKey, quarterOfMonth, type Period } from "@cuentalibre/core";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { periodCode, periodLabel } from "@/lib/format";
 
 interface PeriodSelectProps {

@@ -12,8 +12,8 @@ import {
   vatRateFromPercent,
   type CatalogFamily,
   type StockMovement,
-} from "@fiscalia/core";
-import type { Product } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { Product } from "@cuentalibre/contracts";
 import type { Cell, Sheet } from "@/lib/xlsx";
 import { catalogStore, type CatalogState } from "./catalog-store";
 

@@ -1,10 +1,10 @@
 import { Fragment, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Check, ChevronRight, Copy } from "lucide-react";
-import { cents, sumBy, type Cents } from "@fiscalia/core";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { cents, sumBy, type Cents } from "@cuentalibre/core";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { formatDate } from "@/lib/format";
 import type { PartyBooks } from "./party-operations";
 import { clipboardValue, useCopied } from "./tax-form";

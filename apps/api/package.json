@@ -1,5 +1,5 @@
 {
-  "name": "@fiscalia/api",
+  "name": "@cuentalibre/api",
   "version": "0.0.0",
   "license": "AGPL-3.0-only",
   "private": true,
@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@better-auth/api-key": "1.7.7",
-    "@fiscalia/contracts": "workspace:*",
-    "@fiscalia/core": "workspace:*",
+    "@cuentalibre/contracts": "workspace:*",
+    "@cuentalibre/core": "workspace:*",
     "@hono/node-server": "^2.1.3",
     "@hono/zod-openapi": "^1.6.3",
     "aws4fetch": "1.0.20",

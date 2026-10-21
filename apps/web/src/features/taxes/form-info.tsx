@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { BookOpen, Globe } from "lucide-react";
-import { table } from "@fiscalia/ui/lib/table";
+import { table } from "@cuentalibre/ui/lib/table";
 import { AEAT_LINKS, type FormCode } from "./taxes-model";
 
 /* What each form is for, who files it and when, as the reference app explains it before computing it. */

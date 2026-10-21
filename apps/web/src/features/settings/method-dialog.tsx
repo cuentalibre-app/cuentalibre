@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { newId } from "@fiscalia/core";
-import type { PaymentMethod, PaymentMethodType } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
+import { newId } from "@cuentalibre/core";
+import type { PaymentMethod, PaymentMethodType } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { METHOD_TYPES_FOR_ACCOUNT, takesMethod } from "./account-methods";
 import { METHOD_TYPES } from "./settings-model";

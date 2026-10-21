@@ -5,7 +5,7 @@ import {
   type FiledReturn,
   type SalesDocument,
   type Tag,
-} from "@fiscalia/contracts";
+} from "@cuentalibre/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApiBackend, ApiError } from "./api";
 import { localBackend, setBackend } from "./backend";

@@ -1,5 +1,5 @@
-import { storedFileSchema } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import { storedFileSchema } from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
 import { createMiddleware } from "hono/factory";

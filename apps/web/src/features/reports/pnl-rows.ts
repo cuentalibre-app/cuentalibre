@@ -8,7 +8,7 @@ import {
   type Cents,
   type PnlLine,
   type ProfitAndLoss,
-} from "@fiscalia/core";
+} from "@cuentalibre/core";
 import { accountLabel } from "./reports-model";
 
 /** One row of the report, with its amount in the selected year and the one before. */

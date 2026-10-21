@@ -27,7 +27,7 @@ import {
   userProfileSchema,
   verifactuSetupSchema,
   workerSchema,
-} from "@fiscalia/contracts";
+} from "@cuentalibre/contracts";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { initialCatalogSettings, initialFamilies, initialMovements, initialProducts } from "./catalog";

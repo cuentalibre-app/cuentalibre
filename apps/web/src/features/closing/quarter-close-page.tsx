@@ -21,16 +21,16 @@ import {
   vatReturns,
   type Period,
   type Quarter,
-} from "@fiscalia/core";
-import type { ClosedQuarter } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import type { ClosedQuarter } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { useFormsInUse } from "@/features/taxes/forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "@/features/taxes/tax-books";
 import { FILING_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "@/features/taxes/taxes-model";
@@ -136,7 +136,7 @@ function useQuarterReturns({ year, quarter }: Period & { quarter: Quarter }): Re
 
 /**
  * Forms 303 and 130 of the quarter, as filed once it is closed, plus reminders of the forms
- * Fiscalia doesn't prepare yet.
+ * cuentalibre doesn't prepare yet.
  */
 function Returns({ period, today }: { period: Period & { quarter: Quarter }; today: Date }) {
   const inUse = useFormsInUse()(period.year);

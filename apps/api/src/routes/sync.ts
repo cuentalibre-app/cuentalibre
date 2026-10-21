@@ -1,4 +1,4 @@
-import { changeSchema, changesSchema, commandSchema, cursorSchema, workspaceSchema } from "@fiscalia/contracts";
+import { changeSchema, changesSchema, commandSchema, cursorSchema, workspaceSchema } from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { AppEnv } from "../context";
 import { errorContent } from "../errors";

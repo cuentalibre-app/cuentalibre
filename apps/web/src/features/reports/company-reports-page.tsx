@@ -1,12 +1,12 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ArrowLeft, Building2, ExternalLink, Info, Search, TriangleAlert } from "lucide-react";
-import type { Contact, ContactRole } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { table } from "@fiscalia/ui/lib/table";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { table } from "@cuentalibre/ui/lib/table";
 import { contactPath } from "@/features/contacts/contacts-model";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { formatDate } from "@/lib/format";

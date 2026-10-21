@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { ChevronRight, Folder, FolderOpen, Pencil, Plus, Trash2 } from "lucide-react";
-import type { CatalogFamily } from "@fiscalia/core";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
-import { cn } from "@fiscalia/ui/lib/cn";
+import type { CatalogFamily } from "@cuentalibre/core";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { catalogStore, useCatalog } from "./catalog-store";
 
 /**

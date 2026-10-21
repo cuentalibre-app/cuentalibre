@@ -1,10 +1,10 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation } from "react-router";
 import { Trash2 } from "lucide-react";
-import type { CatalogSettings } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Checkbox, Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import type { CatalogSettings } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Checkbox, Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ConfirmDialog, SaveButton, SettingsHeader, useDraft } from "@/features/settings/settings-parts";
 import { RadioOption } from "@/features/transfer/transfer-parts";

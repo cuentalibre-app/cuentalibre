@@ -13,8 +13,8 @@ import {
   yearlyRate,
   type Cents,
   type InvoiceLine,
-} from "@fiscalia/core";
-import type { Contact, Expense, PurchaseInvoice, SalesDocument, SalesLine } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { Contact, Expense, PurchaseInvoice, SalesDocument, SalesLine } from "@cuentalibre/contracts";
 import { deductibleOf, EXPENSE_STATUS, expenseStatus, payeeOf } from "@/features/purchases/expenses-model";
 import {
   ASSET_CATEGORY_LABELS,

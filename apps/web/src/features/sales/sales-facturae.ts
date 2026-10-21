@@ -1,5 +1,5 @@
-import { SPAIN, WITHHOLDING_RATES, facturaeXml, type FacturaeAddress } from "@fiscalia/core";
-import type { PaymentMethodType, SalesDocument } from "@fiscalia/contracts";
+import { SPAIN, WITHHOLDING_RATES, facturaeXml, type FacturaeAddress } from "@cuentalibre/core";
+import type { PaymentMethodType, SalesDocument } from "@cuentalibre/contracts";
 import { businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
 import { salesStore } from "./sales-store";

@@ -4,8 +4,8 @@ import {
   type SalesDocument,
   type SyncCommand,
   type Workspace,
-} from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+} from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { expect } from "vitest";
 import { createOrganization, signUp, type Client } from "./harness";
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { periodMonths, type Period } from "@fiscalia/core";
-import { Input } from "@fiscalia/ui/components/input";
+import { periodMonths, type Period } from "@cuentalibre/core";
+import { Input } from "@cuentalibre/ui/components/input";
 import { PeriodSelect } from "@/components/period-select";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { useExpenses } from "@/features/purchases/expenses-store";

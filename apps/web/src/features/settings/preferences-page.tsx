@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { Section } from "@/features/sales/form-fields";
 import {
   listPreferencesStore,

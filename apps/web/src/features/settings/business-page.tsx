@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { checkSpanishTaxId, isValidEmail, normalizeTaxId } from "@fiscalia/core";
-import type { BusinessKind, BusinessProfile } from "@fiscalia/contracts";
-import { Input } from "@fiscalia/ui/components/input";
-import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import { checkSpanishTaxId, isValidEmail, normalizeTaxId } from "@cuentalibre/core";
+import type { BusinessKind, BusinessProfile } from "@cuentalibre/contracts";
+import { Input } from "@cuentalibre/ui/components/input";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { AddressFields } from "@/features/contacts/contact-fields";
 import { Field, Section } from "@/features/sales/form-fields";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";

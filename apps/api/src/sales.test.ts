@@ -1,5 +1,5 @@
-import { DEFAULT_ORGANIZATION_SETTINGS, type SalesDocument } from "@fiscalia/contracts";
-import { newId, type Cents } from "@fiscalia/core";
+import { DEFAULT_ORGANIZATION_SETTINGS, type SalesDocument } from "@cuentalibre/contracts";
+import { newId, type Cents } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import type { Client } from "./test/harness";
 import { changes, client, document, errorCode, line, member, send, workspace } from "./test/sync";

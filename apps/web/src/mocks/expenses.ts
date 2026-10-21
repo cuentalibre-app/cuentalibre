@@ -1,5 +1,5 @@
-import { eurosToCents } from "@fiscalia/core";
-import type { Expense, ExpenseType, OtherPayee } from "@fiscalia/contracts";
+import { eurosToCents } from "@cuentalibre/core";
+import type { Expense, ExpenseType, OtherPayee } from "@cuentalibre/contracts";
 
 /** Sample expenses without an invoice until there is a backend. Names, tax IDs and figures are made up. */
 

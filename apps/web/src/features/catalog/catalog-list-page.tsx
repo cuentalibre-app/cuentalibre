@@ -19,16 +19,16 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { eurosToCents, familyWithDescendants, stockLevel, type Cents, type StockAlarm } from "@fiscalia/core";
-import type { Product } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
-import { Input } from "@fiscalia/ui/components/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { eurosToCents, familyWithDescendants, stockLevel, type Cents, type StockAlarm } from "@cuentalibre/core";
+import type { Product } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
+import { Input } from "@cuentalibre/ui/components/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { GroupedSelect, Help } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, type Action } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";

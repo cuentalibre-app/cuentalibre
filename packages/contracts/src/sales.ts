@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sameSeriesFormat, seriesMaskProblem } from "@fiscalia/core";
+import { sameSeriesFormat, seriesMaskProblem } from "@cuentalibre/core";
 import { attachmentSchema, cents, id, isoDate, paymentSchema, rentalLocationSchema } from "./common";
 import { contactSchema } from "./contacts";
 import { invoiceLineSchema, invoiceTotalsSchema, operationTypeSchema, withholdingKindSchema } from "./core";
@@ -170,7 +170,7 @@ export const salesDocumentSchema = z.object({
   status: salesStatusSchema,
   /** Printed on the document. */
   publicNotes: z.string(),
-  /** Only visible in Fiscalia. */
+  /** Only visible in cuentalibre. */
   privateNotes: z.string(),
   /** Supporting files (contracts, delivery proofs…). */
   attachments: z.array(attachmentSchema).optional(),

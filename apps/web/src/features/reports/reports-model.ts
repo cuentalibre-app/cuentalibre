@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
-import { rankCounterparties, type CounterpartyRanking } from "@fiscalia/core";
-import type { ExpenseType } from "@fiscalia/contracts";
+import { rankCounterparties, type CounterpartyRanking } from "@cuentalibre/core";
+import type { ExpenseType } from "@cuentalibre/contracts";
 import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { deductible, expenseTypeShortLabel, supplierOf } from "@/features/purchases/purchases-model";

@@ -1,5 +1,5 @@
-import { addDays, cents, eurosToCents, type Cents } from "@fiscalia/core";
-import type { BankMovement, ManualPayment } from "@fiscalia/contracts";
+import { addDays, cents, eurosToCents, type Cents } from "@cuentalibre/core";
+import type { BankMovement, ManualPayment } from "@cuentalibre/contracts";
 
 /** Sample bank movements until there is a backend and bank sync. Concepts and figures are made up. */
 
@@ -40,7 +40,7 @@ function conceptOf(payment: SamplePayment): string {
   return `RECIBO ${name}`;
 }
 
-/** Movements the bank adds on its own, never recorded in Fiscalia. */
+/** Movements the bank adds on its own, never recorded in cuentalibre. */
 const UNRECORDED: Omit<BankMovement, "id" | "accountId" | "balance" | "source" | "paymentKeys">[] = [
   { date: "2026-06-30", concept: "LIQUIDACION INTERESES", reference: "", amount: eurosToCents(0.42) },
   { date: "2026-09-18", concept: "DEVOLUCION RECIBO COMISION TRANSFERENCIA", reference: "", amount: eurosToCents(2.5) },

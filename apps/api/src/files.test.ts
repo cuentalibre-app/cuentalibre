@@ -1,4 +1,4 @@
-import { newId } from "@fiscalia/core";
+import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import type { Client } from "./test/harness";
 import { client, errorCode, member, send, workspace } from "./test/sync";

@@ -1,5 +1,5 @@
-import { storedPurchaseInvoiceSchema } from "@fiscalia/contracts";
-import type { Cents } from "@fiscalia/core";
+import { storedPurchaseInvoiceSchema } from "@cuentalibre/contracts";
+import type { Cents } from "@cuentalibre/core";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";

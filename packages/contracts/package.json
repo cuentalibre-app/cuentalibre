@@ -1,5 +1,5 @@
 {
-  "name": "@fiscalia/contracts",
+  "name": "@cuentalibre/contracts",
   "version": "0.0.0",
   "license": "AGPL-3.0-only",
   "private": true,
@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@fiscalia/core": "workspace:*",
+    "@cuentalibre/core": "workspace:*",
     "zod": "^4.6.5"
   },
   "devDependencies": {

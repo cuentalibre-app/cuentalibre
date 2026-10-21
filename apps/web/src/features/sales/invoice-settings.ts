@@ -8,7 +8,7 @@ import {
   type InvoiceSettings,
   type InvoiceTemplate,
   type SalesKind,
-} from "@fiscalia/contracts";
+} from "@cuentalibre/contracts";
 import { createStore } from "@/data/store";
 import { syncSettings } from "@/data/sync";
 import { initialNoteTemplates } from "@/mocks/invoicing";

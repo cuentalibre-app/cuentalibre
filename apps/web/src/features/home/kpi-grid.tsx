@@ -1,9 +1,9 @@
 import type { CSSProperties } from "react";
-import type { Cents } from "@fiscalia/core";
+import type { Cents } from "@cuentalibre/core";
 import { ArrowDownLeft, ArrowUpRight, Landmark, TrendingUp, type LucideIcon } from "lucide-react";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { formatPercent, periodShortLabel } from "@/lib/format";
 import type { HomeData } from "./home-data";

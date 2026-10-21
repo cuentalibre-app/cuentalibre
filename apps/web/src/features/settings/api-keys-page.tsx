@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, Copy, KeyRound, Loader2, Trash2 } from "lucide-react";
-import type { ApiKey, CreatedApiKey } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import type { ApiKey, CreatedApiKey } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { currentBackend } from "@/data/backend";
 import { API_URL } from "@/features/auth/session";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
@@ -80,7 +80,7 @@ export function ApiKeysPage() {
 
         {!api ? (
           <p className="m-0 max-w-3xl rounded-lg bg-muted px-4 py-3 text-sm">
-            Las claves de API están disponibles cuando usas Fiscalia con tu cuenta.
+            Las claves de API están disponibles cuando usas cuentalibre con tu cuenta.
           </p>
         ) : (
           <>

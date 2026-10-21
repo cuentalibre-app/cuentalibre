@@ -19,7 +19,7 @@ import {
   type StockRules,
   type TimeEntry,
   type WithholdingKind,
-} from "@fiscalia/core";
+} from "@cuentalibre/core";
 import { z } from "zod";
 import { cents, fraction, id, localDateTime } from "./common";
 

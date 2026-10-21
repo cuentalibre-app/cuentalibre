@@ -1,5 +1,5 @@
-import type { BankMovement, Product } from "@fiscalia/contracts";
-import { newId, type Cents, type StockMovement } from "@fiscalia/core";
+import type { BankMovement, Product } from "@cuentalibre/contracts";
+import { newId, type Cents, type StockMovement } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { changes, errorCode, member, send, workspace } from "./test/sync";
 

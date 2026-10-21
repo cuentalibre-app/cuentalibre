@@ -1,4 +1,4 @@
-import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@fiscalia/contracts";
+import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@cuentalibre/contracts";
 
 /** Sample signed-in user until there is a backend. Made up; matches the sample business profile. */
 

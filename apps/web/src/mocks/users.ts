@@ -1,4 +1,4 @@
-import type { CompanyUser, EmailSettings } from "@fiscalia/contracts";
+import type { CompanyUser, EmailSettings } from "@cuentalibre/contracts";
 
 /** Sample company users and email settings until there is a backend. Made up. */
 
@@ -29,7 +29,7 @@ export const initialUsers: CompanyUser[] = [
 ];
 
 export const initialEmailSettings: EmailSettings = {
-  provider: "fiscalia",
+  provider: "cuentalibre",
   connected: { gmail: null, outlook: null },
   smtp: {
     displayName: "",

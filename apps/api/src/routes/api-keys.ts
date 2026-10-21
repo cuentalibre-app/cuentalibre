@@ -1,4 +1,4 @@
-import { apiKeySchema, createdApiKeySchema, newApiKeySchema, type ApiKey } from "@fiscalia/contracts";
+import { apiKeySchema, createdApiKeySchema, newApiKeySchema, type ApiKey } from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { and, desc, eq } from "drizzle-orm";
 import type { Context } from "hono";

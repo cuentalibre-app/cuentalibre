@@ -12,14 +12,14 @@ import {
   type CalendarEntry,
   type CalendarForm,
   type Cents,
-} from "@fiscalia/core";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button } from "@fiscalia/ui/components/button";
-import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/core";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button } from "@cuentalibre/ui/components/button";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { MONTHS, MONTHS_SHORT } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { useSettings } from "@/features/settings/settings-store";
@@ -43,7 +43,7 @@ interface FormInfo {
   name: string;
   /** Row label in the grid, under its group. */
   row: string;
-  /** Model page in Fiscalia; forms without one are prepared in the AEAT for now. */
+  /** Model page in cuentalibre; forms without one are prepared in the AEAT for now. */
   path?: string;
   /** When the form applies: always, according to the books, or unknown (the user has to check). */
   applies: true | keyof FormsInUse | null;
@@ -134,7 +134,7 @@ function entryKey(entry: CalendarEntry): string {
   return `${entry.form}-${entry.year}-${entry.quarter ?? entry.month ?? "y"}`;
 }
 
-/** Amount to pay for the entries Fiscalia can compute. */
+/** Amount to pay for the entries cuentalibre can compute. */
 function useAmounts(calendarYear: number) {
   const books = useTaxBooks();
   const party = usePartyBooks();
@@ -303,7 +303,7 @@ function RowLabel({ form, applies }: { form: CalendarForm; applies: boolean | nu
           <TooltipContent className="max-w-64">
             {info.condition}
             {applies === false && " No hay documentos que lo requieran."}
-            {applies === null && " Fiscalia aún no lo comprueba."}
+            {applies === null && " cuentalibre aún no lo comprueba."}
           </TooltipContent>
         </Tooltip>
       )}

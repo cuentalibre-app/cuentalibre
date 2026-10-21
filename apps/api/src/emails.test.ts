@@ -1,5 +1,5 @@
-import { DEFAULT_ORGANIZATION_SETTINGS, type EmailMessage } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import { DEFAULT_ORGANIZATION_SETTINGS, type EmailMessage } from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { beforeEach, describe, expect, it } from "vitest";
 import { PermanentEmailError } from "./email/mailer";
 import { mailerFailure, sentEmails, type Client } from "./test/harness";

@@ -1,4 +1,4 @@
-import type { Expense } from "@fiscalia/contracts";
+import type { Expense } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { syncCollection } from "@/data/sync";
 import { initialExpenses } from "@/mocks/expenses";

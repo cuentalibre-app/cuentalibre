@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** An email sent from Fiscalia, such as an invoice to its client. Its attachments are uploaded files. */
+/** An email sent from cuentalibre, such as an invoice to its client. Its attachments are uploaded files. */
 export const emailRequestSchema = z.object({
   /** The sales document the email sends, if any. */
   documentId: z.uuid().optional(),

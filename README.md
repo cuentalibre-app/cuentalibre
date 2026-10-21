@@ -1,4 +1,4 @@
-# Fiscalia
+# cuentalibre
 
 Open-source accounting and tax management for self-employed workers (_autónomos_) in Spain.
 
@@ -24,7 +24,7 @@ Requires Node 22+ and pnpm 12.
 ```sh
 docker compose up -d   # Postgres on localhost:5432
 pnpm install
-pnpm --filter @fiscalia/api db:migrate
+pnpm --filter @cuentalibre/api db:migrate
 pnpm dev          # web on http://localhost:5173, API on http://localhost:3000/v1, site on http://localhost:4321
 pnpm typecheck
 pnpm test         # API tests need the compose Postgres running
@@ -47,7 +47,7 @@ Tokens live in `packages/ui/src/styles/` in three layers:
    Tailwind's default color, font-size and radius scales are disabled.
 
 Names follow shadcn/ui conventions. Note that `accent` is the hover surface; the brand color is `primary`.
-For money amounts use the `amount` class (Geist Mono with tabular figures) and `formatEUR()` from `@fiscalia/ui/lib/format`.
+For money amounts use the `amount` class (Geist Mono with tabular figures) and `formatEUR()` from `@cuentalibre/ui/lib/format`.
 
 ## Conventions
 

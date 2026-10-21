@@ -9,10 +9,10 @@ import {
   type Key349,
   type Periodicity349,
   type Quarter,
-} from "@fiscalia/core";
-import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+} from "@cuentalibre/core";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { PeriodSelect } from "@/components/period-select";
 import { contactPath } from "@/features/contacts/contacts-model";
 import { formatDate } from "@/lib/format";

@@ -7,9 +7,9 @@ import {
   model130,
   sumCents,
   type Quarter,
-} from "@fiscalia/core";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/core";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
 import { deductibleOf, EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { useExpenses } from "@/features/purchases/expenses-store";

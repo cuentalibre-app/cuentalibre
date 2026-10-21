@@ -1,5 +1,5 @@
-import type { ClosedQuarter, FiledReturn } from "@fiscalia/contracts";
-import { periodKey, quarterOfDate } from "@fiscalia/core";
+import type { ClosedQuarter, FiledReturn } from "@cuentalibre/contracts";
+import { periodKey, quarterOfDate } from "@cuentalibre/core";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { closedQuarter, filedReturn } from "../db/schema";

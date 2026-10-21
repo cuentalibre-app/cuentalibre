@@ -1,6 +1,6 @@
 import { CircleAlert, CircleCheck, Clock } from "lucide-react";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { formatPercent } from "@/lib/format";
 import type { HomeData, InvoiceStatus } from "./home-data";
 

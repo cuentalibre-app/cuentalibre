@@ -1,13 +1,13 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { ExternalLink, Paperclip, ScanText, Trash2, Upload } from "lucide-react";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { parseDecimal } from "@/lib/format";
-import { isValidImputation } from "@fiscalia/core";
-import type { Attachment } from "@fiscalia/contracts";
+import { isValidImputation } from "@cuentalibre/core";
+import type { Attachment } from "@cuentalibre/contracts";
 import { attachFile, attachmentUrl, filesAreStored } from "@/data/files";
 
 /* Form building blocks shared by received invoices and expenses. Tooltips need a TooltipProvider above. */

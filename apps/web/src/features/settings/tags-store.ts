@@ -1,4 +1,4 @@
-import type { Tag } from "@fiscalia/contracts";
+import type { Tag } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { syncCollection } from "@/data/sync";
 import { initialTags } from "@/mocks/tags";

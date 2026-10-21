@@ -1,5 +1,5 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
-import { excelSerialToIso, formatSpanishDate } from "@fiscalia/core";
+import { excelSerialToIso, formatSpanishDate } from "@cuentalibre/core";
 
 /*
  * Just enough of the Office Open XML spreadsheet format to export listings and

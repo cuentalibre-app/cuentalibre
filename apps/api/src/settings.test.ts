@@ -1,5 +1,5 @@
-import { DEFAULT_ORGANIZATION_SETTINGS, type FiledReturn } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import { DEFAULT_ORGANIZATION_SETTINGS, type FiledReturn } from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { changes, errorCode, member, send, workspace } from "./test/sync";
 

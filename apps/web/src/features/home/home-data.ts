@@ -21,8 +21,8 @@ import {
   type Period,
   type TaxBooks,
   type YearTotals,
-} from "@fiscalia/core";
-import type { Expense, PurchaseInvoice, SalesDocument } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { Expense, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { deductibleOf, payeeOf } from "@/features/purchases/expenses-model";
 import { deductible, supplierOf } from "@/features/purchases/purchases-model";
 import { clientOf, displayStatus, documentTotals } from "@/features/sales/sales-model";

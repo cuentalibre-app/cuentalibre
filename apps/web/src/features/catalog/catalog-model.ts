@@ -9,8 +9,8 @@ import {
   type StockMovementKind,
   type StockReason,
   type StockRules,
-} from "@fiscalia/core";
-import type { Product } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { Product } from "@cuentalibre/contracts";
 import type { Option } from "@/features/sales/sales-model";
 
 export const CATALOG_PATH = "/catalogo";

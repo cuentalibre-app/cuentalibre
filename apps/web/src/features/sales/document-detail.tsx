@@ -1,12 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { FileDown, Pencil } from "lucide-react";
-import { quarterOfDate } from "@fiscalia/core";
-import type { SalesDocument } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { quarterOfDate } from "@cuentalibre/core";
+import type { SalesDocument } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatDate, periodCode } from "@/lib/format";
 import {
   AttachmentsSection,

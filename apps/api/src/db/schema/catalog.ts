@@ -1,5 +1,5 @@
-import type { StockControl } from "@fiscalia/contracts";
-import type { CatalogUnit, StockMovement } from "@fiscalia/core";
+import type { StockControl } from "@cuentalibre/contracts";
+import type { CatalogUnit, StockMovement } from "@cuentalibre/core";
 import {
   boolean,
   foreignKey,

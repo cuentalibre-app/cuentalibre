@@ -11,13 +11,13 @@ import {
   toIsoDate,
   workerDay,
   type TimeEntry,
-} from "@fiscalia/core";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { table } from "@cuentalibre/ui/lib/table";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { EmptyState, IconAction, type Action } from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";

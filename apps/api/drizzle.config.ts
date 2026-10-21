@@ -5,5 +5,5 @@ export default defineConfig({
   schema: "./src/db/schema/index.ts",
   out: "./drizzle",
   casing: "snake_case",
-  dbCredentials: { url: process.env.DATABASE_URL ?? "postgres://fiscalia:fiscalia@localhost:5432/fiscalia" },
+  dbCredentials: { url: process.env.DATABASE_URL ?? "postgres://cuentalibre:cuentalibre@localhost:5432/cuentalibre" },
 });

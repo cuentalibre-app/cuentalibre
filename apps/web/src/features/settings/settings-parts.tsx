@@ -1,9 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useBlocker, useLocation, type LinkProps } from "react-router";
 import { ArrowLeft, Check } from "lucide-react";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { sameValue } from "@/lib/same-value";
 import { SETTINGS_PATH } from "./settings-model";
 

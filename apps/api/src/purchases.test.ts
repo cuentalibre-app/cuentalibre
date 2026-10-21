@@ -1,6 +1,6 @@
-import type { Expense, PurchaseInvoice } from "@fiscalia/contracts";
-import type { Cents } from "@fiscalia/core";
-import { newId } from "@fiscalia/core";
+import type { Expense, PurchaseInvoice } from "@cuentalibre/contracts";
+import type { Cents } from "@cuentalibre/core";
+import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { changes, client, errorCode, member, send, workspace } from "./test/sync";
 

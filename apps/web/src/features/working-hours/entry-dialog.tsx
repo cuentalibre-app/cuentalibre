@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { LogIn, LogOut, PenLine } from "lucide-react";
-import { clockTime, entryDate, entryError, openEntry, type TimeEntry } from "@fiscalia/core";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input, Textarea } from "@fiscalia/ui/components/input";
+import { clockTime, entryDate, entryError, openEntry, type TimeEntry } from "@cuentalibre/core";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input, Textarea } from "@cuentalibre/ui/components/input";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { formatDate } from "@/lib/format";
 import { ENTRY_ERRORS, defaultWorkerId, toLocalDateTime, workerName, workerOptions } from "./working-hours-model";

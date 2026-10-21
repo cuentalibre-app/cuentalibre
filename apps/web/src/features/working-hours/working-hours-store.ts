@@ -1,4 +1,4 @@
-import { newId, type TimeEntry } from "@fiscalia/core";
+import { newId, type TimeEntry } from "@cuentalibre/core";
 import { createCollection } from "@/data/collection";
 import { initialTimeEntries } from "@/mocks/working-hours";
 

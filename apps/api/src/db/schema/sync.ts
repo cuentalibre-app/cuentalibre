@@ -1,4 +1,4 @@
-import type { SyncCommand } from "@fiscalia/contracts";
+import type { SyncCommand } from "@cuentalibre/contracts";
 import { bigint, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth";
 

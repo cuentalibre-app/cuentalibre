@@ -3,7 +3,7 @@ import {
   storedSalesDocumentSchema,
   type IssuedSnapshot,
   type VerifactuRecordInfo,
-} from "@fiscalia/contracts";
+} from "@cuentalibre/contracts";
 import {
   WITHHOLDING_RATES,
   invoiceTotals,
@@ -14,7 +14,7 @@ import {
   paymentStatus,
   type Cents,
   type VerifactuEnvironment,
-} from "@fiscalia/core";
+} from "@cuentalibre/core";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";

@@ -1,5 +1,5 @@
-import { emailRequestSchema, type EmailMessage } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import { emailRequestSchema, type EmailMessage } from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import type { Db } from "../db/client";

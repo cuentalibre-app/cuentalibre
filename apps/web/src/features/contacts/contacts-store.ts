@@ -1,4 +1,4 @@
-import type { Contact, ContactRole } from "@fiscalia/contracts";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { syncCollection } from "@/data/sync";
 import { initialClients, initialSuppliers } from "@/mocks/contacts";

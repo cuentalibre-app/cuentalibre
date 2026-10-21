@@ -1,7 +1,7 @@
 import { MapPin } from "lucide-react";
-import { SPAIN, checkTaxId, countryFromVatPrefix, isOtherEuCountry, provinceFromPostalCode } from "@fiscalia/core";
-import type { ContactRole } from "@fiscalia/contracts";
-import { Input } from "@fiscalia/ui/components/input";
+import { SPAIN, checkTaxId, countryFromVatPrefix, isOtherEuCountry, provinceFromPostalCode } from "@cuentalibre/core";
+import type { ContactRole } from "@cuentalibre/contracts";
+import { Input } from "@cuentalibre/ui/components/input";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
 import type { ContactDraft, DraftErrors } from "./contact-draft";
 import { COUNTRIES, taxIdWarning } from "./contacts-model";

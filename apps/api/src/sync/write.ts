@@ -5,8 +5,8 @@ import {
   type PlainEntity,
   type RecordEntity,
   type SyncCommand,
-} from "@fiscalia/contracts";
-import type { VerifactuEnvironment } from "@fiscalia/core";
+} from "@cuentalibre/contracts";
+import type { VerifactuEnvironment } from "@cuentalibre/core";
 import { sql } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
 import { changeLog, type LoggedEntity } from "../db/schema";

@@ -1,8 +1,8 @@
 import { Link } from "react-router";
-import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { formatDate, formatShortDate } from "@/lib/format";
 import { CollectionSummary } from "./collection-summary";
 import type { HomeData, InvoiceStatus } from "./home-data";

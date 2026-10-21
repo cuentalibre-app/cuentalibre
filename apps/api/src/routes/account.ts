@@ -1,4 +1,4 @@
-import { membershipSchema, organizationSchema, type MembershipRole } from "@fiscalia/contracts";
+import { membershipSchema, organizationSchema, type MembershipRole } from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { eq } from "drizzle-orm";
 import type { AppEnv } from "../context";

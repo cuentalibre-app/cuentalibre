@@ -1,4 +1,4 @@
-import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@fiscalia/contracts";
+import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@cuentalibre/contracts";
 import { sql } from "drizzle-orm";
 import { boolean, check, index, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization } from "./auth";

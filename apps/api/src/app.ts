@@ -71,7 +71,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
   });
   routes.doc31("/v1/openapi.json", {
     openapi: "3.1.0",
-    info: { title: "Fiscalia API", version: "1" },
+    info: { title: "cuentalibre API", version: "1" },
     security: [{ apiKey: [] }],
   });
 

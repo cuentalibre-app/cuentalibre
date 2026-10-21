@@ -1,8 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router";
 import { ArrowLeft, Download } from "lucide-react";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import type { SpreadsheetFormat } from "@/lib/xlsx";
 import { FORMAT_OPTIONS } from "./transfer-model";

@@ -1,4 +1,4 @@
-import type { Contact } from "@fiscalia/contracts";
+import type { Contact } from "@cuentalibre/contracts";
 
 /** Sample clients and suppliers until there is a backend. Names, tax IDs and figures are made up. */
 

@@ -1,11 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { eurosToCents } from "@fiscalia/core";
-import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
-import { Button } from "@fiscalia/ui/components/button";
-import { Card, CardTitle } from "@fiscalia/ui/components/card";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { eurosToCents } from "@cuentalibre/core";
+import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 
 /** Sample figures below are written in euros. */
 const eur = (euros: number) => formatEUR(eurosToCents(euros));
@@ -114,7 +114,7 @@ export function DesignSystemPage() {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="m-0 text-3xl font-semibold tracking-tight">Sistema visual</h1>
-          <p className="m-0 text-sm text-muted-foreground">Tokens de Fiscalia · propuesta A · Claro</p>
+          <p className="m-0 text-sm text-muted-foreground">Tokens de cuentalibre · propuesta A · Claro</p>
         </div>
         <Button variant="secondary" aria-pressed={dark} onClick={() => setDark((d) => !d)}>
           {dark ? "Modo claro" : "Modo oscuro (provisional)"}

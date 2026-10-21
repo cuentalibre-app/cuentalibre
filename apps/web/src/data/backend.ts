@@ -1,4 +1,4 @@
-import type { ApiKey, CreatedApiKey, EmailMessage, EmailRequest, NewApiKey } from "@fiscalia/contracts";
+import type { ApiKey, CreatedApiKey, EmailMessage, EmailRequest, NewApiKey } from "@cuentalibre/contracts";
 import type { Command } from "./commands";
 
 /**

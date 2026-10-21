@@ -1,5 +1,5 @@
-import { addDays, type TimeEntry } from "@fiscalia/core";
-import type { Worker } from "@fiscalia/contracts";
+import { addDays, type TimeEntry } from "@cuentalibre/core";
+import type { Worker } from "@cuentalibre/contracts";
 
 /** People who clock in, and their sample intervals, until there is a backend. Made up. */
 

@@ -1,13 +1,13 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Pencil } from "lucide-react";
-import { quarterOfDate } from "@fiscalia/core";
-import type { Contact, Expense } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { quarterOfDate } from "@cuentalibre/core";
+import type { Contact, Expense } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { contactsStore } from "@/features/contacts/contacts-store";
 import {

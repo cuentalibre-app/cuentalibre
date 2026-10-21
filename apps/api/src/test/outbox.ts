@@ -47,9 +47,9 @@ export function fakeAeat() {
 }
 
 export const software = {
-  producerName: "Fiscalia Test",
+  producerName: "cuentalibre Test",
   producerTaxId: "B00000000",
-  name: "Fiscalia",
+  name: "cuentalibre",
   id: "FI",
   version: "1.0",
 };

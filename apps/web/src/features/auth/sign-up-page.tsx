@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Input } from "@fiscalia/ui/components/input";
+import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { MIN_PASSWORD_LENGTH, authErrorMessage, signUp } from "./auth-api";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";
@@ -30,7 +30,7 @@ export function SignUpPage() {
   return (
     <AuthLayout
       title="Crear cuenta"
-      description="Empieza a llevar tus facturas e impuestos en Fiscalia."
+      description="Empieza a llevar tus facturas e impuestos en cuentalibre."
       footer={
         <>
           <span>

@@ -17,14 +17,14 @@ import {
   vatReturns,
   type Cents,
   type Quarter,
-} from "@fiscalia/core";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { buttonVariants } from "@fiscalia/ui/components/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { daysLeftLabel, deadlineTitle, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";

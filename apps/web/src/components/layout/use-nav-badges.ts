@@ -1,6 +1,6 @@
-import { daysUntil, upcomingDeadlines } from "@fiscalia/core";
+import { daysUntil, upcomingDeadlines } from "@cuentalibre/core";
 import { useMemo } from "react";
-import { reconciliationStatus } from "@fiscalia/core";
+import { reconciliationStatus } from "@cuentalibre/core";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { matchedAmount } from "@/features/treasury/treasury-model";
 import { usePayments, useTreasury } from "@/features/treasury/treasury-store";

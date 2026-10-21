@@ -4,8 +4,8 @@ import {
   storedPurchaseInvoiceSchema,
   storedSalesDocumentSchema,
   type SyncCommand,
-} from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+} from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import type { AppEnv } from "../context";

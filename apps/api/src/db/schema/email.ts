@@ -1,11 +1,11 @@
-import type { EmailStatus } from "@fiscalia/contracts";
+import type { EmailStatus } from "@cuentalibre/contracts";
 import { sql } from "drizzle-orm";
 import { check, foreignKey, index, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization, user } from "./auth";
 import { createdAt } from "./columns";
 import { salesDocument } from "./sales";
 
-/** Emails sent from Fiscalia, such as invoices to their clients. They are queued and sent by the outbox worker. */
+/** Emails sent from cuentalibre, such as invoices to their clients. They are queued and sent by the outbox worker. */
 export const emailMessage = pgTable(
   "email_message",
   {

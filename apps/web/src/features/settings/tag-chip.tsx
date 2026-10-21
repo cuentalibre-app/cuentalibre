@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { textColorOn, useTags } from "./tags-store";
 
 /**

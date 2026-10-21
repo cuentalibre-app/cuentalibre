@@ -1,5 +1,5 @@
-import { WITHHOLDING_RATES, addDays, eurosToCents, invoiceTotals } from "@fiscalia/core";
-import type { PurchaseInvoice } from "@fiscalia/contracts";
+import { WITHHOLDING_RATES, addDays, eurosToCents, invoiceTotals } from "@cuentalibre/core";
+import type { PurchaseInvoice } from "@cuentalibre/contracts";
 
 /** Sample received invoices until there is a backend. Figures are made up. */
 

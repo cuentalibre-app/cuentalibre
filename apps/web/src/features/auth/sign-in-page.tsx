@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Input } from "@fiscalia/ui/components/input";
+import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { authErrorMessage, signIn } from "./auth-api";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";

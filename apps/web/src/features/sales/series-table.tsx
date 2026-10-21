@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { MoreHorizontal, Pencil, Plus, Power, Star, Trash2 } from "lucide-react";
-import { isBuiltInSeries, type InvoiceSeriesDefinition } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button } from "@fiscalia/ui/components/button";
-import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { isBuiltInSeries, type InvoiceSeriesDefinition } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button } from "@cuentalibre/ui/components/button";
+import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { DefaultMark } from "./document-look";
 import { invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";

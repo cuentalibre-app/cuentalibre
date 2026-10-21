@@ -21,7 +21,7 @@ import {
   type InvoiceTotals,
   type OperationType,
   type WithholdingKind,
-} from "@fiscalia/core";
+} from "@cuentalibre/core";
 import {
   invoiceSeriesList as allInvoiceSeries,
   invoiceSeriesOf,
@@ -35,8 +35,8 @@ import {
   type SalesDocument,
   type SalesKind,
   type SalesLine,
-} from "@fiscalia/contracts";
-import type { BadgeProps } from "@fiscalia/ui/components/badge";
+} from "@cuentalibre/contracts";
+import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 import { contactsStore } from "@/features/contacts/contacts-store";
 import { invoiceSettingsStore } from "./invoice-settings";
 

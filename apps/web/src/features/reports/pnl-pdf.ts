@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
-import type { Cents } from "@fiscalia/core";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import type { Cents } from "@cuentalibre/core";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import type { PnlRow } from "./pnl-rows";
 
 /*

@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router";
-import type { ContactRole, SalesKind } from "@fiscalia/contracts";
+import type { ContactRole, SalesKind } from "@cuentalibre/contracts";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
 import { CatalogExportPage } from "@/features/catalog/catalog-export-page";

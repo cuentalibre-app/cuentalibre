@@ -1,4 +1,4 @@
-import { centsToEuros, type Cents } from "@fiscalia/core";
+import { centsToEuros, type Cents } from "@cuentalibre/core";
 
 const eur = new Intl.NumberFormat("es-ES", {
   style: "currency",

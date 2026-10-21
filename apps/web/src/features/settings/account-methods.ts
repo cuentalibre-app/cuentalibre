@@ -1,4 +1,4 @@
-import type { AccountKind, PaymentMethod, PaymentMethodType, TreasuryAccount } from "@fiscalia/contracts";
+import type { AccountKind, PaymentMethod, PaymentMethodType, TreasuryAccount } from "@cuentalibre/contracts";
 import type { Command } from "@/data/commands";
 
 /*

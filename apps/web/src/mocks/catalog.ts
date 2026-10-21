@@ -1,5 +1,5 @@
-import type { CatalogFamily, CatalogUnit, StockMovement } from "@fiscalia/core";
-import type { CatalogSettings, Product } from "@fiscalia/contracts";
+import type { CatalogFamily, CatalogUnit, StockMovement } from "@cuentalibre/core";
+import type { CatalogSettings, Product } from "@cuentalibre/contracts";
 
 /** Sample catalog until there is a backend: products and services, their families and stock. */
 

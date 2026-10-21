@@ -1,4 +1,4 @@
-import { newId } from "@fiscalia/core";
+import { newId } from "@cuentalibre/core";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { changeLog } from "./db/schema";

@@ -9,9 +9,9 @@ import {
   vatReturns,
   type Period,
   type Quarter,
-} from "@fiscalia/core";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/core";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
 import { deductible, PURCHASE_OPERATION_TYPES, purchaseTotals, supplierOf } from "@/features/purchases/purchases-model";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
@@ -264,7 +264,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
       <FormInfo form="390" />
       <Assumptions
         items={[
-          "Resume todo el año: si empezaste a facturar antes de usar Fiscalia, registra también esas facturas.",
+          "Resume todo el año: si empezaste a facturar antes de usar cuentalibre, registra también esas facturas.",
           "Las adquisiciones intracomunitarias de mercaderías (cuentas 600 y 602) se declaran como bienes; el resto, como servicios.",
           "Los datos estadísticos (actividad y epígrafe) y los del representante se completan en la sede de la AEAT.",
           "Si llevas el SII o solo alquilas inmuebles urbanos, no presentas el 390: en su lugar rellenas el apartado de información adicional del 303 del 4T.",

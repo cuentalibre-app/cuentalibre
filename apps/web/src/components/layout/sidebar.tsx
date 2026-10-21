@@ -1,16 +1,16 @@
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, UserRound } from "lucide-react";
-import { Button } from "@fiscalia/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+} from "@cuentalibre/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { accountName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { LogoMark } from "@/components/logo";

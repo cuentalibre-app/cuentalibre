@@ -1,10 +1,10 @@
 import type { ComponentProps, MouseEvent, ReactNode } from "react";
 import { Link } from "react-router";
-import { cents, eurosToCents, lineBase, type Cents, type InvoiceTotals } from "@fiscalia/core";
-import type { Attachment, Contact, Payment, SalesLine } from "@fiscalia/contracts";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { cents, eurosToCents, lineBase, type Cents, type InvoiceTotals } from "@cuentalibre/core";
+import type { Attachment, Contact, Payment, SalesLine } from "@cuentalibre/contracts";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { countryOf } from "@/features/contacts/contacts-model";
 import { AttachmentList } from "@/features/purchases/form-parts";
 import { paymentMethodName } from "@/features/settings/settings-model";

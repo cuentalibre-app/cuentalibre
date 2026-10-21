@@ -9,15 +9,15 @@ import {
   isOtherEuCountry,
   periodMonths,
   type Period,
-} from "@fiscalia/core";
-import type { Contact, ContactRole } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { PeriodSelect } from "@/components/period-select";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { ReceiptDrop } from "@/features/purchases/form-parts";

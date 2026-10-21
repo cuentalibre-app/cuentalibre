@@ -15,7 +15,7 @@ let state: SessionState = "demo";
 
 export const sessionState = () => state;
 
-const DEMO_KEY = "fiscalia:demo";
+const DEMO_KEY = "cuentalibre:demo";
 
 function isDemoRequested() {
   try {
