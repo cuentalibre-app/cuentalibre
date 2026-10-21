@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fisca
 import { cn } from "@fiscalia/ui/lib/cn";
 import { accountName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
+import { LogoMark } from "@/components/logo";
 import { CreateMenu } from "./create-menu";
 import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
@@ -200,11 +201,14 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           className,
         )}
       >
-        <div className={cn("flex shrink-0 items-center gap-2.5 pt-1 pb-4", collapsed ? "px-1.5" : "px-2")}>
+        <div className={cn("flex shrink-0 items-baseline gap-2.5 pt-1 pb-4", collapsed ? "px-1.5" : "px-2")}>
           {!collapsed && (
             <>
-              <div className="size-7 shrink-0 rounded-md bg-primary" aria-hidden="true" />
-              <span className="flex-1 text-md font-semibold">Fiscalia</span>
+              {/* The mark sits on the wordmark's baseline, so its columns and the letters share a floor */}
+              <span className="flex flex-1 items-baseline gap-3">
+                <LogoMark className="h-7 text-sidebar-foreground" />
+                <span className="text-xl font-semibold tracking-tight">cuentalibre</span>
+              </span>
             </>
           )}
           <RailTooltip
