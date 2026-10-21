@@ -162,6 +162,10 @@ export interface PdfLabels {
   dueDate: string;
   /** Short form, in the date tables of Elegante and Vanguardista. */
   due: string;
+  /** When the goods were delivered or the service done, if not the issue date. */
+  operationDate: string;
+  /** Short form, like `due`. */
+  operation: string;
   validUntil: string;
   client: string;
   taxId: string;
@@ -212,6 +216,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     date: "Fecha",
     dueDate: "Fecha de vencimiento",
     due: "Vencimiento",
+    operationDate: "Fecha de operación",
+    operation: "Operación",
     validUntil: "Fecha de validez",
     client: "Cliente",
     taxId: "NIF",
@@ -262,6 +268,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     date: "Data",
     dueDate: "Data de venciment",
     due: "Venciment",
+    operationDate: "Data d'operació",
+    operation: "Operació",
     validUntil: "Data de validesa",
     client: "Client",
     taxId: "NIF",
@@ -312,6 +320,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     date: "Data",
     dueDate: "Data de vencemento",
     due: "Vencemento",
+    operationDate: "Data de operación",
+    operation: "Operación",
     validUntil: "Data de validez",
     client: "Cliente",
     taxId: "NIF",
@@ -362,6 +372,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     date: "Data",
     dueDate: "Mugaeguna",
     due: "Mugaeguna",
+    operationDate: "Eragiketa-data",
+    operation: "Eragiketa",
     validUntil: "Baliozkotasun-data",
     client: "Bezeroa",
     taxId: "IFZ",
@@ -412,6 +424,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     date: "Date",
     dueDate: "Due date",
     due: "Due",
+    operationDate: "Operation date",
+    operation: "Operation",
     validUntil: "Valid until",
     client: "Bill to",
     taxId: "Tax ID",
@@ -462,6 +476,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     date: "Datum",
     dueDate: "Fälligkeitsdatum",
     due: "Fällig",
+    operationDate: "Leistungsdatum",
+    operation: "Leistung",
     validUntil: "Gültig bis",
     client: "Kunde",
     taxId: "Steuer-Nr.",
@@ -512,6 +528,8 @@ export const PDF_LABELS: Record<string, PdfLabels> = {
     date: "Date",
     dueDate: "Date d'échéance",
     due: "Échéance",
+    operationDate: "Date d'opération",
+    operation: "Opération",
     validUntil: "Valable jusqu'au",
     client: "Client",
     taxId: "NIF",
