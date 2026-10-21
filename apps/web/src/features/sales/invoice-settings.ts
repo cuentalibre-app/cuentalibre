@@ -93,6 +93,8 @@ export interface PrintOptions {
   look: DocumentLook;
   showProductUnits: boolean;
   showServicePeriod: boolean;
+  /** Invoices only; the other kinds have no such setting. */
+  showOperationDate: boolean;
   showPrices: boolean;
   showTaxes: boolean;
   hideZeroTaxes: boolean;
@@ -108,6 +110,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
       look: lookOf(s),
       showProductUnits: s.showProductUnits,
       showServicePeriod: s.showServicePeriod,
+      showOperationDate: s.showOperationDate,
       showPrices: true,
       showTaxes: true,
       hideZeroTaxes: s.hideZeroTaxes,
@@ -120,6 +123,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
     look: lookOf(s),
     showProductUnits: s.showProductUnits,
     showServicePeriod: s.showServicePeriod,
+    showOperationDate: false,
     showPrices: s.showPrices,
     showTaxes: kind === "deliveryNote" || s.showTaxes,
     hideZeroTaxes: kind !== "deliveryNote" && s.hideZeroTaxes,

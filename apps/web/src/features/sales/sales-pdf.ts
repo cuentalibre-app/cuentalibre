@@ -193,6 +193,12 @@ function dueLabel({ doc, t }: Sheet, short = false) {
   return short ? t.due : t.dueDate;
 }
 
+/** When the setting asks for it and the operation happened on another day than the issue. */
+function operationDate({ doc, options }: Sheet): string | null {
+  if (!options.showOperationDate || !doc.operationOn || doc.operationOn === doc.issuedOn) return null;
+  return doc.operationOn;
+}
+
 /** The organization's logo, top left. Returns where the content starts. */
 function drawLogo(s: Sheet): number {
   const { logo } = s.options;
@@ -276,6 +282,8 @@ function metaRows(s: Sheet, { due = true, short = false } = {}): [string, string
   const rows: [string, string][] = [];
   if (doc.number) rows.push([t.numberOf[doc.kind], doc.number]);
   rows.push([t.date, f.date(doc.issuedOn)]);
+  const operation = operationDate(s);
+  if (operation) rows.push([short ? t.operation : t.operationDate, f.date(operation)]);
   const label = dueLabel(s, short);
   if (due && label && doc.dueOn) rows.push([label, f.date(doc.dueOn)]);
   return rows;
@@ -289,6 +297,8 @@ const HEADERS: Record<TemplateStyle["family"], (s: Sheet) => void> = {
     const { doc, t, f } = s;
     const top = s.y;
     write(s, f.date(doc.issuedOn), RIGHT, top + 3, { size: 11, bold: true, align: "right" });
+    const operation = operationDate(s);
+    if (operation) write(s, `${t.operationDate}: ${f.date(operation)}`, RIGHT, top + 8, { align: "right" });
     s.y = drawParty(s, issuer(), LEFT, top, 110) + 9;
     write(s, kindName(s).toUpperCase(), PAGE_WIDTH / 2, s.y, { size: 18, bold: true, align: "center" });
     s.y += 10;
@@ -362,6 +372,8 @@ const HEADERS: Record<TemplateStyle["family"], (s: Sheet) => void> = {
 
     s.y = end + 8;
     const cells: [string, string][] = [[t.date, f.date(doc.issuedOn)]];
+    const operation = operationDate(s);
+    if (operation) cells.push([t.operation, f.date(operation)]);
     const due = dueLabel(s, true);
     if (due && doc.dueOn) cells.push([due, f.date(doc.dueOn)]);
     cells.forEach(([label, value], i) => {
