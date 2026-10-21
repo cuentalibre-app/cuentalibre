@@ -42,5 +42,12 @@ export function s3Storage(options: S3Options, fetchImpl: typeof fetch = fetch): 
       if (!response.ok || !response.body) throw new Error(`S3 GET ${key} failed: ${response.status}`);
       return response.body;
     },
+
+    async delete(key) {
+      const response = await send(urlOf(key), { method: "DELETE" });
+      // S3 answers 204 whether or not the object existed; some compatible stores answer 404.
+      if (!response.ok && response.status !== 404)
+        throw new Error(`S3 DELETE ${key} failed: ${response.status} ${await response.text()}`);
+    },
   };
 }
