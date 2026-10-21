@@ -65,6 +65,17 @@ export function mix(from: Rgb, to: Rgb, amount: number): Rgb {
   return from.map((c, i) => Math.round(c + (to[i]! - c) * amount)) as Rgb;
 }
 
+interface Size {
+  width: number;
+  height: number;
+}
+
+/** A size scaled down, keeping its proportions, to fit in a box; one that already fits stays as it is. */
+export function fitWithin(size: Size, box: Size): Size {
+  const scale = Math.min(1, box.width / size.width, box.height / size.height);
+  return { width: size.width * scale, height: size.height * scale };
+}
+
 /* ───────────────────────── Locale ───────────────────────── */
 
 export interface DocumentLocale {

@@ -57,6 +57,9 @@ export const documentLookSchema = z.object({
 });
 export type DocumentLook = z.infer<typeof documentLookSchema>;
 
+/** Largest logo stored, in pixels; bigger images are scaled down to fit. */
+export const LOGO_MAX_SIZE = { width: 325, height: 200 };
+
 export const invoiceSettingsSchema = documentLookSchema
   .extend({
     showProductUnits: z.boolean(),
@@ -66,6 +69,15 @@ export const invoiceSettingsSchema = documentLookSchema
     showOperationDate: z.boolean(),
     /** Fixed text printed on the side of every invoice (registry details, GDPR…). */
     footer: z.string(),
+    /**
+     * Printed top left on every sales document: a PNG data URL, already scaled down to
+     * fit LOGO_MAX_SIZE. Absent until one is uploaded.
+     */
+    logo: z
+      .string()
+      .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/)
+      .max(512 * 1024)
+      .optional(),
     /** Link in the footer so the recipient can import the invoice. */
     allowImport: z.boolean(),
     /** Check intra-EU clients against VIES when issuing. */

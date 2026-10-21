@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Check, ImageUp, PenLine, Trash2 } from "lucide-react";
-import type { InvoiceSettings } from "@fiscalia/contracts";
+import { LOGO_MAX_SIZE, type InvoiceSettings } from "@fiscalia/contracts";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Textarea } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
@@ -12,6 +12,7 @@ import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
 import { invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
+import { fitWithin } from "./pdf-look";
 import { SeriesTable } from "./series-table";
 
 const MAX_LOGO_BYTES = 1.5 * 1024 * 1024;
@@ -113,7 +114,7 @@ export function InvoiceSettingsPage() {
 
         <div id="logotipo" className="scroll-mt-6">
           <Section title="Logotipo de facturas, borradores, presupuestos y albaranes" index={3}>
-            <LogoField />
+            <LogoField logo={draft.logo} onChange={(logo) => set("logo", logo)} />
           </Section>
         </div>
 
@@ -190,36 +191,32 @@ export function InvoiceSettingsPage() {
   );
 }
 
-/** Logo upload with preview. Kept in memory until there is a backend. */
-function LogoField() {
+/** Logo upload with preview, scaled down to LOGO_MAX_SIZE; saved with the rest of the settings. */
+function LogoField({ logo, onChange }: { logo: string | undefined; onChange: (logo: string | undefined) => void }) {
   const input = useRef<HTMLInputElement>(null);
-  const [logo, setLogo] = useState<{ url: string; name: string } | null>(null);
   const [error, setError] = useState("");
   const [dragging, setDragging] = useState(false);
 
-  useEffect(
-    () => () => {
-      if (logo) URL.revokeObjectURL(logo.url);
-    },
-    [logo],
-  );
-
-  const accept = (file: File | undefined) => {
+  const accept = async (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) return setError("El logotipo debe ser una imagen (PNG, JPG o SVG).");
     if (file.size > MAX_LOGO_BYTES) return setError("La imagen pesa más de 1,5 MB.");
-    setError("");
-    setLogo({ url: URL.createObjectURL(file), name: file.name });
+    try {
+      onChange(await scaledLogo(file));
+      setError("");
+    } catch {
+      setError("No se ha podido leer la imagen. Prueba con otro archivo PNG o JPG.");
+    }
   };
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDragging(false);
-    accept(e.dataTransfer.files[0]);
+    void accept(e.dataTransfer.files[0]);
   };
 
   const notes: ReactNode[] = [
     "Si supera 325 × 200 píxeles, se reduce proporcionalmente.",
-    "Aparece en las facturas y presupuestos que crees a partir de ahora, no en los anteriores.",
+    "Se imprime arriba a la izquierda en el PDF de facturas, borradores, presupuestos y albaranes.",
   ];
 
   return (
@@ -253,18 +250,17 @@ function LogoField() {
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => accept(e.target.files?.[0])}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            void accept(e.target.files?.[0]);
+            e.target.value = "";
+          }}
         />
         <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
           <span className="text-sm font-medium text-muted-foreground">Logo actual</span>
           {logo ? (
             <>
-              <img
-                src={logo.url}
-                alt={`Logotipo ${logo.name}`}
-                className="max-h-24 max-w-full self-start object-contain"
-              />
-              <Button variant="secondary" size="sm" className="self-start" onClick={() => setLogo(null)}>
+              <img src={logo} alt="Logotipo actual" className="max-h-24 max-w-full self-start object-contain" />
+              <Button variant="secondary" size="sm" className="self-start" onClick={() => onChange(undefined)}>
                 <Trash2 aria-hidden="true" />
                 Borrar
               </Button>
@@ -281,4 +277,24 @@ function LogoField() {
       )}
     </div>
   );
+}
+
+/** The image as a PNG data URL, scaled down to fit LOGO_MAX_SIZE. */
+async function scaledLogo(file: File): Promise<string> {
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+    const { width, height } = fitWithin({ width: image.naturalWidth, height: image.naturalHeight }, LOGO_MAX_SIZE);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(width));
+    canvas.height = Math.max(1, Math.round(height));
+    const context = canvas.getContext("2d");
+    if (!context || !width || !height) throw new Error("Unreadable image");
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/png");
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }

@@ -1,6 +1,6 @@
 import { cents } from "@fiscalia/core";
 import { describe, expect, it } from "vitest";
-import { documentLocale, hexToRgb, mix, PDF_LABELS, pdfFormat, pdfLabels } from "./pdf-look";
+import { documentLocale, fitWithin, hexToRgb, mix, PDF_LABELS, pdfFormat, pdfLabels } from "./pdf-look";
 
 const look = { language: "es", numberFormat: "ES" };
 
@@ -15,6 +15,17 @@ describe("documentLocale", () => {
       region: "GB",
     });
     expect(documentLocale({ language: "" }, {}, look)).toEqual({ language: "es", region: "ES" });
+  });
+});
+
+describe("fitWithin", () => {
+  it("scales a size down to fit the box, keeping its proportions", () => {
+    expect(fitWithin({ width: 650, height: 200 }, { width: 325, height: 200 })).toEqual({ width: 325, height: 100 });
+    expect(fitWithin({ width: 300, height: 600 }, { width: 325, height: 200 })).toEqual({ width: 100, height: 200 });
+  });
+
+  it("never scales a size up", () => {
+    expect(fitWithin({ width: 120, height: 40 }, { width: 325, height: 200 })).toEqual({ width: 120, height: 40 });
   });
 });
 
