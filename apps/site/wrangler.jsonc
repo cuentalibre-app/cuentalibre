@@ -2,5 +2,6 @@
 {
   "name": "cuentalibre-site",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./dist" }
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "cuentalibre.es", "custom_domain": true }]
 }
