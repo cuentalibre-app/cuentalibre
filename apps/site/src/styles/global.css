@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@cuentalibre/ui/styles.css";
 @import "@fontsource-variable/source-serif-4";
+@import "@fontsource-variable/source-serif-4/wght-italic.css";
 @import "@fontsource-variable/jetbrains-mono";
 
 /* The site speaks louder than the app: serif headlines, monospaced text, softer shapes */
@@ -11,18 +12,17 @@
   --shadow-tab: 0 1px 3px rgb(17 18 20 / 0.12);
   --shadow-frame: 0 1px 2px rgb(17 18 20 / 0.04), 0 40px 80px -40px rgb(17 18 20 / 0.28);
   --shadow-phone: 0 30px 60px -16px rgb(17 18 20 / 0.45);
+  /* App screenshot peeking out of a feature card: lifted toward its open top-left corner */
+  --shadow-screen: 0 -1px 3px rgb(17 18 20 / 0.06), -10px -10px 36px -14px rgb(17 18 20 / 0.28);
   --shadow-shot: 0 20px 40px -24px rgb(17 18 20 / 0.25);
   --shadow-plan: 0 30px 60px -36px rgb(47 69 201 / 0.45);
 
-  --color-teal-soft: var(--teal-soft);
 }
 
 :root {
   /* Brand blue into violet and teal: headline accent and the hosted plan's border */
   --teal: #0e8fae;
   --brand-gradient: linear-gradient(90deg, var(--primary) 0%, #6a4fe0 55%, var(--teal) 100%);
-  /* The gradient's teal, faded: feature cards, so the app screenshots stand out */
-  --teal-soft: color-mix(in oklab, var(--teal) 14%, var(--background));
 }
 
 @layer base {

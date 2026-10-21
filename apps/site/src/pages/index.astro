@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
+import Logo from "../components/Logo.astro";
 import Base from "../layouts/Base.astro";
 import { appLinks, cloudPrice, cloudYearlyPrice, sourceUrl } from "../site";
 
@@ -337,13 +338,13 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
       >
         {
           features.map((feature) => (
-            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] border border-divider bg-teal-soft transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
-              <div class="px-6 pt-6 sm:px-8 sm:pt-7">
+            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] border border-divider bg-sidebar/60 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
+              <div class="px-6 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-7">
                 <div class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{feature.tag}</div>
                 <h3 class="mt-2 mb-0 text-[20px] leading-tight sm:text-[22px] font-semibold tracking-[-0.015em]">{feature.title}</h3>
                 <p class="mt-2 mb-0 max-w-[420px] text-muted-foreground">{feature.text}</p>
               </div>
-              <div class="mt-6 ml-6 h-[240px] overflow-hidden sm:mt-7 sm:h-[340px] rounded-tl-[14px] border-t border-l border-border bg-background shadow-frame sm:ml-8">
+              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] rounded-tl-[14px] border-t border-l border-input bg-background shadow-screen sm:ml-8">
                 <Image
                   src={feature.image}
                   alt={feature.alt}
@@ -378,67 +379,92 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
     </section>
 
     <section id="privacidad" class="mx-auto mt-10 sm:mt-20 md:mt-30 max-w-[1200px] px-4 sm:px-6">
-      <div data-reveal class="text-center">
-        <div class={eyebrow}>Por qué cuentalibre</div>
-        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Tus cuentas son tuyas</h2>
-      </div>
-      <ul class="m-0 mt-8 grid list-none grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6 p-0 sm:mt-12 sm:gap-10">
-        {
-          reasons.map((reason, i) => (
-            <li data-reveal style={{ "--i": i }} class="grid grid-cols-[20px_1fr] items-center gap-x-3 sm:block">
-              <div class="flex items-center justify-center text-primary sm:size-11 sm:rounded-[12px] sm:bg-primary-soft">
-                <Icon name={reason.icon} class="size-5 sm:size-[22px]" />
-              </div>
-              <h3 class="m-0 text-[18px] font-semibold tracking-[-0.015em] sm:mt-5 sm:text-[20px]">{reason.title}</h3>
-              <p class="col-start-2 mt-1 mb-0 text-muted-foreground sm:mt-2">{reason.text}</p>
-            </li>
-          ))
-        }
-      </ul>
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:items-center lg:gap-16">
+        <div>
+          <div data-reveal class="text-center lg:text-left">
+            <div class={eyebrow}>Por qué cuentalibre</div>
+            <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Tus cuentas son <em>tuyas</em>.</h2>
+            <p class="mt-4 mb-0 hidden max-w-[520px] text-[17px] text-muted-foreground lg:block">
+              Tus datos fiscales, con un software que puedes revisar, auditar y ejecutar en tu propio servidor.
+            </p>
+          </div>
+          <ul class="m-0 mt-8 grid list-none grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6 p-0 sm:mt-12 sm:gap-10 lg:mt-10 lg:grid-cols-1 lg:gap-7">
+            {
+              reasons.map((reason, i) => (
+                <li
+                  data-reveal
+                  style={{ "--i": i }}
+                  class="grid grid-cols-[20px_1fr] items-center gap-x-3 sm:block lg:grid lg:grid-cols-[24px_1fr] lg:items-start lg:gap-x-4"
+                >
+                  <div class="flex items-center justify-center text-primary sm:size-11 sm:rounded-[12px] sm:bg-primary-soft lg:mt-1 lg:size-6 lg:rounded-none lg:bg-transparent">
+                    <Icon name={reason.icon} class="size-5 sm:size-[22px]" />
+                  </div>
+                  <h3 class="m-0 text-[18px] font-semibold tracking-[-0.015em] sm:mt-5 sm:text-[20px] lg:mt-0 lg:font-display lg:text-[24px] lg:leading-tight">
+                    {reason.title}
+                  </h3>
+                  <p class="col-start-2 mt-1 mb-0 text-muted-foreground sm:mt-2 lg:mt-1.5">{reason.text}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
 
-      <div data-reveal class="mx-auto mt-12 max-w-[760px] overflow-hidden rounded-[24px] border border-accent sm:mt-16">
-        <div class="px-5 py-6 sm:px-10 sm:py-8">
-          <table class="w-full border-collapse text-[14px] sm:text-[15px]">
-            <thead>
-              <tr>
-                <th scope="col" class="py-2.5"><span class="sr-only">Función</span></th>
-                <th scope="col" class="w-[76px] py-2.5 text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otros</th>
-                <th scope="col" class="w-[88px] py-2.5 text-center text-xs font-semibold sm:w-24 sm:text-sm text-primary">cuentalibre</th>
-              </tr>
-            </thead>
-            <tbody>
-              {
-                comparison.map((row) => (
-                  <tr class="border-t border-divider">
-                    <th scope="row" class="py-3.5 pr-2 text-left font-normal sm:py-4">
-                      <span class="flex flex-wrap items-center gap-2">
-                        {row.label}
-                        {row.badge && (
-                          <span class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-hover">
-                            {row.badge}
+        <div data-reveal style={{ "--i": 2 }} class="mx-auto mt-12 max-w-[760px] overflow-hidden rounded-[24px] border border-accent sm:mt-16 lg:mt-0 lg:max-w-none">
+          <div class="px-5 py-6 sm:px-10 sm:py-8 lg:px-7">
+            <table class="w-full border-separate border-spacing-0 text-[14px] sm:text-[15px]">
+              <thead>
+                <tr>
+                  <th scope="col" class="py-2.5"><span class="sr-only">Función</span></th>
+                  <th scope="col" class="w-[76px] pb-3 align-bottom text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otros</th>
+                  <th scope="col" class="w-[96px] rounded-t-[16px] bg-primary-soft pt-4 pb-3 align-bottom text-xs font-semibold text-primary sm:w-28 sm:text-sm">
+                    <span class="flex flex-col items-center gap-1.5">
+                      <Logo class="h-[22px] w-5 text-foreground" />
+                      cuentalibre
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  comparison.map((row, i) => (
+                    <tr>
+                      <th scope="row" class="border-t border-divider py-3.5 pr-2 text-left font-normal sm:py-4">
+                        <span class="flex flex-wrap items-center gap-2">
+                          {row.label}
+                          {row.badge && (
+                            <span class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-hover">
+                              {row.badge}
+                            </span>
+                          )}
+                        </span>
+                      </th>
+                      <td class="border-t border-divider py-4 text-center text-sm text-muted-foreground">
+                        {typeof row.others === "string" ? (
+                          row.others
+                        ) : (
+                          <Icon name="x" label="No" class="mx-auto block size-[18px] text-input" />
+                        )}
+                      </td>
+                      <td
+                        class:list={[
+                          "border-t border-primary/15 bg-primary-soft py-4 text-center text-sm font-semibold text-primary",
+                          i === comparison.length - 1 && "rounded-b-[16px]",
+                        ]}
+                      >
+                        {typeof row.ours === "string" ? (
+                          row.ours
+                        ) : (
+                          <span class="mx-auto flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                            <Icon name="check" label="Sí" class="size-3.5 [stroke-width:3]" />
                           </span>
                         )}
-                      </span>
-                    </th>
-                    <td class="py-4 text-center text-sm text-muted-foreground">
-                      {typeof row.others === "string" ? (
-                        row.others
-                      ) : (
-                        <Icon name="x" label="No" class="mx-auto block size-5 text-input" />
-                      )}
-                    </td>
-                    <td class="py-4 text-center text-sm font-semibold text-primary">
-                      {typeof row.ours === "string" ? (
-                        row.ours
-                      ) : (
-                        <Icon name="check" label="Sí" class="mx-auto block size-5 [stroke-width:2.25]" />
-                      )}
-                    </td>
-                  </tr>
-                ))
-              }
-            </tbody>
-          </table>
+                      </td>
+                    </tr>
+                  ))
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
