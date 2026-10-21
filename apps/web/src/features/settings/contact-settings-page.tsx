@@ -1,6 +1,6 @@
-import type { ContactSettings } from "@fiscalia/contracts";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import type { ContactSettings } from "@cuentalibre/contracts";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import {
   DEFAULT_CUSTOM_FIELD_NAMES,
   contactSettingsStore,
@@ -41,7 +41,7 @@ export function ContactSettingsPage() {
               cada vez que la consultes o la modifiques.
             </p>
             <p className="m-0">
-              Por ejemplo, llama «Segundo email» al personalizado 1 para guardar un dato que Fiscalia no pide por
+              Por ejemplo, llama «Segundo email» al personalizado 1 para guardar un dato que cuentalibre no pide por
               defecto.
             </p>
           </div>
@@ -65,12 +65,12 @@ export function ContactSettingsPage() {
         <Section title="Autocompletar datos de clientes y proveedores" index={1}>
           <p className="m-0 max-w-3xl text-muted-foreground">
             Al crear un cliente o proveedor, cuando hayas escrito su NIF completo o tres caracteres o más de su nombre o
-            razón social, Fiscalia puede consultar bases de datos externas de empresas y completar sus datos para
+            razón social, cuentalibre puede consultar bases de datos externas de empresas y completar sus datos para
             ahorrarte el tiempo de escribirlos. Si no te gusta, desmarca la casilla.
           </p>
           <CheckField
             label="Activar el autocompletar para clientes y proveedores"
-            hint="La consulta llegará con el servidor de Fiscalia; por ahora se guarda tu preferencia."
+            hint="La consulta llegará con el servidor de cuentalibre; por ahora se guarda tu preferencia."
             checked={draft.autocomplete}
             onChange={(v) => set("autocomplete", v)}
           />

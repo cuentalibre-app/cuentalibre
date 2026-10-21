@@ -1,5 +1,5 @@
-import { eurosToCents } from "@fiscalia/core";
-import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@fiscalia/contracts";
+import { eurosToCents } from "@cuentalibre/core";
+import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@cuentalibre/contracts";
 
 /** Sample business profile, tax setup, accounts and payment methods until there is a backend. Made up. */
 

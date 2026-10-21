@@ -1,5 +1,5 @@
-import { SPAIN, checkTaxId, hasEuVatPrefix, isOtherEuCountry } from "@fiscalia/core";
-import type { Contact, ContactRole } from "@fiscalia/contracts";
+import { SPAIN, checkTaxId, hasEuVatPrefix, isOtherEuCountry } from "@cuentalibre/core";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
 
 export interface RoleConfig {
   /** "Clientes", for titles and the sidebar. */

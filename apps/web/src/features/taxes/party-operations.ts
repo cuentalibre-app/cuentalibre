@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { cents, SPAIN, sumBy, WITHHOLDING_RATES, type PartyOperation } from "@fiscalia/core";
-import type { Contact, Expense, PurchaseInvoice, SalesDocument } from "@fiscalia/contracts";
+import { cents, SPAIN, sumBy, WITHHOLDING_RATES, type PartyOperation } from "@cuentalibre/core";
+import type { Contact, Expense, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { PURCHASES_PATH, purchaseTotals } from "@/features/purchases/purchases-model";

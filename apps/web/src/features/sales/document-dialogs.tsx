@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Loader2, Paperclip } from "lucide-react";
-import type { EmailMessage, SalesDocument } from "@fiscalia/contracts";
-import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input, Textarea } from "@fiscalia/ui/components/input";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import type { EmailMessage, SalesDocument } from "@cuentalibre/contracts";
+import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input, Textarea } from "@cuentalibre/ui/components/input";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { emailsOf, sendEmail } from "@/data/email";
 import { businessName } from "@/features/settings/settings-model";

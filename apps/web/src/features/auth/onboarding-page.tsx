@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Input } from "@fiscalia/ui/components/input";
+import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { authErrorMessage, createOrganization } from "./auth-api";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";

@@ -1,5 +1,5 @@
 /*
- * zod schemas for the data Fiscalia stores and exchanges, shared by the web app
+ * zod schemas for the data cuentalibre stores and exchanges, shared by the web app
  * and the API. Each schema has a type of the same name inferred from it, so the
  * type and the runtime validation can't drift apart.
  */

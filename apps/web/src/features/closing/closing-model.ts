@@ -8,8 +8,8 @@ import {
   quarterOfMonth,
   type Period,
   type Quarter,
-} from "@fiscalia/core";
-import type { ClosedQuarter } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { ClosedQuarter } from "@cuentalibre/contracts";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { EXPENSES_PATH } from "@/features/purchases/expenses-model";
 import { outstanding, PURCHASES_PATH } from "@/features/purchases/purchases-model";

@@ -8,8 +8,8 @@ import {
   type TimeEntry,
   type WorkedDay,
   type WorkedTotals,
-} from "@fiscalia/core";
-import type { Worker } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { Worker } from "@cuentalibre/contracts";
 import { MONTHS } from "@/lib/format";
 import { workers } from "@/mocks/working-hours";
 

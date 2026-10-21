@@ -1,9 +1,9 @@
 import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { Camera, Plus } from "lucide-react";
-import { periodKey } from "@fiscalia/core";
-import { buttonVariants } from "@fiscalia/ui/components/button";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { periodKey } from "@cuentalibre/core";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { availableYears } from "@/mocks/data";
 import { periodRange } from "@/lib/format";
 import { CashFlowChart, ProfitChart } from "./charts";

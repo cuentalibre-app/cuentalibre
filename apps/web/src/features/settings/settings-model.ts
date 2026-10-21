@@ -7,8 +7,8 @@ import type {
   PaymentMethodType,
   TaxSetup,
   VatRegime,
-} from "@fiscalia/contracts";
-import type { BadgeProps } from "@fiscalia/ui/components/badge";
+} from "@cuentalibre/contracts";
+import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 import type { Option } from "@/features/sales/sales-model";
 import { settingsStore, useSettings } from "./settings-store";
 
@@ -97,7 +97,7 @@ export const incomeTaxMethodLabel = (method: IncomeTaxMethod) => label(INCOME_TA
 export const vatRegimeLabel = (regime: VatRegime) => label(VAT_REGIMES, regime);
 
 /**
- * What the tax pages can't compute for this setup. Fiscalia prepares forms 303 and 130 of the
+ * What the tax pages can't compute for this setup. cuentalibre prepares forms 303 and 130 of the
  * common territory, general VAT regime and direct estimation; anything else is flagged.
  */
 export function unsupportedSetup(tax: Pick<TaxSetup, "region" | "incomeTaxMethod" | "vatRegime">): string[] {
@@ -112,7 +112,7 @@ export function unsupportedSetup(tax: Pick<TaxSetup, "region" | "incomeTaxMethod
   if (tax.vatRegime === "surcharge")
     notes.push("En el recargo de equivalencia no se presenta el modelo 303: el IVA lo ingresa tu proveedor.");
   if (tax.vatRegime === "cashBasis")
-    notes.push("Con criterio de caja el IVA se declara al cobrar y pagar; Fiscalia lo calcula todavía por devengo.");
+    notes.push("Con criterio de caja el IVA se declara al cobrar y pagar; cuentalibre lo calcula todavía por devengo.");
   return notes;
 }
 

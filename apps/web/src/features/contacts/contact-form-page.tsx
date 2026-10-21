@@ -1,18 +1,18 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePlus2, Plus, Star, Trash2 } from "lucide-react";
-import { formatIban, isValidIban, newId, normalizeTaxId } from "@fiscalia/core";
-import type { BankAccount, Contact, ContactRole } from "@fiscalia/contracts";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
+import { formatIban, isValidIban, newId, normalizeTaxId } from "@cuentalibre/core";
+import type { BankAccount, Contact, ContactRole } from "@cuentalibre/contracts";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
-import { Checkbox, Input, Textarea } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+} from "@cuentalibre/ui/components/dropdown-menu";
+import { Checkbox, Input, Textarea } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { PercentInput, ReceiptDrop } from "@/features/purchases/form-parts";
 import { TagsField } from "@/features/sales/document-editor";
 import { CLIENT_DEFAULT, Field, GroupedSelect, LocaleFields, Section } from "@/features/sales/form-fields";

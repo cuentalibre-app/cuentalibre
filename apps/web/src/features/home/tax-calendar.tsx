@@ -1,7 +1,7 @@
 import { Link } from "react-router";
-import { buttonVariants } from "@fiscalia/ui/components/button";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { closingPath, quarterToClose, useQuarterChecks, useQuarterIsEmpty } from "@/features/closing/closing-model";
 import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";

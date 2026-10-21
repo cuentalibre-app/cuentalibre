@@ -1,11 +1,11 @@
 import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { Calendar, ChevronDown, Info } from "lucide-react";
-import { model347, obligation, sumBy, THRESHOLD_347, type Declared347 } from "@fiscalia/core";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { model347, obligation, sumBy, THRESHOLD_347, type Declared347 } from "@cuentalibre/core";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";

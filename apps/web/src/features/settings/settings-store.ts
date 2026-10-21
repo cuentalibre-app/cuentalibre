@@ -1,5 +1,5 @@
-import { newId } from "@fiscalia/core";
-import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@fiscalia/contracts";
+import { newId } from "@cuentalibre/core";
+import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@cuentalibre/contracts";
 import {
   initialAccounts,
   initialDefaultPaymentMethodId,

@@ -1,5 +1,5 @@
-import type { EntryError } from "@fiscalia/core";
-import type { Worker } from "@fiscalia/contracts";
+import type { EntryError } from "@cuentalibre/core";
+import type { Worker } from "@cuentalibre/contracts";
 import { workers } from "@/mocks/working-hours";
 
 export const WORKING_HOURS_PATH = "/jornada";

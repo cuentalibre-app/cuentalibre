@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "fiscalia:sidebar-collapsed";
+const STORAGE_KEY = "cuentalibre:sidebar-collapsed";
 
 function readStored(): boolean {
   try {

@@ -1,4 +1,4 @@
-import type { PurchaseInvoice } from "@fiscalia/contracts";
+import type { PurchaseInvoice } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { syncCollection } from "@/data/sync";
 import { initialPurchaseInvoices } from "@/mocks/purchases";

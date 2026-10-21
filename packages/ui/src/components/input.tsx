@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { MAX_DATE, MIN_DATE } from "@fiscalia/core";
+import { MAX_DATE, MIN_DATE } from "@cuentalibre/core";
 import { cn } from "../lib/cn";
 
 const fieldClass =

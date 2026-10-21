@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const devDatabaseUrl = "postgres://fiscalia:fiscalia@localhost:5432/fiscalia";
+const devDatabaseUrl = "postgres://cuentalibre:cuentalibre@localhost:5432/cuentalibre";
 const devSecret = "dev-only-secret-do-not-use-in-production-0000";
 
 const envSchema = z

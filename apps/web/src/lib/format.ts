@@ -1,4 +1,4 @@
-import { centsToEuros, eurosToCents, type Cents, type Deadline, type Period } from "@fiscalia/core";
+import { centsToEuros, eurosToCents, type Cents, type Deadline, type Period } from "@cuentalibre/core";
 
 export const MONTHS = [
   "Enero",

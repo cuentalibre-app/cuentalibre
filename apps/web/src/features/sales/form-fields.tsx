@@ -1,6 +1,6 @@
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
 import { ChevronDown, CircleHelp } from "lucide-react";
-import { Checkbox } from "@fiscalia/ui/components/input";
+import { Checkbox } from "@cuentalibre/ui/components/input";
 import {
   Select,
   SelectContent,
@@ -10,9 +10,9 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@fiscalia/ui/components/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+} from "@cuentalibre/ui/components/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { LANGUAGES, NUMBER_FORMATS, formatSample } from "./invoice-locale";
 import type { OptionGroup } from "./sales-model";
 

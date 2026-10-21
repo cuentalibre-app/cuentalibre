@@ -7,7 +7,7 @@ import type {
   StoredFile,
   SyncCommand,
   Workspace,
-} from "@fiscalia/contracts";
+} from "@cuentalibre/contracts";
 import { setBackend, type Backend } from "./backend";
 import type { Command } from "./commands";
 import { applyChanges, applyWorkspace, isSettingsSynced, isSynced } from "./sync";
@@ -179,7 +179,7 @@ export async function connectApi(baseUrl: string): Promise<ConnectResult> {
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return "signed-out";
     if (error instanceof ApiError && error.status === 403) return "no-organization";
-    console.warn("Fiscalia API not available:", error);
+    console.warn("cuentalibre API not available:", error);
     return "unavailable";
   }
   setBackend(api);

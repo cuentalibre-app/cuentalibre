@@ -1,5 +1,5 @@
-import { centsToEuros, type Cents } from "@fiscalia/core";
-import type { DocumentFont, InvoiceTemplate, PaymentMethodType, SalesKind } from "@fiscalia/contracts";
+import { centsToEuros, type Cents } from "@cuentalibre/core";
+import type { DocumentFont, InvoiceTemplate, PaymentMethodType, SalesKind } from "@cuentalibre/contracts";
 
 /*
  * How a sales document's PDF looks and reads: template layout, font, colors,

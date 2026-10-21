@@ -26,7 +26,7 @@ import {
   type Period,
   type PurchaseOperationType,
   type WithholdingKind,
-} from "@fiscalia/core";
+} from "@cuentalibre/core";
 import type {
   Contact,
   ContactRole,
@@ -39,7 +39,7 @@ import type {
   PurchaseLine,
   SalesDocument,
   SalesLine,
-} from "@fiscalia/contracts";
+} from "@cuentalibre/contracts";
 import { contactsStore } from "@/features/contacts/contacts-store";
 import { EXPENSES_PATH, expenseIdentity } from "@/features/purchases/expenses-model";
 import { expensesStore } from "@/features/purchases/expenses-store";

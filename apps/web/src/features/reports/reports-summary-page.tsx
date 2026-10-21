@@ -12,12 +12,12 @@ import {
   type Cents,
   type MonthResult,
   type Period,
-} from "@fiscalia/core";
-import { buttonVariants } from "@fiscalia/ui/components/button";
-import { Card, CardTitle } from "@fiscalia/ui/components/card";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { PeriodSelect } from "@/components/period-select";
 import { TopCounterparties } from "@/features/home/top-counterparties";
 import { PURCHASES_PATH } from "@/features/purchases/purchases-model";

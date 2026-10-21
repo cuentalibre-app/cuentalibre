@@ -1,9 +1,9 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useSearchParams } from "react-router";
-import { defaultPeriod, parsePeriod, periodKey, type Period } from "@fiscalia/core";
+import { defaultPeriod, parsePeriod, periodKey, type Period } from "@cuentalibre/core";
 
 const PARAM = "periodo";
-const STORAGE_KEY = "fiscalia:period";
+const STORAGE_KEY = "cuentalibre:period";
 
 /*
  * The selected period is shared by every page, so picking 2026 on the home page carries over to

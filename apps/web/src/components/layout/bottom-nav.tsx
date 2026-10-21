@@ -1,6 +1,6 @@
 import { NavLink } from "react-router";
 import { LayoutGrid, Menu, Percent, Plus, ReceiptText, type LucideIcon } from "lucide-react";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { CreateMenu } from "./create-menu";
 
 const tabs: { label: string; to: string; icon: LucideIcon; end?: boolean }[] = [

@@ -18,15 +18,15 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { sumBy, type Cents } from "@fiscalia/core";
-import type { Contact, ContactRole } from "@fiscalia/contracts";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { sumBy, type Cents } from "@cuentalibre/core";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { NEW_EXPENSE_PATH } from "@/features/purchases/expenses-model";
 import { NEW_PURCHASE_PATH } from "@/features/purchases/purchases-model";

@@ -1,12 +1,12 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { FileKey2, ShieldCheck, Trash2 } from "lucide-react";
-import type { SignatureMode, SignedDocument } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+import type { SignatureMode, SignedDocument } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { formatDate } from "@/lib/format";
 import { complianceStore, useCompliance } from "./compliance-store";
@@ -102,7 +102,7 @@ export function CertificatesPage() {
 
         <Section title="Configuración del certificado digital" index={1}>
           <p className="m-0 max-w-3xl text-muted-foreground">
-            Sube tu certificado digital a Fiscalia para firmar digitalmente tus documentos.
+            Sube tu certificado digital a cuentalibre para firmar digitalmente tus documentos.
           </p>
           <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <CertificateDrop onFile={setPending} />
@@ -145,7 +145,7 @@ export function CertificatesPage() {
             </p>
             <p className="m-0">
               Además, la firma digital hecha con un certificado válido y en vigor tiene la misma consideración legal que
-              una firma manuscrita. Fiscalia puede firmar tus facturas emitidas, presupuestos y albaranes en PDF.
+              una firma manuscrita. cuentalibre puede firmar tus facturas emitidas, presupuestos y albaranes en PDF.
             </p>
           </div>
           {!certificate && (

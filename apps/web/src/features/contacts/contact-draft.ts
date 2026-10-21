@@ -5,8 +5,8 @@ import {
   isValidEmail,
   storedTaxId,
   type WithholdingKind,
-} from "@fiscalia/core";
-import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@cuentalibre/contracts";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
 import { ROLES, countryOf, taxIdError } from "./contacts-model";
 import { contactsStore } from "./contacts-store";

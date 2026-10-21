@@ -1,4 +1,4 @@
-import type { SettingsSection } from "@fiscalia/contracts";
+import type { SettingsSection } from "@cuentalibre/contracts";
 import { jsonb, pgTable, primaryKey, text, uuid } from "drizzle-orm/pg-core";
 import { organization } from "./auth";
 import { createdAt, updatedAt } from "./columns";

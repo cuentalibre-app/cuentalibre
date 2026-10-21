@@ -1,4 +1,4 @@
-import type { Tag } from "@fiscalia/contracts";
+import type { Tag } from "@cuentalibre/contracts";
 
 /** Sample tag list until there is a backend. */
 

@@ -1,19 +1,19 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePlus2, FolderTree, X } from "lucide-react";
-import { cents, isCatalogUnit, newId, priceBreakdown, stockOf, surchargeFitsVat, type Cents } from "@fiscalia/core";
-import type { Product } from "@fiscalia/contracts";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
+import { cents, isCatalogUnit, newId, priceBreakdown, stockOf, surchargeFitsVat, type Cents } from "@cuentalibre/core";
+import type { Product } from "@cuentalibre/contracts";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
-import { Input, Textarea } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/ui/components/dropdown-menu";
+import { Input, Textarea } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PercentInput } from "@/features/purchases/form-parts";
 import { TagsField } from "@/features/sales/document-editor";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";

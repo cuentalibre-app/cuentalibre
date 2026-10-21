@@ -1,4 +1,4 @@
-import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@fiscalia/contracts";
+import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@cuentalibre/contracts";
 import type { SettingsSection } from "@/data/commands";
 import { createStore } from "@/data/store";
 import { initialNotificationPrefs, initialUserAccess, initialUserLocale, initialUserProfile } from "@/mocks/user";

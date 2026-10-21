@@ -1,5 +1,5 @@
 {
-  "name": "@fiscalia/ui",
+  "name": "@cuentalibre/ui",
   "version": "0.0.0",
   "license": "AGPL-3.0-only",
   "private": true,
@@ -13,7 +13,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@fiscalia/core": "workspace:*",
+    "@cuentalibre/core": "workspace:*",
     "@fontsource-variable/geist": "^5.2.0",
     "@fontsource-variable/geist-mono": "^5.2.0",
     "class-variance-authority": "^0.7.1",

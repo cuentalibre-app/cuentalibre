@@ -9,8 +9,8 @@ import {
   type StockDocumentKind,
   type StockMovement,
   type StockReason,
-} from "@fiscalia/core";
-import type { CatalogSettings, Product, SalesDocument } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { CatalogSettings, Product, SalesDocument } from "@cuentalibre/contracts";
 import type { Command, Entity } from "@/data/commands";
 import { createStore } from "@/data/store";
 import { listTarget, syncSettings, syncTarget } from "@/data/sync";

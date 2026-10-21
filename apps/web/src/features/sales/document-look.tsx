@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
-import type { DocumentLook, InvoiceTemplate } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { cn } from "@fiscalia/ui/lib/cn";
+import type { DocumentLook, InvoiceTemplate } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { Field, GroupedSelect, LocaleFields } from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
 import { DEFAULT_SETTINGS, FONTS, TEMPLATES } from "./invoice-settings";

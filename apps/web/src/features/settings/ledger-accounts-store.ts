@@ -1,4 +1,4 @@
-import type { LedgerAccountSettings } from "@fiscalia/contracts";
+import type { LedgerAccountSettings } from "@cuentalibre/contracts";
 import { createStore } from "@/data/store";
 import { syncSettings } from "@/data/sync";
 import { initialLedgerAccounts } from "@/mocks/ledger-accounts";

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { filedReturnsOf, lockedQuarter, newId, periodKey, toIsoDate, type Period } from "@fiscalia/core";
-import type { ClosedQuarter, FiledReturn } from "@fiscalia/contracts";
+import { filedReturnsOf, lockedQuarter, newId, periodKey, toIsoDate, type Period } from "@cuentalibre/core";
+import type { ClosedQuarter, FiledReturn } from "@cuentalibre/contracts";
 import { createStore } from "@/data/store";
 import { listTarget, syncTarget } from "@/data/sync";
 import { initialClosedQuarters, initialFiledReturns } from "@/mocks/closing";

@@ -16,9 +16,9 @@ import {
   type DeductibleAmounts,
   type InvoiceTotals,
   type PurchaseOperationType,
-} from "@fiscalia/core";
-import type { Contact, ExpenseType, PurchaseInvoice } from "@fiscalia/contracts";
-import type { BadgeProps } from "@fiscalia/ui/components/badge";
+} from "@cuentalibre/core";
+import type { Contact, ExpenseType, PurchaseInvoice } from "@cuentalibre/contracts";
+import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 import { contactsStore } from "@/features/contacts/contacts-store";
 import type { OptionGroup } from "@/features/sales/sales-model";
 

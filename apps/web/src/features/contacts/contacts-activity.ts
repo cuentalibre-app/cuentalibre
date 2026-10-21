@@ -1,6 +1,6 @@
-import { cents, isInPeriod, sumBy, sumCents, type Cents, type Period } from "@fiscalia/core";
-import type { ContactRole, Expense, PurchaseInvoice, SalesDocument, SalesKind } from "@fiscalia/contracts";
-import type { BadgeProps } from "@fiscalia/ui/components/badge";
+import { cents, isInPeriod, sumBy, sumCents, type Cents, type Period } from "@cuentalibre/core";
+import type { ContactRole, Expense, PurchaseInvoice, SalesDocument, SalesKind } from "@cuentalibre/contracts";
+import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 import { EXPENSES_PATH, EXPENSE_STATUS, expenseStatus } from "@/features/purchases/expenses-model";
 import { PURCHASES_PATH, PURCHASE_STATUS, purchaseStatus, purchaseTotals } from "@/features/purchases/purchases-model";
 import { KINDS, STATUS, displayStatus, documentTotals } from "@/features/sales/sales-model";

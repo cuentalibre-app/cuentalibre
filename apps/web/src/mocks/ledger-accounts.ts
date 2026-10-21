@@ -1,4 +1,4 @@
-import type { LedgerAccountSettings } from "@fiscalia/contracts";
+import type { LedgerAccountSettings } from "@cuentalibre/contracts";
 
 /** Ledger account numbers for exporting to accounting software. Contasimple's defaults until there is a backend. */
 

@@ -6,7 +6,7 @@ import {
   type InvoiceSettings,
   type OrganizationSettings,
   type SettingsSection,
-} from "@fiscalia/contracts";
+} from "@cuentalibre/contracts";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { organizationSetting, paymentMethod, salesDocument } from "../db/schema";

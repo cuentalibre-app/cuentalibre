@@ -8,15 +8,15 @@ import {
   type ReconciliationStatus,
   type StatementLine,
   type StatementParse,
-} from "@fiscalia/core";
-import type { TreasuryAccount } from "@fiscalia/contracts";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input, Textarea } from "@fiscalia/ui/components/input";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import type { TreasuryAccount } from "@cuentalibre/contracts";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input, Textarea } from "@cuentalibre/ui/components/input";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { ACCOUNT_ICONS } from "@/features/settings/account-icons";
 import {
   ACCOUNTS_PATH,

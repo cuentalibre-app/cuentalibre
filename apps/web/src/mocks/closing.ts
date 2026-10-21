@@ -1,4 +1,4 @@
-import type { ClosedQuarter, FiledReturn } from "@fiscalia/contracts";
+import type { ClosedQuarter, FiledReturn } from "@cuentalibre/contracts";
 
 /** Quarters already filed and closed in the sample data. */
 export const initialClosedQuarters: ClosedQuarter[] = [

@@ -1,4 +1,4 @@
-import { ENTITY_ROLES, type Change, type Changes, type PlainEntity, type Workspace } from "@fiscalia/contracts";
+import { ENTITY_ROLES, type Change, type Changes, type PlainEntity, type Workspace } from "@cuentalibre/contracts";
 import { and, asc, eq, gt, max } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
 import { changeLog, type LoggedEntity } from "../db/schema";

@@ -227,7 +227,7 @@ export const companyUserSchema = z.object({
 });
 export type CompanyUser = z.infer<typeof companyUserSchema>;
 
-export const emailProviderSchema = z.enum(["fiscalia", "gmail", "outlook", "smtp"]);
+export const emailProviderSchema = z.enum(["cuentalibre", "gmail", "outlook", "smtp"]);
 export type EmailProvider = z.infer<typeof emailProviderSchema>;
 
 export const smtpSecuritySchema = z.enum(["none", "auto", "implicit", "explicit"]);

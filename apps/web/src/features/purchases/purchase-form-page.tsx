@@ -33,20 +33,20 @@ import {
   type Cents,
   type PurchaseOperationType,
   type WithholdingKind,
-} from "@fiscalia/core";
-import type { Attachment, Contact, ExpenseType, PurchaseInvoice, RentalLocation } from "@fiscalia/contracts";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
+} from "@cuentalibre/core";
+import type { Attachment, Contact, ExpenseType, PurchaseInvoice, RentalLocation } from "@cuentalibre/contracts";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
-import { Input, Textarea } from "@fiscalia/ui/components/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@fiscalia/ui/components/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/ui/components/dropdown-menu";
+import { Input, Textarea } from "@cuentalibre/ui/components/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";

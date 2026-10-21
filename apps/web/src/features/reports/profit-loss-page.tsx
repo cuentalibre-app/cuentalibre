@@ -13,11 +13,11 @@ import {
   type Period,
   type PnlLine,
   type ProfitAndLoss,
-} from "@fiscalia/core";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/core";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
 import { TopCounterparties } from "@/features/home/top-counterparties";
 import { businessName } from "@/features/settings/settings-model";

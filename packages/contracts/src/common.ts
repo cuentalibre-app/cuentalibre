@@ -1,4 +1,4 @@
-import type { Cents } from "@fiscalia/core";
+import type { Cents } from "@cuentalibre/core";
 import { z } from "zod";
 
 /**

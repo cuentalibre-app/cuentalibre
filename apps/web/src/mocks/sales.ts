@@ -1,5 +1,5 @@
-import { WITHHOLDING_RATES, addDays, cents, invoiceTotals } from "@fiscalia/core";
-import type { SalesDocument, SalesKind, SalesLine, SalesStatus } from "@fiscalia/contracts";
+import { WITHHOLDING_RATES, addDays, cents, invoiceTotals } from "@cuentalibre/core";
+import type { SalesDocument, SalesKind, SalesLine, SalesStatus } from "@cuentalibre/contracts";
 
 /** Sample sales documents until there is a backend. Figures are made up. */
 

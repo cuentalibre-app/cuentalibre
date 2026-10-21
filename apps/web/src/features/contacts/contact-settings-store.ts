@@ -1,4 +1,4 @@
-import { DEFAULT_ORGANIZATION_SETTINGS, type ContactSettings } from "@fiscalia/contracts";
+import { DEFAULT_ORGANIZATION_SETTINGS, type ContactSettings } from "@cuentalibre/contracts";
 import { createStore } from "@/data/store";
 import { syncSettings } from "@/data/sync";
 

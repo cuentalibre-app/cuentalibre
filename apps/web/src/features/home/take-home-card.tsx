@@ -1,9 +1,9 @@
-import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, centsToEuros, type Cents } from "@fiscalia/core";
+import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, centsToEuros, type Cents } from "@cuentalibre/core";
 import { Info } from "lucide-react";
-import { Card, CardTitle } from "@fiscalia/ui/components/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatPercent } from "@/lib/format";

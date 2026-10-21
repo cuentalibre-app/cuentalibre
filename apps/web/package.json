@@ -1,5 +1,5 @@
 {
-  "name": "@fiscalia/web",
+  "name": "@cuentalibre/web",
   "version": "0.0.0",
   "license": "AGPL-3.0-only",
   "private": true,
@@ -12,9 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fiscalia/contracts": "workspace:*",
-    "@fiscalia/core": "workspace:*",
-    "@fiscalia/ui": "workspace:*",
+    "@cuentalibre/contracts": "workspace:*",
+    "@cuentalibre/core": "workspace:*",
+    "@cuentalibre/ui": "workspace:*",
     "fflate": "^0.8.3",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.49.0",

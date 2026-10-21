@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Bell, Check, PackageX } from "lucide-react";
-import { Button } from "@fiscalia/ui/components/button";
-import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@fiscalia/ui/components/popover";
-import { cn } from "@fiscalia/ui/lib/cn";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@cuentalibre/ui/components/popover";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { PRODUCTS_PATH, formatQuantity, productPath, productStock } from "@/features/catalog/catalog-model";
 import { useCatalog } from "@/features/catalog/catalog-store";
 
-const STORAGE_KEY = "fiscalia:read-notifications";
+const STORAGE_KEY = "cuentalibre:read-notifications";
 
 interface Notice {
   /** Changes with the alarm level, so running out after a read "low" warning notifies again. */

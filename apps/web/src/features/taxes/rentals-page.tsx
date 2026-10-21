@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { cents, model115, model180, obligation, sumCents, type Quarter } from "@fiscalia/core";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { cents, model115, model180, obligation, sumCents, type Quarter } from "@cuentalibre/core";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";

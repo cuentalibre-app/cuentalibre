@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toIsoDate } from "@fiscalia/core";
+import { toIsoDate } from "@cuentalibre/core";
 import { ExportButton, FormatField, PageShell, Panel } from "@/features/transfer/transfer-parts";
 import { downloadSheets, type SpreadsheetFormat } from "@/lib/xlsx";
 import { PRODUCTS_PATH } from "./catalog-model";

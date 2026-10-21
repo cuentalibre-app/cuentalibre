@@ -11,18 +11,18 @@ import {
   roundHundredths,
   type InvoiceLine,
   type WithholdingKind,
-} from "@fiscalia/core";
-import type { Product, SalesLine } from "@fiscalia/contracts";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
+} from "@cuentalibre/core";
+import type { Product, SalesLine } from "@cuentalibre/contracts";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
-import { Input, Textarea } from "@fiscalia/ui/components/input";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+} from "@cuentalibre/ui/components/dropdown-menu";
+import { Input, Textarea } from "@cuentalibre/ui/components/input";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
 import { conceptFor } from "@/features/catalog/catalog-model";

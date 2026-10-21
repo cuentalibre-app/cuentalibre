@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, Navigate } from "react-router";
-import { Button } from "@fiscalia/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { AuthLayout } from "./auth-layout";
 import {
   API_URL,
@@ -25,7 +25,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
       return <Navigate to={ONBOARDING_PATH} replace />;
     case "unavailable":
       return (
-        <AuthLayout title="No se puede conectar" description="El servidor de Fiscalia no responde ahora mismo.">
+        <AuthLayout title="No se puede conectar" description="El servidor de cuentalibre no responde ahora mismo.">
           <Button onClick={() => reloadAt(window.location.pathname)} className="w-full">
             Reintentar
           </Button>

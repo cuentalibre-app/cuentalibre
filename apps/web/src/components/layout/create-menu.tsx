@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
+} from "@cuentalibre/ui/components/dropdown-menu";
 import { createActions } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
 

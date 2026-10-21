@@ -1,9 +1,9 @@
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Calculator, ChevronRight } from "lucide-react";
-import type { Period } from "@fiscalia/core";
-import { buttonVariants } from "@fiscalia/ui/components/button";
-import { cn } from "@fiscalia/ui/lib/cn";
+import type { Period } from "@cuentalibre/core";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { usePeriod } from "@/lib/use-period";
 import { FACTS, FormFactsList } from "./form-info";
 import {

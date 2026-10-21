@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { model347 } from "@fiscalia/core";
+import { model347 } from "@cuentalibre/core";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { purchaseTotals } from "@/features/purchases/purchases-model";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { usePartyBooks } from "./party-operations";
 
-/** Which of the forms Fiscalia doesn't prepare yet the books of a year call for. */
+/** Which of the forms cuentalibre doesn't prepare yet the books of a year call for. */
 export interface FormsInUse {
   /** Professionals' invoices with withholding: forms 111 and 190. */
   withholdings: boolean;

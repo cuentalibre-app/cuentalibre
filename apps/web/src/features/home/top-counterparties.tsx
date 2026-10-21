@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import { TriangleAlert } from "lucide-react";
-import { ECONOMIC_DEPENDENCY_THRESHOLD, type CounterpartyRanking } from "@fiscalia/core";
-import { Card, CardTitle } from "@fiscalia/ui/components/card";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { ECONOMIC_DEPENDENCY_THRESHOLD, type CounterpartyRanking } from "@cuentalibre/core";
+import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { formatPercent } from "@/lib/format";
 
 interface Props {

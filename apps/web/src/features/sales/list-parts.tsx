@@ -1,15 +1,15 @@
 import { Fragment, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ChevronsUpDown, FilePlus2, Search, type LucideIcon } from "lucide-react";
-import { centsToEuros, type Cents } from "@fiscalia/core";
-import { Button } from "@fiscalia/ui/components/button";
+import { centsToEuros, type Cents } from "@cuentalibre/core";
+import { Button } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@fiscalia/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+} from "@cuentalibre/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 
 /* Building blocks shared by the document lists (sales and purchases). Tooltips need a TooltipProvider above. */
 

@@ -1,5 +1,5 @@
-import type { Attachment } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import type { Attachment } from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { currentBackend } from "./backend";
 
 /*

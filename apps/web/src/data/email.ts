@@ -1,4 +1,4 @@
-import type { EmailMessage, EmailRequest } from "@fiscalia/contracts";
+import type { EmailMessage, EmailRequest } from "@cuentalibre/contracts";
 import { currentBackend } from "./backend";
 
 /*

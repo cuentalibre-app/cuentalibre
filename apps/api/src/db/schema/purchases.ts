@@ -1,5 +1,5 @@
-import type { Attachment, ExpenseType, InvestmentAsset, OtherPayee, RentalLocation } from "@fiscalia/contracts";
-import type { PurchaseOperationType, WithholdingKind } from "@fiscalia/core";
+import type { Attachment, ExpenseType, InvestmentAsset, OtherPayee, RentalLocation } from "@cuentalibre/contracts";
+import type { PurchaseOperationType, WithholdingKind } from "@cuentalibre/core";
 import { sql } from "drizzle-orm";
 import {
   boolean,

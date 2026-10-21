@@ -1,4 +1,4 @@
-import { newId } from "@fiscalia/core";
+import { newId } from "@cuentalibre/core";
 import { apiKey } from "@better-auth/api-key";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -18,7 +18,7 @@ export const API_KEY_PREFIX = "fsk_";
  */
 export function createAuth(db: Db, env: Env) {
   return betterAuth({
-    appName: "Fiscalia",
+    appName: "cuentalibre",
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/v1/auth",

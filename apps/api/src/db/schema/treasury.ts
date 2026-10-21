@@ -1,4 +1,4 @@
-import type { AccountKind, MovementSource, PaymentMethodType } from "@fiscalia/contracts";
+import type { AccountKind, MovementSource, PaymentMethodType } from "@cuentalibre/contracts";
 import { boolean, foreignKey, index, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization } from "./auth";
 import { createdAt, updatedAt } from "./columns";

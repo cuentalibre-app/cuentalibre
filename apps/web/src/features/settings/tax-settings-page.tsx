@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { ArrowDown, ArrowUp, Info, Plus, Search, Star, Trash2, TriangleAlert, UserPlus } from "lucide-react";
-import { cents, newId } from "@fiscalia/core";
-import type { EconomicActivity, FiscalRegion, IncomeTaxMethod, TaxSetup, VatRegime } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { cents, newId } from "@cuentalibre/core";
+import type { EconomicActivity, FiscalRegion, IncomeTaxMethod, TaxSetup, VatRegime } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { ROLES } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
@@ -172,7 +172,7 @@ function ActivitiesTable({
       <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm text-muted-foreground">
         <li>Ordénalas de mayor a menor volumen de operaciones: la primera es tu actividad principal.</li>
         <li>Si no sabes en qué actividades estás de alta, consúltalo en el modelo 036 o 037 que presentaste.</li>
-        <li>Fiscalia imputa todos los ingresos y gastos a la actividad principal.</li>
+        <li>cuentalibre imputa todos los ingresos y gastos a la actividad principal.</li>
       </ul>
 
       {activities.length === 0 ? (
@@ -396,7 +396,7 @@ export function TaxSettingsPage() {
             <div role="note" className="flex gap-2 rounded-lg bg-warning-soft px-3 py-2.5 text-sm">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
               <div className="flex flex-col gap-1">
-                <span className="font-medium">Fiscalia todavía no prepara los modelos de este régimen.</span>
+                <span className="font-medium">cuentalibre todavía no prepara los modelos de este régimen.</span>
                 {notes.map((n) => (
                   <span key={n} className="text-muted-foreground">
                     {n}

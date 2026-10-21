@@ -13,14 +13,14 @@ import {
   Unlink,
   Upload,
 } from "lucide-react";
-import { isInPeriod, periodKey, reconciliationStatus, sumBy, type ReconciliationStatus } from "@fiscalia/core";
-import type { BankMovement } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { DropdownMenuTrigger } from "@fiscalia/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+import { isInPeriod, periodKey, reconciliationStatus, sumBy, type ReconciliationStatus } from "@cuentalibre/core";
+import type { BankMovement } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { GroupedSelect } from "@/features/sales/form-fields";

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { BellRing, ImageUp, Trash2 } from "lucide-react";
-import type { Gender, NotificationPrefs, UserLocale, UserProfile } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
+import type { Gender, NotificationPrefs, UserLocale, UserProfile } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { LANGUAGES, NUMBER_FORMATS, defaultNumberFormat, formatSample } from "@/features/sales/invoice-locale";
 import type { Option } from "@/features/sales/sales-model";
@@ -56,7 +56,7 @@ export function ProfilePage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
         <SettingsHeader
           title="Datos personales"
-          description="Tus datos como usuario de Fiscalia, no los de tu empresa."
+          description="Tus datos como usuario de cuentalibre, no los de tu empresa."
         />
         <PersonalSection />
         <NotificationsSection />
@@ -227,8 +227,8 @@ function NotificationsSection() {
       action={<SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />}
     >
       <p className="m-0 max-w-3xl text-muted-foreground">
-        Fiscalia se toma muy en serio tu privacidad: no comercia con los correos electrónicos ni con los datos de sus
-        usuarios. Todas las notificaciones que recibas las envía directamente el equipo de Fiscalia.
+        cuentalibre se toma muy en serio tu privacidad: no comercia con los correos electrónicos ni con los datos de sus
+        usuarios. Todas las notificaciones que recibas las envía directamente el equipo de cuentalibre.
       </p>
       <div className="grid gap-5 md:grid-cols-2">
         <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
@@ -330,7 +330,7 @@ function LocaleSection() {
     >
       <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
         <p className="m-0">
-          Fiscalia está en español por ahora. Si eliges otro idioma, los textos seguirán en español, pero los números y
+          cuentalibre está en español por ahora. Si eliges otro idioma, los textos seguirán en español, pero los números y
           las fechas tomarán su formato.
         </p>
         <p className="m-0">

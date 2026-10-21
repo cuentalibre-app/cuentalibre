@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from "react";
-import { newId } from "@fiscalia/core";
-import type { Contact, ContactRole } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
+import { newId } from "@cuentalibre/core";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { fromDraft, hasErrors, toDraft, validateDraft, type ContactDraft, type DraftErrors } from "./contact-draft";
 import { AddressFields, IdentityFields } from "./contact-fields";

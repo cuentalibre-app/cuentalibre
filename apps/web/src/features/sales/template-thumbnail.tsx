@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { DocumentLook, InvoiceTemplate } from "@fiscalia/contracts";
+import type { DocumentLook, InvoiceTemplate } from "@cuentalibre/contracts";
 import { TEMPLATE_STYLES, type TemplateFamily } from "./pdf-look";
 
 /*

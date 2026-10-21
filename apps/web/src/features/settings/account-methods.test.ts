@@ -1,4 +1,4 @@
-import type { PaymentMethod, TreasuryAccount } from "@fiscalia/contracts";
+import type { PaymentMethod, TreasuryAccount } from "@cuentalibre/contracts";
 import { describe, expect, it } from "vitest";
 import { addAccount, removeAccount, setAccountActive, takesMethod, type MethodBook } from "./account-methods";
 

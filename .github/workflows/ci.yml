@@ -12,18 +12,18 @@ jobs:
       postgres:
         image: postgres:18-alpine
         env:
-          POSTGRES_USER: fiscalia
-          POSTGRES_PASSWORD: fiscalia
-          POSTGRES_DB: fiscalia
+          POSTGRES_USER: cuentalibre
+          POSTGRES_PASSWORD: cuentalibre
+          POSTGRES_DB: cuentalibre
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U fiscalia"
+          --health-cmd "pg_isready -U cuentalibre"
           --health-interval 2s
           --health-timeout 5s
           --health-retries 15
     env:
-      TEST_DATABASE_URL: postgres://fiscalia:fiscalia@localhost:5432/fiscalia_test
+      TEST_DATABASE_URL: postgres://cuentalibre:cuentalibre@localhost:5432/cuentalibre_test
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -37,6 +37,6 @@ jobs:
       - run: pnpm build
       - name: Check the migrations match the schema
         run: |
-          pnpm --filter @fiscalia/api db:generate
+          pnpm --filter @cuentalibre/api db:generate
           git diff --exit-code --stat -- apps/api/drizzle
           test -z "$(git status --porcelain -- apps/api/drizzle)"

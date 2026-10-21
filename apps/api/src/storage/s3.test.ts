@@ -3,7 +3,7 @@ import { s3Storage } from "./s3";
 
 const options = {
   endpoint: "http://minio:9000/",
-  bucket: "fiscalia",
+  bucket: "cuentalibre",
   region: "auto",
   accessKeyId: "key",
   secretAccessKey: "secret",
@@ -27,8 +27,8 @@ describe("s3 storage", () => {
     const body = await storage.get("org/file id/key");
 
     expect(requests.map((request) => [request.method, request.url])).toEqual([
-      ["PUT", "http://minio:9000/fiscalia/org/file%20id/key"],
-      ["GET", "http://minio:9000/fiscalia/org/file%20id/key"],
+      ["PUT", "http://minio:9000/cuentalibre/org/file%20id/key"],
+      ["GET", "http://minio:9000/cuentalibre/org/file%20id/key"],
     ]);
     expect(requests[0]!.headers.get("content-type")).toBe("application/pdf");
     expect(requests[0]!.headers.get("authorization")).toMatch(/^AWS4-HMAC-SHA256 Credential=key\//);

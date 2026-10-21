@@ -1,4 +1,4 @@
-import { cents } from "@fiscalia/core";
+import { cents } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { documentLocale, fitWithin, hexToRgb, mix, PDF_LABELS, pdfFormat, pdfLabels } from "./pdf-look";
 

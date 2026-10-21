@@ -1,4 +1,4 @@
-import type { Change, OrganizationSettings, SettingsSection, SyncedEntity, Workspace } from "@fiscalia/contracts";
+import type { Change, OrganizationSettings, SettingsSection, SyncedEntity, Workspace } from "@cuentalibre/contracts";
 import type { Collection } from "./collection";
 
 /*

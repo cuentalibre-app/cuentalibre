@@ -1,10 +1,10 @@
 import { useState, type CSSProperties } from "react";
 import { AtSign, CircleCheck, Inbox, Loader2, Mail, Server, Unplug, type LucideIcon } from "lucide-react";
-import type { EmailProvider, EmailSettings, SmtpSecurity, SmtpSettings } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
+import type { EmailProvider, EmailSettings, SmtpSecurity, SmtpSettings } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import type { Option } from "@/features/sales/sales-model";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
@@ -15,10 +15,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const PROVIDERS: { value: EmailProvider; title: string; description: string; icon: LucideIcon }[] = [
   {
-    value: "fiscalia",
-    title: "Fiscalia",
+    value: "cuentalibre",
+    title: "cuentalibre",
     description:
-      "Los correos se envían desde una dirección de Fiscalia, con tu nombre como remitente y tu email para las respuestas.",
+      "Los correos se envían desde una dirección de cuentalibre, con tu nombre como remitente y tu email para las respuestas.",
     icon: Mail,
   },
   { value: "gmail", title: "Gmail", description: "Para cuentas de Gmail o Google Workspace.", icon: AtSign },
@@ -55,7 +55,7 @@ function smtpErrors(smtp: SmtpSettings): SmtpErrors {
   return errors;
 }
 
-/** Outgoing email: who sends the invoices, quotes and reminders you email from Fiscalia. */
+/** Outgoing email: who sends the invoices, quotes and reminders you email from cuentalibre. */
 export function EmailSettingsPage() {
   const saved = useEmailSettings();
   const { profile } = useSettings();

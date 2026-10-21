@@ -7,12 +7,12 @@ import {
   codeError,
   ledgerAccountNumber,
   prefixError,
-} from "@fiscalia/core";
-import type { ContactRole, LedgerAccountKey, LedgerAccountSettings, PaymentMethodType } from "@fiscalia/contracts";
-import { Input } from "@fiscalia/ui/components/input";
-import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import type { ContactRole, LedgerAccountKey, LedgerAccountSettings, PaymentMethodType } from "@cuentalibre/contracts";
+import { Input } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { table } from "@cuentalibre/ui/lib/table";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { ledgerAccountsStore, useLedgerAccounts } from "./ledger-accounts-store";
@@ -135,7 +135,7 @@ export function LedgerAccountsPage() {
 
         <Section title="Configuración de la exportación" index={0}>
           <p className="m-0 max-w-3xl text-muted-foreground">
-            Configura los números de cuenta contable que se usan al exportar la información de Fiscalia, para que tu
+            Configura los números de cuenta contable que se usan al exportar la información de cuentalibre, para que tu
             gestoría pueda importarla en programas de contabilidad como a3ASESOR | eco | con o GSE Humansoftware.
           </p>
           <div className="flex max-w-3xl flex-col gap-3 rounded-lg bg-warning-soft px-4 py-3 text-sm">

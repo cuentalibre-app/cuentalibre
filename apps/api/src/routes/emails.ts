@@ -1,4 +1,4 @@
-import { emailMessageSchema, emailRequestSchema } from "@fiscalia/contracts";
+import { emailMessageSchema, emailRequestSchema } from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { AppEnv } from "../context";
 import { listEmails, queueEmail } from "../email/messages";

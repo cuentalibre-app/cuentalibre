@@ -1,9 +1,9 @@
 import { useState, type CSSProperties } from "react";
-import { cents, eurosToCents, type Cents } from "@fiscalia/core";
-import { Card, CardTitle } from "@fiscalia/ui/components/card";
-import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { cents, eurosToCents, type Cents } from "@cuentalibre/core";
+import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { formatThousands, MONTHS, MONTHS_INITIAL, MONTHS_SHORT } from "@/lib/format";
 import type { HomeData } from "./home-data";
 

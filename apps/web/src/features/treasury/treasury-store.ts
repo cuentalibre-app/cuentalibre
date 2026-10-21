@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { cents, newId, toIsoDate } from "@fiscalia/core";
-import type { BankMovement, ManualPayment } from "@fiscalia/contracts";
+import { cents, newId, toIsoDate } from "@cuentalibre/core";
+import type { BankMovement, ManualPayment } from "@cuentalibre/contracts";
 import { expensesStore, useExpenses } from "@/features/purchases/expenses-store";
 import { purchasesStore, usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { withPayments } from "@/features/sales/sales-model";

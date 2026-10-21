@@ -20,7 +20,7 @@ const stopWorker = startWorker(db, {
   verifactu: verifactuHandler(db, createVerifactuTransport(env), {
     producerName: env.VERIFACTU_PRODUCER_NAME ?? "",
     producerTaxId: env.VERIFACTU_PRODUCER_TAX_ID ?? "",
-    name: "Fiscalia",
+    name: "cuentalibre",
     id: "FI",
     version: "1.0",
   }),

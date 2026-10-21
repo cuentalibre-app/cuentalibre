@@ -3,15 +3,15 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      POSTGRES_USER: fiscalia
-      POSTGRES_PASSWORD: fiscalia
-      POSTGRES_DB: fiscalia
+      POSTGRES_USER: cuentalibre
+      POSTGRES_PASSWORD: cuentalibre
+      POSTGRES_DB: cuentalibre
     ports:
       - "5432:5432"
     volumes:
       - postgres:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fiscalia"]
+      test: ["CMD-SHELL", "pg_isready -U cuentalibre"]
       interval: 2s
       timeout: 5s
       retries: 15

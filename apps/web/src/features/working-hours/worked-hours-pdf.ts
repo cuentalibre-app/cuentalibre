@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { formatDuration } from "@fiscalia/core";
+import { formatDuration } from "@cuentalibre/core";
 import { weekdayName } from "./working-hours-model";
 import {
   intervalLabel,

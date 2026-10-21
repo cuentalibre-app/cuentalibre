@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { Lock } from "lucide-react";
-import type { Period } from "@fiscalia/core";
+import type { Period } from "@cuentalibre/core";
 import { closingPath, quarterName } from "./closing-model";
 
 /** Shown on a document whose quarter is closed: it can be read but not changed. */

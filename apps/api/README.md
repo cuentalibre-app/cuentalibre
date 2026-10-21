@@ -1,4 +1,4 @@
-# @fiscalia/api
+# @cuentalibre/api
 
 The backend: [Hono](https://hono.dev) on Node, Postgres through [Drizzle](https://orm.drizzle.team), and [Better Auth](https://better-auth.com) for sign-in and organizations. See [docs/architecture.md](../../docs/architecture.md) for the reasoning.
 
@@ -58,7 +58,7 @@ Drafts, quotes and delivery notes are plain records. Invoices only come into bei
 
 - gives the invoice the next number of its series and year (`R-` for rectifying invoices), under the organization's write lock so numbers stay gapless; a number is only kept as sent for imported invoices;
 - rejects a date earlier than the last invoice of the series, a date in a closed quarter, a missing client or lines, and a rectifying invoice that doesn't name an issued invoice of the normal series;
-- freezes the client's fiscal data and the totals, computed with `@fiscalia/core` from the lines as stored.
+- freezes the client's fiscal data and the totals, computed with `@cuentalibre/core` from the lines as stored.
 
 After that, an invoice only takes changes to its collection (`status`, `paidOn`, `paymentMethodId`), tags, attachments and private notes; anything else, and deleting it, answers `409 invoice_issued`. It is corrected with a rectifying invoice.
 
@@ -123,4 +123,4 @@ CI fails if the migrations are out of date with the schema.
 
 ## Tests
 
-Integration tests run against a real Postgres: the `fiscalia_test` database on the compose server, or `TEST_DATABASE_URL`. The database is wiped and migrated at the start of each run.
+Integration tests run against a real Postgres: the `cuentalibre_test` database on the compose server, or `TEST_DATABASE_URL`. The database is wiped and migrated at the start of each run.

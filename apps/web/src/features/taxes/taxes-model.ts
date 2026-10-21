@@ -1,6 +1,6 @@
-import { defaultPeriod, EXPENSE_BOXES_100, type CalendarStatus, type FilingStatus, type Period } from "@fiscalia/core";
-import type { TaxSetup } from "@fiscalia/contracts";
-import type { BadgeProps } from "@fiscalia/ui/components/badge";
+import { defaultPeriod, EXPENSE_BOXES_100, type CalendarStatus, type FilingStatus, type Period } from "@cuentalibre/core";
+import type { TaxSetup } from "@cuentalibre/contracts";
+import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 
 export const TAXES_PATH = "/impuestos";
 export const VAT_PATH = "/impuestos/iva";
@@ -82,7 +82,7 @@ export type FormCode = keyof typeof AEAT_LINKS;
 
 /** Shared caveat of every calculation: it only knows what was recorded. */
 export const ONLY_RECORDED =
-  "Solo cuenta lo que has registrado en Fiscalia: si tienes otras actividades fuera de la app o usas otro método de estimación, ajusta las cifras antes de presentar.";
+  "Solo cuenta lo que has registrado en cuentalibre: si tienes otras actividades fuera de la app o usas otro método de estimación, ajusta las cifras antes de presentar.";
 
 /** Who the VAT and income tax calculations are for. */
 export const ACTIVITY_SCOPE = "No sirve para actividades agrícolas, ganaderas, forestales o pesqueras.";
@@ -269,7 +269,7 @@ export const LAYOUT_303: FormSection[] = [
         hint: {
           text: [
             "Si el 303 del periodo anterior salió negativo y lo dejaste **a compensar**, ese importe va aquí para descontarlo.",
-            "Fiscalia lo calcula con tus datos; puedes corregirlo.",
+            "cuentalibre lo calcula con tus datos; puedes corregirlo.",
           ],
         },
       },
@@ -529,7 +529,7 @@ export const LAYOUT_130: FormSection[] = [
           text: [
             "Suma de las casillas **[07] positivas** de los 130 anteriores de este año.",
             "Si en esos trimestres rellenaste la casilla **[16]** por el préstamo de tu vivienda habitual, resta aquí la suma de esas deducciones.",
-            "Fiscalia la calcula con los trimestres cerrados tal como se presentaron y el resto con tus datos actuales. Si pagaste otra cantidad, escribe aquí lo que pagaste de verdad.",
+            "cuentalibre la calcula con los trimestres cerrados tal como se presentaron y el resto con tus datos actuales. Si pagaste otra cantidad, escribe aquí lo que pagaste de verdad.",
           ],
         },
         "05",
@@ -551,7 +551,7 @@ export const LAYOUT_130: FormSection[] = [
         cells: ["13"],
         hint: {
           text: [
-            "Opcional: Fiscalia la deja **en blanco** para que la rellenes tú, en positivo, si quieres aplicarla.",
+            "Opcional: cuentalibre la deja **en blanco** para que la rellenes tú, en positivo, si quieres aplicarla.",
             "Te corresponde si tu rendimiento neto de actividades del año anterior fue **igual o inferior a 12.000 €**. Si no tuviste actividad, cuenta como cero. El importe sale de esta tabla:",
           ],
           table: {
@@ -757,13 +757,13 @@ export const LAYOUT_111: FormSection[] = [
       },
       info(
         "Rendimientos en especie",
-        "Fiscalia no los calcula: si pagas a trabajadores en especie, añádelos a mano en la sede.",
+        "cuentalibre no los calcula: si pagas a trabajadores en especie, añádelos a mano en la sede.",
         "04",
         "05",
         "06",
       ),
     ],
-    note: "Las retenciones de las nóminas de tus trabajadores también van aquí: Fiscalia no las calcula, añádelas a mano en la sede.",
+    note: "Las retenciones de las nóminas de tus trabajadores también van aquí: cuentalibre no las calcula, añádelas a mano en la sede.",
   },
   {
     title: "II. Rendimientos de actividades económicas",

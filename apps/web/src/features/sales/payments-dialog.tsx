@@ -1,11 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { amountOutstanding, newId, toIsoDate, type Cents } from "@fiscalia/core";
-import type { Payment } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { amountOutstanding, newId, toIsoDate, type Cents } from "@cuentalibre/core";
+import type { Payment } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { defaultPaymentMethodId, paymentMethodName, paymentMethodOptions } from "@/features/settings/settings-model";
 import { MethodDialog } from "@/features/settings/method-dialog";
 import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";

@@ -5,8 +5,8 @@ import {
   type TaxablePurchase,
   type TaxableSale,
   type TaxBooks,
-} from "@fiscalia/core";
-import type { Expense, ExpenseType, PurchaseInvoice, SalesDocument } from "@fiscalia/contracts";
+} from "@cuentalibre/core";
+import type { Expense, ExpenseType, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { deductibleOf } from "@/features/purchases/expenses-model";
 import { useFiledBoxes } from "@/features/closing/closing-store";
 import { useExpenses } from "@/features/purchases/expenses-store";

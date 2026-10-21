@@ -10,7 +10,7 @@ import { loadEnv } from "../env";
 import { diskStorage } from "../storage/disk";
 import { testDatabaseUrl } from "./database";
 
-const storageDir = mkdtempSync(join(tmpdir(), "fiscalia-files-"));
+const storageDir = mkdtempSync(join(tmpdir(), "cuentalibre-files-"));
 
 export const env = loadEnv({
   NODE_ENV: "test",

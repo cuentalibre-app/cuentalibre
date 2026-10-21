@@ -1,5 +1,5 @@
 import { HandCoins, Receipt, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
-import { cents, sumBy, type Cents, type ReconciliationStatus } from "@fiscalia/core";
+import { cents, sumBy, type Cents, type ReconciliationStatus } from "@cuentalibre/core";
 import type {
   BankMovement,
   Expense,
@@ -8,8 +8,8 @@ import type {
   PurchaseInvoice,
   SalesDocument,
   TreasuryAccount,
-} from "@fiscalia/contracts";
-import type { BadgeProps } from "@fiscalia/ui/components/badge";
+} from "@cuentalibre/contracts";
+import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 import { EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { PURCHASES_PATH, outstanding, supplierOf } from "@/features/purchases/purchases-model";
 import { KINDS, clientOf, outstandingOf } from "@/features/sales/sales-model";
@@ -39,7 +39,7 @@ export const RECONCILIATION: Record<ReconciliationStatus, { label: string; tone:
 export const RECONCILIATION_ORDER: ReconciliationStatus[] = ["none", "partial", "full"];
 
 /**
- * A collection or payment recorded in Fiscalia: an invoice marked as collected, a payment of a
+ * A collection or payment recorded in cuentalibre: an invoice marked as collected, a payment of a
  * received invoice or an expense, or a manual one. Signed like bank movements.
  */
 export interface TreasuryPayment {

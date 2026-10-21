@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { Lock } from "lucide-react";
-import type { SalesDocument, VerifactuStatus } from "@fiscalia/contracts";
-import { Badge, type BadgeProps } from "@fiscalia/ui/components/badge";
+import type { SalesDocument, VerifactuStatus } from "@cuentalibre/contracts";
+import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { useCompliance } from "@/features/settings/compliance-store";
 import { KINDS } from "./sales-model";
 

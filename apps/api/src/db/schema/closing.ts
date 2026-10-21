@@ -1,4 +1,4 @@
-import type { FiledForm } from "@fiscalia/core";
+import type { FiledForm } from "@cuentalibre/core";
 import { date, index, jsonb, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization } from "./auth";
 import { createdAt, updatedAt } from "./columns";

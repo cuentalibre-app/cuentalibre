@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
-import { Button } from "@fiscalia/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { LogoMark } from "@/components/logo";
 
 interface AuthLayoutProps {

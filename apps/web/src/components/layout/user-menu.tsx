@@ -7,8 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@fiscalia/ui/components/dropdown-menu";
-import { cn } from "@fiscalia/ui/lib/cn";
+} from "@cuentalibre/ui/components/dropdown-menu";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import {
   BUSINESS_PATH,
   PROFILE_PATH,

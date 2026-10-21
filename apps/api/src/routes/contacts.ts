@@ -1,5 +1,5 @@
-import { contactRoleSchema, storedContactSchema, type ContactEntity, type ContactRole } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import { contactRoleSchema, storedContactSchema, type ContactEntity, type ContactRole } from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import type { AppEnv } from "../context";

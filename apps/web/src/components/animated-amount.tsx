@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { cents, type Cents } from "@fiscalia/core";
-import { formatEUR } from "@fiscalia/ui/lib/format";
+import { cents, type Cents } from "@cuentalibre/core";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
 
 const DURATION = 500;
 

@@ -1,5 +1,5 @@
-import type { ApiKey, CreatedApiKey, SalesDocument } from "@fiscalia/contracts";
-import { newId } from "@fiscalia/core";
+import type { ApiKey, CreatedApiKey, SalesDocument } from "@cuentalibre/contracts";
+import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { membership } from "./db/schema";

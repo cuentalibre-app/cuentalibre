@@ -12,15 +12,15 @@ import {
   type Boxes,
   type Cents,
   type Quarter,
-} from "@fiscalia/core";
-import { Badge } from "@fiscalia/ui/components/badge";
-import { Button, buttonVariants } from "@fiscalia/ui/components/button";
-import { Input } from "@fiscalia/ui/components/input";
-import { SegmentedControl } from "@fiscalia/ui/components/segmented-control";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@fiscalia/ui/components/tooltip";
-import { cn } from "@fiscalia/ui/lib/cn";
-import { formatEUR } from "@fiscalia/ui/lib/format";
-import { table } from "@fiscalia/ui/lib/table";
+} from "@cuentalibre/core";
+import { Badge } from "@cuentalibre/ui/components/badge";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Input } from "@cuentalibre/ui/components/input";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { table } from "@cuentalibre/ui/lib/table";
 import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
 import {
   AEAT_LINKS,

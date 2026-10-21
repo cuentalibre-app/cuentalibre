@@ -1,4 +1,4 @@
-import type { NoteTemplate } from "@fiscalia/contracts";
+import type { NoteTemplate } from "@cuentalibre/contracts";
 
 /** Sample note templates until there is a backend. Payment methods live in the settings; products, in the catalog. */
 

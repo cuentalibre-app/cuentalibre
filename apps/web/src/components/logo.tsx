@@ -1,4 +1,4 @@
-import { cn } from "@fiscalia/ui/lib/cn";
+import { cn } from "@cuentalibre/ui/lib/cn";
 
 /**
  * The cuentalibre mark: rising columns whose last one is a person, the self-employed

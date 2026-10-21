@@ -1,4 +1,4 @@
-import { plainRecordSchemas, type PlainEntity } from "@fiscalia/contracts";
+import { plainRecordSchemas, type PlainEntity } from "@cuentalibre/contracts";
 import { and, eq, inArray, isNull, type SQL } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { z } from "zod";

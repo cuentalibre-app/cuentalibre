@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { formatSeriesNumber, newId, sameSeriesFormat, seriesMaskProblem, type SeriesMaskProblem } from "@fiscalia/core";
-import type { InvoiceSeries, InvoiceSeriesDefinition } from "@fiscalia/contracts";
-import { Button } from "@fiscalia/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
-import { Input } from "@fiscalia/ui/components/input";
+import { formatSeriesNumber, newId, sameSeriesFormat, seriesMaskProblem, type SeriesMaskProblem } from "@cuentalibre/core";
+import type { InvoiceSeries, InvoiceSeriesDefinition } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input } from "@cuentalibre/ui/components/input";
 import { Field, GroupedSelect } from "./form-fields";
 import { invoiceSettingsStore } from "./invoice-settings";
 import { invoiceSeriesList, seriesUsage } from "./sales-model";
