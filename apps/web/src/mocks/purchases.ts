@@ -149,22 +149,20 @@ const RECURRING: Recurring[] = [
   },
 ];
 
-/** Months with sample invoices: January 2025 to October 2026. */
+/** Months with sample invoices: January 2025 to December 2026. */
 const MONTHS: [year: number, month: number][] = [
   ...Array.from({ length: 12 }, (_, m): [number, number] => [2025, m]),
-  ...Array.from({ length: 10 }, (_, m): [number, number] => [2026, m]),
+  ...Array.from({ length: 12 }, (_, m): [number, number] => [2026, m]),
 ];
 
 const recurring = RECURRING.flatMap((r) =>
   MONTHS.flatMap(([year, month]) => {
     const issuedOn = iso(year, month, r.day);
-    // October 2026 is in progress: only what has arrived by mid-month
-    if (issuedOn > "2026-10-14") return [];
     const label = `${MONTH_NAMES[month]} ${year}`;
     const n = month + 1;
-    const latest = year === 2026 && month === 9;
-    const paidOn =
-      latest && r.supplierId !== "s4" && r.supplierId !== "s5" ? null : addDays(issuedOn, r.paidAfter ?? 1);
+    // October 2026 is in progress: only the card subscriptions are charged; later months are ahead
+    const pending = issuedOn > "2026-10-21" || (issuedOn >= "2026-10-01" && r.paymentMethodId !== "card");
+    const paidOn = pending ? null : addDays(issuedOn, r.paidAfter ?? 1);
     return [
       invoice(
         r.supplierId,
@@ -281,6 +279,30 @@ const occasional: PurchaseInvoice[] = [
     expenseType: "622",
     dueOn: "2026-10-24",
     paidOn: null,
+    tags: ["Equipo"],
+  }),
+  // November and December 2026 are ahead: received in advance, not paid yet
+  invoice("s6", "LP-2026-11258", "2026-11-19", [["Gasolina sin plomo 95", 59.1]], {
+    expenseType: "624",
+    imputation: 50,
+    paidOn: null,
+    paymentMethodId: "card",
+  }),
+  invoice("s7", "T-2026-0471", "2026-11-26", [["Material de oficina y agendas 2027", 34.71]], {
+    expenseType: "6293",
+    dueOn: "2026-12-26",
+    paidOn: null,
+  }),
+  invoice("s8", "POL-2026-121730", "2026-12-15", [["Seguro de equipos informáticos · anual", 142, 1, 0]], {
+    expenseType: "625",
+    operationType: "exempt",
+    dueOn: "2027-01-15",
+    paidOn: null,
+  }),
+  invoice("s9", "TP-26-006044", "2026-12-09", [["Auriculares con cancelación de ruido", 189.26]], {
+    expenseType: "6294",
+    paidOn: null,
+    paymentMethodId: "card",
     tags: ["Equipo"],
   }),
 ];

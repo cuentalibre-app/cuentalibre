@@ -52,10 +52,13 @@ function expense(
 const monthEnd = (year: number, month: number) =>
   `${year}-${String(month + 1).padStart(2, "0")}-${new Date(Date.UTC(year, month + 1, 0)).getUTCDate()}`;
 
-/** Monthly self-employed fee (RETA), January 2025 to September 2026. */
+/** Expenses after this date have not been charged yet. */
+const CHARGED_UNTIL = "2026-10-21";
+
+/** Monthly self-employed fee (RETA), January 2025 to December 2026. */
 const socialSecurity = [
   ...Array.from({ length: 12 }, (_, m): [number, number] => [2025, m]),
-  ...Array.from({ length: 9 }, (_, m): [number, number] => [2026, m]),
+  ...Array.from({ length: 12 }, (_, m): [number, number] => [2026, m]),
 ].map(([year, month]) =>
   expense(
     monthEnd(year, month),
@@ -65,6 +68,7 @@ const socialSecurity = [
     {
       otherPayee: SOCIAL_SECURITY,
       tags: ["Seguridad Social"],
+      paidOn: monthEnd(year, month) > CHARGED_UNTIL ? null : monthEnd(year, month),
     },
   ),
 );
@@ -78,8 +82,12 @@ const bankFees = [
   [2026, 2],
   [2026, 5],
   [2026, 8],
+  [2026, 11],
 ].map(([year, month]) =>
-  expense(monthEnd(year!, month!), "Comisión de mantenimiento de la cuenta", 15, "626", { otherPayee: BANK }),
+  expense(monthEnd(year!, month!), "Comisión de mantenimiento de la cuenta", 15, "626", {
+    otherPayee: BANK,
+    paidOn: monthEnd(year!, month!) > CHARGED_UNTIL ? null : monthEnd(year!, month!),
+  }),
 );
 
 const occasional: Expense[] = [
@@ -121,6 +129,32 @@ const occasional: Expense[] = [
   // Pending: will be charged at the end of the month
   expense("2026-10-10", "Inscripción en congreso de diseño", 95, "6297", {
     otherPayee: { name: "Asociación de Diseñadores de Madrid", taxId: "G28654325" },
+    paidOn: null,
+  }),
+  // November and December 2026 are ahead: recorded in advance, not charged yet
+  expense("2026-11-03", "Luz de la vivienda · octubre", 72.15, "628", {
+    otherPayee: { name: "Eléctrica del Centro S.A.", taxId: "A28945616" },
+    number: "EC-2611-57318",
+    imputation: 6,
+    paidOn: null,
+  }),
+  expense("2026-11-19", "Tren a Valencia · taller con cliente", 58.3, "6292", {
+    otherPayee: { name: "Ferrocarriles Peninsulares S.A.", taxId: "A86868189" },
+    number: "FP-26-8841203",
+    paymentMethodId: "card",
+    paidOn: null,
+    tags: ["Desplazamientos"],
+  }),
+  expense("2026-12-02", "Luz de la vivienda · noviembre", 81.9, "628", {
+    otherPayee: { name: "Eléctrica del Centro S.A.", taxId: "A28945616" },
+    number: "EC-2612-59904",
+    imputation: 6,
+    paidOn: null,
+  }),
+  expense("2026-12-17", "Comida de Navidad con clientes", 112.4, "627", {
+    otherPayee: { name: "Restaurante La Corrala", taxId: "B87112231" },
+    number: "T-61207",
+    paymentMethodId: "card",
     paidOn: null,
   }),
 ];
