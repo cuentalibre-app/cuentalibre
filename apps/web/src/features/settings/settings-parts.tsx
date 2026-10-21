@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { Link, useLocation, type LinkProps } from "react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useBlocker, useLocation, type LinkProps } from "react-router";
 import { ArrowLeft, Check } from "lucide-react";
 import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@fiscalia/ui/components/dialog";
@@ -92,6 +92,32 @@ export function SaveButton({ dirty, justSaved, onSave }: { dirty: boolean; justS
         Guardar cambios
       </Button>
     </>
+  );
+}
+
+/** Asks before leaving the page, or closing the tab, while there are unsaved changes. */
+export function UnsavedChangesGuard({ dirty }: { dirty: boolean }) {
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname,
+  );
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  return (
+    <ConfirmDialog
+      open={blocker.state === "blocked"}
+      onOpenChange={(open) => !open && blocker.state === "blocked" && blocker.reset()}
+      title="¿Salir sin guardar?"
+      confirmLabel="Salir sin guardar"
+      danger
+      onConfirm={() => blocker.proceed?.()}
+    >
+      <p className="m-0">Tienes cambios sin guardar en esta página. Si sales, se perderán.</p>
+    </ConfirmDialog>
   );
 }
 

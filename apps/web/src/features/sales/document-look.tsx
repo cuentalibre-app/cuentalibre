@@ -58,6 +58,7 @@ export function LookFields({
         className="self-start"
         onClick={() =>
           onChange({
+            template: DEFAULT_SETTINGS.template,
             font: DEFAULT_SETTINGS.font,
             textColor: DEFAULT_SETTINGS.textColor,
             lineColor: DEFAULT_SETTINGS.lineColor,

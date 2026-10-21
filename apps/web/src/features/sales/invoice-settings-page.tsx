@@ -7,7 +7,7 @@ import { Textarea } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
 import { CERTIFICATES_PATH } from "@/features/settings/settings-model";
-import { SettingsHeader } from "@/features/settings/settings-parts";
+import { SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
@@ -55,6 +55,7 @@ export function InvoiceSettingsPage() {
             Guardar cambios
           </Button>
         </SettingsHeader>
+        <UnsavedChangesGuard dirty={dirty} />
 
         <div id="series" className="scroll-mt-6">
           <Section title="Sistema de auto-numeración" index={1}>
