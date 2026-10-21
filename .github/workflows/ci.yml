@@ -41,6 +41,7 @@ jobs:
         env:
           SITE_URL: https://cuentalibre.es
           PUBLIC_APP_URL: https://app.cuentalibre.es
+          VITE_API_URL: https://api.cuentalibre.es
       - name: Check the migrations match the schema
         run: |
           pnpm --filter @cuentalibre/api db:generate
@@ -61,8 +62,52 @@ jobs:
           path: apps/web/dist
           retention-days: 1
 
-  deploy:
+  deploy-api:
     needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-api
+      cancel-in-progress: false
+    env:
+      IMAGE: cuentalibre-api:${{ github.sha }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build the API image
+        run: docker build -f apps/api/Dockerfile -t "$IMAGE" .
+      - name: Set up SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      # The image goes over SSH, so the server needs no registry credentials.
+      - name: Send the image and the server config
+        run: |
+          docker save "$IMAGE" | gzip | ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load'
+          scp deploy/compose.yml deploy/Caddyfile "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+      - name: Restart the API
+        run: |
+          ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre \
+            && sed -i 's|^API_IMAGE=.*|API_IMAGE=$IMAGE|' .env \
+            && docker compose up -d --remove-orphans \
+            && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile \
+            && docker image prune -af --filter 'until=168h'"
+      - name: Check it answers
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS https://api.cuentalibre.es/v1/health && exit 0
+            sleep 2
+          done
+          ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose logs --tail 50 api'
+          exit 1
+
+  deploy:
+    needs: [check, deploy-api]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production

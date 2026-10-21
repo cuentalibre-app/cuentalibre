@@ -20,6 +20,8 @@ To point the web app at the API, set `VITE_API_URL=http://localhost:3000` in `ap
 
 `deploy/` at the repository root runs cuentalibre Cloud on one server: Caddy with a Cloudflare origin certificate in front, the API and Postgres. Caddy only takes the client's IP from Cloudflare's addresses and passes it on as `X-Forwarded-For`, which Better Auth rate-limits by. `deploy/cloud-init.yml` prepares a new server.
 
+Every push to `main` that passes CI deploys it (the `deploy-api` job): the image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
+
 ## Layout
 
 ```
