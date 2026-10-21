@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.turbo
+**/.env
+**/.env.*
+!**/.env.example
+.git
+docs
+deploy
+apps/api/data
+apps/web
+apps/site
+packages/ui
