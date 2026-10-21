@@ -1,5 +1,5 @@
 import { createReadStream } from "node:fs";
-import { mkdir, stat, writeFile } from "node:fs/promises";
+import { mkdir, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { Readable } from "node:stream";
 import type { FileStorage } from ".";
@@ -25,6 +25,10 @@ export function diskStorage(directory: string): FileStorage {
       const found = await stat(path).catch(() => null);
       if (!found?.isFile()) return null;
       return Readable.toWeb(createReadStream(path)) as ReadableStream<Uint8Array>;
+    },
+
+    async delete(key) {
+      await rm(pathOf(key), { force: true });
     },
   };
 }

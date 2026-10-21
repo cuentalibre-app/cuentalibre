@@ -1,12 +1,17 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { Link } from "react-router";
 import { BellRing, ImageUp, Trash2 } from "lucide-react";
 import type { Gender, NotificationPrefs, UserLocale, UserProfile } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { authErrorMessage, deleteAccount } from "@/features/auth/auth-api";
+import { SIGN_IN_PATH, reloadAt, sessionState } from "@/features/auth/session";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { LANGUAGES, NUMBER_FORMATS, defaultNumberFormat, formatSample } from "@/features/sales/invoice-locale";
 import type { Option } from "@/features/sales/sales-model";
+import { EXPORT_PATH } from "@/features/transfer/transfer-model";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { initials } from "./settings-model";
 import { userFullName, userStore, useUserSettings } from "./user-store";
@@ -61,6 +66,8 @@ export function ProfilePage() {
         <PersonalSection />
         <NotificationsSection />
         <LocaleSection />
+        {/* The demo has no account to delete */}
+        {sessionState() === "connected" && <DeleteAccountSection />}
       </div>
     </TooltipProvider>
   );
@@ -330,8 +337,8 @@ function LocaleSection() {
     >
       <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
         <p className="m-0">
-          cuentalibre está en español por ahora. Si eliges otro idioma, los textos seguirán en español, pero los números y
-          las fechas tomarán su formato.
+          cuentalibre está en español por ahora. Si eliges otro idioma, los textos seguirán en español, pero los números
+          y las fechas tomarán su formato.
         </p>
         <p className="m-0">
           Este idioma y formato no se aplican a las facturas, albaranes y presupuestos en PDF, que tienen su propia
@@ -394,5 +401,104 @@ function LocaleSection() {
         )}
       </div>
     </Section>
+  );
+}
+
+function DeleteAccountSection() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Section title="Eliminar cuenta" index={3} defaultOpen={false}>
+      <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
+        <p className="m-0">
+          Se borrarán tu usuario y todas las empresas en las que eres el único usuario, con sus facturas, gastos,
+          contactos, documentos adjuntos y configuración. No se puede deshacer.
+        </p>
+        <p className="m-0">
+          La Ley General Tributaria te obliga a conservar tus facturas y libros durante al menos cuatro años.{" "}
+          <Link to={EXPORT_PATH} className="font-medium text-primary hover:text-primary-hover">
+            Exporta tus datos
+          </Link>{" "}
+          antes de eliminar la cuenta.
+        </p>
+        <p className="m-0">
+          Las empresas que compartes con otros usuarios se mantienen; solo dejarás de pertenecer a ellas. Las copias de
+          seguridad que aún contengan tus datos se borran solas en un plazo de 31 días.
+        </p>
+      </div>
+      <Button variant="destructive" className="self-start" onClick={() => setOpen(true)}>
+        <Trash2 aria-hidden="true" />
+        Eliminar mi cuenta
+      </Button>
+      <DeleteAccountDialog open={open} onOpenChange={setOpen} />
+    </Section>
+  );
+}
+
+function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [password, setPassword] = useState("");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const change = (next: boolean) => {
+    if (pending) return;
+    if (!next) {
+      setPassword("");
+      setError(null);
+    }
+    onOpenChange(next);
+  };
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    try {
+      await deleteAccount(password);
+      reloadAt(SIGN_IN_PATH);
+    } catch (failure) {
+      setError(authErrorMessage(failure));
+      setPending(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={change}>
+      <DialogContent className="max-w-md">
+        <DialogTitle>¿Eliminar tu cuenta?</DialogTitle>
+        <DialogDescription className="m-0">
+          Se borrarán para siempre tu usuario y los datos de las empresas en las que eres el único usuario. Escribe tu
+          contraseña para confirmarlo.
+        </DialogDescription>
+        <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
+          <Field label="Contraseña">
+            {(props) => (
+              <Input
+                {...props}
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            )}
+          </Field>
+          {error && (
+            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <div className="flex justify-end gap-2.5 pt-1">
+            <DialogClose asChild>
+              <Button variant="secondary" disabled={pending}>
+                Cancelar
+              </Button>
+            </DialogClose>
+            <Button type="submit" variant="destructive" disabled={pending || !password}>
+              {pending ? "Eliminando…" : "Eliminar cuenta"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

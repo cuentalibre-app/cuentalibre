@@ -41,4 +41,18 @@ describe("s3 storage", () => {
     expect(await storage.get("missing")).toBeNull();
     await expect(storage.put("key", new Uint8Array(1), "text/plain")).rejects.toThrow(/403/);
   });
+
+  it("deletes objects, and a missing one is not an error", async () => {
+    const { requests, fetchImpl } = fakeFetch(
+      new Response(null, { status: 204 }),
+      new Response(null, { status: 404 }),
+      new Response("denied", { status: 403 }),
+    );
+    const storage = s3Storage(options, fetchImpl);
+    await storage.delete("org/file id/key");
+    await storage.delete("missing");
+    await expect(storage.delete("key")).rejects.toThrow(/403/);
+    expect(requests[0]!.method).toBe("DELETE");
+    expect(requests[0]!.url).toBe("http://minio:9000/cuentalibre/org/file%20id/key");
+  });
 });

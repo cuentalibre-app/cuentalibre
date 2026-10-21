@@ -26,6 +26,19 @@ export const signUp = (name: string, email: string, password: string) =>
 
 export const signOut = () => post("/sign-out", {});
 
+/** Deletes the account for good, after checking the password; the session ends with it. */
+export async function deleteAccount(password: string) {
+  const response = await fetch(`${API_URL}/v1/me`, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (response.ok) return;
+  const data = (await response.json().catch(() => null)) as { error?: { code?: string } } | null;
+  throw new AuthError(data?.error?.code ?? `HTTP_${response.status}`);
+}
+
 /** Creates the user's organization, which becomes the session's active one. */
 export const createOrganization = (name: string) => post("/organization/create", { name, slug: slugFor(name) });
 
@@ -50,6 +63,9 @@ const MESSAGES: Record<string, string> = {
   INVALID_EMAIL: "El email no es válido.",
   PASSWORD_TOO_SHORT: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
   PASSWORD_TOO_LONG: "La contraseña es demasiado larga.",
+  wrong_password: "La contraseña no es correcta.",
+  sole_owner:
+    "Eres el único propietario de una empresa que tiene más usuarios. Quítalos o haz propietario a otro antes de eliminar tu cuenta.",
 };
 
 /** What to tell the user when signing in, signing up or creating the organization fails. */

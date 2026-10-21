@@ -11,6 +11,8 @@ export interface FileStorage {
   put(key: string, body: Uint8Array, contentType: string): Promise<void>;
   /** The file's bytes, or null if there is nothing under the key. */
   get(key: string): Promise<ReadableStream<Uint8Array> | null>;
+  /** Removes the file under the key; does nothing if there is none. */
+  delete(key: string): Promise<void>;
 }
 
 export function createStorage(env: Env): FileStorage {
