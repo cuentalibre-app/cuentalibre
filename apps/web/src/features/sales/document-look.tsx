@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { Check } from "lucide-react";
 import type { DocumentLook, InvoiceTemplate } from "@fiscalia/contracts";
 import { Button } from "@fiscalia/ui/components/button";
@@ -6,7 +5,7 @@ import { cn } from "@fiscalia/ui/lib/cn";
 import { Field, GroupedSelect, LocaleFields } from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
 import { DEFAULT_SETTINGS, FONTS, TEMPLATES } from "./invoice-settings";
-import { TEMPLATE_STYLES } from "./pdf-look";
+import { TemplateThumbnail } from "./template-thumbnail";
 
 /* PDF look controls shared by the invoice settings and those of drafts, quotes and delivery notes. */
 
@@ -121,23 +120,6 @@ function TemplateCard({
   look: DocumentLook;
   onSelect: () => void;
 }) {
-  const { family, traditional } = TEMPLATE_STYLES[template];
-  const paper = {
-    "--ink": look.textColor,
-    "--rule": look.lineColor,
-    "--paper": look.backgroundColor,
-    fontFamily: look.font,
-  } as CSSProperties;
-  const bar = (w: string, extra?: string) => (
-    <span className={cn("block h-1 rounded-full bg-(--ink) opacity-60", extra)} style={{ width: w }} />
-  );
-  const filledHeader = family === "professional" || family === "avantGarde";
-  const totals = (
-    <span className={cn("flex flex-col items-end gap-1", !traditional && "mt-auto")}>
-      {bar("30%")}
-      {bar("40%", "h-1.5 opacity-90")}
-    </span>
-  );
   return (
     <button
       type="button"
@@ -149,48 +131,7 @@ function TemplateCard({
         selected ? "border-primary" : "border-transparent hover:border-border",
       )}
     >
-      <span
-        aria-hidden="true"
-        style={paper}
-        className="flex aspect-[1/1.414] w-full flex-col gap-1.5 overflow-hidden rounded-sm border border-border bg-(--paper) p-2 shadow-sm"
-      >
-        {/* The VERI*FACTU code, top right */}
-        <span className="block size-3 self-end bg-(--ink) opacity-70" />
-        {family === "avantGarde" && <span className="block h-1 bg-(--rule)" />}
-        <span className="flex justify-between gap-2">
-          <span className="flex w-1/2 flex-col gap-1">
-            {bar("80%")}
-            {bar("60%")}
-          </span>
-          <span
-            className={cn(
-              "flex w-1/2 flex-col gap-1",
-              family === "professional" && "border-l-2 border-(--rule) pl-1",
-              family === "classic" && "border border-(--rule) p-0.5",
-            )}
-          >
-            {bar("80%")}
-            {bar("60%")}
-          </span>
-        </span>
-        {family === "classic" && bar("30%", "self-center")}
-        {family === "modern" && bar("45%", "h-2 opacity-80")}
-        <span
-          className={cn(
-            "mt-1 block h-1.5",
-            filledHeader && "bg-(--rule)",
-            family === "classic" && "border border-(--rule)",
-            family === "modern" && "border-b border-(--rule)",
-          )}
-        />
-        {[70, 55].map((w) => (
-          <span key={w} className="flex justify-between">
-            {bar(`${w}%`)}
-            {bar("15%")}
-          </span>
-        ))}
-        {totals}
-      </span>
+      <TemplateThumbnail template={template} look={look} />
       <span className="text-sm font-medium text-foreground">{label}</span>
     </button>
   );
