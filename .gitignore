@@ -7,3 +7,6 @@ dist/
 !.env.example
 .DS_Store
 .astro/
+
+# Production secrets on the server
+deploy/certs/

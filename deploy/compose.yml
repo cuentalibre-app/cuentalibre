@@ -1,0 +1,61 @@
+# cuentalibre Cloud: Caddy (TLS), the API and Postgres on one server.
+# Copy this folder to the server, fill in `.env` from `.env.example`, put the
+# Cloudflare origin certificate in `certs/`, then `docker compose up -d`.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "5"
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/etc/caddy/certs:ro
+      - caddy-data:/data
+    depends_on:
+      - api
+    logging: *logging
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/jesuspb2/cuentalibre-api:latest}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://cuentalibre:${POSTGRES_PASSWORD}@postgres:5432/cuentalibre
+      BETTER_AUTH_URL: https://${API_DOMAIN}
+    volumes:
+      - files:/app/data/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *logging
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cuentalibre
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: cuentalibre
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cuentalibre"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    logging: *logging
+
+volumes:
+  caddy-data:
+  files:
+  postgres:

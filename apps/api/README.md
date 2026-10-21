@@ -14,6 +14,12 @@ Every setting has a development default; copy `.env.example` to `.env` to change
 
 To point the web app at the API, set `VITE_API_URL=http://localhost:3000` in `apps/web/.env.local`. It then sends users without a session to sign in, and those without an organization to create one; `/demo` keeps running on the sample data. A new session starts in the user's oldest organization.
 
+## Production
+
+`pnpm build` bundles the server and the migration script into `dist/` with esbuild, dependencies included; `pnpm start` runs it. The image (`Dockerfile`, built from the repository root with `docker build -f apps/api/Dockerfile .`) applies pending migrations and then serves on port 3000.
+
+`deploy/` at the repository root runs cuentalibre Cloud on one server: Caddy with a Cloudflare origin certificate in front, the API and Postgres. Caddy only takes the client's IP from Cloudflare's addresses and passes it on as `X-Forwarded-For`, which Better Auth rate-limits by. `deploy/cloud-init.yml` prepares a new server.
+
 ## Layout
 
 ```
