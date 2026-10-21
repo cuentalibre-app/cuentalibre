@@ -128,20 +128,7 @@ export function InvoiceSettingsPage() {
           </Field>
         </Section>
 
-        <Section title="Importación de facturas" index={5}>
-          <p className="m-0 max-w-3xl text-muted-foreground">
-            Añade al pie de tus facturas emitidas un enlace para que quien las reciba pueda importarlas directamente. Si
-            lo desactivas, quien intente importarlas verá que no lo autorizas. En las facturas enviadas por email el
-            enlace aparece en el pie del email y del PDF.
-          </p>
-          <CheckField
-            label="Insertar enlace en el pie de la factura para permitir su importación"
-            checked={draft.allowImport}
-            onChange={(v) => set("allowImport", v)}
-          />
-        </Section>
-
-        <Section title="Firma electrónica de facturas emitidas" index={6}>
+        <Section title="Firma electrónica de facturas emitidas" index={5}>
           <p className="m-0 max-w-3xl text-muted-foreground">
             Firma digitalmente las facturas emitidas, tanto en PDF como en FacturaE, para dar más seguridad y garantías
             a tus clientes.
@@ -155,7 +142,7 @@ export function InvoiceSettingsPage() {
           </Link>
         </Section>
 
-        <Section title="Validación del NIF de cliente en facturas intracomunitarias" index={7}>
+        <Section title="Validación del NIF de cliente en facturas intracomunitarias" index={6}>
           <p className="m-0 max-w-3xl text-muted-foreground">
             Comprueba en el VIES que el cliente está registrado como operador intracomunitario al emitir una factura
             intracomunitaria (requisito imprescindible para considerarla como tal). Si lo desactivas, se emitirán sin
@@ -168,7 +155,7 @@ export function InvoiceSettingsPage() {
           />
         </Section>
 
-        <Section title="Subida de facturas a Dropbox o Google Drive" index={8}>
+        <Section title="Subida de facturas a Dropbox o Google Drive" index={7}>
           <p className="m-0 max-w-3xl text-muted-foreground">
             Elige si las casillas para subir las facturas emitidas a tus cuentas aparecen marcadas por defecto.
           </p>
