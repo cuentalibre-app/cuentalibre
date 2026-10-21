@@ -6,7 +6,7 @@ import { Button, buttonVariants } from "@fiscalia/ui/components/button";
 import { Textarea } from "@fiscalia/ui/components/input";
 import { TooltipProvider } from "@fiscalia/ui/components/tooltip";
 import { cn } from "@fiscalia/ui/lib/cn";
-import { SaveButton, SettingsHeader, useDraft } from "@/features/settings/settings-parts";
+import { SaveButton, SettingsHeader, UnsavedChangesGuard, useDraft } from "@/features/settings/settings-parts";
 import { CERTIFICATES_PATH, INVOICE_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { DefaultMark, LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
@@ -62,6 +62,7 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
         <SettingsHeader title={copy.title}>
           <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />
         </SettingsHeader>
+        <UnsavedChangesGuard dirty={dirty} />
 
         <Section title="Sistema de auto-numeración" index={index++}>
           <p className="m-0 max-w-3xl text-muted-foreground">
