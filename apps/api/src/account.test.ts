@@ -1,7 +1,8 @@
+import type { Me } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { eq, inArray } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { account, apikey, file, membership, organization, session, user } from "./db/schema";
+import { account, apikey, file, membership, organization, session, user, userSetting } from "./db/schema";
 import { app, createOrganization, db, env, signUp, storage, withApiKey, type Client } from "./test/harness";
 import { client, errorCode, member, send, workspace } from "./test/sync";
 
@@ -173,5 +174,65 @@ describe("changing the password", () => {
     const ana = await signUp();
     await db.delete(account).where(eq(account.userId, await userIdOf(ana)));
     expect(await passwordChangedAt(ana)).toBeNull();
+  });
+});
+
+describe("the user's own settings", () => {
+  const profile = { firstName: "Ana", lastName: "Ruiz Gil", birthDate: "1990-05-02", phone: "600 000 000", gender: "" };
+  const me = async (someone: Client) => (await (await someone.request("/v1/me")).json()) as Me;
+  const save = (someone: Client, section: string, body: unknown) =>
+    someone.request(`/v1/me/settings/${section}`, { method: "PUT", body });
+
+  it("starts the profile from the name given on sign-up", async () => {
+    const ana = await signUp("Ana Ruiz");
+    const { user, settings } = await me(ana);
+    expect(user.email).toBe(ana.email);
+    expect(settings).toEqual({
+      userProfile: { firstName: "Ana Ruiz", lastName: "", birthDate: "", phone: "", gender: "" },
+      userLocale: { language: "", numberFormat: "", timeZone: "" },
+    });
+  });
+
+  it("saves each section for the user alone, and renames them with the profile", async () => {
+    const ana = await signUp();
+    const eve = await signUp("Eve");
+    const locale = { language: "en", numberFormat: "US", timeZone: "Atlantic/Canary" };
+
+    expect((await save(ana, "userProfile", profile)).status).toBe(204);
+    expect((await save(ana, "userLocale", locale)).status).toBe(204);
+    expect((await save(ana, "userLocale", { ...locale, timeZone: "" })).status).toBe(204);
+
+    const { user, settings } = await me(ana);
+    expect(user.name).toBe("Ana Ruiz Gil");
+    expect(settings).toEqual({ userProfile: profile, userLocale: { ...locale, timeZone: "" } });
+    expect((await me(eve)).settings.userProfile.firstName).toBe("Eve");
+  });
+
+  it("validates the whole section", async () => {
+    const ana = await signUp();
+    const blank = await save(ana, "userProfile", { ...profile, firstName: "  " });
+    expect(blank.status).toBe(400);
+    expect(await errorCode(blank)).toBe("invalid_settings");
+    expect((await save(ana, "userProfile", { ...profile, birthDate: "02/05/1990" })).status).toBe(400);
+    expect((await save(ana, "userLocale", { language: "es" })).status).toBe(400);
+    expect((await save(ana, "notificationPrefs", {})).status).toBe(400);
+    expect((await me(ana)).user.name).toBe("Ana");
+  });
+
+  it("needs a signed-in user", async () => {
+    const response = await app.request(`${env.BETTER_AUTH_URL}/v1/me/settings/userLocale`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ language: "", numberFormat: "", timeZone: "" }),
+    });
+    expect(response.status).toBe(401);
+  });
+
+  it("goes with the account when it is deleted", async () => {
+    const ana = await member();
+    const anaId = await userIdOf(ana);
+    await save(ana, "userProfile", profile);
+    expect((await deleteAccount(ana)).status).toBe(204);
+    expect(await db.select().from(userSetting).where(eq(userSetting.userId, anaId))).toEqual([]);
   });
 });

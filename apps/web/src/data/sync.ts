@@ -1,4 +1,11 @@
-import type { Change, OrganizationSettings, SettingsSection, SyncedEntity, Workspace } from "@cuentalibre/contracts";
+import type {
+  Change,
+  Me,
+  OrganizationSettings,
+  SettingsSection,
+  SyncedEntity,
+  Workspace,
+} from "@cuentalibre/contracts";
 import type { Collection } from "./collection";
 
 /*
@@ -53,6 +60,17 @@ const settingsTargets = new Map<SettingsSection, (data: unknown) => void>();
 /** Lets the server's version of a settings section reach the store that keeps it. */
 export function syncSettings<S extends SettingsSection>(section: S, apply: (data: OrganizationSettings[S]) => void) {
   settingsTargets.set(section, apply as (data: unknown) => void);
+}
+
+let meTarget: ((me: Me) => void) | undefined;
+
+/** Lets the signed-in user's account and own settings reach the store that keeps them. */
+export function syncMe(apply: (me: Me) => void) {
+  meTarget = apply;
+}
+
+export function applyMe(me: Me) {
+  meTarget?.(me);
 }
 
 export function isSynced(entity: string): entity is SyncedEntity {

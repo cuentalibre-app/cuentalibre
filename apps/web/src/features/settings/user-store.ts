@@ -1,6 +1,7 @@
 import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@cuentalibre/contracts";
 import type { SettingsSection } from "@/data/commands";
 import { createStore } from "@/data/store";
+import { syncMe } from "@/data/sync";
 import { initialNotificationPrefs, initialUserAccess, initialUserLocale, initialUserProfile } from "@/mocks/user";
 
 /** The signed-in user's own settings. */
@@ -17,6 +18,15 @@ const user = createStore<UserSettings>({
   locale: initialUserLocale,
   access: initialUserAccess,
 });
+
+// Signed in, the profile and locale are the account's; the picture and notifications stay sample data for now.
+syncMe(({ user: account, settings }) =>
+  user.set({
+    ...user.get(),
+    profile: { ...settings.userProfile, email: account.email, avatarUrl: null },
+    locale: settings.userLocale,
+  }),
+);
 
 export function useUserSettings(): UserSettings {
   return user.use();

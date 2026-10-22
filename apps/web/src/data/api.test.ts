@@ -3,6 +3,7 @@ import {
   type ClosedQuarter,
   type Contact,
   type FiledReturn,
+  type Me,
   type SalesDocument,
   type Tag,
 } from "@cuentalibre/contracts";
@@ -12,7 +13,7 @@ import { localBackend, setBackend } from "./backend";
 import { createCollection } from "./collection";
 import { attachFile, attachmentUrl } from "./files";
 import { createStore } from "./store";
-import { listTarget, syncCollection, syncSettings, syncTarget } from "./sync";
+import { listTarget, syncCollection, syncMe, syncSettings, syncTarget } from "./sync";
 
 const norte: Contact = { id: "0199f0a0-0000-7000-8000-000000000001", name: "Estudio Norte S.L.", taxId: "B12345674" };
 const brisa: Contact = { id: "0199f0a0-0000-7000-8000-000000000002", name: "Agencia Brisa S.L.", taxId: "B87654323" };
@@ -51,7 +52,8 @@ function fakeFetch(...responses: { status?: number; body: unknown }[]) {
     calls.push({ url, method: init.method ?? "GET", body });
     const next = responses.shift();
     if (!next) throw new Error(`Unexpected request to ${url}`);
-    return new Response(JSON.stringify(next.body), { status: next.status ?? 200 });
+    // A 204 can't have a body
+    return new Response(next.status === 204 ? null : JSON.stringify(next.body), { status: next.status ?? 200 });
   }) as typeof fetch;
   return { calls, fetchImpl };
 }
@@ -153,7 +155,7 @@ describe("api backend", () => {
       [],
       [
         { type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15" },
-        { type: "saveSettings", section: "userLocale", data: {} },
+        { type: "saveSettings", section: "emailSettings", data: {} },
       ],
     );
     expect(calls[0]!.body).toEqual({
@@ -189,6 +191,27 @@ describe("api backend", () => {
 
     await api.loadWorkspace();
     expect(signing.get()).toEqual({ invoice: "company", quote: "none", deliveryNote: "none" });
+  });
+
+  it("saves the user's own settings apart from the organization's, and takes them from the account", async () => {
+    const { api, calls } = setup(
+      { status: 204, body: null },
+      {
+        body: {
+          user: { id: "0199f0a0-0000-7000-8000-000000000020", name: "Ana", email: "ana@example.com" },
+          settings: { userProfile: { firstName: "Ana" }, userLocale: { language: "en" } },
+        },
+      },
+    );
+    const locale = createStore({ language: "", numberFormat: "", timeZone: "" });
+    const seen: Me[] = [];
+    syncMe((me) => seen.push(me));
+    const data = { language: "en", numberFormat: "US", timeZone: "" };
+    await locale.write(data, [{ type: "saveSettings", section: "userLocale", data }]);
+    expect(calls).toEqual([{ url: "http://api/v1/me/settings/userLocale", method: "PUT", body: data }]);
+
+    await api.loadMe();
+    expect(seen.map((me) => me.settings.userLocale.language)).toEqual(["en"]);
   });
 
   it("keeps lists inside bigger stores in step with the server", async () => {

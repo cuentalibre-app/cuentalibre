@@ -1,16 +1,19 @@
-import type {
-  ApiKey,
-  Change,
-  Changes,
-  CreatedApiKey,
-  EmailMessage,
-  StoredFile,
-  SyncCommand,
-  Workspace,
+import {
+  userSettingsSectionSchema,
+  type ApiKey,
+  type Change,
+  type Changes,
+  type CreatedApiKey,
+  type EmailMessage,
+  type Me,
+  type StoredFile,
+  type SyncCommand,
+  type UserSettingsSection,
+  type Workspace,
 } from "@cuentalibre/contracts";
 import { setBackend, type Backend } from "./backend";
 import type { Command } from "./commands";
-import { applyChanges, applyWorkspace, isSettingsSynced, isSynced } from "./sync";
+import { applyChanges, applyMe, applyWorkspace, isSettingsSynced, isSynced } from "./sync";
 
 /** An error the API answered with. */
 export class ApiError extends Error {
@@ -26,14 +29,17 @@ export class ApiError extends Error {
 export interface ApiBackend extends Backend {
   /** Downloads the workspace and replaces the synced collections with it. */
   loadWorkspace: () => Promise<void>;
+  /** Downloads the signed-in user's account and own settings. */
+  loadMe: () => Promise<void>;
   /** Applies what changed on the server since the last download or pull. */
   pull: () => Promise<void>;
 }
 
 /**
  * The backend that talks to the API. Commands for data the server stores are
- * sent in one request and its answer replaces the optimistic records; the rest
- * stay local until their part of the API exists.
+ * sent in one request and its answer replaces the optimistic records; the
+ * user's own settings are saved apart, since they aren't the organization's.
+ * The rest stay local until their part of the API exists.
  */
 export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetch): ApiBackend {
   let cursor = 0;
@@ -74,9 +80,13 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
   return {
     send(commands) {
       const synced = commands.flatMap(toWire);
-      if (synced.length === 0) return Promise.resolve();
+      const own = commands.flatMap(toUserSettings);
+      if (synced.length === 0 && own.length === 0) return Promise.resolve();
       // One request at a time, in order: an invoice must not reach the server before the client it names
       const sent = queue.then(async () => {
+        for (const { section, data } of own)
+          await request(`/v1/me/settings/${section}`, { method: "PUT", body: JSON.stringify(data) });
+        if (synced.length === 0) return;
         // A record may name files still uploading. If one failed, the server rejects the record.
         await Promise.all(uploads);
         const { changes } = await request<{ changes: Change[] }>("/v1/commands", {
@@ -132,6 +142,10 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
       cursor = workspace.cursor;
     },
 
+    async loadMe() {
+      applyMe(await request<Me>("/v1/me"));
+    },
+
     pull() {
       pulling ??= pullAll().finally(() => (pulling = undefined));
       return pulling;
@@ -162,6 +176,13 @@ function toWire(command: Command): SyncCommand[] {
 
 type SyncedUpdate = Extract<SyncCommand, { type: "update" }>;
 
+/** The user's own settings the command saves, if it saves some the server stores. */
+function toUserSettings(command: Command): { section: UserSettingsSection; data: unknown }[] {
+  if (command.type !== "saveSettings") return [];
+  const section = userSettingsSectionSchema.safeParse(command.section);
+  return section.success ? [{ section: section.data, data: command.data }] : [];
+}
+
 /** How connecting to the API went: the app runs on it only when "connected". */
 export type ConnectResult = "connected" | "signed-out" | "no-organization" | "unavailable";
 
@@ -175,7 +196,7 @@ export type ConnectResult = "connected" | "signed-out" | "no-organization" | "un
 export async function connectApi(baseUrl: string): Promise<ConnectResult> {
   const api = createApiBackend(baseUrl);
   try {
-    await api.loadWorkspace();
+    await Promise.all([api.loadWorkspace(), api.loadMe()]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return "signed-out";
     if (error instanceof ApiError && error.status === 403) return "no-organization";

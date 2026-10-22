@@ -1,11 +1,30 @@
-import { membershipSchema, organizationSchema, type MembershipRole } from "@cuentalibre/contracts";
+import {
+  meSchema,
+  membershipSchema,
+  organizationSchema,
+  userSettingsSchema,
+  userSettingsSectionSchema,
+  type MembershipRole,
+  type UserSettings,
+} from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { verifyPassword } from "better-auth/crypto";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import type { AppEnv } from "../context";
-import { account, file, invitation, membership, organization, user as userTable, verification } from "../db/schema";
+import type { Db } from "../db/client";
+import {
+  account,
+  file,
+  invitation,
+  membership,
+  organization,
+  user as userTable,
+  userSetting,
+  verification,
+} from "../db/schema";
 import { ApiError, errorContent, errorResponse } from "../errors";
 import { requireOrganization, requireSession, requireUser } from "../middleware";
+import { parseOr } from "../sync/records";
 
 const me = createRoute({
   method: "get",
@@ -18,24 +37,29 @@ const me = createRoute({
       description: "The signed-in user",
       content: {
         "application/json": {
-          schema: z.object({
-            user: z.object({
-              id: z.uuid(),
-              name: z.string(),
-              email: z.email(),
-              /** Users who sign up with Google come verified. */
-              emailVerified: z.boolean(),
-              /** False for people who only sign in with Google. */
-              hasPassword: z.boolean(),
-              /** When the password was last set; null without one. */
-              passwordChangedAt: z.iso.datetime().nullable(),
-            }),
-            activeOrganizationId: z.uuid().nullable(),
-            memberships: z.array(membershipSchema),
-          }),
+          schema: meSchema,
         },
       },
     },
+    401: errorContent("Not signed in"),
+  },
+});
+
+const saveUserSettings = createRoute({
+  method: "put",
+  path: "/me/settings/{section}",
+  tags: ["Account"],
+  summary: "Replace a section of the signed-in user's own settings",
+  description:
+    "The body is the whole section: `userProfile` (first and last names, birth date, phone, gender) or `userLocale` (language, number format, time zone; empty follows the business). Saving the profile also renames the user.",
+  middleware: [requireUser] as const,
+  request: {
+    params: z.object({ section: userSettingsSectionSchema }),
+    body: { required: true, content: { "application/json": { schema: z.record(z.string(), z.unknown()) } } },
+  },
+  responses: {
+    204: { description: "The section is saved" },
+    400: errorContent("The section doesn't match its schema"),
     401: errorContent("Not signed in"),
   },
 });
@@ -87,6 +111,16 @@ const FRESH_SESSION_MS = 10 * 60 * 1000;
 
 const organizationColumns = { id: organization.id, name: organization.name, slug: organization.slug };
 
+/** Every section: as saved, or its defaults; the profile starts from the name given on sign-up. */
+async function readUserSettings(db: Db, user: { id: string; name: string }): Promise<UserSettings> {
+  const rows = await db.select().from(userSetting).where(eq(userSetting.userId, user.id));
+  const saved = Object.fromEntries(rows.map((row) => [row.section, row.data])) as Partial<UserSettings>;
+  return {
+    userProfile: saved.userProfile ?? { firstName: user.name, lastName: "", birthDate: "", phone: "", gender: "" },
+    userLocale: saved.userLocale ?? { language: "", numberFormat: "", timeZone: "" },
+  };
+}
+
 export const accountRoutes = new OpenAPIHono<AppEnv>()
   .openapi(me, async (c) => {
     const user = c.get("user")!;
@@ -114,9 +148,31 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
         },
         activeOrganizationId: c.get("activeOrganizationId"),
         memberships: rows.map((row) => ({ ...row, role: row.role as MembershipRole })),
+        settings: await readUserSettings(db, user),
       },
       200,
     );
+  })
+  .openapi(saveUserSettings, async (c) => {
+    const { id: userId } = c.get("user")!;
+    const { section } = c.req.valid("param");
+    const data = parseOr(userSettingsSchema.shape[section], c.req.valid("json"), "invalid_settings");
+    await c.get("db").transaction(async (tx) => {
+      await tx
+        .insert(userSetting)
+        .values({ userId, section, data })
+        .onConflictDoUpdate({
+          target: [userSetting.userId, userSetting.section],
+          set: { data, updatedAt: new Date() },
+        });
+      // The account's name is what emails and other members see
+      if (section === "userProfile") {
+        const { firstName, lastName } = data as UserSettings["userProfile"];
+        const name = `${firstName} ${lastName.trim()}`.trim();
+        await tx.update(userTable).set({ name }).where(eq(userTable.id, userId));
+      }
+    });
+    return c.body(null, 204);
   })
   .openapi(currentOrganization, async (c) => {
     const [row] = await c
