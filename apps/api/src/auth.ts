@@ -6,7 +6,12 @@ import { organization } from "better-auth/plugins";
 import { asc, eq } from "drizzle-orm";
 import type { Db } from "./db/client";
 import * as schema from "./db/schema";
-import { VERIFICATION_EXPIRES_IN, passwordResetEmail, sendInBackground, verificationEmail } from "./email/account-emails";
+import {
+  VERIFICATION_EXPIRES_IN,
+  passwordResetEmail,
+  sendInBackground,
+  verificationEmail,
+} from "./email/account-emails";
 import type { Mailer } from "./email/mailer";
 import type { Env } from "./env";
 

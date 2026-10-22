@@ -26,7 +26,13 @@ describe("meta", () => {
 
   it("sends people to Google when it is set up", async () => {
     const googleEnv = { ...env, GOOGLE_CLIENT_ID: "client-id", GOOGLE_CLIENT_SECRET: "client-secret" };
-    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv, accountMailer), env: googleEnv, storage, mailer });
+    const withGoogle = createApp({
+      db,
+      auth: createAuth(db, googleEnv, accountMailer),
+      env: googleEnv,
+      storage,
+      mailer,
+    });
     expect(await (await withGoogle.request("/v1/sign-in-methods")).json()).toEqual({ google: true, email: true });
 
     const origin = env.BETTER_AUTH_URL;
@@ -43,7 +49,13 @@ describe("meta", () => {
 
   it("lets a signed-in user start linking Google, but not a visitor", async () => {
     const googleEnv = { ...env, GOOGLE_CLIENT_ID: "client-id", GOOGLE_CLIENT_SECRET: "client-secret" };
-    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv, accountMailer), env: googleEnv, storage, mailer });
+    const withGoogle = createApp({
+      db,
+      auth: createAuth(db, googleEnv, accountMailer),
+      env: googleEnv,
+      storage,
+      mailer,
+    });
     const origin = env.BETTER_AUTH_URL;
     const link = (cookie?: string) =>
       withGoogle.request(`${origin}/v1/auth/link-social`, {
