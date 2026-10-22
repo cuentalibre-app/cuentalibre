@@ -2,7 +2,7 @@ import { newId } from "@cuentalibre/core";
 import { eq, inArray } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { account, apikey, file, membership, organization, session, user } from "./db/schema";
-import { createOrganization, db, signUp, storage, withApiKey, type Client } from "./test/harness";
+import { app, createOrganization, db, env, signUp, storage, withApiKey, type Client } from "./test/harness";
 import { client, errorCode, member, send, workspace } from "./test/sync";
 
 const PASSWORD = "a-long-password";
@@ -123,5 +123,55 @@ describe("deleting an account", () => {
     const created = await ana.request("/v1/api-keys", { method: "POST", body: { name: "Script" } });
     const { key } = (await created.json()) as { key: string };
     expect((await deleteAccount(withApiKey(key))).status).toBe(401);
+  });
+});
+
+const signIn = (email: string, password: string) =>
+  app.request(`${env.BETTER_AUTH_URL}/v1/auth/sign-in/email`, {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: env.BETTER_AUTH_URL },
+    body: JSON.stringify({ email, password }),
+  });
+
+async function passwordChangedAt(someone: Client) {
+  const response = await someone.request("/v1/me");
+  return ((await response.json()) as { user: { passwordChangedAt: string | null } }).user.passwordChangedAt;
+}
+
+describe("changing the password", () => {
+  const change = (someone: Client, currentPassword: string) =>
+    someone.request("/v1/auth/change-password", {
+      method: "POST",
+      body: { currentPassword, newPassword: "a-new-long-password", revokeOtherSessions: true },
+    });
+
+  it("asks for the current password", async () => {
+    const ana = await signUp();
+    const response = await change(ana, "not-the-password");
+    expect(response.status).toBe(400);
+    expect(((await response.json()) as { code: string }).code).toBe("INVALID_PASSWORD");
+    expect((await signIn(ana.email, PASSWORD)).status).toBe(200);
+  });
+
+  it("replaces the old one, signs out other devices and says when it changed", async () => {
+    const ana = await signUp();
+    const before = await passwordChangedAt(ana);
+    expect(before).not.toBeNull();
+    const elsewhere = (await signIn(ana.email, PASSWORD)).headers.getSetCookie().map((c) => c.split(";")[0]);
+
+    expect((await change(ana, PASSWORD)).status).toBe(200);
+
+    expect((await signIn(ana.email, PASSWORD)).status).toBe(401);
+    expect((await signIn(ana.email, "a-new-long-password")).status).toBe(200);
+    const other = await app.request(`${env.BETTER_AUTH_URL}/v1/me`, { headers: { cookie: elsewhere.join("; ") } });
+    expect(other.status).toBe(401);
+    // This device stays signed in
+    expect(Date.parse((await passwordChangedAt(ana))!)).toBeGreaterThan(Date.parse(before!));
+  });
+
+  it("isn't there for users who only sign in with Google", async () => {
+    const ana = await signUp();
+    await db.delete(account).where(eq(account.userId, await userIdOf(ana)));
+    expect(await passwordChangedAt(ana)).toBeNull();
   });
 });

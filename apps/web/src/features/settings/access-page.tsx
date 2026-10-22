@@ -9,9 +9,11 @@ import { Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import {
   authErrorMessage,
+  changePassword,
   currentUser,
   linkGoogle,
   linkedAccounts,
+  MIN_PASSWORD_LENGTH,
   oauthErrorMessage,
   sendVerificationEmail,
   signInMethods,
@@ -24,8 +26,6 @@ import { ACCESS_PATH } from "./settings-model";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { userStore, useUserSettings } from "./user-store";
 
-const MIN_PASSWORD = 8;
-
 const PROVIDERS: { value: LinkedProvider; label: string }[] = [
   { value: "google", label: "Cuenta de Google" },
   { value: "apple", label: "Cuenta de Apple" },
@@ -35,7 +35,7 @@ const dateFormat = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "lo
 
 export function AccessPage() {
   const { profile, access } = useUserSettings();
-  const [passwordOpen, setPasswordOpen] = useState(false);
+  const connected = sessionState() === "connected";
   const [twoFactorOpen, setTwoFactorOpen] = useState(false);
   const [disableOpen, setDisableOpen] = useState(false);
   const [unlink, setUnlink] = useState<LinkedProvider | null>(null);
@@ -56,55 +56,52 @@ export function AccessPage() {
 
         <Section title="Datos de acceso" index={0}>
           <dl className="m-0 flex flex-col divide-y divide-divider">
-            {sessionState() === "connected" ? (
+            {connected ? (
               <AccountEmailRow />
             ) : (
               <Row label="Correo electrónico">
                 <span className="font-medium break-all">{profile.email}</span>
               </Row>
             )}
-            <Row
-              label="Contraseña"
-              action={
-                <Button variant="secondary" size="md" onClick={() => setPasswordOpen(true)}>
-                  <KeyRound aria-hidden="true" />
-                  Cambiar contraseña
-                </Button>
-              }
-            >
-              <span className="font-mono tracking-widest" aria-label="Contraseña oculta">
-                ••••••••
-              </span>
-              <span className="text-sm text-muted-foreground">
-                Cambiada el {dateFormat.format(new Date(access.passwordChangedAt))}
-              </span>
-            </Row>
-            <Row
-              label="Autenticación por código"
-              action={
-                access.twoFactor ? (
-                  <Button variant="secondary" size="md" onClick={() => setDisableOpen(true)}>
-                    Desactivar
-                  </Button>
-                ) : (
-                  <Button variant="secondary" size="md" onClick={() => setTwoFactorOpen(true)}>
-                    <ShieldCheck aria-hidden="true" />
-                    Activar
-                  </Button>
-                )
-              }
-            >
-              <Badge tone={access.twoFactor ? "success" : "neutral"} className="self-start">
-                {access.twoFactor ? "Activada" : "Desactivada"}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Además de la contraseña, te pediremos un código que enviamos a tu correo cada vez que entres.
-              </span>
-            </Row>
+            {connected ? (
+              <AccountPasswordRow />
+            ) : (
+              <PasswordRow
+                changedAt={access.passwordChangedAt}
+                change={async () => {
+                  userStore.updateAccess({ passwordChangedAt: new Date().toISOString().slice(0, 10) });
+                }}
+              />
+            )}
+            {/* Only a mock-up: hidden on real accounts until the API asks for the code when signing in */}
+            {!connected && (
+              <Row
+                label="Autenticación por código"
+                action={
+                  access.twoFactor ? (
+                    <Button variant="secondary" size="md" onClick={() => setDisableOpen(true)}>
+                      Desactivar
+                    </Button>
+                  ) : (
+                    <Button variant="secondary" size="md" onClick={() => setTwoFactorOpen(true)}>
+                      <ShieldCheck aria-hidden="true" />
+                      Activar
+                    </Button>
+                  )
+                }
+              >
+                <Badge tone={access.twoFactor ? "success" : "neutral"} className="self-start">
+                  {access.twoFactor ? "Activada" : "Desactivada"}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Además de la contraseña, te pediremos un código que enviamos a tu correo cada vez que entres.
+                </span>
+              </Row>
+            )}
           </dl>
         </Section>
 
-        {sessionState() === "connected" ? (
+        {connected ? (
           <LinkedAccountsSection />
         ) : (
           <Section title="Cuentas vinculadas" index={1}>
@@ -146,14 +143,6 @@ export function AccessPage() {
         )}
       </div>
 
-      <PasswordDialog
-        open={passwordOpen}
-        onOpenChange={setPasswordOpen}
-        onChanged={() => {
-          userStore.updateAccess({ passwordChangedAt: new Date().toISOString().slice(0, 10) });
-          setNotice("Contraseña cambiada.");
-        }}
-      />
       <TwoFactorDialog
         open={twoFactorOpen}
         onOpenChange={setTwoFactorOpen}
@@ -287,6 +276,85 @@ function AccountEmailRow() {
   );
 }
 
+/** The user's real password, if they have one: people who only sign in with Google don't. */
+function AccountPasswordRow() {
+  const [state, setState] = useState<{ hasPassword: boolean; changedAt: string | null } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    currentUser()
+      .then((user) => active && setState({ hasPassword: user.hasPassword, changedAt: user.passwordChangedAt }))
+      .catch((failure: unknown) => active && setError(authErrorMessage(failure)));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (state?.hasPassword) {
+    return (
+      <PasswordRow
+        changedAt={state.changedAt}
+        change={async (current, next) => {
+          await changePassword(current, next);
+          setState({ hasPassword: true, changedAt: new Date().toISOString() });
+        }}
+      />
+    );
+  }
+  return (
+    <Row label="Contraseña">
+      <span className="text-muted-foreground">{state ? "No tienes contraseña: entras con Google." : "…"}</span>
+      {error && (
+        <span role="alert" className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+          {error}
+        </span>
+      )}
+    </Row>
+  );
+}
+
+function PasswordRow({
+  changedAt,
+  change,
+}: {
+  changedAt: string | null;
+  change: (current: string, next: string) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [notice, setNotice] = useState("");
+  return (
+    <Row
+      label="Contraseña"
+      action={
+        <Button variant="secondary" size="md" onClick={() => setOpen(true)}>
+          <KeyRound aria-hidden="true" />
+          Cambiar contraseña
+        </Button>
+      }
+    >
+      <span className="font-mono tracking-widest" aria-label="Contraseña oculta">
+        ••••••••
+      </span>
+      {changedAt && (
+        <span className="text-sm text-muted-foreground">Cambiada el {dateFormat.format(new Date(changedAt))}</span>
+      )}
+      {notice && (
+        <span role="status" className="flex items-center gap-2 text-sm text-success">
+          <Check className="size-4" aria-hidden="true" />
+          {notice}
+        </span>
+      )}
+      <PasswordDialog
+        open={open}
+        onOpenChange={setOpen}
+        change={change}
+        onChanged={() => setNotice("Contraseña cambiada. Hemos cerrado la sesión en el resto de dispositivos.")}
+      />
+    </Row>
+  );
+}
+
 /** The user's real sign-in methods, from the API: for now, Google. */
 function LinkedAccountsSection() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -411,13 +479,15 @@ function Row({ label, action, children }: { label: string; action?: ReactNode; c
   );
 }
 
-function DialogActions({ submitLabel }: { submitLabel: string }) {
+function DialogActions({ submitLabel, disabled }: { submitLabel: string; disabled?: boolean }) {
   return (
     <div className="flex justify-end gap-2.5 pt-1">
       <DialogClose asChild>
         <Button variant="secondary">Cancelar</Button>
       </DialogClose>
-      <Button type="submit">{submitLabel}</Button>
+      <Button type="submit" disabled={disabled}>
+        {submitLabel}
+      </Button>
     </div>
   );
 }
@@ -425,21 +495,25 @@ function DialogActions({ submitLabel }: { submitLabel: string }) {
 function PasswordDialog({
   open,
   onOpenChange,
+  change: changeTo,
   onChanged,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  change: (current: string, next: string) => Promise<void>;
   onChanged: () => void;
 }) {
   const empty = { current: "", next: "", repeat: "" };
   const [form, setForm] = useState(empty);
   const [submitted, setSubmitted] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const errors = {
     current: form.current ? undefined : "Introduce tu contraseña actual.",
     next: !form.next
       ? "Introduce la nueva contraseña."
-      : form.next.length < MIN_PASSWORD
-        ? `Debe tener al menos ${MIN_PASSWORD} caracteres.`
+      : form.next.length < MIN_PASSWORD_LENGTH
+        ? `Debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`
         : form.next === form.current
           ? "Debe ser distinta de la actual."
           : undefined,
@@ -451,15 +525,24 @@ function PasswordDialog({
     if (!open) {
       setForm(empty);
       setSubmitted(false);
+      setError(null);
     }
     onOpenChange(open);
   };
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     setSubmitted(true);
     if (errors.current || errors.next || errors.repeat) return;
-    onChanged();
-    change(false);
+    setPending(true);
+    setError(null);
+    try {
+      await changeTo(form.current, form.next);
+      onChanged();
+      change(false);
+    } catch (failure) {
+      setError(authErrorMessage(failure));
+    }
+    setPending(false);
   };
   const field = (key: keyof typeof empty, label: string, autoComplete: string, hint?: string) => (
     <Field label={label} required error={visible[key]} hint={hint}>
@@ -480,11 +563,16 @@ function PasswordDialog({
       <DialogContent className="max-w-md">
         <DialogTitle>Cambiar contraseña</DialogTitle>
         <DialogDescription>Al cambiarla se cerrará la sesión en el resto de dispositivos.</DialogDescription>
-        <form noValidate onSubmit={submit} className="flex flex-col gap-4">
+        <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
           {field("current", "Contraseña actual", "current-password")}
-          {field("next", "Nueva contraseña", "new-password", `Mínimo ${MIN_PASSWORD} caracteres.`)}
+          {field("next", "Nueva contraseña", "new-password", `Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`)}
           {field("repeat", "Repite la nueva contraseña", "new-password")}
-          <DialogActions submitLabel="Cambiar contraseña" />
+          {error && (
+            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <DialogActions submitLabel={pending ? "Cambiando…" : "Cambiar contraseña"} disabled={pending} />
         </form>
       </DialogContent>
     </Dialog>
