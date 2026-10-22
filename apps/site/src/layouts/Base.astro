@@ -2,7 +2,7 @@
 import "../styles/global.css";
 import GitHubIcon from "../components/GitHubIcon.astro";
 import Logo from "../components/Logo.astro";
-import { appLinks, legalPages, sourceUrl } from "../site";
+import { appLinks, demoLinkAttrs, legalPages, sourceUrl } from "../site";
 
 interface Props {
   title: string;
@@ -20,10 +20,13 @@ const sections = [
   { href: "/#precio", label: "Precio" },
 ];
 
+/** The header links: the home page's sections, then the pages beside it. */
+const navLinks = [...sections, { href: "/docs", label: "Docs" }];
+
 const footerColumns = [
   {
     title: "Producto",
-    links: [...sections, { href: appLinks.demo, label: "Probar la demo" }, { href: appLinks.signIn, label: "Entrar" }],
+    links: [...navLinks, { href: appLinks.demo, label: "Probar la demo" }, { href: appLinks.signIn, label: "Entrar" }],
   },
   {
     title: "Proyecto",
@@ -67,16 +70,20 @@ const year = new Date().getFullYear();
     <header class="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
       <a
         href="/"
-        class="flex shrink-0 items-center gap-2 text-[17px] font-semibold tracking-[-0.01em] text-foreground no-underline sm:gap-2.5 sm:text-[19px]"
+        class="flex shrink-0 items-baseline gap-2 text-[17px] font-semibold tracking-[-0.01em] text-foreground no-underline sm:gap-2.5 sm:text-[19px]"
       >
         <Logo />
         cuentalibre
       </a>
       <nav class="hidden gap-7 text-[15px] lg:flex" aria-label="Secciones">
         {
-          sections.map((section) => (
-            <a href={section.href} class="text-muted-foreground no-underline hover:text-foreground">
-              {section.label}
+          navLinks.map((link) => (
+            <a
+              href={link.href}
+              aria-current={Astro.url.pathname.startsWith(link.href) ? "page" : undefined}
+              class="text-muted-foreground no-underline hover:text-foreground aria-[current=page]:font-medium aria-[current=page]:text-foreground"
+            >
+              {link.label}
             </a>
           ))
         }
@@ -96,6 +103,7 @@ const year = new Date().getFullYear();
         </a>
         <a
           href={appLinks.demo}
+          {...demoLinkAttrs}
           class="rounded-full bg-foreground px-3.5 py-2 text-[14px] font-semibold whitespace-nowrap text-background no-underline hover:bg-primary-hover sm:px-4 sm:text-[15px]"
         >
           <span class="sm:hidden">Demo</span><span class="hidden sm:inline">Probar la demo</span>
@@ -109,7 +117,7 @@ const year = new Date().getFullYear();
     <footer class="mx-auto mt-20 max-w-[1200px] border-t border-divider px-4 pt-12 pb-10 sm:px-6 md:mt-30 md:pt-16">
       <div class="grid gap-12 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] md:gap-8">
         <div>
-          <a href="/" class="flex w-fit items-center gap-2.5 text-[19px] font-semibold text-foreground no-underline">
+          <a href="/" class="flex w-fit items-baseline gap-2.5 text-[19px] font-semibold text-foreground no-underline">
             <Logo />
             cuentalibre
           </a>
@@ -133,6 +141,7 @@ const year = new Date().getFullYear();
                   <li>
                     <a
                       href={link.href}
+                      {...(link.href === appLinks.demo ? demoLinkAttrs : {})}
                       class="inline-block py-1.5 text-[15px] text-muted-foreground no-underline hover:text-foreground"
                     >
                       {link.label}
