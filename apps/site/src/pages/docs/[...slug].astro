@@ -1,0 +1,16 @@
+---
+import type { GetStaticPaths } from "astro";
+import { render } from "astro:content";
+import { docPages, docSlug, type DocEntry } from "../../docs";
+import Docs from "../../layouts/Docs.astro";
+
+export const getStaticPaths = (async () =>
+  (await docPages()).map((entry) => ({ params: { slug: docSlug(entry) }, props: { entry } }))) satisfies GetStaticPaths;
+
+const { entry } = Astro.props as { entry: DocEntry };
+const { Content, headings } = await render(entry);
+---
+
+<Docs entry={entry} headings={headings}>
+  <Content />
+</Docs>

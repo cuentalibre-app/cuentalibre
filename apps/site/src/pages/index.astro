@@ -3,7 +3,7 @@ import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
 import Logo from "../components/Logo.astro";
 import Base from "../layouts/Base.astro";
-import { appLinks, cloudPrice, cloudYearlyPrice, sourceUrl } from "../site";
+import { appLinks, cloudPrice, cloudYearlyPrice, demoLinkAttrs, sourceUrl } from "../site";
 
 import bancos from "../assets/screens/bancos.jpg";
 import calendario from "../assets/screens/calendario.jpg";
@@ -230,7 +230,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
         La primera app de gestión para autónomos 100&nbsp;% privada, gratis y de código abierto.
       </p>
       <div class:list={[buttonRow, "mt-8 animate-rise-in [--i:4] sm:mt-9"]}>
-        <a href={appLinks.demo} class={primaryButton}>
+        <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Probar la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
         <a href="#precio" class={secondaryButton}>Empezar gratis</a>
@@ -306,6 +306,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
         <div class="hidden items-center gap-4 sm:flex">
           <a
             href={appLinks.demo}
+            {...demoLinkAttrs}
             class="hidden items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover md:inline-flex"
           >
             Verlo todo en la demo<Icon name="arrow-right" class="size-[17px]" />
@@ -603,7 +604,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
         Un negocio de ejemplo con un año de facturas, gastos e impuestos ya calculados.
       </p>
       <div class:list={[buttonRow, "mt-8"]}>
-        <a href={appLinks.demo} class={primaryButton}>
+        <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Abrir la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
         <a href="#precio" class={secondaryButton}>Empezar gratis</a>

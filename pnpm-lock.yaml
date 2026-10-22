@@ -242,6 +242,9 @@ importers:
 
   apps/site:
     dependencies:
+      '@astrojs/markdown-satteri':
+        specifier: ^0.4.2
+        version: 0.4.2
       '@cuentalibre/ui':
         specifier: workspace:*
         version: link:../../packages/ui
