@@ -12,8 +12,8 @@ import type { Env } from "./env";
 export const API_KEY_PREFIX = "fsk_";
 
 /**
- * Authentication with Better Auth: email and password sign-in, sessions in
- * Postgres, and organizations. Users belong to organizations through
+ * Authentication with Better Auth: email and password sign-in, Google when
+ * configured, sessions in Postgres, and organizations. Users belong to organizations through
  * `membership`, which carries their role. Scripts and agents use API keys.
  */
 export function createAuth(db: Db, env: Env) {
@@ -25,6 +25,7 @@ export function createAuth(db: Db, env: Env) {
     trustedOrigins: [env.WEB_ORIGIN],
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: { enabled: true },
+    socialProviders: googleProvider(env),
     plugins: [
       organization({ schema: { member: { modelName: "membership" } } }),
       // Keys are created and checked through our own routes and middleware (`routes/api-keys.ts`)
@@ -56,6 +57,22 @@ export function createAuth(db: Db, env: Env) {
     },
     telemetry: { enabled: false },
   });
+}
+
+/** True when the instance lets people sign in with Google. */
+export const hasGoogleSignIn = (env: Env) => Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+
+function googleProvider(env: Env) {
+  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) return {};
+  return {
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      prompt: "select_account" as const,
+      // A Google account only becomes a new user from the sign-up screen, where the terms are accepted.
+      disableImplicitSignUp: true,
+    },
+  };
 }
 
 export type Auth = ReturnType<typeof createAuth>;

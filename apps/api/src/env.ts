@@ -14,6 +14,9 @@ const envSchema = z
     BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
     /** Origin of the web app, trusted by auth and allowed by CORS. */
     WEB_ORIGIN: z.url().default("http://localhost:5173"),
+    /** Google sign-in, from an OAuth client in Google Cloud. Without them it is off. */
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     /** Where uploaded files go: a local directory, or an S3-compatible bucket. */
     STORAGE_DRIVER: z.enum(["disk", "s3"]).default("disk"),
     /** For the disk driver. Relative paths start at the working directory. */
@@ -58,7 +61,10 @@ const envSchema = z
       path: ["STORAGE_DRIVER"],
     },
   )
-
+  .refine((env) => !env.GOOGLE_CLIENT_ID === !env.GOOGLE_CLIENT_SECRET, {
+    message: "Google sign-in needs both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET",
+    path: ["GOOGLE_CLIENT_ID"],
+  })
   .refine(
     (env) =>
       env.VERIFACTU_ENV === "off" ||

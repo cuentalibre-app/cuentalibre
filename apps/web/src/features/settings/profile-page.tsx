@@ -6,7 +6,7 @@ import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
-import { authErrorMessage, deleteAccount } from "@/features/auth/auth-api";
+import { authErrorMessage, currentUser, deleteAccount } from "@/features/auth/auth-api";
 import { SIGN_IN_PATH, reloadAt, sessionState } from "@/features/auth/session";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { LANGUAGES, NUMBER_FORMATS, defaultNumberFormat, formatSample } from "@/features/sales/invoice-locale";
@@ -436,8 +436,23 @@ function DeleteAccountSection() {
 
 function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [password, setPassword] = useState("");
+  // People who only sign in with Google have no password to type
+  const [hasPassword, setHasPassword] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    currentUser()
+      .then((user) => active && setHasPassword(user.hasPassword))
+      .catch(() => {
+        // Keep asking for the password; the API answers if it was wrong to.
+      });
+    return () => {
+      active = false;
+    };
+  }, [open]);
 
   const change = (next: boolean) => {
     if (pending) return;
@@ -453,7 +468,7 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
     setPending(true);
     setError(null);
     try {
-      await deleteAccount(password);
+      await deleteAccount(hasPassword ? password : undefined);
       reloadAt(SIGN_IN_PATH);
     } catch (failure) {
       setError(authErrorMessage(failure));
@@ -466,22 +481,24 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
       <DialogContent className="max-w-md">
         <DialogTitle>¿Eliminar tu cuenta?</DialogTitle>
         <DialogDescription className="m-0">
-          Se borrarán para siempre tu usuario y los datos de las empresas en las que eres el único usuario. Escribe tu
-          contraseña para confirmarlo.
+          Se borrarán para siempre tu usuario y los datos de las empresas en las que eres el único usuario.
+          {hasPassword && " Escribe tu contraseña para confirmarlo."}
         </DialogDescription>
         <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
-          <Field label="Contraseña">
-            {(props) => (
-              <Input
-                {...props}
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            )}
-          </Field>
+          {hasPassword && (
+            <Field label="Contraseña">
+              {(props) => (
+                <Input
+                  {...props}
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+              )}
+            </Field>
+          )}
           {error && (
             <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
               {error}
@@ -493,7 +510,7 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
                 Cancelar
               </Button>
             </DialogClose>
-            <Button type="submit" variant="destructive" disabled={pending || !password}>
+            <Button type="submit" variant="destructive" disabled={pending || (hasPassword && !password)}>
               {pending ? "Eliminando…" : "Eliminar cuenta"}
             </Button>
           </div>

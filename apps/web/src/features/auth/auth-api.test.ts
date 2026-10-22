@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AuthError, authErrorMessage, slugFor } from "./auth-api";
+import { AuthError, authErrorMessage, oauthErrorMessage, slugFor } from "./auth-api";
 
 describe("slugFor", () => {
   it("makes a URL-safe slug with a unique suffix", () => {
@@ -19,5 +19,14 @@ describe("authErrorMessage", () => {
     expect(authErrorMessage(new TypeError("Failed to fetch"))).toBe(
       "No se puede conectar con el servidor. Inténtalo de nuevo.",
     );
+  });
+});
+
+describe("oauthErrorMessage", () => {
+  it("explains why Google sign-in failed, and stays quiet when the user cancelled", () => {
+    expect(oauthErrorMessage(null)).toBeNull();
+    expect(oauthErrorMessage("access_denied")).toBeNull();
+    expect(oauthErrorMessage("account_not_linked")).toMatch(/vincula Google desde Configuración/);
+    expect(oauthErrorMessage("invalid_code")).toBe("Algo ha ido mal. Inténtalo de nuevo.");
   });
 });

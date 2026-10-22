@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { session } from "./db/schema";
-import { app, createOrganization, db, env, signUp } from "./test/harness";
+import { createApp } from "./app";
+import { createAuth } from "./auth";
+import { app, createOrganization, db, env, mailer, signUp, storage } from "./test/harness";
 
 describe("meta", () => {
   it("reports health", async () => {
@@ -14,6 +16,56 @@ describe("meta", () => {
     const response = await app.request("/v1/openapi.json");
     const doc = (await response.json()) as { paths: Record<string, unknown> };
     expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/v1/health", "/v1/me", "/v1/organization"]));
+  });
+
+  it("says whether Google sign-in is on", async () => {
+    const response = await app.request("/v1/sign-in-methods");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ google: false });
+  });
+
+  it("sends people to Google when it is set up", async () => {
+    const googleEnv = { ...env, GOOGLE_CLIENT_ID: "client-id", GOOGLE_CLIENT_SECRET: "client-secret" };
+    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv), env: googleEnv, storage, mailer });
+    expect(await (await withGoogle.request("/v1/sign-in-methods")).json()).toEqual({ google: true });
+
+    const origin = env.BETTER_AUTH_URL;
+    const response = await withGoogle.request(`${origin}/v1/auth/sign-in/social`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin },
+      body: JSON.stringify({ provider: "google", callbackURL: `${env.WEB_ORIGIN}/` }),
+    });
+    expect(response.status).toBe(200);
+    const { url } = (await response.json()) as { url: string };
+    expect(new URL(url).hostname).toBe("accounts.google.com");
+    expect(new URL(url).searchParams.get("redirect_uri")).toBe(`${origin}/v1/auth/callback/google`);
+  });
+
+  it("lets a signed-in user start linking Google, but not a visitor", async () => {
+    const googleEnv = { ...env, GOOGLE_CLIENT_ID: "client-id", GOOGLE_CLIENT_SECRET: "client-secret" };
+    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv), env: googleEnv, storage, mailer });
+    const origin = env.BETTER_AUTH_URL;
+    const link = (cookie?: string) =>
+      withGoogle.request(`${origin}/v1/auth/link-social`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin, ...(cookie ? { cookie } : {}) },
+        body: JSON.stringify({ provider: "google", callbackURL: `${env.WEB_ORIGIN}/configuracion/credenciales` }),
+      });
+    expect((await link()).status).toBe(401);
+
+    const signedUp = await withGoogle.request(`${origin}/v1/auth/sign-up/email`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin },
+      body: JSON.stringify({ name: "Ana", email: `link${Date.now()}@example.com`, password: "a-long-password" }),
+    });
+    const cookie = signedUp.headers
+      .getSetCookie()
+      .map((value) => value.split(";")[0])
+      .join("; ");
+    const response = await link(cookie);
+    expect(response.status).toBe(200);
+    const { url } = (await response.json()) as { url: string };
+    expect(new URL(url).hostname).toBe("accounts.google.com");
   });
 
   it("answers unknown routes with a JSON error", async () => {
@@ -33,8 +85,12 @@ describe("account", () => {
     const ana = await signUp("Ana");
     const response = await ana.request("/v1/me");
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { user: { id: string; email: string }; memberships: unknown[] };
+    const body = (await response.json()) as {
+      user: { id: string; email: string; hasPassword: boolean };
+      memberships: unknown[];
+    };
     expect(body.user.email).toBe(ana.email);
+    expect(body.user.hasPassword).toBe(true);
     expect(body.user.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7/);
     expect(body.memberships).toEqual([]);
   });

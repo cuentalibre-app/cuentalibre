@@ -1,19 +1,22 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { Input } from "@cuentalibre/ui/components/input";
 import { legalUrl } from "@/components/legal-links";
 import { Field } from "@/features/sales/form-fields";
-import { MIN_PASSWORD_LENGTH, authErrorMessage, signUp } from "./auth-api";
+import { MIN_PASSWORD_LENGTH, authErrorMessage, oauthErrorMessage, signUp } from "./auth-api";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";
+import { GoogleSignIn } from "./google-sign-in";
 import { DEMO_PATH, ONBOARDING_PATH, SIGN_IN_PATH, leaveDemo } from "./session";
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Google sends people back here with ?error= when signing in with it fails
+  const [error, setError] = useState(() => oauthErrorMessage(searchParams.get("error")));
 
   const submit = () =>
     runAction(
@@ -46,6 +49,7 @@ export function SignUpPage() {
         </>
       }
     >
+      <GoogleSignIn intent="sign-up" onError={setError} />
       <AuthForm onSubmit={submit} submitLabel="Crear cuenta" pending={pending} error={error}>
         <Field label="Nombre">
           {(props) => (

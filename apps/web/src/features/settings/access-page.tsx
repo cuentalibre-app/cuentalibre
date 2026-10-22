@@ -1,4 +1,5 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
 import { Check, KeyRound, ShieldCheck } from "lucide-react";
 import type { LinkedProvider } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
@@ -6,7 +7,19 @@ import { Button } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import {
+  authErrorMessage,
+  currentUser,
+  linkGoogle,
+  linkedAccounts,
+  oauthErrorMessage,
+  signInMethods,
+  unlinkAccount,
+  type LinkedAccount,
+} from "@/features/auth/auth-api";
+import { sessionState } from "@/features/auth/session";
 import { Field, Section } from "@/features/sales/form-fields";
+import { ACCESS_PATH } from "./settings-model";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { userStore, useUserSettings } from "./user-store";
 
@@ -86,42 +99,46 @@ export function AccessPage() {
           </dl>
         </Section>
 
-        <Section title="Cuentas vinculadas" index={1}>
-          <p className="m-0 max-w-3xl text-muted-foreground">
-            Si lo prefieres, puedes vincular tu cuenta de Google o Apple para entrar a cuentalibre en un solo clic.
-          </p>
-          <dl className="m-0 flex flex-col divide-y divide-divider">
-            {PROVIDERS.map(({ value, label }) => {
-              const email = access.linked[value];
-              return (
-                <Row
-                  key={value}
-                  label={label}
-                  action={
-                    email ? (
-                      <Button variant="secondary" size="md" onClick={() => setUnlink(value)}>
-                        Desvincular
-                      </Button>
+        {sessionState() === "connected" ? (
+          <LinkedAccountsSection />
+        ) : (
+          <Section title="Cuentas vinculadas" index={1}>
+            <p className="m-0 max-w-3xl text-muted-foreground">
+              Si lo prefieres, puedes vincular tu cuenta de Google o Apple para entrar a cuentalibre en un solo clic.
+            </p>
+            <dl className="m-0 flex flex-col divide-y divide-divider">
+              {PROVIDERS.map(({ value, label }) => {
+                const email = access.linked[value];
+                return (
+                  <Row
+                    key={value}
+                    label={label}
+                    action={
+                      email ? (
+                        <Button variant="secondary" size="md" onClick={() => setUnlink(value)}>
+                          Desvincular
+                        </Button>
+                      ) : (
+                        <Button variant="secondary" size="md" onClick={() => setLinking(value)}>
+                          Vincular
+                        </Button>
+                      )
+                    }
+                  >
+                    {email ? (
+                      <>
+                        <span className="text-sm text-muted-foreground">Correo electrónico</span>
+                        <span className="font-medium break-all">{email}</span>
+                      </>
                     ) : (
-                      <Button variant="secondary" size="md" onClick={() => setLinking(value)}>
-                        Vincular
-                      </Button>
-                    )
-                  }
-                >
-                  {email ? (
-                    <>
-                      <span className="text-sm text-muted-foreground">Correo electrónico</span>
-                      <span className="font-medium break-all">{email}</span>
-                    </>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Sin vincular</span>
-                  )}
-                </Row>
-              );
-            })}
-          </dl>
-        </Section>
+                      <span className="text-sm text-muted-foreground">Sin vincular</span>
+                    )}
+                  </Row>
+                );
+              })}
+            </dl>
+          </Section>
+        )}
       </div>
 
       <PasswordDialog
@@ -180,6 +197,117 @@ export function AccessPage() {
         }}
       />
     </TooltipProvider>
+  );
+}
+
+/** The user's real sign-in methods, from the API: for now, Google. */
+function LinkedAccountsSection() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [state, setState] = useState<{ google: boolean; email: string; accounts: LinkedAccount[] } | null>(null);
+  const [unlinkOpen, setUnlinkOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  // Google sends people back here with ?vinculada=google, or ?error= if linking failed
+  const [notice, setNotice] = useState(searchParams.get("vinculada") ? "Cuenta de Google vinculada." : "");
+  const [error, setError] = useState(() => oauthErrorMessage(searchParams.get("error")));
+
+  useEffect(() => {
+    if (searchParams.size) setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([signInMethods(), currentUser(), linkedAccounts()])
+      .then(([methods, user, accounts]) => active && setState({ google: methods.google, email: user.email, accounts }))
+      .catch((failure: unknown) => active && setError(authErrorMessage(failure)));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const google = state?.accounts.find((account) => account.providerId === "google");
+
+  const link = async () => {
+    setPending(true);
+    setError(null);
+    try {
+      await linkGoogle(ACCESS_PATH);
+    } catch (failure) {
+      setError(authErrorMessage(failure));
+      setPending(false);
+    }
+  };
+
+  const unlink = async () => {
+    if (!google || !state) return;
+    setError(null);
+    setNotice("");
+    try {
+      await unlinkAccount(google.id);
+      setState({ ...state, accounts: state.accounts.filter((account) => account.id !== google.id) });
+      setNotice("Cuenta de Google desvinculada.");
+    } catch (failure) {
+      setError(authErrorMessage(failure));
+    }
+  };
+
+  return (
+    <Section title="Cuentas vinculadas" index={1}>
+      <p className="m-0 max-w-3xl text-muted-foreground">
+        Si lo prefieres, puedes vincular tu cuenta de Google para entrar a cuentalibre en un solo clic. Debe usar el
+        mismo email que tu cuenta.
+      </p>
+      {notice && (
+        <p role="status" className="m-0 flex items-center gap-2 text-sm text-success">
+          <Check className="size-4" aria-hidden="true" />
+          {notice}
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="m-0 max-w-3xl rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      {state && (state.google || google) && (
+        <dl className="m-0 flex flex-col divide-y divide-divider">
+          <Row
+            label="Cuenta de Google"
+            action={
+              google ? (
+                <Button variant="secondary" size="md" onClick={() => setUnlinkOpen(true)}>
+                  Desvincular
+                </Button>
+              ) : (
+                <Button variant="secondary" size="md" disabled={pending} onClick={() => void link()}>
+                  {pending ? "Un momento…" : "Vincular"}
+                </Button>
+              )
+            }
+          >
+            {google ? (
+              <>
+                <span className="text-sm text-muted-foreground">Correo electrónico</span>
+                <span className="font-medium break-all">{state.email}</span>
+              </>
+            ) : (
+              <span className="text-sm text-muted-foreground">Sin vincular</span>
+            )}
+          </Row>
+        </dl>
+      )}
+      {state && !state.google && !google && (
+        <p className="m-0 text-sm text-muted-foreground">Este servidor no tiene activado el acceso con Google.</p>
+      )}
+      <ConfirmDialog
+        open={unlinkOpen}
+        onOpenChange={setUnlinkOpen}
+        title="¿Desvincular tu cuenta de Google?"
+        confirmLabel="Desvincular"
+        danger
+        onConfirm={() => void unlink()}
+      >
+        <p className="m-0">Ya no podrás entrar con ella; seguirás pudiendo entrar con tu correo y contraseña.</p>
+      </ConfirmDialog>
+    </Section>
   );
 }
 
