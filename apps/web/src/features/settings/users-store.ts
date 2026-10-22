@@ -1,5 +1,5 @@
 import { toIsoDate } from "@cuentalibre/core";
-import type { CompanyUser, EmailSettings, UserRole } from "@cuentalibre/contracts";
+import type { CompanyUser, EmailSettings, OrganizationMember, UserRole } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { createStore } from "@/data/store";
 import { initialEmailSettings, initialUsers } from "@/mocks/users";
@@ -32,3 +32,21 @@ export const roleLabel = (role: UserRole) => ROLES.find((r) => r.value === role)
 /** Whether access has lapsed: the expiry date is the last day with access. */
 export const isExpired = (user: CompanyUser, today = toIsoDate(new Date())) =>
   user.expiresOn !== null && user.expiresOn < today;
+
+/**
+ * A member of the organization as the users page shows them. The API only
+ * knows its own roles so far: the owner and admins are administrators, the
+ * rest standard users, all of them with access that never expires.
+ */
+export const toCompanyUser = (member: OrganizationMember): CompanyUser => ({
+  id: member.userId,
+  kind: "member",
+  name: member.name,
+  email: member.email,
+  role: member.role === "member" ? "standard" : "admin",
+  enabled: true,
+  invited: false,
+  lastAccessAt: null,
+  expiresOn: null,
+  owner: member.role === "owner",
+});

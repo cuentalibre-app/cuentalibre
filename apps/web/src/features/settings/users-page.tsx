@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { MailCheck, MoreHorizontal, Pencil, Plus, Power, Send, Trash2, UserRound } from "lucide-react";
 import { newId } from "@cuentalibre/core";
 import type { CompanyUser, UserKind, UserRole } from "@cuentalibre/contracts";
@@ -11,11 +11,14 @@ import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { table } from "@cuentalibre/ui/lib/table";
+import { currentBackend } from "@/data/backend";
+import { sessionState } from "@/features/auth/session";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, type Action } from "@/features/sales/list-parts";
 import { formatDate } from "@/lib/format";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
-import { isExpired, ROLES, roleLabel, useUsers, usersStore } from "./users-store";
+import { useUserSettings } from "./user-store";
+import { isExpired, ROLES, roleLabel, toCompanyUser, useUsers, usersStore } from "./users-store";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -28,7 +31,7 @@ const KINDS: { value: UserKind; label: string }[] = [
 const COLUMNS = [
   { label: "Usuario", width: undefined },
   { label: "Acceso a la empresa", width: "w-48" },
-  { label: "Último acceso", width: "w-44" },
+  { label: "Último acceso", width: "w-44", demoOnly: true },
   { label: "Fecha expiración", width: "w-40" },
   { label: "Rol", width: "w-40" },
 ];
@@ -213,6 +216,7 @@ function UsersTable({
   actions,
   onEdit,
   index,
+  readOnly = false,
 }: {
   title: string;
   description: string;
@@ -221,7 +225,11 @@ function UsersTable({
   actions: (user: CompanyUser) => Action[][];
   onEdit: (user: CompanyUser) => void;
   index: number;
+  /** Signed in, members can't be managed yet, and the last access isn't tracked. */
+  readOnly?: boolean;
 }) {
+  const you = useUserSettings().profile.email.toLowerCase();
+  const columns = COLUMNS.filter((c) => !(readOnly && c.demoOnly));
   const menu = (u: CompanyUser, size: string) => (
     <ActionsMenu
       groups={actions(u)}
@@ -256,14 +264,16 @@ function UsersTable({
             <table className="w-full min-w-[56rem] table-fixed border-collapse">
               <thead>
                 <tr className={table.headRow}>
-                  {COLUMNS.map((c) => (
+                  {columns.map((c) => (
                     <th key={c.label} scope="col" className={cn(table.th, c.width)}>
                       {c.label}
                     </th>
                   ))}
-                  <th scope="col" className={cn(table.th, "w-24")}>
-                    <span className="sr-only">Operaciones</span>
-                  </th>
+                  {!readOnly && (
+                    <th scope="col" className={cn(table.th, "w-24")}>
+                      <span className="sr-only">Operaciones</span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -275,7 +285,9 @@ function UsersTable({
                         <span className="flex flex-col">
                           <span className="flex items-center gap-2 font-medium">
                             {u.name}
-                            {u.owner && <span className="text-xs font-normal text-muted-foreground">(tú)</span>}
+                            {u.email.toLowerCase() === you && (
+                              <span className="text-xs font-normal text-muted-foreground">(tú)</span>
+                            )}
                           </span>
                           <span className="text-sm text-muted-foreground">{u.email}</span>
                         </span>
@@ -283,7 +295,9 @@ function UsersTable({
                       <td className={table.td}>
                         <Badge tone={status.tone}>{status.label}</Badge>
                       </td>
-                      <td className={cn(table.td, "text-sm whitespace-nowrap")}>{formatAccess(u.lastAccessAt)}</td>
+                      {!readOnly && (
+                        <td className={cn(table.td, "text-sm whitespace-nowrap")}>{formatAccess(u.lastAccessAt)}</td>
+                      )}
                       <td className={cn(table.td, "text-sm whitespace-nowrap")}>
                         {u.expiresOn ? (
                           formatDate(u.expiresOn)
@@ -292,12 +306,14 @@ function UsersTable({
                         )}
                       </td>
                       <td className={table.td}>{roleLabel(u.role)}</td>
-                      <td className={cn(table.td, "whitespace-nowrap")}>
-                        <span className="flex justify-end gap-0.5">
-                          <IconAction action={{ label: "Editar usuario", icon: Pencil, run: () => onEdit(u) }} />
-                          {menu(u, "size-8")}
-                        </span>
-                      </td>
+                      {!readOnly && (
+                        <td className={cn(table.td, "whitespace-nowrap")}>
+                          <span className="flex justify-end gap-0.5">
+                            <IconAction action={{ label: "Editar usuario", icon: Pencil, run: () => onEdit(u) }} />
+                            {menu(u, "size-8")}
+                          </span>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -323,9 +339,13 @@ function UsersTable({
                         {u.expiresOn ? `Expira el ${formatDate(u.expiresOn)}` : "No expira"}
                       </span>
                     </span>
-                    <span className="text-xs text-muted-foreground">Último acceso: {formatAccess(u.lastAccessAt)}</span>
+                    {!readOnly && (
+                      <span className="text-xs text-muted-foreground">
+                        Último acceso: {formatAccess(u.lastAccessAt)}
+                      </span>
+                    )}
                   </div>
-                  {menu(u, "size-9")}
+                  {!readOnly && menu(u, "size-9")}
                 </li>
               );
             })}
@@ -336,7 +356,51 @@ function UsersTable({
   );
 }
 
+/**
+ * Signed in, the organization's real members, without managing them: inviting
+ * and changing access come with roles enforced by the API. The demo keeps the
+ * sample users and everything you can do with them.
+ */
 export function UsersPage() {
+  return sessionState() === "connected" ? <MembersPage /> : <DemoUsersPage />;
+}
+
+function MembersPage() {
+  const [members, setMembers] = useState<CompanyUser[] | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    currentBackend()
+      .members?.()
+      .then((rows) => setMembers(rows.map(toCompanyUser)))
+      .catch(() => setError(true));
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-6 px-5 pt-6 pb-8 lg:px-8">
+      <SettingsHeader title="Gestión de usuarios" description="Las personas que tienen acceso a tu empresa." />
+      {error && (
+        <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-4 py-3 text-sm text-destructive">
+          No se han podido cargar los usuarios. Recarga la página para intentarlo de nuevo.
+        </p>
+      )}
+      {members && (
+        <UsersTable
+          index={0}
+          readOnly
+          title="Usuarios con acceso a la empresa"
+          description="Tú y quienes trabajan contigo, cada uno con su propio usuario y contraseña."
+          users={members}
+          actions={() => []}
+          onEdit={() => {}}
+          empty={{ message: "No hay usuarios", hint: "Invita a quien trabaje contigo." }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DemoUsersPage() {
   const users = useUsers();
   const [editing, setEditing] = useState<{ user: CompanyUser | null; kind: UserKind } | null>(null);
   const [removing, setRemoving] = useState<CompanyUser | null>(null);

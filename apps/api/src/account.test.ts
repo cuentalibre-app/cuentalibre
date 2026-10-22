@@ -236,3 +236,30 @@ describe("the user's own settings", () => {
     expect(await db.select().from(userSetting).where(eq(userSetting.userId, anaId))).toEqual([]);
   });
 });
+
+describe("the organization's members", () => {
+  const membersOf = async (someone: Client) => {
+    const response = await someone.request("/v1/organization/members");
+    expect(response.status).toBe(200);
+    return ((await response.json()) as { members: { name: string; email: string; role: string }[] }).members;
+  };
+
+  it("lists the people in the active organization, the owner first", async () => {
+    const ana = await member();
+    const eve = await signUp("Eve");
+    await join(ana.organizationId, eve, "admin");
+    // Someone else's organization stays out
+    await member("Bob");
+
+    const members = await membersOf(ana);
+    expect(members.map(({ name, email, role }) => ({ name, email, role }))).toEqual([
+      { name: "Ana", email: ana.email, role: "owner" },
+      { name: "Eve", email: eve.email, role: "admin" },
+    ]);
+  });
+
+  it("is only for members", async () => {
+    const ana = await signUp();
+    expect((await ana.request("/v1/organization/members")).status).toBe(403);
+  });
+});
