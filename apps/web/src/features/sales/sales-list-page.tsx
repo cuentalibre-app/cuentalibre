@@ -19,6 +19,7 @@ import {
   Search,
   Send,
   Settings,
+  SlidersHorizontal,
   Tag,
   ThumbsDown,
   ThumbsUp,
@@ -41,6 +42,7 @@ import {
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
   INVOICE_SETTINGS_PATH,
+  PREFERENCES_PATH,
   QUOTE_SETTINGS_PATH,
 } from "@/features/settings/settings-model";
 import { SettingsLink } from "@/features/settings/settings-parts";
@@ -231,6 +233,17 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               Solo {MONTH_NAME.format(today)}
               <X className="size-4" aria-hidden="true" />
             </button>
+          )}
+          {defaults && (
+            <SettingsLink
+              to={PREFERENCES_PATH}
+              from={config.title.toLowerCase()}
+              aria-label="Filtros por defecto"
+              title="Filtros por defecto"
+              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
+            >
+              <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
+            </SettingsLink>
           )}
           <div className="ml-auto flex gap-2">
             <Button
