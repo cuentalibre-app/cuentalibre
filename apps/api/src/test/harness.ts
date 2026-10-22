@@ -32,7 +32,15 @@ export const mailer: Mailer = {
   },
 };
 
-export const app = createApp({ db, auth: createAuth(db, env), env, storage, mailer });
+/** Emails about people's accounts (verification, password reset), apart from the business's. */
+export const accountEmails: OutgoingEmail[] = [];
+export const accountMailer: Mailer = {
+  async send(email) {
+    accountEmails.push(email);
+  },
+};
+
+export const app = createApp({ db, auth: createAuth(db, env, accountMailer), env, storage, mailer });
 
 afterAll(async () => {
   await db.$client.end();

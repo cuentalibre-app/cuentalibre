@@ -6,6 +6,8 @@ import { organization } from "better-auth/plugins";
 import { asc, eq } from "drizzle-orm";
 import type { Db } from "./db/client";
 import * as schema from "./db/schema";
+import { VERIFICATION_EXPIRES_IN, passwordResetEmail, sendInBackground, verificationEmail } from "./email/account-emails";
+import type { Mailer } from "./email/mailer";
 import type { Env } from "./env";
 
 /** Every API key starts with it, so leaked keys are easy to spot. */
@@ -15,8 +17,13 @@ export const API_KEY_PREFIX = "fsk_";
  * Authentication with Better Auth: email and password sign-in, Google when
  * configured, sessions in Postgres, and organizations. Users belong to organizations through
  * `membership`, which carries their role. Scripts and agents use API keys.
+ *
+ * With a mailer, new users get a link to verify their email, and people who
+ * forgot their password get one to reset it. Google only links itself to an
+ * existing user whose email is verified: otherwise someone could sign up with
+ * another person's email and keep access after the owner signs in with Google.
  */
-export function createAuth(db: Db, env: Env) {
+export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
   return betterAuth({
     appName: "cuentalibre",
     secret: env.BETTER_AUTH_SECRET,
@@ -24,7 +31,26 @@ export function createAuth(db: Db, env: Env) {
     basePath: "/v1/auth",
     trustedOrigins: [env.WEB_ORIGIN],
     database: drizzleAdapter(db, { provider: "pg", schema }),
-    emailAndPassword: { enabled: true },
+    emailAndPassword: {
+      enabled: true,
+      // Whoever reset the password owns the mailbox: anyone else signed in is out
+      revokeSessionsOnPasswordReset: true,
+      ...(mailer && {
+        sendResetPassword: async ({ user, url }) => sendInBackground(mailer, passwordResetEmail(user, url)),
+        // The reset link reached the mailbox, which proves it is theirs
+        onPasswordReset: async ({ user }) => {
+          await db.update(schema.user).set({ emailVerified: true }).where(eq(schema.user.id, user.id));
+        },
+      }),
+    },
+    ...(mailer && {
+      emailVerification: {
+        sendOnSignUp: true,
+        autoSignInAfterVerification: true,
+        expiresIn: VERIFICATION_EXPIRES_IN,
+        sendVerificationEmail: async ({ user, url }) => sendInBackground(mailer, verificationEmail(user, url)),
+      },
+    }),
     socialProviders: googleProvider(env),
     plugins: [
       organization({ schema: { member: { modelName: "membership" } } }),

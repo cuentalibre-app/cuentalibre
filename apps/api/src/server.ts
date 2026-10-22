@@ -14,7 +14,7 @@ const env = loadEnv();
 const db = createDb(env.DATABASE_URL);
 const storage = createStorage(env);
 const mailer = createMailer(env);
-const app = createApp({ db, auth: createAuth(db, env), env, storage, mailer });
+const app = createApp({ db, auth: createAuth(db, env, mailer), env, storage, mailer });
 
 const stopWorker = startWorker(db, {
   verifactu: verifactuHandler(db, createVerifactuTransport(env), {

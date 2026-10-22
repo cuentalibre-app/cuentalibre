@@ -1,8 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { sql } from "drizzle-orm";
-import { hasGoogleSignIn } from "../auth";
 import type { AppEnv } from "../context";
-import type { Env } from "../env";
 import { errorContent, errorResponse } from "../errors";
 
 const health = createRoute({
@@ -19,20 +17,24 @@ const health = createRoute({
   },
 });
 
+const signInMethodsSchema = z.object({ google: z.boolean(), email: z.boolean() });
+
 const signInMethods = createRoute({
   method: "get",
   path: "/sign-in-methods",
   tags: ["Meta"],
   summary: "How people can sign in to this instance, besides email and password",
+  description:
+    "`google`: sign in with Google. `email`: the instance sends email, so people verify their address and reset a forgotten password.",
   responses: {
     200: {
       description: "The sign-in methods",
-      content: { "application/json": { schema: z.object({ google: z.boolean() }) } },
+      content: { "application/json": { schema: signInMethodsSchema } },
     },
   },
 });
 
-export const metaRoutes = (env: Env) =>
+export const metaRoutes = (methods: z.infer<typeof signInMethodsSchema>) =>
   new OpenAPIHono<AppEnv>()
     .openapi(health, async (c) => {
       try {
@@ -42,4 +44,4 @@ export const metaRoutes = (env: Env) =>
       }
       return c.json({ status: "ok" as const }, 200);
     })
-    .openapi(signInMethods, (c) => c.json({ google: hasGoogleSignIn(env) }, 200));
+    .openapi(signInMethods, (c) => c.json(methods, 200));

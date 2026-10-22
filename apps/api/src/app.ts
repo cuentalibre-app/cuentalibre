@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
-import type { Auth } from "./auth";
+import { hasGoogleSignIn, type Auth } from "./auth";
 import type { AppEnv } from "./context";
 import type { Db } from "./db/client";
 import type { Mailer } from "./email/mailer";
@@ -55,7 +55,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
 
   // Not basePath(): OpenAPIHono's copy of the app drops the notFound handler.
   const routes = app
-    .route("/v1", metaRoutes(env))
+    .route("/v1", metaRoutes({ google: hasGoogleSignIn(env), email: Boolean(mailer) }))
     .route("/v1", accountRoutes)
     .route("/v1", syncRoutes)
     .route("/v1", contactRoutes)

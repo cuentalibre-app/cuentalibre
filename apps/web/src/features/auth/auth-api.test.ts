@@ -29,4 +29,9 @@ describe("oauthErrorMessage", () => {
     expect(oauthErrorMessage("account_not_linked")).toMatch(/vincula Google desde Configuración/);
     expect(oauthErrorMessage("invalid_code")).toBe("Algo ha ido mal. Inténtalo de nuevo.");
   });
+
+  it("explains why a link from an email no longer works", () => {
+    expect(oauthErrorMessage("TOKEN_EXPIRED")).toBe("El enlace ha caducado. Pide otro.");
+    expect(oauthErrorMessage("INVALID_TOKEN")).toMatch(/no es válido/);
+  });
 });
