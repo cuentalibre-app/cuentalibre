@@ -205,9 +205,15 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           {!collapsed && (
             <>
               {/* The mark sits on the wordmark's baseline, so its columns and the letters share a floor */}
-              <span className="flex flex-1 items-baseline gap-3">
-                <LogoMark className="h-7 text-sidebar-foreground" />
-                <span className="text-xl font-semibold tracking-tight">cuentalibre</span>
+              <span className="flex flex-1 items-baseline">
+                <NavLink
+                  to="/"
+                  aria-label="Ir a inicio"
+                  className="flex items-baseline gap-3 rounded-md text-sidebar-foreground no-underline"
+                >
+                  <LogoMark className="h-7" />
+                  <span className="text-xl font-semibold tracking-tight">cuentalibre</span>
+                </NavLink>
               </span>
             </>
           )}
