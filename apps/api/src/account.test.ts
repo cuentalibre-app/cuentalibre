@@ -3,7 +3,7 @@ import { newId } from "@cuentalibre/core";
 import { eq, inArray } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { account, apikey, file, membership, organization, session, user, userSetting } from "./db/schema";
-import { app, createOrganization, db, env, signUp, storage, withApiKey, type Client } from "./test/harness";
+import { addOrganization, app, db, env, signUp, storage, withApiKey, type Client } from "./test/harness";
 import { client, errorCode, member, send, workspace } from "./test/sync";
 
 const PASSWORD = "a-long-password";
@@ -33,7 +33,7 @@ async function join(organizationId: string, someone: Client, role = "member") {
 describe("deleting an account", () => {
   it("erases the user and the organizations only they belong to, with their data and files", async () => {
     const ana = await member();
-    const second = await createOrganization(ana, "Ana Freelance");
+    const second = await addOrganization(ana, "Ana Freelance");
     const anaId = await userIdOf(ana);
     expect((await send(ana, [{ type: "create", entity: "clients", data: client() }])).status).toBe(200);
     const key = await upload(ana);

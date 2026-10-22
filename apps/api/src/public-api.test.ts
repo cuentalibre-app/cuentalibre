@@ -7,8 +7,8 @@ import {
 import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { membership } from "./db/schema";
-import { app, createOrganization, db, env, withApiKey, type Client } from "./test/harness";
+import { membership, session } from "./db/schema";
+import { addOrganization, app, db, env, withApiKey, type Client } from "./test/harness";
 import { client, document, errorCode, line, member, send } from "./test/sync";
 
 async function createKey(user: Client, body: Record<string, unknown> = { name: "Agente" }) {
@@ -37,7 +37,10 @@ describe("API keys", () => {
     expect(await me.json()).toMatchObject({ organization: { id: ana.organizationId }, role: "owner" });
 
     // Switching the session to another organization doesn't move the key
-    await createOrganization(ana, "Otra SL");
+    const other = await addOrganization(ana, "Otra SL");
+    const { user } = (await (await ana.request("/v1/me")).json()) as { user: { id: string } };
+    await db.update(session).set({ activeOrganizationId: other.id }).where(eq(session.userId, user.id));
+    expect(await (await ana.request("/v1/organization")).json()).toMatchObject({ organization: { id: other.id } });
     expect(await (await api.request("/v1/organization")).json()).toMatchObject({
       organization: { id: ana.organizationId },
     });

@@ -1,10 +1,12 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { newId } from "@cuentalibre/core";
 import { afterAll, expect } from "vitest";
 import { createApp } from "../app";
 import { createAuth } from "../auth";
 import { createDb } from "../db/client";
+import { membership, organization } from "../db/schema";
 import type { Mailer, OutgoingEmail } from "../email/mailer";
 import { loadEnv } from "../env";
 import { diskStorage } from "../storage/disk";
@@ -105,6 +107,19 @@ export async function createOrganization(client: Client, name: string) {
   const response = await client.request("/v1/auth/organization/create", { method: "POST", body: { name, slug } });
   expect(response.status).toBe(200);
   return (await response.json()) as { id: string; name: string; slug: string };
+}
+
+/**
+ * Makes the client's user the owner of another organization, written straight to the database:
+ * the API allows one per user until switching organizations arrives (#33). The session stays
+ * in the organization it was in.
+ */
+export async function addOrganization(client: Client, name: string) {
+  const me = (await (await client.request("/v1/me")).json()) as { user: { id: string } };
+  const id = newId();
+  await db.insert(organization).values({ id, name, slug: `org-${id}` });
+  await db.insert(membership).values({ id: newId(), organizationId: id, userId: me.user.id, role: "owner" });
+  return { id, name };
 }
 
 /** A script or agent: sends requests with an API key instead of a session. */

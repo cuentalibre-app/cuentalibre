@@ -19,6 +19,34 @@ import type { Env } from "./env";
 export const API_KEY_PREFIX = "fsk_";
 
 /**
+ * The organization plugin's routes the web app doesn't use yet, closed until it does: a user
+ * has one organization, created at onboarding. Switching organizations reopens `set-active`
+ * and `list` (#33); invitations and managing members, the rest (#32, #34).
+ */
+export const CLOSED_ORGANIZATION_PATHS = [
+  "/organization/set-active",
+  "/organization/list",
+  "/organization/check-slug",
+  "/organization/get-full-organization",
+  "/organization/update",
+  "/organization/delete",
+  "/organization/leave",
+  "/organization/invite-member",
+  "/organization/accept-invitation",
+  "/organization/reject-invitation",
+  "/organization/cancel-invitation",
+  "/organization/get-invitation",
+  "/organization/list-invitations",
+  "/organization/list-user-invitations",
+  "/organization/list-members",
+  "/organization/remove-member",
+  "/organization/update-member-role",
+  "/organization/get-active-member",
+  "/organization/get-active-member-role",
+  "/organization/has-permission",
+];
+
+/**
  * Authentication with Better Auth: email and password sign-in, Google when
  * configured, sessions in Postgres, and organizations. Users belong to organizations through
  * `membership`, which carries their role. Scripts and agents use API keys.
@@ -35,6 +63,7 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
     baseURL: env.BETTER_AUTH_URL,
     basePath: "/v1/auth",
     trustedOrigins: [env.WEB_ORIGIN],
+    disabledPaths: CLOSED_ORGANIZATION_PATHS,
     database: drizzleAdapter(db, { provider: "pg", schema }),
     emailAndPassword: {
       enabled: true,
@@ -58,7 +87,8 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
     }),
     socialProviders: googleProvider(env),
     plugins: [
-      organization({ schema: { member: { modelName: "membership" } } }),
+      // One organization per user until the web app can switch between them (#33)
+      organization({ organizationLimit: 1, schema: { member: { modelName: "membership" } } }),
       // Keys are created and checked through our own routes and middleware (`routes/api-keys.ts`)
       apiKey({
         defaultPrefix: API_KEY_PREFIX,
