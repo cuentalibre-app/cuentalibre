@@ -52,3 +52,9 @@ export function smtpMailer(url: string, fromAddress: string): Mailer {
 export function createMailer(env: Env): Mailer | null {
   return env.SMTP_URL && env.EMAIL_FROM ? smtpMailer(env.SMTP_URL, env.EMAIL_FROM) : null;
 }
+
+/** For emails about people's accounts, from `ACCOUNT_EMAIL_FROM`: they come from cuentalibre, not a business. */
+export function createAccountMailer(env: Env): Mailer | null {
+  const from = env.ACCOUNT_EMAIL_FROM ?? env.EMAIL_FROM;
+  return env.SMTP_URL && from ? smtpMailer(env.SMTP_URL, from) : null;
+}
