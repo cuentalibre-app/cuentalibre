@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
-import { authErrorMessage, signIn } from "./auth-api";
+import { authErrorMessage, oauthErrorMessage, signIn } from "./auth-api";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";
+import { GoogleSignIn } from "./google-sign-in";
 import { DEMO_PATH, SIGN_UP_PATH, leaveDemo, reloadAt } from "./session";
 
 export function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [searchParams] = useSearchParams();
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Google sends people back here with ?error= when signing in with it fails
+  const [error, setError] = useState(() => oauthErrorMessage(searchParams.get("error")));
 
   const submit = () =>
     runAction(
@@ -42,6 +45,7 @@ export function SignInPage() {
         </>
       }
     >
+      <GoogleSignIn intent="sign-in" onError={setError} />
       <AuthForm onSubmit={submit} submitLabel="Entrar" pending={pending} error={error}>
         <Field label="Email">
           {(props) => (

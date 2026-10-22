@@ -100,6 +100,24 @@ describe("deleting an account", () => {
     expect((await ana.request("/v1/me")).status).toBe(200);
   });
 
+  it("asks users without a password for a recent session instead", async () => {
+    const ana = await member();
+    const anaId = await userIdOf(ana);
+    // Like someone who only signs in with Google
+    await db.delete(account).where(eq(account.userId, anaId));
+    await db
+      .update(session)
+      .set({ createdAt: new Date(Date.now() - 11 * 60 * 1000) })
+      .where(eq(session.userId, anaId));
+
+    const stale = await ana.request("/v1/me", { method: "DELETE", body: {} });
+    expect(stale.status).toBe(403);
+    expect(await errorCode(stale)).toBe("session_not_fresh");
+
+    await db.update(session).set({ createdAt: new Date() }).where(eq(session.userId, anaId));
+    expect((await ana.request("/v1/me", { method: "DELETE", body: {} })).status).toBe(204);
+  });
+
   it("can't be done with an API key", async () => {
     const ana = await member();
     const created = await ana.request("/v1/api-keys", { method: "POST", body: { name: "Script" } });

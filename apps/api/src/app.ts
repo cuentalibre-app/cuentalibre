@@ -55,7 +55,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
 
   // Not basePath(): OpenAPIHono's copy of the app drops the notFound handler.
   const routes = app
-    .route("/v1", metaRoutes)
+    .route("/v1", metaRoutes(env))
     .route("/v1", accountRoutes)
     .route("/v1", syncRoutes)
     .route("/v1", contactRoutes)

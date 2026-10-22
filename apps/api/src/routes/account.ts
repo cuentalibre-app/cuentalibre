@@ -19,7 +19,13 @@ const me = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            user: z.object({ id: z.uuid(), name: z.string(), email: z.email() }),
+            user: z.object({
+              id: z.uuid(),
+              name: z.string(),
+              email: z.email(),
+              /** False for people who only sign in with Google. */
+              hasPassword: z.boolean(),
+            }),
             activeOrganizationId: z.uuid().nullable(),
             memberships: z.array(membershipSchema),
           }),
@@ -56,29 +62,36 @@ const deleteAccount = createRoute({
   tags: ["Account"],
   summary: "Delete the signed-in user's account and the organizations only they belong to",
   description:
-    "Erases the user, their sessions, sign-in methods and API keys, and every organization where they are the only member, with all its data and files. Organizations shared with other people are kept; the user just leaves them. Needs the current password, and a browser session: an API key can't do it.",
+    "Erases the user, their sessions, sign-in methods and API keys, and every organization where they are the only member, with all its data and files. Organizations shared with other people are kept; the user just leaves them. Needs a browser session (an API key can't do it) and the current password; users without one, who sign in with Google, need a session started in the last ten minutes instead.",
   middleware: [requireSession] as const,
   request: {
     body: {
       required: true,
-      content: { "application/json": { schema: z.object({ password: z.string().min(1) }) } },
+      content: { "application/json": { schema: z.object({ password: z.string().min(1).optional() }) } },
     },
   },
   responses: {
     204: { description: "The account is deleted" },
     401: errorContent("Not signed in, or signed in with an API key"),
-    403: errorContent("The password is wrong"),
+    403: errorContent("The password is wrong, or the user has none and the session is not recent"),
     409: errorContent("The user is the only owner of an organization that has other members"),
   },
 });
+
+/** How recent a session must be to delete an account without a password. */
+const FRESH_SESSION_MS = 10 * 60 * 1000;
 
 const organizationColumns = { id: organization.id, name: organization.name, slug: organization.slug };
 
 export const accountRoutes = new OpenAPIHono<AppEnv>()
   .openapi(me, async (c) => {
     const user = c.get("user")!;
-    const rows = await c
-      .get("db")
+    const db = c.get("db");
+    const [credential] = await db
+      .select({ id: account.id })
+      .from(account)
+      .where(and(eq(account.userId, user.id), eq(account.providerId, "credential")));
+    const rows = await db
       .select({ organization: organizationColumns, role: membership.role })
       .from(membership)
       .innerJoin(organization, eq(organization.id, membership.organizationId))
@@ -86,7 +99,7 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       .orderBy(organization.name);
     return c.json(
       {
-        user: { id: user.id, name: user.name, email: user.email },
+        user: { id: user.id, name: user.name, email: user.email, hasPassword: Boolean(credential) },
         activeOrganizationId: c.get("activeOrganizationId"),
         memberships: rows.map((row) => ({ ...row, role: row.role as MembershipRole })),
       },
@@ -110,8 +123,12 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       .select({ hash: account.password })
       .from(account)
       .where(and(eq(account.userId, userId), eq(account.providerId, "credential")));
-    if (!credential?.hash || !(await verifyPassword({ hash: credential.hash, password })))
-      return errorResponse(c, 403, "wrong_password", "The password is wrong.");
+    if (credential?.hash) {
+      if (!password || !(await verifyPassword({ hash: credential.hash, password })))
+        return errorResponse(c, 403, "wrong_password", "The password is wrong.");
+    } else if (Date.now() - c.get("session")!.createdAt.getTime() > FRESH_SESSION_MS) {
+      return errorResponse(c, 403, "session_not_fresh", "Sign in again to confirm it's you, then delete the account.");
+    }
 
     const storageKeys = await db.transaction(async (tx) => {
       // Lock the user's memberships so nobody joins or leaves their organizations meanwhile
