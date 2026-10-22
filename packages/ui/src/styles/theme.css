@@ -58,6 +58,7 @@
 @theme {
   --font-sans: "Geist Variable", "Helvetica Neue", system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", monospace;
+  --font-display: "Source Serif 4 Variable", Georgia, serif; /* site headlines and sign-in screens */
 
   /* Type scale (design px → rem) */
   --text-*: initial;

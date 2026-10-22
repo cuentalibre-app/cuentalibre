@@ -26,8 +26,8 @@ export function SignInPage() {
 
   return (
     <AuthLayout
-      title="Entrar"
-      description="Accede a tu contabilidad."
+      title="Hola de nuevo"
+      description="Entra para seguir con tus facturas e impuestos."
       footer={
         <>
           <span>

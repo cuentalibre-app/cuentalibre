@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Link, Navigate } from "react-router";
-import { Button } from "@cuentalibre/ui/components/button";
-import { AuthLayout } from "./auth-layout";
+import { AuthButton, AuthLayout } from "./auth-layout";
 import {
   API_URL,
   DEMO_PATH,
@@ -26,9 +25,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
     case "unavailable":
       return (
         <AuthLayout title="No se puede conectar" description="El servidor de cuentalibre no responde ahora mismo.">
-          <Button onClick={() => reloadAt(window.location.pathname)} className="w-full">
-            Reintentar
-          </Button>
+          <AuthButton onClick={() => reloadAt(window.location.pathname)}>Reintentar</AuthButton>
           <a href={DEMO_PATH} className="text-center font-medium text-primary hover:text-primary-hover">
             Probar la demo mientras tanto
           </a>

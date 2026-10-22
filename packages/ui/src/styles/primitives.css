@@ -26,6 +26,10 @@
   --blue-600: #2f45c9;
   --blue-800: #1e2f96;
 
+  /* Brand gradient: blue into violet and teal */
+  --violet-500: #6a4fe0;
+  --teal-600: #0e8fae;
+
   /* Status */
   --green-50: #e3f1e8;
   --green-700: #1a6340;

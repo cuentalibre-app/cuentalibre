@@ -1,12 +1,10 @@
 @import "tailwindcss";
 @import "@cuentalibre/ui/styles.css";
-@import "@fontsource-variable/source-serif-4";
 @import "@fontsource-variable/source-serif-4/wght-italic.css";
 @import "@fontsource-variable/jetbrains-mono";
 
 /* The site speaks louder than the app: serif headlines, monospaced text, softer shapes */
 @theme {
-  --font-display: "Source Serif 4 Variable", Georgia, serif;
   --font-body: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
 
   --shadow-tab: 0 1px 3px rgb(17 18 20 / 0.12);
@@ -17,12 +15,6 @@
   --shadow-shot: 0 20px 40px -24px rgb(17 18 20 / 0.25);
   --shadow-plan: 0 30px 60px -36px rgb(47 69 201 / 0.45);
 
-}
-
-:root {
-  /* Brand blue into violet and teal: headline accent and the hosted plan's border */
-  --teal: #0e8fae;
-  --brand-gradient: linear-gradient(90deg, var(--primary) 0%, #6a4fe0 55%, var(--teal) 100%);
 }
 
 @layer base {
@@ -72,50 +64,6 @@
   from {
     opacity: 0;
     transform: translateY(8px);
-  }
-}
-
-@utility text-gradient-brand {
-  background: var(--brand-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
-@utility border-gradient-brand {
-  border: 2px solid transparent;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--primary-soft) 50%, var(--background)), var(--background) 45%)
-      padding-box,
-    var(--brand-gradient) border-box;
-}
-
-/*
- * Main call to action: the brand gradient instead of flat blue. It is drawn
- * wider than the button so hovering slides it from blue-violet to violet-teal.
- */
-@utility button-brand {
-  color: var(--primary-foreground);
-  background: linear-gradient(110deg, var(--primary) 0%, #6a4fe0 50%, #0e8fae 100%);
-  background-size: 200% 100%;
-  background-position: 0% 50%;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.2),
-    0 10px 24px -12px rgb(106 79 224 / 0.7);
-  transition:
-    background-position 500ms var(--ease-out),
-    box-shadow 200ms var(--ease-out),
-    transform 150ms var(--ease-out);
-  &:hover {
-    color: var(--primary-foreground);
-    background-position: 100% 50%;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.2),
-      0 14px 28px -12px rgb(14 143 174 / 0.7);
-  }
-  &:active {
-    transform: scale(0.98);
   }
 }
 

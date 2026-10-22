@@ -22,6 +22,10 @@
   --primary-hover: var(--blue-800);
   --primary-soft: var(--blue-50); /* highlighted period, info notes */
   --selection: var(--blue-200); /* selected text */
+  /* Brand gradient: headline accents and calls to action on the site and the sign-in screens */
+  --brand-violet: var(--violet-500);
+  --brand-teal: var(--teal-600);
+  --brand-gradient: linear-gradient(90deg, var(--primary) 0%, var(--brand-violet) 55%, var(--brand-teal) 100%);
 
   --secondary: var(--neutral-0);
   --secondary-foreground: var(--neutral-950);
@@ -82,6 +86,8 @@
   --primary-hover: #9aa7f5;
   --primary-soft: #1f2440;
   --selection: #34407f;
+  --brand-violet: #a08cf4;
+  --brand-teal: #4fc0db;
 
   --secondary: #18191c;
   --secondary-foreground: #ededeb;
