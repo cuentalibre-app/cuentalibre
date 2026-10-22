@@ -1,10 +1,15 @@
-import type { ApiKey, CreatedApiKey, SalesDocument } from "@cuentalibre/contracts";
+import {
+  DEFAULT_ORGANIZATION_SETTINGS,
+  type ApiKey,
+  type CreatedApiKey,
+  type SalesDocument,
+} from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { membership } from "./db/schema";
 import { createOrganization, db, withApiKey, type Client } from "./test/harness";
-import { client, document, errorCode, member, send } from "./test/sync";
+import { client, document, errorCode, line, member, send } from "./test/sync";
 
 async function createKey(user: Client, body: Record<string, unknown> = { name: "Agente" }) {
   const response = await user.request("/v1/api-keys", { method: "POST", body });
@@ -108,6 +113,44 @@ describe("public API", () => {
     const response = await api.request("/v1/invoices", { method: "POST", body: invoice });
     expect(response.status).toBe(201);
     expect(await response.json()).toMatchObject({ kind: "invoice", number: "2026-0001" });
+  });
+
+  it("revises and deletes issued invoices of a business exempt from VERI*FACTU while the quarter is open", async () => {
+    const { ana, norte, api } = await agent();
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt" as const };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
+    const issue = async (fields: Partial<SalesDocument>) => {
+      const { id: _, ...invoice } = document(norte.id, { kind: "invoice", ...fields });
+      const response = await api.request("/v1/invoices", { method: "POST", body: invoice });
+      expect(response.status).toBe(201);
+      return (await response.json()) as SalesDocument;
+    };
+    const patch = (id: string, body: Record<string, unknown>) =>
+      api.request(`/v1/sales-documents/${id}`, { method: "PATCH", body });
+    const first = await issue({ issuedOn: "2026-10-05" });
+    const second = await issue({ issuedOn: "2026-10-10" });
+
+    const revised = await patch(first.id, { lines: [line({ unitPrice: 2000 })], publicNotes: "Revisada" });
+    expect(revised.status).toBe(200);
+    // Same number, new totals: 2000 + 21 % VAT - 15 % withholding
+    expect(await revised.json()).toMatchObject({
+      number: first.number,
+      publicNotes: "Revisada",
+      issued: { totals: { total: 212_000 } },
+    });
+    expect((await patch(first.id, { number: "2026-0009" })).status).toBe(400);
+    const late = await patch(first.id, { issuedOn: "2026-10-11" });
+    expect(late.status).toBe(409);
+    expect(await errorCode(late)).toBe("date_out_of_order");
+
+    expect((await api.request(`/v1/sales-documents/${second.id}`, { method: "DELETE" })).status).toBe(204);
+    expect((await api.request(`/v1/sales-documents/${second.id}`)).status).toBe(404);
+
+    await send(ana, [{ type: "closeQuarter", period: "2026-T4", closedOn: "2027-01-15" }]);
+    const closed = await patch(first.id, { publicNotes: "Tarde" });
+    expect(closed.status).toBe(409);
+    expect(await errorCode(closed)).toBe("quarter_closed");
+    expect((await api.request(`/v1/sales-documents/${first.id}`, { method: "DELETE" })).status).toBe(409);
   });
 
   it("keeps expenses to the organization", async () => {
