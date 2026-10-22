@@ -77,7 +77,7 @@ Drafts, quotes and delivery notes are plain records. Invoices only come into bei
 - rejects a date earlier than the last invoice of the series, a date in a closed quarter, a missing client or lines, and a rectifying invoice that doesn't name an issued invoice of the normal series;
 - freezes the client's fiscal data and the totals, computed with `@cuentalibre/core` from the lines as stored.
 
-After that, an invoice only takes changes to its collection (`status`, `paidOn`, `paymentMethodId`), tags, attachments and private notes; anything else, and deleting it, answers `409 invoice_issued`. It is corrected with a rectifying invoice.
+After that, an invoice only takes changes to its collections (`payments`, which `status` follows), tags, attachments and private notes; anything else, and deleting it, answers `409 invoice_issued`. It is corrected with a rectifying invoice. A business exempt from VERI\*FACTU may still revise or delete an issued invoice that has no VERI\*FACTU record while its quarter is open; its kind, number, series and the invoice it rectifies stay, and a new date must keep it in its year and in order within its series.
 
 ## Purchases and expenses
 
