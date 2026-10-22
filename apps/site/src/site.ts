@@ -9,6 +9,9 @@ export const appLinks = {
   profile: `${appUrl}/configuracion/datos-personales`,
 };
 
+/** The demo opens in its own tab, so leaving it brings people back to the page they were reading. */
+export const demoLinkAttrs = { target: "_blank", rel: "noopener" } as const;
+
 export const sourceUrl = "https://github.com/jesuspb2/cuentalibre";
 
 /**
@@ -39,3 +42,13 @@ export const legalPages = [
 
 /** Date of the last change to the legal pages. */
 export const legalUpdated = "21 de octubre de 2026";
+
+/** The groups of the documentation's index, in the order it shows them. */
+export const docSections = [
+  { id: "start", label: "Empezar" },
+  { id: "integrations", label: "Integraciones" },
+  { id: "api", label: "Referencia de la API" },
+] as const;
+
+export type DocSectionId = (typeof docSections)[number]["id"];
+export const docSectionIds = docSections.map((section) => section.id) as [DocSectionId, ...DocSectionId[]];

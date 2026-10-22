@@ -1,0 +1,201 @@
+---
+import type { MarkdownHeading } from "astro";
+import GitHubIcon from "../components/GitHubIcon.astro";
+import Icon from "../components/Icon.astro";
+import { docHref, docPages, type DocEntry } from "../docs";
+import { docSections, sourceUrl } from "../site";
+import Base from "./Base.astro";
+
+interface Props {
+  entry: DocEntry;
+  headings: MarkdownHeading[];
+}
+
+const { entry, headings } = Astro.props;
+const pages = await docPages();
+const index = pages.findIndex((page) => page.id === entry.id);
+const previous = pages[index - 1];
+const next = pages[index + 1];
+const section = docSections.find((s) => s.id === entry.data.section)!;
+const groups = docSections
+  .map((s) => ({ ...s, pages: pages.filter((page) => page.data.section === s.id) }))
+  .filter((group) => group.pages.length > 0);
+const outline = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+const editUrl = `${sourceUrl}/edit/main/apps/site/${entry.filePath}`;
+---
+
+<Base
+  title={entry.id === "index" ? "Docs · cuentalibre" : `${entry.data.title} · Docs de cuentalibre`}
+  description={entry.data.description}
+>
+  <div
+    class="mx-auto grid max-w-[1200px] gap-8 px-4 pt-6 sm:px-6 lg:grid-cols-[208px_minmax(0,1fr)] lg:gap-12 lg:pt-10 xl:grid-cols-[208px_minmax(0,1fr)_184px]"
+  >
+    <!-- The index of every page: a sidebar on wide screens, a menu that opens above the page on narrow ones -->
+    <details class="group rounded-xl border border-border lg:hidden">
+      <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-medium">
+        Índice de la documentación
+        <Icon name="chevron-down" class="size-4 text-muted-foreground transition-transform group-open:rotate-180" />
+      </summary>
+      <div class="border-t border-border px-2 py-3">
+        {
+          groups.map((group) => (
+            <div class="mt-3 first:mt-0">
+              <p class="m-0 px-2 py-1 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                {group.label}
+              </p>
+              <ul class="m-0 list-none p-0">
+                {group.pages.map((page) => (
+                  <li>
+                    <a
+                      href={docHref(page)}
+                      aria-current={page.id === entry.id ? "page" : undefined}
+                      class="block rounded-lg px-2 py-1.5 text-sm text-foreground no-underline hover:bg-muted aria-[current=page]:bg-primary-soft aria-[current=page]:font-medium aria-[current=page]:text-primary"
+                    >
+                      {page.data.label ?? page.data.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </details>
+
+    <nav aria-label="Documentación" class="hidden lg:block">
+      <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pr-2">
+        {
+          groups.map((group) => (
+            <div class="mt-6 first:mt-0">
+              <p class="m-0 px-3 pb-1.5 text-sm font-semibold text-foreground">{group.label}</p>
+              <ul class="m-0 flex list-none flex-col gap-0.5 p-0">
+                {group.pages.map((page) => (
+                  <li>
+                    <a
+                      href={docHref(page)}
+                      aria-current={page.id === entry.id ? "page" : undefined}
+                      class="block rounded-lg px-3 py-1.5 text-sm text-muted-foreground no-underline hover:bg-muted hover:text-foreground aria-[current=page]:bg-primary-soft aria-[current=page]:font-medium aria-[current=page]:text-primary"
+                    >
+                      {page.data.label ?? page.data.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </nav>
+
+    <main class="min-w-0">
+      <nav aria-label="Ruta" class="text-sm text-muted-foreground">
+        <a href="/docs" class="text-muted-foreground no-underline hover:text-foreground">Docs</a>
+        <span aria-hidden="true"> › </span>
+        {section.label}
+      </nav>
+      <h1 class="mt-3 mb-0 font-display text-[2rem] leading-tight font-semibold tracking-[-0.01em] sm:text-[2.5rem]">
+        {entry.data.title}
+      </h1>
+      <p class="mt-3 mb-0 max-w-[680px] text-lg text-muted-foreground">{entry.data.description}</p>
+
+      <article class="doc mt-8 max-w-[720px] border-t border-divider pt-2 text-md">
+        <slot />
+      </article>
+
+      <footer class="mt-12 max-w-[720px]">
+        <div
+          class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-divider pt-5 text-sm text-muted-foreground"
+        >
+          <a href={editUrl} class="inline-flex items-center gap-2 text-muted-foreground no-underline hover:text-foreground">
+            <GitHubIcon class="size-4" />Ver en GitHub
+          </a>
+          <a
+            href={`${sourceUrl}/issues`}
+            class="inline-flex items-center gap-2 text-muted-foreground no-underline hover:text-foreground"
+          >
+            <Icon name="message-circle" class="size-4" />¿Algo no está claro? Cuéntanoslo
+          </a>
+        </div>
+        {
+          (previous || next) && (
+            <nav aria-label="Otras páginas" class="mt-6 grid gap-3 sm:grid-cols-2">
+              {previous && (
+                <a
+                  href={docHref(previous)}
+                  class="group flex items-center gap-4 rounded-2xl border border-border px-5 py-4 no-underline transition-colors hover:border-primary hover:bg-primary-soft"
+                >
+                  <Icon
+                    name="arrow-left"
+                    class="size-5 shrink-0 text-muted-foreground transition-transform group-hover:-translate-x-1 group-hover:text-primary"
+                  />
+                  <span class="min-w-0">
+                    <span class="block text-xs text-muted-foreground">Anterior</span>
+                    <span class="block font-medium text-foreground">{previous.data.label ?? previous.data.title}</span>
+                  </span>
+                </a>
+              )}
+              {next && (
+                <a
+                  href={docHref(next)}
+                  class="group flex items-center justify-end gap-4 rounded-2xl sm:col-start-2 border border-border px-5 py-4 text-right no-underline transition-colors hover:border-primary hover:bg-primary-soft"
+                >
+                  <span class="min-w-0">
+                    <span class="block text-xs text-muted-foreground">Siguiente</span>
+                    <span class="block font-medium text-foreground">{next.data.label ?? next.data.title}</span>
+                  </span>
+                  <Icon
+                    name="arrow-right"
+                    class="size-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary"
+                  />
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </footer>
+    </main>
+
+    {
+      outline.length > 0 && (
+        <aside aria-label="En esta página" class="hidden xl:block">
+          <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+            <p class="m-0 text-sm font-semibold text-foreground">En esta página</p>
+            <ul class="m-0 mt-3 flex list-none flex-col gap-1 border-l border-divider p-0 text-sm">
+              {outline.map((heading) => (
+                <li>
+                  <a
+                    href={`#${heading.slug}`}
+                    data-outline={heading.slug}
+                    class:list={[
+                      "-ml-px block border-l border-transparent py-1 pr-1 text-muted-foreground no-underline hover:text-foreground data-active:border-primary data-active:text-primary",
+                      heading.depth === 3 ? "pl-6" : "pl-3",
+                    ]}
+                  >
+                    {heading.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      )
+    }
+  </div>
+  <script>
+    // Highlights in "En esta página" the section being read: the last heading above the top third of the screen
+    const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-outline]")];
+    const headings = links
+      .map((link) => document.getElementById(link.dataset.outline!))
+      .filter((heading): heading is HTMLElement => heading !== null);
+    const update = () => {
+      const line = window.innerHeight / 3;
+      const current = headings.filter((heading) => heading.getBoundingClientRect().top < line).at(-1) ?? headings[0];
+      for (const link of links) link.toggleAttribute("data-active", link.dataset.outline === current?.id);
+    };
+    if (links.length > 0) {
+      window.addEventListener("scroll", update, { passive: true });
+      update();
+    }
+  </script>
+</Base>

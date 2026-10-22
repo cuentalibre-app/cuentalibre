@@ -120,3 +120,188 @@
     font-weight: 500;
   }
 }
+
+/* Long-form text of the documentation, written in Markdown */
+@layer components {
+  .doc h2 {
+    margin: 2.75rem 0 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-divider);
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+    font-weight: 600;
+  }
+  .doc > h2:first-child {
+    margin-top: 1.5rem;
+  }
+  .doc h3 {
+    margin: 2rem 0 0;
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    font-weight: 600;
+  }
+  .doc p,
+  .doc ul,
+  .doc ol,
+  .doc pre,
+  .doc table {
+    margin: 0.875rem 0 0;
+  }
+  .doc ul,
+  .doc ol {
+    padding-left: 1.25rem;
+  }
+  .doc ul {
+    list-style: disc;
+  }
+  .doc ol {
+    list-style: decimal;
+  }
+  .doc li + li {
+    margin-top: 0.375rem;
+  }
+  .doc a {
+    color: var(--color-primary);
+  }
+  .doc :not(pre) > code {
+    padding: 0.1em 0.35em;
+    border-radius: var(--radius-sm);
+    background: var(--color-muted);
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+  .doc pre {
+    overflow-x: auto;
+    padding: 1rem 1.125rem;
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+  }
+  /* Wide tables scroll sideways on their own instead of the page */
+  .doc table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+  .doc th,
+  .doc td {
+    padding: 0.5rem 1rem 0.5rem 0;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+    vertical-align: top;
+  }
+  .doc th {
+    color: var(--color-muted-foreground);
+    font-weight: 500;
+  }
+  .doc td:first-child {
+    white-space: nowrap;
+  }
+}
+
+/* Code highlighting (Shiki's css-variables theme) in the site's colors */
+:root {
+  --astro-code-foreground: var(--color-foreground);
+  --astro-code-background: var(--color-muted);
+  --astro-code-token-comment: var(--color-muted-foreground);
+  --astro-code-token-keyword: var(--color-primary);
+  --astro-code-token-string: var(--color-success);
+  --astro-code-token-string-expression: var(--color-success);
+  --astro-code-token-constant: var(--color-primary);
+  --astro-code-token-function: var(--color-foreground);
+  --astro-code-token-parameter: var(--color-foreground);
+  --astro-code-token-punctuation: var(--color-muted-foreground);
+  --astro-code-token-link: var(--color-primary);
+}
+
+/* The two ways to use cuentalibre, side by side on the docs' introduction */
+@layer components {
+  .doc .doc-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+  .doc .doc-option {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 1.375rem;
+    border: 1px solid var(--color-border);
+    border-radius: 1.25rem;
+  }
+  .doc .doc-option-featured {
+    border-color: color-mix(in oklab, var(--color-primary) 35%, transparent);
+    background: color-mix(in oklab, var(--color-primary-soft) 45%, transparent);
+  }
+  .doc .doc-option-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .doc .doc-option-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.625rem;
+    background: var(--color-muted);
+    color: var(--color-foreground);
+  }
+  .doc .doc-option-featured .doc-option-icon {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+  .doc .doc-option-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .doc .doc-option p {
+    margin: 0;
+  }
+  .doc .doc-option-title {
+    font-weight: 600;
+  }
+  .doc .doc-option-subtitle {
+    color: var(--color-muted-foreground);
+    font-size: var(--text-sm);
+  }
+  .doc .doc-option ul {
+    flex: 1;
+    margin: 1.125rem 0 0;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--color-divider);
+    list-style: none;
+    font-size: var(--text-sm);
+  }
+  .doc .doc-option li {
+    position: relative;
+    padding-left: 1.25rem;
+  }
+  .doc .doc-option li::before {
+    content: "";
+    position: absolute;
+    top: 0.6em;
+    left: 0.125rem;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 999px;
+    background: var(--color-primary);
+  }
+  .doc .doc-option-link {
+    margin-top: 1.25rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .doc .doc-option-link:hover {
+    color: var(--color-primary-hover);
+  }
+}
