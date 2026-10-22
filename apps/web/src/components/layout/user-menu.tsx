@@ -19,7 +19,7 @@ import {
 } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { signOut } from "@/features/auth/auth-api";
-import { API_URL, SIGN_IN_PATH, leaveDemo, reloadAt, sessionState } from "@/features/auth/session";
+import { SIGN_IN_PATH, canExitDemo, exitDemo, reloadAt, sessionState } from "@/features/auth/session";
 
 interface UserMenuProps {
   /** Custom trigger, a single button; defaults to the round avatar. */
@@ -80,13 +80,7 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
             Cerrar sesión
           </DropdownMenuItem>
         ) : (
-          <DropdownMenuItem
-            disabled={!API_URL}
-            onSelect={() => {
-              leaveDemo();
-              reloadAt(SIGN_IN_PATH);
-            }}
-          >
+          <DropdownMenuItem disabled={!canExitDemo()} onSelect={exitDemo}>
             <LogOut strokeWidth={1.8} aria-hidden="true" />
             Salir de la demo
           </DropdownMenuItem>

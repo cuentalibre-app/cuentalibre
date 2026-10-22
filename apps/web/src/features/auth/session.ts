@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/components/legal-links";
 import { connectApi, type ConnectResult } from "@/data/api";
 
 export const SIGN_IN_PATH = "/entrar";
@@ -20,40 +21,89 @@ let state: SessionState = "demo";
 
 export const sessionState = () => state;
 
-const DEMO_KEY = "cuentalibre:demo";
+/** Where the demo was opened from, to go back there when leaving it. */
+const DEMO_RETURN_KEY = "cuentalibre:demo-return";
 
-function isDemoRequested() {
-  try {
-    return sessionStorage.getItem(DEMO_KEY) === "1";
-  } catch {
-    return false;
-  }
+interface DemoReturn {
+  /** The page that linked to the demo, if the browser said. */
+  from: string | null;
+  /** The demo opened in a tab of its own (a link to a new tab): closing it goes back. */
+  ownTab: boolean;
 }
 
-/** Stops the demo; the next load goes to the API. */
+/** Whether a path is in the demo, which lives under /demo: /demo/ventas/facturas… */
+const inDemo = (pathname: string) => pathname === DEMO_PATH || pathname.startsWith(`${DEMO_PATH}/`);
+
+/**
+ * The app's routes live under /demo in the demo, so its URLs say so and can be
+ * shared or reloaded; the router takes this as its basename.
+ */
+export const routerBasename = () => (inDemo(window.location.pathname) ? DEMO_PATH : undefined);
+
+/** Forgets where the demo was opened from; the app leaves it by loading a path outside /demo. */
 export function leaveDemo() {
   try {
-    sessionStorage.removeItem(DEMO_KEY);
+    sessionStorage.removeItem(DEMO_RETURN_KEY);
   } catch {
-    // Storage blocked: the demo flag was never stored either.
+    // Storage blocked: nothing was stored.
   }
 }
 
 /**
- * Decides what the app runs on, before the first render. Opening /demo starts
- * the demo for this tab; otherwise the app connects to the API if there is one.
+ * Decides what the app runs on, before the first render: the demo under /demo
+ * (and always without an API); otherwise the API.
  */
 export async function startSession() {
-  if (window.location.pathname === DEMO_PATH) {
+  if (routerBasename()) {
     try {
-      sessionStorage.setItem(DEMO_KEY, "1");
+      // Kept from the first visit: reloading has no referrer, and moving around the demo isn't where it came from
+      if (!sessionStorage.getItem(DEMO_RETURN_KEY)) {
+        const referrer = document.referrer && new URL(document.referrer);
+        const from = referrer && !inDemo(referrer.pathname) ? referrer.href : null;
+        const back: DemoReturn = { from, ownTab: window.history.length === 1 };
+        sessionStorage.setItem(DEMO_RETURN_KEY, JSON.stringify(back));
+      }
     } catch {
-      // Storage blocked: the demo lasts until the next reload.
+      // Storage blocked: leaving the demo falls back to the site or the sign-in page.
     }
     state = "demo";
     return;
   }
-  state = API_URL && !isDemoRequested() ? await connectApi(API_URL) : "demo";
+  state = API_URL ? await connectApi(API_URL) : "demo";
+}
+
+function demoReturn(): DemoReturn {
+  try {
+    const stored = sessionStorage.getItem(DEMO_RETURN_KEY);
+    if (stored) return JSON.parse(stored) as DemoReturn;
+  } catch {
+    // Storage blocked or garbled: fall back to the site or the sign-in page.
+  }
+  return { from: null, ownTab: false };
+}
+
+/** Where leaving the demo goes when it can't just close its tab; null when there is nowhere else to go. */
+function demoExit(back: DemoReturn) {
+  return back.from ?? SITE_URL ?? (API_URL ? SIGN_IN_PATH : null);
+}
+
+/** Whether the demo has somewhere to go back to, so it offers to leave. */
+export const canExitDemo = () => {
+  const back = demoReturn();
+  return back.ownTab || demoExit(back) !== null;
+};
+
+/**
+ * Leaves the demo for where it was opened from: closes its tab when it has one
+ * of its own, so the page that opened it shows again, or goes back to that page.
+ */
+export function exitDemo() {
+  const back = demoReturn();
+  const exit = demoExit(back);
+  leaveDemo();
+  if (back.ownTab) window.close();
+  // Still here when the browser doesn't let the page close its tab
+  if (exit) window.setTimeout(() => window.location.assign(exit), back.ownTab ? 150 : 0);
 }
 
 /** Reloads the app at `path`, so it boots again with the new session. */
