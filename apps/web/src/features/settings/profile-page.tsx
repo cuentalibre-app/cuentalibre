@@ -56,6 +56,7 @@ const TIME_ZONES: Option[] = [
 const BUSINESS_LOCALE = { language: "es", numberFormat: "ES" };
 
 export function ProfilePage() {
+  const connected = sessionState() === "connected";
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
@@ -64,10 +65,11 @@ export function ProfilePage() {
           description="Tus datos como usuario de cuentalibre, no los de tu empresa."
         />
         <PersonalSection />
-        <NotificationsSection />
-        <LocaleSection />
+        {/* Nothing sends these notifications yet: only the demo shows them */}
+        {!connected && <NotificationsSection />}
+        <LocaleSection index={connected ? 1 : 2} />
         {/* The demo has no account to delete */}
-        {sessionState() === "connected" && <DeleteAccountSection />}
+        {connected && <DeleteAccountSection />}
       </div>
     </TooltipProvider>
   );
@@ -100,7 +102,10 @@ function PersonalSection() {
         <span className="text-muted-foreground">Email de contacto: </span>
         <span className="font-medium">{draft.email}</span>
       </p>
-      <AvatarField name={userFullName(draft)} url={draft.avatarUrl} onChange={(url) => set("avatarUrl", url)} />
+      {/* The picture isn't stored yet: only the demo shows it */}
+      {sessionState() !== "connected" && (
+        <AvatarField name={userFullName(draft)} url={draft.avatarUrl} onChange={(url) => set("avatarUrl", url)} />
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nombre" required error={showErrors ? errors.firstName : undefined}>
           {(p) => (
@@ -313,7 +318,7 @@ function BrowserNotifications() {
   );
 }
 
-function LocaleSection() {
+function LocaleSection({ index }: { index: number }) {
   const saved = useUserSettings().locale;
   const { draft, set, setDraft, dirty, justSaved, markSaved } = useDraft<UserLocale>(saved);
   const save = () => {
@@ -332,7 +337,7 @@ function LocaleSection() {
   return (
     <Section
       title="Idioma, formato numérico y zona horaria"
-      index={2}
+      index={index}
       action={<SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />}
     >
       <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
@@ -407,7 +412,7 @@ function LocaleSection() {
 function DeleteAccountSection() {
   const [open, setOpen] = useState(false);
   return (
-    <Section title="Eliminar cuenta" index={3} defaultOpen={false}>
+    <Section title="Eliminar cuenta" index={2} defaultOpen={false}>
       <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
         <p className="m-0">
           Se borrarán tu usuario y todas las empresas en las que eres el único usuario, con sus facturas, gastos,

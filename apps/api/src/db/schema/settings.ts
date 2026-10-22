@@ -1,6 +1,6 @@
-import type { SettingsSection } from "@cuentalibre/contracts";
+import type { SettingsSection, UserSettingsSection } from "@cuentalibre/contracts";
 import { jsonb, pgTable, primaryKey, text, uuid } from "drizzle-orm/pg-core";
-import { organization } from "./auth";
+import { organization, user } from "./auth";
 import { createdAt, updatedAt } from "./columns";
 
 /**
@@ -20,4 +20,22 @@ export const organizationSetting = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [primaryKey({ columns: [table.organizationId, table.section] })],
+);
+
+/**
+ * The signed-in user's own settings, one JSON document per section, validated
+ * with `userSettingsSchema`. They follow the user across organizations.
+ */
+export const userSetting = pgTable(
+  "user_setting",
+  {
+    userId: uuid()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    section: text().$type<UserSettingsSection>().notNull(),
+    data: jsonb().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.section] })],
 );
