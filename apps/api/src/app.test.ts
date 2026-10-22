@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { session } from "./db/schema";
 import { createApp } from "./app";
-import { createAuth } from "./auth";
+import { CLOSED_ORGANIZATION_PATHS, createAuth } from "./auth";
 import { accountMailer, app, createOrganization, db, env, mailer, signUp, storage } from "./test/harness";
 
 describe("meta", () => {
@@ -149,21 +149,29 @@ describe("account", () => {
     expect(stored?.activeOrganizationId).toBe(created.id);
   });
 
-  it("doesn't let a user switch to another user's organization", async () => {
+  it("lets a user create only one organization", async () => {
+    const ana = await signUp("Ana");
+    const first = await createOrganization(ana, "Ana SL");
+
+    const second = await ana.request("/v1/auth/organization/create", {
+      method: "POST",
+      body: { name: "Otra SL", slug: `otra-sl-${crypto.randomUUID().slice(0, 8)}` },
+    });
+    expect(second.status).toBe(403);
+    expect(await (await ana.request("/v1/organization")).json()).toMatchObject({ organization: { id: first.id } });
+  });
+
+  it("closes the organization routes the web app doesn't use", async () => {
     const ana = await signUp("Ana");
     const luis = await signUp("Luis");
     const anas = await createOrganization(ana, "Ana SL");
     await createOrganization(luis, "Luis SL");
 
-    const switched = await luis.request("/v1/auth/organization/set-active", {
-      method: "POST",
-      body: { organizationId: anas.id },
-    });
-    expect(switched.status).toBe(403);
-
-    // Better Auth clears the active organization after the failed switch.
-    const current = await luis.request("/v1/organization");
-    expect(current.status).toBe(403);
+    for (const path of CLOSED_ORGANIZATION_PATHS) {
+      const response = await luis.request(`/v1/auth${path}`, { method: "POST", body: { organizationId: anas.id } });
+      expect(response.status, path).toBe(404);
+    }
+    expect((await luis.request("/v1/auth/organization/list")).status).toBe(404);
   });
 
   it("rejects a session whose active organization the user doesn't belong to", async () => {
