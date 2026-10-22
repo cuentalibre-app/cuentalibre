@@ -23,6 +23,8 @@ const me = createRoute({
               id: z.uuid(),
               name: z.string(),
               email: z.email(),
+              /** Users who sign up with Google come verified. */
+              emailVerified: z.boolean(),
               /** False for people who only sign in with Google. */
               hasPassword: z.boolean(),
             }),
@@ -99,7 +101,13 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       .orderBy(organization.name);
     return c.json(
       {
-        user: { id: user.id, name: user.name, email: user.email, hasPassword: Boolean(credential) },
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          hasPassword: Boolean(credential),
+        },
         activeOrganizationId: c.get("activeOrganizationId"),
         memberships: rows.map((row) => ({ ...row, role: row.role as MembershipRole })),
       },

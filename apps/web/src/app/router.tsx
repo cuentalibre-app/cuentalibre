@@ -16,9 +16,18 @@ import {
 import { CatalogSettingsPage } from "@/features/catalog/catalog-settings-page";
 import { ProductFormPage } from "@/features/catalog/product-form-page";
 import { StockPage } from "@/features/catalog/stock-page";
+import { ForgotPasswordPage } from "@/features/auth/forgot-password-page";
 import { OnboardingPage } from "@/features/auth/onboarding-page";
+import { ResetPasswordPage } from "@/features/auth/reset-password-page";
 import { GuestOnly, RequireSession } from "@/features/auth/session-gate";
-import { DEMO_PATH, ONBOARDING_PATH, SIGN_IN_PATH, SIGN_UP_PATH } from "@/features/auth/session";
+import {
+  DEMO_PATH,
+  FORGOT_PASSWORD_PATH,
+  ONBOARDING_PATH,
+  RESET_PASSWORD_PATH,
+  SIGN_IN_PATH,
+  SIGN_UP_PATH,
+} from "@/features/auth/session";
 import { SignInPage } from "@/features/auth/sign-in-page";
 import { SignUpPage } from "@/features/auth/sign-up-page";
 import { CLOSING_PATH } from "@/features/closing/closing-model";
@@ -327,6 +336,16 @@ export const router = createBrowserRouter([
       </GuestOnly>
     ),
   },
+  {
+    path: FORGOT_PASSWORD_PATH.slice(1),
+    element: (
+      <GuestOnly>
+        <ForgotPasswordPage />
+      </GuestOnly>
+    ),
+  },
+  // Not guest-only: the emailed link works in a tab that is still signed in
+  { path: RESET_PASSWORD_PATH.slice(1), element: <ResetPasswordPage /> },
   { path: ONBOARDING_PATH.slice(1), element: <OnboardingPage /> },
   // startSession() has already started the demo; this only leaves the URL.
   { path: DEMO_PATH.slice(1), element: <Navigate to="/" replace /> },

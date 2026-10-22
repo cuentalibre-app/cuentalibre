@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { session } from "./db/schema";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
-import { app, createOrganization, db, env, mailer, signUp, storage } from "./test/harness";
+import { accountMailer, app, createOrganization, db, env, mailer, signUp, storage } from "./test/harness";
 
 describe("meta", () => {
   it("reports health", async () => {
@@ -21,13 +21,13 @@ describe("meta", () => {
   it("says whether Google sign-in is on", async () => {
     const response = await app.request("/v1/sign-in-methods");
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ google: false });
+    expect(await response.json()).toEqual({ google: false, email: true });
   });
 
   it("sends people to Google when it is set up", async () => {
     const googleEnv = { ...env, GOOGLE_CLIENT_ID: "client-id", GOOGLE_CLIENT_SECRET: "client-secret" };
-    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv), env: googleEnv, storage, mailer });
-    expect(await (await withGoogle.request("/v1/sign-in-methods")).json()).toEqual({ google: true });
+    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv, accountMailer), env: googleEnv, storage, mailer });
+    expect(await (await withGoogle.request("/v1/sign-in-methods")).json()).toEqual({ google: true, email: true });
 
     const origin = env.BETTER_AUTH_URL;
     const response = await withGoogle.request(`${origin}/v1/auth/sign-in/social`, {
@@ -43,7 +43,7 @@ describe("meta", () => {
 
   it("lets a signed-in user start linking Google, but not a visitor", async () => {
     const googleEnv = { ...env, GOOGLE_CLIENT_ID: "client-id", GOOGLE_CLIENT_SECRET: "client-secret" };
-    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv), env: googleEnv, storage, mailer });
+    const withGoogle = createApp({ db, auth: createAuth(db, googleEnv, accountMailer), env: googleEnv, storage, mailer });
     const origin = env.BETTER_AUTH_URL;
     const link = (cookie?: string) =>
       withGoogle.request(`${origin}/v1/auth/link-social`, {

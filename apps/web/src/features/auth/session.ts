@@ -4,6 +4,11 @@ export const SIGN_IN_PATH = "/entrar";
 export const SIGN_UP_PATH = "/registro";
 export const ONBOARDING_PATH = "/bienvenida";
 export const DEMO_PATH = "/demo";
+export const FORGOT_PASSWORD_PATH = "/recuperar-contrasena";
+/** Where the link to reset a password lands, with `?token=` (or `?error=` if it no longer works). */
+export const RESET_PASSWORD_PATH = "/nueva-contrasena";
+/** Where the link to verify an email lands: Credenciales de acceso, which says how it went. */
+export const EMAIL_VERIFIED_PATH = "/configuracion/credenciales?verificado=1";
 
 /** The API the app signs in to. Without it the app only runs the demo. */
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "");

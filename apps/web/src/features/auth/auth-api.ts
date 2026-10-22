@@ -1,4 +1,11 @@
-import { API_URL, ONBOARDING_PATH, SIGN_IN_PATH, SIGN_UP_PATH } from "./session";
+import {
+  API_URL,
+  EMAIL_VERIFIED_PATH,
+  ONBOARDING_PATH,
+  RESET_PASSWORD_PATH,
+  SIGN_IN_PATH,
+  SIGN_UP_PATH,
+} from "./session";
 
 /** Better Auth rejected the request; `code` says why. */
 export class AuthError extends Error {
@@ -28,8 +35,20 @@ async function get<R>(path: string): Promise<R> {
 
 export const signIn = (email: string, password: string) => post("/sign-in/email", { email, password });
 
+/** On instances that send email, the API also sends a link to verify it. */
 export const signUp = (name: string, email: string, password: string) =>
-  post("/sign-up/email", { name, email, password });
+  post("/sign-up/email", { name, email, password, callbackURL: `${window.location.origin}${EMAIL_VERIFIED_PATH}` });
+
+/** Sends the signed-in user the link to verify their email again. */
+export const sendVerificationEmail = (email: string) =>
+  post("/send-verification-email", { email, callbackURL: `${window.location.origin}${EMAIL_VERIFIED_PATH}` });
+
+/** Emails a link to choose a new password, if the email has an account; the answer is the same either way. */
+export const requestPasswordReset = (email: string) =>
+  post("/request-password-reset", { email, redirectTo: `${window.location.origin}${RESET_PASSWORD_PATH}` });
+
+/** Sets the new password with the token from the emailed link; every session ends. */
+export const resetPassword = (token: string, newPassword: string) => post("/reset-password", { token, newPassword });
 
 /**
  * Goes to Google to sign in. Only the sign-up screen creates new users, as
@@ -73,24 +92,40 @@ export async function linkGoogle(returnPath: string) {
 /** Better Auth refuses to unlink the user's only way in. */
 export const unlinkAccount = (accountId: string) => post("/unlink-account", { accountId });
 
-/** How people can sign in to this instance besides email and password; nothing extra if the API can't say. */
-export async function signInMethods(): Promise<{ google: boolean }> {
+/**
+ * What this instance offers besides email and password: Google, and email
+ * (verifying it, resetting a forgotten password). Nothing extra if the API can't say.
+ */
+export interface SignInMethods {
+  google: boolean;
+  email: boolean;
+}
+
+let methods: Promise<SignInMethods> | undefined;
+
+/** Asked once per load: several parts of a screen want it. */
+export const signInMethods = () => (methods ??= fetchSignInMethods());
+
+async function fetchSignInMethods(): Promise<SignInMethods> {
   try {
     const response = await fetch(`${API_URL}/v1/sign-in-methods`);
-    if (response.ok) return (await response.json()) as { google: boolean };
+    if (response.ok) return (await response.json()) as SignInMethods;
   } catch {
     // Unreachable API: the screen still offers email and password.
   }
-  return { google: false };
+  methods = undefined;
+  return { google: false, email: false };
 }
 
 export const signOut = () => post("/sign-out", {});
 
-/** The signed-in user; `hasPassword` is false for people who only sign in with Google. */
+/** The signed-in user; `hasPassword` is false for people who only sign in with Google, who come verified. */
 export async function currentUser() {
   const response = await fetch(`${API_URL}/v1/me`, { credentials: "include" });
   if (!response.ok) throw new AuthError(`HTTP_${response.status}`);
-  const { user } = (await response.json()) as { user: { email: string; hasPassword: boolean } };
+  const { user } = (await response.json()) as {
+    user: { email: string; emailVerified: boolean; hasPassword: boolean };
+  };
   return user;
 }
 
@@ -145,11 +180,17 @@ const MESSAGES: Record<string, string> = {
   account_already_linked_to_different_user: "Esa cuenta de Google ya está vinculada a otro usuario.",
   FAILED_TO_UNLINK_LAST_ACCOUNT: "Es tu única forma de entrar, así que no puedes desvincularla.",
   SESSION_NOT_FRESH: "Por seguridad, sal y vuelve a entrar antes de desvincularla.",
+  // Links in emails (verifying an email, resetting a password) send these back
+  INVALID_TOKEN: "El enlace no es válido o ya se ha usado. Pide otro.",
+  TOKEN_EXPIRED: "El enlace ha caducado. Pide otro.",
+  EMAIL_ALREADY_VERIFIED: "Tu email ya está verificado.",
+  RESET_PASSWORD_DISABLED: "Este servidor no puede enviar emails, así que no puede restablecer contraseñas.",
+  VERIFICATION_EMAIL_NOT_ENABLED: "Este servidor no puede enviar emails.",
   sole_owner:
     "Eres el único propietario de una empresa que tiene más usuarios. Quítalos o haz propietario a otro antes de eliminar tu cuenta.",
 };
 
-/** What to tell the user when Google sign-in sent them back with `?error=`; nothing if they cancelled. */
+/** What to tell the user when Google, or a link in an email, sent them back with `?error=`; nothing if they cancelled. */
 export function oauthErrorMessage(code: string | null): string | null {
   if (!code || code === "access_denied") return null;
   return authErrorMessage(new AuthError(code));
