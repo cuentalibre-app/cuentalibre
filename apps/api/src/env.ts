@@ -47,6 +47,8 @@ const envSchema = z
     SMTP_URL: z.url().optional(),
     /** Address emails are sent from; the business's name goes as the sender's name. */
     EMAIL_FROM: z.email().optional(),
+    /** Address emails about people's accounts (verifying an email, resetting a password) are sent from; defaults to `EMAIL_FROM`. */
+    ACCOUNT_EMAIL_FROM: z.email().optional(),
   })
   .refine((env) => env.NODE_ENV !== "production" || env.BETTER_AUTH_SECRET !== devSecret, {
     message: "BETTER_AUTH_SECRET must be set in production",
