@@ -1,5 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
 import { hasGoogleSignIn, type Auth } from "./auth";
 import type { AppEnv } from "./context";
 import type { Db } from "./db/client";
@@ -49,6 +50,10 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
   app.notFound((c) => errorResponse(c, 404, "not_found", "Not found."));
   app.onError((error, c) => {
     if (error instanceof ApiError) return errorResponse(c, error.status, error.code, error.message);
+    // Hono's own rejections, such as a body that isn't valid JSON
+    if (error instanceof HTTPException && error.status < 500) {
+      return errorResponse(c, error.status, "invalid_request", error.message);
+    }
     console.error(error);
     return errorResponse(c, 500, "internal_error", "Something went wrong.");
   });

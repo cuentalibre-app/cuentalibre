@@ -8,7 +8,7 @@ import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { membership } from "./db/schema";
-import { createOrganization, db, withApiKey, type Client } from "./test/harness";
+import { app, createOrganization, db, env, withApiKey, type Client } from "./test/harness";
 import { client, document, errorCode, line, member, send } from "./test/sync";
 
 async function createKey(user: Client, body: Record<string, unknown> = { name: "Agente" }) {
@@ -181,6 +181,24 @@ describe("public API", () => {
     expect((await api.request(`/v1/expenses/${id}`, { method: "DELETE" })).status).toBe(204);
     expect((await api.request(`/v1/expenses/${id}`)).status).toBe(404);
     expect((await api.request(`/v1/purchase-invoices/${newId()}`)).status).toBe(404);
+  });
+
+  it("rejects bodies that aren't JSON as invalid requests", async () => {
+    const { key } = await agent();
+    const post = (contentType: string, body: string) =>
+      app.request(`${env.BETTER_AUTH_URL}/v1/contacts`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${key.key}`, "content-type": contentType },
+        body,
+      });
+    const malformed = await post("application/json", "{bad json");
+    expect(malformed.status).toBe(400);
+    expect(await malformed.json()).toEqual({
+      error: { code: "invalid_request", message: "Malformed JSON in request body" },
+    });
+    const notJson = await post("application/x-www-form-urlencoded", "name=x");
+    expect(notJson.status).toBe(415);
+    expect(await errorCode(notJson)).toBe("invalid_request");
   });
 
   it("describes itself with OpenAPI, keys as bearer auth", async () => {
