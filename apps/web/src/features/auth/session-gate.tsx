@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link, Navigate } from "react-router";
+import { Navigate } from "react-router";
 import { AuthButton, AuthLayout } from "./auth-layout";
 import {
   API_URL,
@@ -7,6 +7,8 @@ import {
   ONBOARDING_PATH,
   SIGN_IN_PATH,
   SIGN_UP_PATH,
+  canExitDemo,
+  exitDemo,
   leaveDemo,
   reloadAt,
   sessionState,
@@ -46,16 +48,28 @@ export function DemoBanner() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-primary-soft px-4 py-2 text-center text-sm text-foreground">
       <span>Estás en la demo: los datos son de ejemplo y los cambios no se guardan.</span>
-      {API_URL && (
-        <span className="flex gap-3">
-          <Link to={SIGN_UP_PATH} onClick={leaveDemo} className="font-semibold text-primary hover:text-primary-hover">
-            Crear cuenta
-          </Link>
-          <Link to={SIGN_IN_PATH} onClick={leaveDemo} className="font-medium text-primary hover:text-primary-hover">
-            Entrar
-          </Link>
-        </span>
-      )}
+      <span className="flex gap-3">
+        {API_URL && (
+          <>
+            {/* Plain links: they load the app outside /demo, on the API */}
+            <a href={SIGN_UP_PATH} onClick={leaveDemo} className="font-semibold text-primary hover:text-primary-hover">
+              Crear cuenta
+            </a>
+            <a href={SIGN_IN_PATH} onClick={leaveDemo} className="font-medium text-primary hover:text-primary-hover">
+              Entrar
+            </a>
+          </>
+        )}
+        {canExitDemo() && (
+          <button
+            type="button"
+            onClick={exitDemo}
+            className="cursor-pointer font-medium text-primary hover:text-primary-hover"
+          >
+            Salir de la demo
+          </button>
+        )}
+      </span>
     </div>
   );
 }

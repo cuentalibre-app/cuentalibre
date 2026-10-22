@@ -21,12 +21,12 @@ import { OnboardingPage } from "@/features/auth/onboarding-page";
 import { ResetPasswordPage } from "@/features/auth/reset-password-page";
 import { GuestOnly, RequireSession } from "@/features/auth/session-gate";
 import {
-  DEMO_PATH,
   FORGOT_PASSWORD_PATH,
   ONBOARDING_PATH,
   RESET_PASSWORD_PATH,
   SIGN_IN_PATH,
   SIGN_UP_PATH,
+  routerBasename,
 } from "@/features/auth/session";
 import { SignInPage } from "@/features/auth/sign-in-page";
 import { SignUpPage } from "@/features/auth/sign-up-page";
@@ -291,64 +291,65 @@ const placeholders = [
   ...createActions.flat().map((action) => ({ label: `Crear ${action.label.toLowerCase()}`, to: action.to })),
 ].filter((p) => !builtPaths.has(p.to));
 
-export const router = createBrowserRouter([
-  {
-    element: (
-      <RequireSession>
-        <AppLayout />
-      </RequireSession>
-    ),
-    children: [
-      { index: true, element: <HomePage /> },
-      { path: "ventas", element: <Navigate to="/ventas/facturas" replace /> },
-      { path: "compras", element: <Navigate to="/compras/facturas" replace /> },
-      { path: "contactos", element: <Navigate to="/contactos/clientes" replace /> },
-      { path: "catalogo", element: <Navigate to={PRODUCTS_PATH} replace /> },
-      { path: "mas", element: <MorePage /> },
-      ...salesRoutes,
-      ...purchaseRoutes,
-      ...contactRoutes,
-      ...catalogRoutes,
-      ...taxRoutes,
-      ...treasuryRoutes,
-      closingRoute,
-      ...reportRoutes,
-      workingHoursRoute,
-      ...settingsRoutes,
-      ...transferRoutes,
-      ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
-      { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
-    ],
-  },
-  {
-    path: SIGN_IN_PATH.slice(1),
-    element: (
-      <GuestOnly>
-        <SignInPage />
-      </GuestOnly>
-    ),
-  },
-  {
-    path: SIGN_UP_PATH.slice(1),
-    element: (
-      <GuestOnly>
-        <SignUpPage />
-      </GuestOnly>
-    ),
-  },
-  {
-    path: FORGOT_PASSWORD_PATH.slice(1),
-    element: (
-      <GuestOnly>
-        <ForgotPasswordPage />
-      </GuestOnly>
-    ),
-  },
-  // Not guest-only: the emailed link works in a tab that is still signed in
-  { path: RESET_PASSWORD_PATH.slice(1), element: <ResetPasswordPage /> },
-  { path: ONBOARDING_PATH.slice(1), element: <OnboardingPage /> },
-  // startSession() has already started the demo; this only leaves the URL.
-  { path: DEMO_PATH.slice(1), element: <Navigate to="/" replace /> },
-  // Design system reference, outside the app shell
-  { path: "sistema-visual", element: <DesignSystemPage /> },
-]);
+export const router = createBrowserRouter(
+  [
+    {
+      element: (
+        <RequireSession>
+          <AppLayout />
+        </RequireSession>
+      ),
+      children: [
+        { index: true, element: <HomePage /> },
+        { path: "ventas", element: <Navigate to="/ventas/facturas" replace /> },
+        { path: "compras", element: <Navigate to="/compras/facturas" replace /> },
+        { path: "contactos", element: <Navigate to="/contactos/clientes" replace /> },
+        { path: "catalogo", element: <Navigate to={PRODUCTS_PATH} replace /> },
+        { path: "mas", element: <MorePage /> },
+        ...salesRoutes,
+        ...purchaseRoutes,
+        ...contactRoutes,
+        ...catalogRoutes,
+        ...taxRoutes,
+        ...treasuryRoutes,
+        closingRoute,
+        ...reportRoutes,
+        workingHoursRoute,
+        ...settingsRoutes,
+        ...transferRoutes,
+        ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
+        { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
+      ],
+    },
+    {
+      path: SIGN_IN_PATH.slice(1),
+      element: (
+        <GuestOnly>
+          <SignInPage />
+        </GuestOnly>
+      ),
+    },
+    {
+      path: SIGN_UP_PATH.slice(1),
+      element: (
+        <GuestOnly>
+          <SignUpPage />
+        </GuestOnly>
+      ),
+    },
+    {
+      path: FORGOT_PASSWORD_PATH.slice(1),
+      element: (
+        <GuestOnly>
+          <ForgotPasswordPage />
+        </GuestOnly>
+      ),
+    },
+    // Not guest-only: the emailed link works in a tab that is still signed in
+    { path: RESET_PASSWORD_PATH.slice(1), element: <ResetPasswordPage /> },
+    { path: ONBOARDING_PATH.slice(1), element: <OnboardingPage /> },
+    // Design system reference, outside the app shell
+    { path: "sistema-visual", element: <DesignSystemPage /> },
+  ],
+  { basename: routerBasename() },
+);

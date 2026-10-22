@@ -33,7 +33,7 @@ pnpm build
 
 See [apps/api/README.md](apps/api/README.md) for the API.
 
-With `VITE_API_URL=http://localhost:3000` in `apps/web/.env.local`, the web app asks you to sign in (`/entrar`, `/registro`) and runs on your data. `/demo` opens it on the sample data without an account; without `VITE_API_URL` it always runs the demo.
+With `VITE_API_URL=http://localhost:3000` in `apps/web/.env.local`, the web app asks you to sign in (`/entrar`, `/registro`) and runs on your data. `/demo` opens it on the sample data without an account, with every page under `/demo` (`/demo/ventas/facturas`), so demo links can be shared and reloaded; without `VITE_API_URL` it always runs the demo.
 
 The design system reference page is at `/sistema-visual`.
 

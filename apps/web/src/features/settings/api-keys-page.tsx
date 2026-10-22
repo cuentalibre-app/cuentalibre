@@ -4,6 +4,7 @@ import type { ApiKey, CreatedApiKey } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { SITE_URL } from "@/components/legal-links";
 import { currentBackend } from "@/data/backend";
 import { API_URL } from "@/features/auth/session";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
@@ -177,6 +178,30 @@ export function ApiKeysPage() {
                   OpenAPI
                 </a>
                 : facturas, borradores, compras, gastos, contactos y archivos.
+                {SITE_URL && (
+                  <>
+                    {" "}
+                    Para conectar un agente de IA, sigue la{" "}
+                    <a
+                      href={`${SITE_URL}/docs/agentes`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-primary no-underline hover:text-primary-hover"
+                    >
+                      guía
+                    </a>{" "}
+                    y la{" "}
+                    <a
+                      href={`${SITE_URL}/docs/api`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-primary no-underline hover:text-primary-hover"
+                    >
+                      referencia de la API
+                    </a>
+                    .
+                  </>
+                )}
               </p>
               <pre className="m-0 overflow-x-auto rounded-lg bg-muted px-4 py-3 font-mono text-xs">
                 {`curl ${API_URL ?? ""}/v1/sales-documents?from=2026-01-01 \\\n  -H "Authorization: Bearer fsk_…"`}
