@@ -1,6 +1,7 @@
 import {
   meSchema,
   membershipSchema,
+  organizationMemberSchema,
   organizationSchema,
   userSettingsSchema,
   userSettingsSectionSchema,
@@ -9,7 +10,7 @@ import {
 } from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { verifyPassword } from "better-auth/crypto";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { AppEnv } from "../context";
 import type { Db } from "../db/client";
 import {
@@ -78,6 +79,23 @@ const currentOrganization = createRoute({
           schema: z.object({ organization: organizationSchema, role: membershipSchema.shape.role }),
         },
       },
+    },
+    401: errorContent("Not signed in"),
+    403: errorContent("No active organization, or the user doesn't belong to it"),
+  },
+});
+
+const members = createRoute({
+  method: "get",
+  path: "/organization/members",
+  tags: ["Account"],
+  summary: "The people who belong to the active organization",
+  description: "Oldest first, so the owner who created it leads.",
+  middleware: [requireOrganization] as const,
+  responses: {
+    200: {
+      description: "The organization's members",
+      content: { "application/json": { schema: z.object({ members: z.array(organizationMemberSchema) }) } },
     },
     401: errorContent("Not signed in"),
     403: errorContent("No active organization, or the user doesn't belong to it"),
@@ -181,6 +199,31 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       .from(organization)
       .where(eq(organization.id, c.get("organizationId")));
     return c.json({ organization: row!, role: c.get("role") }, 200);
+  })
+  .openapi(members, async (c) => {
+    const rows = await c
+      .get("db")
+      .select({
+        userId: membership.userId,
+        name: userTable.name,
+        email: userTable.email,
+        role: membership.role,
+        joinedAt: membership.createdAt,
+      })
+      .from(membership)
+      .innerJoin(userTable, eq(userTable.id, membership.userId))
+      .where(eq(membership.organizationId, c.get("organizationId")))
+      .orderBy(asc(membership.createdAt));
+    return c.json(
+      {
+        members: rows.map((row) => ({
+          ...row,
+          role: row.role as MembershipRole,
+          joinedAt: row.joinedAt.toISOString(),
+        })),
+      },
+      200,
+    );
   })
   .openapi(deleteAccount, async (c) => {
     const db = c.get("db");

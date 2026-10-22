@@ -1,4 +1,11 @@
-import type { ApiKey, CreatedApiKey, EmailMessage, EmailRequest, NewApiKey } from "@cuentalibre/contracts";
+import type {
+  ApiKey,
+  CreatedApiKey,
+  EmailMessage,
+  EmailRequest,
+  NewApiKey,
+  OrganizationMember,
+} from "@cuentalibre/contracts";
 import type { Command } from "./commands";
 
 /**
@@ -24,6 +31,8 @@ export interface Backend {
     create(key: NewApiKey): Promise<CreatedApiKey>;
     revoke(id: string): Promise<void>;
   };
+  /** The people in the organization. Without a server, the sample users stand in. */
+  members?(): Promise<OrganizationMember[]>;
 }
 
 /** Until there is an API, data lives only in memory and every change is accepted. */

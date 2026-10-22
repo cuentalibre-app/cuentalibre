@@ -6,6 +6,7 @@ import {
   type CreatedApiKey,
   type EmailMessage,
   type Me,
+  type OrganizationMember,
   type StoredFile,
   type SyncCommand,
   type UserSettingsSection,
@@ -134,6 +135,10 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
       list: async () => (await request<{ apiKeys: ApiKey[] }>("/v1/api-keys")).apiKeys,
       create: (key) => request<CreatedApiKey>("/v1/api-keys", { method: "POST", body: JSON.stringify(key) }),
       revoke: (id) => request(`/v1/api-keys/${id}`, { method: "DELETE" }),
+    },
+
+    async members() {
+      return (await request<{ members: OrganizationMember[] }>("/v1/organization/members")).members;
     },
 
     async loadWorkspace() {
