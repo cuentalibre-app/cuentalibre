@@ -15,6 +15,7 @@ describe("authErrorMessage", () => {
       "El email o la contraseña no son correctos.",
     );
     expect(authErrorMessage(new AuthError("wrong_password"))).toBe("La contraseña no es correcta.");
+    expect(authErrorMessage(new AuthError("INVALID_PASSWORD"))).toBe("La contraseña actual no es correcta.");
     expect(authErrorMessage(new AuthError("SOMETHING_ELSE"))).toBe("Algo ha ido mal. Inténtalo de nuevo.");
     expect(authErrorMessage(new TypeError("Failed to fetch"))).toBe(
       "No se puede conectar con el servidor. Inténtalo de nuevo.",

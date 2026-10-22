@@ -27,6 +27,8 @@ const me = createRoute({
               emailVerified: z.boolean(),
               /** False for people who only sign in with Google. */
               hasPassword: z.boolean(),
+              /** When the password was last set; null without one. */
+              passwordChangedAt: z.iso.datetime().nullable(),
             }),
             activeOrganizationId: z.uuid().nullable(),
             memberships: z.array(membershipSchema),
@@ -90,7 +92,7 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
     const user = c.get("user")!;
     const db = c.get("db");
     const [credential] = await db
-      .select({ id: account.id })
+      .select({ updatedAt: account.updatedAt })
       .from(account)
       .where(and(eq(account.userId, user.id), eq(account.providerId, "credential")));
     const rows = await db
@@ -107,6 +109,8 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
           email: user.email,
           emailVerified: user.emailVerified,
           hasPassword: Boolean(credential),
+          // Only the password changes on the credential account
+          passwordChangedAt: credential?.updatedAt.toISOString() ?? null,
         },
         activeOrganizationId: c.get("activeOrganizationId"),
         memberships: rows.map((row) => ({ ...row, role: row.role as MembershipRole })),

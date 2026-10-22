@@ -50,6 +50,10 @@ export const requestPasswordReset = (email: string) =>
 /** Sets the new password with the token from the emailed link; every session ends. */
 export const resetPassword = (token: string, newPassword: string) => post("/reset-password", { token, newPassword });
 
+/** Changes the signed-in user's password, checking the current one; sessions on other devices end. */
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  post("/change-password", { currentPassword, newPassword, revokeOtherSessions: true });
+
 /**
  * Goes to Google to sign in. Only the sign-up screen creates new users, as
  * people accept the terms there; Google brings them back to `error` if it fails.
@@ -119,12 +123,15 @@ async function fetchSignInMethods(): Promise<SignInMethods> {
 
 export const signOut = () => post("/sign-out", {});
 
-/** The signed-in user; `hasPassword` is false for people who only sign in with Google, who come verified. */
+/**
+ * The signed-in user; `hasPassword` is false for people who only sign in with
+ * Google, who come verified, and then `passwordChangedAt` is null.
+ */
 export async function currentUser() {
   const response = await fetch(`${API_URL}/v1/me`, { credentials: "include" });
   if (!response.ok) throw new AuthError(`HTTP_${response.status}`);
   const { user } = (await response.json()) as {
-    user: { email: string; emailVerified: boolean; hasPassword: boolean };
+    user: { email: string; emailVerified: boolean; hasPassword: boolean; passwordChangedAt: string | null };
   };
   return user;
 }
@@ -170,6 +177,7 @@ const MESSAGES: Record<string, string> = {
   PASSWORD_TOO_SHORT: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
   PASSWORD_TOO_LONG: "La contraseña es demasiado larga.",
   wrong_password: "La contraseña no es correcta.",
+  INVALID_PASSWORD: "La contraseña actual no es correcta.",
   session_not_fresh:
     "Por seguridad, sal y vuelve a entrar con Google. Después tendrás 10 minutos para eliminar la cuenta.",
   // Google sign-in sends these back in the URL
