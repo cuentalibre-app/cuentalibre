@@ -4,7 +4,7 @@ import { cn } from "@cuentalibre/ui/lib/cn";
  * The public site that hosts this instance's legal pages. Self-hosted
  * instances leave it unset: their owner, not cuentalibre, answers for them.
  */
-const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "");
+export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined)?.replace(/\/$/, "");
 
 export const legalUrl = (path: "aviso-legal" | "privacidad" | "cookies" | "terminos") =>
   SITE_URL ? `${SITE_URL}/${path}` : undefined;
