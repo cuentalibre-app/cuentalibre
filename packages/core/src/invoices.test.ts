@@ -6,6 +6,7 @@ import {
   isOverdue,
   isSupportedDate,
   laterInvoiceInSeries,
+  laterNumberInSeries,
   lineBase,
   nextDocumentNumber,
   nextInvoiceNumber,
@@ -241,5 +242,25 @@ describe("outOfOrderInSeries", () => {
 
   it("ignores other series", () => {
     expect(outOfOrderInSeries("AAAA-####", { number: "2026-0046", issuedOn: "2026-09-30" }, issued)).toBeUndefined();
+  });
+});
+
+describe("laterNumberInSeries", () => {
+  const issued = [
+    { number: "2026-0001", issuedOn: "2026-10-02" },
+    { number: "2026-0002", issuedOn: "2026-10-09" },
+    { number: "2026-0003", issuedOn: "2026-10-15" },
+    { number: "R-2026-0004", issuedOn: "2026-10-20" },
+    { number: "2027-0001", issuedOn: "2027-01-02" },
+  ];
+
+  it("finds an invoice numbered after one in the middle of its series", () => {
+    expect(laterNumberInSeries("AAAA-####", "2026-0002", issued)?.number).toBe("2026-0003");
+  });
+
+  it("finds none after the last of its series and year, whatever other series hold", () => {
+    expect(laterNumberInSeries("AAAA-####", "2026-0003", issued)).toBeUndefined();
+    expect(laterNumberInSeries("R-AAAA-####", "R-2026-0004", issued)).toBeUndefined();
+    expect(laterNumberInSeries("AAAA-####", "2027-0001", issued)).toBeUndefined();
   });
 });

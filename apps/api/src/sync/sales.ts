@@ -8,6 +8,7 @@ import {
   WITHHOLDING_RATES,
   invoiceTotals,
   laterInvoiceInSeries,
+  laterNumberInSeries,
   nextInvoiceNumber,
   outOfOrderInSeries,
   parseSeriesNumber,
@@ -338,8 +339,9 @@ async function reviseInvoice(
 
 /**
  * Deletes a document. An issued invoice can only be deleted by a business
- * exempt from VERI*FACTU, never once it has a record, and while its quarter
- * is open.
+ * exempt from VERI*FACTU, never once it has a record, while its quarter is
+ * open, if it is the last of its series (numbering stays gapless) and no
+ * rectifying invoice corrects it.
  */
 export async function deleteSalesDocument(tx: Tx, organizationId: string, id: string) {
   const row = await liveRow(tx, organizationId, id);
@@ -349,6 +351,30 @@ export async function deleteSalesDocument(tx: Tx, organizationId: string, id: st
     if (settings.verifactu.system !== "exempt" || (await recordInfoByInvoice(tx, organizationId, [id])).size > 0)
       issuedError();
     await checkQuarterOpen(tx, organizationId, row.issuedOn);
+    const series = invoiceSeriesOf(
+      { series: row.series, seriesId: row.seriesId ?? undefined },
+      settings.invoiceSettings.series ?? [],
+    );
+    const later = series && laterNumberInSeries(series.mask, row.number!, await issuedInvoices(tx, organizationId));
+    if (later)
+      throw new ApiError(
+        409,
+        "not_last_in_series",
+        `Invoice ${later.number} follows this one in its series; only the last invoice can be deleted. Rectify it instead.`,
+      );
+    const [rectifying] = await tx
+      .select({ number: salesDocument.number })
+      .from(salesDocument)
+      .where(
+        and(
+          eq(salesDocument.organizationId, organizationId),
+          eq(salesDocument.rectifiesId, id),
+          eq(salesDocument.kind, "invoice"),
+          isNull(salesDocument.deletedAt),
+        ),
+      )
+      .limit(1);
+    if (rectifying) throw new ApiError(409, "in_use", `Rectifying invoice ${rectifying.number} corrects this one.`);
   }
   await tx
     .update(salesDocument)
