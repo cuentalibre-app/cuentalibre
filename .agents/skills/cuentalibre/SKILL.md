@@ -12,6 +12,16 @@ cuentalibre is open-source accounting for Spanish self-employed workers. Its API
 - `CUENTALIBRE_API_KEY`: a key starting with `fsk_`, created in the app under **Configuración › API y agentes**. It acts as the person who created it, in the business that was active then. Never print it, echo it or ask the user to paste it into the chat; if it is missing, tell them to export it.
 - `CUENTALIBRE_API_URL`: optional, defaults to `https://api.cuentalibre.es/v1`. Self-hosted instances use their own URL followed by `/v1` (`http://localhost:3000/v1` in development).
 
+### No key yet
+
+Without `CUENTALIBRE_API_KEY`, stop and tell the user before doing anything else. The account and the business are theirs: never sign up or create a business for them, not even on a fresh install or for a test.
+
+1. If the instance is new (you just installed it, or they have no account), tell them it's ready and send them to the web app's `/registro` (`https://app.cuentalibre.es/registro` online) to create their account and their business. Wait until they say they're done.
+2. Then ask: do they want to create the API key themselves, or should you?
+   - **Themselves**: in **Configuración › API y agentes**, one key per agent; they export it as `CUENTALIBRE_API_KEY` (and `CUENTALIBRE_API_URL` when self-hosted), never in the chat.
+   - **You**: a key can only be created from a signed-in session. Have them export `CUENTALIBRE_EMAIL` and `CUENTALIBRE_PASSWORD` (never in the chat), sign in with `POST /auth/sign-in/email` `{ email, password }` keeping the session cookie, and create it with `POST /api-keys` `{ name }` (`name` up to 32 characters, e.g. the agent's name). Send `Origin: <the web app's URL>` on both: the API only accepts sessions from it. Save the returned `key` to a file only the user can read, never print it, tell them where it is, and ask them to unset the password variables.
+3. Continue with `GET /organization`.
+
 Make requests with `scripts/cuentalibre.sh` (path relative to this skill), which adds the key, prints the body and reports the HTTP status:
 
 ```sh
@@ -122,4 +132,4 @@ List issued invoices (`kind: "invoice"`, by `issuedOn`), received invoices (by `
 
 ## Not available through the API
 
-Invoice PDFs (the web app generates them; to email an invoice, upload a PDF yourself), computing forms 303 and 130, managing API keys and the user's account.
+Invoice PDFs (the web app generates them; to email an invoice, upload a PDF yourself), computing forms 303 and 130, signing up and the user's account. API keys need a signed-in session, not a key (see Setup › No key yet).
