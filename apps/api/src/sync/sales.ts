@@ -1,4 +1,5 @@
 import {
+  SALES_STATUSES_BY_KIND,
   invoiceSeriesOf,
   storedSalesDocumentSchema,
   type IssuedSnapshot,
@@ -24,7 +25,7 @@ import { ApiError } from "../errors";
 import { recordInfoByInvoice, registerInvoice, usesVerifactu } from "../verifactu/record";
 import { checkQuarterOpen } from "./closing";
 import { checkAttachments } from "./files";
-import { alreadyExists, mergeChanges, parseOr, touchedFields } from "./records";
+import { alreadyExists, mergeChanges, parseOr, repeatedId, touchedFields } from "./records";
 import { readSettings } from "./settings";
 
 export type StoredSalesDocument = z.infer<typeof storedSalesDocumentSchema>;
@@ -114,7 +115,18 @@ function invalid(message: string): never {
   throw new ApiError(400, "invalid_document", message);
 }
 
-const parse = (data: unknown): StoredSalesDocument => parseOr(storedSalesDocumentSchema, data, "invalid_document");
+/** Parses a document and checks what its shape can't: a status of its kind and lines and payments with their own IDs. */
+function parse(data: unknown): StoredSalesDocument {
+  const record = parseOr(storedSalesDocumentSchema, data, "invalid_document");
+  const statuses = SALES_STATUSES_BY_KIND[record.kind];
+  if (!statuses.includes(record.status))
+    invalid(`status: ${record.kind === "invoice" ? "an" : "a"} ${record.kind} can only be ${statuses.join(", ")}.`);
+  const line = repeatedId(record.lines);
+  if (line !== undefined) invalid(`lines: the ID ${line} is repeated.`);
+  const payment = repeatedId(record.payments);
+  if (payment !== undefined) invalid(`payments: the ID ${payment} is repeated.`);
+  return record;
+}
 
 function notFound(): never {
   throw new ApiError(404, "not_found", "Sales document not found.");
@@ -261,7 +273,6 @@ export async function updateSalesDocument(
       await reviseInvoice(tx, organizationId, current, record, touched);
       return;
     }
-    if (record.status !== "pending" && record.status !== "paid") invalid("status: an invoice is pending or paid.");
     await tx
       .update(salesDocument)
       .set({

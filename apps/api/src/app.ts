@@ -6,7 +6,7 @@ import type { AppEnv } from "./context";
 import type { Db } from "./db/client";
 import type { Mailer } from "./email/mailer";
 import type { Env } from "./env";
-import { ApiError, errorResponse } from "./errors";
+import { ApiError, describeIssues, errorResponse } from "./errors";
 import { loadSession } from "./middleware";
 import { accountRoutes } from "./routes/account";
 import { apiKeyRoutes } from "./routes/api-keys";
@@ -31,7 +31,8 @@ interface Deps {
 export function createApp({ db, auth, env, storage, mailer }: Deps) {
   const app = new OpenAPIHono<AppEnv>({
     defaultHook: (result, c) => {
-      if (!result.success) return errorResponse(c, 400, "invalid_request", result.error.message);
+      if (!result.success)
+        return errorResponse(c, 400, "invalid_request", describeIssues(result.error.issues) ?? "Invalid request.");
     },
   });
 
