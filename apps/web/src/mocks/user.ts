@@ -1,4 +1,4 @@
-import type { NotificationPrefs, UserAccess, UserLocale, UserProfile } from "@cuentalibre/contracts";
+import type { NotificationPrefs, UserAccess, UserLocale, UserProfile, UserTour } from "@cuentalibre/contracts";
 
 /** Sample signed-in user until there is a backend. Made up; matches the sample business profile. */
 
@@ -20,6 +20,8 @@ export const initialNotificationPrefs: NotificationPrefs = {
 };
 
 export const initialUserLocale: UserLocale = { language: "", numberFormat: "", timeZone: "" };
+
+export const initialUserTour: UserTour = { status: "pending" };
 
 export const initialUserAccess: UserAccess = {
   passwordChangedAt: "2026-05-02",

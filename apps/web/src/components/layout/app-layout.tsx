@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router";
 import { DemoBanner } from "@/features/auth/session-gate";
+import { FirstRunTour } from "@/features/tour/first-run-tour";
 import { BottomNav } from "./bottom-nav";
 import { CommandErrorNotice } from "./command-error-notice";
 import { Sidebar } from "./sidebar";
@@ -29,6 +30,7 @@ export function AppLayout() {
         </main>
         <BottomNav className="lg:hidden" />
       </div>
+      <FirstRunTour />
     </>
   );
 }

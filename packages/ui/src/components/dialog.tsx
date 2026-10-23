@@ -46,3 +46,7 @@ export function DialogTitle({ className, ...props }: ComponentProps<typeof Primi
 export function DialogDescription({ className, ...props }: ComponentProps<typeof Primitive.Description>) {
   return <Primitive.Description className={cn("m-0 text-sm text-muted-foreground", className)} {...props} />;
 }
+
+/** Bare pieces for a dialog that places itself, such as a step of a tour pointing at an element. */
+export const DialogPortal = Primitive.Portal;
+export const DialogPanel = Primitive.Content;

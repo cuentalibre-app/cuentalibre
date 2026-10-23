@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { Building2, LogOut, Settings, UserRound } from "lucide-react";
+import { Building2, Compass, LogOut, Settings, UserRound } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
 import { useSettings } from "@/features/settings/settings-store";
 import { signOut } from "@/features/auth/auth-api";
 import { SIGN_IN_PATH, canExitDemo, exitDemo, reloadAt, sessionState } from "@/features/auth/session";
+import { startTour } from "@/features/tour/tour-model";
 
 interface UserMenuProps {
   /** Custom trigger, a single button; defaults to the round avatar. */
@@ -29,7 +30,7 @@ interface UserMenuProps {
   className?: string;
 }
 
-/** The account's shortcuts (personal and business details, settings, signing out), from the avatar or the sidebar. */
+/** The account's shortcuts (personal and business details, settings, the tour, signing out), from the avatar or the sidebar. */
 export function UserMenu({ children, side = "bottom", align = "end", className }: UserMenuProps) {
   const navigate = useNavigate();
   const { profile, tax } = useSettings();
@@ -72,6 +73,10 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
         <DropdownMenuItem onSelect={() => navigate(SETTINGS_PATH)}>
           <Settings strokeWidth={1.8} aria-hidden="true" />
           Configuración
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={startTour}>
+          <Compass strokeWidth={1.8} aria-hidden="true" />
+          Ver recorrido
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {sessionState() === "connected" ? (
