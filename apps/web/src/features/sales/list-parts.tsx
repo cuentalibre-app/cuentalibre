@@ -6,7 +6,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -24,9 +30,30 @@ export interface Action {
   icon: LucideIcon;
   run?: () => void;
   danger?: boolean;
+  /** Exclusive choices, shown in a submenu instead of running the action. */
+  choice?: Choice;
 }
 
-export function ActionsMenu({ groups, trigger }: { groups: Action[][]; trigger: ReactNode }) {
+export interface Choice {
+  value: string;
+  /** `hint` says why an option can't be chosen, or anything else worth knowing about it. */
+  options: { value: string; label: string; disabled?: boolean; hint?: string }[];
+  onChange: (value: string) => void;
+}
+
+/**
+ * The actions of a record. A choice opens a submenu, or with `inlineChoices`
+ * (phones, where a submenu has no room beside the menu) lists its options in place.
+ */
+export function ActionsMenu({
+  groups,
+  trigger,
+  inlineChoices = false,
+}: {
+  groups: Action[][];
+  trigger: ReactNode;
+  inlineChoices?: boolean;
+}) {
   return (
     <DropdownMenu>
       {trigger}
@@ -34,21 +61,52 @@ export function ActionsMenu({ groups, trigger }: { groups: Action[][]; trigger: 
         {groups.map((group, i) => (
           <Fragment key={i}>
             {i > 0 && <DropdownMenuSeparator />}
-            {group.map((a) => (
-              <DropdownMenuItem
-                key={a.label}
-                disabled={!a.run}
-                onSelect={a.run}
-                className={cn(a.danger && "text-destructive [&_svg]:text-destructive")}
-              >
-                <a.icon aria-hidden="true" />
-                {a.label}
-              </DropdownMenuItem>
-            ))}
+            {group.map((a) => {
+              if (!a.choice)
+                return (
+                  <DropdownMenuItem
+                    key={a.label}
+                    disabled={!a.run}
+                    onSelect={a.run}
+                    className={cn(a.danger && "text-destructive [&_svg]:text-destructive")}
+                  >
+                    <a.icon aria-hidden="true" />
+                    {a.label}
+                  </DropdownMenuItem>
+                );
+              const options = <ChoiceOptions label={a.label} choice={a.choice} />;
+              return inlineChoices ? (
+                <Fragment key={a.label}>
+                  <DropdownMenuLabel>{a.label}</DropdownMenuLabel>
+                  {options}
+                </Fragment>
+              ) : (
+                <DropdownMenuSub key={a.label}>
+                  <DropdownMenuSubTrigger>
+                    <a.icon aria-hidden="true" />
+                    {a.label}
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>{options}</DropdownMenuSubContent>
+                </DropdownMenuSub>
+              );
+            })}
           </Fragment>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function ChoiceOptions({ label, choice }: { label: string; choice: Choice }) {
+  return (
+    <DropdownMenuRadioGroup aria-label={label} value={choice.value} onValueChange={choice.onChange}>
+      {choice.options.map((option) => (
+        <DropdownMenuRadioItem key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+          {option.hint && <span className="ml-auto pl-4 text-xs font-normal text-muted-foreground">{option.hint}</span>}
+        </DropdownMenuRadioItem>
+      ))}
+    </DropdownMenuRadioGroup>
   );
 }
 

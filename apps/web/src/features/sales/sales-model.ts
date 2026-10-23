@@ -145,7 +145,8 @@ export const STATUS: Record<StatusKey, { label: string; tone: BadgeProps["tone"]
   sent: { label: "Enviado", tone: "primary" },
   accepted: { label: "Aceptado", tone: "success" },
   rejected: { label: "Rechazado", tone: "danger" },
-  invoiced: { label: "Facturado", tone: "neutral" },
+  // Solid: the document reached the end of its workflow, past "accepted"
+  invoiced: { label: "Facturado", tone: "solidSuccess" },
 };
 
 export function displayStatus(doc: SalesDocument, today: Date): StatusKey {
