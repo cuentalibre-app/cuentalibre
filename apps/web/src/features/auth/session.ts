@@ -11,8 +11,18 @@ export const RESET_PASSWORD_PATH = "/nueva-contrasena";
 /** Where the link to verify an email lands: Credenciales de acceso, which says how it went. */
 export const EMAIL_VERIFIED_PATH = "/configuracion/credenciales?verificado=1";
 
+/**
+ * Where the API is, from `VITE_API_URL`: a full URL, or a path such as `/` when the
+ * API serves the app from its own origin (self-hosting). Undefined without one.
+ */
+export function resolveApiUrl(value: string | undefined, origin: string | undefined) {
+  if (!value) return undefined;
+  const url = value.startsWith("/") && origin ? `${origin}${value}` : value;
+  return url.replace(/\/$/, "");
+}
+
 /** The API the app signs in to. Without it the app only runs the demo. */
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "");
+export const API_URL = resolveApiUrl(import.meta.env.VITE_API_URL as string | undefined, globalThis.location?.origin);
 
 /** What the app runs on: the user's data from the API, or the sample data ("demo"). */
 export type SessionState = ConnectResult | "demo";

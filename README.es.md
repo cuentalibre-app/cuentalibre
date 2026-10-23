@@ -148,7 +148,7 @@ VITE_API_URL=http://localhost:3000
 VITE_SITE_URL=http://localhost:4321
 ```
 
-Sin `VITE_API_URL`, la aplicación web solo abre la demo, con datos de ejemplo.
+Sin `VITE_API_URL`, la aplicación web solo abre la demo, con datos de ejemplo. `VITE_API_URL=/` quiere decir que la API sirve la aplicación desde su mismo origen, como hace la imagen para instalarlo en tu servidor.
 
 La API y la web pública funcionan sin configurar nada: cada ajuste tiene un valor por defecto para desarrollo. Para cambiar alguno, copia `apps/api/.env.example` a `apps/api/.env` (o `apps/site/.env.example` a `apps/site/.env`).
 
@@ -238,6 +238,7 @@ packages/core          Lógica de dominio compartida por front y back: periodos,
 packages/contracts     Esquemas zod de los datos guardados; los tipos se infieren de ellos
 packages/ui            Sistema de diseño: tokens, estilos base y componentes
 deploy/                Lo que hace funcionar cuentalibre online: Caddy, la API y PostgreSQL en un servidor
+selfhost/              Para instalarlo en tu servidor: una imagen con la aplicación y la API, más PostgreSQL
 .agents/skills/        La skill de cuentalibre para agentes de IA (.claude/skills enlaza a ella)
 ```
 
