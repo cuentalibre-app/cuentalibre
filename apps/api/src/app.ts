@@ -17,6 +17,7 @@ import { recordRoutes } from "./routes/records";
 import { metaRoutes } from "./routes/meta";
 import { syncRoutes } from "./routes/sync";
 import type { FileStorage } from "./storage";
+import { serveWeb } from "./web";
 
 interface Deps {
   db: Db;
@@ -27,7 +28,10 @@ interface Deps {
   mailer: Mailer | null;
 }
 
-/** Builds the HTTP app. Everything lives under `/v1`, since the API will be public. */
+/**
+ * Builds the HTTP app. Everything lives under `/v1`, since the API will be public;
+ * with `WEB_DIR`, the rest of the paths serve the web app.
+ */
 export function createApp({ db, auth, env, storage, mailer }: Deps) {
   const app = new OpenAPIHono<AppEnv>({
     defaultHook: (result, c) => {
@@ -47,6 +51,8 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
   });
   app.on(["GET", "POST"], "/v1/auth/*", (c) => auth.handler(c.req.raw));
   app.use("/v1/*", loadSession(auth));
+
+  if (env.WEB_DIR) app.use("*", serveWeb(env.WEB_DIR));
 
   app.notFound((c) => errorResponse(c, 404, "not_found", "Not found."));
   app.onError((error, c) => {

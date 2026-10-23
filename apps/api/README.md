@@ -20,11 +20,14 @@ To point the web app at the API, set `VITE_API_URL=http://localhost:3000` in `ap
 
 ## Production
 
-`pnpm build` bundles the server and the migration script into `dist/` with esbuild, dependencies included; `pnpm start` runs it. The image (`Dockerfile`, built from the repository root with `docker build -f apps/api/Dockerfile .`) applies pending migrations and then serves on port 3000.
+`pnpm build` bundles the server and the migration script into `dist/` with esbuild, dependencies included; `pnpm start` runs it. `Dockerfile`, built from the repository root, makes two images that apply pending migrations and then serve on port 3000:
+
+- the default target, for self-hosting: the API plus the web app, built with `VITE_API_URL=/` and served from `WEB_DIR` on every path outside `/v1` (`src/web.ts`). Pages fall back to `index.html`, sent with `no-cache`; the hashed files in `/assets/` are cached for good. One origin needs one URL, `PUBLIC_URL`, which stands for both `BETTER_AUTH_URL` and `WEB_ORIGIN`. `selfhost/` at the repository root runs it with Postgres and no web server in front; HTTPS is left to whatever the owner already uses (guide: `apps/site/src/content/docs/instalar.md`).
+- `--target api`: the API alone, as cuentalibre online runs it, with the web app on Cloudflare.
 
 `deploy/` at the repository root runs cuentalibre Cloud on one server: Caddy with a Cloudflare origin certificate in front, the API and Postgres. Caddy only takes the client's IP from Cloudflare's addresses and passes it on as `X-Forwarded-For`, which Better Auth rate-limits by. `deploy/cloud-init.yml` prepares a new server.
 
-Every push to `main` that passes CI deploys it (the `deploy-api` job): the image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
+Every push to `main` that passes CI deploys it (the `deploy-api` job): the `api` image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
 
 `deploy/backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
 
@@ -32,6 +35,7 @@ Every push to `main` that passes CI deploys it (the `deploy-api` job): the image
 
 ```
 src/app.ts             The HTTP app: middleware and routes, all under /v1
+src/web.ts             Serves the built web app outside /v1 when self-hosted
 src/auth.ts            Better Auth config (email and password, Google, organizations)
 src/middleware.ts      Session loading, requireUser, requireOrganization
 src/routes/            Route modules, defined with @hono/zod-openapi
