@@ -1,6 +1,7 @@
 **/node_modules
 **/dist
 **/.turbo
+**/.wrangler
 **/.env
 **/.env.*
 !**/.env.example
@@ -8,6 +9,4 @@
 docs
 deploy
 apps/api/data
-apps/web
 apps/site
-packages/ui
