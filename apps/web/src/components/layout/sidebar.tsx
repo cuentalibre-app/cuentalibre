@@ -197,7 +197,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
         aria-label="Principal"
         className={cn(
           "sticky top-0 h-dvh shrink-0 flex-col gap-1 overflow-x-hidden overflow-y-auto border-r border-sidebar-border bg-sidebar px-3.5 py-5 transition-[width] duration-300 ease-out",
-          collapsed ? "w-[72px]" : "w-[264px]",
+          collapsed ? "w-18" : "w-66",
           className,
         )}
       >
@@ -237,7 +237,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
                 !collapsed && "-mr-1.5",
               )}
             >
-              <ToggleIcon className="size-[18px]" strokeWidth={1.8} aria-hidden="true" />
+              <ToggleIcon className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
             </button>
           </RailTooltip>
         </div>
