@@ -23,6 +23,8 @@
     ·
     <a href="https://cuentalibre.es/docs/instalar">Self-hosting</a>
   </p>
+
+  <p align="center"><b>English</b> · <a href="README.es.md">Español</a></p>
 </div>
 
 ![The cuentalibre home page: income, expenses, profit, estimated taxes and the filing calendar](.github/assets/screens/inicio.webp)
@@ -107,7 +109,7 @@ The UI is in Spanish, like the taxes it deals with.
 
 - **🧾 Unlimited invoicing**: invoices, quotes and delivery notes, with gapless numbering, custom series, rectifying invoices and PDFs.
 - **💸 Deductible expenses**: the autónomo fee, tickets and received invoices with their receipts attached, and investment goods with their amortization.
-- **📊 VAT and IRPF, box by box**: forms 303, 130 and 390 computed from your documents, ready for the AEAT.
+- **📊 VAT and IRPF, box by box**: forms 303, 130 and 390 computed from your documents, to review and file with the AEAT.
 - **📅 Filing calendar**: every deadline that applies to you, with the amount before it arrives.
 - **🏦 Bank reconciliation**: suggestions to match each movement with its invoice or expense.
 - **🔒 Quarter closing**: a checklist before filing, after which the quarter's books are frozen.
@@ -257,8 +259,8 @@ Names follow shadcn/ui conventions. Note that `accent` is the hover surface; the
 
 ## Contributing
 
-Issues and pull requests are welcome. Code, comments, documentation and commit messages are in English; the UI copy is in Spanish. Run `pnpm typecheck` and `pnpm test` before opening a pull request.
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: how to report bugs and tax rule errors, how to set up, and how to open a pull request.
 
 ## License
 
-[AGPL-3.0](LICENSE)
+[AGPL-3.0](LICENSE). cuentalibre is provided as is, without any warranty, and is not tax advice: check the figures before you file.
