@@ -8,7 +8,7 @@ import { ApiError } from "../errors";
 import { checkQuarterOpen } from "./closing";
 import { checkSupplier } from "./contacts";
 import { checkAttachments } from "./files";
-import { alreadyExists, mergeChanges, parseOr, touchedFields } from "./records";
+import { alreadyExists, mergeChanges, parseOr, repeatedId, touchedFields } from "./records";
 import { LINE_FIELDS } from "./sales";
 
 export type StoredPurchaseInvoice = z.infer<typeof storedPurchaseInvoiceSchema>;
@@ -24,7 +24,15 @@ const FIELDS = (Object.keys(storedPurchaseInvoiceSchema.shape) as (keyof StoredP
 /** What can still change while the invoice's quarter is closed: nothing that alters the books. */
 const OPEN_WHEN_CLOSED = new Set<string>(["payments", "tags", "attachments", "privateNotes"]);
 
-const parse = (data: unknown): StoredPurchaseInvoice => parseOr(storedPurchaseInvoiceSchema, data, "invalid_invoice");
+/** Parses an invoice and checks that its lines and payments have their own IDs. */
+function parse(data: unknown): StoredPurchaseInvoice {
+  const record = parseOr(storedPurchaseInvoiceSchema, data, "invalid_invoice");
+  const line = repeatedId(record.lines);
+  if (line !== undefined) invalid(`lines: the ID ${line} is repeated.`);
+  const payment = repeatedId(record.payments);
+  if (payment !== undefined) invalid(`payments: the ID ${payment} is repeated.`);
+  return record;
+}
 
 function invalid(message: string): never {
   throw new ApiError(400, "invalid_invoice", message);

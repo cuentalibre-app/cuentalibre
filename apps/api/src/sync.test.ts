@@ -81,6 +81,20 @@ describe("sync", () => {
     expect(await errorCode(response)).toBe("invalid_request");
   });
 
+  it("names the field that is wrong, not every kind of command", async () => {
+    const ana = await member();
+    const response = await send(ana, [{ type: "closeQuarter", period: "2026-T3" } as never]);
+    expect(await response.json()).toEqual({
+      error: {
+        code: "invalid_request",
+        message: "commands.0.closedOn: Invalid input: expected string, received undefined",
+      },
+    });
+
+    const unknown = await send(ana, [{ type: "create", entity: "invoices", data: {} } as never]);
+    expect(((await unknown.json()) as { error: { message: string } }).error.message).toMatch(/^commands\.0\.entity: /);
+  });
+
   it("feeds changes after a cursor, once per record with its latest state", async () => {
     const ana = await member();
     const norte = client();

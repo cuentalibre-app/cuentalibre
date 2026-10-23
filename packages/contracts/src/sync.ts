@@ -144,24 +144,27 @@ export const settingsChangeSchema = z.object({ section: settingsSectionSchema, d
 /** Position in an organization's change feed. 0 is before the first change. */
 export const cursorSchema = z.int().nonnegative();
 
-export const commandSchema = z.union([
-  z.object({ type: z.literal("create"), entity: contactEntitySchema, data: storedContactSchema }),
-  z.object({
-    type: z.literal("create"),
-    entity: z.literal("salesDocuments"),
-    /** Drafts, quotes and delivery notes. Invoices come into being by issuing them. */
-    data: storedSalesDocumentSchema,
-  }),
-  z.object({ type: z.literal("create"), entity: z.literal("purchaseInvoices"), data: storedPurchaseInvoiceSchema }),
-  z.object({ type: z.literal("create"), entity: z.literal("expenses"), data: storedExpenseSchema }),
-  plainCreate("tags"),
-  plainCreate("treasuryAccounts"),
-  plainCreate("paymentMethods"),
-  plainCreate("manualPayments"),
-  plainCreate("bankMovements"),
-  plainCreate("catalogFamilies"),
-  plainCreate("products"),
-  plainCreate("stockMovements"),
+/** Discriminated by `type`, and creates by `entity`, so a wrong command reports only its own problem. */
+export const commandSchema = z.discriminatedUnion("type", [
+  z.discriminatedUnion("entity", [
+    z.object({ type: z.literal("create"), entity: contactEntitySchema, data: storedContactSchema }),
+    z.object({
+      type: z.literal("create"),
+      entity: z.literal("salesDocuments"),
+      /** Drafts, quotes and delivery notes. Invoices come into being by issuing them. */
+      data: storedSalesDocumentSchema,
+    }),
+    z.object({ type: z.literal("create"), entity: z.literal("purchaseInvoices"), data: storedPurchaseInvoiceSchema }),
+    z.object({ type: z.literal("create"), entity: z.literal("expenses"), data: storedExpenseSchema }),
+    plainCreate("tags"),
+    plainCreate("treasuryAccounts"),
+    plainCreate("paymentMethods"),
+    plainCreate("manualPayments"),
+    plainCreate("bankMovements"),
+    plainCreate("catalogFamilies"),
+    plainCreate("products"),
+    plainCreate("stockMovements"),
+  ]),
   z.object({
     type: z.literal("update"),
     entity: recordEntitySchema,

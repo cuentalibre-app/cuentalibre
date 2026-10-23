@@ -177,6 +177,22 @@ describe("received invoices", () => {
   });
 });
 
+describe("received invoice lines", () => {
+  it("can't share an ID", async () => {
+    const ana = await buyer();
+    const lines = [
+      { id: "1", concept: "Hosting", unitPrice: 100, quantity: 1, discount: 0, vatRate: 0.21 },
+      { id: "1", concept: "Dominio", unitPrice: 10, quantity: 1, discount: 0, vatRate: 0.21 },
+    ];
+    const response = await send(ana, [
+      { type: "create", entity: "purchaseInvoices", data: invoice(ana.brisa.id, { lines }) },
+    ]);
+    expect(response.status).toBe(400);
+    expect(await errorCode(response)).toBe("invalid_invoice");
+    expect((await workspace(ana)).purchaseInvoices).toEqual([]);
+  });
+});
+
 describe("expenses", () => {
   it("creates, updates and deletes them", async () => {
     const ana = await buyer();

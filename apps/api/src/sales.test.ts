@@ -72,6 +72,41 @@ describe("sales documents", () => {
     expect(await errorCode(response)).toBe("invalid_document");
   });
 
+  it("only takes a status of the document's kind", async () => {
+    const ana = await seller();
+    const quote = document(ana.norte.id, { kind: "quote", number: "P-2026-0001", status: "paid" });
+    const created = await send(ana, [{ type: "create", entity: "salesDocuments", data: quote }]);
+    expect(created.status).toBe(400);
+    expect(await created.json()).toEqual({
+      error: {
+        code: "invalid_document",
+        message: "status: a quote can only be created, sent, accepted, rejected, invoiced.",
+      },
+    });
+
+    const draft = document(ana.norte.id);
+    await send(ana, [{ type: "create", entity: "salesDocuments", data: draft }]);
+    const updated = await send(ana, [
+      { type: "update", entity: "salesDocuments", id: draft.id, changes: { status: "accepted" } },
+    ]);
+    expect(updated.status).toBe(400);
+    expect(await errorCode(updated)).toBe("invalid_document");
+    expect(await salesDocuments(ana)).toEqual([draft]);
+  });
+
+  it("won't store lines that share an ID", async () => {
+    const ana = await seller();
+    const draft = document(ana.norte.id);
+    await send(ana, [{ type: "create", entity: "salesDocuments", data: draft }]);
+    const lines = [line({ id: "1", concept: "X" }), line({ id: "1", concept: "Y" })];
+    const response = await send(ana, [{ type: "update", entity: "salesDocuments", id: draft.id, changes: { lines } }]);
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      error: { code: "invalid_document", message: "lines: the ID 1 is repeated." },
+    });
+    expect(await salesDocuments(ana)).toEqual([draft]);
+  });
+
   it("doesn't create invoices directly", async () => {
     const ana = await seller();
     const invoice = document(ana.norte.id, { kind: "invoice", number: "2026-0001" });
