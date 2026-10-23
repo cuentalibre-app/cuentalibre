@@ -15,7 +15,14 @@ Las personas de la empresa, de la más antigua a la más nueva: `userId`, `name`
 
 ## `GET /v1/me`
 
-Tu usuario (`id`, `name`, `email`…), las empresas a las que perteneces (`memberships`) y tus ajustes personales (`settings`).
+Tu usuario (`id`, `name`, `email`, `emailVerified`, `hasPassword`, `passwordChangedAt`), la empresa activa (`activeOrganizationId`), las empresas a las que perteneces (`memberships`, con tu papel en cada una) y tus ajustes personales (`settings`).
+
+## `PUT /v1/me/settings/{section}`
+
+Guarda una sección de tus ajustes personales, entera. Te siguen en todas tus empresas.
+
+- `userProfile`: `{ firstName, lastName, birthDate, phone, gender }`. `firstName` es obligatorio (hasta 100 caracteres); `birthDate`, `"AAAA-MM-DD"` o vacío; `gender`, `""`, `"male"` o `"female"`. Cambia también tu nombre de usuario.
+- `userLocale`: `{ language, numberFormat, timeZone }`. Vacíos, siguen los de la empresa.
 
 ## Claves de API
 
