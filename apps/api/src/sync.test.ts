@@ -195,6 +195,23 @@ describe("contacts", () => {
     expect((await workspace(ana)).suppliers).toEqual([]);
   });
 
+  it("accepts a repeated tax ID and finds contacts by it", async () => {
+    const ana = await member();
+    const create = (name: string, taxId: string) =>
+      ana.request("/v1/contacts", { method: "POST", body: { role: "client", name, taxId } });
+    expect((await create("Norte SL", "B12345674")).status).toBe(201);
+    expect((await create("Norte SL (Bilbao)", "ES-B12.345.674")).status).toBe(201);
+    expect((await create("Ana", "")).status).toBe(201);
+
+    const names = async (query: string) =>
+      ((await (await ana.request(`/v1/contacts?${query}`)).json()) as { contacts: { name: string }[] }).contacts
+        .map((c) => c.name)
+        .sort();
+    expect(await names("taxId=b12345674")).toEqual(["Norte SL", "Norte SL (Bilbao)"]);
+    expect(await names("role=supplier&taxId=B12345674")).toEqual([]);
+    expect(await names("taxId=")).toEqual([]);
+  });
+
   it("documents the routes", async () => {
     const ana = await member();
     const doc = (await (await ana.request("/v1/openapi.json")).json()) as { paths: Record<string, unknown> };

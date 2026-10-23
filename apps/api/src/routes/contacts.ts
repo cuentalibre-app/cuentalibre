@@ -1,5 +1,5 @@
 import { contactRoleSchema, storedContactSchema, type ContactEntity, type ContactRole } from "@cuentalibre/contracts";
-import { newId } from "@cuentalibre/core";
+import { newId, sameTaxId } from "@cuentalibre/core";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import type { AppEnv } from "../context";
@@ -29,7 +29,15 @@ const list = createRoute({
   tags: ["Contacts"],
   summary: "List clients and suppliers",
   middleware: [requireOrganization] as const,
-  request: { query: z.object({ role: contactRoleSchema.optional() }) },
+  request: {
+    query: z.object({
+      role: contactRoleSchema.optional(),
+      taxId: z
+        .string()
+        .optional()
+        .openapi({ description: "Only contacts with this tax ID, ignoring separators and the ES prefix" }),
+    }),
+  },
   responses: {
     200: { description: "The contacts", content: json(z.object({ contacts: z.array(contactWithRole) })) },
     ...tenantErrors,
@@ -100,8 +108,10 @@ const remove = createRoute({
 
 export const contactRoutes = new OpenAPIHono<AppEnv>()
   .openapi(list, async (c) => {
-    const { role } = c.req.valid("query");
-    const rows = await liveContacts(c.get("db"), c.get("organizationId"), role);
+    const { role, taxId } = c.req.valid("query");
+    const all = await liveContacts(c.get("db"), c.get("organizationId"), role);
+    // Duplicates are accepted, so clients that create in bulk can look a tax ID up first
+    const rows = taxId === undefined ? all : all.filter((row) => sameTaxId(row.taxId, taxId));
     return c.json({ contacts: rows.map((row) => ({ ...toContact(row), role: row.role })) }, 200);
   })
   .openapi(get, async (c) => {
