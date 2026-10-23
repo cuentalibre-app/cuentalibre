@@ -12,14 +12,11 @@ import { Field } from "@/features/sales/form-fields";
 import { EmptyState, IconAction } from "@/features/sales/list-parts";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { TagChip } from "./tag-chip";
-import { tagsStore, textColorOn, useTags } from "./tags-store";
-
-/** Colors offered in the dialog; any other can be picked with the color input. */
-const SWATCHES = ["#dbeafe", "#dcfce7", "#fef3c7", "#fee2e2", "#ede9fe", "#fce7f3", "#e5e7eb", "#334155", "#2f45c9"];
+import { TAG_SWATCHES, nextTagColor, tagsStore, textColorOn, useTags } from "./tags-store";
 
 function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open: boolean) => void }) {
   const [name, setName] = useState(tag?.name ?? "");
-  const [color, setColor] = useState(tag?.color ?? SWATCHES[0]!);
+  const [color, setColor] = useState(() => tag?.color ?? nextTagColor());
   const [submitted, setSubmitted] = useState(false);
   const clash = tagsStore.find(name);
   const nameError = !name.trim()
@@ -63,7 +60,7 @@ function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open
           <Field label="Color de fondo">
             {(p) => (
               <div className="flex flex-wrap items-center gap-2">
-                {SWATCHES.map((s) => (
+                {TAG_SWATCHES.map((s) => (
                   <button
                     key={s}
                     type="button"
