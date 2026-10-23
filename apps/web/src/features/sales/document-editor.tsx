@@ -28,7 +28,7 @@ import { formatDecimalInput, parseDecimal } from "@/lib/format";
 import { conceptFor } from "@/features/catalog/catalog-model";
 import { useCatalog } from "@/features/catalog/catalog-store";
 import { TagChip } from "@/features/settings/tag-chip";
-import { tagsStore, useTags } from "@/features/settings/tags-store";
+import { TAG_SWATCHES, nextTagColor, tagsStore, textColorOn, useTags } from "@/features/settings/tags-store";
 import { Field, GroupedSelect } from "./form-fields";
 import { SURCHARGE_OPTIONS, VAT_RATE_OPTIONS, ratePercent } from "./sales-model";
 
@@ -120,11 +120,17 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
   const [draft, setDraft] = useState("");
   const listId = useId();
   const known = useTags();
+  const [color, setColor] = useState<string | null>(null);
+  // A name that isn't in Configuración › Etiquetas is created there, with the color picked here
+  const isNew = draft.trim() !== "" && !tagsStore.find(draft);
+  const newColor = color ?? nextTagColor();
   const add = () => {
     // Use the configured spelling when the name matches a known tag
     const tag = tagsStore.find(draft)?.name ?? draft.trim();
+    if (isNew) tagsStore.add({ id: newId(), name: tag, color: newColor });
     if (tag && !tags.includes(tag)) onChange([...tags, tag]);
     setDraft("");
+    setColor(null);
   };
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" || e.key === ",") {
@@ -163,6 +169,40 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
               <Plus strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </div>
+          {isNew && (
+            <div
+              role="group"
+              aria-label="Color de la nueva etiqueta"
+              className="flex flex-col gap-2 rounded-lg bg-muted/50 p-2.5"
+            >
+              <span className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                Etiqueta nueva
+                <span
+                  className="min-w-0 truncate rounded-full px-2.5 leading-6 font-medium"
+                  style={{ backgroundColor: newColor, color: textColorOn(newColor) }}
+                >
+                  {draft.trim()}
+                </span>
+              </span>
+              <span className="flex flex-wrap gap-2">
+                {TAG_SWATCHES.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    aria-label={`Color ${s}`}
+                    aria-pressed={newColor === s}
+                    onClick={() => setColor(s)}
+                    className={cn(
+                      "size-6 cursor-pointer rounded-full border border-border p-0 transition-[scale] duration-150 active:scale-95",
+                      newColor === s && "outline-2 outline-offset-2 outline-ring",
+                    )}
+                    // A sample of the color itself
+                    style={{ backgroundColor: s }}
+                  />
+                ))}
+              </span>
+            </div>
+          )}
           {tags.length > 0 && (
             <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
               {tags.map((tag) => (

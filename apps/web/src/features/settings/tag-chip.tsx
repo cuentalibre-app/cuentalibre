@@ -31,3 +31,15 @@ export function TagChip({
     </Tag>
   );
 }
+
+/** A record's tags, small, under its name or number in a list. */
+export function TagChips({ tags, className }: { tags?: string[]; className?: string }) {
+  if (!tags?.length) return null;
+  return (
+    <span className={cn("flex flex-wrap gap-1 font-sans", className)}>
+      {tags.map((t) => (
+        <TagChip key={t} name={t} className="px-2 text-2xs leading-5" />
+      ))}
+    </span>
+  );
+}
