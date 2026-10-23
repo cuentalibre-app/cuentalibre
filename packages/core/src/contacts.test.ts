@@ -5,7 +5,8 @@ import {
   countryFromVatPrefix,
   formatIban,
   hasEuVatPrefix,
-  isDuplicateTaxId,
+  findDuplicateTaxId,
+  sameTaxId,
   isOtherEuCountry,
   isValidEmail,
   isValidIban,
@@ -122,20 +123,34 @@ describe("isValidEmail", () => {
   });
 });
 
-describe("isDuplicateTaxId", () => {
+describe("sameTaxId", () => {
+  it("compares tax IDs however they are typed", () => {
+    expect(sameTaxId("B12345674", "b-12.345.674")).toBe(true);
+    expect(sameTaxId("12345678Z", "ES 12345678Z")).toBe(true);
+    expect(sameTaxId("B12345674", "B12345675")).toBe(false);
+  });
+
+  it("never matches empty tax IDs", () => {
+    expect(sameTaxId("", "")).toBe(false);
+    expect(sameTaxId(" - ", "")).toBe(false);
+  });
+});
+
+describe("findDuplicateTaxId", () => {
   const existing = [
     { id: "c1", taxId: "B12345674" },
     { id: "c2", taxId: "12345678Z" },
+    { id: "c3", taxId: "" },
   ];
 
-  it("flags the same tax ID however it is typed", () => {
-    expect(isDuplicateTaxId({ taxId: "b-12345674" }, existing)).toBe(true);
-    expect(isDuplicateTaxId({ taxId: "ES12345678Z" }, existing)).toBe(true);
+  it("finds the contact with the same tax ID however it is typed", () => {
+    expect(findDuplicateTaxId({ taxId: "b-12345674" }, existing)?.id).toBe("c1");
+    expect(findDuplicateTaxId({ taxId: "ES12345678Z" }, existing)?.id).toBe("c2");
   });
 
   it("ignores the contact itself and empty IDs", () => {
-    expect(isDuplicateTaxId({ id: "c1", taxId: "B12345674" }, existing)).toBe(false);
-    expect(isDuplicateTaxId({ taxId: "" }, existing)).toBe(false);
+    expect(findDuplicateTaxId({ id: "c1", taxId: "B12345674" }, existing)).toBeUndefined();
+    expect(findDuplicateTaxId({ taxId: "" }, existing)).toBeUndefined();
   });
 });
 

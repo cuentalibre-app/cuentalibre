@@ -1,15 +1,7 @@
-import {
-  SPAIN,
-  isDuplicateTaxId,
-  isOtherEuCountry,
-  isValidEmail,
-  storedTaxId,
-  type WithholdingKind,
-} from "@cuentalibre/core";
+import { SPAIN, isOtherEuCountry, isValidEmail, storedTaxId, type WithholdingKind } from "@cuentalibre/core";
 import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@cuentalibre/contracts";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
-import { ROLES, countryOf, taxIdError } from "./contacts-model";
-import { contactsStore } from "./contacts-store";
+import { countryOf, taxIdError } from "./contacts-model";
 
 /** Radix Select can't hold an empty value: this stands for "no default". */
 export const NO_DEFAULT = "default";
@@ -124,14 +116,10 @@ export function fromDraft(role: ContactRole, draft: ContactDraft, id: string): C
   };
 }
 
-export function validateDraft(role: ContactRole, draft: ContactDraft, id?: string): DraftErrors {
+/** A repeated tax ID is not an error: the form warns about it instead (see DuplicateTaxIdNotice). */
+export function validateDraft(draft: ContactDraft): DraftErrors {
   const errors: DraftErrors = {};
   errors.taxId = taxIdError(draft.taxId, draft.country);
-  const duplicate = errors.taxId
-    ? undefined
-    : contactsStore.all(role).find((c) => isDuplicateTaxId({ id, taxId: draft.taxId }, [c]));
-  if (duplicate)
-    errors.taxId = `Ya tienes ${ROLES[role].noun.replace(/^el /, "un ")} con este NIF: ${duplicate.name.replace(/\.$/, "")}.`;
   if (!draft.name.trim()) errors.name = "Introduce un nombre.";
   if (draft.email.trim() && !isValidEmail(draft.email)) errors.email = "El email no es correcto.";
   if (draft.discount.trim()) {

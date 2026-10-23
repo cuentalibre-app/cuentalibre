@@ -182,11 +182,15 @@ export interface ContactIdentity {
   taxId: string;
 }
 
-/** Whether another contact of the same list already has this tax ID. */
-export function isDuplicateTaxId(contact: ContactIdentity, existing: ContactIdentity[]): boolean {
-  const id = normalizeTaxId(contact.taxId).replace(/^ES/, "");
-  if (!id) return false;
-  return existing.some((c) => c.id !== contact.id && normalizeTaxId(c.taxId).replace(/^ES/, "") === id);
+/** Whether two tax IDs are the same however they are typed: separators and the ES prefix don't count. */
+export function sameTaxId(a: string, b: string): boolean {
+  const key = (taxId: string) => normalizeTaxId(taxId).replace(/^ES/, "");
+  return key(a) !== "" && key(a) === key(b);
+}
+
+/** Another contact of the same list with this tax ID, if any. Empty tax IDs never match. */
+export function findDuplicateTaxId<T extends ContactIdentity>(contact: ContactIdentity, existing: T[]): T | undefined {
+  return existing.find((c) => c.id !== contact.id && sameTaxId(c.taxId, contact.taxId));
 }
 
 /** Spanish provinces by the first two digits of the postal code (INE order). */
