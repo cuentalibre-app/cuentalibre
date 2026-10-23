@@ -11,6 +11,7 @@ import {
   FileCode2,
   FileDown,
   FileX2,
+  Filter,
   Mail,
   MoreHorizontal,
   Paperclip,
@@ -29,6 +30,7 @@ import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
+import { Input } from "@cuentalibre/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -46,10 +48,11 @@ import {
 import { SettingsLink } from "@/features/settings/settings-parts";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
-import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
+import { MONTHS, formatDate, formatPercent, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import {
+  INCOME_TYPE_GROUPS,
   KINDS,
   STATUS,
   clientOf,
@@ -67,6 +70,7 @@ import {
 } from "./sales-model";
 import { canSendEmail } from "@/data/email";
 import { SalesDocumentLink } from "./document-detail";
+import { GroupedSelect } from "./form-fields";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
 import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
@@ -90,6 +94,36 @@ interface Row {
 }
 
 const MONTH_NAME = new Intl.DateTimeFormat("es-ES", { month: "long" });
+
+/** Filters behind the "Filtros" button; search and status stay in the toolbar. */
+interface Filters {
+  /** A client as the documents show it, by `clientKey`. */
+  client: string;
+  incomeType: string;
+  /** Zero-based month within the period, or ALL. */
+  month: string;
+  tag: string;
+  totalFrom: string;
+  totalTo: string;
+}
+
+const NO_FILTERS: Filters = { client: ALL, incomeType: ALL, month: ALL, tag: ALL, totalFrom: "", totalTo: "" };
+
+/** Contacts with the same name and tax ID are one client to filter by. */
+const clientKey = (r: Row) => `${r.client.name}\u0000${r.client.taxId}`;
+
+function matches(r: Row, f: Filters): boolean {
+  const from = parseEuros(f.totalFrom);
+  const to = parseEuros(f.totalTo);
+  return (
+    (f.client === ALL || clientKey(r) === f.client) &&
+    (f.incomeType === ALL || r.doc.incomeType === f.incomeType) &&
+    (f.month === ALL || Number(r.doc.issuedOn.slice(5, 7)) - 1 === Number(f.month)) &&
+    (f.tag === ALL || (r.doc.tags ?? []).includes(f.tag)) &&
+    (from === null || r.total >= from) &&
+    (to === null || r.total <= to)
+  );
+}
 
 const isOpen = (status: StatusKey) => (OPEN_STATUSES as StatusKey[]).includes(status);
 
@@ -118,6 +152,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   const defaults = kind === "quote" || kind === "deliveryNote" ? listPreferencesStore.get()[kind] : null;
   const [status, setStatus] = useState<string>(defaults?.status === "open" ? OPEN : ALL);
   const [thisMonth, setThisMonth] = useState(defaults?.date === "month");
+  const [filters, setFilters] = useState(NO_FILTERS);
+  const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState(DEFAULT_SORT);
   const documents = useSalesDocuments();
 
@@ -145,12 +181,21 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
     const matching = periodRows.filter(
       (r) =>
         (status === ALL || r.status === status || (status === OPEN && isOpen(r.status))) &&
+        matches(r, filters) &&
         (!q || [r.doc.number ?? "", r.client.name, r.client.taxId].some((v) => v.toLowerCase().includes(q))),
     );
     return sortRows(matching, sort);
-  }, [periodRows, query, status, sort]);
+  }, [periodRows, query, status, filters, sort]);
 
-  const filtered = query.trim() !== "" || status !== ALL || thisMonth;
+  const set = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters((f) => ({ ...f, [key]: value }));
+  const extraFilters = (Object.keys(NO_FILTERS) as (keyof Filters)[]).filter(
+    (k) => filters[k] !== NO_FILTERS[k],
+  ).length;
+  const filtered = query.trim() !== "" || status !== ALL || thisMonth || extraFilters > 0;
+  const tags = [...new Set(documents.filter((d) => d.kind === kind).flatMap((d) => d.tags ?? []))].sort();
+  const periodClients = [...new Map(periodRows.map((r) => [clientKey(r), r.client.name]))].sort(([, a], [, b]) =>
+    a.localeCompare(b, "es"),
+  );
   const exportName = `${config.title} ${periodCode(period)}`.toLowerCase().replaceAll(" ", "-");
   const [exporting, setExporting] = useState(false);
 
@@ -218,6 +263,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             onChange={(p) => {
               setPeriod(p);
               setThisMonth(false);
+              // The month belongs to the old period
+              set("month", ALL);
             }}
             years={availableYears}
             today={today}
@@ -244,6 +291,21 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
             </SettingsLink>
           )}
+          <Button
+            variant="secondary"
+            size="md"
+            aria-expanded={showFilters}
+            aria-controls="sales-filters"
+            onClick={() => setShowFilters((s) => !s)}
+          >
+            <Filter strokeWidth={1.8} aria-hidden="true" />
+            Filtros
+            {extraFilters > 0 && (
+              <span className="flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
+                {extraFilters}
+              </span>
+            )}
+          </Button>
           <div className="ml-auto flex gap-2">
             <Button
               variant="secondary"
@@ -279,10 +341,25 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           </div>
         </div>
 
+        {showFilters && (
+          <FiltersPanel
+            filters={filters}
+            // Within the current month only that month can be picked
+            months={thisMonth ? [today.getMonth()] : periodMonths(period)}
+            clients={periodClients}
+            tags={tags}
+            incomeTypes={kind === "invoice" || kind === "draft"}
+            onChange={set}
+            onClear={() => setFilters(NO_FILTERS)}
+          />
+        )}
+
         {rows.length === 0 ? (
           <EmptyState
             message={filtered ? "Ningún resultado coincide con la búsqueda." : config.empty}
-            hint={filtered ? "Prueba con otro término o estado." : "Puedes cambiar el periodo en el selector."}
+            hint={
+              filtered ? "Prueba con otro término o quita algún filtro." : "Puedes cambiar el periodo en el selector."
+            }
             action={
               !filtered && (
                 <Link to={config.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}>
@@ -300,6 +377,110 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           </>
         )}
       </section>
+    </div>
+  );
+}
+
+function FiltersPanel({
+  filters,
+  months,
+  clients,
+  tags,
+  incomeTypes,
+  onChange,
+  onClear,
+}: {
+  filters: Filters;
+  months: number[];
+  /** Clients of the period's documents, as [key, name]. */
+  clients: [string, string][];
+  tags: string[];
+  /** Whether the documents carry an income type to filter by. */
+  incomeTypes: boolean;
+  onChange: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
+  onClear: () => void;
+}) {
+  const label = "text-xs font-medium text-muted-foreground";
+  const all = (text: string) => ({ value: ALL, label: text });
+  return (
+    <div
+      id="sales-filters"
+      className={cn(
+        "grid animate-fade-in gap-3 border-y border-border bg-muted/50 py-3 sm:grid-cols-2 lg:items-end lg:px-4",
+        incomeTypes ? "lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]" : "lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]",
+      )}
+    >
+      <label className="flex min-w-0 flex-col gap-1">
+        <span className={label}>Cliente</span>
+        <GroupedSelect
+          id="filter-client"
+          value={filters.client}
+          onChange={(v) => onChange("client", v)}
+          groups={[{ options: [all("Todos"), ...clients.map(([key, name]) => ({ value: key, label: name }))] }]}
+        />
+      </label>
+      {incomeTypes && (
+        <label className="flex min-w-0 flex-col gap-1">
+          <span className={label}>Tipo de ingreso</span>
+          <GroupedSelect
+            id="filter-income-type"
+            value={filters.incomeType}
+            onChange={(v) => onChange("incomeType", v)}
+            groups={[{ options: [all("Todos")] }, ...INCOME_TYPE_GROUPS]}
+          />
+        </label>
+      )}
+      <label className="flex min-w-0 flex-col gap-1">
+        <span className={label}>Mes</span>
+        <GroupedSelect
+          id="filter-month"
+          value={filters.month}
+          onChange={(v) => onChange("month", v)}
+          groups={[
+            { options: [all("Todo el periodo"), ...months.map((m) => ({ value: String(m), label: MONTHS[m]! }))] },
+          ]}
+        />
+      </label>
+      <label className="flex min-w-0 flex-col gap-1">
+        <span className={label}>Etiqueta</span>
+        <GroupedSelect
+          id="filter-tag"
+          value={filters.tag}
+          onChange={(v) => onChange("tag", v)}
+          disabled={tags.length === 0}
+          groups={[
+            { options: [all(tags.length ? "Todas" : "Sin etiquetas"), ...tags.map((t) => ({ value: t, label: t }))] },
+          ]}
+        />
+      </label>
+      <fieldset className="m-0 flex min-w-0 flex-col gap-1 border-0 p-0">
+        <legend className={cn(label, "mb-1 p-0")}>Total entre</legend>
+        <div className="flex items-center gap-1.5">
+          <Input
+            inputMode="decimal"
+            placeholder="Desde"
+            aria-label="Total desde"
+            value={filters.totalFrom}
+            onChange={(e) => onChange("totalFrom", e.target.value)}
+            aria-invalid={filters.totalFrom && parseEuros(filters.totalFrom) === null ? true : undefined}
+            className="text-right amount"
+          />
+          <span className="text-muted-foreground">–</span>
+          <Input
+            inputMode="decimal"
+            placeholder="Hasta"
+            aria-label="Total hasta"
+            value={filters.totalTo}
+            onChange={(e) => onChange("totalTo", e.target.value)}
+            aria-invalid={filters.totalTo && parseEuros(filters.totalTo) === null ? true : undefined}
+            className="text-right amount"
+          />
+        </div>
+      </fieldset>
+      <Button variant="ghost" size="md" onClick={onClear} className="justify-self-start">
+        <X strokeWidth={1.8} aria-hidden="true" />
+        Quitar filtros
+      </Button>
     </div>
   );
 }
