@@ -96,6 +96,36 @@ describe("received invoices", () => {
     expect(response.status).toBe(400);
   });
 
+  it("can't be booked before they were issued", async () => {
+    const ana = await buyer();
+    const early = invoice(ana.brisa.id, { issuedOn: "2026-10-10", bookedOn: "2026-10-01" });
+    const created = await send(ana, [{ type: "create", entity: "purchaseInvoices", data: early }]);
+    expect(created.status).toBe(400);
+    expect(await errorCode(created)).toBe("invalid_invoice");
+
+    const bill = invoice(ana.brisa.id);
+    await send(ana, [{ type: "create", entity: "purchaseInvoices", data: bill }]);
+    for (const changes of [{ bookedOn: "2026-10-01" }, { issuedOn: "2026-10-04" }]) {
+      const response = await send(ana, [{ type: "update", entity: "purchaseInvoices", id: bill.id, changes }]);
+      expect(response.status).toBe(400);
+    }
+    expect((await workspace(ana)).purchaseInvoices).toEqual([bill]);
+  });
+
+  it("can't be deleted while a credit note corrects them", async () => {
+    const ana = await buyer();
+    const original = invoice(ana.brisa.id);
+    const credit = invoice(ana.brisa.id, { rectifiesId: original.id, number: "A-1" });
+    await send(ana, [{ type: "create", entity: "purchaseInvoices", data: original }]);
+    expect((await send(ana, [{ type: "create", entity: "purchaseInvoices", data: credit }])).status).toBe(200);
+    const blocked = await send(ana, [{ type: "delete", entity: "purchaseInvoices", id: original.id }]);
+    expect(blocked.status).toBe(409);
+    expect(await errorCode(blocked)).toBe("in_use");
+
+    expect((await send(ana, [{ type: "delete", entity: "purchaseInvoices", id: credit.id }])).status).toBe(200);
+    expect((await send(ana, [{ type: "delete", entity: "purchaseInvoices", id: original.id }])).status).toBe(200);
+  });
+
   it("only takes payments, tags, attachments and notes while their quarter is closed", async () => {
     const ana = await buyer();
     const bill = invoice(ana.brisa.id);

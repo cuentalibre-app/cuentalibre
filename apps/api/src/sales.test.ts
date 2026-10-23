@@ -188,6 +188,37 @@ describe("issued invoices", () => {
     expect(await errorCode(closed)).toBe("quarter_closed");
   });
 
+  it("can only be deleted from the end of their series", async () => {
+    const ana = await seller();
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt" as const };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
+    const first = await issued(ana, document(ana.norte.id));
+    const second = await issued(ana, document(ana.norte.id));
+    const middle = await send(ana, [{ type: "delete", entity: "salesDocuments", id: first.id }]);
+    expect(middle.status).toBe(409);
+    expect(await errorCode(middle)).toBe("not_last_in_series");
+    // An invoice of another series doesn't hold it back
+    await issued(ana, document(ana.norte.id, { series: "rectifying", rectifiesId: first.id, lines: [line()] }));
+    expect((await send(ana, [{ type: "delete", entity: "salesDocuments", id: second.id }])).status).toBe(200);
+  });
+
+  it("can't be deleted while a rectifying invoice corrects them", async () => {
+    const ana = await seller();
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt" as const };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
+    const original = await issued(ana, document(ana.norte.id));
+    const rectifying = await issued(
+      ana,
+      document(ana.norte.id, { series: "rectifying", rectifiesId: original.id, lines: [line({ quantity: -1 })] }),
+    );
+    const blocked = await send(ana, [{ type: "delete", entity: "salesDocuments", id: original.id }]);
+    expect(blocked.status).toBe(409);
+    expect(await errorCode(blocked)).toBe("in_use");
+
+    expect((await send(ana, [{ type: "delete", entity: "salesDocuments", id: rectifying.id }])).status).toBe(200);
+    expect((await send(ana, [{ type: "delete", entity: "salesDocuments", id: original.id }])).status).toBe(200);
+  });
+
   it("can be revised by a business exempt from VERI*FACTU while the quarter is open", async () => {
     const ana = await seller();
     const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt" as const };
