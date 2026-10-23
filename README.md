@@ -150,7 +150,7 @@ VITE_API_URL=http://localhost:3000
 VITE_SITE_URL=http://localhost:4321
 ```
 
-Without `VITE_API_URL` the web app only runs the demo, on sample data.
+Without `VITE_API_URL` the web app only runs the demo, on sample data. `VITE_API_URL=/` means the API serves the app from its own origin, as the self-hosting image does.
 
 The API and the site work without any configuration: every setting has a development default. To change one, copy `apps/api/.env.example` to `apps/api/.env` (or `apps/site/.env.example` to `apps/site/.env`).
 
@@ -240,6 +240,7 @@ packages/core          Domain logic shared by front and back: periods, tax calcu
 packages/contracts     zod schemas of the stored data; types are inferred from them
 packages/ui            Design system: tokens, base styles and components
 deploy/                What runs cuentalibre online: Caddy, the API and PostgreSQL on one server
+selfhost/              Self-hosting: one image with the app and the API, plus PostgreSQL
 .agents/skills/        The cuentalibre skill for AI agents (.claude/skills links to it)
 ```
 

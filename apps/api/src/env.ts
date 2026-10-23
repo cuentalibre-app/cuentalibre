@@ -10,10 +10,15 @@ const envSchema = z
     DATABASE_URL: z.url().default(devDatabaseUrl),
     /** Signs sessions and cookies. Generate one with `openssl rand -base64 32`. */
     BETTER_AUTH_SECRET: z.string().min(32).default(devSecret),
-    /** Public URL of the API, used in auth callbacks. */
+    /** Public URL of the API, used in auth callbacks. Defaults to `PUBLIC_URL`. */
     BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
-    /** Origin of the web app, trusted by auth and allowed by CORS. */
+    /** Origin of the web app, trusted by auth and allowed by CORS. Defaults to `PUBLIC_URL`. */
     WEB_ORIGIN: z.url().default("http://localhost:5173"),
+    /**
+     * The built web app (`apps/web/dist`), served from the API's own origin with a
+     * fallback to `index.html`. Self-hosting sets it; without it the API serves only `/v1`.
+     */
+    WEB_DIR: z.string().min(1).optional(),
     /** Google sign-in, from an OAuth client in Google Cloud. Without them it is off. */
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
@@ -83,6 +88,16 @@ const envSchema = z
 
 export type Env = z.infer<typeof envSchema>;
 
+/**
+ * Reads the environment. Self-hosting serves the app and the API from one origin, so
+ * `PUBLIC_URL` (the address people open, e.g. `https://cuentas.example.com`) stands
+ * for both `BETTER_AUTH_URL` and `WEB_ORIGIN`; either can still be set on its own.
+ */
 export function loadEnv(source: Record<string, string | undefined> = process.env): Env {
-  return envSchema.parse(source);
+  const publicUrl = source.PUBLIC_URL?.replace(/\/$/, "") || undefined;
+  return envSchema.parse({
+    ...source,
+    BETTER_AUTH_URL: source.BETTER_AUTH_URL || publicUrl,
+    WEB_ORIGIN: source.WEB_ORIGIN || publicUrl,
+  });
 }
