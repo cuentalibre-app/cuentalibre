@@ -6,13 +6,13 @@ These four have their own REST routes. Value lists (accounts, withholdings, oper
 
 Clients and suppliers. `role` is `client` or `supplier` and can't change.
 
-| Route                                 |                                                            |
-| ------------------------------------- | ---------------------------------------------------------- |
-| `GET /contacts?role=client\|supplier` | → `{ contacts: [...] }`. `role` optional.                  |
-| `GET /contacts/{id}`                  | One contact.                                               |
-| `POST /contacts`                      | Create (`role` required).                                  |
-| `PATCH /contacts/{id}`                | Change fields.                                             |
-| `DELETE /contacts/{id}`               | Delete. Issued invoices keep the client's data they froze. |
+| Route                                        |                                                                                                       |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `GET /contacts?role=client\|supplier&taxId=` | → `{ contacts: [...] }`. `role` and `taxId` optional; `taxId` ignores separators and the `ES` prefix. |
+| `GET /contacts/{id}`                         | One contact.                                                                                          |
+| `POST /contacts`                             | Create (`role` required).                                                                             |
+| `PATCH /contacts/{id}`                       | Change fields.                                                                                        |
+| `DELETE /contacts/{id}`                      | Delete. Issued invoices keep the client's data they froze.                                            |
 
 | Field                                        | Type                   |                                                                                                     |
 | -------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------- |

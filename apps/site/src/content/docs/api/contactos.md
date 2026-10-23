@@ -11,11 +11,15 @@ Clientes y proveedores. Cada contacto tiene un `role`, `client` o `supplier`, qu
 
 | Ruta                           | Qué hace                                                                   |
 | ------------------------------ | -------------------------------------------------------------------------- |
-| `GET /v1/contacts?role=client` | Lista los contactos. `role` es opcional. Responde `{ "contacts": [...] }`. |
+| `GET /v1/contacts?role=client` | Lista los contactos. `role` y `taxId` son opcionales. Responde `{ "contacts": [...] }`. |
 | `GET /v1/contacts/{id}`        | Un contacto.                                                               |
 | `POST /v1/contacts`            | Crea un contacto.                                                          |
 | `PATCH /v1/contacts/{id}`      | Cambia algunos campos.                                                     |
 | `DELETE /v1/contacts/{id}`     | Lo borra. Las facturas ya emitidas conservan sus datos.                    |
+
+## NIF repetidos
+
+Se pueden crear varios contactos con el mismo NIF: una empresa con varias direcciones de facturación o un organismo público con varias unidades DIR3. Casi siempre es un descuido, así que antes de crear un contacto puedes buscarlo por NIF con `GET /v1/contacts?taxId=B12345674`. La búsqueda ignora mayúsculas, espacios, puntos, guiones y el prefijo `ES`.
 
 ## Campos
 

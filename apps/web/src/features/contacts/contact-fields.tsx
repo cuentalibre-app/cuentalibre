@@ -1,10 +1,20 @@
-import { MapPin } from "lucide-react";
-import { SPAIN, checkTaxId, countryFromVatPrefix, isOtherEuCountry, provinceFromPostalCode } from "@cuentalibre/core";
-import type { ContactRole } from "@cuentalibre/contracts";
+import { Link } from "react-router";
+import { MapPin, UsersRound } from "lucide-react";
+import {
+  SPAIN,
+  checkTaxId,
+  countryFromVatPrefix,
+  findDuplicateTaxId,
+  isOtherEuCountry,
+  provinceFromPostalCode,
+} from "@cuentalibre/core";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
 import type { ContactDraft, DraftErrors } from "./contact-draft";
-import { COUNTRIES, taxIdWarning } from "./contacts-model";
+import { COUNTRIES, ROLES, contactPath, taxIdWarning } from "./contacts-model";
+import { useContacts } from "./contacts-store";
 
 /* Field groups shared by the contact page and the quick-create dialog. Help icons need a TooltipProvider above. */
 
@@ -19,17 +29,24 @@ const KIND_LABELS = { nif: "NIF de persona física", nie: "NIE", cif: "CIF de en
 
 export function IdentityFields({
   role,
+  contactId,
   draft,
   errors,
   set,
   autoFocus,
+  onUseExisting,
 }: {
   role: ContactRole;
+  /** The contact being edited, which doesn't count as a duplicate of itself. */
+  contactId?: string;
   draft: ContactDraft;
   errors: DraftErrors;
   set: SetDraft;
   autoFocus?: boolean;
+  /** Offers picking the contact that already has this tax ID instead of linking to its sheet. */
+  onUseExisting?: (contact: Contact) => void;
 }) {
+  const duplicate = findDuplicateTaxId({ id: contactId, taxId: draft.taxId }, useContacts(role));
   const check = checkTaxId(draft.taxId, draft.country);
   const hint = taxIdWarning(draft.taxId, draft.country) ?? (check.valid ? KIND_LABELS[check.kind] : null) ?? undefined;
   const eu = isOtherEuCountry(draft.country);
@@ -76,6 +93,13 @@ export function IdentityFields({
           )}
         </Field>
       </div>
+      {duplicate && !errors.taxId && (
+        <DuplicateTaxIdNotice
+          role={role}
+          duplicate={duplicate}
+          onUse={onUseExisting && (() => onUseExisting(duplicate))}
+        />
+      )}
       <div className="grid gap-4 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] sm:items-end">
         <Field label="País" help="Decide cómo se valida el NIF y qué tipo de operación se propone en las facturas.">
           {(p) => (
@@ -94,6 +118,49 @@ export function IdentityFields({
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * A repeated tax ID is usually a mistake but not always (one company with
+ * several billing addresses, or a public body with several DIR3 units), so it
+ * warns without blocking the save.
+ */
+function DuplicateTaxIdNotice({
+  role,
+  duplicate,
+  onUse,
+}: {
+  role: ContactRole;
+  duplicate: Contact;
+  onUse?: () => void;
+}) {
+  const noun = ROLES[role].noun.replace(/^el /, "");
+  return (
+    <div
+      role="status"
+      className="flex flex-col gap-2.5 rounded-lg bg-warning-soft px-3.5 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+    >
+      <p className="m-0 flex min-w-0 items-start gap-2.5">
+        <UsersRound className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={2} aria-hidden="true" />
+        <span className="min-w-0">
+          Ya tienes un {noun} con este NIF:{" "}
+          <strong className="font-semibold">{duplicate.name.replace(/\.$/, "")}</strong>.
+        </span>
+      </p>
+      {onUse ? (
+        <Button variant="secondary" size="sm" className="shrink-0 self-start sm:self-auto" onClick={onUse}>
+          Usar este {noun}
+        </Button>
+      ) : (
+        <Link
+          to={contactPath(role, duplicate.id)}
+          className="shrink-0 self-start pl-6.5 font-medium text-foreground underline underline-offset-4 sm:self-auto sm:pl-0"
+        >
+          Abrir su ficha
+        </Link>
+      )}
+    </div>
   );
 }
 

@@ -108,7 +108,7 @@ function ContactForm({
   };
 
   function save(after: AfterSave = "sheet") {
-    const found = validateDraft(role, draft, existing?.id);
+    const found = validateDraft(draft);
     setErrors(found);
     if (hasErrors(found)) {
       // Wait for the error to render so the field is marked invalid
@@ -202,7 +202,14 @@ function ContactForm({
 
         <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
           <Section title="Datos de facturación" index={1}>
-            <IdentityFields role={role} draft={draft} errors={errors} set={set} autoFocus={!existing} />
+            <IdentityFields
+              role={role}
+              contactId={existing?.id}
+              draft={draft}
+              errors={errors}
+              set={set}
+              autoFocus={!existing}
+            />
           </Section>
 
           <Section title="Dirección" index={2}>
