@@ -1,3 +1,4 @@
+import { newId } from "@cuentalibre/core";
 import {
   API_URL,
   EMAIL_VERIFIED_PATH,
@@ -164,7 +165,8 @@ export function slugFor(name: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
-  return `${base || "empresa"}-${crypto.randomUUID().slice(0, 8)}`;
+  // crypto.randomUUID only exists on HTTPS and localhost; the tail of a UUIDv7 is random
+  return `${base || "empresa"}-${newId().slice(-8)}`;
 }
 
 export const MIN_PASSWORD_LENGTH = 8;

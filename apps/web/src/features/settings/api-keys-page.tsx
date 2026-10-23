@@ -8,6 +8,7 @@ import { SITE_URL } from "@/components/legal-links";
 import { currentBackend } from "@/data/backend";
 import { API_URL } from "@/features/auth/session";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
+import { copyText } from "@/lib/clipboard";
 import { formatDate } from "@/lib/format";
 import { SettingsHeader } from "./settings-parts";
 
@@ -67,8 +68,7 @@ export function ApiKeysPage() {
   };
 
   const copy = async (text: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
+    if (await copyText(text)) setCopied(true);
   };
 
   return (

@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/compone
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { copyText } from "@/lib/clipboard";
 import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
 import {
   AEAT_LINKS,
@@ -55,7 +56,8 @@ export function useCopied(): [string | null, (key: string, text: string) => void
   const timer = useRef<number>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
   const copy = (key: string, text: string) => {
-    void navigator.clipboard?.writeText(text).then(() => {
+    void copyText(text).then((done) => {
+      if (!done) return;
       setCopied(key);
       window.clearTimeout(timer.current);
       timer.current = window.setTimeout(() => setCopied(null), 1_400);
@@ -201,7 +203,7 @@ function BoxHint({ boxes, hint }: { boxes: string[]; hint: Hint }) {
           <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
         </button>
       </TooltipTrigger>
-      <TooltipContent className="block max-w-80 px-3.5 py-3 font-normal leading-snug">
+      <TooltipContent className="block max-w-80 px-3.5 py-3 leading-snug font-normal">
         <p className="m-0 mb-1.5 text-center font-semibold">{boxesTitle(boxes)}</p>
         <div className="flex flex-col gap-2">
           {text.map((t, i) => (
