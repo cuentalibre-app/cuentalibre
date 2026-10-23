@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { ApiError } from "../errors";
+import { ApiError, describeIssues } from "../errors";
 
 /* Helpers shared by the services that store records sent as commands. */
 
@@ -39,9 +39,17 @@ export function touchedFields<T extends object>(before: T, after: T, changes: Re
 export function parseOr<S extends z.ZodType>(schema: S, data: unknown, code: string): z.infer<S> {
   const parsed = schema.safeParse(data);
   if (parsed.success) return parsed.data;
-  const issue = parsed.error.issues[0];
-  const where = issue?.path.length ? `${issue.path.join(".")}: ` : "";
-  throw new ApiError(400, code, `${where}${issue?.message ?? "Invalid record."}`);
+  throw new ApiError(400, code, describeIssues(parsed.error.issues) ?? "Invalid record.");
+}
+
+/** The first ID that appears twice in a record's lines or payments, which are edited by it. */
+export function repeatedId(items: readonly { id: string }[] | undefined): string | undefined {
+  const seen = new Set<string>();
+  for (const { id } of items ?? []) {
+    if (seen.has(id)) return id;
+    seen.add(id);
+  }
+  return undefined;
 }
 
 export function alreadyExists(): never {

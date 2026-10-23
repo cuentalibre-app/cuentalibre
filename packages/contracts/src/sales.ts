@@ -15,6 +15,14 @@ export type SalesKind = z.infer<typeof salesKindSchema>;
 export const salesStatusSchema = z.enum(["pending", "paid", "created", "sent", "accepted", "rejected", "invoiced"]);
 export type SalesStatus = z.infer<typeof salesStatusSchema>;
 
+/** Statuses each kind of document can be in. */
+export const SALES_STATUSES_BY_KIND: Record<SalesKind, readonly SalesStatus[]> = {
+  invoice: ["pending", "paid"],
+  draft: ["pending", "paid"],
+  quote: ["created", "sent", "accepted", "rejected", "invoiced"],
+  deliveryNote: ["created", "sent", "accepted", "rejected", "invoiced"],
+};
+
 export const invoiceSeriesSchema = z.enum(["normal", "rectifying"]);
 export type InvoiceSeries = z.infer<typeof invoiceSeriesSchema>;
 
