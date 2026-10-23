@@ -43,6 +43,7 @@
   --ring: var(--blue-600);
 
   --success: var(--green-700);
+  --success-foreground: var(--neutral-0);
   --success-soft: var(--green-50);
   --warning: var(--amber-700);
   --warning-foreground: var(--neutral-0);
@@ -105,6 +106,7 @@
   --ring: #7f8ff2;
 
   --success: #5bc08a;
+  --success-foreground: #0b1a12;
   --success-soft: #16291f;
   --warning: #e8a34a;
   --warning-foreground: #1a1206;

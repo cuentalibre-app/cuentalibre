@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ChevronDown,
   CircleDollarSign,
+  CircleDot,
   Copy,
   Download,
   FileArchive,
@@ -17,12 +18,9 @@ import {
   Plus,
   ReceiptText,
   Search,
-  Send,
   Settings,
   SlidersHorizontal,
   Tag,
-  ThumbsDown,
-  ThumbsUp,
   Trash2,
   X,
 } from "lucide-react";
@@ -628,17 +626,32 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     };
   }
 
-  const transitions: Action[] = workflow
-    ? (
-        [
-          { to: "sent", label: "Marcar como enviado", icon: Send },
-          { to: "accepted", label: "Marcar como aceptado", icon: ThumbsUp },
-          { to: "rejected", label: "Marcar como rechazado", icon: ThumbsDown },
-        ] as const
-      )
-        .filter((t) => t.to !== status)
-        .map((t) => ({ label: t.label, icon: t.icon, run: () => salesStore.update(doc.id, { status: t.to }) }))
-    : [];
+  // Any status can be chosen, back to "created" too; "invoiced" is set by converting the document into an invoice
+  const changeStatus: Action | null = workflow
+    ? {
+        label: "Cambiar estado",
+        icon: CircleDot,
+        choice: {
+          value: doc.status,
+          options: config.statuses.map((value) => ({
+            value,
+            label: STATUS[value].label,
+            ...(value === "invoiced" &&
+              doc.status !== "invoiced" && { disabled: true, hint: "Al convertirlo en factura" }),
+          })),
+          onChange: (value) => {
+            if (
+              doc.status === "invoiced" &&
+              !window.confirm(
+                `${config.noun[0]!.toUpperCase()}${config.noun.slice(1)} ${label} ya está facturado. Si cambias su estado, podrás volver a convertirlo en factura. ¿Continuar?`,
+              )
+            )
+              return;
+            salesStore.update(doc.id, { status: value as SalesDocument["status"] });
+          },
+        },
+      }
+    : null;
 
   const isInvoice = doc.kind === "invoice";
   const groups: Action[][] = [
@@ -651,7 +664,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       },
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
     ],
-    [...(primary ? [primary] : []), ...transitions, attach, extras.tags],
+    [...(primary ? [primary] : []), ...(changeStatus ? [changeStatus] : []), attach, extras.tags],
     [pdf, ...(isInvoice ? [extras.facturae] : []), extras.send],
     isInvoice && doc.series === "normal"
       ? [
@@ -746,6 +759,7 @@ function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) 
       {dialogs}
       <ActionsMenu
         groups={groups}
+        inlineChoices
         trigger={
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
