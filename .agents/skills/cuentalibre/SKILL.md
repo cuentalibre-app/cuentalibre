@@ -108,14 +108,14 @@ Use an expense for tickets, the autónomo fee, fees and anything without a full 
 
 ### Received invoice
 
-1. Find or create the supplier (`role: "supplier"`, with its `taxId`).
+1. Find the supplier by its tax ID (`GET /contacts?role=supplier&taxId=…`) or create it. The API accepts repeated tax IDs, so look before creating.
 2. Upload the PDF with a new UUID (`UPLOAD <file> <uuid>`).
 3. `POST /purchase-invoices` with the supplier's `number`, `issuedOn`, `bookedOn` (usually the same day; it decides the quarter), `expenseType`, `imputation`, `vatImputation: null`, `withholding`, `operationType`, `cashBasis`, `rental`, `lines` (unit prices in euros, VAT as a fraction), `payments`, `privateNotes: ""` and the attachment. Add `asset` for investment goods that are amortized.
 4. Check that the totals you computed from the lines match the document before reporting back.
 
 ### Prepare and issue an invoice
 
-1. Find the client in `GET /contacts?role=client` (or create it). Reuse its default `withholding`, `discount` and `paymentMethodId`; under VERI\*FACTU it needs a `taxId`.
+1. Find the client in `GET /contacts?role=client` (by `taxId` when you have it), or create it. Reuse its default `withholding`, `discount` and `paymentMethodId`; under VERI\*FACTU it needs a `taxId`.
 2. Create a **draft** (`POST /sales-documents`, `kind: "draft"`, `number: null`, `series: "normal"`, `status: "pending"`), with `incomeType`, `operationType`, `lines`, `dueOn`, `publicNotes`.
 3. Show the user the client, lines, base, VAT, withholding and total in euros.
 4. Only after an explicit yes, `POST /sales-documents/{id}/issue`. Report the number and `issued.totals`.

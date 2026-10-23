@@ -13,6 +13,8 @@ import { contactsStore } from "./contacts-store";
 /**
  * Creates a client or supplier without leaving the document being edited:
  * only what an invoice needs. The rest can be completed later in the sheet.
+ * When the tax ID is already taken it offers that contact instead, passed to
+ * `onCreated` as if it had just been created.
  * Needs a TooltipProvider above, as the forms that open it have.
  */
 export function NewContactDialog({
@@ -66,7 +68,7 @@ function QuickForm({
     // The dialog is portalled, but React still bubbles submit to the document form around it
     e.preventDefault();
     e.stopPropagation();
-    const found = validateDraft(role, draft);
+    const found = validateDraft(draft);
     setErrors(found);
     if (hasErrors(found)) {
       requestAnimationFrame(() => document.querySelector<HTMLElement>("[role=dialog] [aria-invalid=true]")?.focus());
@@ -85,7 +87,7 @@ function QuickForm({
           Los datos que aparecen en la factura. El resto puedes completarlo después en su ficha.
         </DialogDescription>
       </div>
-      <IdentityFields role={role} draft={draft} errors={errors} set={set} autoFocus />
+      <IdentityFields role={role} draft={draft} errors={errors} set={set} autoFocus onUseExisting={onCreated} />
       <AddressFields draft={draft} set={set} />
       <Field label="Email" error={errors.email}>
         {(p) => <Input {...p} type="email" value={draft.email} onChange={(e) => set("email", e.target.value)} />}
