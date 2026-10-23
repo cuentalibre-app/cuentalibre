@@ -44,7 +44,7 @@ import {
 } from "@/features/sales/list-parts";
 import { KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
-import { TagChip } from "@/features/settings/tag-chip";
+import { TagChips } from "@/features/settings/tag-chip";
 import { attachFile } from "@/data/files";
 import { customFieldLabels } from "./contact-settings-store";
 import { contactActivity, type ActivityRow } from "./contacts-activity";
@@ -364,13 +364,7 @@ function ContactsTable({
                     >
                       {c.name}
                     </Link>
-                    {!!c.tags?.length && (
-                      <span className="flex flex-wrap gap-1">
-                        {c.tags.map((t) => (
-                          <TagChip key={t} name={t} className="px-2 text-2xs leading-5" />
-                        ))}
-                      </span>
-                    )}
+                    <TagChips tags={c.tags} />
                   </div>
                 </td>
                 <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>{c.taxId}</td>
