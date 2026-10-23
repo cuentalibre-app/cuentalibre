@@ -1,5 +1,5 @@
 import { storedPurchaseInvoiceSchema } from "@cuentalibre/contracts";
-import type { Cents } from "@cuentalibre/core";
+import { isValidBookingDate, type Cents } from "@cuentalibre/core";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
@@ -147,8 +147,14 @@ async function checkRectified(tx: Tx, organizationId: string, record: StoredPurc
   if (!original) invalid("rectifiesId: no such received invoice.");
 }
 
+/** Its VAT can't be deducted before the invoice exists, so it is never booked before its issue date. */
+function checkBookingDate(record: StoredPurchaseInvoice) {
+  if (!isValidBookingDate(record.issuedOn, record.bookedOn)) invalid("bookedOn: can't be before issuedOn.");
+}
+
 export async function createPurchaseInvoice(tx: Tx, organizationId: string, data: unknown) {
   const record = parse(data);
+  checkBookingDate(record);
   await checkSupplier(tx, organizationId, record.supplierId, "invalid_invoice");
   await checkRectified(tx, organizationId, record);
   await checkQuarterOpen(tx, organizationId, record.bookedOn);
@@ -181,6 +187,7 @@ export async function updatePurchaseInvoice(
   const { lines, payments } = await detailsOf(tx, organizationId, [id]);
   const current = toPurchaseInvoice(row, lines.get(id) ?? [], payments.get(id) ?? []);
   const record = parse(mergeChanges(storedPurchaseInvoiceSchema, current, changes));
+  if (record.issuedOn !== current.issuedOn || record.bookedOn !== current.bookedOn) checkBookingDate(record);
 
   const touched = touchedFields<StoredPurchaseInvoice>(current, record, changes);
   if (touched.some((field) => !OPEN_WHEN_CLOSED.has(field))) {
@@ -201,6 +208,18 @@ export async function deletePurchaseInvoice(tx: Tx, organizationId: string, id: 
   const row = await liveRow(tx, organizationId, id);
   if (!row) notFound();
   await checkQuarterOpen(tx, organizationId, row.bookedOn);
+  const [creditNote] = await tx
+    .select({ number: purchaseInvoice.number })
+    .from(purchaseInvoice)
+    .where(
+      and(
+        eq(purchaseInvoice.organizationId, organizationId),
+        eq(purchaseInvoice.rectifiesId, id),
+        isNull(purchaseInvoice.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (creditNote) throw new ApiError(409, "in_use", `Credit note ${creditNote.number} corrects this invoice.`);
   await tx.update(purchaseInvoice).set({ deletedAt: new Date() }).where(where(organizationId, id));
 }
 
