@@ -28,7 +28,7 @@ Los borradores, los presupuestos y los albaranes se crean y se cambian librement
 | `kind`                           | `invoice` \| `draft` \| `quote` \| `deliveryNote`           | Obligatorio.                                                                                                                                         |
 | `number`                         | texto \| null                                               | Lo pone el servidor. Envía `null` al crear.                                                                                                          |
 | `series`                         | `normal` \| `rectifying`                                    | Obligatorio. `rectifying` para facturas rectificativas.                                                                                              |
-| `seriesId`                       | id                                                          | Serie personalizada (Configuración › Facturas). Sin ella, la serie por defecto de `series`.                                                          |
+| `seriesId`                       | id                                                          | Serie personalizada ([ajustes de facturas](/docs/api/ajustes#series-de-facturas)), del mismo tipo que `series`. Sin ella, la serie por defecto de `series`. |
 | `clientId`                       | id \| `""`                                                  | El cliente. Vacío solo en borradores y presupuestos.                                                                                                 |
 | `issuedOn`                       | fecha                                                       | Obligatorio. Fecha de emisión; decide el trimestre.                                                                                                  |
 | `dueOn`                          | fecha \| null                                               | Obligatorio. Vencimiento; en presupuestos, la validez.                                                                                               |
@@ -42,7 +42,7 @@ Los borradores, los presupuestos y los albaranes se crean y se cambian librement
 | `rectifiesId`                    | id                                                          | En una rectificativa, la factura que corrige.                                                                                                        |
 | `lines`                          | lista de [líneas](/docs/api/ventas#líneas)                  | Obligatorio.                                                                                                                                         |
 | `supplies`                       | céntimos                                                    | Suplidos: gastos pagados en nombre del cliente, fuera de la base imponible.                                                                          |
-| `payments`                       | lista de [pagos](/docs/api/ventas#pagos)                    | Cobros, del más antiguo al más reciente.                                                                                                             |
+| `payments`                       | lista de [pagos](/docs/api/ventas#pagos)                    | Cobros, del más antiguo al más reciente. Solo las facturas tienen cobros.                                                                            |
 | `status`                         | texto                                                       | Obligatorio. Facturas y borradores: `pending` o `paid`. Presupuestos y albaranes: `created`, `sent`, `accepted`, `rejected` o `invoiced`.            |
 | `publicNotes`                    | texto                                                       | Obligatorio (puede ir vacío). Se imprime en el documento.                                                                                            |
 | `privateNotes`                   | texto                                                       | Obligatorio (puede ir vacío). Solo se ve en cuentalibre.                                                                                             |
@@ -50,7 +50,9 @@ Los borradores, los presupuestos y los albaranes se crean y se cambian librement
 | `tags`, `attachments`            | listas                                                      | Etiquetas y [archivos](/docs/api/archivos).                                                                                                          |
 | `issued`                         | objeto                                                      | Solo lectura, en facturas emitidas: `client` (los datos fiscales congelados), `totals` y, con VERI\*FACTU, `verifactu` (`status`, `qrUrl`, `error`). |
 
-Los totales de una factura emitida (`issued.totals`) van en céntimos: `base`, `vat`, `surcharge`, `withholding`, `supplies`, `total` y `vatBreakdown` (base y cuota por tipo de IVA).
+Los totales de una factura emitida (`issued.totals`) van en céntimos: `base`, `vat`, `surcharge`, `withholding`, `supplies`, `total` y `vatBreakdown` (base y cuota por tipo de IVA). El total es base + IVA + recargo − retención + suplidos.
+
+El estado de VERI\*FACTU (`issued.verifactu.status`) es `pending`, `accepted`, `acceptedWithErrors` o `rejected`.
 
 El estado de una factura sigue a sus cobros: es `paid` cuando los `payments` cubren el total y `pending` mientras no. Para marcarla como cobrada, añade el cobro.
 
@@ -119,7 +121,11 @@ Se rechaza (`400` o `409`) una factura:
 - sin cliente o sin líneas;
 - con fecha anterior a la última factura de su serie, porque la numeración tiene que ser correlativa;
 - en un trimestre cerrado;
-- rectificativa que no indique en `rectifiesId` una factura emitida de la serie normal.
+- rectificativa que no indique en `rectifiesId` una factura emitida de la serie normal, o normal que lo indique;
+- en una serie desactivada (`409 series_inactive`) o que no es de su tipo;
+- con VERI\*FACTU, si el negocio no tiene NIF y nombre (`400 verifactu_issuer_missing`) o el cliente no tiene NIF.
+
+Para importar una factura emitida con otro programa conservando su número, usa el comando [`issue` con `number`](/docs/api/sincronizacion#post-v1commands).
 
 Con VERI\*FACTU activado, emitir crea además el registro de facturación y lo envía a la Agencia Tributaria en segundo plano; su estado aparece en `issued.verifactu`.
 
@@ -139,4 +145,4 @@ Si no se cumple alguna condición, responde `409 invoice_issued` o `409 quarter_
 
 ## Rectificar una factura
 
-Emite otra factura con `"series": "rectifying"`, `rectifiesId` con el id de la original y las líneas que corrigen (con cantidades negativas para restar). Se numera en la serie rectificativa (`R-2026-0001`).
+Emite otra factura con `"series": "rectifying"`, `rectifiesId` con el id de la original y las líneas que corrigen (con cantidades negativas para restar). Se numera en la serie rectificativa (`R-2026-0001`). Las devoluciones se apuntan como cobros negativos.

@@ -6,7 +6,7 @@ section: api
 order: 1
 ---
 
-La API de cuentalibre te deja leer y escribir tu contabilidad desde scripts, hojas de cálculo, automatizaciones o agentes de IA: contactos, facturas, borradores, presupuestos, albaranes, facturas recibidas, gastos y archivos. Es la misma API que usa la aplicación web, así que lo que hagas por ella sigue las mismas reglas: la numeración correlativa, los trimestres cerrados y VERI\*FACTU.
+La API de cuentalibre te deja leer y escribir tu contabilidad desde scripts, hojas de cálculo, automatizaciones o agentes de IA: contactos, facturas, borradores, presupuestos, albaranes, facturas recibidas, gastos, archivos, etiquetas, formas de pago, tesorería, catálogo y ajustes. Es la misma API que usa la aplicación web, así que lo que hagas por ella sigue las mismas reglas: la numeración correlativa, los trimestres cerrados y VERI\*FACTU.
 
 Si vas a conectar un agente de IA, empieza por [Conectar un agente](/docs/agentes). Toda esta referencia está también en un solo archivo Markdown, [`/docs/api.md`](/docs/api.md), para dársela tal cual.
 
@@ -89,7 +89,8 @@ Los errores responden con un código HTTP y este cuerpo:
 | HTTP | `code`                                                       | Qué significa                                                                                                                                                                          |
 | ---- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 400  | `invalid_request`                                            | El cuerpo no es JSON válido, o el cuerpo o los parámetros no tienen la forma esperada. `message` dice qué falla.                                                                       |
-| 400  | `invalid_document`, `invalid_contact`, `invalid_attachment`… | Los datos tienen buena forma pero no son válidos: una factura sin cliente, un adjunto que no se ha subido…                                                                             |
+| 400  | `invalid_document`, `invalid_contact`, `invalid_attachment`… | Los datos tienen buena forma pero no son válidos: una factura sin cliente, un adjunto que no se ha subido… El código nombra el tipo de registro (`invalid_invoice` en compras, `invalid_expense`, `invalid_tag`, `invalid_product`, `invalid_settings`…). |
+| 400  | `verifactu_issuer_missing`                                   | Con VERI\*FACTU, hacen falta el NIF y el nombre del negocio (Configuración › Datos de la empresa) para emitir.                                                                              |
 | 401  | `unauthorized`, `invalid_api_key`                            | Falta la clave, o no es válida, ha caducado o se ha revocado.                                                                                                                          |
 | 403  | `no_active_organization`, `not_a_member`                     | La clave ya no tiene acceso a la empresa.                                                                                                                                              |
 | 404  | `not_found`                                                  | El registro no existe, se borró o es de otra empresa.                                                                                                                                  |
@@ -97,6 +98,8 @@ Los errores responden con un código HTTP y este cuerpo:
 | 409  | `invoice_issued`, `already_issued`                           | La factura está emitida y no se puede cambiar ni borrar (ver [Editar una factura emitida](/docs/api/ventas#editar-una-factura-emitida)), o ya lo estaba y no se puede volver a emitir. |
 | 409  | `date_out_of_order`                                          | La factura tiene fecha anterior a la última de su serie.                                                                                                                               |
 | 409  | `series_inactive`                                            | La serie está desactivada y no admite facturas nuevas.                                                                                                                                 |
+| 409  | `series_in_use`                                              | La serie ya numera facturas o borradores: se puede renombrar o desactivar, pero no quitar ni cambiar su formato.                                                                       |
+| 409  | `number_taken`                                               | Al importar una factura con su número, ya hay otra con ese número.                                                                                                                     |
 | 409  | `quarter_closed`                                             | El trimestre está cerrado. Reábrelo en la aplicación para cambiar sus registros.                                                                                                       |
 | 409  | `in_use`                                                     | No se puede borrar porque otro registro lo usa (una forma de pago, un producto…).                                                                                                      |
 | 413  | `file_too_large`                                             | El archivo pasa del límite (25 MB por defecto).                                                                                                                                        |
@@ -113,7 +116,9 @@ Al cerrar un trimestre en la aplicación (al presentar los modelos), sus libros 
 - crear facturas, facturas recibidas o gastos con fecha de ese trimestre;
 - cambiarlas, borrarlas o moverlas a otra fecha.
 
-Lo único que admiten son cambios en los pagos, las etiquetas, los adjuntos y las notas privadas.
+Lo único que admiten son cambios en los pagos, las etiquetas, los adjuntos y las notas privadas. Los borradores, presupuestos y albaranes no tienen efectos fiscales y no se bloquean.
+
+Cerrar y reabrir trimestres se explica en [Ajustes y trimestres](/docs/api/ajustes#cerrar-y-reabrir-trimestres).
 
 ## Lo que todavía no hace
 
