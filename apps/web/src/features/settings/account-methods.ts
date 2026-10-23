@@ -94,7 +94,7 @@ export function accountRemoval(book: MethodBook, id: string, isUsed: (methodId: 
 export function removeAccount(book: MethodBook, id: string, isUsed: (methodId: string) => boolean): MethodBookChange {
   const { removed, kept } = accountRemoval(book, id, isUsed);
   const unlinked = { accountId: null, active: false };
-  return settle(
+  const change = settle(
     book,
     {
       accounts: book.accounts.filter((a) => a.id !== id),
@@ -102,11 +102,13 @@ export function removeAccount(book: MethodBook, id: string, isUsed: (methodId: s
         .filter((m) => !removed.includes(m))
         .map((m) => (kept.includes(m) ? { ...m, ...unlinked } : m)),
     },
-    [
-      ...kept.map((m): Command => ({ type: "update", entity: "paymentMethods", id: m.id, changes: unlinked })),
-      ...removed.map((m): Command => ({ type: "delete", entity: "paymentMethods", id: m.id })),
-      // Last: the server won't remove an account its methods still name
-      { type: "delete", entity: "treasuryAccounts", id },
-    ],
+    kept.map((m): Command => ({ type: "update", entity: "paymentMethods", id: m.id, changes: unlinked })),
   );
+  // After the default moves off them, and the account last: the server won't remove a record still named
+  change.commands.push(...removed.map((m): Command => ({ type: "delete", entity: "paymentMethods", id: m.id })), {
+    type: "delete",
+    entity: "treasuryAccounts",
+    id,
+  });
+  return change;
 }

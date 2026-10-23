@@ -98,6 +98,11 @@ describe("accounts and their methods", () => {
     const change = removeAccount(only, "rev", () => false);
     expect(change.paymentMethods).toEqual([]);
     expect(change.defaultPaymentMethodId).toBe("");
-    expect(change.commands.at(-1)).toEqual({ type: "saveSettings", section: "defaultPaymentMethod", data: "" });
+    // The default moves off the method before the server is asked to remove it
+    expect(change.commands).toEqual([
+      { type: "saveSettings", section: "defaultPaymentMethod", data: "" },
+      { type: "delete", entity: "paymentMethods", id: "transfer" },
+      { type: "delete", entity: "treasuryAccounts", id: "rev" },
+    ]);
   });
 });
