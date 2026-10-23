@@ -169,14 +169,18 @@ async function paymentMethodUse(tx: Tx, organizationId: string, id: string) {
       query: tx
         .select({ id: contact.id })
         .from(contact)
-        .where(and(eq(contact.organizationId, organizationId), eq(contact.paymentMethodId, id), isNull(contact.deletedAt))),
+        .where(
+          and(eq(contact.organizationId, organizationId), eq(contact.paymentMethodId, id), isNull(contact.deletedAt)),
+        ),
     },
     {
       name: "expenses.payment",
       query: tx
         .select({ id: expense.id })
         .from(expense)
-        .where(and(eq(expense.organizationId, organizationId), eq(expense.paymentMethodId, id), isNull(expense.deletedAt))),
+        .where(
+          and(eq(expense.organizationId, organizationId), eq(expense.paymentMethodId, id), isNull(expense.deletedAt)),
+        ),
     },
     {
       name: "salesDocuments.payments",
@@ -185,7 +189,10 @@ async function paymentMethodUse(tx: Tx, organizationId: string, id: string) {
         .from(salesPayment)
         .innerJoin(
           salesDocument,
-          and(eq(salesDocument.organizationId, salesPayment.organizationId), eq(salesDocument.id, salesPayment.documentId)),
+          and(
+            eq(salesDocument.organizationId, salesPayment.organizationId),
+            eq(salesDocument.id, salesPayment.documentId),
+          ),
         )
         .where(
           and(
