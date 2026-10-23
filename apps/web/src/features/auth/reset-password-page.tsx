@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
-import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { MIN_PASSWORD_LENGTH, authErrorMessage, oauthErrorMessage, resetPassword } from "./auth-api";
+import { PasswordInput } from "./password-input";
 import { AuthButton, AuthForm, AuthLayout, runAction } from "./auth-layout";
 import { FORGOT_PASSWORD_PATH, SIGN_IN_PATH, reloadAt } from "./session";
 
@@ -53,9 +53,8 @@ export function ResetPasswordPage() {
         <AuthForm onSubmit={submit} submitLabel="Cambiar contraseña" pending={pending} error={error}>
           <Field label="Contraseña nueva" hint={`Al menos ${MIN_PASSWORD_LENGTH} caracteres.`}>
             {(props) => (
-              <Input
+              <PasswordInput
                 {...props}
-                type="password"
                 autoComplete="new-password"
                 required
                 minLength={MIN_PASSWORD_LENGTH}

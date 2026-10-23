@@ -4,6 +4,7 @@ import { Input } from "@cuentalibre/ui/components/input";
 import { legalUrl } from "@/components/legal-links";
 import { Field } from "@/features/sales/form-fields";
 import { MIN_PASSWORD_LENGTH, authErrorMessage, oauthErrorMessage, signUp } from "./auth-api";
+import { PasswordInput } from "./password-input";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";
 import { GoogleSignIn } from "./google-sign-in";
 import { DEMO_PATH, ONBOARDING_PATH, SIGN_IN_PATH, leaveDemo } from "./session";
@@ -76,9 +77,8 @@ export function SignUpPage() {
         </Field>
         <Field label="Contraseña" hint={`Al menos ${MIN_PASSWORD_LENGTH} caracteres.`}>
           {(props) => (
-            <Input
+            <PasswordInput
               {...props}
-              type="password"
               autoComplete="new-password"
               required
               minLength={MIN_PASSWORD_LENGTH}

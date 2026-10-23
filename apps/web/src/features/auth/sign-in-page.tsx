@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { authErrorMessage, oauthErrorMessage, signIn, signInMethods } from "./auth-api";
+import { PasswordInput } from "./password-input";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";
 import { GoogleSignIn } from "./google-sign-in";
 import { DEMO_PATH, FORGOT_PASSWORD_PATH, SIGN_UP_PATH, leaveDemo, reloadAt } from "./session";
@@ -80,9 +81,8 @@ export function SignInPage() {
           }
         >
           {(props) => (
-            <Input
+            <PasswordInput
               {...props}
-              type="password"
               autoComplete="current-password"
               required
               value={password}
