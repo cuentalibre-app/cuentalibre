@@ -323,6 +323,23 @@ export function outOfOrderInSeries<T extends IssuedInvoiceRef>(
   });
 }
 
+/**
+ * An invoice numbered after `number` in its series and year, if any. Numbers
+ * stay gapless, so only the last invoice of a series can be deleted.
+ */
+export function laterNumberInSeries<T extends IssuedInvoiceRef>(
+  mask: string,
+  number: string,
+  issued: T[],
+): T | undefined {
+  const own = parseSeriesNumber(mask, number);
+  if (!own) return undefined;
+  return issued.find((other) => {
+    const parsed = parseSeriesNumber(mask, other.number);
+    return parsed?.year === own.year && parsed.counter > own.counter;
+  });
+}
+
 /** How an operation is treated for VAT, which decides whether the invoice charges it. */
 export type OperationType = "national" | "exempt" | "notSubject" | "reverseCharge" | "intraEu" | "export";
 

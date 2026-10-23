@@ -10,6 +10,7 @@ import {
   lineBase,
   isOverdue,
   laterInvoiceInSeries,
+  laterNumberInSeries,
   outOfOrderInSeries,
   nextDocumentNumber,
   nextInvoiceNumber,
@@ -274,6 +275,18 @@ export function laterInvoice(series: SeriesRef, issuedOn: string, docs: SalesDoc
 /** The invoice of the series that moving an issued invoice to `issuedOn` would put out of order, if any. */
 export function outOfOrderInvoice(invoice: SeriesRef & { number: string }, issuedOn: string, docs: SalesDocument[]) {
   return outOfOrderInSeries(seriesOf(invoice).mask, { number: invoice.number, issuedOn }, issuedInvoices(docs));
+}
+
+/**
+ * Why an issued invoice can't be deleted even where deleting is allowed, if
+ * so: numbering stays gapless, so only the last of its series goes, and never
+ * while a rectifying invoice corrects it.
+ */
+export function deleteBlocker(invoice: SalesDocument, docs: SalesDocument[]): string | null {
+  if (docs.some((d) => d.kind === "invoice" && d.rectifiesId === invoice.id)) return "tiene una rectificativa";
+  if (invoice.number && laterNumberInSeries(seriesOf(invoice).mask, invoice.number, issuedInvoices(docs)))
+    return "no es la última de su serie";
+  return null;
 }
 
 /**

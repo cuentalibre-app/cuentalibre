@@ -911,6 +911,12 @@ function usePurchaseActions(row: Row) {
   const primary: Action = { label: "Gestionar los pagos", icon: CircleDollarSign, run: () => setDialog("payments") };
 
   const locked = lockedQuarterOf(doc.bookedOn) !== null;
+  // A credit note names the invoice it corrects, so the invoice stays while it does
+  const blocker = locked
+    ? "trimestre cerrado"
+    : purchasesStore.all().some((d) => d.rectifiesId === doc.id)
+      ? "tiene un abono"
+      : null;
   const groups: Action[][] = [
     [
       { label: locked ? "Ver factura" : "Editar factura", icon: Pencil, run: () => navigate(purchasePath(doc)) },
@@ -926,10 +932,10 @@ function usePurchaseActions(row: Row) {
     ],
     [
       {
-        label: `Eliminar factura ${doc.number}` + (locked ? " (trimestre cerrado)" : ""),
+        label: `Eliminar factura ${doc.number}` + (blocker ? ` (${blocker})` : ""),
         icon: Trash2,
         danger: true,
-        run: locked
+        run: blocker
           ? undefined
           : () => {
               if (window.confirm(`¿Eliminar la factura ${doc.number} de ${row.supplier.name}? No se puede deshacer.`))

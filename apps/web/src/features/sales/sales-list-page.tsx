@@ -58,6 +58,7 @@ import {
   displayStatus,
   documentTotals,
   defaultSeries,
+  deleteBlocker,
   laterInvoice,
   seriesOf,
   seriesRefOf,
@@ -538,6 +539,8 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const lockedQuarter = useLockedQuarter()(doc.issuedOn);
   // An invoice already recorded under VERI*FACTU stays, even if the business is exempt now
   const deletable = useCompliance().verifactu.system === "exempt" && !doc.issued?.verifactu;
+  const blocker =
+    doc.kind !== "invoice" ? null : lockedQuarter ? "trimestre cerrado" : deleteBlocker(doc, salesStore.all());
 
   const attach: Action = {
     label: attachments.length > 0 ? `Documentos adjuntos (${attachments.length})` : "Adjuntar documentos",
@@ -665,17 +668,15 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       : [
           {
             label:
-              `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim() +
-              (isInvoice && lockedQuarter ? " (trimestre cerrado)" : ""),
+              `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim() + (blocker ? ` (${blocker})` : ""),
             icon: Trash2,
             danger: true,
-            run:
-              isInvoice && lockedQuarter
-                ? undefined
-                : () => {
-                    if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`))
-                      salesStore.remove(doc.id);
-                  },
+            run: blocker
+              ? undefined
+              : () => {
+                  if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`))
+                    salesStore.remove(doc.id);
+                },
           },
         ],
   ].filter((g) => g.length > 0);
