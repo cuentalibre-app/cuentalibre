@@ -15,6 +15,7 @@ function Tab({ label, to, icon: Icon, end }: (typeof tabs)[number]) {
     <NavLink
       to={to}
       end={end}
+      data-tour={to}
       className={({ isActive }) =>
         cn(
           "group flex min-h-12 flex-col items-center justify-center gap-1 text-2xs no-underline transition-colors duration-200",
@@ -49,9 +50,14 @@ export function BottomNav({ className }: { className?: string }) {
           <button
             type="button"
             aria-label="Crear"
+            data-tour="crear"
             className="grid size-12 cursor-pointer place-items-center rounded-2xl bg-primary text-primary-foreground transition-[background-color,scale] duration-150 ease-out hover:bg-primary-hover active:scale-90 [&[data-state=open]>svg]:rotate-45"
           >
-            <Plus className="size-[22px] transition-transform duration-250 ease-out" strokeWidth={2} aria-hidden="true" />
+            <Plus
+              className="size-[22px] transition-transform duration-250 ease-out"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
           </button>
         </CreateMenu>
       </div>
