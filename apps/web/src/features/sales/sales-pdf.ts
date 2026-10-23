@@ -492,9 +492,14 @@ function drawLines(s: Sheet) {
         item.serviceTo &&
         `${t.period}: ${f.date(item.serviceFrom)} - ${f.date(item.serviceTo)}`,
     ].filter(Boolean) as string[];
-    const detail = extra.length ? wrap(s, extra.join("\n"), RIGHT - LEFT - indent - 2, 8) : [];
+    // In the grid templates the detail stays inside the concept cell, right under the concept
+    const detailWidth = grid ? conceptRight - LEFT - 3 : RIGHT - LEFT - indent - 2;
+    const detail = extra.length ? wrap(s, extra.join("\n"), detailWidth, 8) : [];
     const main = concept.length * LINE + 2;
-    const height = main + (detail.length ? detail.length * 3.6 + 1.5 : 0) + (grid ? 0 : 1.5);
+    const detailTop = main + (grid ? 2 : 3);
+    const height = grid
+      ? main + (detail.length ? detail.length * 3.6 + 0.5 : 0)
+      : main + (detail.length ? detail.length * 3.6 + 1.5 : 0) + 1.5;
 
     if (s.y + height > FOOT - 8) {
       newPage(s);
@@ -503,14 +508,13 @@ function drawLines(s: Sheet) {
     const top = s.y;
     write(s, concept, LEFT + 1.5, top + 4.2);
     cols.forEach((col, i) => write(s, col.value(item), edges[i]! - 1.5, top + 4.2, { align: "right" }));
-    if (detail.length) write(s, detail, LEFT + indent, top + main + 3, { size: 8 });
+    if (detail.length) write(s, detail, LEFT + indent, top + detailTop, { size: 8 });
     s.y = top + height;
 
     if (grid) {
       line(s, LEFT, top, LEFT, s.y);
       line(s, RIGHT, top, RIGHT, s.y);
-      cols.forEach((col, i) => line(s, edges[i]! - col.width, top, edges[i]! - col.width, top + main));
-      if (detail.length) line(s, LEFT, top + main, RIGHT, top + main);
+      cols.forEach((col, i) => line(s, edges[i]! - col.width, top, edges[i]! - col.width, s.y));
       line(s, LEFT, s.y, RIGHT, s.y);
     } else if (family === "professional" && index < doc.lines.length - 1) {
       s.pdf.setLineDashPattern([0.6, 0.6], 0);
