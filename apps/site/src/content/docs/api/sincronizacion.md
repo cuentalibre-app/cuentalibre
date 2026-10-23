@@ -9,11 +9,11 @@ Para tener una copia local de todo y mantenerla al día, sin volver a descargarl
 
 ## `GET /v1/workspace`
 
-Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `treasuryAccounts`, `paymentMethods`, `manualPayments`, `bankMovements`, `catalogFamilies`, `products`, `stockMovements` y `settings`, más un `cursor`.
+Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `treasuryAccounts`, `paymentMethods`, `manualPayments`, `bankMovements`, `catalogFamilies`, `products`, `stockMovements` y `settings`, más un `cursor`. `filedReturns` trae todas las versiones, de la más antigua a la más reciente, y `settings` todas las secciones, con los valores por defecto en las que nunca se han guardado.
 
 ## `GET /v1/sync?since=<cursor>&limit=500`
 
-Lo que ha cambiado desde el cursor: `{ cursor, changes, hasMore }`. Cada cambio es `{ "op": "upsert", "entity": "…", "data": {…} }` con el estado actual del registro, o `{ "op": "delete", "entity": "…", "id": "…" }`. Guarda el `cursor` nuevo y vuelve a pedir mientras `hasMore` sea `true`. `limit` va de 1 a 1000.
+Lo que ha cambiado desde el cursor: `{ cursor, changes, hasMore }`. Cada cambio es `{ "op": "upsert", "entity": "…", "data": {…} }` con el estado actual del registro, o `{ "op": "delete", "entity": "…", "id": "…" }`. Para los ajustes, `entity` es `settings` y `data` es `{ section, data }`; al reabrir un trimestre, el `delete` de `closedQuarters` lleva el periodo como `id`. Guarda el `cursor` nuevo y vuelve a pedir mientras `hasMore` sea `true`. `limit` va de 1 a 1000.
 
 ## `POST /v1/commands`
 
@@ -29,4 +29,18 @@ La forma en que escribe la aplicación web: una lista de hasta 500 comandos que 
 }
 ```
 
-Tipos de comando: `create`, `update`, `delete`, `issue` (emitir), `closeQuarter`, `reopenQuarter` y `saveSettings`. La forma exacta de cada uno está en el [documento OpenAPI](https://api.cuentalibre.es/v1/openapi.json). Para contactos, documentos, compras y gastos es más cómodo usar sus rutas.
+| Comando         | Forma                                                                                                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `create`        | `{ type, entity, data }`. `data` es el registro completo, con su `id` (aquí es obligatorio).                                                                                                                        |
+| `update`        | `{ type, entity, id, changes }`. Como un `PATCH`: solo los campos que cambian.                                                                                                                                      |
+| `delete`        | `{ type, entity, id }`                                                                                                                                                                                             |
+| `issue`         | `{ type, data, number? }`. Emite `data` como factura: una nueva o un borrador con el mismo `id`. `number` solo para importar facturas emitidas con otro programa: conserva ese número en vez de tomar el siguiente. |
+| `closeQuarter`  | `{ type, period, closedOn, returns? }`. Ver [Ajustes y trimestres](/docs/api/ajustes#cerrar-y-reabrir-trimestres).                                                                                                 |
+| `reopenQuarter` | `{ type, period }`                                                                                                                                                                                                 |
+| `saveSettings`  | `{ type, section, data }`. Sustituye una sección entera de los [ajustes](/docs/api/ajustes).                                                                                                                       |
+
+`entity` puede ser `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses` y los [registros sin ruta propia](/docs/api/otros-registros): `tags`, `treasuryAccounts`, `paymentMethods`, `manualPayments`, `bankMovements`, `catalogFamilies`, `products` y `stockMovements`. En los comandos, los contactos van como `clients` o `suppliers` y no llevan `role`. Todos los `id` son UUID.
+
+Un número importado tiene que encajar en su serie y no existir ya (`409 number_taken`), y no crea registro de VERI\*FACTU: lo hizo el programa que la emitió.
+
+Para contactos, documentos, compras y gastos es más cómodo usar sus rutas. La forma exacta de cada comando está en el [documento OpenAPI](https://api.cuentalibre.es/v1/openapi.json).

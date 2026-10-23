@@ -44,7 +44,7 @@ Envía un correo, por ejemplo una factura a su cliente. Sale con el nombre de tu
 | `to`          | lista de correos | Obligatorio. De 1 a 10.                                  |
 | `cc`          | lista de correos | Hasta 10.                                                |
 | `subject`     | texto            | Obligatorio. Hasta 200 caracteres.                       |
-| `body`        | texto            | Obligatorio. Texto plano.                                |
+| `body`        | texto            | Obligatorio. Texto plano, hasta 20 000 caracteres.       |
 | `attachments` | lista de ids     | Archivos subidos con `POST /v1/files`; hasta 10.         |
 | `documentId`  | id               | El documento de venta que envía, para encontrarlo luego. |
 

@@ -2,7 +2,7 @@
 title: "Valores"
 description: "Los códigos que admiten los campos: tipos de operación, retenciones y cuentas contables."
 section: api
-order: 9
+order: 11
 ---
 
 ## Tipos de operación
@@ -29,7 +29,9 @@ order: 9
 | `rental`                                                   | 19 %              | Alquileres y rendimientos del capital.             |
 | `imageRights`                                              | 24 %              | Derechos de imagen.                                |
 | `ceutaProfessional`, `ceutaNewProfessional`, `ceutaRental` | 6 %, 2,8 %, 7,6 % | Tipos reducidos de Ceuta y Melilla.                |
-| `legacy…`                                                  |                   | Tipos históricos, para facturas antiguas.          |
+| `legacy…`                                                  |                   | Tipos históricos, para facturas antiguas (abajo).  |
+
+Tipos históricos, solo para facturas de antes de cada cambio: `legacyProfessional2014` (21 %), `legacyNewProfessional2015` (9 %), `legacyRental2009` (18 %), `legacyRental2015` (19,5 %), `legacyRentalJuly2015` (20 %), `legacyCeutaProfessional2014` (10,5 %), `legacyCeutaProfessional2015` (9,5 %), `legacyCeutaProfessional2018` (7,5 %), `legacyCeutaNewProfessional2015` (4,5 %) y `legacyCeutaNewProfessional2018` (3,5 %).
 
 ## Cuentas de ingresos
 
@@ -71,3 +73,41 @@ order: 9
 | `680`  | Amortización del inmovilizado intangible                   |
 | `681`  | Amortización del inmovilizado material                     |
 | `682`  | Amortización de las inversiones inmobiliarias              |
+
+## Situación del inmueble
+
+`rentalLocation` en los alquileres: `spain` (España, con referencia catastral), `basqueCountry` (País Vasco), `navarre` (Navarra), `noCadastralRef` (España, sin referencia catastral) y `abroad` (extranjero).
+
+## Bienes de inversión
+
+`asset.category` de una factura recibida, con el coeficiente anual máximo y el periodo máximo de amortización:
+
+| Valor                | Coeficiente máximo | Años máximos |                                  |
+| -------------------- | ------------------ | ------------ | -------------------------------- |
+| `buildings`          | 3 %                | 68           | Edificios y construcciones       |
+| `installations`      | 10 %               | 20           | Instalaciones                    |
+| `machinery`          | 12 %               | 18           | Maquinaria                       |
+| `transport`          | 16 %               | 14           | Elementos de transporte          |
+| `itEquipment`        | 26 %               | 10           | Equipos informáticos             |
+| `software`           | 33 %               | 6            | Aplicaciones informáticas        |
+| `tools`              | 30 %               | 8            | Útiles y herramientas            |
+| `cattle`             | 16 %               | 14           | Ganado vacuno, porcino, ovino…   |
+| `horses`             | 8 %                | 25           | Ganado equino y frutales no cítricos |
+| `citrus`             | 4 %                | 50           | Frutales cítricos y viñedos      |
+| `olives`             | 2 %                | 100          | Olivar                           |
+| `research`, `development`, `concessions`, `industrialProperty`, `goodwill`, `leaseRights` | 100 % | 100 | Inmovilizado intangible |
+
+`asset.condition`: `new` (nuevo), `used` (usado) y `accelerated` (amortización acelerada) pueden aplicar hasta el doble del coeficiente máximo; `lowValue` (bienes de hasta 300 €) y `free` (libertad de amortización) se amortizan enteros el año de compra. `asset.method` es `rate` (coeficiente anual en `value`) o `years` (número de años en `value`).
+
+## Unidades
+
+`unit` de las líneas y los productos: `uds` (unidades), `dec` (decenas), `cent` (centenas), `mill` (millares), `mg`, `g`, `kg`, `t`, `ml`, `cl`, `dl`, `l`, `m3`, `min`, `h`, `d` (días), `1/2d` (medios días), `jornadas`, `1/2j` (medias jornadas), `semana`, `mes`, `trimestre`, `semestre`, `año`, `letra`, `palabra`, `frase`, `página`, `mm`, `cm`, `m` y `km`.
+
+## Estados
+
+| Qué                                        | Valores                                                       |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| Facturas y borradores (`status`)           | `pending`, `paid`                                             |
+| Presupuestos y albaranes (`status`)        | `created`, `sent`, `accepted`, `rejected`, `invoiced`         |
+| Registro de VERI\*FACTU (`issued.verifactu.status`) | `pending`, `accepted`, `acceptedWithErrors`, `rejected` |
+| Correos (`status`)                         | `queued`, `sent`, `failed`                                    |
