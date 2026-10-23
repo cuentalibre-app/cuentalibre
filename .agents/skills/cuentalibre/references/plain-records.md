@@ -29,7 +29,7 @@ Can't be deleted while a payment method or a bank movement names it.
 | `accountId` | id \| null                                                                  | Treasury account it books into.                                                |
 | `active`    | boolean                                                                     |                                                                                |
 
-Can't be deleted while a manual payment names it. The method proposed on new documents is settings `defaultPaymentMethod`.
+Can't be deleted while a contact, an expense, a payment of a sales or received invoice, a manual payment or settings `defaultPaymentMethod` names it (the message says which); deactivate it instead. The method proposed on new documents is settings `defaultPaymentMethod`.
 
 ## Manual payments (`manualPayments`)
 
