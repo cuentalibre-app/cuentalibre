@@ -1,7 +1,7 @@
-import type { BankMovement, Product } from "@cuentalibre/contracts";
+import type { BankMovement, Expense, Product, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { newId, type Cents, type StockMovement } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
-import { changes, errorCode, member, send, workspace } from "./test/sync";
+import { changes, client, document, errorCode, member, send, workspace } from "./test/sync";
 
 const account = () =>
   ({ id: newId(), kind: "bank", name: "Cuenta principal", number: "ES91…1332", active: true }) as const;
@@ -102,6 +102,96 @@ describe("plain records", () => {
       { type: "delete", entity: "treasuryAccounts", id: main.id },
     ]);
     expect((await workspace(ana)).paymentMethods).toEqual([{ ...method, accountId: null }]);
+  });
+
+  it("keep a payment method while a contact, an expense, a payment or the settings name it", async () => {
+    const ana = await member();
+    const method = {
+      id: newId(),
+      type: "transfer",
+      name: "Transferencia",
+      number: "",
+      accountId: null,
+      active: true,
+    } as const;
+    await send(ana, [{ type: "create", entity: "paymentMethods", data: method }]);
+    const blockedBy = async () => {
+      const response = await send(ana, [{ type: "delete", entity: "paymentMethods", id: method.id }]);
+      expect(response.status).toBe(409);
+      return ((await response.json()) as { error: { code: string; message: string } }).error;
+    };
+
+    const norte = client({ paymentMethodId: method.id });
+    await send(ana, [{ type: "create", entity: "clients", data: norte }]);
+    expect(await blockedBy()).toMatchObject({ code: "in_use", message: "Still named by contacts.paymentMethodId." });
+    await send(ana, [{ type: "delete", entity: "clients", id: norte.id }]);
+
+    const parking: Expense = {
+      id: newId(),
+      date: "2026-10-07",
+      number: "",
+      concept: "Parking",
+      amount: 1250 as Cents,
+      expenseType: "629",
+      imputation: 100,
+      supplierId: null,
+      otherPayee: { name: "Aparcamiento Centro", taxId: "" },
+      payment: { date: "2026-10-07", paymentMethodId: method.id },
+      rental: false,
+      privateNotes: "",
+    };
+    await send(ana, [{ type: "create", entity: "expenses", data: parking }]);
+    expect((await blockedBy()).message).toBe("Still named by expenses.payment.");
+    await send(ana, [{ type: "delete", entity: "expenses", id: parking.id }]);
+
+    const brisa = client({ name: "Hosting Brisa S.L.", taxId: "B87654323" });
+    const bill: PurchaseInvoice = {
+      id: newId(),
+      supplierId: brisa.id,
+      number: "F-2026-118",
+      issuedOn: "2026-10-02",
+      bookedOn: "2026-10-03",
+      dueOn: null,
+      expenseType: "629",
+      imputation: 100,
+      vatImputation: null,
+      withholding: "none",
+      operationType: "national",
+      operationOn: null,
+      cashBasis: false,
+      rental: false,
+      lines: [{ id: newId(), concept: "Hosting anual", unitPrice: 100, quantity: 1, discount: 0, vatRate: 0.21 }],
+      payments: [{ id: newId(), date: "2026-10-10", amount: 12100 as Cents, paymentMethodId: method.id }],
+      privateNotes: "",
+    };
+    await send(ana, [
+      { type: "create", entity: "suppliers", data: brisa },
+      { type: "create", entity: "purchaseInvoices", data: bill },
+    ]);
+    expect((await blockedBy()).message).toBe("Still named by purchaseInvoices.payments.");
+    await send(ana, [{ type: "delete", entity: "purchaseInvoices", id: bill.id }]);
+
+    const sur = client({ name: "Sur S.L.", taxId: "B11111118" });
+    await send(ana, [{ type: "create", entity: "clients", data: sur }]);
+    const issued = await send(ana, [{ type: "issue", data: document(sur.id) }]);
+    const { changes: written } = (await issued.json()) as { changes: { data: SalesDocument }[] };
+    const invoice = written[0]!.data;
+    const collection = { id: newId(), date: "2026-10-20", amount: 100 as Cents, paymentMethodId: method.id };
+    await send(ana, [
+      { type: "update", entity: "salesDocuments", id: invoice.id, changes: { payments: [collection] } },
+    ]);
+    expect((await blockedBy()).message).toBe("Still named by salesDocuments.payments.");
+    await send(ana, [{ type: "update", entity: "salesDocuments", id: invoice.id, changes: { payments: [] } }]);
+
+    await send(ana, [{ type: "saveSettings", section: "defaultPaymentMethod", data: method.id }]);
+    expect((await blockedBy()).message).toBe("Still named by settings.defaultPaymentMethod.");
+    // Moving the default off it in the same batch frees it
+    const freed = await send(ana, [
+      { type: "saveSettings", section: "defaultPaymentMethod", data: "" },
+      { type: "delete", entity: "paymentMethods", id: method.id },
+    ]);
+    expect(freed.status).toBe(200);
+    expect((await workspace(ana)).paymentMethods).toEqual([]);
   });
 
   it("only name the organization's own records, and not deleted ones", async () => {

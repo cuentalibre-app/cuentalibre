@@ -1,14 +1,21 @@
 import { plainRecordSchemas, type PlainEntity } from "@cuentalibre/contracts";
-import { and, eq, inArray, isNull, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
 import {
   bankMovement,
   catalogFamily,
+  contact,
+  expense,
   manualPayment,
+  organizationSetting,
   paymentMethod,
   product,
+  purchaseInvoice,
+  purchasePayment,
+  salesDocument,
+  salesPayment,
   stockMovement,
   tag,
   treasuryAccount,
@@ -42,6 +49,8 @@ interface PlainKind {
   check?: (tx: Tx, organizationId: string, record: Record<string, unknown>) => Promise<void>;
   /** Live records that name this one and keep it from being deleted. */
   usedBy?: { entity: PlainEntity; field: string }[];
+  /** Further uses outside plain records: what still names the record, if anything. */
+  usedElsewhere?: (tx: Tx, organizationId: string, id: string) => Promise<string | undefined>;
 }
 
 const KINDS: Record<PlainEntity, PlainKind> = {
@@ -59,6 +68,7 @@ const KINDS: Record<PlainEntity, PlainKind> = {
     logged: "payment_method",
     references: [{ field: "accountId", table: treasuryAccount }],
     usedBy: [{ entity: "manualPayments", field: "paymentMethodId" }],
+    usedElsewhere: paymentMethodUse,
   },
   manualPayments: {
     table: manualPayment,
@@ -151,6 +161,87 @@ async function checkReferences(
   await kind.check?.(tx, organizationId, record);
 }
 
+/** The first contact, expense, payment or setting that names the payment method. */
+async function paymentMethodUse(tx: Tx, organizationId: string, id: string) {
+  const uses = [
+    {
+      name: "contacts.paymentMethodId",
+      query: tx
+        .select({ id: contact.id })
+        .from(contact)
+        .where(
+          and(eq(contact.organizationId, organizationId), eq(contact.paymentMethodId, id), isNull(contact.deletedAt)),
+        ),
+    },
+    {
+      name: "expenses.payment",
+      query: tx
+        .select({ id: expense.id })
+        .from(expense)
+        .where(
+          and(eq(expense.organizationId, organizationId), eq(expense.paymentMethodId, id), isNull(expense.deletedAt)),
+        ),
+    },
+    {
+      name: "salesDocuments.payments",
+      query: tx
+        .select({ id: salesDocument.id })
+        .from(salesPayment)
+        .innerJoin(
+          salesDocument,
+          and(
+            eq(salesDocument.organizationId, salesPayment.organizationId),
+            eq(salesDocument.id, salesPayment.documentId),
+          ),
+        )
+        .where(
+          and(
+            eq(salesPayment.organizationId, organizationId),
+            eq(salesPayment.paymentMethodId, id),
+            isNull(salesDocument.deletedAt),
+          ),
+        ),
+    },
+    {
+      name: "purchaseInvoices.payments",
+      query: tx
+        .select({ id: purchaseInvoice.id })
+        .from(purchasePayment)
+        .innerJoin(
+          purchaseInvoice,
+          and(
+            eq(purchaseInvoice.organizationId, purchasePayment.organizationId),
+            eq(purchaseInvoice.id, purchasePayment.invoiceId),
+          ),
+        )
+        .where(
+          and(
+            eq(purchasePayment.organizationId, organizationId),
+            eq(purchasePayment.paymentMethodId, id),
+            isNull(purchaseInvoice.deletedAt),
+          ),
+        ),
+    },
+    {
+      name: "settings.defaultPaymentMethod",
+      query: tx
+        .select({ id: organizationSetting.organizationId })
+        .from(organizationSetting)
+        .where(
+          and(
+            eq(organizationSetting.organizationId, organizationId),
+            eq(organizationSetting.section, "defaultPaymentMethod"),
+            sql`${organizationSetting.data} = to_jsonb(${id}::text)`,
+          ),
+        ),
+    },
+  ];
+  for (const use of uses) {
+    const [found] = await use.query.limit(1);
+    if (found) return use.name;
+  }
+}
+
 /** A family can't be its own ancestor. */
 async function checkFamilyTree(tx: Tx, organizationId: string, record: Record<string, unknown>) {
   const seen = new Set([record.id as string]);
@@ -213,6 +304,8 @@ export async function deletePlain(tx: Tx, organizationId: string, entity: PlainE
       .limit(1);
     if (found) throw new ApiError(409, "in_use", `Still named by ${use.entity}.${use.field}.`);
   }
+  const use = await kind.usedElsewhere?.(tx, organizationId, id);
+  if (use) throw new ApiError(409, "in_use", `Still named by ${use}.`);
   await tx
     .update(kind.table)
     .set({ deletedAt: new Date() })
