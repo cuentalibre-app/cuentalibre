@@ -32,6 +32,7 @@ import { table } from "@cuentalibre/ui/lib/table";
 import { GroupedSelect, Help } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, type Action } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
+import { TagChips } from "@/features/settings/tag-chip";
 import { parseDecimal } from "@/lib/format";
 import {
   CATALOG_EXPORT_PATH,
@@ -561,15 +562,7 @@ function ProductsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSort
                       </Link>
                       {!p.active && <StatusBadge active={false} />}
                     </span>
-                    {p.tags.length > 0 && (
-                      <span className="flex flex-wrap gap-1">
-                        {p.tags.map((t) => (
-                          <span key={t} className="rounded-full bg-accent px-2 text-2xs leading-5 font-medium">
-                            {t}
-                          </span>
-                        ))}
-                      </span>
-                    )}
+                    <TagChips tags={p.tags} />
                   </div>
                 </td>
                 <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>{p.sku || "—"}</td>

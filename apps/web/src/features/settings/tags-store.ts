@@ -14,6 +14,22 @@ export function useTags(): Tag[] {
   return tags.use();
 }
 
+/** Colors offered when creating a tag; any other can be picked in Configuración › Etiquetas. */
+export const TAG_SWATCHES = [
+  "#dbeafe",
+  "#dcfce7",
+  "#fef3c7",
+  "#fee2e2",
+  "#ede9fe",
+  "#fce7f3",
+  "#e5e7eb",
+  "#334155",
+  "#2f45c9",
+];
+
+/** The swatch for the next new tag, so consecutive tags don't all look alike. */
+export const nextTagColor = () => TAG_SWATCHES[tags.all().length % TAG_SWATCHES.length]!;
+
 const key = (name: string) => name.trim().toLocaleLowerCase("es");
 
 export const tagsStore = {

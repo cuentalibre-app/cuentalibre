@@ -33,6 +33,7 @@ import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
+import { TagChips } from "@/features/settings/tag-chip";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
@@ -685,6 +686,7 @@ function PurchasesTable({
                   <PurchaseLink doc={r.doc} className="text-foreground no-underline hover:text-primary">
                     {r.doc.number}
                   </PurchaseLink>
+                  <TagChips tags={r.doc.tags} className="mt-1 max-w-48" />
                   {r.doc.asset && (
                     <span
                       className="block max-w-44 truncate font-sans text-xs text-muted-foreground"
@@ -848,6 +850,7 @@ function PurchasesList({ rows }: { rows: Row[] }) {
               <span className="truncate text-sm text-muted-foreground">
                 {r.doc.number} · {formatShortDate(r.doc.bookedOn)}
               </span>
+              <TagChips tags={r.doc.tags} className="mt-0.5" />
             </div>
             <div className="flex flex-col items-end gap-1">
               <span className="amount text-base">{formatEUR(r.total)}</span>

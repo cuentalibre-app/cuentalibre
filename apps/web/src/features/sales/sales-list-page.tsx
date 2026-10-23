@@ -44,6 +44,7 @@ import {
   QUOTE_SETTINGS_PATH,
 } from "@/features/settings/settings-model";
 import { SettingsLink } from "@/features/settings/settings-parts";
+import { TagChips } from "@/features/settings/tag-chip";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate, formatPercent, formatShortDate, periodCode } from "@/lib/format";
@@ -438,6 +439,7 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                   <SalesDocumentLink doc={r.doc} className="text-foreground no-underline hover:text-primary">
                     {r.doc.number ?? <span className="font-sans text-muted-foreground">Sin número</span>}
                   </SalesDocumentLink>
+                  <TagChips tags={r.doc.tags} className="mt-1 max-w-48" />
                 </td>
                 <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>{formatDate(r.doc.issuedOn)}</td>
                 <td className={td}>
@@ -505,6 +507,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
               <span className="text-sm text-muted-foreground">
                 {r.doc.number ?? "Sin número"} · {formatShortDate(r.doc.issuedOn)}
               </span>
+              <TagChips tags={r.doc.tags} className="mt-0.5" />
             </div>
             <div className="flex flex-col items-end gap-1">
               <span className="amount text-base">{formatEUR(r.total)}</span>

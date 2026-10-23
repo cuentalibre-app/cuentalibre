@@ -35,6 +35,7 @@ import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/l
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { paymentMethodName } from "@/features/settings/settings-model";
+import { TagChips } from "@/features/settings/tag-chip";
 import { attachmentUrl } from "@/data/files";
 import { AttachmentsDialog } from "./form-parts";
 import { ExpenseLink } from "./expense-detail";
@@ -540,6 +541,7 @@ function ExpensesTable({
                     {r.doc.concept}
                   </ExpenseLink>
                   {r.doc.number && <span className="font-mono text-xs text-muted-foreground">{r.doc.number}</span>}
+                  <TagChips tags={r.doc.tags} className="mt-1 max-w-48" />
                 </div>
               </td>
               <td className={td}>
@@ -653,6 +655,7 @@ function ExpensesList({ rows }: { rows: Row[] }) {
               <span className="truncate text-sm text-muted-foreground">
                 {[r.payee?.name, formatShortDate(r.doc.date)].filter(Boolean).join(" · ")}
               </span>
+              <TagChips tags={r.doc.tags} className="mt-0.5" />
             </div>
             <div className="flex flex-col items-end gap-1">
               <span className="amount text-base">{formatEUR(r.amount)}</span>
