@@ -9,8 +9,12 @@ cuentalibre is open-source accounting for Spanish self-employed workers. Its API
 
 ## Setup
 
-- `CUENTALIBRE_API_KEY`: a key starting with `fsk_`, created in the app under **Configuración › API y agentes**. It acts as the person who created it, in the business that was active then. Never print it, echo it or ask the user to paste it into the chat; if it is missing, tell them to export it.
+The key and URL go in a `.env` next to this file. Copy `.env.example` to `.env` and fill it in; the wrapper script loads it, and variables already set in the environment take precedence. Prefer the file to `export`: coding agents run commands in their own shell, which doesn't see what the user exports in their terminal.
+
+- `CUENTALIBRE_API_KEY`: a key starting with `fsk_`, created in the app under **Configuración › API y agentes**. It acts as the person who created it, in the business that was active then.
 - `CUENTALIBRE_API_URL`: optional, defaults to `https://api.cuentalibre.es/v1`. Self-hosted instances use their own URL followed by `/v1` (`http://localhost:3000/v1` in development).
+
+Never print, `cat` or echo `.env` or the key, and never ask the user to paste it into the chat. The repository ignores `.env`, but copying this folder to share the skill would carry the key with it: tell the user to leave `.env` out.
 
 ### No key yet
 
@@ -18,8 +22,8 @@ Without `CUENTALIBRE_API_KEY`, stop and tell the user before doing anything else
 
 1. If the instance is new (you just installed it, or they have no account), tell them it's ready and send them to the web app's `/registro` (`https://app.cuentalibre.es/registro` online) to create their account and their business. Wait until they say they're done.
 2. Then ask: do they want to create the API key themselves, or should you?
-   - **Themselves**: in **Configuración › API y agentes**, one key per agent; they export it as `CUENTALIBRE_API_KEY` (and `CUENTALIBRE_API_URL` when self-hosted), never in the chat.
-   - **You**: a key can only be created from a signed-in session. Have them export `CUENTALIBRE_EMAIL` and `CUENTALIBRE_PASSWORD` (never in the chat), sign in with `POST /auth/sign-in/email` `{ email, password }` keeping the session cookie, and create it with `POST /api-keys` `{ name }` (`name` up to 32 characters, e.g. the agent's name). Send `Origin: <the web app's URL>` on both: the API only accepts sessions from it. Save the returned `key` to a file only the user can read, never print it, tell them where it is, and ask them to unset the password variables.
+   - **Themselves**: in **Configuración › API y agentes**, one key per agent; they put it in `.env` as `CUENTALIBRE_API_KEY` (and `CUENTALIBRE_API_URL` when self-hosted), never in the chat.
+   - **You**: a key can only be created from a signed-in session. Have them add `CUENTALIBRE_EMAIL` and `CUENTALIBRE_PASSWORD` to `.env` (never in the chat). In the same shell command, load it without printing it (`set -a; . <this folder>/.env; set +a`), sign in with `POST /auth/sign-in/email` `{ email, password }` keeping the session cookie, and create the key with `POST /api-keys` `{ name }` (`name` up to 32 characters, e.g. the agent's name). Send `Origin: <the web app's URL>` on both: the API only accepts sessions from it. Write the returned `key` to `.env` as `CUENTALIBRE_API_KEY` without printing it, delete the cookie file, and ask them to remove the email and password lines.
 3. Continue with `GET /organization`.
 
 Make requests with `scripts/cuentalibre.sh` (path relative to this skill), which adds the key, prints the body and reports the HTTP status:
@@ -27,7 +31,7 @@ Make requests with `scripts/cuentalibre.sh` (path relative to this skill), which
 ```sh
 scripts/cuentalibre.sh GET /organization            # check the key and see which business it opens
 scripts/cuentalibre.sh POST /expenses @expense.json # JSON body from a file (@- reads stdin)
-scripts/cuentalibre.sh UPLOAD ticket.pdf            # POST /files
+scripts/cuentalibre.sh UPLOAD ticket.pdf <uuid>     # POST /files with the id you generated
 ```
 
 Start every session with `GET /organization` and tell the user which business you are working in.
@@ -46,14 +50,14 @@ The OpenAPI 3.1 document at `<API URL>/openapi.json` is the source of truth for 
 
 ## Rules that are easy to get wrong
 
-| What                                                  | Format                                                                                                                                |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Amounts of payments, expenses, totals, bank movements | **Integer cents**: `12100` is 121,00 €                                                                                                |
-| Unit prices of lines and products                     | **Euros**, without VAT: `100.5`                                                                                                       |
-| VAT, surcharge and line discounts                     | Fraction: `0.21` is 21 %                                                                                                              |
-| Imputation, contact default discount                  | Number 0–100                                                                                                                          |
-| Dates                                                 | `YYYY-MM-DD`                                                                                                                          |
-| IDs                                                   | UUID. Generate one (UUIDv7 preferred) for every record you create, so a retry answers `409 already_exists` instead of duplicating it. |
+| What                                                  | Format                                                                                                                                                          |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Amounts of payments, expenses, totals, bank movements | **Integer cents**: `12100` is 121,00 €                                                                                                                          |
+| Unit prices of lines and products                     | **Euros**, without VAT: `100.5`                                                                                                                                 |
+| VAT, surcharge and line discounts                     | Fraction: `0.21` is 21 %                                                                                                                                        |
+| Imputation, contact default discount                  | Number 0–100                                                                                                                                                    |
+| Dates                                                 | `YYYY-MM-DD`                                                                                                                                                    |
+| IDs                                                   | UUID. Generate one (UUIDv7 preferred) for every record you create and every file you upload, so a retry answers `409 already_exists` instead of duplicating it. |
 
 - `POST` takes the whole record, including required fields that may be empty (`privateNotes: ""`, `payments: []`). `PATCH` takes only what changes; lists (`lines`, `payments`, `tags`, `attachments`) are replaced whole, so send the full list. `null` clears an optional field.
 - An invoice's `status` follows its payments: to mark it paid, add a payment covering the total. Only invoices take payments; drafts and quotes don't.
@@ -97,7 +101,7 @@ Creating drafts, quotes, contacts, expenses and received invoices is fine withou
 Use an expense for tickets, the autónomo fee, fees and anything without a full invoice; it deducts no VAT. If the document is a full invoice with the supplier's NIF and VAT broken down, book it as a received invoice instead.
 
 1. Read the document: date, issuer, concept, total with taxes.
-2. Upload it: `UPLOAD <file>` → `{ id, name, size }`.
+2. Upload it with a new UUID: `UPLOAD <file> <uuid>` → `{ id, name, size }`.
 3. Pick `expenseType` (values.md has the list with typical uses; `629` when nothing fits).
 4. Look for the supplier in `GET /contacts?role=supplier`; if it isn't there, use `supplierId: null` and `otherPayee: { name, taxId }`.
 5. `POST /expenses` with the attachment; `payment: { date, paymentMethodId }` if already paid, else `null`.
@@ -105,7 +109,7 @@ Use an expense for tickets, the autónomo fee, fees and anything without a full 
 ### Received invoice
 
 1. Find or create the supplier (`role: "supplier"`, with its `taxId`).
-2. Upload the PDF.
+2. Upload the PDF with a new UUID (`UPLOAD <file> <uuid>`).
 3. `POST /purchase-invoices` with the supplier's `number`, `issuedOn`, `bookedOn` (usually the same day; it decides the quarter), `expenseType`, `imputation`, `vatImputation: null`, `withholding`, `operationType`, `cashBasis`, `rental`, `lines` (unit prices in euros, VAT as a fraction), `payments`, `privateNotes: ""` and the attachment. Add `asset` for investment goods that are amortized.
 4. Check that the totals you computed from the lines match the document before reporting back.
 
