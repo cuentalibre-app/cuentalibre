@@ -177,7 +177,9 @@ describe("plain records", () => {
     const { changes: written } = (await issued.json()) as { changes: { data: SalesDocument }[] };
     const invoice = written[0]!.data;
     const collection = { id: newId(), date: "2026-10-20", amount: 100 as Cents, paymentMethodId: method.id };
-    await send(ana, [{ type: "update", entity: "salesDocuments", id: invoice.id, changes: { payments: [collection] } }]);
+    await send(ana, [
+      { type: "update", entity: "salesDocuments", id: invoice.id, changes: { payments: [collection] } },
+    ]);
     expect((await blockedBy()).message).toBe("Still named by salesDocuments.payments.");
     await send(ana, [{ type: "update", entity: "salesDocuments", id: invoice.id, changes: { payments: [] } }]);
 

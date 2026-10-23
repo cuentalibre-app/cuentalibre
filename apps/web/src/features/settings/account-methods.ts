@@ -105,9 +105,10 @@ export function removeAccount(book: MethodBook, id: string, isUsed: (methodId: s
     kept.map((m): Command => ({ type: "update", entity: "paymentMethods", id: m.id, changes: unlinked })),
   );
   // After the default moves off them, and the account last: the server won't remove a record still named
-  change.commands.push(
-    ...removed.map((m): Command => ({ type: "delete", entity: "paymentMethods", id: m.id })),
-    { type: "delete", entity: "treasuryAccounts", id },
-  );
+  change.commands.push(...removed.map((m): Command => ({ type: "delete", entity: "paymentMethods", id: m.id })), {
+    type: "delete",
+    entity: "treasuryAccounts",
+    id,
+  });
   return change;
 }
