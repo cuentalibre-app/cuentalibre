@@ -83,7 +83,10 @@ describe("API keys", () => {
 
 describe("public API", () => {
   it("creates a draft, issues it and reads the invoice", async () => {
-    const { norte, api } = await agent();
+    const { ana, norte, api } = await agent();
+    // Under VERI*FACTU, so the issued invoice can't be changed
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "verifactu" as const };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
     const { id: _, ...draft } = document(norte.id);
     const created = await api.request("/v1/sales-documents", { method: "POST", body: draft });
     expect(created.status).toBe(201);
