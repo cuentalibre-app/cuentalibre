@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ChevronLeft, Star, TriangleAlert } from "lucide-react";
 import { normalizeTaxId } from "@cuentalibre/core";
 import type { BusinessProfile, FiscalRegion, IncomeTaxMethod, TaxSetup, VatRegime } from "@cuentalibre/contracts";
@@ -20,14 +20,16 @@ import {
   unsupportedSetup,
   type ProfileErrors,
 } from "@/features/settings/settings-model";
-import { authErrorMessage, createOrganization, saveSettings } from "./auth-api";
+import { authErrorMessage, createOrganization, currentUser, saveSettings, signInMethods } from "./auth-api";
+import { EmailCode } from "./email-code";
 import { AuthButton, AuthLayout, runAction } from "./auth-layout";
 import {
-  ONBOARDING_STEPS,
   newSetup,
+  onboardingSteps,
   organizationName,
   setupCommands,
   stepErrors,
+  type OnboardingStep,
   type Setup,
 } from "./onboarding-model";
 import { reloadAt } from "./session";
@@ -36,12 +38,12 @@ type SetProfile = <K extends keyof BusinessProfile>(key: K, value: BusinessProfi
 type SetTax = <K extends keyof TaxSetup>(key: K, value: TaxSetup[K]) => void;
 
 /** Which step the user is on, and how far along: a bar per step, filled up to the current one. */
-function Progress({ step }: { step: number }) {
-  const current = ONBOARDING_STEPS[step]!;
+function Progress({ steps, step }: { steps: OnboardingStep[]; step: number }) {
+  const current = steps[step]!;
   return (
     <div className="mb-3 flex flex-col gap-2.5">
       <ol aria-hidden="true" className="m-0 flex list-none gap-1.5 p-0">
-        {ONBOARDING_STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <li
             key={s.key}
             className={cn(
@@ -52,7 +54,7 @@ function Progress({ step }: { step: number }) {
         ))}
       </ol>
       <p className="m-0 text-sm font-medium text-muted-foreground">
-        Paso {step + 1} de {ONBOARDING_STEPS.length} · {current.label}
+        Paso {step + 1} de {steps.length} · {current.label}
         {current.optional && " · opcional"}
       </p>
     </div>
@@ -267,11 +269,13 @@ function ActivityStep({ tax, set }: { tax: TaxSetup; set: SetTax }) {
 }
 
 /**
- * After signing up: the business's tax setup, tax ID and name, address and
+ * After signing up: a code to confirm the email, if it needs verifying, then the business's tax setup, tax ID and name, address and
  * activity, step by step. The business is created at the end, with everything
  * at once, and the app opens with the first-run tour.
  */
 export function OnboardingPage() {
+  // The email to confirm, or null when it needs no verifying; undefined until known
+  const [verifying, setVerifying] = useState<string | null>();
   const [setup, setSetup] = useState(newSetup);
   const [step, setStep] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
@@ -280,8 +284,16 @@ export function OnboardingPage() {
   // Saving the settings can fail after the business was created: a retry mustn't create another
   const created = useRef(false);
 
-  const current = ONBOARDING_STEPS[step]!;
-  const last = step === ONBOARDING_STEPS.length - 1;
+  const steps = onboardingSteps(Boolean(verifying));
+  const current = steps[step]!;
+  const last = step === steps.length - 1;
+
+  useEffect(() => {
+    Promise.all([currentUser(), signInMethods()])
+      .then(([user, methods]) => setVerifying(methods.email && !user.emailVerified ? user.email : null))
+      // Unknown: the wizard goes on without it, and the app reminds the user later
+      .catch(() => setVerifying(null));
+  }, []);
   const errors = stepErrors(current.key, setup);
   // Once the activity is chosen, "later" would throw it away
   const skippable = current.optional && !(current.key === "activity" && setup.tax.activities.length > 0);
@@ -330,41 +342,61 @@ export function OnboardingPage() {
     next();
   };
 
+  // A moment, so the steps don't shift once it's known whether the email needs confirming
+  if (verifying === undefined) return null;
+
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <AuthLayout wide eyebrow={<Progress step={step} />} title={current.title} description={current.description}>
-        <form key={current.key} onSubmit={submit} noValidate className="flex animate-rise-in flex-col gap-4">
-          {current.key === "regime" && <RegimeStep setup={setup} setProfile={setProfile} setTax={setTax} />}
-          {current.key === "identity" && (
-            <IdentityStep profile={setup.profile} set={setProfile} errors={showErrors ? errors : {}} />
-          )}
-          {current.key === "address" && <AddressFields compact draft={setup.profile} set={setProfile} />}
-          {current.key === "activity" && <ActivityStep tax={setup.tax} set={setTax} />}
-
-          {error && (
-            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <AuthButton type="submit" disabled={pending} className="mt-1">
-            {pending ? "Un momento…" : last ? "Empezar" : "Continuar"}
-          </AuthButton>
-          <div className="flex items-center justify-between gap-3">
-            {step > 0 ? (
-              <Button variant="ghost" size="sm" disabled={pending} onClick={() => goTo(step - 1)}>
-                <ChevronLeft aria-hidden="true" />
-                Atrás
-              </Button>
-            ) : (
-              <span />
-            )}
-            {skippable && (
-              <Button variant="ghost" size="sm" disabled={pending} onClick={skip}>
-                Lo haré más tarde
-              </Button>
-            )}
+      <AuthLayout
+        wide
+        eyebrow={<Progress steps={steps} step={step} />}
+        title={current.title}
+        description={current.description}
+      >
+        {current.key === "email" && verifying ? (
+          <div key="email" className="animate-rise-in">
+            <EmailCode
+              large
+              email={verifying}
+              // Its step goes away, so the one after it is now the current one
+              onVerified={() => setVerifying(null)}
+              onLater={() => goTo(step + 1)}
+            />
           </div>
-        </form>
+        ) : (
+          <form key={current.key} onSubmit={submit} noValidate className="flex animate-rise-in flex-col gap-4">
+            {current.key === "regime" && <RegimeStep setup={setup} setProfile={setProfile} setTax={setTax} />}
+            {current.key === "identity" && (
+              <IdentityStep profile={setup.profile} set={setProfile} errors={showErrors ? errors : {}} />
+            )}
+            {current.key === "address" && <AddressFields compact draft={setup.profile} set={setProfile} />}
+            {current.key === "activity" && <ActivityStep tax={setup.tax} set={setTax} />}
+
+            {error && (
+              <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <AuthButton type="submit" disabled={pending} className="mt-1">
+              {pending ? "Un momento…" : last ? "Empezar" : "Continuar"}
+            </AuthButton>
+            <div className="flex items-center justify-between gap-3">
+              {step > 0 ? (
+                <Button variant="ghost" size="sm" disabled={pending} onClick={() => goTo(step - 1)}>
+                  <ChevronLeft aria-hidden="true" />
+                  Atrás
+                </Button>
+              ) : (
+                <span />
+              )}
+              {skippable && (
+                <Button variant="ghost" size="sm" disabled={pending} onClick={skip}>
+                  Lo haré más tarde
+                </Button>
+              )}
+            </div>
+          </form>
+        )}
       </AuthLayout>
     </TooltipProvider>
   );

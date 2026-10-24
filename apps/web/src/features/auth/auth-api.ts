@@ -1,13 +1,6 @@
 import { newId } from "@cuentalibre/core";
 import type { SyncCommand } from "@cuentalibre/contracts";
-import {
-  API_URL,
-  EMAIL_VERIFIED_PATH,
-  ONBOARDING_PATH,
-  RESET_PASSWORD_PATH,
-  SIGN_IN_PATH,
-  SIGN_UP_PATH,
-} from "./session";
+import { API_URL, ONBOARDING_PATH, RESET_PASSWORD_PATH, SIGN_IN_PATH, SIGN_UP_PATH } from "./session";
 
 /** Better Auth rejected the request; `code` says why. */
 export class AuthError extends Error {
@@ -37,13 +30,21 @@ async function get<R>(path: string): Promise<R> {
 
 export const signIn = (email: string, password: string) => post("/sign-in/email", { email, password });
 
-/** On instances that send email, the API also sends a link to verify it. */
+/** On instances that send email, the API also sends a code to verify it. */
 export const signUp = (name: string, email: string, password: string) =>
-  post("/sign-up/email", { name, email, password, callbackURL: `${window.location.origin}${EMAIL_VERIFIED_PATH}` });
+  post("/sign-up/email", { name, email, password });
 
-/** Sends the signed-in user the link to verify their email again. */
-export const sendVerificationEmail = (email: string) =>
-  post("/send-verification-email", { email, callbackURL: `${window.location.origin}${EMAIL_VERIFIED_PATH}` });
+/** Sends the signed-in user a new code to verify their email; the previous one stops working. */
+export const sendVerificationEmail = (email: string) => post("/send-verification-email", { email });
+
+/** Verifies the email with the code sent to it. Each code allows three tries. */
+export const verifyEmail = (email: string, otp: string) => post("/email-otp/verify-email", { email, otp });
+
+/** Sends a code to `newEmail`, to switch the account to it; nothing arrives if it has an account already. */
+export const requestEmailChange = (newEmail: string) => post("/email-otp/request-email-change", { newEmail });
+
+/** Switches the account to `newEmail`, verified, with the code sent to it. */
+export const changeEmail = (newEmail: string, otp: string) => post("/email-otp/change-email", { newEmail, otp });
 
 /** Emails a link to choose a new password, if the email has an account; the answer is the same either way. */
 export const requestPasswordReset = (email: string) =>
@@ -219,17 +220,21 @@ const MESSAGES: Record<string, string> = {
   account_already_linked_to_different_user: "Esa cuenta de Google ya está vinculada a otro usuario.",
   FAILED_TO_UNLINK_LAST_ACCOUNT: "Es tu única forma de entrar, así que no puedes desvincularla.",
   SESSION_NOT_FRESH: "Por seguridad, sal y vuelve a entrar antes de desvincularla.",
-  // Links in emails (verifying an email, resetting a password) send these back
+  // The link to reset a password sends these back
   INVALID_TOKEN: "El enlace no es válido o ya se ha usado. Pide otro.",
   TOKEN_EXPIRED: "El enlace ha caducado. Pide otro.",
   EMAIL_ALREADY_VERIFIED: "Tu email ya está verificado.",
+  // Codes to verify an email
+  INVALID_OTP: "El código no es correcto. Revísalo o pide otro.",
+  OTP_EXPIRED: "El código ha caducado. Pide otro.",
+  TOO_MANY_ATTEMPTS: "Has fallado el código demasiadas veces. Pide otro.",
   RESET_PASSWORD_DISABLED: "Este servidor no puede enviar emails, así que no puede restablecer contraseñas.",
   VERIFICATION_EMAIL_NOT_ENABLED: "Este servidor no puede enviar emails.",
   sole_owner:
     "Eres el único propietario de una empresa que tiene más usuarios. Quítalos o haz propietario a otro antes de eliminar tu cuenta.",
 };
 
-/** What to tell the user when Google, or a link in an email, sent them back with `?error=`; nothing if they cancelled. */
+/** What to tell the user when Google, or the link to reset a password, sent them back with `?error=`; nothing if they cancelled. */
 export function oauthErrorMessage(code: string | null): string | null {
   if (!code || code === "access_denied") return null;
   return authErrorMessage(new AuthError(code));

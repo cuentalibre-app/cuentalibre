@@ -8,8 +8,6 @@ export const DEMO_PATH = "/demo";
 export const FORGOT_PASSWORD_PATH = "/recuperar-contrasena";
 /** Where the link to reset a password lands, with `?token=` (or `?error=` if it no longer works). */
 export const RESET_PASSWORD_PATH = "/nueva-contrasena";
-/** Where the link to verify an email lands: Credenciales de acceso, which says how it went. */
-export const EMAIL_VERIFIED_PATH = "/configuracion/credenciales?verificado=1";
 
 /**
  * Where the API is, from `VITE_API_URL`: a full URL, or a path such as `/` when the
