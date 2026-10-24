@@ -1,4 +1,4 @@
-import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
+import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, UserRound } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
@@ -18,6 +18,7 @@ import { CreateMenu } from "./create-menu";
 import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
 import { useNavBadges } from "./use-nav-badges";
+import { useNavGroupOpen } from "./use-nav-group-open";
 import { UserMenu } from "./user-menu";
 
 type Badges = ReturnType<typeof useNavBadges>;
@@ -123,7 +124,7 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
 function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; collapsed: boolean }) {
   const { pathname } = useLocation();
   const isCurrent = pathname.startsWith(item.to);
-  const [open, setOpen] = useState(isCurrent || item.to === "/ventas");
+  const [open, toggle] = useNavGroupOpen(item.to, isCurrent || item.to === "/ventas");
   const id = `nav-group-${item.to.slice(1)}`;
   const count = item.badge ? badges[item.badge] : 0;
 
@@ -137,7 +138,7 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
         aria-expanded={open}
         aria-controls={id}
         data-tour={item.to}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         className={cn(itemClass, "w-full cursor-pointer text-left")}
       >
         <NavIcon item={item} />
