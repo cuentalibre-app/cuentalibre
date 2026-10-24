@@ -47,6 +47,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
     c.set("mailer", mailer);
     c.set("verifactuEnvironment", env.VERIFACTU_ENV === "test" ? "test" : "production");
     c.set("fileMaxBytes", env.FILE_MAX_BYTES);
+    c.set("checkBreachedPasswords", env.PASSWORD_BREACH_CHECK === "on");
     await next();
   });
   app.on(["GET", "POST"], "/v1/auth/*", (c) => auth.handler(c.req.raw));

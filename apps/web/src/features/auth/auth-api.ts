@@ -208,6 +208,7 @@ const MESSAGES: Record<string, string> = {
   INVALID_EMAIL: "El email no es válido.",
   PASSWORD_TOO_SHORT: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
   PASSWORD_TOO_LONG: "La contraseña es demasiado larga.",
+  PASSWORD_COMPROMISED: "Esta contraseña es muy común y fácil de adivinar. Elige otra.",
   wrong_password: "La contraseña no es correcta.",
   INVALID_PASSWORD: "La contraseña actual no es correcta.",
   session_not_fresh: "Por seguridad, sal y vuelve a entrar con Google. Después tendrás 10 minutos para hacerlo.",
