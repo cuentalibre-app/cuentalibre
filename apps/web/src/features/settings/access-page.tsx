@@ -21,6 +21,7 @@ import {
   type LinkedAccount,
 } from "@/features/auth/auth-api";
 import { VerifyEmailDialog } from "@/features/auth/email-code";
+import { ForgotPasswordLink } from "@/features/auth/forgot-password-link";
 import { PasswordMeter, newPasswordHint } from "@/features/auth/password-meter";
 import { sessionState } from "@/features/auth/session";
 import { Field, Section } from "@/features/sales/form-fields";
@@ -573,8 +574,8 @@ function PasswordDialog({
     }
     setPending(false);
   };
-  const field = (key: keyof typeof empty, label: string, autoComplete: string, hint?: string) => (
-    <Field label={label} required error={visible[key]} hint={hint}>
+  const field = (key: keyof typeof empty, label: string, autoComplete: string, hint?: string, action?: ReactNode) => (
+    <Field label={label} required error={visible[key]} hint={hint} action={action}>
       {(p) => (
         <>
           <Input
@@ -600,7 +601,7 @@ function PasswordDialog({
             : "Al cambiarla se cerrará la sesión en el resto de dispositivos."}
         </DialogDescription>
         <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
-          {!creating && field("current", "Contraseña actual", "current-password")}
+          {!creating && field("current", "Contraseña actual", "current-password", undefined, <ForgotPasswordLink />)}
           {field("next", "Nueva contraseña", "new-password", newPasswordHint(form.next))}
           {field("repeat", "Repite la nueva contraseña", "new-password")}
           {error && (
