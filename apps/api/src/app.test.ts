@@ -21,7 +21,7 @@ describe("meta", () => {
   it("says whether Google sign-in is on", async () => {
     const response = await app.request("/v1/sign-in-methods");
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ google: false, email: true });
+    expect(await response.json()).toEqual({ google: false, email: true, billing: false });
   });
 
   it("sends people to Google when it is set up", async () => {
@@ -33,7 +33,11 @@ describe("meta", () => {
       storage,
       mailer,
     });
-    expect(await (await withGoogle.request("/v1/sign-in-methods")).json()).toEqual({ google: true, email: true });
+    expect(await (await withGoogle.request("/v1/sign-in-methods")).json()).toEqual({
+      google: true,
+      email: true,
+      billing: false,
+    });
 
     const origin = env.BETTER_AUTH_URL;
     const response = await withGoogle.request(`${origin}/v1/auth/sign-in/social`, {

@@ -3,6 +3,15 @@ import { z } from "zod";
 const devDatabaseUrl = "postgres://cuentalibre:cuentalibre@localhost:5432/cuentalibre";
 const devSecret = "dev-only-secret-do-not-use-in-production-0000";
 
+const STRIPE_VARIABLES = [
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "STRIPE_PRICE_MONTHLY",
+  "STRIPE_PRICE_QUARTERLY",
+  "STRIPE_PRICE_YEARLY",
+  "STRIPE_TAX_RATE",
+] as const;
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -63,6 +72,16 @@ const envSchema = z
     SENTRY_DSN: z.url().optional(),
     /** The version errors are tagged with; the image build sets it to the commit, or leaves it empty. */
     SENTRY_RELEASE: z.string().optional(),
+    /**
+     * Charging for Cloud with Stripe: all of them, or none and billing is off. The prices are
+     * the product's three periods; the tax rate, the VAT added on top of them.
+     */
+    STRIPE_SECRET_KEY: z.string().min(1).optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+    STRIPE_PRICE_MONTHLY: z.string().min(1).optional(),
+    STRIPE_PRICE_QUARTERLY: z.string().min(1).optional(),
+    STRIPE_PRICE_YEARLY: z.string().min(1).optional(),
+    STRIPE_TAX_RATE: z.string().min(1).optional(),
   })
   .refine((env) => env.NODE_ENV !== "production" || env.BETTER_AUTH_SECRET !== devSecret, {
     message: "BETTER_AUTH_SECRET must be set in production",
@@ -93,6 +112,10 @@ const envSchema = z
   .refine((env) => !env.SMTP_URL || env.EMAIL_FROM, {
     message: "SMTP_URL needs EMAIL_FROM",
     path: ["EMAIL_FROM"],
+  })
+  .refine((env) => new Set(STRIPE_VARIABLES.map((name) => Boolean(env[name]))).size === 1, {
+    message: `Billing needs all of ${STRIPE_VARIABLES.join(", ")}, or none of them`,
+    path: ["STRIPE_SECRET_KEY"],
   });
 
 export type Env = z.infer<typeof envSchema>;

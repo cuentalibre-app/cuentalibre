@@ -2,6 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { hasGoogleSignIn, type Auth } from "./auth";
+import type { Billing } from "./billing";
 import type { AppEnv } from "./context";
 import type { Db } from "./db/client";
 import type { Mailer } from "./email/mailer";
@@ -11,6 +12,7 @@ import { ApiError, describeIssues, errorResponse } from "./errors";
 import { loadSession } from "./middleware";
 import { accountRoutes } from "./routes/account";
 import { apiKeyRoutes } from "./routes/api-keys";
+import { billingRoutes } from "./routes/billing";
 import { contactRoutes } from "./routes/contacts";
 import { emailRoutes } from "./routes/emails";
 import { fileRoutes } from "./routes/files";
@@ -27,13 +29,15 @@ interface Deps {
   storage: FileStorage;
   /** Null when the instance can't send email. */
   mailer: Mailer | null;
+  /** Null when the instance doesn't bill: self-hosted ones never do. */
+  billing?: Billing | null;
 }
 
 /**
  * Builds the HTTP app. Everything lives under `/v1`, since the API will be public;
  * with `WEB_DIR`, the rest of the paths serve the web app.
  */
-export function createApp({ db, auth, env, storage, mailer }: Deps) {
+export function createApp({ db, auth, env, storage, mailer, billing = null }: Deps) {
   const app = new OpenAPIHono<AppEnv>({
     defaultHook: (result, c) => {
       if (!result.success)
@@ -46,6 +50,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
     c.set("db", db);
     c.set("storage", storage);
     c.set("mailer", mailer);
+    c.set("billing", billing);
     c.set("verifactuEnvironment", env.VERIFACTU_ENV === "test" ? "test" : "production");
     c.set("fileMaxBytes", env.FILE_MAX_BYTES);
     c.set("checkBreachedPasswords", env.PASSWORD_BREACH_CHECK === "on");
@@ -70,7 +75,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
 
   // Not basePath(): OpenAPIHono's copy of the app drops the notFound handler.
   const routes = app
-    .route("/v1", metaRoutes({ google: hasGoogleSignIn(env), email: Boolean(mailer) }))
+    .route("/v1", metaRoutes({ google: hasGoogleSignIn(env), email: Boolean(mailer), billing: Boolean(billing) }))
     .route("/v1", accountRoutes)
     .route("/v1", syncRoutes)
     .route("/v1", contactRoutes)
@@ -78,6 +83,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
     .route("/v1", fileRoutes)
     .route("/v1", emailRoutes)
     .route("/v1", apiKeyRoutes(auth));
+  if (billing) routes.route("/v1", billingRoutes(billing, env.WEB_ORIGIN));
   routes.openAPIRegistry.registerComponent("securitySchemes", "apiKey", {
     type: "http",
     scheme: "bearer",

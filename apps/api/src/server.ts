@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
+import { createBilling } from "./billing";
 import { createDb } from "./db/client";
 import { createAccountMailer, createMailer } from "./email/mailer";
 import { emailHandler } from "./email/messages";
@@ -16,7 +17,14 @@ startErrorReporting(env);
 const db = createDb(env.DATABASE_URL);
 const storage = createStorage(env);
 const mailer = createMailer(env);
-const app = createApp({ db, auth: createAuth(db, env, createAccountMailer(env)), env, storage, mailer });
+const app = createApp({
+  db,
+  auth: createAuth(db, env, createAccountMailer(env)),
+  env,
+  storage,
+  mailer,
+  billing: createBilling(env),
+});
 
 const stopWorker = startWorker(db, {
   verifactu: verifactuHandler(db, createVerifactuTransport(env), {
