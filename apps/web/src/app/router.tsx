@@ -54,6 +54,7 @@ import { KINDS } from "@/features/sales/sales-model";
 import { DocumentSettingsPage } from "@/features/sales/document-settings-page";
 import { AccessPage } from "@/features/settings/access-page";
 import { AccountsPage } from "@/features/settings/accounts-page";
+import { BillingPage } from "@/features/settings/billing-page";
 import { BusinessPage } from "@/features/settings/business-page";
 import { CertificatesPage } from "@/features/settings/certificates-page";
 import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
@@ -65,6 +66,7 @@ import { ProfilePage } from "@/features/settings/profile-page";
 import {
   ACCESS_PATH,
   ACCOUNTS_PATH,
+  BILLING_PATH,
   BUSINESS_PATH,
   CERTIFICATES_PATH,
   CONTACT_SETTINGS_PATH,
@@ -261,6 +263,7 @@ const settingsRoutes = [
   { path: PREFERENCES_PATH.slice(1), element: <PreferencesPage /> },
   { path: EMAIL_SETTINGS_PATH.slice(1), element: <EmailSettingsPage /> },
   { path: API_KEYS_PATH.slice(1), element: <ApiKeysPage /> },
+  { path: BILLING_PATH.slice(1), element: <BillingPage /> },
 ];
 
 const transferRoutes = [
