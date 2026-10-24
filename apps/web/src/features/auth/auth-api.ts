@@ -138,6 +138,22 @@ export async function currentUser() {
 }
 
 /**
+ * Gives a password to a user who only signs in with Google, who then can also
+ * sign in with their email. Needs a session started in the last ten minutes.
+ */
+export async function createPassword(newPassword: string) {
+  const response = await fetch(`${API_URL}/v1/me/password`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ newPassword }),
+  });
+  if (response.ok) return;
+  const data = (await response.json().catch(() => null)) as { error?: { code?: string } } | null;
+  throw new AuthError(data?.error?.code ?? `HTTP_${response.status}`);
+}
+
+/**
  * Deletes the account for good, after checking the password (or, for users
  * without one, that they signed in recently); the session ends with it.
  */
@@ -180,8 +196,8 @@ const MESSAGES: Record<string, string> = {
   PASSWORD_TOO_LONG: "La contraseña es demasiado larga.",
   wrong_password: "La contraseña no es correcta.",
   INVALID_PASSWORD: "La contraseña actual no es correcta.",
-  session_not_fresh:
-    "Por seguridad, sal y vuelve a entrar con Google. Después tendrás 10 minutos para eliminar la cuenta.",
+  session_not_fresh: "Por seguridad, sal y vuelve a entrar con Google. Después tendrás 10 minutos para hacerlo.",
+  password_already_set: "Ya tienes contraseña. Recarga la página para cambiarla.",
   // Google sign-in sends these back in the URL
   signup_disabled: "No hay ninguna cuenta con esta cuenta de Google. Créala primero.",
   account_not_linked:
