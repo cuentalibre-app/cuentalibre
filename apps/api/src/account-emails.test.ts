@@ -45,6 +45,11 @@ describe("verifying an email", () => {
       subject: `${code} es tu código de cuentalibre`,
     });
 
+    // The designed version carries the code too, and escapes the user's name
+    const html = accountEmails.findLast((message) => message.to.includes(ana.email))!.html!;
+    expect(html).toContain(code);
+    expect(html).toContain("Hola, Ana:");
+
     expect((await verify(ana, code)).status).toBe(200);
     expect((await account(ana)).emailVerified).toBe(true);
     // A code only works once
