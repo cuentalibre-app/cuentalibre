@@ -3,6 +3,7 @@ import {
   WITHHOLDING_RATES,
   cents,
   centsToEuros,
+  defaultIncomeAccount,
   eurosToCents,
   groupRows,
   invoiceTotals,
@@ -460,6 +461,8 @@ function lockedError(date: string, ctx: Context, errors: string[]) {
 function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: Context): ImportPreview {
   const contacts = new ContactResolver("client");
   const accepted: SalesDocument[] = [];
+  // Rows without an income type take the one proposed for the main activity, as new invoices do
+  const proposedIncomeType = defaultIncomeAccount(settingsStore.get().tax.activities[0]);
   const items = groupRows(body, (r) => `${get(r.row, "Serie")}|${get(r.row, "Número")}`.replace(/^\|$/, "")).map(
     (group): ImportItem => {
       const rows = group.map((g) => g.row);
@@ -490,7 +493,7 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
               at("Tipo ingreso"),
               INCOME_TYPE_GROUPS.flatMap((g) => g.options),
             )
-          : "705"
+          : proposedIncomeType
       ) as IncomeType | null;
       if (!incomeType || !INCOME_TYPES.has(incomeType))
         errors.push(`Tipo de ingreso desconocido: «${at("Tipo ingreso")}».`);
@@ -559,7 +562,7 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         clientId: client?.id ?? "",
         issuedOn,
         dueOn,
-        incomeType: incomeType ?? "705",
+        incomeType: incomeType ?? proposedIncomeType,
         withholding,
         operationType: operationType ?? "national",
         operationOn,
