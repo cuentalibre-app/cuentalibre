@@ -90,7 +90,11 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false}>
       <DropdownMenuTrigger asChild {...triggerProps}>
-        <button type="button" className={cn(itemClass, "w-full cursor-pointer text-left", isCurrent && activeClass)}>
+        <button
+          type="button"
+          data-tour={item.to}
+          className={cn(itemClass, "w-full cursor-pointer text-left", isCurrent && activeClass)}
+        >
           <NavIcon item={item} dot={count > 0} />
           <span className={labelClass(true)}>{item.label}</span>
         </button>
@@ -132,6 +136,7 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
         type="button"
         aria-expanded={open}
         aria-controls={id}
+        data-tour={item.to}
         onClick={() => setOpen((o) => !o)}
         className={cn(itemClass, "w-full cursor-pointer text-left")}
       >
@@ -258,7 +263,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           const count = item.badge ? badges[item.badge] : 0;
           return (
             <RailTooltip key={item.to} enabled={collapsed} label={item.label}>
-              <NavLink to={item.to} end className={cn(itemClass, currentClass)}>
+              <NavLink to={item.to} end data-tour={item.to} className={cn(itemClass, currentClass)}>
                 <NavIcon item={item} dot={collapsed && count > 0} />
                 <span className={cn("flex flex-1 items-center justify-between", labelClass(collapsed))}>
                   {item.label}
@@ -273,7 +278,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
 
         {secondaryNav.map((item) => (
           <RailTooltip key={item.to} enabled={collapsed} label={item.label}>
-            <NavLink to={item.to} className={cn(itemClass, currentClass, "h-8 font-normal")}>
+            <NavLink to={item.to} data-tour={item.to} className={cn(itemClass, currentClass, "h-8 font-normal")}>
               <NavIcon item={item} />
               <span className={labelClass(collapsed)}>{item.label}</span>
             </NavLink>

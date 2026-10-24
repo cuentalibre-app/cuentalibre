@@ -40,6 +40,7 @@ export type SettingsSection =
   | "userProfile"
   | "notificationPrefs"
   | "userLocale"
+  | "userTour"
   | "userAccess";
 
 export type Command =

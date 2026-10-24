@@ -190,6 +190,7 @@ describe("the user's own settings", () => {
     expect(settings).toEqual({
       userProfile: { firstName: "Ana Ruiz", lastName: "", birthDate: "", phone: "", gender: "" },
       userLocale: { language: "", numberFormat: "", timeZone: "" },
+      userTour: { status: "pending" },
     });
   });
 
@@ -201,11 +202,17 @@ describe("the user's own settings", () => {
     expect((await save(ana, "userProfile", profile)).status).toBe(204);
     expect((await save(ana, "userLocale", locale)).status).toBe(204);
     expect((await save(ana, "userLocale", { ...locale, timeZone: "" })).status).toBe(204);
+    expect((await save(ana, "userTour", { status: "skipped" })).status).toBe(204);
 
     const { user, settings } = await me(ana);
     expect(user.name).toBe("Ana Ruiz Gil");
-    expect(settings).toEqual({ userProfile: profile, userLocale: { ...locale, timeZone: "" } });
+    expect(settings).toEqual({
+      userProfile: profile,
+      userLocale: { ...locale, timeZone: "" },
+      userTour: { status: "skipped" },
+    });
     expect((await me(eve)).settings.userProfile.firstName).toBe("Eve");
+    expect((await me(eve)).settings.userTour.status).toBe("pending");
   });
 
   it("validates the whole section", async () => {
@@ -215,6 +222,7 @@ describe("the user's own settings", () => {
     expect(await errorCode(blank)).toBe("invalid_settings");
     expect((await save(ana, "userProfile", { ...profile, birthDate: "02/05/1990" })).status).toBe(400);
     expect((await save(ana, "userLocale", { language: "es" })).status).toBe(400);
+    expect((await save(ana, "userTour", { status: "seen" })).status).toBe(400);
     expect((await save(ana, "notificationPrefs", {})).status).toBe(400);
     expect((await me(ana)).user.name).toBe("Ana");
   });

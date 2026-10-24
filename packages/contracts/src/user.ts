@@ -35,6 +35,13 @@ export const userLocaleSchema = z.object({
 });
 export type UserLocale = z.infer<typeof userLocaleSchema>;
 
+/** How the first-run tour went: it shows by itself while "pending", and never again once finished or skipped. */
+export const tourStatusSchema = z.enum(["pending", "finished", "skipped"]);
+export type TourStatus = z.infer<typeof tourStatusSchema>;
+
+export const userTourSchema = z.object({ status: tourStatusSchema });
+export type UserTour = z.infer<typeof userTourSchema>;
+
 export const linkedProviderSchema = z.enum(["google", "apple"]);
 export type LinkedProvider = z.infer<typeof linkedProviderSchema>;
 
@@ -65,6 +72,7 @@ export const userSettingsSchema = z.object({
     numberFormat: z.string().max(20),
     timeZone: z.string().max(60),
   }),
+  userTour: userTourSchema,
 });
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 
