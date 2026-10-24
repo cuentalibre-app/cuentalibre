@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   ArrowDownWideNarrow,
@@ -7,6 +7,7 @@ import {
   Building2,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   FileSignature,
   FilePen,
   FileText,
@@ -30,12 +31,17 @@ import { CATALOG_SETTINGS_PATH } from "@/features/catalog/catalog-model";
 import { isVerifactuMandatory, verifactuMandatoryFrom } from "@cuentalibre/core";
 import { IMPORT_PATH } from "@/features/transfer/transfer-model";
 import { LegalLinks } from "@/components/legal-links";
+import type { Billing } from "@cuentalibre/contracts";
+import { currentBackend } from "@/data/backend";
+import { signInMethods } from "@/features/auth/auth-api";
 import { formatDate } from "@/lib/format";
+import { localDate, periodOf, planHeadline, planState, type PlanState } from "./billing-model";
 import { useCompliance } from "./compliance-store";
 import {
   ACCESS_PATH,
   ACCOUNTS_PATH,
   API_KEYS_PATH,
+  BILLING_PATH,
   BUSINESS_PATH,
   businessName,
   CERTIFICATES_PATH,
@@ -136,11 +142,70 @@ function VerifactuCard() {
   );
 }
 
+/** The company's plan, on instances that charge for one (cuentalibre Cloud); null elsewhere. */
+function useBilling() {
+  const [billing, setBilling] = useState<Billing | null>(null);
+  useEffect(() => {
+    const api = currentBackend().billing;
+    if (!api) return;
+    let active = true;
+    void signInMethods()
+      .then((methods) => (methods.billing ? api.get() : null))
+      .then((next) => active && setBilling(next))
+      // Without the plan the hub still works; its page says what went wrong
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+  return billing;
+}
+
+/** The plan gets a card like VERI*FACTU's: when the trial runs out, nobody should miss it. */
+function PlanCard({ billing }: { billing: Billing }) {
+  const { title, badge, tone } = planHeadline(billing);
+  const { subscription } = billing;
+  const period = subscription?.period ? periodOf(subscription.period) : null;
+  const periodEnd = subscription?.currentPeriodEnd ? formatDate(localDate(subscription.currentPeriodEnd)) : "";
+  const summary: Record<PlanState, string> = {
+    trial: "Suscríbete cuando quieras: no perderás nada de lo que hayas hecho.",
+    trialEnded: "Tus datos están a salvo. Suscríbete para volver a emitir facturas y registrar gastos.",
+    subscriptionEnded: "Tus datos están a salvo. Suscríbete para volver a emitir facturas y registrar gastos.",
+    active: period
+      ? `Plan ${period.label.toLowerCase()}. Próximo cobro el ${periodEnd}.`
+      : `Próximo cobro el ${periodEnd}.`,
+    cancelled: `No se renovará: tienes todo cuentalibre hasta el ${periodEnd}.`,
+    pastDue: "No hemos podido cobrar el último pago. Revisa tu tarjeta.",
+  };
+  return (
+    <Link
+      to={BILLING_PATH}
+      className="group flex min-w-0 animate-rise-in flex-col gap-4 rounded-xl border border-primary/30 bg-primary-soft/40 p-5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-primary-soft active:scale-[0.995] sm:flex-row sm:items-center"
+    >
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <CreditCard className="size-6" strokeWidth={1.8} aria-hidden="true" />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="text-lg font-semibold">{title}</span>
+          <Badge tone={tone}>{badge}</Badge>
+        </span>
+        <span className="text-sm text-muted-foreground">{summary[planState(billing)]}</span>
+      </span>
+      <ChevronRight
+        className="hidden size-5 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 sm:block"
+        aria-hidden="true"
+      />
+    </Link>
+  );
+}
+
 export function SettingsPage() {
   const { profile, tax, accounts, paymentMethods } = useSettings();
   const activeAccounts = accounts.filter((a) => a.active).length;
   const activeMethods = paymentMethods.filter((m) => m.active).length;
   const main = tax.activities[0];
+  const billing = useBilling();
 
   const groups: { title: string; entries: Entry[] }[] = [
     {
@@ -296,6 +361,13 @@ export function SettingsPage() {
           Los datos de tu negocio y cómo trabaja cuentalibre con ellos.
         </p>
       </header>
+
+      {billing && (
+        <section aria-label="Tu plan" className="flex flex-col gap-3">
+          <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">Tu plan</h2>
+          <PlanCard billing={billing} />
+        </section>
+      )}
 
       <section aria-label="Facturación verificable" className="flex flex-col gap-3">
         <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
