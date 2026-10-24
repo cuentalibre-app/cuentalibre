@@ -12,20 +12,25 @@ interface AuthLayoutProps {
   children: ReactNode;
   /** Shown under the form: links to the other screens. */
   footer?: ReactNode;
+  /** Shown above the title, such as the step of a wizard. */
+  eyebrow?: ReactNode;
+  /** A wider column, for forms with fields side by side. */
+  wide?: boolean;
 }
 
 /**
  * The screens around the app (sign-in, sign-up, onboarding) speak like the
  * public site: serif headline, brand gradient, and a panel that shows the app.
  */
-export function AuthLayout({ title, description, children, footer }: AuthLayoutProps) {
+export function AuthLayout({ title, description, children, footer, eyebrow, wide = false }: AuthLayoutProps) {
   return (
     <div className="grid min-h-dvh bg-background lg:grid-cols-2">
       <main className="flex flex-col px-4 py-5 sm:px-10 sm:py-8">
         <Brand />
         <div className="flex flex-1 items-center justify-center py-10">
-          <div className="flex w-full max-w-[400px] animate-rise-in flex-col gap-7">
+          <div className={cn("flex w-full animate-rise-in flex-col gap-7", wide ? "max-w-[480px]" : "max-w-[400px]")}>
             <div className="flex flex-col gap-2">
+              {eyebrow}
               <h1 className="m-0 font-display text-[clamp(32px,5vw,40px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance">
                 {title}
               </h1>
