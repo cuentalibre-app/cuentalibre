@@ -9,6 +9,8 @@ export interface OutgoingEmail {
   cc: string[];
   subject: string;
   text: string;
+  /** A designed version of `text`, for clients that show HTML. */
+  html?: string;
   attachments: { filename: string; contentType: string; content: Uint8Array }[];
 }
 
@@ -33,6 +35,7 @@ export function smtpMailer(url: string, fromAddress: string): Mailer {
           cc: email.cc,
           subject: email.subject,
           text: email.text,
+          html: email.html,
           attachments: email.attachments.map((file) => ({
             filename: file.filename,
             contentType: file.contentType,

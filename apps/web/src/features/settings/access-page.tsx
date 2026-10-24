@@ -16,11 +16,11 @@ import {
   linkedAccounts,
   MIN_PASSWORD_LENGTH,
   oauthErrorMessage,
-  sendVerificationEmail,
   signInMethods,
   unlinkAccount,
   type LinkedAccount,
 } from "@/features/auth/auth-api";
+import { VerifyEmailDialog } from "@/features/auth/email-code";
 import { sessionState } from "@/features/auth/session";
 import { Field, Section } from "@/features/sales/form-fields";
 import { ACCESS_PATH } from "./settings-model";
@@ -196,17 +196,14 @@ export function AccessPage() {
 }
 
 /**
- * The user's email, and whether it is verified, with a way to send the link
- * again. Verifying it lets Google link itself to the account when signing in.
+ * The user's email, and whether it is verified, with a way to verify it with a
+ * code. Verifying it lets Google link itself to the account when signing in.
  */
 function AccountEmailRow() {
-  const [searchParams] = useSearchParams();
   const [state, setState] = useState<{ email: string; verified: boolean; canSend: boolean } | null>(null);
-  const [pending, setPending] = useState(false);
-  // The verification link lands here with ?verificado=1, and &error= if it no longer works
-  const returned = searchParams.has("verificado");
-  const [error, setError] = useState(() => (returned ? oauthErrorMessage(searchParams.get("error")) : null));
-  const [notice, setNotice] = useState(returned && !searchParams.get("error") ? "Email verificado." : "");
+  const [verifying, setVerifying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -221,20 +218,6 @@ function AccountEmailRow() {
     };
   }, []);
 
-  const send = async () => {
-    if (!state) return;
-    setPending(true);
-    setError(null);
-    setNotice("");
-    try {
-      await sendVerificationEmail(state.email);
-      setNotice("Te hemos enviado el enlace. Caduca en 24 horas; mira también en la carpeta de spam.");
-    } catch (failure) {
-      setError(authErrorMessage(failure));
-    }
-    setPending(false);
-  };
-
   // Instances that can't send email don't verify, so there is nothing to say about it
   const showStatus = state && (state.verified || state.canSend);
 
@@ -245,8 +228,8 @@ function AccountEmailRow() {
         state &&
         !state.verified &&
         state.canSend && (
-          <Button variant="secondary" size="md" disabled={pending} onClick={() => void send()}>
-            {pending ? "Enviando…" : "Enviar enlace de verificación"}
+          <Button variant="secondary" size="md" onClick={() => setVerifying(true)}>
+            Verificar email
           </Button>
         )
       }
@@ -272,6 +255,18 @@ function AccountEmailRow() {
         <span role="alert" className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
           {error}
         </span>
+      )}
+      {state && (
+        <VerifyEmailDialog
+          email={state.email}
+          open={verifying}
+          onOpenChange={setVerifying}
+          onVerified={(email) => {
+            setState({ ...state, email, verified: true });
+            setNotice("Email verificado.");
+            userStore.emailVerified(email);
+          }}
+        />
       )}
     </Row>
   );
@@ -395,10 +390,7 @@ function LinkedAccountsSection() {
   const [pending, setPending] = useState(false);
   // Google sends people back here with ?vinculada=google, or ?error= if linking failed
   const [notice, setNotice] = useState(searchParams.get("vinculada") ? "Cuenta de Google vinculada." : "");
-  // With ?verificado, the error is the verification link's, for the email row
-  const [error, setError] = useState(() =>
-    searchParams.has("verificado") ? null : oauthErrorMessage(searchParams.get("error")),
-  );
+  const [error, setError] = useState(() => oauthErrorMessage(searchParams.get("error")));
 
   useEffect(() => {
     if (searchParams.size) setSearchParams({}, { replace: true });
