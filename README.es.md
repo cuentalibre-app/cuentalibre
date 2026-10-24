@@ -178,6 +178,7 @@ Todos vienen desactivados y se configuran en `apps/api/.env`; [`.env.example`](a
 | Enviar correos (facturas, verificación, recuperar la contraseña) | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM`                                                 |
 | Archivos en un bucket compatible con S3 en vez del disco         | `STORAGE_DRIVER=s3`, `S3_*`                                                                    |
 | Enviar registros de VERI\*FACTU al entorno de pruebas de la AEAT | `VERIFACTU_ENV=test`, `VERIFACTU_CERT_FILE`, `VERIFACTU_CERT_PASSWORD`, `VERIFACTU_PRODUCER_*` |
+| Enviar los errores inesperados a Sentry                          | `SENTRY_DSN`                                                                                   |
 
 ### Comprobaciones
 

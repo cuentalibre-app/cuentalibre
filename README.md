@@ -180,6 +180,7 @@ All of these are off by default and set in `apps/api/.env`; [`.env.example`](app
 | Sending email (invoices, verification, password reset)     | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM`                                                 |
 | Files in an S3-compatible bucket instead of local disk     | `STORAGE_DRIVER=s3`, `S3_*`                                                                    |
 | Sending VERI\*FACTU records to the AEAT's test environment | `VERIFACTU_ENV=test`, `VERIFACTU_CERT_FILE`, `VERIFACTU_CERT_PASSWORD`, `VERIFACTU_PRODUCER_*` |
+| Reporting unexpected errors to Sentry                      | `SENTRY_DSN`                                                                                   |
 
 ### Checks
 
