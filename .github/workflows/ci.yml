@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Build the API image
-        run: docker build -f apps/api/Dockerfile --target api -t "$IMAGE" .
+        run: docker build -f apps/api/Dockerfile --target api --build-arg SENTRY_RELEASE=${{ github.sha }} -t "$IMAGE" .
       - name: Set up SSH
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
