@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { emailOTP, organization } from "better-auth/plugins";
 import { asc, eq } from "drizzle-orm";
+import { rejectBreachedPasswords } from "./breached-passwords";
 import type { Db } from "./db/client";
 import * as schema from "./db/schema";
 import {
@@ -68,7 +69,7 @@ export const CLOSED_EMAIL_OTP_PATHS = [
  *
  * With a mailer, new users get a code to verify their email (or to switch to
  * another one, if they mistyped it), and people who forgot their password get
- * a link to reset it. Google only links itself to an
+ * a link to reset it. New passwords found in data breaches are rejected. Google only links itself to an
  * existing user whose email is verified: otherwise someone could sign up with
  * another person's email and keep access after the owner signs in with Google.
  */
@@ -96,6 +97,7 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
     // The email OTP plugin sends the verification email, with a code instead of a link
     ...(mailer && { emailVerification: { sendOnSignUp: true } }),
     socialProviders: googleProvider(env),
+    ...(env.PASSWORD_BREACH_CHECK === "on" && { hooks: { before: rejectBreachedPasswords() } }),
     plugins: [
       // One organization per user until the web app can switch between them (#33)
       organization({ organizationLimit: 1, schema: { member: { modelName: "membership" } } }),

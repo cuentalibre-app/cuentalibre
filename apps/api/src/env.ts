@@ -48,6 +48,11 @@ const envSchema = z
     /** Who produces the invoicing software, as records name it. */
     VERIFACTU_PRODUCER_NAME: z.string().min(1).optional(),
     VERIFACTU_PRODUCER_TAX_ID: z.string().min(1).optional(),
+    /**
+     * Rejects new passwords found in data breaches, asking Have I Been Pwned with the first
+     * five characters of their hash. Turn it off on servers that can't reach the internet.
+     */
+    PASSWORD_BREACH_CHECK: z.enum(["on", "off"]).default("on"),
     /** Outgoing email server, e.g. `smtps://user:password@smtp.example.com:465`. Without it, email is off. */
     SMTP_URL: z.url().optional(),
     /** Address emails are sent from; the business's name goes as the sender's name. */
