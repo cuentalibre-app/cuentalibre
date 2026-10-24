@@ -4,22 +4,26 @@ import {
   type BusinessProfile,
   type SyncCommand,
   type TaxSetup,
+  type VerifactuSetup,
 } from "@cuentalibre/contracts";
 import { businessName, profileErrors, type ProfileErrors } from "@/features/settings/settings-model";
 
-/** What the wizard gathers before the business exists: its profile and its tax setup. */
+/** What the wizard gathers before the business exists: its profile, its tax setup and its invoicing system. */
 export interface Setup {
   profile: BusinessProfile;
   tax: TaxSetup;
+  verifactu: VerifactuSetup;
 }
 
-export const newSetup = (): Setup => ({
+/** VERI*FACTU starts off: the business is exempt unless the user turns it on. Either applies from the day it's created. */
+export const newSetup = (today = new Date().toISOString().slice(0, 10)): Setup => ({
   profile: DEFAULT_ORGANIZATION_SETTINGS.businessProfile,
   tax: DEFAULT_ORGANIZATION_SETTINGS.taxSetup,
+  verifactu: { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt", startDate: today },
 });
 
 export interface OnboardingStep {
-  key: "email" | "regime" | "identity" | "address" | "activity";
+  key: "email" | "regime" | "identity" | "address" | "activity" | "verifactu";
   /** Name in the progress bar. */
   label: string;
   title: string;
@@ -64,6 +68,14 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     description: "Tu actividad principal, con el epígrafe del IAE de tu alta (modelo 036 o 037).",
     optional: true,
   },
+  {
+    key: "verifactu",
+    label: "VERI*FACTU",
+    title: "¿Envías tus facturas a Hacienda?",
+    description:
+      "Con VERI*FACTU, cada factura que emites se comunica a la AEAT en el momento. Puedes activarlo cuando quieras.",
+    optional: true,
+  },
 ];
 
 /**
@@ -72,6 +84,16 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
  */
 export const onboardingSteps = (verifyEmail: boolean) =>
   ONBOARDING_STEPS.filter((step) => verifyEmail || step.key !== "email");
+
+/**
+ * What leaving a step for later keeps: nothing of the activity or the invoicing
+ * system, which go back to none and exempt; whatever was typed elsewhere.
+ */
+export function skipStep(step: OnboardingStep["key"], setup: Setup): Setup {
+  if (step === "activity") return { ...setup, tax: { ...setup.tax, activities: [] } };
+  if (step === "verifactu") return { ...setup, verifactu: { ...setup.verifactu, system: "exempt" } };
+  return setup;
+}
 
 /** What stops the user from leaving a step: only the tax ID and the name are required. */
 export function stepErrors(step: OnboardingStep["key"], setup: Setup): ProfileErrors {
@@ -82,9 +104,10 @@ export function stepErrors(step: OnboardingStep["key"], setup: Setup): ProfileEr
 export const organizationName = (setup: Setup) => businessName(setup.profile);
 
 /** The settings sections the wizard saves once the business exists. */
-export function setupCommands({ profile, tax }: Setup): SyncCommand[] {
+export function setupCommands({ profile, tax, verifactu }: Setup): SyncCommand[] {
   return [
     { type: "saveSettings", section: "businessProfile", data: { ...profile, taxId: normalizeTaxId(profile.taxId) } },
     { type: "saveSettings", section: "taxSetup", data: tax },
+    { type: "saveSettings", section: "verifactu", data: verifactu },
   ];
 }
