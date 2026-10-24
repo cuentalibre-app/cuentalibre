@@ -56,8 +56,9 @@ export const changePassword = (currentPassword: string, newPassword: string) =>
   post("/change-password", { currentPassword, newPassword, revokeOtherSessions: true });
 
 /**
- * Goes to Google to sign in. Only the sign-up screen creates new users, as
- * people accept the terms there; Google brings them back to `error` if it fails.
+ * Goes to Google to sign in, creating the user if there is none: both screens
+ * say that accepts the terms. New users go on to onboarding; Google brings
+ * people back to the screen they came from if it fails.
  */
 export async function signInWithGoogle(intent: "sign-in" | "sign-up") {
   const origin = window.location.origin;
@@ -66,7 +67,7 @@ export async function signInWithGoogle(intent: "sign-in" | "sign-up") {
     callbackURL: `${origin}/`,
     newUserCallbackURL: `${origin}${ONBOARDING_PATH}`,
     errorCallbackURL: `${origin}${intent === "sign-up" ? SIGN_UP_PATH : SIGN_IN_PATH}`,
-    requestSignUp: intent === "sign-up",
+    requestSignUp: true,
   });
   window.location.assign(url);
 }
