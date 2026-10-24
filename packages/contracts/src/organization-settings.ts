@@ -288,8 +288,9 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     contactCodes: {},
     methodCodes: {},
   },
+  // Nobody sends records to the AEAT without choosing to
   verifactu: {
-    system: "verifactu",
+    system: "exempt",
     startDate: "2027-07-01",
     authorizationNumber: "",
     exemptionResolution: "",
