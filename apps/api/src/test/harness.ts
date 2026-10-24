@@ -78,10 +78,16 @@ export interface Client {
 
 let counter = 0;
 
-/** Signs up a new user with a unique email and returns a client holding their session. */
-export async function signUp(name = "Ana"): Promise<Client & { email: string }> {
+/**
+ * Signs up a new user with a unique email and returns a client holding their session,
+ * sending its requests to `target` (the app above, unless a test builds its own).
+ */
+export async function signUp(
+  name = "Ana",
+  target: Pick<typeof app, "request"> = app,
+): Promise<Client & { email: string }> {
   const email = `user${Date.now()}-${++counter}@example.com`;
-  const response = await app.request(`${origin}/v1/auth/sign-up/email`, {
+  const response = await target.request(`${origin}/v1/auth/sign-up/email`, {
     method: "POST",
     headers: { "content-type": "application/json", origin },
     body: JSON.stringify({ name, email, password: "a-long-password" }),
@@ -93,7 +99,7 @@ export async function signUp(name = "Ana"): Promise<Client & { email: string }> 
   return {
     email,
     async request(path, init = {}) {
-      const res = await app.request(`${origin}${path}`, {
+      const res = await target.request(`${origin}${path}`, {
         method: init.method ?? "GET",
         headers: {
           cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join("; "),

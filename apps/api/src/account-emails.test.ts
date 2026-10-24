@@ -151,7 +151,11 @@ describe("an instance that can't send email", () => {
   const withoutEmail = createApp({ db, auth: createAuth(db, env, null), env, storage, mailer: null });
 
   it("says so, and neither verifies emails nor resets passwords", async () => {
-    expect(await (await withoutEmail.request("/v1/sign-in-methods")).json()).toEqual({ google: false, email: false });
+    expect(await (await withoutEmail.request("/v1/sign-in-methods")).json()).toEqual({
+      google: false,
+      email: false,
+      billing: false,
+    });
 
     const before = accountEmails.length;
     const email = `noemail${Date.now()}@example.com`;
