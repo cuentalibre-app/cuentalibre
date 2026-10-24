@@ -1,10 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
-import type { Billing, BillingPeriod } from "@cuentalibre/contracts";
+import type { Billing, BillingPeriod, Plan } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
-import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { currentBackend } from "@/data/backend";
@@ -12,20 +11,19 @@ import { signInMethods } from "@/features/auth/auth-api";
 import { Section } from "@/features/sales/form-fields";
 import { formatDate } from "@/lib/format";
 import {
+  firstChargeOf,
   isLive,
   localDate,
-  perMonth,
   periodOf,
-  PERIODS,
   planHeadline,
   planState,
   type PlanState,
-  savingOf,
   TRIAL_DAYS,
   trialDaysLeft,
   withVat,
 } from "./billing-model";
 import { setBilling as setSharedBilling } from "./billing-store";
+import { PeriodPicker } from "./period-picker";
 import { SettingsHeader } from "./settings-parts";
 
 const READ_ONLY =
@@ -130,7 +128,7 @@ function BillingDetails({ billing, justPaid }: { billing: Billing; justPaid: boo
       {subscribed ? (
         <ManageSection billing={billing} />
       ) : (
-        <SubscribeSection hasHistory={Boolean(billing.subscription)} />
+        <SubscribeSection plan={billing.plan} hasHistory={Boolean(billing.subscription)} />
       )}
     </>
   );
@@ -211,7 +209,8 @@ function PlanPanel({ billing }: { billing: Billing }) {
 }
 
 /** Choosing a period and paying for it in Stripe Checkout. */
-function SubscribeSection({ hasHistory }: { hasHistory: boolean }) {
+function SubscribeSection({ plan, hasHistory }: { plan: Plan; hasHistory: boolean }) {
+  const firstCharge = firstChargeOf(plan);
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -229,38 +228,10 @@ function SubscribeSection({ hasHistory }: { hasHistory: boolean }) {
 
   return (
     <Section title="Suscribirte" index={1}>
-      <div role="radiogroup" aria-label="Cada cuánto pagas" className="grid gap-3 sm:grid-cols-3">
-        {PERIODS.map((option) => {
-          const checked = option.value === period;
-          const saving = savingOf(option);
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={checked}
-              onClick={() => setPeriod(option.value)}
-              className={cn(
-                "flex flex-col items-start gap-1 rounded-lg border p-4 text-left transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                checked ? "border-primary bg-primary-soft" : "border-border bg-card hover:bg-accent",
-              )}
-            >
-              <span className="flex w-full items-center justify-between gap-2">
-                <span className="font-semibold">{option.label}</span>
-                {saving > 0 && <Badge tone="success">Ahorras un {saving} %</Badge>}
-              </span>
-              <span>
-                <span className="amount text-2xl font-semibold tracking-tight">{formatEUR(perMonth(option))}</span>
-                <span className="text-sm text-muted-foreground"> /mes</span>
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {option.months === 1 ? "Se cobra cada mes" : `${formatEUR(option.price)} ${option.every}`}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <PeriodPicker value={period} onChange={setPeriod} />
       <p className="m-0 text-sm text-muted-foreground">
+        {firstCharge &&
+          `Conservas tus días gratis: te pedimos la tarjeta ahora y el primer cobro llega el ${formatDate(localDate(firstCharge))}, cuando acaba la prueba. `}
         Precios sin IVA: al pagar se añade el 21 %. Cambia de periodo o cancela cuando quieras; si cancelas, sigues
         teniendo acceso hasta el final de lo que has pagado.
       </p>
