@@ -1,7 +1,7 @@
 import type { Mailer, OutgoingEmail } from "./mailer";
 
-/** How long the link to verify an email works. */
-export const VERIFICATION_EXPIRES_IN = 24 * 60 * 60;
+/** How long a code to verify an email works: long enough to read the mail on another device. */
+export const VERIFICATION_EXPIRES_IN = 60 * 60;
 
 interface Recipient {
   name: string;
@@ -17,17 +17,33 @@ const accountEmail = (to: Recipient, subject: string, text: string): OutgoingEma
   attachments: [],
 });
 
-export const verificationEmail = (to: Recipient, url: string) =>
+/** The code to verify the email the user signed up with; the subject carries it, for phone notifications. */
+export const verificationCodeEmail = (to: Recipient, code: string) =>
   accountEmail(
     to,
-    "Confirma tu email en cuentalibre",
+    `${code} es tu código de cuentalibre`,
     `Hola, ${to.name}:
 
-Para confirmar que este email es tuyo, abre este enlace:
+Para confirmar que este email es tuyo, escribe este código en cuentalibre:
 
-${url}
+${code}
 
-Caduca en 24 horas. Si no has creado una cuenta en cuentalibre, ignora este mensaje.
+Caduca en una hora. Si no has creado una cuenta en cuentalibre, ignora este mensaje.
+`,
+  );
+
+/** The code to switch the account to a new email, sent to that email. */
+export const emailChangeCodeEmail = (to: Recipient, code: string) =>
+  accountEmail(
+    to,
+    `${code} es tu código de cuentalibre`,
+    `Hola, ${to.name}:
+
+Para usar este email en tu cuenta de cuentalibre, escribe este código:
+
+${code}
+
+Caduca en una hora. Si no lo has pedido tú, ignora este mensaje.
 `,
   );
 

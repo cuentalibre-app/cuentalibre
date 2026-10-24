@@ -20,45 +20,93 @@ function linkSentTo(email: string) {
   return sent!.text.match(/https?:\/\/\S+/)![0];
 }
 
-async function emailVerified(someone: Client) {
-  const response = await someone.request("/v1/me");
-  return ((await response.json()) as { user: { emailVerified: boolean } }).user.emailVerified;
+/** The code in the last account email sent to `email`. */
+function codeSentTo(email: string) {
+  const sent = accountEmails.findLast((message) => message.to.includes(email));
+  expect(sent).toBeDefined();
+  return sent!.text.match(/^\d{6}$/m)![0];
 }
 
-describe("verifying an email", () => {
-  it("sends a link on sign-up that verifies the email", async () => {
-    const ana = await signUp("Ana");
-    expect(await emailVerified(ana)).toBe(false);
-    const sent = accountEmails.findLast((message) => message.to.includes(ana.email))!;
-    expect(sent).toMatchObject({ fromName: "cuentalibre", subject: "Confirma tu email en cuentalibre" });
+async function account(someone: Client) {
+  const response = await someone.request("/v1/me");
+  return ((await response.json()) as { user: { email: string; emailVerified: boolean } }).user;
+}
 
-    const link = new URL(linkSentTo(ana.email));
-    link.searchParams.set("callbackURL", `${web}/configuracion/credenciales?verificado=1`);
-    const response = await app.request(link.toString());
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(`${web}/configuracion/credenciales?verificado=1`);
-    expect(await emailVerified(ana)).toBe(true);
+const verify = (someone: Client & { email: string }, otp: string) =>
+  someone.request("/v1/auth/email-otp/verify-email", { method: "POST", body: { email: someone.email, otp } });
+
+describe("verifying an email", () => {
+  it("sends a code on sign-up that verifies the email", async () => {
+    const ana = await signUp("Ana");
+    expect((await account(ana)).emailVerified).toBe(false);
+    const code = codeSentTo(ana.email);
+    expect(accountEmails.findLast((message) => message.to.includes(ana.email))).toMatchObject({
+      fromName: "cuentalibre",
+      subject: `${code} es tu código de cuentalibre`,
+    });
+
+    expect((await verify(ana, code)).status).toBe(200);
+    expect((await account(ana)).emailVerified).toBe(true);
+    // A code only works once
+    expect((await verify(ana, code)).status).toBe(400);
   });
 
-  it("sends the link again when the user asks for it", async () => {
+  it("allows three tries per code", async () => {
+    const ana = await signUp("Ana");
+    const code = codeSentTo(ana.email);
+    const wrong = code === "000000" ? "111111" : "000000";
+    for (let i = 0; i < 3; i++) {
+      const response = await verify(ana, wrong);
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ code: "INVALID_OTP" });
+    }
+    const response = await verify(ana, code);
+    expect(response.status).toBe(403);
+    expect(await response.json()).toMatchObject({ code: "TOO_MANY_ATTEMPTS" });
+    expect((await account(ana)).emailVerified).toBe(false);
+  });
+
+  it("sends a new code when the user asks for it", async () => {
     const ana = await signUp("Ana");
     const before = accountEmails.length;
     const response = await ana.request("/v1/auth/send-verification-email", {
       method: "POST",
-      body: { email: ana.email, callbackURL: `${web}/configuracion/credenciales` },
+      body: { email: ana.email },
     });
     expect(response.status).toBe(200);
     expect(accountEmails.length).toBe(before + 1);
-    expect(linkSentTo(ana.email)).toContain(encodeURIComponent(`${web}/configuracion/credenciales`));
+    expect((await verify(ana, codeSentTo(ana.email))).status).toBe(200);
   });
 
-  it("sends people back with an error when the link is wrong", async () => {
-    const callback = `${web}/configuracion/credenciales?verificado=1`;
-    const response = await app.request(
-      `${origin}/v1/auth/verify-email?token=nope&callbackURL=${encodeURIComponent(callback)}`,
-    );
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(`${callback}&error=INVALID_TOKEN`);
+  it("switches to another email with a code sent to it, which verifies it", async () => {
+    const ana = await signUp("Ana");
+    const newEmail = `fixed-${ana.email}`;
+    const requested = await ana.request("/v1/auth/email-otp/request-email-change", {
+      method: "POST",
+      body: { newEmail },
+    });
+    expect(requested.status).toBe(200);
+    expect(accountEmails.findLast((message) => message.to.includes(newEmail))!.text).toContain("Hola, Ana:");
+
+    const changed = await ana.request("/v1/auth/email-otp/change-email", {
+      method: "POST",
+      body: { newEmail, otp: codeSentTo(newEmail) },
+    });
+    expect(changed.status).toBe(200);
+    expect(await account(ana)).toMatchObject({ email: newEmail, emailVerified: true });
+  });
+
+  it("doesn't sign in or reset passwords with a code", async () => {
+    for (const path of [
+      "/sign-in/email-otp",
+      "/forget-password/email-otp",
+      "/email-otp/request-password-reset",
+      "/email-otp/reset-password",
+      "/email-otp/send-verification-otp",
+      "/email-otp/check-verification-otp",
+    ]) {
+      expect((await post(path, { email: "someone@example.com", otp: "123456", type: "sign-in" })).status).toBe(404);
+    }
   });
 });
 
