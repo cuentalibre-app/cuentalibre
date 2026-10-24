@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CircleAlert, X } from "lucide-react";
 import { ApiError } from "@/data/api";
 import { onCommandError } from "@/data/backend";
+import { refreshBilling } from "@/features/settings/billing-store";
 
 /** What the user reads when the server rejects a change, by the API's error code. */
 const MESSAGES: Record<string, string> = {
@@ -12,6 +13,7 @@ const MESSAGES: Record<string, string> = {
   number_taken: "Ya existe una factura con ese número.",
   already_issued: "Esa factura ya estaba emitida.",
   invalid_attachment: "No se ha podido subir uno de los archivos adjuntos. Vuelve a adjuntarlo.",
+  subscription_required: "Tu empresa está en solo lectura. Suscríbete para volver a guardar cambios.",
 };
 
 function messageOf(error: unknown) {
@@ -27,6 +29,8 @@ export function CommandErrorNotice() {
       onCommandError((error) => {
         console.warn("Change rejected:", error);
         setMessage(messageOf(error));
+        // The trial may have ended since the plan loaded: show the read-only banner
+        if (error instanceof ApiError && error.code === "subscription_required") void refreshBilling();
       }),
     [],
   );

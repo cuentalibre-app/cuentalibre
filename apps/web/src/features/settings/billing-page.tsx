@@ -25,6 +25,7 @@ import {
   trialDaysLeft,
   withVat,
 } from "./billing-model";
+import { setBilling as setSharedBilling } from "./billing-store";
 import { SettingsHeader } from "./settings-parts";
 
 const READ_ONLY =
@@ -72,6 +73,8 @@ export function BillingPage() {
         const next = await api.get();
         if (!active) return;
         setBilling(next);
+        // So the read-only banner goes away as soon as the subscription is active
+        setSharedBilling(next);
         // The webhook may land a moment after Stripe sends people back
         if (justPaid && !isLive(next.subscription) && tries > 1) timer = setTimeout(() => void load(tries - 1), 2000);
       } catch {
