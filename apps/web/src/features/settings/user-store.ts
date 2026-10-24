@@ -34,15 +34,19 @@ const user = createStore<UserSettings>({
   tour: initialUserTour,
 });
 
+/** Whether the account's email is verified; the demo's is. The API changes it, not commands. */
+const emailVerification = createStore({ verified: true });
+
 // Signed in, the profile, locale and tour are the account's; the picture and notifications stay sample data for now.
-syncMe(({ user: account, settings }) =>
+syncMe(({ user: account, settings }) => {
   user.set({
     ...user.get(),
     profile: { ...settings.userProfile, email: account.email, avatarUrl: null },
     locale: settings.userLocale,
     tour: settings.userTour,
-  }),
-);
+  });
+  emailVerification.set({ verified: account.emailVerified });
+});
 
 export function useUserSettings(): UserSettings {
   return user.use();
@@ -67,7 +71,14 @@ export const userStore = {
   updateLocale: (locale: UserLocale) => save("locale", locale),
   updateAccess: (changes: Partial<UserAccess>) => save("access", { ...user.get().access, ...changes }),
   setTourStatus: (status: TourStatus) => save("tour", { status }),
+  /** The user verified `email` with a code, maybe switching to it. */
+  emailVerified: (email: string) => {
+    user.set({ ...user.get(), profile: { ...user.get().profile, email } });
+    emailVerification.set({ verified: true });
+  },
 };
+
+export const useEmailVerified = () => emailVerification.use().verified;
 
 /** "Lucía Martín Ortega". */
 export const userFullName = (profile: UserProfile) =>
