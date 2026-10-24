@@ -1,4 +1,5 @@
 import { newId } from "@cuentalibre/core";
+import type { SyncCommand } from "@cuentalibre/contracts";
 import {
   API_URL,
   EMAIL_VERIFIED_PATH,
@@ -155,6 +156,17 @@ export async function deleteAccount(password?: string) {
 
 /** Creates the user's organization, which becomes the session's active one. */
 export const createOrganization = (name: string) => post("/organization/create", { name, slug: slugFor(name) });
+
+/** Saves settings of the session's active organization before the app, and its data layer, loads. */
+export async function saveSettings(commands: SyncCommand[]) {
+  const response = await fetch(`${API_URL}/v1/commands`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ commands }),
+  });
+  if (!response.ok) throw new AuthError(`HTTP_${response.status}`);
+}
 
 /** A unique, URL-safe slug; users never see it. */
 export function slugFor(name: string) {
