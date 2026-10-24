@@ -1,6 +1,16 @@
 import { cents } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
-import { isLive, localDate, perMonth, periodOf, savingOf, trialDaysLeft, withVat } from "./billing-model";
+import {
+  isLive,
+  localDate,
+  planHeadline,
+  planState,
+  perMonth,
+  periodOf,
+  savingOf,
+  trialDaysLeft,
+  withVat,
+} from "./billing-model";
 
 describe("billing model", () => {
   it("matches the landing's per-month prices and savings", () => {
@@ -31,5 +41,31 @@ describe("billing model", () => {
     expect(isLive({ ...subscription, status: "active" })).toBe(true);
     expect(isLive({ ...subscription, status: "past_due" })).toBe(true);
     expect(isLive({ ...subscription, status: "canceled" })).toBe(false);
+  });
+
+  it("names where the company stands", () => {
+    const now = new Date("2026-10-24T10:00:00Z");
+    const plan = (status: "trial" | "active" | "pastDue" | "readOnly") => ({
+      status,
+      canWrite: status !== "readOnly",
+      trialEndsAt: "2026-10-30T10:00:00.000Z",
+    });
+    const sub = (status: string, cancelAtPeriodEnd = false) => ({
+      period: "yearly" as const,
+      status,
+      currentPeriodEnd: "2027-10-24T10:00:00.000Z",
+      cancelAtPeriodEnd,
+    });
+    expect(planHeadline({ plan: plan("trial"), subscription: null }, now)).toEqual({
+      title: "Prueba gratuita",
+      badge: "Quedan 6 días",
+      tone: "primary",
+    });
+    expect(planState({ plan: plan("readOnly"), subscription: null })).toBe("trialEnded");
+    expect(planState({ plan: plan("readOnly"), subscription: sub("canceled") })).toBe("subscriptionEnded");
+    expect(planState({ plan: plan("active"), subscription: sub("active") })).toBe("active");
+    expect(planState({ plan: plan("active"), subscription: sub("active", true) })).toBe("cancelled");
+    expect(planState({ plan: plan("pastDue"), subscription: sub("past_due") })).toBe("pastDue");
+    expect(planHeadline({ plan: plan("readOnly"), subscription: null }).badge).toBe("Solo lectura");
   });
 });
