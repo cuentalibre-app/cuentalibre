@@ -11,7 +11,7 @@ import type { Context } from "hono";
 import type { AppEnv } from "../context";
 import type { Db } from "../db/client";
 import { ApiError, errorContent } from "../errors";
-import { requireOrganization, scopeOf } from "../middleware";
+import { readOnlyError, requireOrganization, requireWritable, scopeOf } from "../middleware";
 import { expensesById, liveExpenses, toExpense } from "../sync/expenses";
 import { livePurchaseInvoices, purchaseInvoicesById } from "../sync/purchases";
 import { liveSalesDocuments, salesDocumentsById } from "../sync/sales";
@@ -154,13 +154,14 @@ function resourceRoutes(resource: Resource) {
         (entity === "salesDocuments"
           ? " Creates drafts, quotes and delivery notes; invoices are issued with `POST /v1/invoices`."
           : ""),
-      middleware: [requireOrganization] as const,
+      middleware: [requireOrganization, requireWritable] as const,
       request: { body: { required: true, content: json(schema.extend({ id: z.uuid().optional() })) } },
       responses: {
         201: { description: "Created", content: json(schema) },
         400: errorContent(`Invalid ${lower}`),
         409: errorContent("The ID is already used, or its quarter is closed"),
         ...tenantErrors,
+        ...readOnlyError,
       },
     }),
     async (c) => {
@@ -178,7 +179,7 @@ function resourceRoutes(resource: Resource) {
       tags: [tag],
       summary: `Change some fields of a ${lower}`,
       description: "Send only the fields to change; `null` clears an optional field.",
-      middleware: [requireOrganization] as const,
+      middleware: [requireOrganization, requireWritable] as const,
       request: { params: idParam, body: { required: true, content: json(z.record(z.string(), z.unknown())) } },
       responses: {
         200: { description: "Updated", content: json(schema) },
@@ -186,6 +187,7 @@ function resourceRoutes(resource: Resource) {
         404: errorContent(`No such ${lower}`),
         409: errorContent("An issued invoice, or one in a closed quarter, can't take this change"),
         ...tenantErrors,
+        ...readOnlyError,
       },
     }),
     async (c) => {
@@ -202,13 +204,14 @@ function resourceRoutes(resource: Resource) {
       path: `${path}/{id}`,
       tags: [tag],
       summary: `Delete a ${lower}`,
-      middleware: [requireOrganization] as const,
+      middleware: [requireOrganization, requireWritable] as const,
       request: { params: idParam },
       responses: {
         204: { description: "Deleted" },
         404: errorContent(`No such ${lower}`),
         409: errorContent("Issued invoices, and records of a closed quarter, can't be deleted"),
         ...tenantErrors,
+        ...readOnlyError,
       },
     }),
     async (c) => {
@@ -233,7 +236,7 @@ const issueNew = createRoute({
     "The server gives it the next number of its series and freezes its client data and totals; " +
     "from then on it can't be changed or deleted, only rectified. Send the ID of a draft to issue it " +
     "with the data sent. Under VERI*FACTU its record is created and sent to the AEAT.",
-  middleware: [requireOrganization] as const,
+  middleware: [requireOrganization, requireWritable] as const,
   request: {
     body: {
       required: true,
@@ -245,6 +248,7 @@ const issueNew = createRoute({
     400: errorContent("Invalid invoice"),
     409: errorContent("Already issued, dated before the last invoice of its series, or in a closed quarter"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 
@@ -253,7 +257,7 @@ const issueDraft = createRoute({
   path: "/sales-documents/{id}/issue",
   tags: ["Sales"],
   summary: "Issue a draft as it is",
-  middleware: [requireOrganization] as const,
+  middleware: [requireOrganization, requireWritable] as const,
   request: { params: idParam },
   responses: {
     201: { description: "Issued", content: json(storedSalesDocumentSchema) },
@@ -261,6 +265,7 @@ const issueDraft = createRoute({
     404: errorContent("No such draft"),
     409: errorContent("Dated before the last invoice of its series, or in a closed quarter"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 

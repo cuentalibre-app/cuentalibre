@@ -148,7 +148,9 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
       setError(
         e instanceof ApiError && e.code === "email_unavailable"
           ? "Este servidor no tiene configurado el envío de correo. Usa tu programa de correo."
-          : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
+          : e instanceof ApiError && e.code === "subscription_required"
+            ? "Tu empresa está en solo lectura. Suscríbete para volver a enviar documentos."
+            : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
       );
     } finally {
       setSending(false);
