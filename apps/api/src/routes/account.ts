@@ -12,6 +12,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { newId } from "@cuentalibre/core";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
+import { BREACHED_PASSWORD, BREACHED_PASSWORD_MESSAGE, isBreachedPassword } from "../breached-passwords";
 import type { AppEnv } from "../context";
 import type { Db } from "../db/client";
 import {
@@ -149,7 +150,7 @@ const createPassword = createRoute({
   },
   responses: {
     204: { description: "The password is set" },
-    400: errorContent("The password is too short or too long"),
+    400: errorContent("The password is too short or too long, or it has appeared in a data breach"),
     401: errorContent("Not signed in, or signed in with an API key"),
     403: errorContent("The session is not recent"),
     409: errorContent("The user has a password already"),
@@ -274,6 +275,8 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       .from(account)
       .where(and(eq(account.userId, userId), eq(account.providerId, "credential")));
     if (credential) return errorResponse(c, 409, "password_already_set", "The user has a password already.");
+    if (c.get("checkBreachedPasswords") && (await isBreachedPassword(newPassword)))
+      return errorResponse(c, 400, BREACHED_PASSWORD, BREACHED_PASSWORD_MESSAGE);
     // The row Better Auth makes on signing up with email and password
     await db.insert(account).values({
       id: newId(),

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Field } from "@/features/sales/form-fields";
 import { MIN_PASSWORD_LENGTH, authErrorMessage, oauthErrorMessage, resetPassword } from "./auth-api";
+import { PasswordMeter, newPasswordHint } from "./password-meter";
 import { PasswordInput } from "./password-input";
 import { AuthButton, AuthForm, AuthLayout, runAction } from "./auth-layout";
 import { FORGOT_PASSWORD_PATH, SIGN_IN_PATH, reloadAt } from "./session";
@@ -51,16 +52,19 @@ export function ResetPasswordPage() {
     >
       {token ? (
         <AuthForm onSubmit={submit} submitLabel="Cambiar contraseña" pending={pending} error={error}>
-          <Field label="Contraseña nueva" hint={`Al menos ${MIN_PASSWORD_LENGTH} caracteres.`}>
+          <Field label="Contraseña nueva" hint={newPasswordHint(password)}>
             {(props) => (
-              <PasswordInput
-                {...props}
-                autoComplete="new-password"
-                required
-                minLength={MIN_PASSWORD_LENGTH}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
+              <>
+                <PasswordInput
+                  {...props}
+                  autoComplete="new-password"
+                  required
+                  minLength={MIN_PASSWORD_LENGTH}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                <PasswordMeter password={password} />
+              </>
             )}
           </Field>
         </AuthForm>

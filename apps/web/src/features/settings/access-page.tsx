@@ -21,6 +21,7 @@ import {
   type LinkedAccount,
 } from "@/features/auth/auth-api";
 import { VerifyEmailDialog } from "@/features/auth/email-code";
+import { PasswordMeter, newPasswordHint } from "@/features/auth/password-meter";
 import { sessionState } from "@/features/auth/session";
 import { Field, Section } from "@/features/sales/form-fields";
 import { ACCESS_PATH } from "./settings-model";
@@ -575,13 +576,16 @@ function PasswordDialog({
   const field = (key: keyof typeof empty, label: string, autoComplete: string, hint?: string) => (
     <Field label={label} required error={visible[key]} hint={hint}>
       {(p) => (
-        <Input
-          {...p}
-          type="password"
-          autoComplete={autoComplete}
-          value={form[key]}
-          onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-        />
+        <>
+          <Input
+            {...p}
+            type="password"
+            autoComplete={autoComplete}
+            value={form[key]}
+            onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+          />
+          {key === "next" && <PasswordMeter password={form.next} />}
+        </>
       )}
     </Field>
   );
@@ -597,7 +601,7 @@ function PasswordDialog({
         </DialogDescription>
         <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
           {!creating && field("current", "Contraseña actual", "current-password")}
-          {field("next", "Nueva contraseña", "new-password", `Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`)}
+          {field("next", "Nueva contraseña", "new-password", newPasswordHint(form.next))}
           {field("repeat", "Repite la nueva contraseña", "new-password")}
           {error && (
             <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">

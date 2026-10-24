@@ -1,8 +1,9 @@
+import { createHash } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { newId } from "@cuentalibre/core";
-import { afterAll, expect } from "vitest";
+import { afterAll, expect, vi } from "vitest";
 import { createApp } from "../app";
 import { createAuth } from "../auth";
 import { createDb } from "../db/client";
@@ -41,6 +42,24 @@ export const accountMailer: Mailer = {
     accountEmails.push(email);
   },
 };
+
+/**
+ * Passwords Have I Been Pwned knows from data breaches. Its range API is answered here,
+ * so tests don't reach the internet; with `down`, it fails as if unreachable.
+ */
+export const pwnedPasswords = { known: new Set(["password1234"]), down: false };
+const realFetch = globalThis.fetch;
+vi.stubGlobal("fetch", async (input: string | URL | Request, init?: RequestInit) => {
+  const url = new URL(input instanceof Request ? input.url : input);
+  if (url.hostname !== "api.pwnedpasswords.com") return realFetch(input, init);
+  if (pwnedPasswords.down) return new Response(null, { status: 503 });
+  const prefix = url.pathname.split("/").pop()!.toUpperCase();
+  const lines = [...pwnedPasswords.known]
+    .map((password) => createHash("sha1").update(password).digest("hex").toUpperCase())
+    .filter((hash) => hash.startsWith(prefix))
+    .map((hash) => `${hash.slice(5)}:42`);
+  return new Response(lines.join("\r\n"), { headers: { "content-type": "text/plain" } });
+});
 
 export const app = createApp({ db, auth: createAuth(db, env, accountMailer), env, storage, mailer });
 

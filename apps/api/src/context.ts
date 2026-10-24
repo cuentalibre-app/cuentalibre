@@ -16,6 +16,8 @@ export interface AppEnv {
     verifactuEnvironment: VerifactuEnvironment;
     /** Sends email; null when the instance has no mail server. */
     mailer: Mailer | null;
+    /** Whether new passwords are checked against data breaches. */
+    checkBreachedPasswords: boolean;
     /** Largest file that can be uploaded, in bytes. */
     fileMaxBytes: number;
     user: SessionData["user"] | null;
