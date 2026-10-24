@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router";
 import { DemoBanner } from "@/features/auth/session-gate";
+import { VerifyEmailBanner } from "@/features/auth/verify-email-banner";
 import { FirstRunTour } from "@/features/tour/first-run-tour";
 import { BottomNav } from "./bottom-nav";
 import { CommandErrorNotice } from "./command-error-notice";
@@ -13,6 +14,7 @@ export function AppLayout() {
   return (
     <>
       <DemoBanner />
+      <VerifyEmailBanner />
       <CommandErrorNotice />
       <div className="flex min-h-dvh">
         <a

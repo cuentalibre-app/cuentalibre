@@ -19,7 +19,7 @@ export const newSetup = (): Setup => ({
 });
 
 export interface OnboardingStep {
-  key: "regime" | "identity" | "address" | "activity";
+  key: "email" | "regime" | "identity" | "address" | "activity";
   /** Name in the progress bar. */
   label: string;
   title: string;
@@ -29,6 +29,13 @@ export interface OnboardingStep {
 }
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
+  {
+    key: "email",
+    label: "Email",
+    title: "Confirma tu email",
+    description: "Así sabremos que está bien escrito y podrás recuperar tu cuenta si olvidas la contraseña.",
+    optional: true,
+  },
   {
     key: "regime",
     label: "Régimen fiscal",
@@ -58,6 +65,13 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     optional: true,
   },
 ];
+
+/**
+ * The wizard's steps: confirming the email first, while it isn't verified and the
+ * instance can send email. Google users come verified.
+ */
+export const onboardingSteps = (verifyEmail: boolean) =>
+  ONBOARDING_STEPS.filter((step) => verifyEmail || step.key !== "email");
 
 /** What stops the user from leaving a step: only the tax ID and the name are required. */
 export function stepErrors(step: OnboardingStep["key"], setup: Setup): ProfileErrors {
