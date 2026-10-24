@@ -1,6 +1,7 @@
 import type { MembershipRole } from "@cuentalibre/contracts";
 import type { VerifactuEnvironment } from "@cuentalibre/core";
 import type { Auth } from "./auth";
+import type { Billing } from "./billing";
 import type { Mailer } from "./email/mailer";
 import type { Db } from "./db/client";
 import type { FileStorage } from "./storage";
@@ -16,6 +17,8 @@ export interface AppEnv {
     verifactuEnvironment: VerifactuEnvironment;
     /** Sends email; null when the instance has no mail server. */
     mailer: Mailer | null;
+    /** Charging for Cloud; null when the instance doesn't bill. */
+    billing: Billing | null;
     /** Whether new passwords are checked against data breaches. */
     checkBreachedPasswords: boolean;
     /** Largest file that can be uploaded, in bytes. */

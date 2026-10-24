@@ -12,6 +12,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { newId } from "@cuentalibre/core";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
+import { isLive } from "../billing/plan";
 import { BREACHED_PASSWORD, BREACHED_PASSWORD_MESSAGE, isBreachedPassword } from "../breached-passwords";
 import type { AppEnv } from "../context";
 import type { Db } from "../db/client";
@@ -21,11 +22,13 @@ import {
   invitation,
   membership,
   organization,
+  subscription,
   user as userTable,
   userSetting,
   verification,
 } from "../db/schema";
 import { ApiError, errorContent, errorResponse } from "../errors";
+import { reportError } from "../error-reporting";
 import { requireOrganization, requireSession, requireUser } from "../middleware";
 import { parseOr } from "../sync/records";
 
@@ -110,7 +113,7 @@ const deleteAccount = createRoute({
   tags: ["Account"],
   summary: "Delete the signed-in user's account and the organizations only they belong to",
   description:
-    "Erases the user, their sessions, sign-in methods and API keys, and every organization where they are the only member, with all its data and files. Organizations shared with other people are kept; the user just leaves them. Needs a browser session (an API key can't do it) and the current password; users without one, who sign in with Google, need a session started in the last ten minutes instead.",
+    "Erases the user, their sessions, sign-in methods and API keys, and every organization where they are the only member, with all its data and files, and cancels their subscriptions. Organizations shared with other people are kept; the user just leaves them. Needs a browser session (an API key can't do it) and the current password; users without one, who sign in with Google, need a session started in the last ten minutes instead.",
   middleware: [requireSession] as const,
   request: {
     body: {
@@ -303,7 +306,7 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       return errorResponse(c, 403, "session_not_fresh", "Sign in again to confirm it's you, then delete the account.");
     }
 
-    const storageKeys = await db.transaction(async (tx) => {
+    const { storageKeys, subscriptionIds } = await db.transaction(async (tx) => {
       // Lock the user's memberships so nobody joins or leaves their organizations meanwhile
       const mine = await tx
         .select({ organizationId: membership.organizationId, role: membership.role })
@@ -334,19 +337,36 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
             (row) => row.key,
           )
         : [];
+      const subscriptions = solo.length
+        ? await tx
+            .select({ id: subscription.stripeSubscriptionId, status: subscription.status })
+            .from(subscription)
+            .where(inArray(subscription.organizationId, solo))
+        : [];
       // Everything an organization holds cascades from it: records, settings, files, outbox, VERI*FACTU…
       if (solo.length) await tx.delete(organization).where(inArray(organization.id, solo));
       await tx.delete(invitation).where(sql`lower(${invitation.email}) = lower(${email})`);
       await tx.delete(verification).where(eq(verification.value, userId));
       // Sessions, sign-in accounts, memberships, API keys and sent invitations cascade from the user.
       await tx.delete(userTable).where(eq(userTable.id, userId));
-      return keys;
+      return {
+        storageKeys: keys,
+        subscriptionIds: subscriptions.filter((row) => row.id && isLive(row.status)).map((row) => row.id!),
+      };
     });
 
     // After the commit: a file left behind by a failure here is unreachable, never a dangling row.
     const storage = c.get("storage");
     for (const key of storageKeys) {
       await storage.delete(key).catch((error: unknown) => console.error(`Couldn't delete file ${key}`, error));
+    }
+    // Nobody is left to use what they would pay for. A failure must reach someone, who cancels it by hand.
+    const billing = c.get("billing");
+    for (const id of subscriptionIds) {
+      await billing?.stripe.cancelSubscription(id).catch((error: unknown) => {
+        console.error(`Couldn't cancel subscription ${id}`, error);
+        reportError(error, { method: c.req.method, route: c.req.routePath });
+      });
     }
     return c.body(null, 204);
   });
