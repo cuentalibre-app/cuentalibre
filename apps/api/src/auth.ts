@@ -130,7 +130,7 @@ function googleProvider(env: Env) {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       prompt: "select_account" as const,
-      // A Google account only becomes a new user from the sign-up screen, where the terms are accepted.
+      // A Google account only becomes a new user when the web app asks, next to the terms it accepts.
       disableImplicitSignUp: true,
     },
   };
