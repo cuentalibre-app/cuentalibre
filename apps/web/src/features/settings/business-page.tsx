@@ -1,49 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { checkSpanishTaxId, isValidEmail, normalizeTaxId } from "@cuentalibre/core";
-import type { BusinessKind, BusinessProfile } from "@cuentalibre/contracts";
+import { normalizeTaxId } from "@cuentalibre/core";
+import type { BusinessProfile } from "@cuentalibre/contracts";
 import { Input } from "@cuentalibre/ui/components/input";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { AddressFields } from "@/features/contacts/contact-fields";
 import { Field, Section } from "@/features/sales/form-fields";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
-import { addressLine, businessName, fullName, INVOICE_SETTINGS_PATH } from "./settings-model";
+import {
+  addressLine,
+  BUSINESS_KINDS,
+  businessName,
+  fullName,
+  INVOICE_SETTINGS_PATH,
+  profileErrors,
+} from "./settings-model";
 import { settingsStore, useSettings } from "./settings-store";
-
-type Errors = Partial<Record<keyof BusinessProfile, string>>;
-
-const KIND_OPTIONS: { value: BusinessKind; label: string }[] = [
-  { value: "selfEmployed", label: "Autónomo" },
-  { value: "company", label: "Sociedad" },
-];
-
-/** A self-employed worker files with their NIF or NIE; a company with its CIF. */
-function taxIdError(kind: BusinessKind, taxId: string): string | undefined {
-  const check = checkSpanishTaxId(taxId);
-  if (!check.valid) {
-    if (check.reason === "empty") return "Introduce tu NIF.";
-    if (check.reason === "checksum") return "La letra o el dígito de control no es correcto.";
-    return "El formato no es correcto. Ejemplos: 12345678Z (NIF), X1234567L (NIE) o B12345674 (CIF).";
-  }
-  if (kind === "selfEmployed" && check.kind === "cif")
-    return "Un CIF es de una sociedad. Cambia el tipo de empresa o revisa el NIF.";
-  if (kind === "company" && check.kind !== "cif")
-    return "Una sociedad se identifica con su CIF, no con un NIF personal.";
-  return undefined;
-}
-
-function validate(p: BusinessProfile): Errors {
-  const errors: Errors = {};
-  const taxId = taxIdError(p.kind, p.taxId);
-  if (taxId) errors.taxId = taxId;
-  if (p.kind === "selfEmployed") {
-    if (!p.firstName.trim()) errors.firstName = "Introduce tu nombre.";
-    if (!p.lastName.trim()) errors.lastName = "Introduce tu primer apellido.";
-  } else if (!p.legalName.trim()) errors.legalName = "Introduce la razón social.";
-  if (p.email.trim() && !isValidEmail(p.email)) errors.email = "El email no es válido.";
-  return errors;
-}
 
 /** How the issuer block of an invoice will look with the current draft. */
 function InvoicePreview({ profile }: { profile: BusinessProfile }) {
@@ -89,7 +62,7 @@ export function BusinessPage() {
   const saved = useSettings().profile;
   const { draft, set, dirty, justSaved, markSaved } = useDraft(saved);
   const [showErrors, setShowErrors] = useState(false);
-  const errors = validate(draft);
+  const errors = profileErrors(draft);
   const visible = showErrors ? errors : {};
 
   const save = () => {
@@ -119,7 +92,7 @@ export function BusinessPage() {
                 label="Tipo de empresa"
                 value={draft.kind}
                 onChange={(kind) => set("kind", kind)}
-                options={KIND_OPTIONS}
+                options={BUSINESS_KINDS}
                 className="self-start"
               />
               <div className="grid gap-4 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">

@@ -11,6 +11,7 @@ import {
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
 import type { ContactDraft, DraftErrors } from "./contact-draft";
 import { COUNTRIES, ROLES, contactPath, taxIdWarning } from "./contacts-model";
@@ -170,9 +171,12 @@ type AddressDraft = Pick<ContactDraft, "address" | "postalCode" | "city" | "prov
 export function AddressFields({
   draft,
   set,
+  compact = false,
 }: {
   draft: AddressDraft;
   set: <K extends keyof AddressDraft>(key: K, value: AddressDraft[K]) => void;
+  /** Two columns at most, for narrow forms such as onboarding. */
+  compact?: boolean;
 }) {
   const query = [draft.address, draft.postalCode, draft.city, draft.province, draft.country]
     .filter((v) => v.trim())
@@ -186,8 +190,13 @@ export function AddressFields({
   };
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <Field label="Dirección" className="sm:col-span-2 xl:col-span-1">
+      <div
+        className={cn(
+          "grid gap-4 sm:grid-cols-2",
+          !compact && "xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]",
+        )}
+      >
+        <Field label="Dirección" className={cn("sm:col-span-2", !compact && "xl:col-span-1")}>
           {(p) => (
             <Input
               {...p}

@@ -1,5 +1,7 @@
+import { checkSpanishTaxId, isValidEmail } from "@cuentalibre/core";
 import type {
   AccountKind,
+  BusinessKind,
   BusinessProfile,
   FiscalRegion,
   IncomeTaxMethod,
@@ -35,6 +37,41 @@ export const EMAIL_SETTINGS_PATH = "/configuracion/correo";
 export const API_KEYS_PATH = "/configuracion/api";
 
 /* ───────────────────────────── Business profile ───────────────────────────── */
+
+export const BUSINESS_KINDS: Option<BusinessKind>[] = [
+  { value: "selfEmployed", label: "Autónomo" },
+  { value: "company", label: "Sociedad" },
+];
+
+export type ProfileErrors = Partial<Record<keyof BusinessProfile, string>>;
+
+/** A self-employed worker files with their NIF or NIE; a company with its CIF. */
+export function taxIdError(kind: BusinessKind, taxId: string): string | undefined {
+  const check = checkSpanishTaxId(taxId);
+  if (!check.valid) {
+    if (check.reason === "empty") return "Introduce tu NIF.";
+    if (check.reason === "checksum") return "La letra o el dígito de control no es correcto.";
+    return "El formato no es correcto. Ejemplos: 12345678Z (NIF), X1234567L (NIE) o B12345674 (CIF).";
+  }
+  if (kind === "selfEmployed" && check.kind === "cif")
+    return "Un CIF es de una sociedad. Cambia el tipo de empresa o revisa el NIF.";
+  if (kind === "company" && check.kind !== "cif")
+    return "Una sociedad se identifica con su CIF, no con un NIF personal.";
+  return undefined;
+}
+
+/** What stops the profile from being saved: the tax ID, the name and a well-formed email. */
+export function profileErrors(p: BusinessProfile): ProfileErrors {
+  const errors: ProfileErrors = {};
+  const taxId = taxIdError(p.kind, p.taxId);
+  if (taxId) errors.taxId = taxId;
+  if (p.kind === "selfEmployed") {
+    if (!p.firstName.trim()) errors.firstName = "Introduce tu nombre.";
+    if (!p.lastName.trim()) errors.lastName = "Introduce tu primer apellido.";
+  } else if (!p.legalName.trim()) errors.legalName = "Introduce la razón social.";
+  if (p.email.trim() && !isValidEmail(p.email)) errors.email = "El email no es válido.";
+  return errors;
+}
 
 /** Full name of a self-employed worker, or the company's legal name. */
 export function fullName(profile: BusinessProfile): string {

@@ -1,20 +1,309 @@
-import { useState } from "react";
+import { useRef, useState, type FormEvent } from "react";
+import { ChevronLeft, Star, TriangleAlert } from "lucide-react";
+import { normalizeTaxId } from "@cuentalibre/core";
+import type { BusinessProfile, FiscalRegion, IncomeTaxMethod, TaxSetup, VatRegime } from "@cuentalibre/contracts";
+import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
-import { Field } from "@/features/sales/form-fields";
-import { authErrorMessage, createOrganization } from "./auth-api";
-import { AuthForm, AuthLayout, runAction } from "./auth-layout";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { AddressFields } from "@/features/contacts/contact-fields";
+import { Field, GroupedSelect } from "@/features/sales/form-fields";
+import { ActivityPicker } from "@/features/settings/activity-picker";
+import {
+  BUSINESS_KINDS,
+  INCOME_TAX_METHODS,
+  REGIONS,
+  VAT_REGIMES,
+  businessName,
+  fullName,
+  unsupportedSetup,
+  type ProfileErrors,
+} from "@/features/settings/settings-model";
+import { authErrorMessage, createOrganization, saveSettings } from "./auth-api";
+import { AuthButton, AuthLayout, runAction } from "./auth-layout";
+import {
+  ONBOARDING_STEPS,
+  newSetup,
+  organizationName,
+  setupCommands,
+  stepErrors,
+  type Setup,
+} from "./onboarding-model";
 import { reloadAt } from "./session";
 
-/** After signing up: the user creates the business their data belongs to. */
+type SetProfile = <K extends keyof BusinessProfile>(key: K, value: BusinessProfile[K]) => void;
+type SetTax = <K extends keyof TaxSetup>(key: K, value: TaxSetup[K]) => void;
+
+/** Which step the user is on, and how far along: a bar per step, filled up to the current one. */
+function Progress({ step }: { step: number }) {
+  const current = ONBOARDING_STEPS[step]!;
+  return (
+    <div className="mb-3 flex flex-col gap-2.5">
+      <ol aria-hidden="true" className="m-0 flex list-none gap-1.5 p-0">
+        {ONBOARDING_STEPS.map((s, i) => (
+          <li
+            key={s.key}
+            className={cn(
+              "h-1 flex-1 rounded-full transition-colors duration-300",
+              i <= step ? "bg-primary" : "bg-muted",
+            )}
+          />
+        ))}
+      </ol>
+      <p className="m-0 text-sm font-medium text-muted-foreground">
+        Paso {step + 1} de {ONBOARDING_STEPS.length} · {current.label}
+        {current.optional && " · opcional"}
+      </p>
+    </div>
+  );
+}
+
+function RegimeStep({ setup, setProfile, setTax }: { setup: Setup; setProfile: SetProfile; setTax: SetTax }) {
+  const { profile, tax } = setup;
+  const notes = unsupportedSetup(tax);
+  return (
+    <>
+      <SegmentedControl
+        label="Tipo de empresa"
+        value={profile.kind}
+        onChange={(kind) => setProfile("kind", kind)}
+        options={BUSINESS_KINDS}
+        className="self-start"
+      />
+      <Field
+        label="Región fiscal"
+        help="Cada territorio tiene su propia normativa: en Canarias, por ejemplo, se aplica el IGIC en lugar del IVA."
+      >
+        {(p) => (
+          <GroupedSelect
+            {...p}
+            value={tax.region}
+            onChange={(v) => setTax("region", v as FiscalRegion)}
+            groups={[{ options: REGIONS }]}
+          />
+        )}
+      </Field>
+      {profile.kind === "selfEmployed" && (
+        <Field
+          label="Método de estimación de IRPF"
+          help="Decide cómo se calcula el rendimiento de tu actividad en los modelos 130 y 100."
+        >
+          {(p) => (
+            <GroupedSelect
+              {...p}
+              value={tax.incomeTaxMethod}
+              onChange={(v) => setTax("incomeTaxMethod", v as IncomeTaxMethod)}
+              groups={[{ options: INCOME_TAX_METHODS }]}
+            />
+          )}
+        </Field>
+      )}
+      <Field label="Régimen de IVA">
+        {(p) => (
+          <GroupedSelect
+            {...p}
+            value={tax.vatRegime}
+            onChange={(v) => setTax("vatRegime", v as VatRegime)}
+            groups={[{ options: VAT_REGIMES }]}
+          />
+        )}
+      </Field>
+      {notes.length > 0 && (
+        <div role="note" className="flex gap-2 rounded-lg bg-warning-soft px-3 py-2.5 text-sm">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
+          <div className="flex flex-col gap-1">
+            <span className="font-medium">cuentalibre todavía no prepara los modelos de este régimen.</span>
+            {notes.map((n) => (
+              <span key={n} className="text-muted-foreground">
+                {n}
+              </span>
+            ))}
+            <span className="text-muted-foreground">Puedes llevar tus facturas y gastos igualmente.</span>
+          </div>
+        </div>
+      )}
+      <details className="group rounded-lg border border-border px-4 py-3 text-sm">
+        <summary className="cursor-pointer font-medium text-foreground marker:text-muted-foreground">
+          ¿Dónde lo miro?
+        </summary>
+        <div className="mt-2 flex flex-col gap-2 text-muted-foreground">
+          <p className="m-0">
+            Lo elegiste al darte de alta en Hacienda: aparece en el modelo 036 o 037 que presentaste. Si te lo tramitó
+            una gestoría, pídeselo.
+          </p>
+          <p className="m-0">
+            Lo más habitual es la estimación directa simplificada para el IRPF y el régimen general para el IVA. Si no
+            estás seguro, déjalos así: podrás cambiarlos en Configuración › Impuestos.
+          </p>
+        </div>
+      </details>
+    </>
+  );
+}
+
+function IdentityStep({ profile, set, errors }: { profile: BusinessProfile; set: SetProfile; errors: ProfileErrors }) {
+  const company = profile.kind === "company";
+  const name = businessName(profile);
+  return (
+    <>
+      <Field
+        label={company ? "CIF" : "NIF"}
+        required
+        error={errors.taxId}
+        help="Se comprueba la letra o el dígito de control. Es el que figura en tu alta censal (modelo 036 o 037)."
+      >
+        {(p) => (
+          <Input
+            {...p}
+            value={profile.taxId}
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(e) => set("taxId", e.target.value)}
+            className="font-mono uppercase"
+          />
+        )}
+      </Field>
+      {company ? (
+        <Field label="Razón social" required error={errors.legalName}>
+          {(p) => (
+            <Input
+              {...p}
+              value={profile.legalName}
+              autoComplete="organization"
+              onChange={(e) => set("legalName", e.target.value)}
+            />
+          )}
+        </Field>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Nombre" required error={errors.firstName} className="sm:col-span-2">
+            {(p) => (
+              <Input
+                {...p}
+                value={profile.firstName}
+                autoComplete="given-name"
+                onChange={(e) => set("firstName", e.target.value)}
+              />
+            )}
+          </Field>
+          <Field label="Primer apellido" required error={errors.lastName}>
+            {(p) => (
+              <Input
+                {...p}
+                value={profile.lastName}
+                autoComplete="family-name"
+                onChange={(e) => set("lastName", e.target.value)}
+              />
+            )}
+          </Field>
+          <Field label="Segundo apellido">
+            {(p) => (
+              <Input {...p} value={profile.secondLastName} onChange={(e) => set("secondLastName", e.target.value)} />
+            )}
+          </Field>
+        </div>
+      )}
+      <Field
+        label="Nombre a mostrar en las facturas"
+        hint={`Tu nombre comercial, si tienes. Vacío, se usa ${company ? "la razón social" : "el nombre completo"}.`}
+      >
+        {(p) => (
+          <Input
+            {...p}
+            value={profile.tradeName}
+            placeholder={fullName(profile)}
+            onChange={(e) => set("tradeName", e.target.value)}
+          />
+        )}
+      </Field>
+      <Field label="Teléfono">
+        {(p) => (
+          <Input
+            {...p}
+            type="tel"
+            value={profile.phone}
+            autoComplete="tel"
+            onChange={(e) => set("phone", e.target.value)}
+          />
+        )}
+      </Field>
+      {name && (
+        <p className="m-0 flex flex-col gap-0.5 rounded-lg bg-muted px-4 py-3">
+          <span className="text-2xs tracking-wide text-muted-foreground uppercase">Así apareces en tus facturas</span>
+          <span className="font-semibold">{name}</span>
+          {profile.taxId.trim() && (
+            <span className="text-sm text-muted-foreground">
+              {company ? "CIF" : "NIF"} {normalizeTaxId(profile.taxId)}
+            </span>
+          )}
+        </p>
+      )}
+    </>
+  );
+}
+
+function ActivityStep({ tax, set }: { tax: TaxSetup; set: SetTax }) {
+  const main = tax.activities[0];
+  if (main)
+    return (
+      <div className="flex items-start gap-3 rounded-lg border border-border bg-card px-4 py-3.5">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+            <Star className="size-3.5 fill-current" aria-hidden="true" />
+            Actividad principal
+          </span>
+          <span>
+            {main.code && <span className="font-mono text-muted-foreground">{main.code}</span>} {main.name}
+          </span>
+          <span className="text-sm text-muted-foreground">Si tienes más, añádelas en Configuración › Impuestos.</span>
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => set("activities", [])}>
+          Cambiar
+        </Button>
+      </div>
+    );
+  return <ActivityPicker existing={tax.activities} onPick={(a) => set("activities", [a])} listClassName="max-h-64" />;
+}
+
+/**
+ * After signing up: the business's tax setup, tax ID and name, address and
+ * activity, step by step. The business is created at the end, with everything
+ * at once, and the app opens with the first-run tour.
+ */
 export function OnboardingPage() {
-  const [name, setName] = useState("");
+  const [setup, setSetup] = useState(newSetup);
+  const [step, setStep] = useState(0);
+  const [showErrors, setShowErrors] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Saving the settings can fail after the business was created: a retry mustn't create another
+  const created = useRef(false);
 
-  const submit = () =>
+  const current = ONBOARDING_STEPS[step]!;
+  const last = step === ONBOARDING_STEPS.length - 1;
+  const errors = stepErrors(current.key, setup);
+  // Once the activity is chosen, "later" would throw it away
+  const skippable = current.optional && !(current.key === "activity" && setup.tax.activities.length > 0);
+
+  const setProfile: SetProfile = (key, value) => setSetup((s) => ({ ...s, profile: { ...s.profile, [key]: value } }));
+  const setTax: SetTax = (key, value) => setSetup((s) => ({ ...s, tax: { ...s.tax, [key]: value } }));
+
+  const goTo = (next: number) => {
+    setStep(next);
+    setShowErrors(false);
+    setError(null);
+    window.scrollTo({ top: 0 });
+  };
+
+  const finish = (done: Setup) =>
     runAction(
       async () => {
-        await createOrganization(name.trim());
+        if (!created.current) {
+          await createOrganization(organizationName(done));
+          created.current = true;
+        }
+        await saveSettings(setupCommands(done));
         reloadAt("/");
       },
       setPending,
@@ -22,21 +311,61 @@ export function OnboardingPage() {
       authErrorMessage,
     );
 
+  const next = () => {
+    if (Object.keys(errors).length > 0) {
+      setShowErrors(true);
+      return;
+    }
+    if (last) void finish(setup);
+    else goTo(step + 1);
+  };
+
+  const skip = () => {
+    if (last) void finish({ ...setup, tax: { ...setup.tax, activities: [] } });
+    else goTo(step + 1);
+  };
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    next();
+  };
+
   return (
-    <AuthLayout title="Tu negocio" description="¿Con qué nombre trabajas? Podrás cambiarlo más adelante.">
-      <AuthForm onSubmit={submit} submitLabel="Empezar" pending={pending} error={error}>
-        <Field label="Nombre comercial o razón social">
-          {(props) => (
-            <Input
-              {...props}
-              autoComplete="organization"
-              required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <AuthLayout wide eyebrow={<Progress step={step} />} title={current.title} description={current.description}>
+        <form key={current.key} onSubmit={submit} noValidate className="flex animate-rise-in flex-col gap-4">
+          {current.key === "regime" && <RegimeStep setup={setup} setProfile={setProfile} setTax={setTax} />}
+          {current.key === "identity" && (
+            <IdentityStep profile={setup.profile} set={setProfile} errors={showErrors ? errors : {}} />
           )}
-        </Field>
-      </AuthForm>
-    </AuthLayout>
+          {current.key === "address" && <AddressFields compact draft={setup.profile} set={setProfile} />}
+          {current.key === "activity" && <ActivityStep tax={setup.tax} set={setTax} />}
+
+          {error && (
+            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <AuthButton type="submit" disabled={pending} className="mt-1">
+            {pending ? "Un momento…" : last ? "Empezar" : "Continuar"}
+          </AuthButton>
+          <div className="flex items-center justify-between gap-3">
+            {step > 0 ? (
+              <Button variant="ghost" size="sm" disabled={pending} onClick={() => goTo(step - 1)}>
+                <ChevronLeft aria-hidden="true" />
+                Atrás
+              </Button>
+            ) : (
+              <span />
+            )}
+            {skippable && (
+              <Button variant="ghost" size="sm" disabled={pending} onClick={skip}>
+                Lo haré más tarde
+              </Button>
+            )}
+          </div>
+        </form>
+      </AuthLayout>
+    </TooltipProvider>
   );
 }
