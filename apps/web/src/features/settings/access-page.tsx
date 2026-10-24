@@ -10,6 +10,7 @@ import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import {
   authErrorMessage,
   changePassword,
+  createPassword,
   currentUser,
   linkGoogle,
   linkedAccounts,
@@ -280,6 +281,8 @@ function AccountEmailRow() {
 function AccountPasswordRow() {
   const [state, setState] = useState<{ hasPassword: boolean; changedAt: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [created, setCreated] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -294,6 +297,7 @@ function AccountPasswordRow() {
   if (state?.hasPassword) {
     return (
       <PasswordRow
+        notice={created ? "Contraseña creada. Ya puedes entrar también con tu email y esta contraseña." : ""}
         changedAt={state.changedAt}
         change={async (current, next) => {
           await changePassword(current, next);
@@ -303,13 +307,38 @@ function AccountPasswordRow() {
     );
   }
   return (
-    <Row label="Contraseña">
+    <Row
+      label="Contraseña"
+      action={
+        state && (
+          <Button variant="secondary" size="md" onClick={() => setCreating(true)}>
+            <KeyRound aria-hidden="true" />
+            Crear contraseña
+          </Button>
+        )
+      }
+    >
       <span className="text-muted-foreground">{state ? "No tienes contraseña: entras con Google." : "…"}</span>
+      {state && (
+        <span className="text-sm text-muted-foreground">
+          Crea una para poder entrar también con tu email, por si algún día no puedes usar Google.
+        </span>
+      )}
       {error && (
         <span role="alert" className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
           {error}
         </span>
       )}
+      <PasswordDialog
+        creating
+        open={creating}
+        onOpenChange={setCreating}
+        change={(_, next) => createPassword(next)}
+        onChanged={() => {
+          setState({ hasPassword: true, changedAt: new Date().toISOString() });
+          setCreated(true);
+        }}
+      />
     </Row>
   );
 }
@@ -317,12 +346,15 @@ function AccountPasswordRow() {
 function PasswordRow({
   changedAt,
   change,
+  notice: initialNotice = "",
 }: {
   changedAt: string | null;
   change: (current: string, next: string) => Promise<void>;
+  /** What to say when it shows, such as that the password was just created. */
+  notice?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState(initialNotice);
   return (
     <Row
       label="Contraseña"
@@ -492,29 +524,33 @@ function DialogActions({ submitLabel, disabled }: { submitLabel: string; disable
   );
 }
 
+/** Changes the password, or with `creating`, gives one to a user who has none, without asking for it. */
 function PasswordDialog({
   open,
   onOpenChange,
   change: changeTo,
   onChanged,
+  creating = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   change: (current: string, next: string) => Promise<void>;
   onChanged: () => void;
+  creating?: boolean;
 }) {
+  const title = creating ? "Crear contraseña" : "Cambiar contraseña";
   const empty = { current: "", next: "", repeat: "" };
   const [form, setForm] = useState(empty);
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const errors = {
-    current: form.current ? undefined : "Introduce tu contraseña actual.",
+    current: form.current || creating ? undefined : "Introduce tu contraseña actual.",
     next: !form.next
       ? "Introduce la nueva contraseña."
       : form.next.length < MIN_PASSWORD_LENGTH
         ? `Debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`
-        : form.next === form.current
+        : form.next === form.current && !creating
           ? "Debe ser distinta de la actual."
           : undefined,
     repeat: form.repeat === form.next ? undefined : "Las contraseñas no coinciden.",
@@ -561,10 +597,14 @@ function PasswordDialog({
   return (
     <Dialog open={open} onOpenChange={change}>
       <DialogContent className="max-w-md">
-        <DialogTitle>Cambiar contraseña</DialogTitle>
-        <DialogDescription>Al cambiarla se cerrará la sesión en el resto de dispositivos.</DialogDescription>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>
+          {creating
+            ? "Con ella podrás entrar también con tu email, además de con Google."
+            : "Al cambiarla se cerrará la sesión en el resto de dispositivos."}
+        </DialogDescription>
         <form noValidate onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
-          {field("current", "Contraseña actual", "current-password")}
+          {!creating && field("current", "Contraseña actual", "current-password")}
           {field("next", "Nueva contraseña", "new-password", `Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`)}
           {field("repeat", "Repite la nueva contraseña", "new-password")}
           {error && (
@@ -572,7 +612,7 @@ function PasswordDialog({
               {error}
             </p>
           )}
-          <DialogActions submitLabel={pending ? "Cambiando…" : "Cambiar contraseña"} disabled={pending} />
+          <DialogActions submitLabel={pending ? (creating ? "Creando…" : "Cambiando…") : title} disabled={pending} />
         </form>
       </DialogContent>
     </Dialog>

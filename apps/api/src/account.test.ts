@@ -177,6 +177,53 @@ describe("changing the password", () => {
   });
 });
 
+describe("creating a password", () => {
+  const create = (someone: Client, newPassword = "a-new-long-password") =>
+    someone.request("/v1/me/password", { method: "POST", body: { newPassword } });
+
+  /** Like someone who signed up with Google: no password, a session from `minutesAgo`. */
+  async function googleUser(minutesAgo = 0) {
+    const ana = await signUp();
+    const anaId = await userIdOf(ana);
+    await db.delete(account).where(eq(account.userId, anaId));
+    await db
+      .update(session)
+      .set({ createdAt: new Date(Date.now() - minutesAgo * 60 * 1000) })
+      .where(eq(session.userId, anaId));
+    return ana;
+  }
+
+  it("lets users who only sign in with Google sign in with their email too", async () => {
+    const ana = await googleUser();
+    expect((await signIn(ana.email, "a-new-long-password")).status).toBe(401);
+
+    expect((await create(ana)).status).toBe(204);
+    expect(await passwordChangedAt(ana)).not.toBeNull();
+    expect((await signIn(ana.email, "a-new-long-password")).status).toBe(200);
+  });
+
+  it("asks for a recent session", async () => {
+    const ana = await googleUser(11);
+    const response = await create(ana);
+    expect(response.status).toBe(403);
+    expect(await errorCode(response)).toBe("session_not_fresh");
+    expect(await passwordChangedAt(ana)).toBeNull();
+  });
+
+  it("doesn't replace a password the user has", async () => {
+    const ana = await signUp();
+    const response = await create(ana);
+    expect(response.status).toBe(409);
+    expect(await errorCode(response)).toBe("password_already_set");
+    expect((await signIn(ana.email, PASSWORD)).status).toBe(200);
+  });
+
+  it("asks for at least 8 characters", async () => {
+    const ana = await googleUser();
+    expect((await create(ana, "short")).status).toBe(400);
+  });
+});
+
 describe("the user's own settings", () => {
   const profile = { firstName: "Ana", lastName: "Ruiz Gil", birthDate: "1990-05-02", phone: "600 000 000", gender: "" };
   const me = async (someone: Client) => (await (await someone.request("/v1/me")).json()) as Me;
