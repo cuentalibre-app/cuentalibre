@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   ArrowDownWideNarrow,
@@ -7,6 +7,7 @@ import {
   Building2,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   FileSignature,
   FilePen,
   FileText,
@@ -30,12 +31,14 @@ import { CATALOG_SETTINGS_PATH } from "@/features/catalog/catalog-model";
 import { isVerifactuMandatory, verifactuMandatoryFrom } from "@cuentalibre/core";
 import { IMPORT_PATH } from "@/features/transfer/transfer-model";
 import { LegalLinks } from "@/components/legal-links";
+import { signInMethods } from "@/features/auth/auth-api";
 import { formatDate } from "@/lib/format";
 import { useCompliance } from "./compliance-store";
 import {
   ACCESS_PATH,
   ACCOUNTS_PATH,
   API_KEYS_PATH,
+  BILLING_PATH,
   BUSINESS_PATH,
   businessName,
   CERTIFICATES_PATH,
@@ -141,6 +144,15 @@ export function SettingsPage() {
   const activeAccounts = accounts.filter((a) => a.active).length;
   const activeMethods = paymentMethods.filter((m) => m.active).length;
   const main = tax.activities[0];
+  // Only instances that charge for their plan (cuentalibre Cloud) have one to show
+  const [billing, setBilling] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void signInMethods().then((methods) => active && setBilling(methods.billing));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const groups: { title: string; entries: Entry[] }[] = [
     {
@@ -170,6 +182,16 @@ export function SettingsPage() {
           icon: Building2,
           summary: `${businessName(profile)} · ${profile.taxId}`,
         },
+        ...(billing
+          ? [
+              {
+                title: "Plan y facturación",
+                description: "Tu suscripción a cuentalibre Cloud, cómo la pagas y tus facturas.",
+                to: BILLING_PATH,
+                icon: CreditCard,
+              },
+            ]
+          : []),
         {
           title: "Facturas",
           description: "Series de numeración, plantilla del PDF, logotipo y textos.",
