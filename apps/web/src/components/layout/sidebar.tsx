@@ -218,7 +218,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
                   className="flex items-baseline gap-3 rounded-md text-sidebar-foreground no-underline"
                 >
                   <LogoMark className="h-7" />
-                  <span className="text-xl font-semibold tracking-tight">cuentalibre</span>
+                  <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
                 </NavLink>
               </span>
             </>
