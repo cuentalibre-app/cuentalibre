@@ -3,7 +3,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import { eq } from "drizzle-orm";
 import { customerOf, handleEvent, type Billing } from "../billing";
-import { isLive, planOf } from "../billing/plan";
+import { firstChargeOf, isLive, planOf } from "../billing/plan";
 import { verifyWebhook } from "../billing/stripe";
 import type { AppEnv } from "../context";
 import { organization, subscription } from "../db/schema";
@@ -37,7 +37,7 @@ const checkout = createRoute({
   tags: ["Billing"],
   summary: "Start paying for the organization: a Stripe Checkout page to open",
   description:
-    "Only owners and administrators, signed in. Back from Stripe, the plan changes once its webhook arrives.",
+    "Only owners and administrators, signed in. During the trial the card is taken now and the first charge lands when the trial ends. Back from Stripe, the plan changes once its webhook arrives.",
   middleware: [requireSession, requireOrganization] as const,
   request: { body: { required: true, content: json(checkoutRequestSchema) } },
   responses: {
@@ -104,27 +104,40 @@ export const billingRoutes = (billing: Billing, webOrigin: string) => {
       const db = c.get("db");
       const organizationId = c.get("organizationId");
       const [org] = await db
-        .select({ id: organization.id, name: organization.name, status: subscription.status })
+        .select({
+          id: organization.id,
+          name: organization.name,
+          createdAt: organization.createdAt,
+          status: subscription.status,
+        })
         .from(organization)
         .leftJoin(subscription, eq(subscription.organizationId, organization.id))
         .where(eq(organization.id, organizationId));
       if (isLive(org!.status ?? null))
         return errorResponse(c, 409, "already_subscribed", "The organization already has a subscription.");
 
+      const { period, returnTo } = c.req.valid("json");
+      const back = returnTo === "app" ? `${webOrigin}/` : returnUrl;
+      const firstCharge = firstChargeOf(org!);
       const customer = await customerOf(db, billing, org!, c.get("user")!.email);
       const session = await billing.stripe.createCheckoutSession({
         mode: "subscription",
         customer,
         client_reference_id: organizationId,
-        line_items: [{ price: billing.prices[c.req.valid("json").period], quantity: 1 }],
-        subscription_data: { default_tax_rates: [billing.taxRate], metadata: { organization_id: organizationId } },
+        line_items: [{ price: billing.prices[period], quantity: 1 }],
+        subscription_data: {
+          default_tax_rates: [billing.taxRate],
+          metadata: { organization_id: organizationId },
+          // Subscribing during the trial keeps its remaining days
+          trial_end: firstCharge ? Math.floor(firstCharge.getTime() / 1000) : undefined,
+        },
         // Our invoices need the customer's address and, for businesses, their tax ID
         billing_address_collection: "required",
         tax_id_collection: { enabled: true },
         customer_update: { name: "auto", address: "auto" },
         locale: "es",
-        success_url: `${returnUrl}?suscripcion=ok`,
-        cancel_url: returnUrl,
+        success_url: `${back}?suscripcion=ok`,
+        cancel_url: back,
       });
       return c.json({ url: session.url }, 200);
     })

@@ -2,7 +2,7 @@ import type { Billing } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
-import { planOf } from "./billing/plan";
+import { firstChargeOf, planOf } from "./billing/plan";
 import { encodeForm, signWebhook, verifyWebhook } from "./billing/stripe";
 import { membership, organization, session, subscription } from "./db/schema";
 import { loadEnv } from "./env";
@@ -70,6 +70,18 @@ describe("planOf", () => {
     expect(planOf({ createdAt }, { status: "canceled" }, new Date(createdAt.getTime() + 2 * DAY))).toMatchObject({
       status: "trial",
     });
+  });
+});
+
+describe("firstChargeOf", () => {
+  const createdAt = new Date("2026-10-01T10:00:00Z");
+
+  it("charges a subscription taken during the trial when the trial ends, unless it ends within two days", () => {
+    const trialEnd = new Date("2026-10-31T10:00:00Z");
+    expect(firstChargeOf({ createdAt }, createdAt)).toEqual(trialEnd);
+    expect(firstChargeOf({ createdAt }, new Date("2026-10-29T08:00:00Z"))).toEqual(trialEnd);
+    expect(firstChargeOf({ createdAt }, new Date("2026-10-29T10:00:00Z"))).toBeNull();
+    expect(firstChargeOf({ createdAt }, new Date("2026-11-15T10:00:00Z"))).toBeNull();
   });
 });
 
@@ -144,6 +156,34 @@ describe("billing", () => {
       cancel_url: `${billingEnv.WEB_ORIGIN}/configuracion/plan`,
     });
     expect(row!.status).toBeNull();
+  });
+
+  it("keeps the trial's remaining days when subscribing during it, and charges at once after it", async () => {
+    const ana = await owner();
+    await ana.request("/v1/billing/checkout", { method: "POST", body: { period: "monthly" } });
+    const [org] = await db.select().from(organization).where(eq(organization.id, ana.organizationId));
+    const trialEnd = Math.floor((org!.createdAt.getTime() + 30 * DAY) / 1000);
+    const checkouts = () => stripe.requests.filter((request) => request.path === "/v1/checkout/sessions");
+    expect(checkouts()[0]!.form.get("subscription_data[trial_end]")).toBe(String(trialEnd));
+
+    await db
+      .update(organization)
+      .set({ createdAt: new Date(Date.now() - 40 * DAY) })
+      .where(eq(organization.id, ana.organizationId));
+    await ana.request("/v1/billing/checkout", { method: "POST", body: { period: "monthly" } });
+    expect(checkouts()[1]!.form.has("subscription_data[trial_end]")).toBe(false);
+  });
+
+  it("sends people subscribing from the welcome steps back to the app", async () => {
+    const ana = await owner();
+    const response = await ana.request("/v1/billing/checkout", {
+      method: "POST",
+      body: { period: "yearly", returnTo: "app" },
+    });
+    expect(response.status).toBe(200);
+    const [checkout] = stripe.requests.filter((request) => request.path === "/v1/checkout/sessions");
+    expect(checkout!.form.get("success_url")).toBe(`${billingEnv.WEB_ORIGIN}/?suscripcion=ok`);
+    expect(checkout!.form.get("cancel_url")).toBe(`${billingEnv.WEB_ORIGIN}/`);
   });
 
   it("only lets owners and administrators, signed in, manage the plan", async () => {

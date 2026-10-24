@@ -1,6 +1,7 @@
 import { cents } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import {
+  firstChargeOf,
   isLive,
   localDate,
   planHeadline,
@@ -29,6 +30,15 @@ describe("billing model", () => {
     expect(trialDaysLeft(plan, new Date("2026-10-24T10:00:00Z"))).toBe(30);
     expect(trialDaysLeft(plan, new Date("2026-11-23T09:00:00Z"))).toBe(1);
     expect(trialDaysLeft(plan, new Date("2026-11-24T00:00:00Z"))).toBe(0);
+  });
+
+  it("charges a subscription taken during the trial when the trial ends, unless it ends within two days", () => {
+    const plan = { status: "trial" as const, canWrite: true, trialEndsAt: "2026-11-23T10:00:00.000Z" };
+    expect(firstChargeOf(plan, new Date("2026-10-24T10:00:00Z"))).toBe(plan.trialEndsAt);
+    expect(firstChargeOf(plan, new Date("2026-11-21T10:00:00Z"))).toBeNull();
+    expect(
+      firstChargeOf({ ...plan, status: "readOnly", canWrite: false }, new Date("2026-10-24T10:00:00Z")),
+    ).toBeNull();
   });
 
   it("takes the date of a timestamp in the local time zone", () => {

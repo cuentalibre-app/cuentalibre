@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ChevronLeft, Star, TriangleAlert } from "lucide-react";
+import { ChevronLeft, Loader2, Star, TriangleAlert } from "lucide-react";
 import { isVerifactuMandatory, normalizeTaxId, verifactuMandatoryFrom } from "@cuentalibre/core";
 import type {
+  BillingPeriod,
   BusinessProfile,
   FiscalRegion,
   IncomeTaxMethod,
@@ -17,6 +18,8 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { AddressFields } from "@/features/contacts/contact-fields";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ActivityPicker } from "@/features/settings/activity-picker";
+import { localDate, TRIAL_DAYS } from "@/features/settings/billing-model";
+import { PeriodPicker } from "@/features/settings/period-picker";
 import { formatDate } from "@/lib/format";
 import {
   BUSINESS_KINDS,
@@ -28,11 +31,19 @@ import {
   unsupportedSetup,
   type ProfileErrors,
 } from "@/features/settings/settings-model";
-import { authErrorMessage, createOrganization, currentUser, saveSettings, signInMethods } from "./auth-api";
+import {
+  authErrorMessage,
+  createOrganization,
+  currentUser,
+  saveSettings,
+  signInMethods,
+  startCheckout,
+} from "./auth-api";
 import verifactuLogo from "./assets/verifactu.webp";
 import { EmailCode } from "./email-code";
 import { AuthButton, AuthLayout, runAction } from "./auth-layout";
 import {
+  CREATES_BUSINESS,
   newSetup,
   onboardingSteps,
   organizationName,
@@ -345,13 +356,77 @@ function VerifactuStep({ setup, set }: { setup: Setup; set: (system: InvoicingSy
 }
 
 /**
+ * Once the business exists, where the instance charges for it: straight into the app on
+ * the free trial, or paying now in Stripe Checkout, which keeps the trial's days.
+ */
+function PlanStep() {
+  const [period, setPeriod] = useState<BillingPeriod>("monthly");
+  const [pending, setPending] = useState<"trial" | "subscribe" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // The business was created a moment ago, so its trial ends 30 days from now
+  const [trialEnd] = useState(() =>
+    formatDate(localDate(new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString())),
+  );
+
+  const startTrial = () => {
+    setPending("trial");
+    reloadAt("/");
+  };
+
+  const subscribe = async () => {
+    setPending("subscribe");
+    setError(null);
+    try {
+      window.location.assign(await startCheckout(period));
+    } catch {
+      setError(
+        "No se ha podido conectar con el sistema de pago. Empieza la prueba y suscríbete cuando quieras desde Configuración › Plan y facturación.",
+      );
+      setPending(null);
+    }
+  };
+
+  return (
+    <div className="flex animate-rise-in flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <AuthButton onClick={startTrial} disabled={pending !== null}>
+          {pending === "trial" ? "Un momento…" : "Empezar la prueba gratis"}
+        </AuthButton>
+        <p className="m-0 text-center text-sm text-muted-foreground">Gratis hasta el {trialEnd}, sin tarjeta.</p>
+      </div>
+
+      <section aria-labelledby="subscribe-now" className="flex flex-col gap-3 border-t border-border pt-6">
+        <h2 id="subscribe-now" className="m-0 text-md font-semibold">
+          ¿Ya sabes que te quedas?
+        </h2>
+        <PeriodPicker rows value={period} onChange={setPeriod} />
+        <p className="m-0 text-sm text-muted-foreground">
+          Conservas tus 30 días: te pedimos la tarjeta ahora y el primer cobro llega el {trialEnd}. Precios sin IVA, al
+          pagar se añade el 21 %. Cancela cuando quieras.
+        </p>
+        {error && (
+          <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        <Button variant="secondary" size="lg" onClick={() => void subscribe()} disabled={pending !== null}>
+          {pending === "subscribe" && <Loader2 className="animate-spin" aria-hidden="true" />}
+          Suscribirme ya
+        </Button>
+      </section>
+    </div>
+  );
+}
+
+/**
  * After signing up: a code to confirm the email, if it needs verifying, then the business's tax setup, tax ID and name, address,
- * activity and whether to send its invoices with VERI*FACTU, step by step. The business is created at the end, with everything
- * at once, and the app opens with the first-run tour.
+ * activity and whether to send its invoices with VERI*FACTU, step by step. The business is created then, with everything
+ * at once, and the app opens with the first-run tour; on Cloud, after a last step to start the trial or subscribe.
  */
 export function OnboardingPage() {
   // The email to confirm, or null when it needs no verifying; undefined until known
   const [verifying, setVerifying] = useState<string | null>();
+  const [billing, setBilling] = useState(false);
   const [setup, setSetup] = useState(newSetup);
   const [step, setStep] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
@@ -360,13 +435,16 @@ export function OnboardingPage() {
   // Saving the settings can fail after the business was created: a retry mustn't create another
   const created = useRef(false);
 
-  const steps = onboardingSteps(Boolean(verifying));
+  const steps = onboardingSteps(Boolean(verifying), billing);
   const current = steps[step]!;
-  const last = step === steps.length - 1;
+  const creates = current.key === CREATES_BUSINESS;
 
   useEffect(() => {
     Promise.all([currentUser(), signInMethods()])
-      .then(([user, methods]) => setVerifying(methods.email && !user.emailVerified ? user.email : null))
+      .then(([user, methods]) => {
+        setBilling(methods.billing);
+        setVerifying(methods.email && !user.emailVerified ? user.email : null);
+      })
       // Unknown: the wizard goes on without it, and the app reminds the user later
       .catch(() => setVerifying(null));
   }, []);
@@ -392,7 +470,10 @@ export function OnboardingPage() {
           created.current = true;
         }
         await saveSettings(setupCommands(done));
-        reloadAt("/");
+        if (billing) {
+          setPending(false);
+          goTo(step + 1);
+        } else reloadAt("/");
       },
       setPending,
       setError,
@@ -404,14 +485,14 @@ export function OnboardingPage() {
       setShowErrors(true);
       return;
     }
-    if (last) void finish(setup);
+    if (creates) void finish(setup);
     else goTo(step + 1);
   };
 
   const skip = () => {
     const skipped = skipStep(current.key, setup);
     setSetup(skipped);
-    if (last) void finish(skipped);
+    if (creates) void finish(skipped);
     else goTo(step + 1);
   };
 
@@ -441,6 +522,8 @@ export function OnboardingPage() {
               onLater={() => goTo(step + 1)}
             />
           </div>
+        ) : current.key === "plan" ? (
+          <PlanStep />
         ) : (
           <form key={current.key} onSubmit={submit} noValidate className="flex animate-rise-in flex-col gap-4">
             {current.key === "regime" && <RegimeStep setup={setup} setProfile={setProfile} setTax={setTax} />}
@@ -462,7 +545,7 @@ export function OnboardingPage() {
               </p>
             )}
             <AuthButton type="submit" disabled={pending} className="mt-1">
-              {pending ? "Un momento…" : last ? "Empezar" : "Continuar"}
+              {pending ? "Un momento…" : creates && !billing ? "Empezar" : "Continuar"}
             </AuthButton>
             <div className="flex items-center justify-between gap-3">
               {step > 0 ? (
