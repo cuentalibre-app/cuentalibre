@@ -50,15 +50,10 @@ export function DemoBanner() {
       <span>Estás en la demo: los datos son de ejemplo y los cambios no se guardan.</span>
       <span className="flex gap-3">
         {API_URL && (
-          <>
-            {/* Plain links: they load the app outside /demo, on the API */}
-            <a href={SIGN_UP_PATH} onClick={leaveDemo} className="font-semibold text-primary hover:text-primary-hover">
-              Crear cuenta
-            </a>
-            <a href={SIGN_IN_PATH} onClick={leaveDemo} className="font-medium text-primary hover:text-primary-hover">
-              Entrar
-            </a>
-          </>
+          // A plain link: it loads the app outside /demo, on the API
+          <a href={SIGN_UP_PATH} onClick={leaveDemo} className="font-semibold text-primary hover:text-primary-hover">
+            Crear cuenta
+          </a>
         )}
         {canExitDemo() && (
           <button
