@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { monthlyResults, periodDates, pnlLine, profitAndLoss, relativeChange, yearToQuarter } from "./reports";
+import { defaultIncomeAccount, monthlyResults, periodDates, pnlLine, profitAndLoss, relativeChange, yearToQuarter } from "./reports";
 import { applyRate, cents, eurosToCents } from "./money";
 import type { TaxableExpense, TaxablePurchase, TaxableSale, TaxBooks } from "./tax-returns";
 
@@ -69,6 +69,30 @@ describe("pnlLine", () => {
   it("sends unknown accounts to services or other income", () => {
     expect(pnlLine("69")).toBe("62");
     expect(pnlLine("79")).toBe("75");
+  });
+});
+
+describe("defaultIncomeAccount", () => {
+  const act = (type: string, code = "") => ({ type, code });
+
+  it("proposes leases to landlords", () => {
+    expect(defaultIncomeAccount(act("A01", "861.2"))).toBe("752");
+  });
+
+  it("proposes sales of goods to commerce and the primary sector", () => {
+    expect(defaultIncomeAccount(act("A03", "651.2"))).toBe("700");
+    expect(defaultIncomeAccount(act("A03", "612.3"))).toBe("700");
+    for (const type of ["B01", "B02", "B03", "B04", "B05"]) expect(defaultIncomeAccount(act(type))).toBe("700");
+  });
+
+  it("proposes services to everyone else", () => {
+    expect(defaultIncomeAccount(act("A03", "501.1"))).toBe("705");
+    expect(defaultIncomeAccount(act("A03"))).toBe("705");
+    expect(defaultIncomeAccount(act("A04", "841"))).toBe("705");
+    expect(defaultIncomeAccount(act("A05", "751"))).toBe("705");
+    expect(defaultIncomeAccount(act("B06"))).toBe("705");
+    expect(defaultIncomeAccount(act("C"))).toBe("705");
+    expect(defaultIncomeAccount(undefined)).toBe("705");
   });
 });
 
