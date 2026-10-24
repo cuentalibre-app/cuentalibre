@@ -192,8 +192,10 @@ describe("issuing invoices", () => {
 });
 
 describe("issued invoices", () => {
-  it("can't be edited or deleted", async () => {
+  it("can't be edited or deleted under VERI*FACTU", async () => {
     const ana = await seller();
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "verifactu" as const };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
     const invoice = await issued(ana, document(ana.norte.id));
     for (const changes of [{ lines: [line({ unitPrice: 1 })] }, { issuedOn: "2026-10-06" }, { number: "2026-0002" }]) {
       const response = await send(ana, [{ type: "update", entity: "salesDocuments", id: invoice.id, changes }]);
