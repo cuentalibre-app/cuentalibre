@@ -4,7 +4,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import type { AppEnv } from "../context";
 import { ApiError, errorContent } from "../errors";
-import { requireOrganization, scopeOf } from "../middleware";
+import { readOnlyError, requireOrganization, requireWritable, scopeOf } from "../middleware";
 import { findContact, liveContacts, toContact } from "../sync/contacts";
 import { applyCommands } from "../sync/write";
 
@@ -64,7 +64,7 @@ const create = createRoute({
   tags: ["Contacts"],
   summary: "Create a contact",
   description: "`id` is optional: send a UUID to make retries safe, or let the server generate one.",
-  middleware: [requireOrganization] as const,
+  middleware: [requireOrganization, requireWritable] as const,
   request: {
     body: { required: true, content: json(contactWithRole.extend({ id: z.uuid().optional() })) },
   },
@@ -73,6 +73,7 @@ const create = createRoute({
     400: errorContent("Invalid contact"),
     409: errorContent("The ID is already used"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 
@@ -82,13 +83,14 @@ const update = createRoute({
   tags: ["Contacts"],
   summary: "Change some fields of a contact",
   description: "Send only the fields to change; `null` clears an optional field. The role can't change.",
-  middleware: [requireOrganization] as const,
+  middleware: [requireOrganization, requireWritable] as const,
   request: { params: idParam, body: { required: true, content: json(z.record(z.string(), z.unknown())) } },
   responses: {
     200: { description: "Updated", content: json(contactWithRole) },
     400: errorContent("Invalid contact"),
     404: errorContent("No such contact"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 
@@ -97,12 +99,13 @@ const remove = createRoute({
   path: "/contacts/{id}",
   tags: ["Contacts"],
   summary: "Delete a contact",
-  middleware: [requireOrganization] as const,
+  middleware: [requireOrganization, requireWritable] as const,
   request: { params: idParam },
   responses: {
     204: { description: "Deleted" },
     404: errorContent("No such contact"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 

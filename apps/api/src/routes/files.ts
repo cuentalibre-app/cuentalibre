@@ -5,7 +5,7 @@ import { bodyLimit } from "hono/body-limit";
 import { createMiddleware } from "hono/factory";
 import type { AppEnv } from "../context";
 import { ApiError, errorContent, errorResponse } from "../errors";
-import { requireOrganization } from "../middleware";
+import { readOnlyError, requireOrganization, requireWritable } from "../middleware";
 import { findFile, uploadFile } from "../sync/files";
 
 /*
@@ -38,7 +38,7 @@ const upload = createRoute({
   description:
     "Send it as `multipart/form-data`. `id` is optional: the web app sends the attachment's ID, " +
     "so it can show the file before the upload ends. Name the file in a record's `attachments` afterwards.",
-  middleware: [requireOrganization, limitUpload] as const,
+  middleware: [requireOrganization, requireWritable, limitUpload] as const,
   request: {
     body: {
       required: true,
@@ -58,6 +58,7 @@ const upload = createRoute({
     409: errorContent("The ID is already used"),
     413: errorContent("The file is too large"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 

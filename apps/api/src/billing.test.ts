@@ -292,3 +292,41 @@ describe("billing", () => {
     expect(await billingDb(ana.organizationId)).toEqual([]);
   });
 });
+
+describe("the plan", () => {
+  const age = (organizationId: string, days: number) =>
+    db
+      .update(organization)
+      .set({ createdAt: new Date(Date.now() - days * DAY) })
+      .where(eq(organization.id, organizationId));
+  const addSupplier = (client: Client, name: string) =>
+    client.request("/v1/contacts", { method: "POST", body: { role: "supplier", name, taxId: "B11111111" } });
+
+  it("turns away writes once the trial ends, keeps reads, and writes again after subscribing", async () => {
+    const ana = await owner();
+    expect((await addSupplier(ana, "Before")).status).toBe(201);
+    await age(ana.organizationId, 31);
+
+    const rejected = await addSupplier(ana, "After");
+    expect(rejected.status).toBe(402);
+    expect(await rejected.json()).toMatchObject({ error: { code: "subscription_required" } });
+    const command = { type: "create", entity: "clients", data: { id: newId(), name: "Sync" } };
+    expect((await ana.request("/v1/commands", { method: "POST", body: { commands: [command] } })).status).toBe(402);
+    expect((await ana.request("/v1/files", { method: "POST", form: new FormData() })).status).toBe(402);
+
+    expect((await ana.request("/v1/workspace")).status).toBe(200);
+    const contacts = await ana.request("/v1/contacts");
+    expect(contacts.status).toBe(200);
+    expect(await contacts.json()).toMatchObject({ contacts: [expect.objectContaining({ name: "Before" })] });
+
+    await subscribed(ana);
+    expect((await addSupplier(ana, "Paying")).status).toBe(201);
+  });
+
+  it("never stops a self-hosted instance from writing", async () => {
+    const ana = await signUp();
+    const org = await createOrganization(ana, "Ana SL");
+    await age(org.id, 400);
+    expect((await addSupplier(ana, "Still here")).status).toBe(201);
+  });
+});

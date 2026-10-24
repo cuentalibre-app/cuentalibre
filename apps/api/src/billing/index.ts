@@ -1,10 +1,10 @@
 import type { BillingPeriod } from "@cuentalibre/contracts";
 import { eq } from "drizzle-orm";
 import type { Db } from "../db/client";
-import { stripeEvent, subscription } from "../db/schema";
+import { organization, stripeEvent, subscription } from "../db/schema";
 import type { Env } from "../env";
 import { reportError } from "../error-reporting";
-import { isLive } from "./plan";
+import { isLive, planOf } from "./plan";
 import { stripeClient, type StripeClient, type StripeEvent, type StripeSubscription } from "./stripe";
 
 /** Charging for Cloud: present only when the instance has the `STRIPE_*` variables. */
@@ -28,6 +28,16 @@ export function createBilling(env: Env, fetchImpl: typeof fetch = fetch): Billin
     },
     taxRate: env.STRIPE_TAX_RATE!,
   };
+}
+
+/** What the organization may do now, from its creation and the subscription the webhook last stored. */
+export async function currentPlan(db: Db, organizationId: string, now = new Date()) {
+  const [row] = await db
+    .select({ createdAt: organization.createdAt, status: subscription.status })
+    .from(organization)
+    .leftJoin(subscription, eq(subscription.organizationId, organization.id))
+    .where(eq(organization.id, organizationId));
+  return planOf(row!, row!, now);
 }
 
 /**

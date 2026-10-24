@@ -2,9 +2,10 @@ import { and, eq } from "drizzle-orm";
 import type { Context } from "hono";
 import { createMiddleware } from "hono/factory";
 import { API_KEY_PREFIX, type Auth } from "./auth";
+import { currentPlan } from "./billing";
 import type { AppEnv } from "./context";
 import { membership, user } from "./db/schema";
-import { errorResponse } from "./errors";
+import { errorContent, errorResponse } from "./errors";
 import type { Scope } from "./sync/write";
 
 /** The API key a request carries, as `Authorization: Bearer <key>` or `x-api-key`. */
@@ -78,6 +79,27 @@ export const requireOrganization = createMiddleware<AppEnv>(async (c, next) => {
   c.set("role", row.role as AppEnv["Variables"]["role"]);
   await next();
 });
+
+/**
+ * For what changes the organization's data, after `requireOrganization`. On an instance
+ * that bills, an organization whose trial or subscription ended can only read and export;
+ * self-hosted ones never stop writing.
+ */
+export const requireWritable = createMiddleware<AppEnv>(async (c, next) => {
+  if (c.get("billing") && !(await currentPlan(c.get("db"), c.get("organizationId"))).canWrite)
+    return errorResponse(
+      c,
+      402,
+      "subscription_required",
+      "The organization's trial or subscription has ended: it can read and export its data, but not change it. Subscribe to write again.",
+    );
+  await next();
+});
+
+/** The OpenAPI entry for the routes behind `requireWritable`. */
+export const readOnlyError = {
+  402: errorContent("The organization's trial or subscription has ended: it can only read and export"),
+};
 
 /** Who a tenant request acts as, for the services that write. */
 export function scopeOf(c: Context<AppEnv>): Scope {
