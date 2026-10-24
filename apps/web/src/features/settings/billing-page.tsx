@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
 import type { Billing, BillingPeriod } from "@cuentalibre/contracts";
-import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
+import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -17,12 +17,18 @@ import {
   perMonth,
   periodOf,
   PERIODS,
+  planHeadline,
+  planState,
+  type PlanState,
   savingOf,
   TRIAL_DAYS,
   trialDaysLeft,
   withVat,
 } from "./billing-model";
 import { SettingsHeader } from "./settings-parts";
+
+const READ_ONLY =
+  "Tus datos están a salvo: puedes consultarlos y exportarlos. Suscríbete para volver a emitir facturas y registrar gastos.";
 
 /** How long to wait for Stripe's webhook after paying, checking every two seconds. */
 const ACTIVATION_TRIES = 15;
@@ -128,36 +134,27 @@ function BillingDetails({ billing, justPaid }: { billing: Billing; justPaid: boo
 }
 
 /** Where the company stands: trial, paying, a failed charge or read-only. */
-function PlanPanel({ billing: { plan, subscription } }: { billing: Billing }) {
+function PlanPanel({ billing }: { billing: Billing }) {
+  const { plan, subscription } = billing;
   const subscribed = isLive(subscription);
   const period = subscription?.period ? periodOf(subscription.period) : null;
   const periodEnd = subscription?.currentPeriodEnd ? formatDate(localDate(subscription.currentPeriodEnd)) : null;
+  const { title, badge, tone } = planHeadline(billing);
 
-  let badge: { tone: BadgeProps["tone"]; label: string };
-  let title: string;
-  let body: ReactNode;
-  if (subscribed && subscription!.cancelAtPeriodEnd) {
-    badge = { tone: "neutral", label: "Cancelada" };
-    title = "cuentalibre Cloud";
-    body = (
+  const body: Record<PlanState, ReactNode> = {
+    cancelled: (
       <>
         No se renovará: tienes todo cuentalibre hasta el {periodEnd}. Si cambias de idea, reactívala al gestionar tu
         suscripción.
       </>
-    );
-  } else if (plan.status === "pastDue") {
-    badge = { tone: "warning", label: "Pago pendiente" };
-    title = "cuentalibre Cloud";
-    body = (
+    ),
+    pastDue: (
       <>
         No hemos podido cobrar el último pago y lo volveremos a intentar en los próximos días. Revisa tu tarjeta al
         gestionar la suscripción. Mientras tanto, todo sigue funcionando.
       </>
-    );
-  } else if (subscribed) {
-    badge = { tone: "success", label: "Activa" };
-    title = "cuentalibre Cloud";
-    body = period ? (
+    ),
+    active: period ? (
       <>
         Plan {period.label.toLowerCase()}. Próximo cobro el {periodEnd}:{" "}
         <span className="amount font-semibold">{formatEUR(withVat(period.price))}</span> ({formatEUR(period.price)} +
@@ -165,28 +162,16 @@ function PlanPanel({ billing: { plan, subscription } }: { billing: Billing }) {
       </>
     ) : (
       <>Próximo cobro el {periodEnd}.</>
-    );
-  } else if (plan.status === "trial") {
-    const left = trialDaysLeft(plan);
-    badge = { tone: "primary", label: left === 1 ? "Queda 1 día" : `Quedan ${left} días` };
-    title = "Prueba gratuita";
-    body = (
+    ),
+    trial: (
       <>
         Tienes todo cuentalibre Cloud hasta el {formatDate(localDate(plan.trialEndsAt))}. Suscríbete cuando quieras: no
         perderás nada de lo que hayas hecho.
       </>
-    );
-  } else {
-    badge = { tone: "warning", label: "Solo lectura" };
-    // A subscription that ended, or a trial nobody paid after
-    title = subscription ? "Tu suscripción ha terminado" : "Tu prueba ha terminado";
-    body = (
-      <>
-        Tus datos están a salvo: puedes consultarlos y exportarlos. Suscríbete para volver a emitir facturas y registrar
-        gastos.
-      </>
-    );
-  }
+    ),
+    subscriptionEnded: <>{READ_ONLY}</>,
+    trialEnded: <>{READ_ONLY}</>,
+  };
 
   const trialUsed = plan.status === "trial" && !subscribed ? TRIAL_DAYS - trialDaysLeft(plan) : null;
   return (
@@ -201,9 +186,9 @@ function PlanPanel({ billing: { plan, subscription } }: { billing: Billing }) {
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="m-0 text-lg font-semibold">{title}</h2>
-            <Badge tone={badge.tone}>{badge.label}</Badge>
+            <Badge tone={tone}>{badge}</Badge>
           </div>
-          <p className="m-0 text-sm text-muted-foreground">{body}</p>
+          <p className="m-0 text-sm text-muted-foreground">{body[planState(billing)]}</p>
         </div>
       </div>
       {trialUsed !== null && (

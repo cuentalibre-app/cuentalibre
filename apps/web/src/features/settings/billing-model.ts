@@ -1,4 +1,4 @@
-import type { BillingPeriod, Plan, Subscription } from "@cuentalibre/contracts";
+import type { Billing, BillingPeriod, Plan, Subscription } from "@cuentalibre/contracts";
 import { applyRate, cents, type Cents } from "@cuentalibre/core";
 
 /** VAT added on top of the Cloud prices, which are quoted without it. */
@@ -54,3 +54,37 @@ export function localDate(iso: string): string {
 /** A subscription that still charges, or will again: one is enough per company. */
 export const isLive = (subscription: Subscription | null) =>
   subscription !== null && !["canceled", "incomplete_expired"].includes(subscription.status);
+
+export type PlanState = "cancelled" | "pastDue" | "active" | "trial" | "subscriptionEnded" | "trialEnded";
+
+/** Where the company stands, as the settings hub and the plan page name it. */
+export function planState({ plan, subscription }: Billing): PlanState {
+  const subscribed = isLive(subscription);
+  if (subscribed && subscription!.cancelAtPeriodEnd) return "cancelled";
+  if (plan.status === "pastDue") return "pastDue";
+  if (subscribed) return "active";
+  if (plan.status === "trial") return "trial";
+  return subscription ? "subscriptionEnded" : "trialEnded";
+}
+
+/** The plan's title and its badge, for a state. */
+export function planHeadline(billing: Billing, now = new Date()): { title: string; badge: string; tone: PlanTone } {
+  const state = planState(billing);
+  const left = trialDaysLeft(billing.plan, now);
+  switch (state) {
+    case "cancelled":
+      return { title: "cuentalibre Cloud", badge: "Cancelada", tone: "neutral" };
+    case "pastDue":
+      return { title: "cuentalibre Cloud", badge: "Pago pendiente", tone: "warning" };
+    case "active":
+      return { title: "cuentalibre Cloud", badge: "Activa", tone: "success" };
+    case "trial":
+      return { title: "Prueba gratuita", badge: left === 1 ? "Queda 1 día" : `Quedan ${left} días`, tone: "primary" };
+    case "subscriptionEnded":
+      return { title: "Tu suscripción ha terminado", badge: "Solo lectura", tone: "warning" };
+    case "trialEnded":
+      return { title: "Tu prueba ha terminado", badge: "Solo lectura", tone: "warning" };
+  }
+}
+
+type PlanTone = "neutral" | "warning" | "success" | "primary";
