@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { newSetup, organizationName, setupCommands, stepErrors, type Setup } from "./onboarding-model";
+import { newSetup, onboardingSteps, organizationName, setupCommands, stepErrors, type Setup } from "./onboarding-model";
 
 const withProfile = (changes: Partial<Setup["profile"]>): Setup => {
   const setup = newSetup();
   return { ...setup, profile: { ...setup.profile, ...changes } };
 };
+
+describe("onboardingSteps", () => {
+  it("asks to confirm the email first, only when it needs verifying", () => {
+    expect(onboardingSteps(true).map((s) => s.key)).toEqual(["email", "regime", "identity", "address", "activity"]);
+    expect(onboardingSteps(false).map((s) => s.key)).toEqual(["regime", "identity", "address", "activity"]);
+  });
+});
 
 describe("stepErrors", () => {
   it("lets the tax setup, address and activity through as they are", () => {
