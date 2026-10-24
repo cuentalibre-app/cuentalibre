@@ -1,5 +1,7 @@
 import type {
   ApiKey,
+  Billing,
+  BillingPeriod,
   CreatedApiKey,
   EmailMessage,
   EmailRequest,
@@ -30,6 +32,14 @@ export interface Backend {
     list(): Promise<ApiKey[]>;
     create(key: NewApiKey): Promise<CreatedApiKey>;
     revoke(id: string): Promise<void>;
+  };
+  /** The company's Cloud plan. Only on instances that charge for it. */
+  billing?: {
+    get(): Promise<Billing>;
+    /** Where to pay for the period: a Stripe Checkout page. */
+    checkout(period: BillingPeriod): Promise<string>;
+    /** Where to manage the subscription: Stripe's customer portal. */
+    portal(): Promise<string>;
   };
   /** The people in the organization. Without a server, the sample users stand in. */
   members?(): Promise<OrganizationMember[]>;

@@ -1,6 +1,7 @@
 import {
   userSettingsSectionSchema,
   type ApiKey,
+  type Billing,
   type Change,
   type Changes,
   type CreatedApiKey,
@@ -135,6 +136,14 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
       list: async () => (await request<{ apiKeys: ApiKey[] }>("/v1/api-keys")).apiKeys,
       create: (key) => request<CreatedApiKey>("/v1/api-keys", { method: "POST", body: JSON.stringify(key) }),
       revoke: (id) => request(`/v1/api-keys/${id}`, { method: "DELETE" }),
+    },
+
+    billing: {
+      get: () => request<Billing>("/v1/billing"),
+      checkout: async (period) =>
+        (await request<{ url: string }>("/v1/billing/checkout", { method: "POST", body: JSON.stringify({ period }) }))
+          .url,
+      portal: async () => (await request<{ url: string }>("/v1/billing/portal", { method: "POST" })).url,
     },
 
     async members() {

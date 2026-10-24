@@ -35,6 +35,8 @@ export const TAGS_PATH = "/configuracion/etiquetas";
 export const PREFERENCES_PATH = "/configuracion/ordenacion-y-filtrado";
 export const EMAIL_SETTINGS_PATH = "/configuracion/correo";
 export const API_KEYS_PATH = "/configuracion/api";
+/** Where Stripe sends people back to, after paying or managing their subscription. */
+export const BILLING_PATH = "/configuracion/plan";
 
 /* ───────────────────────────── Business profile ───────────────────────────── */
 
