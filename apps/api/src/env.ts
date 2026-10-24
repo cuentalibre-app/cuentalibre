@@ -59,6 +59,10 @@ const envSchema = z
     EMAIL_FROM: z.email().optional(),
     /** Address emails about people's accounts (verifying an email, resetting a password) are sent from; defaults to `EMAIL_FROM`. */
     ACCOUNT_EMAIL_FROM: z.email().optional(),
+    /** Sends unexpected errors to Sentry (no request data or users). Without it, errors only go to the log. */
+    SENTRY_DSN: z.url().optional(),
+    /** The version errors are tagged with; the image build sets it to the commit, or leaves it empty. */
+    SENTRY_RELEASE: z.string().optional(),
   })
   .refine((env) => env.NODE_ENV !== "production" || env.BETTER_AUTH_SECRET !== devSecret, {
     message: "BETTER_AUTH_SECRET must be set in production",

@@ -6,6 +6,7 @@ import type { AppEnv } from "./context";
 import type { Db } from "./db/client";
 import type { Mailer } from "./email/mailer";
 import type { Env } from "./env";
+import { reportError } from "./error-reporting";
 import { ApiError, describeIssues, errorResponse } from "./errors";
 import { loadSession } from "./middleware";
 import { accountRoutes } from "./routes/account";
@@ -63,6 +64,7 @@ export function createApp({ db, auth, env, storage, mailer }: Deps) {
       return errorResponse(c, error.status, "invalid_request", error.message);
     }
     console.error(error);
+    reportError(error, { method: c.req.method, route: c.req.routePath });
     return errorResponse(c, 500, "internal_error", "Something went wrong.");
   });
 
