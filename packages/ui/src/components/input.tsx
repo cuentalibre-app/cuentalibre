@@ -8,7 +8,10 @@ const fieldClass =
 export function Input({ className, ...props }: ComponentProps<"input">) {
   // Without bounds browsers let the year run to six digits (20269-01-21)
   const bounds = props.type === "date" ? { min: MIN_DATE, max: MAX_DATE } : undefined;
-  return <input className={cn(fieldClass, "h-10", className)} {...bounds} {...props} />;
+  // Browsers draw a password's dots at text size, too small to count: larger and spaced out
+  const dots =
+    "[&[type=password]:not(:placeholder-shown)]:text-xl [&[type=password]:not(:placeholder-shown)]:tracking-[0.2em]";
+  return <input className={cn(fieldClass, "h-10", dots, className)} {...bounds} {...props} />;
 }
 
 export function Textarea({ className, rows = 3, ...props }: ComponentProps<"textarea">) {
