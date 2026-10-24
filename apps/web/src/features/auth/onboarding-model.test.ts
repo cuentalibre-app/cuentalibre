@@ -32,6 +32,11 @@ describe("onboardingSteps", () => {
       "verifactu",
     ]);
   });
+
+  it("ends with the plan, only where the instance charges for one", () => {
+    expect(onboardingSteps(false, true).at(-1)!.key).toBe("plan");
+    expect(onboardingSteps(true, false).map((s) => s.key)).not.toContain("plan");
+  });
 });
 
 describe("newSetup", () => {

@@ -23,7 +23,7 @@ export const newSetup = (today = new Date().toISOString().slice(0, 10)): Setup =
 });
 
 export interface OnboardingStep {
-  key: "email" | "regime" | "identity" | "address" | "activity" | "verifactu";
+  key: "email" | "regime" | "identity" | "address" | "activity" | "verifactu" | "plan";
   /** Name in the progress bar. */
   label: string;
   title: string;
@@ -76,14 +76,25 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
       "Con VERI*FACTU, cada factura que emites se comunica a la AEAT en el momento. Puedes activarlo cuando quieras.",
     optional: true,
   },
+  {
+    key: "plan",
+    label: "Plan",
+    title: "Tienes 30 días gratis",
+    description: "Usa cuentalibre entero, sin tarjeta. Si ya sabes que te quedas, puedes suscribirte ahora.",
+    optional: false,
+  },
 ];
 
 /**
  * The wizard's steps: confirming the email first, while it isn't verified and the
- * instance can send email. Google users come verified.
+ * instance can send email (Google users come verified); and, once the business
+ * exists, its plan, only where the instance charges for one (cuentalibre Cloud).
  */
-export const onboardingSteps = (verifyEmail: boolean) =>
-  ONBOARDING_STEPS.filter((step) => verifyEmail || step.key !== "email");
+export const onboardingSteps = (verifyEmail: boolean, billing = false) =>
+  ONBOARDING_STEPS.filter((step) => (verifyEmail || step.key !== "email") && (billing || step.key !== "plan"));
+
+/** The step whose end creates the business, with everything gathered until then. */
+export const CREATES_BUSINESS: OnboardingStep["key"] = "verifactu";
 
 /**
  * What leaving a step for later keeps: nothing of the activity or the invoicing
