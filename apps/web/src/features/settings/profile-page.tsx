@@ -7,6 +7,7 @@ import { Input } from "@cuentalibre/ui/components/input";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { authErrorMessage, currentUser, deleteAccount } from "@/features/auth/auth-api";
+import { ForgotPasswordLink } from "@/features/auth/forgot-password-link";
 import { SIGN_IN_PATH, reloadAt, sessionState } from "@/features/auth/session";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { LANGUAGES, NUMBER_FORMATS, defaultNumberFormat, formatSample } from "@/features/sales/invoice-locale";
@@ -491,7 +492,7 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
         </DialogDescription>
         <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
           {hasPassword && (
-            <Field label="Contraseña">
+            <Field label="Contraseña" action={<ForgotPasswordLink />}>
               {(props) => (
                 <Input
                   {...props}
