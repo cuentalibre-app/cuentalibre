@@ -9,7 +9,7 @@ const RETRYING = new Set(["past_due"]);
 
 /**
  * What an organization may do on Cloud: write while it pays, while Stripe retries a
- * failed charge, or during its trial; read and export only, otherwise. Not enforced yet.
+ * failed charge, or during its trial; read and export only, otherwise (`requireWritable`).
  */
 export function planOf(
   organization: { createdAt: Date },

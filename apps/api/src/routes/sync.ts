@@ -2,7 +2,7 @@ import { changeSchema, changesSchema, commandSchema, cursorSchema, workspaceSche
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { AppEnv } from "../context";
 import { errorContent } from "../errors";
-import { requireOrganization, scopeOf } from "../middleware";
+import { readOnlyError, requireOrganization, requireWritable, scopeOf } from "../middleware";
 import { readChanges, readWorkspace } from "../sync/read";
 import { applyCommands } from "../sync/write";
 
@@ -52,7 +52,7 @@ const commands = createRoute({
   description:
     "Commands run in order in one transaction; if any is rejected, nothing is saved. " +
     "Returns the resulting state of the records they touched.",
-  middleware: [requireOrganization] as const,
+  middleware: [requireOrganization, requireWritable] as const,
   request: {
     body: {
       required: true,
@@ -68,6 +68,7 @@ const commands = createRoute({
     404: errorContent("A command refers to a record that doesn't exist"),
     409: errorContent("A create reuses an existing ID"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 

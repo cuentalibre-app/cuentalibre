@@ -3,7 +3,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { AppEnv } from "../context";
 import { listEmails, queueEmail } from "../email/messages";
 import { ApiError, errorContent } from "../errors";
-import { requireOrganization, scopeOf } from "../middleware";
+import { readOnlyError, requireOrganization, requireWritable, scopeOf } from "../middleware";
 
 const tenantErrors = {
   401: errorContent("Not signed in"),
@@ -19,13 +19,14 @@ const send = createRoute({
   description:
     "Upload the attachments first (`POST /v1/files`). The email is queued and sent in the background: " +
     "follow its `status` with `GET /v1/emails`. It goes out with the business's name and replies go to its email.",
-  middleware: [requireOrganization] as const,
+  middleware: [requireOrganization, requireWritable] as const,
   request: { body: { required: true, content: json(emailRequestSchema) } },
   responses: {
     202: { description: "Queued", content: json(emailMessageSchema) },
     400: errorContent("Invalid email, or an attachment that wasn't uploaded"),
     503: errorContent("This server can't send email"),
     ...tenantErrors,
+    ...readOnlyError,
   },
 });
 

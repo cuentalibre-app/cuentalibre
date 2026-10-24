@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   ArrowDownWideNarrow,
@@ -32,10 +32,9 @@ import { isVerifactuMandatory, verifactuMandatoryFrom } from "@cuentalibre/core"
 import { IMPORT_PATH } from "@/features/transfer/transfer-model";
 import { LegalLinks } from "@/components/legal-links";
 import type { Billing } from "@cuentalibre/contracts";
-import { currentBackend } from "@/data/backend";
-import { signInMethods } from "@/features/auth/auth-api";
 import { formatDate } from "@/lib/format";
 import { localDate, periodOf, planHeadline, planState, type PlanState } from "./billing-model";
+import { useBilling } from "./billing-store";
 import { useCompliance } from "./compliance-store";
 import {
   ACCESS_PATH,
@@ -140,25 +139,6 @@ function VerifactuCard() {
       />
     </Link>
   );
-}
-
-/** The company's plan, on instances that charge for one (cuentalibre Cloud); null elsewhere. */
-function useBilling() {
-  const [billing, setBilling] = useState<Billing | null>(null);
-  useEffect(() => {
-    const api = currentBackend().billing;
-    if (!api) return;
-    let active = true;
-    void signInMethods()
-      .then((methods) => (methods.billing ? api.get() : null))
-      .then((next) => active && setBilling(next))
-      // Without the plan the hub still works; its page says what went wrong
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, []);
-  return billing;
 }
 
 /** The plan gets a card like VERI*FACTU's: when the trial runs out, nobody should miss it. */
