@@ -33,6 +33,23 @@ export const PNL_FINANCIAL_LINES = ["76", "66"] as const satisfies PnlLine[];
 /** Accounts of issued invoices without one of their own: services (705) and, for property rentals, leases (752). */
 export const SERVICES_ACCOUNT = "705";
 export const RENTAL_ACCOUNT = "752";
+export const MERCHANDISE_ACCOUNT = "700";
+
+/** Farming, livestock, forestry, mussel farming and fishing (forms 036/037). */
+const PRIMARY_SECTOR_TYPES = new Set(["B01", "B02", "B03", "B04", "B05"]);
+
+/**
+ * The income account proposed on a new invoice for the main activity (type of forms 036/037
+ * and IAE epígrafe): leases for landlords (A01), sales of goods for commerce (A03 in division 6
+ * of the IAE) and the primary sector (B01–B05), services otherwise or without an activity.
+ */
+export function defaultIncomeAccount(activity?: { type: string; code: string }): "700" | "705" | "752" {
+  if (!activity) return SERVICES_ACCOUNT;
+  if (activity.type === "A01") return RENTAL_ACCOUNT;
+  if (PRIMARY_SECTOR_TYPES.has(activity.type)) return MERCHANDISE_ACCOUNT;
+  if (activity.type === "A03" && activity.code.trim().startsWith("6")) return MERCHANDISE_ACCOUNT;
+  return SERVICES_ACCOUNT;
+}
 
 /** The report line an account (PGC, three or more digits) adds to. Unknown expense accounts go to 62. */
 export function pnlLine(account: string): PnlLine {
