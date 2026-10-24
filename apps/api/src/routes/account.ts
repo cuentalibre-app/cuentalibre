@@ -9,7 +9,8 @@ import {
   type UserSettings,
 } from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import { verifyPassword } from "better-auth/crypto";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { newId } from "@cuentalibre/core";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { AppEnv } from "../context";
 import type { Db } from "../db/client";
@@ -124,7 +125,38 @@ const deleteAccount = createRoute({
   },
 });
 
-/** How recent a session must be to delete an account without a password. */
+/** Better Auth's limits, which signing up and changing a password also apply. */
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+
+const createPassword = createRoute({
+  method: "post",
+  path: "/me/password",
+  tags: ["Account"],
+  summary: "Give a password to a user who only signs in with Google",
+  description:
+    "Afterwards they can also sign in with their email and this password. Needs a browser session started in the last ten minutes, as there is no password to confirm it's them; users who have one change it with `/v1/auth/change-password`.",
+  middleware: [requireSession] as const,
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: z.object({ newPassword: z.string().min(MIN_PASSWORD_LENGTH).max(MAX_PASSWORD_LENGTH) }),
+        },
+      },
+    },
+  },
+  responses: {
+    204: { description: "The password is set" },
+    400: errorContent("The password is too short or too long"),
+    401: errorContent("Not signed in, or signed in with an API key"),
+    403: errorContent("The session is not recent"),
+    409: errorContent("The user has a password already"),
+  },
+});
+
+/** How recent a session must be to delete an account, or create a password, without one. */
 const FRESH_SESSION_MS = 10 * 60 * 1000;
 
 const organizationColumns = { id: organization.id, name: organization.name, slug: organization.slug };
@@ -228,6 +260,29 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       },
       200,
     );
+  })
+  .openapi(createPassword, async (c) => {
+    const db = c.get("db");
+    const { id: userId } = c.get("user")!;
+    const { newPassword } = c.req.valid("json");
+    // Someone who got hold of the session mustn't make themselves a way back in
+    if (Date.now() - c.get("session")!.createdAt.getTime() > FRESH_SESSION_MS)
+      return errorResponse(c, 403, "session_not_fresh", "Sign in again to confirm it's you, then create the password.");
+
+    const [credential] = await db
+      .select({ id: account.id })
+      .from(account)
+      .where(and(eq(account.userId, userId), eq(account.providerId, "credential")));
+    if (credential) return errorResponse(c, 409, "password_already_set", "The user has a password already.");
+    // The row Better Auth makes on signing up with email and password
+    await db.insert(account).values({
+      id: newId(),
+      userId,
+      providerId: "credential",
+      accountId: userId,
+      password: await hashPassword(newPassword),
+    });
+    return c.body(null, 204);
   })
   .openapi(deleteAccount, async (c) => {
     const db = c.get("db");
