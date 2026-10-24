@@ -5,12 +5,14 @@ import { createDb } from "./db/client";
 import { createAccountMailer, createMailer } from "./email/mailer";
 import { emailHandler } from "./email/messages";
 import { loadEnv } from "./env";
+import { startErrorReporting, stopErrorReporting } from "./error-reporting";
 import { startWorker } from "./outbox/worker";
 import { createStorage } from "./storage";
 import { verifactuHandler } from "./verifactu/submit";
 import { createVerifactuTransport } from "./verifactu/transport";
 
 const env = loadEnv();
+startErrorReporting(env);
 const db = createDb(env.DATABASE_URL);
 const storage = createStorage(env);
 const mailer = createMailer(env);
@@ -32,5 +34,7 @@ const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
-  process.on(signal, () => server.close(() => void stopWorker().then(() => process.exit(0))));
+  process.on(signal, () =>
+    server.close(() => void Promise.all([stopWorker(), stopErrorReporting()]).then(() => process.exit(0))),
+  );
 }

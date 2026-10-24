@@ -26,7 +26,9 @@ COPY apps/web apps/web
 RUN VITE_API_URL=/ pnpm --filter @cuentalibre/web exec vite build
 
 FROM node:22-alpine AS api
-ENV NODE_ENV=production STORAGE_DIR=/app/data/files
+# The commit, for error reports: CI passes --build-arg SENTRY_RELEASE=<sha>.
+ARG SENTRY_RELEASE=""
+ENV NODE_ENV=production STORAGE_DIR=/app/data/files SENTRY_RELEASE=$SENTRY_RELEASE
 WORKDIR /app
 COPY --from=build /repo/apps/api/dist dist
 COPY --from=build /repo/apps/api/drizzle drizzle
