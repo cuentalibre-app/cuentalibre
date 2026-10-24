@@ -44,6 +44,16 @@ export function trialDaysLeft(plan: Plan, now = new Date()): number {
   return Math.max(0, Math.ceil(left / (24 * 60 * 60 * 1000)));
 }
 
+/**
+ * When a subscription taken now first charges: when the trial ends, as the API sets it up.
+ * Null to charge at once: after the trial, or within its last two days, too short for Stripe.
+ */
+export function firstChargeOf(plan: Plan, now = new Date()): string | null {
+  if (plan.status !== "trial") return null;
+  const left = new Date(plan.trialEndsAt).getTime() - now.getTime();
+  return left > (2 * 24 + 1) * 60 * 60 * 1000 ? plan.trialEndsAt : null;
+}
+
 /** "2026-11-23" from an ISO timestamp, in the user's time zone. */
 export function localDate(iso: string): string {
   const date = new Date(iso);

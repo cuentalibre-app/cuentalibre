@@ -1,5 +1,5 @@
 import { newId } from "@cuentalibre/core";
-import type { SyncCommand } from "@cuentalibre/contracts";
+import type { BillingPeriod, SyncCommand } from "@cuentalibre/contracts";
 import { API_URL, ONBOARDING_PATH, RESET_PASSWORD_PATH, SIGN_IN_PATH, SIGN_UP_PATH } from "./session";
 
 /** Better Auth rejected the request; `code` says why. */
@@ -186,6 +186,18 @@ export async function saveSettings(commands: SyncCommand[]) {
     body: JSON.stringify({ commands }),
   });
   if (!response.ok) throw new AuthError(`HTTP_${response.status}`);
+}
+
+/** A Stripe Checkout page to pay for the new business, from the welcome steps; it comes back to the app. */
+export async function startCheckout(period: BillingPeriod) {
+  const response = await fetch(`${API_URL}/v1/billing/checkout`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ period, returnTo: "app" }),
+  });
+  if (!response.ok) throw new AuthError(`HTTP_${response.status}`);
+  return ((await response.json()) as { url: string }).url;
 }
 
 /** A unique, URL-safe slug; users never see it. */
