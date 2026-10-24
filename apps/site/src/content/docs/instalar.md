@@ -6,7 +6,7 @@ section: start
 order: 2
 ---
 
-cuentalibre es software libre (AGPL-3.0): puedes instalarlo en un servidor tuyo y usarlo gratis, sin límites. A cambio, la instalación, las copias de seguridad y las actualizaciones corren de tu cuenta. Si prefieres no ocuparte de nada de eso, usa [cuentalibre online](/docs#dos-formas-de-usar-cuentalibre).
+cuentalibre es software libre (AGPL-3.0): puedes instalarlo en un servidor tuyo y usarlo gratis, sin límites. A cambio, la instalación, las copias de seguridad y las actualizaciones corren de tu cuenta. Si prefieres no ocuparte de nada de eso, usa [cuentalibre Cloud](/docs#dos-formas-de-usar-cuentalibre).
 
 Esta guía es para quien sabe manejar un servidor Linux por SSH. El código y su documentación técnica están en el [repositorio de GitHub](https://github.com/jesuspb2/cuentalibre); los enlaces de cada paso llevan al archivo exacto.
 
@@ -112,7 +112,7 @@ Para restaurar la base de datos:
 docker compose exec -T postgres pg_restore -U cuentalibre -d cuentalibre --clean --if-exists < cuentalibre.dump
 ```
 
-El nombre del volumen lleva delante el de la carpeta (`selfhost_files` si no la has cambiado); compruébalo con `docker volume ls`. Como ejemplo de copia automática a un bucket, mira el script que usa cuentalibre online, [`deploy/backup.sh`](https://github.com/jesuspb2/cuentalibre/blob/main/deploy/backup.sh).
+El nombre del volumen lleva delante el de la carpeta (`selfhost_files` si no la has cambiado); compruébalo con `docker volume ls`. Como ejemplo de copia automática a un bucket, mira el script que usa cuentalibre Cloud, [`deploy/backup.sh`](https://github.com/jesuspb2/cuentalibre/blob/main/deploy/backup.sh).
 
 ## Actualizar
 
