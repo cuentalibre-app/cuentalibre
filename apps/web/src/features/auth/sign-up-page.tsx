@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { MIN_PASSWORD_LENGTH, authErrorMessage, oauthErrorMessage, signUp } from "./auth-api";
+import { PasswordMeter, newPasswordHint } from "./password-meter";
 import { PasswordInput } from "./password-input";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";
 import { GoogleSignIn } from "./google-sign-in";
@@ -75,16 +76,19 @@ export function SignUpPage() {
             />
           )}
         </Field>
-        <Field label="Contraseña" hint={`Al menos ${MIN_PASSWORD_LENGTH} caracteres.`}>
+        <Field label="Contraseña" hint={newPasswordHint(password)}>
           {(props) => (
-            <PasswordInput
-              {...props}
-              autoComplete="new-password"
-              required
-              minLength={MIN_PASSWORD_LENGTH}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <>
+              <PasswordInput
+                {...props}
+                autoComplete="new-password"
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <PasswordMeter password={password} />
+            </>
           )}
         </Field>
         <LegalConsent lead="Al crear la cuenta aceptas los" />
