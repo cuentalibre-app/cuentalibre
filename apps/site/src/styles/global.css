@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "@cuentalibre/ui/styles.css";
 @import "@fontsource-variable/source-serif-4/wght-italic.css";
-@import "@fontsource-variable/jetbrains-mono";
 
 /* The site speaks louder than the app: serif headlines, monospaced text, softer shapes */
 @theme {
