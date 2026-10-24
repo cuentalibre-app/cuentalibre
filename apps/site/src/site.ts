@@ -26,11 +26,18 @@ export const owner = {
   email: env.PUBLIC_OWNER_EMAIL || "[Correo de contacto]",
 };
 
-/** Price of the Cloud plan, VAT included. */
+/** Monthly price of the Cloud plan, VAT not included. */
 export const cloudPrice = "4,99 €";
 
-/** Price of the Cloud plan paid yearly. */
-export const cloudYearlyPrice = "34,99 €";
+/**
+ * How the Cloud plan can be paid, VAT not included. The landing leads with what
+ * each period comes to per month, in euros, and puts the amount actually charged below it.
+ */
+export const cloudBilling = [
+  { id: "monthly", label: "Mensual", perMonth: "4,99", charged: "4,99 € al mes", saving: "" },
+  { id: "quarterly", label: "Trimestral", perMonth: "4,66", charged: "13,99 € cada trimestre", saving: "7 %" },
+  { id: "yearly", label: "Anual", perMonth: "4,08", charged: "49 € al año", saving: "18 %" },
+] as const;
 
 /** The legal pages, in the order the footers list them. */
 export const legalPages = [

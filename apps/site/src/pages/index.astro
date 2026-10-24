@@ -3,7 +3,7 @@ import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
 import Logo from "../components/Logo.astro";
 import Base from "../layouts/Base.astro";
-import { appLinks, cloudPrice, cloudYearlyPrice, demoLinkAttrs, sourceUrl } from "../site";
+import { appLinks, cloudBilling, demoLinkAttrs, sourceUrl } from "../site";
 
 import bancos from "../assets/screens/bancos.jpg";
 import calendario from "../assets/screens/calendario.jpg";
@@ -194,16 +194,10 @@ const onlinePlan = [
   "Exporta tus datos cuando quieras",
 ];
 
-const billing = [
-  { id: "monthly", price: cloudPrice, unit: "al mes + IVA", note: "" },
-  {
-    id: "yearly",
-    price: cloudYearlyPrice,
-    unit: "al año + IVA",
-    note: "Unos 2,92 € al mes, un 42 % menos que pagando cada mes",
-  },
-];
 const defaultBilling = "yearly";
+
+/** In the big prices a monospaced space reads as a gap, so the euro sign gets a narrow margin instead */
+const euroSign = "ml-[0.28em]";
 
 /** White pill that slides under the chosen tab; the script places it and marks the group ready */
 const indicator =
@@ -481,20 +475,22 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           role="group"
           aria-label="Forma de pago"
           data-indicator-group
-          class="relative mx-auto mt-7 flex w-fit gap-1 rounded-[12px] bg-muted p-1"
+          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-[12px] bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
         >
           <span data-indicator aria-hidden="true" class={indicator}></span>
           {
-            billing.map((option) => (
+            cloudBilling.map((option) => (
               <button
                 type="button"
                 data-billing-option={option.id}
                 aria-pressed={option.id === defaultBilling ? "true" : "false"}
-                class="inline-flex items-center gap-2 rounded-[9px] border-0 bg-transparent px-4 py-2 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
+                class="inline-flex items-center justify-center gap-2 rounded-[9px] border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
               >
-                {option.id === "monthly" ? "Mensual" : "Anual"}
-                {option.id === "yearly" && (
-                  <span class="rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold text-success">−42 %</span>
+                {option.label}
+                {option.saving && (
+                  <span class="hidden rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold whitespace-nowrap text-success sm:inline">
+                    −{option.saving}
+                  </span>
                 )}
               </button>
             ))
@@ -514,7 +510,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
             </div>
           </div>
           <div class="mt-7 flex items-baseline gap-2">
-            <span class="amount text-[48px] leading-none sm:text-[56px] font-semibold tracking-[-0.05em]">0 €</span>
+            <span class="amount text-[48px] leading-none sm:text-[56px] font-semibold tracking-[-0.05em]">0<span class={euroSign}>€</span></span>
             <span class="text-muted-foreground">para siempre</span>
           </div>
           <div class="mt-2 min-h-[21px] text-[14px] text-muted-foreground">Sin límites y sin letra pequeña</div>
@@ -546,18 +542,27 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
               <Icon name="cloud" />
             </div>
             <div>
-              <h3 class="m-0 text-[18px] font-semibold">cuentalibre online</h3>
+              <h3 class="m-0 text-[18px] font-semibold">cuentalibre Cloud</h3>
               <div class="text-[14px] text-muted-foreground">Nosotros lo alojamos por ti</div>
             </div>
           </div>
           {
-            billing.map((option) => (
+            cloudBilling.map((option) => (
               <div data-billing-show={option.id} hidden={option.id !== defaultBilling}>
                 <div class="mt-7 flex flex-wrap items-baseline gap-2">
-                  <span class="amount text-[48px] leading-none sm:text-[56px] font-semibold tracking-[-0.05em]">{option.price}</span>
-                  <span class="text-muted-foreground">{option.unit}</span>
+                  <span class="amount text-[48px] leading-none sm:text-[56px] font-semibold tracking-[-0.05em]">
+                    {option.perMonth}<span class={euroSign}>€</span>
+                  </span>
+                  <span class="text-muted-foreground">al mes + IVA</span>
                 </div>
-                <div class="mt-2 min-h-[21px] text-[14px] text-muted-foreground">{option.note}</div>
+                <div class="mt-2 flex min-h-[21px] flex-wrap items-center gap-2 text-[14px] text-muted-foreground">
+                  {option.id === "monthly" ? "Sin permanencia" : `Pagas ${option.charged}`}
+                  {option.saving && (
+                    <span class="rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold text-success sm:hidden">
+                      Ahorras un {option.saving}
+                    </span>
+                  )}
+                </div>
               </div>
             ))
           }
@@ -586,9 +591,6 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           >
             Probar 30 días gratis
           </a>
-          <div class="mt-2.5 text-center text-sm text-muted-foreground">
-            Sin tarjeta. Cancela cuando quieras y llévate tus datos.
-          </div>
         </div>
       </div>
       <p class="mx-auto mt-5 mb-0 max-w-[620px] text-center text-[14px] text-muted-foreground">Precios sin IVA.</p>
@@ -691,7 +693,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
     syncEnds();
   }
 
-  // Price: show the monthly or the yearly price of the hosted plan
+  // Price: show the hosted plan's price for the chosen billing period
   for (const root of document.querySelectorAll<HTMLElement>("[data-billing]")) {
     const options = root.querySelectorAll<HTMLButtonElement>("[data-billing-option]");
     for (const option of options) {

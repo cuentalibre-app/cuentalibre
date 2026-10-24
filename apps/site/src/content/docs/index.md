@@ -34,7 +34,7 @@ Es el mismo programa, con las mismas funciones. Cambia quién lo instala y lo ma
     <div class="doc-option-head">
       <span class="doc-option-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
       <div>
-        <p class="doc-option-title">cuentalibre online</p>
+        <p class="doc-option-title">cuentalibre Cloud</p>
         <p class="doc-option-subtitle">Nosotros lo alojamos por ti</p>
       </div>
     </div>

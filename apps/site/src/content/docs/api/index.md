@@ -38,7 +38,7 @@ curl "https://api.cuentalibre.es/v1/sales-documents?from=2026-01-01&to=2026-03-3
 
 Todas las rutas cuelgan de `/v1`:
 
-- **cuentalibre online:** `https://api.cuentalibre.es/v1`
+- **cuentalibre Cloud:** `https://api.cuentalibre.es/v1`
 - **[Instalación propia](/docs/instalar):** la URL de tu servidor seguida de `/v1` (en desarrollo, `http://localhost:3000/v1`).
 
 ## Autenticación

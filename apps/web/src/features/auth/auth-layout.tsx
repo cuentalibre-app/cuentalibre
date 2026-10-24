@@ -56,7 +56,7 @@ function Brand() {
       className="flex items-baseline gap-2.5 self-center rounded-lg text-foreground lg:self-start"
     >
       <LogoMark className="h-6" />
-      <span className="text-xl font-semibold tracking-tight">cuentalibre</span>
+      <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
     </a>
   );
 }
