@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createBrowserRouter, Navigate } from "react-router";
 import type { ContactRole, SalesKind } from "@cuentalibre/contracts";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -55,6 +56,7 @@ import { DocumentSettingsPage } from "@/features/sales/document-settings-page";
 import { AccessPage } from "@/features/settings/access-page";
 import { AccountsPage } from "@/features/settings/accounts-page";
 import { BillingPage } from "@/features/settings/billing-page";
+import { RequireWritable } from "@/features/settings/read-only-gate";
 import { BusinessPage } from "@/features/settings/business-page";
 import { CertificatesPage } from "@/features/settings/certificates-page";
 import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
@@ -127,24 +129,27 @@ import { DesignSystemPage } from "@/pages/design-system";
 import { MorePage } from "@/pages/more-page";
 import { PlaceholderPage } from "@/pages/placeholder-page";
 
+/** Pages that only create something: read-only companies see why they can't instead of the form. */
+const writable = (page: ReactNode) => <RequireWritable>{page}</RequireWritable>;
+
 const salesRoutes = (Object.keys(KINDS) as SalesKind[]).flatMap((kind) => {
   const { path, newPath } = KINDS[kind];
   return [
     { path: path.slice(1), element: <SalesListPage key={kind} kind={kind} /> },
-    { path: newPath.slice(1), element: <SalesFormPage key={kind} kind={kind} /> },
+    { path: newPath.slice(1), element: writable(<SalesFormPage key={kind} kind={kind} />) },
     { path: `${path.slice(1)}/:id`, element: <SalesFormPage key={kind} kind={kind} /> },
   ];
 });
 
 const purchaseRoutes = [
   { path: PURCHASES_PATH.slice(1), element: <PurchasesListPage key="invoice" /> },
-  { path: NEW_PURCHASE_PATH.slice(1), element: <PurchaseFormPage key="invoice" /> },
+  { path: NEW_PURCHASE_PATH.slice(1), element: writable(<PurchaseFormPage key="invoice" />) },
   { path: `${PURCHASES_PATH.slice(1)}/:id`, element: <PurchaseFormPage key="invoice" /> },
   { path: ASSETS_PATH.slice(1), element: <PurchasesListPage key="asset" kind="asset" /> },
-  { path: NEW_ASSET_PATH.slice(1), element: <PurchaseFormPage key="asset" kind="asset" /> },
+  { path: NEW_ASSET_PATH.slice(1), element: writable(<PurchaseFormPage key="asset" kind="asset" />) },
   { path: `${ASSETS_PATH.slice(1)}/:id`, element: <PurchaseFormPage key="asset" kind="asset" /> },
   { path: EXPENSES_PATH.slice(1), element: <ExpensesListPage /> },
-  { path: NEW_EXPENSE_PATH.slice(1), element: <ExpenseFormPage /> },
+  { path: NEW_EXPENSE_PATH.slice(1), element: writable(<ExpenseFormPage />) },
   { path: `${EXPENSES_PATH.slice(1)}/:id`, element: <ExpenseFormPage /> },
 ];
 
@@ -152,7 +157,7 @@ const contactRoutes = (Object.keys(ROLES) as ContactRole[]).flatMap((role) => {
   const { path, newPath } = ROLES[role];
   return [
     { path: path.slice(1), element: <ContactsListPage key={role} role={role} /> },
-    { path: newPath.slice(1), element: <ContactFormPage key={role} role={role} /> },
+    { path: newPath.slice(1), element: writable(<ContactFormPage key={role} role={role} />) },
     { path: `${path.slice(1)}/:id`, element: <ContactDetailPage key={role} role={role} /> },
     { path: `${path.slice(1)}/:id/editar`, element: <ContactFormPage key={role} role={role} /> },
   ];
@@ -160,10 +165,10 @@ const contactRoutes = (Object.keys(ROLES) as ContactRole[]).flatMap((role) => {
 
 const catalogRoutes = [
   { path: PRODUCTS_PATH.slice(1), element: <CatalogListPage /> },
-  { path: NEW_PRODUCT_PATH.slice(1), element: <ProductFormPage /> },
+  { path: NEW_PRODUCT_PATH.slice(1), element: writable(<ProductFormPage />) },
   { path: `${PRODUCTS_PATH.slice(1)}/:id`, element: <ProductFormPage /> },
   { path: STOCK_PATH.slice(1), element: <StockPage /> },
-  { path: CATALOG_IMPORT_PATH.slice(1), element: <CatalogImportPage /> },
+  { path: CATALOG_IMPORT_PATH.slice(1), element: writable(<CatalogImportPage />) },
   { path: CATALOG_EXPORT_PATH.slice(1), element: <CatalogExportPage /> },
 ];
 
@@ -270,7 +275,7 @@ const transferRoutes = [
   { path: EXPORT_PATH.slice(1), element: <ExportPage /> },
   { path: EXPORT_BOOKS_PATH.slice(1), element: <ExportBooksPage /> },
   { path: EXPORT_ADVANCED_PATH.slice(1), element: <ExportAdvancedPage /> },
-  { path: IMPORT_PATH.slice(1), element: <ImportPage /> },
+  { path: IMPORT_PATH.slice(1), element: writable(<ImportPage />) },
 ];
 
 const builtPaths = new Set(
