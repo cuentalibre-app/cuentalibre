@@ -18,9 +18,10 @@ describe("missingIssuerData", () => {
   });
 
   it("lists what is missing as a sentence", () => {
-    expect(missingIssuerData({ ...profile, taxId: "", postalCode: "" })).toBe("el NIF y el código postal");
+    expect(missingIssuerData({ ...profile, city: "" })).toBe("falta la población");
+    expect(missingIssuerData({ ...profile, taxId: "", postalCode: "" })).toBe("faltan el NIF y el código postal");
     expect(missingIssuerData({ ...profile, kind: "company", address: "", city: "" })).toBe(
-      "la razón social, la dirección y la población",
+      "faltan la razón social, la dirección y la población",
     );
   });
 });

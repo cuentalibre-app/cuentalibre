@@ -1,30 +1,25 @@
 import { CircleAlert } from "lucide-react";
-import { SettingsLink } from "@/features/settings/settings-parts";
-import { BUSINESS_PATH } from "@/features/settings/settings-model";
-
-export const ISSUER_NOTICE_ID = "issuer-notice";
+import { Button } from "@cuentalibre/ui/components/button";
 
 /**
  * Shown where an invoice can be issued while the business profile lacks what
  * names the issuer: the server refuses to issue until it's filled in.
  */
-export function IssuerNotice({ missing, from }: { missing: string; from: string }) {
+export function IssuerNotice({ missing, onComplete }: { missing: string; onComplete: () => void }) {
   return (
-    <p
-      id={ISSUER_NOTICE_ID}
+    <div
       role="status"
-      tabIndex={-1}
-      className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-warning-soft px-4 py-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="flex flex-col gap-3 rounded-lg bg-warning-soft px-4 py-3 text-sm text-foreground sm:flex-row sm:items-center"
     >
-      <CircleAlert className="size-4 shrink-0 text-warning" strokeWidth={1.8} aria-hidden="true" />
-      <span>Para emitir facturas, tu empresa necesita {missing}.</span>
-      <SettingsLink
-        to={BUSINESS_PATH}
-        from={from}
-        className="font-medium text-primary no-underline hover:text-primary-hover"
-      >
-        Completar datos de la empresa
-      </SettingsLink>
-    </p>
+      <p className="m-0 flex flex-1 gap-2">
+        <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={1.8} aria-hidden="true" />
+        <span>
+          <strong className="font-semibold">Aún no puedes emitir facturas.</strong> A tu empresa le {missing}.
+        </span>
+      </p>
+      <Button size="sm" variant="secondary" className="self-start sm:self-auto" onClick={onComplete}>
+        Completar datos
+      </Button>
+    </div>
   );
 }
