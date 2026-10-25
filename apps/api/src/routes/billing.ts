@@ -84,6 +84,43 @@ const invoices = createRoute({
   },
 });
 
+const invoicePdf = createRoute({
+  method: "get",
+  path: "/billing/invoices/{id}/pdf",
+  tags: ["Billing"],
+  summary: "An invoice of the organization's plan, as a PDF",
+  description:
+    "Shown in the browser rather than downloaded. Only owners and administrators; read-only organizations too.",
+  middleware: [requireOrganization] as const,
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: {
+      description: "The invoice",
+      content: { "application/pdf": { schema: z.string().openapi({ type: "string", format: "binary" }) } },
+    },
+    401: errorContent("Not signed in"),
+    403: errorContent("No active organization, or the user isn't one of its owners or administrators"),
+    404: errorContent("Not one of the organization's invoices"),
+  },
+});
+
+/**
+ * The organization's paid invoices in Stripe, newest first: not the 0 € one of subscribing
+ * during the trial, which charged nothing.
+ */
+async function paidInvoicesOf(c: Context<AppEnv>, billing: Billing) {
+  requireManager(c);
+  const [row] = await c
+    .get("db")
+    .select({ customer: subscription.stripeCustomerId })
+    .from(subscription)
+    .where(eq(subscription.organizationId, c.get("organizationId")));
+  const paid = row ? await billing.stripe.listPaidInvoices(row.customer) : [];
+  return paid.filter(
+    (invoice) => invoice.amount_paid > 0 && invoice.number && invoice.invoice_pdf && invoice.hosted_invoice_url,
+  );
+}
+
 function requireManager(c: Context<AppEnv>) {
   if (c.get("role") === "member")
     throw new ApiError(403, "forbidden", "Only the organization's owners and administrators manage its plan.");
@@ -161,33 +198,30 @@ export const billingRoutes = (billing: Billing, webOrigin: string) => {
       });
       return c.json({ url: session.url }, 200);
     })
-    .openapi(invoices, async (c) => {
-      requireManager(c);
-      const [row] = await c
-        .get("db")
-        .select({ customer: subscription.stripeCustomerId })
-        .from(subscription)
-        .where(eq(subscription.organizationId, c.get("organizationId")));
-      const paid = row ? await billing.stripe.listPaidInvoices(row.customer) : [];
-      return c.json(
+    .openapi(invoices, async (c) =>
+      c.json(
         {
-          invoices: paid
-            // Not the 0 € invoice of subscribing during the trial, which charged nothing
-            .filter(
-              (invoice) =>
-                invoice.amount_paid > 0 && invoice.number && invoice.invoice_pdf && invoice.hosted_invoice_url,
-            )
-            .map((invoice): BillingInvoice => ({
-              id: invoice.id,
-              number: invoice.number!,
-              paidAt: new Date((invoice.status_transitions.paid_at ?? invoice.created) * 1000).toISOString(),
-              total: invoice.amount_paid as BillingInvoice["total"],
-              pdfUrl: invoice.invoice_pdf!,
-              url: invoice.hosted_invoice_url!,
-            })),
+          invoices: (await paidInvoicesOf(c, billing)).map((invoice): BillingInvoice => ({
+            id: invoice.id,
+            number: invoice.number!,
+            paidAt: new Date((invoice.status_transitions.paid_at ?? invoice.created) * 1000).toISOString(),
+            total: invoice.amount_paid as BillingInvoice["total"],
+            url: invoice.hosted_invoice_url!,
+          })),
         },
         200,
-      );
+      ),
+    )
+    .openapi(invoicePdf, async (c) => {
+      const { id } = c.req.valid("param");
+      // Found among the organization's own, so no other customer's invoice can be read
+      const invoice = (await paidInvoicesOf(c, billing)).find((paid) => paid.id === id);
+      if (!invoice) return errorResponse(c, 404, "not_found", "No such invoice for this organization.");
+      return c.body(await billing.stripe.downloadInvoicePdf(invoice), 200, {
+        "content-type": "application/pdf",
+        "content-disposition": `inline; filename*=UTF-8''${encodeURIComponent(`Factura ${invoice.number}.pdf`)}`,
+        "cache-control": "private, no-store",
+      });
     })
     .openapi(portal, async (c) => {
       requireManager(c);

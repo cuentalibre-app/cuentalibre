@@ -146,6 +146,7 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
           .url,
       portal: async () => (await request<{ url: string }>("/v1/billing/portal", { method: "POST" })).url,
       invoices: async () => (await request<{ invoices: BillingInvoice[] }>("/v1/billing/invoices")).invoices,
+      pdfUrl: (invoiceId) => `${baseUrl}/v1/billing/invoices/${encodeURIComponent(invoiceId)}/pdf`,
     },
 
     async members() {

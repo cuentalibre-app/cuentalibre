@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
-import { CreditCard, Download, ExternalLink, Loader2 } from "lucide-react";
+import { CreditCard, ExternalLink, FileText, Loader2 } from "lucide-react";
 import type { Billing, BillingInvoice, BillingPeriod, Plan } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
@@ -86,6 +86,23 @@ export function BillingPage() {
       clearTimeout(timer);
     };
   }, [enabled, api, justPaid]);
+
+  useEffect(() => {
+    if (!enabled || !api) return;
+    // Stripe's portal opens in another tab: what changed there shows on coming back
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      api.get().then(
+        (next) => {
+          setBilling(next);
+          setSharedBilling(next);
+        },
+        () => undefined,
+      );
+    };
+    document.addEventListener("visibilitychange", refresh);
+    return () => document.removeEventListener("visibilitychange", refresh);
+  }, [enabled, api]);
 
   return (
     // One narrow column: the page is short, and the prices read better side by side than stretched
@@ -252,8 +269,8 @@ function ManageSection({ billing }: { billing: Billing }) {
   return (
     <Section title="Tu suscripción" index={1}>
       <p className="m-0 text-sm text-muted-foreground">
-        Cambia el periodo o la tarjeta, actualiza los datos de facturación o cancela la suscripción. Se abre la página
-        de pagos de Stripe, que te devuelve aquí al terminar.
+        Cambia el periodo o la tarjeta, actualiza los datos de facturación o cancela la suscripción. Se abre en otra
+        pestaña la página de pagos de Stripe.
       </p>
       <div>
         <PortalButton
@@ -270,14 +287,21 @@ function PortalButton({ variant, label }: { variant: "primary" | "secondary" | "
   const [error, setError] = useState<string | null>(null);
 
   const open = async () => {
+    // Opened on the click, as browsers block tabs opened later, and sent to Stripe once the link arrives
+    const tab = window.open("", "_blank");
     setPending(true);
     setError(null);
     try {
-      window.location.assign(await currentBackend().billing!.portal());
+      const url = await currentBackend().billing!.portal();
+      if (tab) {
+        tab.opener = null;
+        tab.location.href = url;
+      } else window.location.assign(url);
     } catch (failure) {
+      tab?.close();
       setError(failureMessage(failure));
-      setPending(false);
     }
+    setPending(false);
   };
 
   return (
@@ -336,13 +360,13 @@ function InvoicesSection() {
               </div>
               <span className="amount font-semibold">{formatEUR(invoice.total)}</span>
               <a
-                href={invoice.pdfUrl}
+                href={currentBackend().billing!.pdfUrl(invoice.id)}
                 target="_blank"
                 rel="noreferrer"
-                aria-label={`Descargar la factura ${invoice.number} en PDF`}
+                aria-label={`Abrir la factura ${invoice.number} en PDF`}
                 className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
               >
-                <Download aria-hidden="true" />
+                <FileText aria-hidden="true" />
                 PDF
               </a>
             </li>

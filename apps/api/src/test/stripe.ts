@@ -57,6 +57,8 @@ async function fakeStripe(input: string | URL | Request, init?: RequestInit) {
     return reply({ url: `https://checkout.stripe.com/c/pay/cs_test_${++counter}` });
   if (method === "POST" && url.pathname === "/v1/billing_portal/sessions")
     return reply({ url: `https://billing.stripe.com/p/session/test_${++counter}` });
+  if (url.hostname === "pay.stripe.com")
+    return new Response(`%PDF-1.4 ${url.pathname}`, { headers: { "content-type": "application/octet-stream" } });
   if (method === "GET" && url.pathname === "/v1/invoices") {
     const status = url.searchParams.get("status");
     const found = (stripe.invoices.get(url.searchParams.get("customer") ?? "") ?? []).filter(

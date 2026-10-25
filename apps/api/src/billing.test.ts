@@ -335,13 +335,34 @@ describe("billing", () => {
         number: second.number,
         paidAt: new Date(1_795_452_934 * 1000).toISOString(),
         total: 4236,
-        pdfUrl: second.invoice_pdf,
         url: second.hosted_invoice_url,
       },
       expect.objectContaining({ id: first.id, total: 604 }),
     ]);
     const [request] = stripe.requests.filter((r) => r.path === "/v1/invoices");
     expect(request!.method).toBe("GET");
+  });
+
+  it("shows an invoice's PDF in the browser, only the organization's own", async () => {
+    const ana = await owner();
+    const created = await subscribed(ana);
+    const paid = invoice(created.customer, 604);
+    const trial = invoice(created.customer, 0);
+
+    const response = await ana.request(`/v1/billing/invoices/${paid.id}/pdf`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/pdf");
+    expect(response.headers.get("content-disposition")).toBe(
+      `inline; filename*=UTF-8''${encodeURIComponent(`Factura ${paid.number}.pdf`)}`,
+    );
+    expect(await response.text()).toBe(`%PDF-1.4 ${new URL(paid.invoice_pdf).pathname}`);
+
+    expect((await ana.request(`/v1/billing/invoices/${trial.id}/pdf`)).status).toBe(404);
+    const bea = await owner("Bea");
+    expect((await bea.request(`/v1/billing/invoices/${paid.id}/pdf`)).status).toBe(404);
+    const beaSubscription = await subscribed(bea);
+    invoice(beaSubscription.customer, 604);
+    expect((await bea.request(`/v1/billing/invoices/${paid.id}/pdf`)).status).toBe(404);
   });
 
   it("only shows the invoices to owners and administrators, and still once the organization is read-only", async () => {
