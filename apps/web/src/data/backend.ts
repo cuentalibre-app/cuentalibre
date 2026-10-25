@@ -1,6 +1,7 @@
 import type {
   ApiKey,
   Billing,
+  BillingInvoice,
   BillingPeriod,
   CreatedApiKey,
   EmailMessage,
@@ -40,6 +41,10 @@ export interface Backend {
     checkout(period: BillingPeriod): Promise<string>;
     /** Where to manage the subscription: Stripe's customer portal. */
     portal(): Promise<string>;
+    /** The invoices for the plan's charges, newest first. */
+    invoices(): Promise<BillingInvoice[]>;
+    /** Where an invoice's PDF opens, in the browser's viewer. */
+    pdfUrl(invoiceId: string): string;
   };
   /** The people in the organization. Without a server, the sample users stand in. */
   members?(): Promise<OrganizationMember[]>;

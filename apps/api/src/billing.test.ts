@@ -1,4 +1,4 @@
-import type { Billing } from "@cuentalibre/contracts";
+import type { Billing, BillingInvoice } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -7,7 +7,7 @@ import { encodeForm, signWebhook, verifyWebhook } from "./billing/stripe";
 import { membership, organization, session, subscription } from "./db/schema";
 import { loadEnv } from "./env";
 import { app, createOrganization, db, signUp, type Client } from "./test/harness";
-import { billingApp, billingEnv, prices, sendEvent, stripe, subscribe } from "./test/stripe";
+import { billingApp, billingEnv, invoice, prices, sendEvent, stripe, subscribe } from "./test/stripe";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -310,6 +310,83 @@ describe("billing", () => {
     expect(((await response.json()) as { url: string }).url).toMatch(/^https:\/\/billing\.stripe\.com\//);
     const [request] = stripe.requests.filter((r) => r.path === "/v1/billing_portal/sessions");
     expect(request!.form.get("return_url")).toBe(`${billingEnv.WEB_ORIGIN}/configuracion/plan`);
+  });
+
+  it("lists the invoices Stripe issued for the plan, with their links, and none before subscribing", async () => {
+    const ana = await owner();
+    const listed = async () => {
+      const response = await ana.request("/v1/billing/invoices");
+      expect(response.status).toBe(200);
+      return ((await response.json()) as { invoices: BillingInvoice[] }).invoices;
+    };
+    expect(await listed()).toEqual([]);
+    expect(stripe.requests.some((request) => request.path === "/v1/invoices")).toBe(false);
+
+    const created = await subscribed(ana);
+    // The 0 € invoice of subscribing during the trial, then the charges
+    invoice(created.customer, 0, "paid", 1_790_000_000);
+    const first = invoice(created.customer, 604, "paid", 1_792_860_934);
+    invoice(created.customer, 604, "open", 1_795_452_934);
+    const second = invoice(created.customer, 4236, "paid", 1_795_452_934);
+
+    expect(await listed()).toEqual([
+      {
+        id: second.id,
+        number: second.number,
+        paidAt: new Date(1_795_452_934 * 1000).toISOString(),
+        total: 4236,
+        url: second.hosted_invoice_url,
+      },
+      expect.objectContaining({ id: first.id, total: 604 }),
+    ]);
+    const [request] = stripe.requests.filter((r) => r.path === "/v1/invoices");
+    expect(request!.method).toBe("GET");
+  });
+
+  it("shows an invoice's PDF in the browser, only the organization's own", async () => {
+    const ana = await owner();
+    const created = await subscribed(ana);
+    const paid = invoice(created.customer, 604);
+    const trial = invoice(created.customer, 0);
+
+    const response = await ana.request(`/v1/billing/invoices/${paid.id}/pdf`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/pdf");
+    expect(response.headers.get("content-disposition")).toBe(
+      `inline; filename*=UTF-8''${encodeURIComponent(`Factura ${paid.number}.pdf`)}`,
+    );
+    expect(await response.text()).toBe(`%PDF-1.4 ${new URL(paid.invoice_pdf).pathname}`);
+
+    expect((await ana.request(`/v1/billing/invoices/${trial.id}/pdf`)).status).toBe(404);
+    const bea = await owner("Bea");
+    expect((await bea.request(`/v1/billing/invoices/${paid.id}/pdf`)).status).toBe(404);
+    const beaSubscription = await subscribed(bea);
+    invoice(beaSubscription.customer, 604);
+    expect((await bea.request(`/v1/billing/invoices/${paid.id}/pdf`)).status).toBe(404);
+  });
+
+  it("only shows the invoices to owners and administrators, and still once the organization is read-only", async () => {
+    const ana = await owner();
+    const created = await subscribed(ana);
+    invoice(created.customer, 604);
+    created.status = "canceled";
+    await sendEvent("customer.subscription.deleted", { id: created.id });
+    await db
+      .update(organization)
+      .set({ createdAt: new Date(Date.now() - 400 * DAY) })
+      .where(eq(organization.id, ana.organizationId));
+    expect((await billingOf(ana)).plan.status).toBe("readOnly");
+    const response = await ana.request("/v1/billing/invoices");
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { invoices: unknown[] }).invoices).toHaveLength(1);
+
+    const bea = await signUp("Bea", billingApp);
+    const { user } = (await (await bea.request("/v1/me")).json()) as { user: { id: string } };
+    await db
+      .insert(membership)
+      .values({ id: newId(), organizationId: ana.organizationId, userId: user.id, role: "member" });
+    await db.update(session).set({ activeOrganizationId: ana.organizationId }).where(eq(session.userId, user.id));
+    expect((await bea.request("/v1/billing/invoices")).status).toBe(403);
   });
 
   it("cancels the subscriptions of the organizations a deleted account takes with it", async () => {
