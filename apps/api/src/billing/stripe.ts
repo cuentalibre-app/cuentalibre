@@ -42,6 +42,8 @@ export interface StripeClient {
   retrieveSubscription(id: string): Promise<StripeSubscription>;
   /** The customer's paid invoices, newest first, up to 100. */
   listPaidInvoices(customer: string): Promise<StripeInvoice[]>;
+  /** An invoice's PDF, from its `invoice_pdf` link. */
+  downloadInvoicePdf(invoice: StripeInvoice): Promise<ArrayBuffer>;
   /** Cancels it at once, without refunding the period started. */
   cancelSubscription(id: string): Promise<void>;
 }
@@ -81,6 +83,15 @@ export function stripeClient(secretKey: string, fetchImpl: typeof fetch = fetch)
     async listPaidInvoices(customer) {
       const query = new URLSearchParams({ customer, status: "paid", limit: "100" });
       return (await send<{ data: StripeInvoice[] }>("GET", `/v1/invoices?${query}`)).data;
+    },
+    async downloadInvoicePdf(invoice) {
+      const url = new URL(invoice.invoice_pdf ?? "");
+      // Only Stripe's own links: the key never leaves for anywhere else, and neither does the request
+      if (url.protocol !== "https:" || url.hostname !== "pay.stripe.com")
+        throw new Error(`Stripe invoice ${invoice.id} has an unexpected PDF link`);
+      const response = await fetchImpl(url);
+      if (!response.ok) throw new Error(`Stripe invoice ${invoice.id} PDF failed: ${response.status}`);
+      return response.arrayBuffer();
     },
     async cancelSubscription(id) {
       await send("DELETE", `/v1/subscriptions/${encodeURIComponent(id)}`);

@@ -55,9 +55,7 @@ export const billingInvoiceSchema = z.object({
   paidAt: z.iso.datetime(),
   /** In cents, VAT included. */
   total: cents,
-  /** Its PDF, to download. */
-  pdfUrl: z.url(),
-  /** Stripe's page for it, with the receipt. */
+  /** Stripe's page for it, with the receipt. Its PDF is at `/v1/billing/invoices/{id}/pdf`. */
   url: z.url(),
 });
 export type BillingInvoice = z.infer<typeof billingInvoiceSchema>;
