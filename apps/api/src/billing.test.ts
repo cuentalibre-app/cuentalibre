@@ -174,7 +174,7 @@ describe("billing", () => {
     expect(checkouts()[1]!.form.has("subscription_data[trial_end]")).toBe(false);
   });
 
-  it("sends people subscribing from the welcome steps back to the app", async () => {
+  it("sends people subscribing from the welcome steps into the app, or back to the plan step", async () => {
     const ana = await owner();
     const response = await ana.request("/v1/billing/checkout", {
       method: "POST",
@@ -183,7 +183,7 @@ describe("billing", () => {
     expect(response.status).toBe(200);
     const [checkout] = stripe.requests.filter((request) => request.path === "/v1/checkout/sessions");
     expect(checkout!.form.get("success_url")).toBe(`${billingEnv.WEB_ORIGIN}/?suscripcion=ok`);
-    expect(checkout!.form.get("cancel_url")).toBe(`${billingEnv.WEB_ORIGIN}/`);
+    expect(checkout!.form.get("cancel_url")).toBe(`${billingEnv.WEB_ORIGIN}/bienvenida`);
   });
 
   it("only lets owners and administrators, signed in, manage the plan", async () => {

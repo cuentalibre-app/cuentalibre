@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { Billing } from "@cuentalibre/contracts";
 import {
   newSetup,
   onboardingSteps,
   organizationName,
+  resumesAtPlan,
   setupCommands,
   skipStep,
   stepErrors,
@@ -108,5 +110,26 @@ describe("setupCommands", () => {
     });
     expect(tax).toEqual({ type: "saveSettings", section: "taxSetup", data: setup.tax });
     expect(verifactu).toEqual({ type: "saveSettings", section: "verifactu", data: setup.verifactu });
+  });
+});
+
+describe("resumesAtPlan", () => {
+  const trial: Billing = {
+    plan: { status: "trial", canWrite: true, trialEndsAt: "2026-11-24T10:00:00.000Z" },
+    subscription: null,
+  };
+
+  it("offers the plan again while the trial runs without a subscription", () => {
+    expect(resumesAtPlan(trial)).toBe(true);
+  });
+
+  it("goes to the app once it has subscribed, the trial is over, or nothing is charged", () => {
+    const subscribed: Billing = {
+      ...trial,
+      subscription: { period: "monthly", status: "trialing", currentPeriodEnd: null, cancelAtPeriodEnd: false },
+    };
+    expect(resumesAtPlan(subscribed)).toBe(false);
+    expect(resumesAtPlan({ ...trial, plan: { ...trial.plan, status: "readOnly", canWrite: false } })).toBe(false);
+    expect(resumesAtPlan(null)).toBe(false);
   });
 });

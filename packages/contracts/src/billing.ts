@@ -42,7 +42,7 @@ export type Billing = z.infer<typeof billingSchema>;
 
 export const checkoutRequestSchema = z.object({
   period: billingPeriodSchema,
-  /** Where Stripe sends the person back: the plan page, or the app when subscribing from the welcome steps. */
+  /** Where Stripe sends the person back: the plan page; or, from the welcome steps, the app once paid and the plan step otherwise. */
   returnTo: z.enum(["plan", "app"]).default("plan"),
 });
 export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;

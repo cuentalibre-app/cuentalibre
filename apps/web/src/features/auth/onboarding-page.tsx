@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router";
 import { ChevronLeft, Loader2, Star, TriangleAlert } from "lucide-react";
 import { isVerifactuMandatory, normalizeTaxId, verifactuMandatoryFrom } from "@cuentalibre/core";
 import type {
@@ -15,6 +16,7 @@ import { Input } from "@cuentalibre/ui/components/input";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
+import { currentBackend } from "@/data/backend";
 import { AddressFields } from "@/features/contacts/contact-fields";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ActivityPicker } from "@/features/settings/activity-picker";
@@ -32,6 +34,7 @@ import {
   type ProfileErrors,
 } from "@/features/settings/settings-model";
 import {
+  AuthError,
   authErrorMessage,
   createOrganization,
   currentUser,
@@ -47,13 +50,14 @@ import {
   newSetup,
   onboardingSteps,
   organizationName,
+  resumesAtPlan,
   setupCommands,
   skipStep,
   stepErrors,
   type OnboardingStep,
   type Setup,
 } from "./onboarding-model";
-import { reloadAt } from "./session";
+import { ONBOARDING_PATH, reloadAt, sessionState } from "./session";
 
 type SetProfile = <K extends keyof BusinessProfile>(key: K, value: BusinessProfile[K]) => void;
 type SetTax = <K extends keyof TaxSetup>(key: K, value: TaxSetup[K]) => void;
@@ -359,14 +363,23 @@ function VerifactuStep({ setup, set }: { setup: Setup; set: (system: InvoicingSy
  * Once the business exists, where the instance charges for it: straight into the app on
  * the free trial, or paying now in Stripe Checkout, which keeps the trial's days.
  */
-function PlanStep() {
+function PlanStep({ trialEndsAt }: { trialEndsAt: string | null }) {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
   const [pending, setPending] = useState<"trial" | "subscribe" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // The business was created a moment ago, so its trial ends 30 days from now
+  // Unless the plan said, the business was created a moment ago, so its trial ends 30 days from now
   const [trialEnd] = useState(() =>
-    formatDate(localDate(new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString())),
+    formatDate(localDate(trialEndsAt ?? new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString())),
   );
+
+  useEffect(() => {
+    // Back from Checkout, the browser may show the page as it was left: still waiting to go there
+    const restored = (event: PageTransitionEvent) => {
+      if (event.persisted) setPending(null);
+    };
+    window.addEventListener("pageshow", restored);
+    return () => window.removeEventListener("pageshow", restored);
+  }, []);
 
   const startTrial = () => {
     setPending("trial");
@@ -432,14 +445,32 @@ export function OnboardingPage() {
   const [showErrors, setShowErrors] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // When the trial ends, if the page loaded with the business already created; null for one created here
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   // Saving the settings can fail after the business was created: a retry mustn't create another
   const created = useRef(false);
+  const navigate = useNavigate();
 
   const steps = onboardingSteps(Boolean(verifying), billing);
   const current = steps[step]!;
   const creates = current.key === CREATES_BUSINESS;
 
   useEffect(() => {
+    // The business exists (back from Checkout, or the history): it can't be created again, so only the plan is left
+    if (sessionState() === "connected") {
+      created.current = true;
+      signInMethods()
+        .then(async (methods) => (methods.billing ? ((await currentBackend().billing?.get()) ?? null) : null))
+        .then((plan) => {
+          if (!resumesAtPlan(plan)) return void navigate("/", { replace: true });
+          setTrialEndsAt(plan.plan.trialEndsAt);
+          setBilling(true);
+          setStep(onboardingSteps(false, true).findIndex((s) => s.key === "plan"));
+          setVerifying(null);
+        })
+        .catch(() => void navigate("/", { replace: true }));
+      return;
+    }
     Promise.all([currentUser(), signInMethods()])
       .then(([user, methods]) => {
         setBilling(methods.billing);
@@ -466,7 +497,14 @@ export function OnboardingPage() {
     runAction(
       async () => {
         if (!created.current) {
-          await createOrganization(organizationName(done));
+          try {
+            await createOrganization(organizationName(done));
+          } catch (error) {
+            // Created meanwhile, in another tab: loading the page again picks it up
+            if (error instanceof AuthError && error.code === "YOU_HAVE_REACHED_THE_MAXIMUM_NUMBER_OF_ORGANIZATIONS")
+              return reloadAt(ONBOARDING_PATH);
+            throw error;
+          }
           created.current = true;
         }
         await saveSettings(setupCommands(done));
@@ -523,7 +561,7 @@ export function OnboardingPage() {
             />
           </div>
         ) : current.key === "plan" ? (
-          <PlanStep />
+          <PlanStep trialEndsAt={trialEndsAt} />
         ) : (
           <form key={current.key} onSubmit={submit} noValidate className="flex animate-rise-in flex-col gap-4">
             {current.key === "regime" && <RegimeStep setup={setup} setProfile={setProfile} setTax={setTax} />}
