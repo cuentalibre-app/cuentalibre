@@ -1,4 +1,9 @@
-import { billingSchema, checkoutRequestSchema } from "@cuentalibre/contracts";
+import {
+  billingInvoiceSchema,
+  billingSchema,
+  checkoutRequestSchema,
+  type BillingInvoice,
+} from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import type { Context } from "hono";
 import { eq } from "drizzle-orm";
@@ -61,6 +66,21 @@ const portal = createRoute({
     401: errorContent("Not signed in, or signed in with an API key"),
     403: errorContent("No active organization, or the user isn't one of its owners or administrators"),
     409: errorContent("The organization has never subscribed"),
+  },
+});
+
+const invoices = createRoute({
+  method: "get",
+  path: "/billing/invoices",
+  tags: ["Billing"],
+  summary: "The invoices for the organization's plan, newest first",
+  description:
+    "Every charge paid, with links to its PDF and to Stripe's page for it. Stripe makes the links when asked, so ask again rather than keeping them. Only owners and administrators; read-only organizations too.",
+  middleware: [requireOrganization] as const,
+  responses: {
+    200: { description: "The invoices", content: json(z.object({ invoices: z.array(billingInvoiceSchema) })) },
+    401: errorContent("Not signed in"),
+    403: errorContent("No active organization, or the user isn't one of its owners or administrators"),
   },
 });
 
@@ -140,6 +160,34 @@ export const billingRoutes = (billing: Billing, webOrigin: string) => {
         cancel_url: back,
       });
       return c.json({ url: session.url }, 200);
+    })
+    .openapi(invoices, async (c) => {
+      requireManager(c);
+      const [row] = await c
+        .get("db")
+        .select({ customer: subscription.stripeCustomerId })
+        .from(subscription)
+        .where(eq(subscription.organizationId, c.get("organizationId")));
+      const paid = row ? await billing.stripe.listPaidInvoices(row.customer) : [];
+      return c.json(
+        {
+          invoices: paid
+            // Not the 0 € invoice of subscribing during the trial, which charged nothing
+            .filter(
+              (invoice) =>
+                invoice.amount_paid > 0 && invoice.number && invoice.invoice_pdf && invoice.hosted_invoice_url,
+            )
+            .map((invoice): BillingInvoice => ({
+              id: invoice.id,
+              number: invoice.number!,
+              paidAt: new Date((invoice.status_transitions.paid_at ?? invoice.created) * 1000).toISOString(),
+              total: invoice.amount_paid as BillingInvoice["total"],
+              pdfUrl: invoice.invoice_pdf!,
+              url: invoice.hosted_invoice_url!,
+            })),
+        },
+        200,
+      );
     })
     .openapi(portal, async (c) => {
       requireManager(c);

@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
-import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
-import type { Billing, BillingPeriod, Plan } from "@cuentalibre/contracts";
+import { CreditCard, Download, ExternalLink, Loader2 } from "lucide-react";
+import type { Billing, BillingInvoice, BillingPeriod, Plan } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { currentBackend } from "@/data/backend";
@@ -125,11 +126,8 @@ function BillingDetails({ billing, justPaid }: { billing: Billing; justPaid: boo
         </p>
       )}
       <PlanPanel billing={billing} />
-      {subscribed ? (
-        <ManageSection billing={billing} />
-      ) : (
-        <SubscribeSection plan={billing.plan} hasHistory={Boolean(billing.subscription)} />
-      )}
+      {subscribed ? <ManageSection billing={billing} /> : <SubscribeSection plan={billing.plan} />}
+      {billing.subscription && <InvoicesSection />}
     </>
   );
 }
@@ -209,7 +207,7 @@ function PlanPanel({ billing }: { billing: Billing }) {
 }
 
 /** Choosing a period and paying for it in Stripe Checkout. */
-function SubscribeSection({ plan, hasHistory }: { plan: Plan; hasHistory: boolean }) {
+function SubscribeSection({ plan }: { plan: Plan }) {
   const firstCharge = firstChargeOf(plan);
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
   const [pending, setPending] = useState(false);
@@ -240,12 +238,11 @@ function SubscribeSection({ plan, hasHistory }: { plan: Plan; hasHistory: boolea
           {error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-3">
+      <div>
         <Button onClick={() => void subscribe()} disabled={pending}>
           {pending && <Loader2 className="animate-spin" aria-hidden="true" />}
           Continuar al pago
         </Button>
-        {hasHistory && <PortalButton variant="ghost" label="Ver facturas anteriores" />}
       </div>
     </Section>
   );
@@ -255,8 +252,8 @@ function ManageSection({ billing }: { billing: Billing }) {
   return (
     <Section title="Tu suscripción" index={1}>
       <p className="m-0 text-sm text-muted-foreground">
-        Cambia el periodo o la tarjeta, actualiza los datos de facturación, descarga tus facturas o cancela la
-        suscripción. Se abre la página de pagos de Stripe, que te devuelve aquí al terminar.
+        Cambia el periodo o la tarjeta, actualiza los datos de facturación o cancela la suscripción. Se abre la página
+        de pagos de Stripe, que te devuelve aquí al terminar.
       </p>
       <div>
         <PortalButton
@@ -295,5 +292,63 @@ function PortalButton({ variant, label }: { variant: "primary" | "secondary" | "
         </span>
       )}
     </span>
+  );
+}
+
+/** The invoices for the plan's charges, each with its PDF; asked for every time, as Stripe's links expire. */
+function InvoicesSection() {
+  const [invoices, setInvoices] = useState<BillingInvoice[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    currentBackend()
+      .billing!.invoices()
+      .then((list) => active && setInvoices(list))
+      .catch((failure: unknown) => {
+        if (!active) return;
+        setError(
+          failure instanceof ApiError && failure.code === "forbidden"
+            ? "Solo quien administra la empresa puede ver sus facturas."
+            : "No se han podido cargar las facturas. Recarga la página para intentarlo de nuevo.",
+        );
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <Section title="Facturas" index={2}>
+      {error ? (
+        <p className="m-0 text-sm text-muted-foreground">{error}</p>
+      ) : invoices === null ? (
+        <p className="m-0 text-sm text-muted-foreground">Cargando…</p>
+      ) : invoices.length === 0 ? (
+        <p className="m-0 text-sm text-muted-foreground">Aún no hay facturas: tendrás una con cada cobro.</p>
+      ) : (
+        <ul className="m-0 flex list-none flex-col divide-y divide-border p-0">
+          {invoices.map((invoice) => (
+            <li key={invoice.id} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-medium">{formatDate(localDate(invoice.paidAt))}</span>
+                <span className="truncate text-xs text-muted-foreground">Factura {invoice.number}</span>
+              </div>
+              <span className="amount font-semibold">{formatEUR(invoice.total)}</span>
+              <a
+                href={invoice.pdfUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Descargar la factura ${invoice.number} en PDF`}
+                className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
+              >
+                <Download aria-hidden="true" />
+                PDF
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
   );
 }
