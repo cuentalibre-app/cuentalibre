@@ -86,13 +86,14 @@ const ISSUER_FIELD_LABELS: Record<IssuerField, string> = {
 };
 
 /**
- * What the profile lacks to issue invoices, as in "el NIF, la dirección y el
- * código postal", or null when it has it all.
+ * What the profile lacks to issue invoices, with its verb, as in "falta el NIF"
+ * or "faltan la dirección y el código postal"; null when it has it all.
  */
 export function missingIssuerData(profile: BusinessProfile): string | null {
   const labels = missingIssuerFields(profile).map((field) => ISSUER_FIELD_LABELS[field]);
   if (labels.length === 0) return null;
-  return new Intl.ListFormat("es", { type: "conjunction" }).format(labels);
+  const list = new Intl.ListFormat("es", { type: "conjunction" }).format(labels);
+  return `${labels.length === 1 ? "falta" : "faltan"} ${list}`;
 }
 
 /** Full name of a self-employed worker, or the company's legal name. */

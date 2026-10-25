@@ -75,6 +75,7 @@ import { canSendEmail } from "@/data/email";
 import { SalesDocumentLink } from "./document-detail";
 import { GroupedSelect } from "./form-fields";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
+import { IssuerDialog } from "./issuer-dialog";
 import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
@@ -715,7 +716,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
 /** Every operation available on a document, grouped so the menu can split them with separators. */
 function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const navigate = useNavigate();
-  const [dialog, setDialog] = useState<"payment" | "attachments" | "tags" | "send" | null>(null);
+  const [dialog, setDialog] = useState<"payment" | "attachments" | "tags" | "send" | "issuer" | null>(null);
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
@@ -777,11 +778,8 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   } satisfies Record<string, Action>;
 
   const issueDraft = () => {
-    const missing = missingIssuerData(settingsStore.get().profile);
-    if (missing) {
-      window.alert(
-        `No se puede emitir: tu empresa necesita ${missing}. Complétalo en Configuración › Datos de la empresa.`,
-      );
+    if (missingIssuerData(settingsStore.get().profile)) {
+      setDialog("issuer");
       return;
     }
     // Drafts don't show their series: one deactivated since goes to the default series of its type
@@ -903,6 +901,8 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       <TagsDialog doc={doc} title={`${config.noun} ${label}`} onOpenChange={close} />
     ) : dialog === "send" ? (
       <SendDialog doc={doc} onOpenChange={close} />
+    ) : dialog === "issuer" ? (
+      <IssuerDialog open issues onOpenChange={close} onSaved={issueDraft} />
     ) : null;
 
   return {
