@@ -1,7 +1,7 @@
 import type { BankMovement, Expense, Product, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { newId, type Cents, type StockMovement } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
-import { changes, client, document, errorCode, member, send, workspace } from "./test/sync";
+import { changes, client, document, errorCode, issuer, member, send, workspace } from "./test/sync";
 
 const account = () =>
   ({ id: newId(), kind: "bank", name: "Cuenta principal", number: "ES91…1332", active: true }) as const;
@@ -105,7 +105,7 @@ describe("plain records", () => {
   });
 
   it("keep a payment method while a contact, an expense, a payment or the settings name it", async () => {
-    const ana = await member();
+    const ana = await issuer();
     const method = {
       id: newId(),
       type: "transfer",

@@ -8,6 +8,7 @@ import {
   laterInvoiceInSeries,
   laterNumberInSeries,
   lineBase,
+  missingIssuerFields,
   nextDocumentNumber,
   nextInvoiceNumber,
   operationChargesVat,
@@ -262,5 +263,36 @@ describe("laterNumberInSeries", () => {
     expect(laterNumberInSeries("AAAA-####", "2026-0003", issued)).toBeUndefined();
     expect(laterNumberInSeries("R-AAAA-####", "R-2026-0004", issued)).toBeUndefined();
     expect(laterNumberInSeries("AAAA-####", "2027-0001", issued)).toBeUndefined();
+  });
+});
+
+describe("missingIssuerFields", () => {
+  const worker = {
+    kind: "selfEmployed" as const,
+    taxId: "50123456Q",
+    firstName: "Lucía",
+    lastName: "Martín",
+    legalName: "",
+    address: "Calle del Pez 12",
+    postalCode: "28004",
+    city: "Madrid",
+  };
+
+  it("finds nothing missing in a complete profile", () => {
+    expect(missingIssuerFields(worker)).toEqual([]);
+  });
+
+  it("lists every blank field in profile order", () => {
+    expect(missingIssuerFields({ ...worker, taxId: " ", lastName: "", city: "" })).toEqual([
+      "taxId",
+      "lastName",
+      "city",
+    ]);
+  });
+
+  it("names a company by its legal name, not by a person's", () => {
+    const company = { ...worker, kind: "company" as const, taxId: "B12345674", firstName: "", lastName: "" };
+    expect(missingIssuerFields(company)).toEqual(["legalName"]);
+    expect(missingIssuerFields({ ...company, legalName: "Peña S.L." })).toEqual([]);
   });
 });

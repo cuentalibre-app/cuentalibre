@@ -107,7 +107,8 @@ An invoice's `status` follows its payments: `paid` once they cover the total, `p
 - its quarter is closed (`409 quarter_closed`);
 - the invoice already exists as an issued invoice (`409 already_issued`);
 - it is rectifying and `rectifiesId` doesn't name an issued invoice of the normal series, or it is normal and has `rectifiesId` (`400`);
-- under VERI\*FACTU, the business lacks NIF or name (`400 verifactu_issuer_missing`) or the client lacks a tax ID (`400 invalid_document`).
+- the business profile lacks the issuer's NIF, fiscal name (`legalName` of a company, `firstName` and `lastName` of a self-employed worker; not `tradeName`) or address (`address`, `postalCode`, `city`) (`400 issuer_missing`);
+- under VERI\*FACTU, the client lacks a tax ID (`400 invalid_document`).
 
 Issuing freezes the client's fiscal data and the totals. Under VERI\*FACTU (settings `verifactu.system: "verifactu"` from `startDate`), it also creates the invoice record, chained to the previous one, and sends it to the AEAT in the background; its status shows up in `issued.verifactu`.
 

@@ -10,6 +10,7 @@ import {
   invoiceTotals,
   laterInvoiceInSeries,
   laterNumberInSeries,
+  missingIssuerFields,
   nextInvoiceNumber,
   outOfOrderInSeries,
   parseSeriesNumber,
@@ -426,6 +427,13 @@ export async function issueInvoice(
   await checkRectified(tx, organizationId, record, number !== undefined);
 
   const settings = await readSettings(tx, organizationId);
+  const missing = missingIssuerFields(settings.businessProfile);
+  if (missing.length > 0)
+    throw new ApiError(
+      400,
+      "issuer_missing",
+      `Every invoice names its issuer: the business profile lacks ${missing.join(", ")}.`,
+    );
   const series = invoiceSeriesOf(record, settings.invoiceSettings.series ?? []);
   if (!series) invalid("seriesId: no such series in the invoice settings.");
   if (series.type !== record.series) invalid(`seriesId: ${series.name} isn't a series of ${record.series} invoices.`);

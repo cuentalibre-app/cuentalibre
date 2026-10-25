@@ -12,6 +12,8 @@ const MESSAGES: Record<string, string> = {
     "Ya hay una factura de la serie con una fecha posterior: la nueva no puede tener una fecha anterior.",
   number_taken: "Ya existe una factura con ese número.",
   already_issued: "Esa factura ya estaba emitida.",
+  issuer_missing:
+    "Para emitir facturas, tu empresa necesita su NIF, su nombre fiscal y su dirección. Complétalos en Configuración › Datos de la empresa.",
   invalid_attachment: "No se ha podido subir uno de los archivos adjuntos. Vuelve a adjuntarlo.",
   subscription_required: "Tu empresa está en solo lectura. Suscríbete para volver a guardar cambios.",
 };

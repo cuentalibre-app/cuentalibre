@@ -351,3 +351,30 @@ export type OperationType = "national" | "exempt" | "notSubject" | "reverseCharg
 export function operationChargesVat(type: OperationType): boolean {
   return type === "national";
 }
+
+/** The parts of the business profile an invoice names its issuer with. */
+export interface IssuerProfile {
+  kind: "selfEmployed" | "company";
+  taxId: string;
+  firstName: string;
+  lastName: string;
+  legalName: string;
+  address: string;
+  postalCode: string;
+  city: string;
+}
+
+/** A field of the business profile the issuer still lacks. */
+export type IssuerField = "taxId" | "firstName" | "lastName" | "legalName" | "address" | "postalCode" | "city";
+
+/**
+ * What the business profile lacks for its invoices to name the issuer: NIF,
+ * fiscal name and address (RD 1619/2012, art. 6). The fiscal name is the legal
+ * name of a company, or the first name and last name of a self-employed
+ * worker; the trade name doesn't count.
+ */
+export function missingIssuerFields(profile: IssuerProfile): IssuerField[] {
+  const names: IssuerField[] = profile.kind === "company" ? ["legalName"] : ["firstName", "lastName"];
+  const fields: IssuerField[] = ["taxId", ...names, "address", "postalCode", "city"];
+  return fields.filter((field) => !profile[field].trim());
+}
