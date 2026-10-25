@@ -372,6 +372,15 @@ function PlanStep({ trialEndsAt }: { trialEndsAt: string | null }) {
     formatDate(localDate(trialEndsAt ?? new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString())),
   );
 
+  useEffect(() => {
+    // Back from Checkout, the browser may show the page as it was left: still waiting to go there
+    const restored = (event: PageTransitionEvent) => {
+      if (event.persisted) setPending(null);
+    };
+    window.addEventListener("pageshow", restored);
+    return () => window.removeEventListener("pageshow", restored);
+  }, []);
+
   const startTrial = () => {
     setPending("trial");
     reloadAt("/");
