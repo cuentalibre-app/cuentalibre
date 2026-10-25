@@ -13,6 +13,20 @@ export interface StripeSubscription {
   items: { data: { price: { id: string }; current_period_end?: number }[] };
 }
 
+/** An invoice Stripe issued for a subscription's charge, with the fields we read. */
+export interface StripeInvoice {
+  id: string;
+  /** Null while it is a draft. */
+  number: string | null;
+  created: number;
+  /** In cents, VAT included. */
+  amount_paid: number;
+  status_transitions: { paid_at: number | null };
+  /** Its PDF, and the page where the customer sees it; Stripe makes them when asked. */
+  invoice_pdf: string | null;
+  hosted_invoice_url: string | null;
+}
+
 /** A webhook event; `data.object` depends on its type. */
 export interface StripeEvent {
   id: string;
@@ -26,6 +40,8 @@ export interface StripeClient {
   createCheckoutSession(params: Params): Promise<{ url: string }>;
   createPortalSession(params: Params): Promise<{ url: string }>;
   retrieveSubscription(id: string): Promise<StripeSubscription>;
+  /** The customer's paid invoices, newest first, up to 100. */
+  listPaidInvoices(customer: string): Promise<StripeInvoice[]>;
   /** Cancels it at once, without refunding the period started. */
   cancelSubscription(id: string): Promise<void>;
 }
@@ -62,6 +78,10 @@ export function stripeClient(secretKey: string, fetchImpl: typeof fetch = fetch)
     createCheckoutSession: (params) => send("POST", "/v1/checkout/sessions", params),
     createPortalSession: (params) => send("POST", "/v1/billing_portal/sessions", params),
     retrieveSubscription: (id) => send("GET", `/v1/subscriptions/${encodeURIComponent(id)}`),
+    async listPaidInvoices(customer) {
+      const query = new URLSearchParams({ customer, status: "paid", limit: "100" });
+      return (await send<{ data: StripeInvoice[] }>("GET", `/v1/invoices?${query}`)).data;
+    },
     async cancelSubscription(id) {
       await send("DELETE", `/v1/subscriptions/${encodeURIComponent(id)}`);
     },
