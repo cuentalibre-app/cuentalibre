@@ -1,6 +1,7 @@
 import { normalizeTaxId } from "@cuentalibre/core";
 import {
   DEFAULT_ORGANIZATION_SETTINGS,
+  type Billing,
   type BusinessProfile,
   type SyncCommand,
   type TaxSetup,
@@ -92,6 +93,14 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
  */
 export const onboardingSteps = (verifyEmail: boolean, billing = false) =>
   ONBOARDING_STEPS.filter((step) => (verifyEmail || step.key !== "email") && (billing || step.key !== "plan"));
+
+/**
+ * Back on the wizard once the business exists (from Stripe Checkout, or the browser's history):
+ * the plan is all that is left to choose while the trial runs and it has never subscribed.
+ * Otherwise, and without a plan to charge (`null`), the app is where to go.
+ */
+export const resumesAtPlan = (billing: Billing | null): billing is Billing =>
+  billing !== null && billing.plan.status === "trial" && billing.subscription === null;
 
 /** The step whose end creates the business, with everything gathered until then. */
 export const CREATES_BUSINESS: OnboardingStep["key"] = "verifactu";
