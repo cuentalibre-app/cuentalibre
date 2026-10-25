@@ -174,7 +174,9 @@ export const billingRoutes = (billing: Billing, webOrigin: string) => {
         return errorResponse(c, 409, "already_subscribed", "The organization already has a subscription.");
 
       const { period, returnTo } = c.req.valid("json");
+      // From the welcome steps, paying goes into the app; going back, to the plan step again
       const back = returnTo === "app" ? `${webOrigin}/` : returnUrl;
+      const cancel = returnTo === "app" ? `${webOrigin}/bienvenida` : returnUrl;
       const firstCharge = firstChargeOf(org!);
       const customer = await customerOf(db, billing, org!, c.get("user")!.email);
       const session = await billing.stripe.createCheckoutSession({
@@ -194,7 +196,7 @@ export const billingRoutes = (billing: Billing, webOrigin: string) => {
         customer_update: { name: "auto", address: "auto" },
         locale: "es",
         success_url: `${back}?suscripcion=ok`,
-        cancel_url: back,
+        cancel_url: cancel,
       });
       return c.json({ url: session.url }, 200);
     })
