@@ -4,5 +4,8 @@
   "name": "cuentalibre-app",
   "compatibility_date": "2026-10-01",
   "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
-  "routes": [{ "pattern": "app.cuentalibre.es", "custom_domain": true }]
+  // app.cuentalibre.es is a Cloudflare for SaaS custom hostname on jesuspb.dev, whose
+  // IPs aren't shared with the sites Spanish ISPs block during LaLiga matches (#91).
+  // A custom domain would put it back on cuentalibre.es's own, blocked IPs.
+  "routes": [{ "pattern": "app.cuentalibre.es/*", "zone_name": "jesuspb.dev" }]
 }
