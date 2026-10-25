@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cents } from "./common";
 
 /** How often a Cloud subscription is charged. */
 export const billingPeriodSchema = z.enum(["monthly", "quarterly", "yearly"]);
@@ -45,3 +46,16 @@ export const checkoutRequestSchema = z.object({
   returnTo: z.enum(["plan", "app"]).default("plan"),
 });
 export type CheckoutRequest = z.infer<typeof checkoutRequestSchema>;
+
+/** An invoice for a charge of the plan, issued by Stripe for cuentalibre Cloud. */
+export const billingInvoiceSchema = z.object({
+  id: z.string(),
+  number: z.string(),
+  /** When it was paid. */
+  paidAt: z.iso.datetime(),
+  /** In cents, VAT included. */
+  total: cents,
+  /** Stripe's page for it, with the receipt. Its PDF is at `/v1/billing/invoices/{id}/pdf`. */
+  url: z.url(),
+});
+export type BillingInvoice = z.infer<typeof billingInvoiceSchema>;
