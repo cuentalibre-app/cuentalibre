@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { membership, session } from "./db/schema";
 import { addOrganization, app, db, env, withApiKey, type Client } from "./test/harness";
-import { client, document, errorCode, line, member, send } from "./test/sync";
+import { client, document, errorCode, issuer, line, member, send } from "./test/sync";
 
 async function createKey(user: Client, body: Record<string, unknown> = { name: "Agente" }) {
   const response = await user.request("/v1/api-keys", { method: "POST", body });
@@ -17,9 +17,9 @@ async function createKey(user: Client, body: Record<string, unknown> = { name: "
   return (await response.json()) as CreatedApiKey;
 }
 
-/** A member with a client, and an API key of theirs. */
+/** A member ready to invoice a client, and an API key of theirs. */
 async function agent() {
-  const ana = await member();
+  const ana = await issuer();
   const norte = client();
   await send(ana, [{ type: "create", entity: "clients", data: norte }]);
   const key = await createKey(ana);

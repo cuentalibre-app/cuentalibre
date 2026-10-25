@@ -118,7 +118,8 @@ Use an expense for tickets, the autónomo fee, fees and anything without a full 
 1. Find the client in `GET /contacts?role=client` (by `taxId` when you have it), or create it. Reuse its default `withholding`, `discount` and `paymentMethodId`; under VERI\*FACTU it needs a `taxId`.
 2. Create a **draft** (`POST /sales-documents`, `kind: "draft"`, `number: null`, `series: "normal"`, `status: "pending"`), with `incomeType`, `operationType`, `lines`, `dueOn`, `publicNotes`.
 3. Show the user the client, lines, base, VAT, withholding and total in euros.
-4. Only after an explicit yes, `POST /sales-documents/{id}/issue`. Report the number and `issued.totals`.
+4. Before issuing, check `settings.businessProfile` (from `GET /workspace`): it needs `taxId`, the fiscal name (`legalName` of a company, `firstName` and `lastName` of a self-employed worker) and `address`, `postalCode` and `city`. Ask the user for what's missing and save it (`saveSettings`, references/settings.md), or issuing fails with `400 issuer_missing`.
+5. Only after an explicit yes, `POST /sales-documents/{id}/issue`. Report the number and `issued.totals`.
 
 To correct an issued invoice that can't be edited, issue a rectifying one (`series: "rectifying"`, `rectifiesId`, negative quantities for what it takes away), with the same confirmation.
 

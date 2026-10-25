@@ -2,11 +2,22 @@ import { DEFAULT_ORGANIZATION_SETTINGS, type SalesDocument } from "@cuentalibre/
 import { newId, type Cents } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import type { Client } from "./test/harness";
-import { changes, client, document, errorCode, line, member, send, workspace } from "./test/sync";
+import {
+  changes,
+  client,
+  document,
+  errorCode,
+  issuer,
+  ISSUER_PROFILE,
+  line,
+  member,
+  send,
+  workspace,
+} from "./test/sync";
 
 /** A member with one client, ready to invoice. */
 async function seller() {
-  const ana = await member();
+  const ana = await issuer();
   const norte = client({ address: "Calle Mayor 1", city: "Bilbao" });
   expect((await send(ana, [{ type: "create", entity: "clients", data: norte }])).status).toBe(200);
   return Object.assign(ana, { norte });
@@ -116,6 +127,28 @@ describe("sales documents", () => {
 });
 
 describe("issuing invoices", () => {
+  it("needs the issuer's NIF, fiscal name and address, also for imported invoices", async () => {
+    const ana = await member();
+    const norte = client();
+    expect((await send(ana, [{ type: "create", entity: "clients", data: norte }])).status).toBe(200);
+    // The trade name doesn't name the issuer
+    const profile = { ...ISSUER_PROFILE, lastName: "", city: " ", tradeName: "Estudio Martín" };
+    await send(ana, [{ type: "saveSettings", section: "businessProfile", data: profile }]);
+
+    for (const number of [undefined, "2026-0100"]) {
+      const response = await issue(ana, document(norte.id), number);
+      expect(response.status).toBe(400);
+      const { error } = (await response.json()) as { error: { code: string; message: string } };
+      expect(error).toMatchObject({ code: "issuer_missing", message: expect.stringContaining("lastName, city") });
+    }
+    expect(await salesDocuments(ana)).toEqual([]);
+
+    // Drafts don't name an issuer yet
+    expect((await send(ana, [{ type: "create", entity: "salesDocuments", data: document(norte.id) }])).status).toBe(
+      200,
+    );
+  });
+
   it("numbers invoices in sequence and freezes the client and totals", async () => {
     const ana = await seller();
     const first = await issued(ana, document(ana.norte.id, { number: null }));

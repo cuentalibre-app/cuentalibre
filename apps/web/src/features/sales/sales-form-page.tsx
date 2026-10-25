@@ -47,10 +47,10 @@ import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
-import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
+import { defaultPaymentMethodId, missingIssuerData, paymentMethodOptions } from "@/features/settings/settings-model";
 import { MethodDialog } from "@/features/settings/method-dialog";
 import { SettingsLink } from "@/features/settings/settings-parts";
-import { settingsStore } from "@/features/settings/settings-store";
+import { settingsStore, useSettings } from "@/features/settings/settings-store";
 import {
   LinesEditor,
   TagsField,
@@ -88,6 +88,7 @@ import { SeriesDialog } from "./series-dialog";
 import { canSendEmail } from "@/data/email";
 import { SendDialog, sendWithMailClient } from "./document-dialogs";
 import { IssuedNotice } from "./issued-notice";
+import { ISSUER_NOTICE_ID, IssuerNotice } from "./issuer-notice";
 import { salesStore } from "./sales-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
@@ -286,6 +287,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   // anyway: without VERI*FACTU, while the quarter is open, they can be revised too
   const revisable = issued && verifactuSystem === "exempt" && !existing.issued?.verifactu && !locked;
   const readOnly = issued && !revisable;
+  // New invoices and drafts are the documents this form issues
+  const issuable = (kind === "invoice" && !existing) || kind === "draft";
+  const missingIssuer = missingIssuerData(useSettings().profile);
   const [advanced, setAdvanced] = useState(
     () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
   );
@@ -429,6 +433,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
 
   function save(asKind: SalesKind, after: AfterSave = "list") {
     if (readOnly) return;
+    if (asKind === "invoice" && !issued && missingIssuer) {
+      document.getElementById(ISSUER_NOTICE_ID)?.focus();
+      return;
+    }
     const found = validate(asKind);
     setErrors(found);
     if (Object.values(found).some(Boolean)) {
@@ -610,6 +618,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
           <LockedNotice period={locked} noun="Esta factura" />
         ) : (
           readOnly && <IssuedNotice invoice={existing} />
+        )}
+        {issuable && missingIssuer && (
+          <IssuerNotice missing={missingIssuer} from={title[0]!.toLowerCase() + title.slice(1)} />
         )}
         {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
 

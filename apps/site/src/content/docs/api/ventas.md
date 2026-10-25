@@ -123,7 +123,8 @@ Se rechaza (`400` o `409`) una factura:
 - en un trimestre cerrado;
 - rectificativa que no indique en `rectifiesId` una factura emitida de la serie normal, o normal que lo indique;
 - en una serie desactivada (`409 series_inactive`) o que no es de su tipo;
-- con VERI\*FACTU, si el negocio no tiene NIF y nombre (`400 verifactu_issuer_missing`) o el cliente no tiene NIF.
+- si al negocio le falta el NIF, el nombre fiscal o la dirección (`400 issuer_missing`): la razón social de una sociedad, o el nombre y el primer apellido de un autónomo, y la dirección, el código postal y la población;
+- con VERI\*FACTU, si el cliente no tiene NIF.
 
 Para importar una factura emitida con otro programa conservando su número, usa el comando [`issue` con `number`](/docs/api/sincronizacion#post-v1commands).
 

@@ -42,10 +42,12 @@ import {
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
   INVOICE_SETTINGS_PATH,
+  missingIssuerData,
   PREFERENCES_PATH,
   QUOTE_SETTINGS_PATH,
 } from "@/features/settings/settings-model";
 import { SettingsLink } from "@/features/settings/settings-parts";
+import { settingsStore } from "@/features/settings/settings-store";
 import { TagChips } from "@/features/settings/tag-chip";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
@@ -775,6 +777,13 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   } satisfies Record<string, Action>;
 
   const issueDraft = () => {
+    const missing = missingIssuerData(settingsStore.get().profile);
+    if (missing) {
+      window.alert(
+        `No se puede emitir: tu empresa necesita ${missing}. Complétalo en Configuración › Datos de la empresa.`,
+      );
+      return;
+    }
     // Drafts don't show their series: one deactivated since goes to the default series of its type
     const own = seriesOf(doc);
     const draft = own.active === false ? { ...doc, ...seriesRefOf(defaultSeries(own.type)) } : doc;
