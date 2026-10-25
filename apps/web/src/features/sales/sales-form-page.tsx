@@ -47,10 +47,10 @@ import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
-import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
+import { defaultPaymentMethodId, missingIssuerData, paymentMethodOptions } from "@/features/settings/settings-model";
 import { MethodDialog } from "@/features/settings/method-dialog";
 import { SettingsLink } from "@/features/settings/settings-parts";
-import { settingsStore } from "@/features/settings/settings-store";
+import { settingsStore, useSettings } from "@/features/settings/settings-store";
 import {
   LinesEditor,
   TagsField,
@@ -88,6 +88,8 @@ import { SeriesDialog } from "./series-dialog";
 import { canSendEmail } from "@/data/email";
 import { SendDialog, sendWithMailClient } from "./document-dialogs";
 import { IssuedNotice } from "./issued-notice";
+import { IssuerDialog } from "./issuer-dialog";
+import { IssuerNotice } from "./issuer-notice";
 import { salesStore } from "./sales-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
@@ -286,6 +288,11 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   // anyway: without VERI*FACTU, while the quarter is open, they can be revised too
   const revisable = issued && verifactuSystem === "exempt" && !existing.issued?.verifactu && !locked;
   const readOnly = issued && !revisable;
+  // New invoices and drafts are the documents this form issues
+  const issuable = (kind === "invoice" && !existing) || kind === "draft";
+  const missingIssuer = missingIssuerData(useSettings().profile);
+  /** Asking for the issuer's data: to fill it in, or before issuing as `save` was asked to. */
+  const [askingIssuer, setAskingIssuer] = useState<{ issue?: { asKind: SalesKind; after: AfterSave } } | null>(null);
   const [advanced, setAdvanced] = useState(
     () => form.lines.some((l) => l.surchargeRate || l.detail || l.serviceFrom || l.serviceTo) || form.supplies !== "0",
   );
@@ -427,12 +434,17 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     return next;
   }
 
-  function save(asKind: SalesKind, after: AfterSave = "list") {
+  function save(asKind: SalesKind, after: AfterSave = "list", issuerReady = false) {
     if (readOnly) return;
     const found = validate(asKind);
     setErrors(found);
     if (Object.values(found).some(Boolean)) {
       document.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
+      return;
+    }
+    // Asked once the rest is valid, so saving the profile goes on to issue
+    if (asKind === "invoice" && !issued && missingIssuer && !issuerReady) {
+      setAskingIssuer({ issue: { asKind, after } });
       return;
     }
 
@@ -611,6 +623,17 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         ) : (
           readOnly && <IssuedNotice invoice={existing} />
         )}
+        {issuable && missingIssuer && <IssuerNotice missing={missingIssuer} onComplete={() => setAskingIssuer({})} />}
+        <IssuerDialog
+          open={askingIssuer !== null}
+          issues={askingIssuer?.issue !== undefined}
+          onOpenChange={(open) => !open && setAskingIssuer(null)}
+          onSaved={() => {
+            const issue = askingIssuer?.issue;
+            // The profile saved is complete, though this render's `missingIssuer` doesn't know yet
+            if (issue) save(issue.asKind, issue.after, true);
+          }}
+        />
         {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
 
         {source && !existing && (
