@@ -1,4 +1,4 @@
-import { checkSpanishTaxId, isValidEmail } from "@cuentalibre/core";
+import { checkSpanishTaxId, isValidEmail, missingIssuerFields, type IssuerField } from "@cuentalibre/core";
 import type {
   AccountKind,
   BusinessKind,
@@ -73,6 +73,27 @@ export function profileErrors(p: BusinessProfile): ProfileErrors {
   } else if (!p.legalName.trim()) errors.legalName = "Introduce la razón social.";
   if (p.email.trim() && !isValidEmail(p.email)) errors.email = "El email no es válido.";
   return errors;
+}
+
+const ISSUER_FIELD_LABELS: Record<IssuerField, string> = {
+  taxId: "el NIF",
+  firstName: "el nombre",
+  lastName: "el primer apellido",
+  legalName: "la razón social",
+  address: "la dirección",
+  postalCode: "el código postal",
+  city: "la población",
+};
+
+/**
+ * What the profile lacks to issue invoices, with its verb, as in "falta el NIF"
+ * or "faltan la dirección y el código postal"; null when it has it all.
+ */
+export function missingIssuerData(profile: BusinessProfile): string | null {
+  const labels = missingIssuerFields(profile).map((field) => ISSUER_FIELD_LABELS[field]);
+  if (labels.length === 0) return null;
+  const list = new Intl.ListFormat("es", { type: "conjunction" }).format(labels);
+  return `${labels.length === 1 ? "falta" : "faltan"} ${list}`;
 }
 
 /** Full name of a self-employed worker, or the company's legal name. */

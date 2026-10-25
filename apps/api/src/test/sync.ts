@@ -37,6 +37,26 @@ export async function member(name = "Ana") {
   return Object.assign(client, { organizationId: organization.id });
 }
 
+/** A self-employed worker's profile with everything an invoice names its issuer with. */
+export const ISSUER_PROFILE = {
+  ...DEFAULT_ORGANIZATION_SETTINGS.businessProfile,
+  taxId: "50123456Q",
+  firstName: "Lucía",
+  lastName: "Martín",
+  secondLastName: "Sanz",
+  address: "Calle del Pez 12",
+  postalCode: "28004",
+  city: "Madrid",
+};
+
+/** A member whose business profile lets them issue invoices. */
+export async function issuer(name = "Ana") {
+  const user = await member(name);
+  const response = await send(user, [{ type: "saveSettings", section: "businessProfile", data: ISSUER_PROFILE }]);
+  expect(response.status).toBe(200);
+  return user;
+}
+
 export const client = (fields: Record<string, unknown> = {}) => ({
   id: newId(),
   name: "Estudio Norte S.L.",

@@ -42,10 +42,12 @@ import {
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
   INVOICE_SETTINGS_PATH,
+  missingIssuerData,
   PREFERENCES_PATH,
   QUOTE_SETTINGS_PATH,
 } from "@/features/settings/settings-model";
 import { SettingsLink } from "@/features/settings/settings-parts";
+import { settingsStore } from "@/features/settings/settings-store";
 import { TagChips } from "@/features/settings/tag-chip";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { PeriodSelect } from "@/components/period-select";
@@ -73,6 +75,7 @@ import { canSendEmail } from "@/data/email";
 import { SalesDocumentLink } from "./document-detail";
 import { GroupedSelect } from "./form-fields";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
+import { IssuerDialog } from "./issuer-dialog";
 import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
@@ -713,7 +716,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
 /** Every operation available on a document, grouped so the menu can split them with separators. */
 function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const navigate = useNavigate();
-  const [dialog, setDialog] = useState<"payment" | "attachments" | "tags" | "send" | null>(null);
+  const [dialog, setDialog] = useState<"payment" | "attachments" | "tags" | "send" | "issuer" | null>(null);
   const config = KINDS[doc.kind];
   const label = doc.number ?? "sin número";
   const attachments = doc.attachments ?? [];
@@ -775,6 +778,10 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   } satisfies Record<string, Action>;
 
   const issueDraft = () => {
+    if (missingIssuerData(settingsStore.get().profile)) {
+      setDialog("issuer");
+      return;
+    }
     // Drafts don't show their series: one deactivated since goes to the default series of its type
     const own = seriesOf(doc);
     const draft = own.active === false ? { ...doc, ...seriesRefOf(defaultSeries(own.type)) } : doc;
@@ -894,6 +901,8 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       <TagsDialog doc={doc} title={`${config.noun} ${label}`} onOpenChange={close} />
     ) : dialog === "send" ? (
       <SendDialog doc={doc} onOpenChange={close} />
+    ) : dialog === "issuer" ? (
+      <IssuerDialog open issues onOpenChange={close} onSaved={issueDraft} />
     ) : null;
 
   return {
