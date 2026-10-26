@@ -7,9 +7,9 @@ import {
   type SalesDocument,
   type Tag,
 } from "@cuentalibre/contracts";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApiBackend, ApiError } from "./api";
-import { localBackend, setBackend } from "./backend";
+import { localBackend, onCommandError, setBackend } from "./backend";
 import { createCollection } from "./collection";
 import { attachFile, attachmentUrl } from "./files";
 import { createStore } from "./store";
@@ -290,6 +290,25 @@ describe("api backend", () => {
       ["POST", "http://api/v1/commands"],
     ]);
     expect(attachmentUrl({ ...attachment, url: undefined })).toBe(`http://api/v1/files/${attachment.id}`);
+  });
+
+  it("fails the record that names a file whose upload failed, with the upload's reason", async () => {
+    const { calls, clients } = setup({
+      status: 413,
+      body: { error: { code: "storage_quota_exceeded", message: "Full." } },
+    });
+    URL.createObjectURL = () => "blob:local";
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const errors: unknown[] = [];
+    const stop = onCommandError((error) => errors.push(error));
+    const attachment = attachFile(new File(["%PDF"], "contrato.pdf", { type: "application/pdf" }));
+    await clients.add({ ...norte, attachments: [attachment] });
+    stop();
+    warn.mockRestore();
+
+    expect(calls.map((call) => call.url)).toEqual(["http://api/v1/files"]);
+    expect(clients.all()).toEqual([]);
+    expect(errors).toEqual([new ApiError(413, "storage_quota_exceeded", "Full.")]);
   });
 
   it("undoes a change the server rejects", async () => {

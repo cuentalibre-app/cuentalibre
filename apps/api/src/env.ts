@@ -45,7 +45,16 @@ const envSchema = z
       .number()
       .int()
       .positive()
-      .default(25 * 1024 * 1024),
+      .default(10 * 1024 * 1024),
+    /**
+     * Most bytes an organization's files may take in all, so an account or API key
+     * can't fill the storage. 0 means no limit.
+     */
+    FILE_QUOTA_BYTES: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .default(1024 * 1024 * 1024),
     /**
      * VERI*FACTU: records are always chained when a business uses the system;
      * they are only sent to the AEAT's test or production service when set.

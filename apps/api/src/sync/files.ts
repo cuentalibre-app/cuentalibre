@@ -1,5 +1,5 @@
 import type { StoredFile } from "@cuentalibre/contracts";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { file } from "../db/schema";
 import { ApiError } from "../errors";
@@ -44,32 +44,55 @@ export interface Upload {
   body: Uint8Array;
 }
 
-/** Stores the bytes, then the metadata. A file's ID can't be reused, even by a retry. */
-export async function uploadFile(
-  tx: Tx,
+/**
+ * Stores the bytes, then the metadata. A file's ID can't be reused, even by a retry.
+ * `quota` is the most bytes the organization's files may take in all; 0 means no limit.
+ */
+export function uploadFile(
+  db: Tx,
   storage: FileStorage,
-  scope: { organizationId: string; userId: string },
+  scope: { organizationId: string; userId: string; quota: number },
   upload: Upload,
 ): Promise<StoredFile> {
-  if (await findFile(tx, scope.organizationId, upload.id)) alreadyUploaded();
-  // A key of its own per upload: a racing upload with the same ID can't overwrite these bytes
-  const storageKey = `${scope.organizationId}/${upload.id}/${crypto.randomUUID()}`;
-  await storage.put(storageKey, upload.body, upload.contentType);
+  return db.transaction(async (tx) => {
+    // One upload at a time per organization, so two at once can't both fit under the quota.
+    // A key of its own: an upload doesn't hold up the organization's other writes.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${scope.organizationId}, 1))`);
+    if (await findFile(tx, scope.organizationId, upload.id)) alreadyUploaded();
+    if (scope.quota > 0 && (await storedBytes(tx, scope.organizationId)) + upload.body.byteLength > scope.quota)
+      throw new ApiError(
+        413,
+        "storage_quota_exceeded",
+        `The organization's files can take up to ${scope.quota} bytes in all; this one doesn't fit.`,
+      );
+    // A key of its own per upload: a racing upload with the same ID can't overwrite these bytes
+    const storageKey = `${scope.organizationId}/${upload.id}/${crypto.randomUUID()}`;
+    await storage.put(storageKey, upload.body, upload.contentType);
+    const [row] = await tx
+      .insert(file)
+      .values({
+        organizationId: scope.organizationId,
+        id: upload.id,
+        name: upload.name,
+        contentType: upload.contentType,
+        size: upload.body.byteLength,
+        storageKey,
+        uploadedBy: scope.userId,
+      })
+      .onConflictDoNothing()
+      .returning();
+    if (!row) alreadyUploaded();
+    return toStoredFile(row);
+  });
+}
+
+/** Bytes the organization's files take. */
+async function storedBytes(tx: Tx, organizationId: string) {
   const [row] = await tx
-    .insert(file)
-    .values({
-      organizationId: scope.organizationId,
-      id: upload.id,
-      name: upload.name,
-      contentType: upload.contentType,
-      size: upload.body.byteLength,
-      storageKey,
-      uploadedBy: scope.userId,
-    })
-    .onConflictDoNothing()
-    .returning();
-  if (!row) alreadyUploaded();
-  return toStoredFile(row);
+    .select({ bytes: sql<number>`coalesce(sum(${file.size}), 0)::bigint` })
+    .from(file)
+    .where(eq(file.organizationId, organizationId));
+  return Number(row?.bytes ?? 0);
 }
 
 export async function findFile(tx: Tx, organizationId: string, id: string) {

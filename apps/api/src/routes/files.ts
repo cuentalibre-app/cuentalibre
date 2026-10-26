@@ -56,7 +56,9 @@ const upload = createRoute({
     201: { description: "Uploaded", content: { "application/json": { schema: storedFileSchema } } },
     400: errorContent("No file"),
     409: errorContent("The ID is already used"),
-    413: errorContent("The file is too large"),
+    413: errorContent(
+      "The file is too large (`file_too_large`), or the organization's files would take more than its quota (`storage_quota_exceeded`)",
+    ),
     ...tenantErrors,
     ...readOnlyError,
   },
@@ -83,7 +85,7 @@ export const fileRoutes = new OpenAPIHono<AppEnv>()
     const stored = await uploadFile(
       c.get("db"),
       c.get("storage"),
-      { organizationId: c.get("organizationId"), userId: c.get("user")!.id },
+      { organizationId: c.get("organizationId"), userId: c.get("user")!.id, quota: c.get("fileQuotaBytes") },
       {
         id: id ?? newId(),
         name: file.name || "archivo",
