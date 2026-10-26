@@ -5,7 +5,6 @@ import {
   Camera,
   ChartColumn,
   ClipboardList,
-  Clock,
   FileText,
   Package,
   Receipt,
@@ -122,14 +121,12 @@ export const mainNav: NavItem[] = [
       { label: "Resumen", to: "/informes" },
       { label: "Pérdidas y ganancias", to: "/informes/perdidas-y-ganancias" },
       { label: "Informes de empresas", to: "/informes/empresas" },
-      { label: "Horas trabajadas", to: "/informes/horas-trabajadas" },
     ],
   },
 ];
 
 export const secondaryNav: NavItem[] = [
   { label: "Cierre de trimestres", to: "/cierre-trimestre", icon: CalendarCheck },
-  { label: "Jornada laboral", to: "/jornada", icon: Clock },
   { label: "Configuración", to: "/configuracion", icon: Settings },
 ];
 

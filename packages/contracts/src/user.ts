@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { id, isoDate } from "./common";
+import { isoDate } from "./common";
 import { membershipSchema } from "./organizations";
 
 export const genderSchema = z.enum(["", "male", "female"]);
@@ -84,13 +84,3 @@ export const meSchema = z.object({
   settings: userSettingsSchema,
 });
 export type Me = z.infer<typeof meSchema>;
-
-/** A person whose working hours are recorded. */
-export const workerSchema = z.object({
-  id,
-  name: z.string(),
-  email: z.string(),
-  /** The business owner; the others are employees. */
-  owner: z.boolean(),
-});
-export type Worker = z.infer<typeof workerSchema>;
