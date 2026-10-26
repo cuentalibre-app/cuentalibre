@@ -104,6 +104,7 @@ const remove = createRoute({
   responses: {
     204: { description: "Deleted" },
     404: errorContent("No such contact"),
+    409: errorContent("Received invoices or expenses still name the supplier"),
     ...tenantErrors,
     ...readOnlyError,
   },
