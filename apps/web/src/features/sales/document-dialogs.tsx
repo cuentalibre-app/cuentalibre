@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
-import { Loader2, Paperclip } from "lucide-react";
-import type { EmailMessage, SalesDocument } from "@cuentalibre/contracts";
+import { useEffect, useRef, useState } from "react";
+import { CircleAlert, Loader2, Paperclip } from "lucide-react";
+import type { EmailMessage, EmailSender, SalesDocument } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
-import { Input, Textarea } from "@cuentalibre/ui/components/input";
+import { Checkbox, Input, Textarea } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { ApiError } from "@/data/api";
-import { emailsOf, sendEmail } from "@/data/email";
+import { emailSender, emailsOf, sendEmail } from "@/data/email";
+import { VerifyEmailDialog } from "@/features/auth/email-code";
+import { userStore, useEmailVerified, useUserSettings } from "@/features/settings/user-store";
 import { businessName } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate } from "@/lib/format";
@@ -98,6 +101,10 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
     `${doc.series === "rectifying" ? "factura rectificativa" : config.singular.toLowerCase()} ${doc.number ?? ""}`.trim();
   const [to, setTo] = useState(clientOf(doc).email ?? "");
   const [cc, setCc] = useState("");
+  // Null until edited: then it follows the server's default
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [bccMe, setBccMe] = useState(true);
+  const toInput = useRef<HTMLInputElement>(null);
   const [subject, setSubject] = useState(`${name.charAt(0).toUpperCase()}${name.slice(1)} · ${businessName(profile)}`);
   const [body, setBody] = useState(
     `Hola,\n\nTe adjunto la ${name} por importe de ${formatEUR(documentTotals(doc).total)}.\n\nUn saludo,\n${businessName(profile)}`,
@@ -106,11 +113,19 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<EmailMessage[]>([]);
+  const [sender, setSender] = useState<EmailSender | null>(null);
+  // The server only sends for users who verified their email
+  const verified = useEmailVerified();
+  const { profile: account } = useUserSettings();
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     let live = true;
     emailsOf(doc.id)
       .then((emails) => live && setHistory(emails))
+      .catch(() => undefined);
+    emailSender()
+      .then((found) => live && setSender(found))
       .catch(() => undefined);
     return () => {
       live = false;
@@ -119,6 +134,7 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
 
   const recipients = splitEmails(to);
   const copies = splitEmails(cc);
+  const replyAddress = (replyTo ?? sender?.replyTo ?? "").trim();
   const errors = {
     to:
       recipients.length === 0
@@ -127,30 +143,45 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
           ? "Algún email no es válido."
           : undefined,
     cc: copies.some((e) => !EMAIL_RE.test(e)) ? "Algún email no es válido." : undefined,
+    replyTo: replyAddress && !EMAIL_RE.test(replyAddress) ? "El email no es válido." : undefined,
     subject: subject.trim() ? undefined : "Escribe un asunto.",
   };
   const shown: Partial<typeof errors> = submitted ? errors : {};
 
   const submit = async () => {
     setSubmitted(true);
-    if (errors.to || errors.cc || errors.subject) return;
+    if (!verified || errors.to || errors.cc || errors.replyTo || errors.subject) return;
     setSending(true);
     setError(null);
     try {
       // The current version: an issued invoice may have just got its number from the server
       const current = salesStore.get(doc.id) ?? doc;
       const { documentPdfFile } = await import("./sales-pdf");
-      await sendEmail({ documentId: current.id, to: recipients, cc: copies, subject: subject.trim(), body }, [
-        documentPdfFile(current),
-      ]);
+      await sendEmail(
+        {
+          documentId: current.id,
+          to: recipients,
+          cc: copies,
+          ...(replyAddress && { replyTo: replyAddress }),
+          bccMe,
+          subject: subject.trim(),
+          body,
+        },
+        [documentPdfFile(current)],
+      );
       onOpenChange(false);
     } catch (e) {
+      const code = e instanceof ApiError ? e.code : null;
       setError(
-        e instanceof ApiError && e.code === "email_unavailable"
-          ? "Este servidor no tiene configurado el envío de correo. Usa tu programa de correo."
-          : e instanceof ApiError && e.code === "subscription_required"
+        code === "email_unavailable"
+          ? "Este servidor no tiene configurado el envío de correo."
+          : code === "subscription_required"
             ? "Tu empresa está en solo lectura. Suscríbete para volver a enviar documentos."
-            : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
+            : code === "email_unverified"
+              ? "Verifica tu email para enviar documentos desde cuentalibre."
+              : code === "email_quota_exceeded"
+                ? "Has llegado al límite de destinatarios de tu empresa por hoy o por este mes. Inténtalo más adelante."
+                : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
       );
     } finally {
       setSending(false);
@@ -159,72 +190,140 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent
+        className="max-w-lg"
+        onOpenAutoFocus={(e) => {
+          // The recipient is what people fill first, though the sender's fields come above it
+          e.preventDefault();
+          toInput.current?.focus();
+        }}
+      >
         <DialogTitle>Enviar {name}</DialogTitle>
-        <DialogDescription>
-          Se envía con el PDF adjunto, a tu nombre. Las respuestas llegan a {profile.email.trim() || "tu email"}.
-        </DialogDescription>
-        <form
-          className="flex flex-col gap-4"
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
-        >
-          <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
-            {(p) => <Input {...p} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />}
-          </Field>
-          <Field label="CC" error={shown.cc}>
-            {(p) => <Input {...p} type="email" multiple value={cc} onChange={(e) => setCc(e.target.value)} />}
-          </Field>
-          <Field label="Asunto" required error={shown.subject}>
-            {(p) => <Input {...p} value={subject} onChange={(e) => setSubject(e.target.value)} />}
-          </Field>
-          <Field label="Mensaje">
-            {(p) => <Textarea {...p} rows={6} value={body} onChange={(e) => setBody(e.target.value)} />}
-          </Field>
-          <p className="m-0 flex items-center gap-2 text-sm text-muted-foreground">
-            <Paperclip className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-            {documentFileName(doc, "pdf")}
-          </p>
-
-          {history.length > 0 && (
-            <div className="flex flex-col gap-1.5 border-t border-border pt-3">
-              <span className="text-xs font-medium text-muted-foreground">Envíos anteriores</span>
-              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
-                {history.map((email) => (
-                  <li key={email.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <Badge tone={EMAIL_STATUS[email.status].tone}>{EMAIL_STATUS[email.status].label}</Badge>
-                    <span className="min-w-0 truncate">{email.to.join(", ")}</span>
-                    <span className="text-muted-foreground">{formatDate(email.createdAt.slice(0, 10))}</span>
-                    {email.status === "failed" && email.error && (
-                      <span className="w-full text-xs text-destructive">{email.error}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
+        <DialogDescription>Se envía con el PDF adjunto, a nombre de tu negocio.</DialogDescription>
+        <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+          <form
+            className="flex flex-col gap-4"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submit();
+            }}
+          >
+            {!verified && (
+              <div
+                role="status"
+                className="flex flex-col gap-3 rounded-lg bg-warning-soft px-3 py-2.5 text-sm text-foreground sm:flex-row sm:items-center"
+              >
+                <p className="m-0 flex flex-1 gap-2">
+                  <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={1.8} aria-hidden="true" />
+                  <span>Verifica tu email para enviar documentos desde cuentalibre.</span>
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="self-start sm:self-auto"
+                  onClick={() => setVerifying(true)}
+                >
+                  Verificar mi email
+                </Button>
+              </div>
+            )}
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-sm font-medium text-muted-foreground">De</span>
+              <p className="m-0 min-w-0 truncate text-sm">
+                {sender?.name ?? businessName(profile)}
+                {sender && <span className="text-muted-foreground"> &lt;{sender.address}&gt;</span>}
+              </p>
             </div>
-          )}
+            <Field
+              label="Responder a"
+              error={shown.replyTo}
+              help="El email al que llegan las respuestas si quien recibe el correo contesta."
+            >
+              {(p) => <Input {...p} type="email" value={replyAddress} onChange={(e) => setReplyTo(e.target.value)} />}
+            </Field>
+            <label className="-mt-1 flex cursor-pointer items-start gap-2.5 text-sm">
+              <Checkbox className="mt-px" checked={bccMe} onChange={(e) => setBccMe(e.target.checked)} />
+              <span className="min-w-0">
+                Enviarme una copia oculta
+                {account.email && <span className="text-muted-foreground"> a {account.email}</span>}
+              </span>
+            </label>
+            <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
+              {(p) => (
+                <Input {...p} ref={toInput} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />
+              )}
+            </Field>
+            <Field label="CC" error={shown.cc}>
+              {(p) => <Input {...p} type="email" multiple value={cc} onChange={(e) => setCc(e.target.value)} />}
+            </Field>
+            <Field label="Asunto" required error={shown.subject}>
+              {(p) => <Input {...p} value={subject} onChange={(e) => setSubject(e.target.value)} />}
+            </Field>
+            <Field label="Mensaje">
+              {(p) => <Textarea {...p} rows={6} value={body} onChange={(e) => setBody(e.target.value)} />}
+            </Field>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-sm font-medium text-muted-foreground">Adjunto</span>
+              <button
+                type="button"
+                title="Ver el PDF"
+                onClick={() => {
+                  // Opened now, while the click still counts, and filled once the PDF code loads
+                  const tab = window.open("", "_blank");
+                  const current = salesStore.get(doc.id) ?? doc;
+                  if (tab) void import("./sales-pdf").then((m) => m.showDocumentPdf(current, tab));
+                }}
+                className="flex min-w-0 cursor-pointer items-center gap-2 self-start rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <Paperclip className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+                <span className="min-w-0 truncate">{documentFileName(doc, "pdf")}</span>
+              </button>
+            </div>
 
-          {error && (
-            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <div className="flex flex-wrap justify-end gap-2.5 pt-1">
-            <Button variant="ghost" className="mr-auto" onClick={() => sendWithMailClient(doc)}>
-              Usar mi programa de correo
-            </Button>
-            <DialogClose asChild>
-              <Button variant="secondary">Cancelar</Button>
-            </DialogClose>
-            <Button type="submit" disabled={sending}>
-              {sending && <Loader2 className="animate-spin" aria-hidden="true" />}
-              Enviar
-            </Button>
-          </div>
-        </form>
+            {history.length > 0 && (
+              <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+                <span className="text-xs font-medium text-muted-foreground">Envíos anteriores</span>
+                <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+                  {history.map((email) => (
+                    <li key={email.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <Badge tone={EMAIL_STATUS[email.status].tone}>{EMAIL_STATUS[email.status].label}</Badge>
+                      <span className="min-w-0 truncate">{email.to.join(", ")}</span>
+                      <span className="text-muted-foreground">{formatDate(email.createdAt.slice(0, 10))}</span>
+                      {email.status === "failed" && email.error && (
+                        <span className="w-full text-xs text-destructive">{email.error}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {error && (
+              <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <div className="flex flex-wrap justify-end gap-2.5 pt-1">
+              <DialogClose asChild>
+                <Button variant="secondary">Cancelar</Button>
+              </DialogClose>
+              <Button type="submit" disabled={sending || !verified}>
+                {sending && <Loader2 className="animate-spin" aria-hidden="true" />}
+                Enviar
+              </Button>
+            </div>
+          </form>
+        </TooltipProvider>
+        <VerifyEmailDialog
+          email={account.email}
+          open={verifying}
+          onOpenChange={setVerifying}
+          onVerified={(verifiedEmail) => {
+            userStore.emailVerified(verifiedEmail);
+            setError(null);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -1,0 +1,1 @@
+ALTER TABLE "email_message" ADD COLUMN "bcc" text[] DEFAULT '{}'::text[] NOT NULL;

@@ -37,16 +37,20 @@ Descarga el archivo. Los PDF y las imágenes se sirven con su tipo; el resto, co
 
 ### `POST /v1/emails`
 
-Envía un correo, por ejemplo una factura a su cliente. Sale con el nombre de tu negocio y las respuestas llegan a tu correo. Se encola y se envía en segundo plano: responde `202` con el mensaje y su `status` (`queued`, `sent` o `failed`).
+Envía un documento de venta, por ejemplo una factura a su cliente. Sale de la dirección de cuentalibre con el nombre de tu negocio, y las respuestas llegan a `replyTo` o, si no lo indicas, al correo de tu negocio o al tuyo. `GET /v1/emails/sender` devuelve ese remitente: `name`, `address` y el `replyTo` por defecto. Se encola y se envía en segundo plano: responde `202` con el mensaje y su `status` (`queued`, `sent` o `failed`).
+
+Solo envía quien tiene su email verificado; si no, responde `403 email_unverified`, también con una clave de API. Cada empresa puede llegar a 50 destinatarios al día y 500 cada 30 días, contando `to`, `cc` y la copia oculta; por encima responde `429 email_quota_exceeded`.
 
 | Campo         | Tipo             |                                                          |
 | ------------- | ---------------- | -------------------------------------------------------- |
 | `to`          | lista de correos | Obligatorio. De 1 a 10.                                  |
 | `cc`          | lista de correos | Hasta 10.                                                |
+| `replyTo`     | correo           | A dónde llegan las respuestas.                           |
+| `bccMe`       | sí/no            | Te envía una copia oculta a tu correo. Por defecto, no.  |
 | `subject`     | texto            | Obligatorio. Hasta 200 caracteres.                       |
 | `body`        | texto            | Obligatorio. Texto plano, hasta 20 000 caracteres.       |
 | `attachments` | lista de ids     | Archivos subidos con `POST /v1/files`; hasta 10.         |
-| `documentId`  | id               | El documento de venta que envía, para encontrarlo luego. |
+| `documentId`  | id               | Obligatorio. El documento de venta que envía.            |
 
 El PDF de la factura lo genera la aplicación web; por la API, sube tú el PDF y adjúntalo.
 
