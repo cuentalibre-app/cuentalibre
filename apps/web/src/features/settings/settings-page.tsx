@@ -15,6 +15,7 @@ import {
   KeyRound,
   Landmark,
   Mail,
+  MailPlus,
   Package,
   Percent,
   ReceiptText,
@@ -48,6 +49,7 @@ import {
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
   EMAIL_SETTINGS_PATH,
+  EMAIL_TEMPLATES_PATH,
   incomeTaxMethodLabel,
   INVOICE_SETTINGS_PATH,
   LEDGER_ACCOUNTS_PATH,
@@ -315,6 +317,12 @@ export function SettingsPage() {
           description: "Desde qué dirección se envían tus facturas por email.",
           to: EMAIL_SETTINGS_PATH,
           icon: Mail,
+        },
+        {
+          title: "Plantillas de correo",
+          description: "El asunto y el mensaje con los que envías tus documentos.",
+          to: EMAIL_TEMPLATES_PATH,
+          icon: MailPlus,
         },
         {
           title: "API y agentes",
