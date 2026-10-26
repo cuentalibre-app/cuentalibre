@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
+import { secureHeaders } from "hono/secure-headers";
 import { hasGoogleSignIn, type Auth } from "./auth";
 import type { Billing } from "./billing";
 import type { AppEnv } from "./context";
@@ -45,6 +46,15 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
     },
   });
 
+  // The API answers with data and uploaded files, never a page: nothing in it may run, load or be framed.
+  app.use(
+    "/v1/*",
+    secureHeaders({
+      contentSecurityPolicy: { defaultSrc: ["'none'"], frameAncestors: ["'none'"], sandbox: [] },
+      xFrameOptions: "DENY",
+      strictTransportSecurity: "max-age=31536000; includeSubDomains",
+    }),
+  );
   app.use("/v1/*", cors({ origin: env.WEB_ORIGIN, credentials: true }));
   app.use("/v1/*", async (c, next) => {
     c.set("db", db);

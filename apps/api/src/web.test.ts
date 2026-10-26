@@ -10,6 +10,18 @@ mkdirSync(join(dir, "assets"));
 writeFileSync(join(dir, "index.html"), "<!doctype html><title>cuentalibre</title>");
 writeFileSync(join(dir, "assets", "index-3f2a.js"), "console.log('cuentalibre');\n".repeat(200));
 writeFileSync(join(dir, "favicon.svg"), "<svg/>");
+writeFileSync(
+  join(dir, "_headers"),
+  [
+    "# What the build writes",
+    "/*",
+    "  Content-Security-Policy: default-src 'self'; frame-ancestors 'none'",
+    "  X-Frame-Options: DENY",
+    "/assets/*",
+    "  X-Only-Assets: yes",
+    "",
+  ].join("\n"),
+);
 
 const app = new Hono();
 app.use("*", serveWeb(dir));
@@ -36,6 +48,19 @@ describe("serveWeb", () => {
     const icon = await app.request("/favicon.svg");
     expect(icon.status).toBe(200);
     expect(icon.headers.get("cache-control")).toBe("no-cache");
+  });
+
+  it("sends the headers of _headers with every file", async () => {
+    for (const path of ["/", "/ventas/facturas", "/assets/index-3f2a.js", "/favicon.svg"]) {
+      const response = await app.request(path);
+      expect(response.headers.get("content-security-policy")).toBe("default-src 'self'; frame-ancestors 'none'");
+      expect(response.headers.get("x-frame-options")).toBe("DENY");
+      expect(response.headers.get("x-only-assets")).toBeNull();
+    }
+  });
+
+  it("doesn't serve _headers itself", async () => {
+    expect((await app.request("/_headers")).status).toBe(404);
   });
 
   it("answers a missing file with a 404, not the app", async () => {
