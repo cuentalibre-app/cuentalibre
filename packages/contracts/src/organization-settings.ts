@@ -64,7 +64,6 @@ export const invoiceSettingsSchema = documentLookSchema
   .extend({
     showProductUnits: z.boolean(),
     hideZeroTaxes: z.boolean(),
-    hideWatermark: z.boolean(),
     showServicePeriod: z.boolean(),
     showOperationDate: z.boolean(),
     /** Fixed text printed on the side of every invoice (registry details, GDPR…). */
@@ -83,8 +82,6 @@ export const invoiceSettingsSchema = documentLookSchema
      * settings yet: the link needs a public import URL, which needs the backend.
      */
     allowImport: z.boolean(),
-    /** Check intra-EU clients against VIES when issuing. */
-    validateVies: z.boolean(),
     uploadToDropbox: z.boolean(),
     uploadToDrive: z.boolean(),
     noteTemplates: z.array(noteTemplateSchema),
@@ -244,12 +241,10 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     ...look,
     showProductUnits: true,
     hideZeroTaxes: false,
-    hideWatermark: false,
     showServicePeriod: true,
     showOperationDate: false,
     footer: "",
     allowImport: true,
-    validateVies: true,
     uploadToDropbox: false,
     uploadToDrive: false,
     noteTemplates: [],
