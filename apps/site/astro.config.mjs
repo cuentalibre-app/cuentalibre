@@ -24,4 +24,7 @@ export default defineConfig({
     shikiConfig: { theme: "css-variables" },
   },
   vite: { plugins: [tailwindcss()] },
+  // A CSP in each page that only lets the site's own scripts run, by their hashes. Styles stay
+  // inline: code blocks color their tokens with `style` attributes. `public/_headers` adds the rest.
+  security: { csp: { styleDirective: { resources: ["'self'", "'unsafe-inline'"] } } },
 });

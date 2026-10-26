@@ -84,6 +84,17 @@ describe("meta", () => {
     expect(new URL(url).hostname).toBe("accounts.google.com");
   });
 
+  it("sends security headers, on errors and auth routes too", async () => {
+    for (const path of ["/v1/health", "/v1/nope", "/v1/auth/get-session"]) {
+      const response = await app.request(path);
+      expect(response.headers.get("content-security-policy")).toBe("default-src 'none'; frame-ancestors 'none'; sandbox");
+      expect(response.headers.get("strict-transport-security")).toBe("max-age=31536000; includeSubDomains");
+      expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+      expect(response.headers.get("x-frame-options")).toBe("DENY");
+      expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    }
+  });
+
   it("answers unknown routes with a JSON error", async () => {
     const response = await app.request("/v1/nope");
     expect(response.status).toBe(404);
