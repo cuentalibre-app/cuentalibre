@@ -62,6 +62,18 @@ describe("files", () => {
     expect(await errorCode(response)).toBe("file_too_large");
   });
 
+  it("caps the bytes an organization's files take in all, even uploaded at once", async () => {
+    const ana = await member();
+    // The quota is 3 MB: three of these fit and the fourth doesn't
+    const responses = await Promise.all([1, 2, 3, 4].map(() => upload(ana, new Uint8Array(1024 * 1024))));
+    expect(responses.map((response) => response.status).sort()).toEqual([201, 201, 201, 413]);
+    expect(await errorCode(responses.find((response) => response.status === 413)!)).toBe("storage_quota_exceeded");
+
+    // Other organizations have their own
+    const eve = await member("Eve");
+    expect((await upload(eve, pdf)).status).toBe(201);
+  });
+
   it("keeps files to their organization", async () => {
     const ana = await member();
     const { id } = (await (await upload(ana, pdf)).json()) as { id: string };
