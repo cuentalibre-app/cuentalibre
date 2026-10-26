@@ -100,7 +100,7 @@ describe("createStore", () => {
   it("undoes a rejected write when nothing changed since", async () => {
     fakeBackend().fail();
     const store = createStore({ value: 1 });
-    await store.write({ value: 2 }, [{ type: "saveSettings", section: "userLocale", data: 2 }]);
+    await store.write({ value: 2 }, [{ type: "saveSettings", section: "userTour", data: 2 }]);
     expect(store.get()).toEqual({ value: 1 });
   });
 
@@ -108,9 +108,9 @@ describe("createStore", () => {
     const backend = fakeBackend();
     const store = createStore({ value: 1 });
     backend.fail();
-    const rejected = store.write({ value: 2 }, [{ type: "saveSettings", section: "userLocale", data: 2 }]);
+    const rejected = store.write({ value: 2 }, [{ type: "saveSettings", section: "userTour", data: 2 }]);
     setBackend(localBackend);
-    void store.write({ value: 3 }, [{ type: "saveSettings", section: "userLocale", data: 3 }]);
+    void store.write({ value: 3 }, [{ type: "saveSettings", section: "userTour", data: 3 }]);
     await rejected;
     expect(store.get()).toEqual({ value: 3 });
   });

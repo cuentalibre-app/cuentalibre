@@ -22,7 +22,6 @@ Tu usuario (`id`, `name`, `email`, `emailVerified`, `hasPassword`, `passwordChan
 Guarda una sección de tus ajustes personales, entera. Te siguen en todas tus empresas.
 
 - `userProfile`: `{ firstName, lastName, birthDate, phone, gender }`. `firstName` es obligatorio (hasta 100 caracteres); `birthDate`, `"AAAA-MM-DD"` o vacío; `gender`, `""`, `"male"` o `"female"`. Cambia también tu nombre de usuario.
-- `userLocale`: `{ language, numberFormat, timeZone }`. Vacíos, siguen los de la empresa.
 - `userTour`: `{ status }`, que es `"pending"` (al principio), `"finished"` o `"skipped"`. Mientras está pendiente, la aplicación enseña el recorrido de bienvenida.
 
 ## Claves de API

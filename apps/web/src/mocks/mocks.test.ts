@@ -23,7 +23,6 @@ import {
   timeEntrySchema,
   treasuryAccountSchema,
   userAccessSchema,
-  userLocaleSchema,
   userProfileSchema,
   userTourSchema,
   verifactuSetupSchema,
@@ -43,13 +42,7 @@ import { initialSalesDocuments } from "./sales";
 import { initialAccounts, initialPaymentMethods, initialProfile, initialTaxSetup } from "./settings";
 import { initialTags } from "./tags";
 import { initialManualPayments, sampleMovements } from "./treasury";
-import {
-  initialNotificationPrefs,
-  initialUserAccess,
-  initialUserLocale,
-  initialUserProfile,
-  initialUserTour,
-} from "./user";
+import { initialNotificationPrefs, initialUserAccess, initialUserProfile, initialUserTour } from "./user";
 import { initialEmailSettings, initialUsers } from "./users";
 import { initialTimeEntries, workers } from "./working-hours";
 
@@ -83,7 +76,6 @@ const singletons: [string, z.ZodType, unknown][] = [
   ["tax setup", taxSetupSchema, initialTaxSetup],
   ["user profile", userProfileSchema, initialUserProfile],
   ["notification preferences", notificationPrefsSchema, initialNotificationPrefs],
-  ["user locale", userLocaleSchema, initialUserLocale],
   ["user access", userAccessSchema, initialUserAccess],
   ["user tour", userTourSchema, initialUserTour],
   ["email settings", emailSettingsSchema, initialEmailSettings],
