@@ -71,7 +71,6 @@ Body: `{ "error": { "code": "…", "message": "…" } }`. Program against `code`
 - `GET /me` → `{ user: { id, name, email, emailVerified, hasPassword, passwordChangedAt }, activeOrganizationId, memberships: [{ organization, role }], settings }`.
 - `PUT /me/settings/{section}` saves one section of the user's own settings, whole:
   - `userProfile`: `{ firstName (1–100), lastName, birthDate ("YYYY-MM-DD" or ""), phone, gender ("", "male", "female") }`. Also renames the user.
-  - `userLocale`: `{ language, numberFormat, timeZone }`; empty follows the business defaults.
   - `userTour`: `{ status }`, `"pending"` (the default), `"finished"` or `"skipped"`: whether the app shows its first-run tour.
 - API keys (`GET`/`POST /api-keys`, `DELETE /api-keys/{id}`) and deleting the account need a signed-in session: a key can't manage keys.
 
