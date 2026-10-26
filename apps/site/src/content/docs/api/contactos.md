@@ -15,7 +15,7 @@ Clientes y proveedores. Cada contacto tiene un `role`, `client` o `supplier`, qu
 | `GET /v1/contacts/{id}`        | Un contacto.                                                               |
 | `POST /v1/contacts`            | Crea un contacto.                                                          |
 | `PATCH /v1/contacts/{id}`      | Cambia algunos campos.                                                     |
-| `DELETE /v1/contacts/{id}`     | Lo borra. Las facturas ya emitidas conservan sus datos.                    |
+| `DELETE /v1/contacts/{id}`     | Lo borra. Las facturas ya emitidas conservan sus datos. Un proveedor con facturas recibidas o gastos no se puede borrar (`409 in_use`). |
 
 ## NIF repetidos
 
