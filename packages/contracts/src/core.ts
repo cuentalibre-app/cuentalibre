@@ -17,7 +17,6 @@ import {
   type PurchaseOperationType,
   type StockMovement,
   type StockRules,
-  type TimeEntry,
   type WithholdingKind,
 } from "@cuentalibre/core";
 import { z } from "zod";
@@ -94,14 +93,6 @@ export const stockRulesSchema = z.object({
   drafts: z.enum(["never", "invoice"]),
 });
 
-export const timeEntrySchema = z.object({
-  id,
-  workerId: id,
-  start: localDateTime,
-  end: localDateTime.nullable(),
-  comment: z.string(),
-});
-
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Mirrors<Schema extends z.ZodType, Type> = Equal<z.infer<Schema>, Type>;
 type Assert<T extends true> = T;
@@ -119,5 +110,4 @@ export type CoreTypesMatch = [
   Assert<Mirrors<typeof catalogFamilySchema, CatalogFamily>>,
   Assert<Mirrors<typeof stockMovementSchema, StockMovement>>,
   Assert<Mirrors<typeof stockRulesSchema, StockRules>>,
-  Assert<Mirrors<typeof timeEntrySchema, TimeEntry>>,
 ];

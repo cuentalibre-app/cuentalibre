@@ -124,9 +124,6 @@ import { ExportBooksPage } from "@/features/transfer/export-books-page";
 import { ExportPage } from "@/features/transfer/export-page";
 import { ImportPage } from "@/features/transfer/import-page";
 import { EXPORT_ADVANCED_PATH, EXPORT_BOOKS_PATH, EXPORT_PATH, IMPORT_PATH } from "@/features/transfer/transfer-model";
-import { WorkedHoursPage } from "@/features/working-hours/worked-hours-page";
-import { WORKED_HOURS_PATH, WORKING_HOURS_PATH } from "@/features/working-hours/working-hours-model";
-import { WorkingHoursPage } from "@/features/working-hours/working-hours-page";
 import { DesignSystemPage } from "@/pages/design-system";
 import { MorePage } from "@/pages/more-page";
 import { PlaceholderPage } from "@/pages/placeholder-page";
@@ -240,10 +237,7 @@ const reportRoutes = [
   { path: REPORTS_PATH.slice(1), element: <ReportsSummaryPage /> },
   { path: PNL_PATH.slice(1), element: <ProfitLossPage /> },
   { path: COMPANY_REPORTS_PATH.slice(1), element: <CompanyReportsPage /> },
-  { path: WORKED_HOURS_PATH.slice(1), element: <WorkedHoursPage /> },
 ];
-
-const workingHoursRoute = { path: WORKING_HOURS_PATH.slice(1), element: <WorkingHoursPage /> };
 
 const settingsRoutes = [
   { path: SETTINGS_PATH.slice(1), element: <SettingsPage /> },
@@ -291,7 +285,6 @@ const builtPaths = new Set(
     ...treasuryRoutes,
     closingRoute,
     ...reportRoutes,
-    workingHoursRoute,
     ...settingsRoutes,
     ...transferRoutes,
   ].map((r) => `/${r.path}`),
@@ -325,7 +318,6 @@ export const router = createBrowserRouter(
         ...treasuryRoutes,
         closingRoute,
         ...reportRoutes,
-        workingHoursRoute,
         ...settingsRoutes,
         ...transferRoutes,
         ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),

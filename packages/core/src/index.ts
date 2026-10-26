@@ -15,7 +15,6 @@ export * from "./closing";
 export * from "./reports";
 export * from "./treasury";
 export * from "./informative-returns";
-export * from "./working-hours";
 export * from "./assets";
 export * from "./transfer";
 export * from "./catalog";
