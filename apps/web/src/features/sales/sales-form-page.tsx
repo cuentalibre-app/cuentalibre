@@ -64,7 +64,7 @@ import {
 } from "./document-editor";
 import { CLIENT_DEFAULT, CheckField, Field, GroupedSelect, LocaleFields, Section } from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
-import { documentSettingsStore, invoiceSettingsStore, useInvoiceSettings, useUploadDefaults } from "./invoice-settings";
+import { documentSettingsStore, invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
 import {
   INCOME_TYPE_GROUPS,
   KINDS,
@@ -266,7 +266,6 @@ function withClientDefaults(form: FormState, client: Contact): FormState {
 function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormProps) {
   const navigate = useNavigate();
   const config = KINDS[kind];
-  const uploads = useUploadDefaults(kind);
   const [form, setForm] = useState(() => {
     const initial = initialState(kind, existing ?? source, !existing, rectify);
     return presetClient ? withClientDefaults(initial, presetClient) : initial;
@@ -1101,25 +1100,6 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               onLanguageChange={changeLanguage}
               onNumberFormatChange={(v) => set("numberFormat", v === CLIENT_DEFAULT ? "" : v)}
             />
-            {kind !== "draft" && (
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-medium text-muted-foreground">Servicios externos</span>
-                <CheckField
-                  label={`Subir ${config.noun} a tu cuenta de Dropbox`}
-                  hint={`Para subir ${config.noun} a tu cuenta de Dropbox es necesario que conectes tu cuenta.`}
-                  checked={uploads.uploadToDropbox}
-                  disabled
-                  onChange={() => {}}
-                />
-                <CheckField
-                  label={`Subir ${config.noun} a tu cuenta de Google Drive`}
-                  hint={`Para subir ${config.noun} a tu cuenta de Google Drive es necesario que conectes tu cuenta.`}
-                  checked={uploads.uploadToDrive}
-                  disabled
-                  onChange={() => {}}
-                />
-              </div>
-            )}
           </Section>
         </fieldset>
 

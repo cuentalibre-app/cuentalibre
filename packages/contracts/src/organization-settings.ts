@@ -77,8 +77,6 @@ export const invoiceSettingsSchema = documentLookSchema
       .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/)
       .max(512 * 1024)
       .optional(),
-    uploadToDropbox: z.boolean(),
-    uploadToDrive: z.boolean(),
     noteTemplates: z.array(noteTemplateSchema),
     /**
      * Numbering series created by the organization, and the built-in ones it
@@ -120,8 +118,6 @@ export const documentSettingsSchema = documentLookSchema.extend({
    */
   keepLinesOnInvoice: z.boolean(),
   /** Quotes and delivery notes. */
-  uploadToDropbox: z.boolean(),
-  uploadToDrive: z.boolean(),
 });
 export type DocumentSettings = z.infer<typeof documentSettingsSchema>;
 
@@ -182,8 +178,6 @@ const documentDefaults = (kind: DocumentKind): DocumentSettings => ({
   hideZeroTaxes: false,
   footer: "",
   keepLinesOnInvoice: kind === "deliveryNote",
-  uploadToDropbox: false,
-  uploadToDrive: false,
 });
 
 const catalogDefaults: CatalogSettings = {
@@ -239,8 +233,6 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     showServicePeriod: true,
     showOperationDate: false,
     footer: "",
-    uploadToDropbox: false,
-    uploadToDrive: false,
     noteTemplates: [],
   },
   documentSettings: {
