@@ -16,6 +16,11 @@ export const emailMessage = pgTable(
     documentId: uuid(),
     to: text().array().notNull(),
     cc: text().array().notNull(),
+    /** The sender's own copy, if they asked for one. */
+    bcc: text()
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     replyTo: text(),
     /** Display name of the sender; the address is the instance's. */
     fromName: text().notNull(),

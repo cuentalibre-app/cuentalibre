@@ -29,6 +29,7 @@ export const sentEmails: OutgoingEmail[] = [];
 /** Makes the next sends fail with this error, until cleared. */
 export const mailerFailure: { error: Error | null } = { error: null };
 export const mailer: Mailer = {
+  address: "facturas@cuentalibre.test",
   async send(email) {
     if (mailerFailure.error) throw mailerFailure.error;
     sentEmails.push(email);
@@ -38,6 +39,7 @@ export const mailer: Mailer = {
 /** Emails about people's accounts (verification, password reset), apart from the business's. */
 export const accountEmails: OutgoingEmail[] = [];
 export const accountMailer: Mailer = {
+  address: "hola@cuentalibre.test",
   async send(email) {
     accountEmails.push(email);
   },

@@ -82,18 +82,20 @@ Body: `{ "error": { "code": "…", "message": "…" } }`. Program against `code`
 
 ## Email
 
-`POST /emails` queues an email and answers `202` with the message. It goes out under the business's name, with replies to its email. Only users with a verified email can send (`403 email_unverified`), and each organization reaches at most 50 recipients (to and cc) a day and 500 in 30 days (`429 email_quota_exceeded`).
+`POST /emails` queues an email and answers `202` with the message. It goes out from the instance's address under the business's name, with replies to `replyTo` or else the business's email (or the user's); `GET /emails/sender` → `{ name, address, replyTo }`. Only users with a verified email can send (`403 email_unverified`), and each organization reaches at most 50 recipients (to, cc and bcc) a day and 500 in 30 days (`429 email_quota_exceeded`).
 
 | Field         | Type             |                                                |
 | ------------- | ---------------- | ---------------------------------------------- |
 | `to`          | list of emails   | Required, 1–10.                                |
 | `cc`          | list of emails   | Up to 10.                                      |
+| `replyTo`     | email            | Where replies go.                              |
+| `bccMe`       | boolean          | Blind copy to the sending user. Default false. |
 | `subject`     | text             | Required, 1–200 characters.                    |
 | `body`        | text             | Required, plain text, up to 20 000 characters. |
 | `attachments` | list of file ids | Uploaded with `POST /files`, up to 10.         |
 | `documentId`  | id               | Required. The sales document it sends.         |
 
-Message: `{ id, documentId, to, cc, subject, status, error, createdAt, sentAt }`, `status` `queued`, `sent` or `failed`. `GET /emails?documentId=` lists messages, newest first. The API doesn't generate invoice PDFs: upload one yourself to attach it.
+Message: `{ id, documentId, to, cc, bcc, replyTo, subject, status, error, createdAt, sentAt }`, `status` `queued`, `sent` or `failed`. `GET /emails?documentId=` lists messages, newest first. The API doesn't generate invoice PDFs: upload one yourself to attach it.
 
 ## Workspace and change feed
 

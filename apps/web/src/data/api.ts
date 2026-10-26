@@ -7,6 +7,7 @@ import {
   type Changes,
   type CreatedApiKey,
   type EmailMessage,
+  type EmailSender,
   type Me,
   type OrganizationMember,
   type StoredFile,
@@ -132,6 +133,8 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
     async emailsOf(documentId) {
       return (await request<{ emails: EmailMessage[] }>(`/v1/emails?documentId=${documentId}`)).emails;
     },
+
+    emailSender: () => request<EmailSender>("/v1/emails/sender"),
 
     apiKeys: {
       list: async () => (await request<{ apiKeys: ApiKey[] }>("/v1/api-keys")).apiKeys,

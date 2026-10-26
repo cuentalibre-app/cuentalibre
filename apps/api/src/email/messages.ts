@@ -20,6 +20,8 @@ export const toEmailMessage = (row: Row): EmailMessage => ({
   documentId: row.documentId,
   to: row.to,
   cc: row.cc,
+  bcc: row.bcc,
+  replyTo: row.replyTo,
   subject: row.subject,
   status: row.status,
   error: row.error,
@@ -36,11 +38,11 @@ export interface Sender extends Scope {
 
 const DAY = 24 * 60 * 60 * 1000;
 
-/** Recipients (to and cc) of the organization's emails since then, whether they went out or not. */
+/** Recipients (to, cc and bcc) of the organization's emails since then, whether they went out or not. */
 async function recipientsSince(tx: Tx, organizationId: string, since: Date) {
   const [row] = await tx
     .select({
-      n: sql<number>`coalesce(sum(cardinality(${emailMessage.to}) + cardinality(${emailMessage.cc})), 0)::int`,
+      n: sql<number>`coalesce(sum(cardinality(${emailMessage.to}) + cardinality(${emailMessage.cc}) + cardinality(${emailMessage.bcc})), 0)::int`,
     })
     .from(emailMessage)
     .where(and(eq(emailMessage.organizationId, organizationId), gte(emailMessage.createdAt, since)));
@@ -59,14 +61,32 @@ async function checkQuota(tx: Tx, organizationId: string, quota: Sender["quota"]
       throw new ApiError(
         429,
         "email_quota_exceeded",
-        `The organization can email up to ${max} recipients (to and cc) every ${period}; try again later.`,
+        `The organization can email up to ${max} recipients (to, cc and bcc) every ${period}; try again later.`,
       );
   }
 }
 
 /**
- * Queues an email from the business: its name as the sender's, replies to
- * its email address (or the user's). It is sent in the background.
+ * Who the organization's emails come from: the business's name, replying to
+ * its email address or else the user's. `userId` is null for no user.
+ */
+export async function senderOf(db: Tx, organizationId: string, userId: string | null) {
+  const { businessProfile: profile } = await readSettings(db, organizationId);
+  const [org] = await db
+    .select({ name: organization.name })
+    .from(organization)
+    .where(eq(organization.id, organizationId));
+  const [author] = userId ? await db.select({ email: user.email }).from(user).where(eq(user.id, userId)) : [];
+  return {
+    name: profile.tradeName.trim() || issuerName(profile) || org!.name,
+    replyTo: profile.email.trim() || author?.email || null,
+    userEmail: author?.email ?? null,
+  };
+}
+
+/**
+ * Queues an email from the business (see `senderOf`), replying where the
+ * request says if it does. It is sent in the background.
  */
 export async function queueEmail(db: Db, sender: Sender, request: z.output<typeof emailRequestSchema>) {
   const { organizationId } = sender;
@@ -93,16 +113,10 @@ export async function queueEmail(db: Db, sender: Sender, request: z.output<typeo
       if (found.length !== attachments.length)
         throw new ApiError(400, "invalid_attachment", "attachments: upload the files first.");
     }
-    await checkQuota(tx, organizationId, sender.quota, request.to.length + request.cc.length);
-
-    const { businessProfile: profile } = await readSettings(tx, organizationId);
-    const [org] = await tx
-      .select({ name: organization.name })
-      .from(organization)
-      .where(eq(organization.id, organizationId));
-    const [author] = sender.userId
-      ? await tx.select({ email: user.email }).from(user).where(eq(user.id, sender.userId))
-      : [];
+    const from = await senderOf(tx, organizationId, sender.userId);
+    // Only ever to the sender's own address, so it can't widen who the email reaches
+    const bcc = request.bccMe && from.userEmail ? [from.userEmail] : [];
+    await checkQuota(tx, organizationId, sender.quota, request.to.length + request.cc.length + bcc.length);
 
     const [row] = await tx
       .insert(emailMessage)
@@ -112,8 +126,9 @@ export async function queueEmail(db: Db, sender: Sender, request: z.output<typeo
         documentId: request.documentId,
         to: request.to,
         cc: request.cc,
-        replyTo: profile.email.trim() || author?.email || null,
-        fromName: profile.tradeName.trim() || issuerName(profile) || org!.name,
+        bcc,
+        replyTo: request.replyTo ?? from.replyTo,
+        fromName: from.name,
         subject: request.subject,
         body: request.body,
         attachments,
@@ -173,6 +188,7 @@ export function emailHandler(db: Db, storage: FileStorage, mailer: Mailer | null
         ...(message.replyTo && { replyTo: message.replyTo }),
         to: message.to,
         cc: message.cc,
+        ...(message.bcc.length > 0 && { bcc: message.bcc }),
         subject: message.subject,
         text: message.body,
         attachments,

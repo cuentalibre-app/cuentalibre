@@ -6,6 +6,7 @@ import type {
   CreatedApiKey,
   EmailMessage,
   EmailRequest,
+  EmailSender,
   NewApiKey,
   OrganizationMember,
 } from "@cuentalibre/contracts";
@@ -28,6 +29,8 @@ export interface Backend {
   sendEmail?(email: Omit<EmailRequest, "attachments">, files: File[]): Promise<EmailMessage>;
   /** The emails that sent a document, newest first. */
   emailsOf?(documentId: string): Promise<EmailMessage[]>;
+  /** Who emails go out from. */
+  emailSender?(): Promise<EmailSender>;
   /** The user's API keys for the organization. Without a server there are none. */
   apiKeys?: {
     list(): Promise<ApiKey[]>;
