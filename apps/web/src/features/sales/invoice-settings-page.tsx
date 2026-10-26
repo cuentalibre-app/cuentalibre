@@ -83,12 +83,6 @@ export function InvoiceSettingsPage() {
                 checked={draft.hideZeroTaxes}
                 onChange={(v) => set("hideZeroTaxes", v)}
               />
-              <CheckField
-                label="No mostrar la marca de agua al exportar a PDF facturas recibidas y bienes de inversión"
-                help="Por defecto esos PDF llevan una marca de agua para distinguirlos de las facturas emitidas."
-                checked={draft.hideWatermark}
-                onChange={(v) => set("hideWatermark", v)}
-              />
             </div>
             <div className="flex flex-col gap-4">
               <CheckField
@@ -127,20 +121,7 @@ export function InvoiceSettingsPage() {
           </Field>
         </Section>
 
-        <Section title="Validación del NIF de cliente en facturas intracomunitarias" index={5}>
-          <p className="m-0 max-w-3xl text-muted-foreground">
-            Comprueba en el VIES que el cliente está registrado como operador intracomunitario al emitir una factura
-            intracomunitaria (requisito imprescindible para considerarla como tal). Si lo desactivas, se emitirán sin
-            comprobarlo.
-          </p>
-          <CheckField
-            label="Validar el NIF del cliente al dar de alta facturas emitidas intracomunitarias"
-            checked={draft.validateVies}
-            onChange={(v) => set("validateVies", v)}
-          />
-        </Section>
-
-        <Section title="Subida de facturas a Dropbox o Google Drive" index={6}>
+        <Section title="Subida de facturas a Dropbox o Google Drive" index={5}>
           <p className="m-0 max-w-3xl text-muted-foreground">
             Elige si las casillas para subir las facturas emitidas a tus cuentas aparecen marcadas por defecto.
           </p>
