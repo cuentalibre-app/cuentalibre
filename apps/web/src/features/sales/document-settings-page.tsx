@@ -193,27 +193,6 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
           </Section>
         )}
 
-        {kind !== "draft" && (
-          <Section title={`Subida de ${copy.plural} a Dropbox o Google Drive`} index={index++}>
-            <p className="m-0 max-w-3xl text-muted-foreground">
-              Elige si las casillas para subir {copy.plural} a tus cuentas aparecen marcadas por defecto.
-            </p>
-            <CheckField
-              label={`Subir ${copy.plural} a tu cuenta de Dropbox`}
-              hint="Necesitas conectar tu cuenta."
-              checked={draft.uploadToDropbox}
-              disabled
-              onChange={(v) => set("uploadToDropbox", v)}
-            />
-            <CheckField
-              label={`Subir ${copy.plural} a tu cuenta de Google Drive`}
-              hint="Necesitas conectar tu cuenta."
-              checked={draft.uploadToDrive}
-              disabled
-              onChange={(v) => set("uploadToDrive", v)}
-            />
-          </Section>
-        )}
       </div>
     </TooltipProvider>
   );
