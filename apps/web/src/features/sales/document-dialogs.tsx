@@ -5,6 +5,7 @@ import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Checkbox, Input, Textarea } from "@cuentalibre/ui/components/input";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { emailSender, emailsOf, sendEmail } from "@/data/email";
@@ -199,115 +200,121 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
       >
         <DialogTitle>Enviar {name}</DialogTitle>
         <DialogDescription>Se envía con el PDF adjunto, a nombre de tu negocio.</DialogDescription>
-        <form
-          className="flex flex-col gap-4"
-          noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
-        >
-          {!verified && (
-            <div
-              role="status"
-              className="flex flex-col gap-3 rounded-lg bg-warning-soft px-3 py-2.5 text-sm text-foreground sm:flex-row sm:items-center"
-            >
-              <p className="m-0 flex flex-1 gap-2">
-                <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={1.8} aria-hidden="true" />
-                <span>Verifica tu email para enviar documentos desde cuentalibre.</span>
-              </p>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="self-start sm:self-auto"
-                onClick={() => setVerifying(true)}
+        <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+          <form
+            className="flex flex-col gap-4"
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              void submit();
+            }}
+          >
+            {!verified && (
+              <div
+                role="status"
+                className="flex flex-col gap-3 rounded-lg bg-warning-soft px-3 py-2.5 text-sm text-foreground sm:flex-row sm:items-center"
               >
-                Verificar mi email
+                <p className="m-0 flex flex-1 gap-2">
+                  <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={1.8} aria-hidden="true" />
+                  <span>Verifica tu email para enviar documentos desde cuentalibre.</span>
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="self-start sm:self-auto"
+                  onClick={() => setVerifying(true)}
+                >
+                  Verificar mi email
+                </Button>
+              </div>
+            )}
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-sm font-medium text-muted-foreground">De</span>
+              <p className="m-0 min-w-0 truncate text-sm">
+                {sender?.name ?? businessName(profile)}
+                {sender && <span className="text-muted-foreground"> &lt;{sender.address}&gt;</span>}
+              </p>
+            </div>
+            <Field
+              label="Responder a"
+              error={shown.replyTo}
+              help="El email al que llegan las respuestas si quien recibe el correo contesta."
+            >
+              {(p) => <Input {...p} type="email" value={replyAddress} onChange={(e) => setReplyTo(e.target.value)} />}
+            </Field>
+            <label className="-mt-1 flex cursor-pointer items-start gap-2.5 text-sm">
+              <Checkbox className="mt-px" checked={bccMe} onChange={(e) => setBccMe(e.target.checked)} />
+              <span className="min-w-0">
+                Enviarme una copia oculta
+                {account.email && <span className="text-muted-foreground"> a {account.email}</span>}
+              </span>
+            </label>
+            <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
+              {(p) => (
+                <Input {...p} ref={toInput} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />
+              )}
+            </Field>
+            <Field label="CC" error={shown.cc}>
+              {(p) => <Input {...p} type="email" multiple value={cc} onChange={(e) => setCc(e.target.value)} />}
+            </Field>
+            <Field label="Asunto" required error={shown.subject}>
+              {(p) => <Input {...p} value={subject} onChange={(e) => setSubject(e.target.value)} />}
+            </Field>
+            <Field label="Mensaje">
+              {(p) => <Textarea {...p} rows={6} value={body} onChange={(e) => setBody(e.target.value)} />}
+            </Field>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <span className="text-sm font-medium text-muted-foreground">Adjunto</span>
+              <button
+                type="button"
+                title="Ver el PDF"
+                onClick={() => {
+                  // Opened now, while the click still counts, and filled once the PDF code loads
+                  const tab = window.open("", "_blank");
+                  const current = salesStore.get(doc.id) ?? doc;
+                  if (tab) void import("./sales-pdf").then((m) => m.showDocumentPdf(current, tab));
+                }}
+                className="flex min-w-0 cursor-pointer items-center gap-2 self-start rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <Paperclip className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+                <span className="min-w-0 truncate">{documentFileName(doc, "pdf")}</span>
+              </button>
+            </div>
+
+            {history.length > 0 && (
+              <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+                <span className="text-xs font-medium text-muted-foreground">Envíos anteriores</span>
+                <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+                  {history.map((email) => (
+                    <li key={email.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <Badge tone={EMAIL_STATUS[email.status].tone}>{EMAIL_STATUS[email.status].label}</Badge>
+                      <span className="min-w-0 truncate">{email.to.join(", ")}</span>
+                      <span className="text-muted-foreground">{formatDate(email.createdAt.slice(0, 10))}</span>
+                      {email.status === "failed" && email.error && (
+                        <span className="w-full text-xs text-destructive">{email.error}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {error && (
+              <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <div className="flex flex-wrap justify-end gap-2.5 pt-1">
+              <DialogClose asChild>
+                <Button variant="secondary">Cancelar</Button>
+              </DialogClose>
+              <Button type="submit" disabled={sending || !verified}>
+                {sending && <Loader2 className="animate-spin" aria-hidden="true" />}
+                Enviar
               </Button>
             </div>
-          )}
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-sm font-medium text-muted-foreground">De</span>
-            <p className="m-0 min-w-0 truncate text-sm">
-              {sender?.name ?? businessName(profile)}
-              {sender && <span className="text-muted-foreground"> &lt;{sender.address}&gt;</span>}
-            </p>
-          </div>
-          <Field label="Responder a" error={shown.replyTo}>
-            {(p) => <Input {...p} type="email" value={replyAddress} onChange={(e) => setReplyTo(e.target.value)} />}
-          </Field>
-          <label className="-mt-1 flex cursor-pointer items-start gap-2.5 text-sm">
-            <Checkbox className="mt-px" checked={bccMe} onChange={(e) => setBccMe(e.target.checked)} />
-            <span className="min-w-0">
-              Enviarme una copia oculta
-              {account.email && <span className="text-muted-foreground"> a {account.email}</span>}
-            </span>
-          </label>
-          <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
-            {(p) => (
-              <Input {...p} ref={toInput} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />
-            )}
-          </Field>
-          <Field label="CC" error={shown.cc}>
-            {(p) => <Input {...p} type="email" multiple value={cc} onChange={(e) => setCc(e.target.value)} />}
-          </Field>
-          <Field label="Asunto" required error={shown.subject}>
-            {(p) => <Input {...p} value={subject} onChange={(e) => setSubject(e.target.value)} />}
-          </Field>
-          <Field label="Mensaje">
-            {(p) => <Textarea {...p} rows={6} value={body} onChange={(e) => setBody(e.target.value)} />}
-          </Field>
-          <div className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-sm font-medium text-muted-foreground">Adjunto</span>
-            <button
-              type="button"
-              title="Ver el PDF"
-              onClick={() => {
-                // Opened now, while the click still counts, and filled once the PDF code loads
-                const tab = window.open("", "_blank");
-                const current = salesStore.get(doc.id) ?? doc;
-                if (tab) void import("./sales-pdf").then((m) => m.showDocumentPdf(current, tab));
-              }}
-              className="flex min-w-0 cursor-pointer items-center gap-2 self-start rounded-lg border border-border bg-transparent px-3 py-2 text-sm text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
-            >
-              <Paperclip className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-              <span className="min-w-0 truncate">{documentFileName(doc, "pdf")}</span>
-            </button>
-          </div>
-
-          {history.length > 0 && (
-            <div className="flex flex-col gap-1.5 border-t border-border pt-3">
-              <span className="text-xs font-medium text-muted-foreground">Envíos anteriores</span>
-              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
-                {history.map((email) => (
-                  <li key={email.id} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <Badge tone={EMAIL_STATUS[email.status].tone}>{EMAIL_STATUS[email.status].label}</Badge>
-                    <span className="min-w-0 truncate">{email.to.join(", ")}</span>
-                    <span className="text-muted-foreground">{formatDate(email.createdAt.slice(0, 10))}</span>
-                    {email.status === "failed" && email.error && (
-                      <span className="w-full text-xs text-destructive">{email.error}</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {error && (
-            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <div className="flex flex-wrap justify-end gap-2.5 pt-1">
-            <DialogClose asChild>
-              <Button variant="secondary">Cancelar</Button>
-            </DialogClose>
-            <Button type="submit" disabled={sending || !verified}>
-              {sending && <Loader2 className="animate-spin" aria-hidden="true" />}
-              Enviar
-            </Button>
-          </div>
-        </form>
+          </form>
+        </TooltipProvider>
         <VerifyEmailDialog
           email={account.email}
           open={verifying}
