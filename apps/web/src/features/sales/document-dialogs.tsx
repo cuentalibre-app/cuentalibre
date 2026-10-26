@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CircleAlert, Loader2, Paperclip } from "lucide-react";
+import { Link } from "react-router";
 import type { EmailMessage, EmailSender, SalesDocument } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
@@ -11,11 +12,13 @@ import { ApiError } from "@/data/api";
 import { emailSender, emailsOf, sendEmail } from "@/data/email";
 import { VerifyEmailDialog } from "@/features/auth/email-code";
 import { userStore, useEmailVerified, useUserSettings } from "@/features/settings/user-store";
-import { businessName } from "@/features/settings/settings-model";
+import { EMAIL_TEMPLATES_PATH, businessName } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate } from "@/lib/format";
 import { TagsField } from "./document-editor";
-import { Field } from "./form-fields";
+import { BUILT_IN_TEMPLATE, defaultTemplateId, templatesFor, writeEmail } from "./email-templates";
+import { useEmailTemplates } from "./email-templates-store";
+import { Field, GroupedSelect } from "./form-fields";
 import { STATUS, clientOf, displayStatus, documentFileName, documentTotals, KINDS, withPayments } from "./sales-model";
 import { salesStore, useSalesDocuments } from "./sales-store";
 import { PaymentsDialog } from "./payments-dialog";
@@ -105,10 +108,16 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [bccMe, setBccMe] = useState(true);
   const toInput = useRef<HTMLInputElement>(null);
-  const [subject, setSubject] = useState(`${name.charAt(0).toUpperCase()}${name.slice(1)} · ${businessName(profile)}`);
-  const [body, setBody] = useState(
-    `Hola,\n\nTe adjunto la ${name} por importe de ${formatEUR(documentTotals(doc).total)}.\n\nUn saludo,\n${businessName(profile)}`,
-  );
+  const templates = useEmailTemplates();
+  const [templateId, setTemplateId] = useState(() => defaultTemplateId(templates, doc.kind));
+  const [subject, setSubject] = useState(() => writeEmail(templates, templateId, doc, profile).subject);
+  const [body, setBody] = useState(() => writeEmail(templates, templateId, doc, profile).body);
+  const pickTemplate = (id: string) => {
+    const email = writeEmail(templates, id, salesStore.get(doc.id) ?? doc, profile);
+    setTemplateId(id);
+    setSubject(email.subject);
+    setBody(email.body);
+  };
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -249,6 +258,30 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
                 {account.email && <span className="text-muted-foreground"> a {account.email}</span>}
               </span>
             </label>
+            <Field
+              label="Plantilla"
+              action={
+                <Link to={EMAIL_TEMPLATES_PATH} className="text-sm text-primary">
+                  Gestionar plantillas
+                </Link>
+              }
+            >
+              {(p) => (
+                <GroupedSelect
+                  {...p}
+                  value={templateId}
+                  onChange={pickTemplate}
+                  groups={[
+                    {
+                      options: [
+                        { value: BUILT_IN_TEMPLATE, label: "Texto de cuentalibre" },
+                        ...templatesFor(templates, doc.kind).map((t) => ({ value: t.id, label: t.name })),
+                      ],
+                    },
+                  ]}
+                />
+              )}
+            </Field>
             <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
               {(p) => (
                 <Input {...p} ref={toInput} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />

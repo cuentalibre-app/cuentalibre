@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { id } from "./common";
+import { salesKindSchema } from "./sales";
 
 /** An email sent from cuentalibre, such as an invoice to its client. Its attachments are uploaded files. */
 export const emailRequestSchema = z.object({
@@ -45,3 +47,35 @@ export const emailSenderSchema = z.object({
   replyTo: z.string().nullable(),
 });
 export type EmailSender = z.infer<typeof emailSenderSchema>;
+
+/**
+ * A saved subject and message for emailing one kind of sales document. Its
+ * `{{placeholders}}` (the document's number, total, client…) are filled in
+ * when the email is written.
+ */
+export const emailTemplateSchema = z.object({
+  id,
+  name: z.string().trim().min(1).max(80),
+  kind: salesKindSchema,
+  subject: z.string().max(200),
+  body: z.string().max(20_000),
+});
+export type EmailTemplate = z.infer<typeof emailTemplateSchema>;
+
+export const emailTemplateSettingsSchema = z
+  .object({
+    templates: z.array(emailTemplateSchema).max(100),
+    /** The template each kind of document starts with; absent means cuentalibre's own text. */
+    defaults: z.partialRecord(salesKindSchema, id),
+  })
+  .superRefine((settings, ctx) => {
+    for (const [kind, templateId] of Object.entries(settings.defaults)) {
+      if (!settings.templates.some((t) => t.id === templateId && t.kind === kind))
+        ctx.addIssue({
+          code: "custom",
+          path: ["defaults", kind],
+          message: `The default ${kind} template must be one of the ${kind} templates.`,
+        });
+    }
+  });
+export type EmailTemplateSettings = z.infer<typeof emailTemplateSettingsSchema>;
