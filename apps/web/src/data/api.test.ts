@@ -2,6 +2,7 @@ import {
   DEFAULT_ORGANIZATION_SETTINGS,
   type ClosedQuarter,
   type Contact,
+  type ContactSettings,
   type FiledReturn,
   type Me,
   type SalesDocument,
@@ -174,23 +175,23 @@ describe("api backend", () => {
           salesDocuments: [],
           settings: {
             ...DEFAULT_ORGANIZATION_SETTINGS,
-            signing: { invoice: "company", quote: "none", deliveryNote: "none" },
+            contactSettings: { customFieldNames: ["Sector", ""], autocomplete: false },
           },
         },
       },
     );
-    const signing = createStore(DEFAULT_ORGANIZATION_SETTINGS.signing);
-    syncSettings("signing", signing.set);
-    const data = { invoice: "none", quote: "company", deliveryNote: "none" } as const;
-    await signing.write(data, [
-      { type: "saveSettings", section: "signing", data },
+    const contacts = createStore(DEFAULT_ORGANIZATION_SETTINGS.contactSettings);
+    syncSettings("contactSettings", contacts.set);
+    const data: ContactSettings = { customFieldNames: ["Zona", ""], autocomplete: true };
+    await contacts.write(data, [
+      { type: "saveSettings", section: "contactSettings", data },
       // Not stored by the server yet
       { type: "saveSettings", section: "emailSettings", data: {} },
     ]);
-    expect(calls[0]!.body).toEqual({ commands: [{ type: "saveSettings", section: "signing", data }] });
+    expect(calls[0]!.body).toEqual({ commands: [{ type: "saveSettings", section: "contactSettings", data }] });
 
     await api.loadWorkspace();
-    expect(signing.get()).toEqual({ invoice: "company", quote: "none", deliveryNote: "none" });
+    expect(contacts.get()).toEqual({ customFieldNames: ["Sector", ""], autocomplete: false });
   });
 
   it("saves the user's own settings apart from the organization's, and takes them from the account", async () => {

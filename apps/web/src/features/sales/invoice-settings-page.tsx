@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Check, ImageUp, PenLine, Trash2 } from "lucide-react";
+import { Check, ImageUp, Trash2 } from "lucide-react";
 import { LOGO_MAX_SIZE, type InvoiceSettings } from "@cuentalibre/contracts";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { CERTIFICATES_PATH } from "@/features/settings/settings-model";
 import { SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
@@ -128,21 +127,7 @@ export function InvoiceSettingsPage() {
           </Field>
         </Section>
 
-        <Section title="Firma electrónica de facturas emitidas" index={5}>
-          <p className="m-0 max-w-3xl text-muted-foreground">
-            Firma digitalmente las facturas emitidas, tanto en PDF como en FacturaE, para dar más seguridad y garantías
-            a tus clientes.
-          </p>
-          <Link
-            to={CERTIFICATES_PATH}
-            className={cn(buttonVariants({ variant: "secondary", size: "md" }), "self-start no-underline")}
-          >
-            <PenLine aria-hidden="true" />
-            Configurar la firma electrónica de facturas
-          </Link>
-        </Section>
-
-        <Section title="Validación del NIF de cliente en facturas intracomunitarias" index={6}>
+        <Section title="Validación del NIF de cliente en facturas intracomunitarias" index={5}>
           <p className="m-0 max-w-3xl text-muted-foreground">
             Comprueba en el VIES que el cliente está registrado como operador intracomunitario al emitir una factura
             intracomunitaria (requisito imprescindible para considerarla como tal). Si lo desactivas, se emitirán sin
@@ -155,7 +140,7 @@ export function InvoiceSettingsPage() {
           />
         </Section>
 
-        <Section title="Subida de facturas a Dropbox o Google Drive" index={7}>
+        <Section title="Subida de facturas a Dropbox o Google Drive" index={6}>
           <p className="m-0 max-w-3xl text-muted-foreground">
             Elige si las casillas para subir las facturas emitidas a tus cuentas aparecen marcadas por defecto.
           </p>
