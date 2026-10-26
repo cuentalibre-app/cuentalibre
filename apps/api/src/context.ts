@@ -25,6 +25,8 @@ export interface AppEnv {
     emailQuota: { daily: number; monthly: number };
     /** Largest file that can be uploaded, in bytes. */
     fileMaxBytes: number;
+    /** Most bytes an organization's files may take in all; 0 means no limit. */
+    fileQuotaBytes: number;
     user: SessionData["user"] | null;
     /** The browser session; null when the request authenticates with an API key. */
     session: SessionData["session"] | null;

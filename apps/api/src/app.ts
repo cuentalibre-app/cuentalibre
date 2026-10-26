@@ -54,6 +54,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
     c.set("verifactuEnvironment", env.VERIFACTU_ENV === "test" ? "test" : "production");
     c.set("emailQuota", { daily: env.EMAIL_DAILY_RECIPIENTS, monthly: env.EMAIL_MONTHLY_RECIPIENTS });
     c.set("fileMaxBytes", env.FILE_MAX_BYTES);
+    c.set("fileQuotaBytes", env.FILE_QUOTA_BYTES);
     c.set("checkBreachedPasswords", env.PASSWORD_BREACH_CHECK === "on");
     await next();
   });
