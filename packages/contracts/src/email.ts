@@ -2,8 +2,8 @@ import { z } from "zod";
 
 /** An email sent from cuentalibre, such as an invoice to its client. Its attachments are uploaded files. */
 export const emailRequestSchema = z.object({
-  /** The sales document the email sends, if any. */
-  documentId: z.uuid().optional(),
+  /** The sales document the email sends: every email sends one, so the route can't carry anything else. */
+  documentId: z.uuid(),
   to: z.array(z.email()).min(1).max(10),
   cc: z.array(z.email()).max(10).default([]),
   subject: z.string().trim().min(1).max(200),

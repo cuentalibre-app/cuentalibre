@@ -21,6 +21,8 @@ export interface AppEnv {
     billing: Billing | null;
     /** Whether new passwords are checked against data breaches. */
     checkBreachedPasswords: boolean;
+    /** Most recipients an organization's emails reach in a day and in 30 days; 0 means no limit. */
+    emailQuota: { daily: number; monthly: number };
     /** Largest file that can be uploaded, in bytes. */
     fileMaxBytes: number;
     user: SessionData["user"] | null;

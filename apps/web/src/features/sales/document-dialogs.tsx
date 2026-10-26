@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Paperclip } from "lucide-react";
+import { CircleAlert, Loader2, Paperclip } from "lucide-react";
 import type { EmailMessage, SalesDocument } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
@@ -8,6 +8,8 @@ import { Input, Textarea } from "@cuentalibre/ui/components/input";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { emailsOf, sendEmail } from "@/data/email";
+import { VerifyEmailDialog } from "@/features/auth/email-code";
+import { userStore, useEmailVerified, useUserSettings } from "@/features/settings/user-store";
 import { businessName } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate } from "@/lib/format";
@@ -106,6 +108,10 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<EmailMessage[]>([]);
+  // The server only sends for users who verified their email
+  const verified = useEmailVerified();
+  const { profile: account } = useUserSettings();
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -133,7 +139,7 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
 
   const submit = async () => {
     setSubmitted(true);
-    if (errors.to || errors.cc || errors.subject) return;
+    if (!verified || errors.to || errors.cc || errors.subject) return;
     setSending(true);
     setError(null);
     try {
@@ -145,12 +151,17 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
       ]);
       onOpenChange(false);
     } catch (e) {
+      const code = e instanceof ApiError ? e.code : null;
       setError(
-        e instanceof ApiError && e.code === "email_unavailable"
+        code === "email_unavailable"
           ? "Este servidor no tiene configurado el envío de correo. Usa tu programa de correo."
-          : e instanceof ApiError && e.code === "subscription_required"
+          : code === "subscription_required"
             ? "Tu empresa está en solo lectura. Suscríbete para volver a enviar documentos."
-            : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
+            : code === "email_unverified"
+              ? "Verifica tu email para enviar documentos desde cuentalibre."
+              : code === "email_quota_exceeded"
+                ? "Has llegado al límite de destinatarios de tu empresa por hoy o por este mes. Usa tu programa de correo o inténtalo más adelante."
+                : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
       );
     } finally {
       setSending(false);
@@ -172,6 +183,25 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
             void submit();
           }}
         >
+          {!verified && (
+            <div
+              role="status"
+              className="flex flex-col gap-3 rounded-lg bg-warning-soft px-3 py-2.5 text-sm text-foreground sm:flex-row sm:items-center"
+            >
+              <p className="m-0 flex flex-1 gap-2">
+                <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={1.8} aria-hidden="true" />
+                <span>Verifica tu email para enviar documentos desde cuentalibre.</span>
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="self-start sm:self-auto"
+                onClick={() => setVerifying(true)}
+              >
+                Verificar mi email
+              </Button>
+            </div>
+          )}
           <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
             {(p) => <Input {...p} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />}
           </Field>
@@ -219,12 +249,21 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
             <DialogClose asChild>
               <Button variant="secondary">Cancelar</Button>
             </DialogClose>
-            <Button type="submit" disabled={sending}>
+            <Button type="submit" disabled={sending || !verified}>
               {sending && <Loader2 className="animate-spin" aria-hidden="true" />}
               Enviar
             </Button>
           </div>
         </form>
+        <VerifyEmailDialog
+          email={account.email}
+          open={verifying}
+          onOpenChange={setVerifying}
+          onVerified={(verifiedEmail) => {
+            userStore.emailVerified(verifiedEmail);
+            setError(null);
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
