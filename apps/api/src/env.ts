@@ -68,6 +68,12 @@ const envSchema = z
     EMAIL_FROM: z.email().optional(),
     /** Address emails about people's accounts (verifying an email, resetting a password) are sent from; defaults to `EMAIL_FROM`. */
     ACCOUNT_EMAIL_FROM: z.email().optional(),
+    /**
+     * Most recipients (to and cc) an organization's emails reach in a day and in 30 days, so
+     * a stolen or fake account can't send spam from the instance's domain. 0 means no limit.
+     */
+    EMAIL_DAILY_RECIPIENTS: z.coerce.number().int().min(0).default(50),
+    EMAIL_MONTHLY_RECIPIENTS: z.coerce.number().int().min(0).default(500),
     /** Sends unexpected errors to Sentry (no request data or users). Without it, errors only go to the log. */
     SENTRY_DSN: z.url().optional(),
     /** The version errors are tagged with; the image build sets it to the commit, or leaves it empty. */

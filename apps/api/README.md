@@ -120,7 +120,7 @@ Records are always chained; they are only sent when `VERIFACTU_ENV` is `test` or
 
 ## Email
 
-`POST /v1/emails` checks the attachments are the organization's files and queues the email; the worker sends it over SMTP (`SMTP_URL`, from `EMAIL_FROM`) with the business's name as the sender and replies to its email, or the user's. A failed send is retried with backoff; a final refusal from the server (5xx), or too many failures, marks it `failed`. Without `SMTP_URL` the endpoint answers `503 email_unavailable` and the web app falls back to the user's mail client.
+`POST /v1/emails` sends a sales document (`documentId` is required), only for users with a verified email (`403 email_unverified`, API keys included), and checks the attachments are the organization's files. Each organization reaches at most `EMAIL_DAILY_RECIPIENTS` recipients (to and cc, default 50) a day and `EMAIL_MONTHLY_RECIPIENTS` (default 500) in 30 days, 0 for no limit; past that it answers `429 email_quota_exceeded`, so a fake account can't send spam from the instance's domain. Each email records who sent it and with which API key. Then it queues the email; the worker sends it over SMTP (`SMTP_URL`, from `EMAIL_FROM`) with the business's name as the sender and replies to its email, or the user's. A failed send is retried with backoff; a final refusal from the server (5xx), or too many failures, marks it `failed`. Without `SMTP_URL` the endpoint answers `503 email_unavailable` and the web app falls back to the user's mail client.
 
 ## Billing
 

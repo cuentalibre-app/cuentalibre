@@ -96,6 +96,17 @@ export const requireWritable = createMiddleware<AppEnv>(async (c, next) => {
   await next();
 });
 
+/**
+ * For what reaches people outside the organization, such as its emails: only a user who
+ * proved they own their email, so an account made with someone else's can't send spam.
+ * An API key acts as its user, so it needs them verified too.
+ */
+export const requireVerifiedEmail = createMiddleware<AppEnv>(async (c, next) => {
+  if (!c.get("user")?.emailVerified)
+    return errorResponse(c, 403, "email_unverified", "Verify your email before sending email from cuentalibre.");
+  await next();
+});
+
 /** The OpenAPI entry for the routes behind `requireWritable`. */
 export const readOnlyError = {
   402: errorContent("The organization's trial or subscription has ended: it can only read and export"),
