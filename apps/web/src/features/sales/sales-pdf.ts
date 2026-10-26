@@ -42,6 +42,8 @@ const QR_SIZE = 32;
 /** Room for the logo, top left: the proportions of the largest one stored, as tall as the QR code. */
 const LOGO_BOX = { width: 52, height: QR_SIZE };
 const LINE = 4;
+/** Between the lines of a wrapped table header label. */
+const HEADER_LINE = 3.4;
 
 type Align = "left" | "right" | "center";
 
@@ -447,14 +449,36 @@ function columnEdges(cols: Column[]): number[] {
   return edges;
 }
 
+interface HeaderLabel {
+  lines: string[];
+  size: number;
+}
+
+/**
+ * A column header wrapped to its column, only between words: a word wider
+ * than the column ("MENGE") gets a smaller size instead of being split.
+ */
+function headerLabel(s: Sheet, text: string, columnWidth: number, classic: boolean): HeaderLabel {
+  const label = pdfText(classic ? text.toUpperCase() : text);
+  const width = columnWidth - 3;
+  const words = label.split(/\s+/);
+  let size = 8.5;
+  s.pdf.setFont(s.font, classic ? "bold" : "normal");
+  const widest = () => Math.max(...words.map((w) => s.pdf.setFontSize(fontSize(s, size)).getTextWidth(w)));
+  while (size > 6 && widest() > width) size -= 0.25;
+  return { lines: wrap(s, label, width, size, classic), size };
+}
+
 function drawTableHeader(s: Sheet, cols: Column[], edges: number[]) {
   const { family } = s.style;
-  const height = 6;
   const top = s.y;
   const filled = family === "professional" || family === "avantGarde";
   const color = filled ? s.paper : s.ink;
   const classic = family === "classic";
-  const label = (text: string) => (classic ? text.toUpperCase() : text);
+  // A label longer than its column, as in some languages, wraps and the header grows to fit it
+  const conceptLabel = headerLabel(s, s.t.concept, edges[0]! - cols[0]!.width - LEFT, classic);
+  const labels = cols.map((col) => headerLabel(s, col.label, col.width, classic));
+  const height = 6 + (Math.max(conceptLabel.lines.length, ...labels.map((l) => l.lines.length)) - 1) * HEADER_LINE;
 
   if (filled) fill(s, LEFT, top, RIGHT - LEFT, height, s.rule);
   if (classic) fill(s, LEFT, top, RIGHT - LEFT, height, s.soft);
@@ -464,12 +488,12 @@ function drawTableHeader(s: Sheet, cols: Column[], edges: number[]) {
     cols.forEach((col, i) => line(s, edges[i]! - col.width, top, edges[i]! - col.width, top + height, 0.3));
   }
 
-  const baseline = top + 4.2;
-  write(s, label(s.t.concept), LEFT + 1.5, baseline, { bold: classic, color });
-  cols.forEach((col, i) => {
-    const x = classic ? edges[i]! - col.width / 2 : edges[i]! - 1.5;
-    write(s, label(col.label), x, baseline, { bold: classic, color, align: classic ? "center" : "right" });
-  });
+  const writeLabel = ({ lines, size }: HeaderLabel, x: number, align: Align) =>
+    lines.forEach((text, i) => write(s, text, x, top + 4.2 + i * HEADER_LINE, { size, bold: classic, color, align }));
+  writeLabel(conceptLabel, LEFT + 1.5, "left");
+  cols.forEach((col, i) =>
+    writeLabel(labels[i]!, classic ? edges[i]! - col.width / 2 : edges[i]! - 1.5, classic ? "center" : "right"),
+  );
   s.y = top + height;
 }
 
