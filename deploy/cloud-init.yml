@@ -1,7 +1,8 @@
 #cloud-config
 # Paste into "Cloud config" when creating the server (Ubuntu 24.04).
 # It creates the `deploy` user with the SSH keys chosen in the console, turns off
-# password and root logins, enables automatic security updates and installs Docker.
+# password and root logins, enables automatic security updates and installs Docker
+# and age (backup encryption).
 # The Hetzner Cloud Firewall in front of it allows 22 and, from Cloudflare only, 443.
 
 users:
@@ -16,6 +17,7 @@ package_upgrade: true
 packages:
   - unattended-upgrades
   - ufw
+  - age
 
 write_files:
   - path: /etc/ssh/sshd_config.d/10-hardening.conf
