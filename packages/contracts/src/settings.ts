@@ -183,25 +183,6 @@ export const verifactuSetupSchema = z.object({
 });
 export type VerifactuSetup = z.infer<typeof verifactuSetupSchema>;
 
-export const certificateSchema = z.object({
-  fileName: z.string(),
-  holder: z.string(),
-  taxId: z.string(),
-  uploadedOn: isoDate,
-  expiresOn: isoDate,
-  hasPassword: z.boolean(),
-});
-export type Certificate = z.infer<typeof certificateSchema>;
-
-export const signatureModeSchema = z.enum(["none", "company"]);
-export type SignatureMode = z.infer<typeof signatureModeSchema>;
-
-export const signedDocumentSchema = z.enum(["invoice", "quote", "deliveryNote"]);
-export type SignedDocument = z.infer<typeof signedDocumentSchema>;
-
-export const signingSettingsSchema = z.record(signedDocumentSchema, signatureModeSchema);
-export type SigningSettings = z.infer<typeof signingSettingsSchema>;
-
 /** People who work in the company, or an outside advisor (gestoría) who keeps its books. */
 export const userKindSchema = z.enum(["member", "advisor"]);
 export type UserKind = z.infer<typeof userKindSchema>;

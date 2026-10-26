@@ -26,10 +26,10 @@ describe("settings", () => {
   it("feeds saved sections", async () => {
     const ana = await member();
     const { cursor } = await workspace(ana);
-    const signing = { invoice: "company", quote: "none", deliveryNote: "none" } as const;
-    await send(ana, [{ type: "saveSettings", section: "signing", data: signing }]);
+    const contacts = { customFieldNames: ["Sector", ""], autocomplete: false };
+    await send(ana, [{ type: "saveSettings", section: "contactSettings", data: contacts }]);
     expect((await changes(ana, cursor)).changes).toEqual([
-      { op: "upsert", entity: "settings", data: { section: "signing", data: signing } },
+      { op: "upsert", entity: "settings", data: { section: "contactSettings", data: contacts } },
     ]);
   });
 

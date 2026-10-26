@@ -58,7 +58,6 @@ import { AccountsPage } from "@/features/settings/accounts-page";
 import { BillingPage } from "@/features/settings/billing-page";
 import { RequireWritable } from "@/features/settings/read-only-gate";
 import { BusinessPage } from "@/features/settings/business-page";
-import { CertificatesPage } from "@/features/settings/certificates-page";
 import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
 import { ApiKeysPage } from "@/features/settings/api-keys-page";
 import { EmailSettingsPage } from "@/features/settings/email-settings-page";
@@ -71,7 +70,6 @@ import {
   ACCOUNTS_PATH,
   BILLING_PATH,
   BUSINESS_PATH,
-  CERTIFICATES_PATH,
   CONTACT_SETTINGS_PATH,
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
@@ -257,7 +255,6 @@ const settingsRoutes = [
     element: <DocumentSettingsPage key="deliveryNote" kind="deliveryNote" />,
   },
   { path: LEDGER_ACCOUNTS_PATH.slice(1), element: <LedgerAccountsPage /> },
-  { path: CERTIFICATES_PATH.slice(1), element: <CertificatesPage /> },
   { path: CONTACT_SETTINGS_PATH.slice(1), element: <ContactSettingsPage /> },
   { path: USERS_PATH.slice(1), element: <UsersPage /> },
   { path: TAGS_PATH.slice(1), element: <TagsPage /> },
