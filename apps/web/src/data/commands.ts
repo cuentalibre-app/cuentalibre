@@ -39,7 +39,6 @@ export type SettingsSection =
   | "emailSettings"
   | "userProfile"
   | "notificationPrefs"
-  | "userLocale"
   | "userTour"
   | "userAccess";
 

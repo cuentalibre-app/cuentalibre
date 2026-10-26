@@ -199,19 +199,19 @@ describe("api backend", () => {
       {
         body: {
           user: { id: "0199f0a0-0000-7000-8000-000000000020", name: "Ana", email: "ana@example.com" },
-          settings: { userProfile: { firstName: "Ana" }, userLocale: { language: "en" } },
+          settings: { userProfile: { firstName: "Ana" }, userTour: { status: "skipped" } },
         },
       },
     );
-    const locale = createStore({ language: "", numberFormat: "", timeZone: "" });
+    const tour = createStore({ status: "pending" });
     const seen: Me[] = [];
     syncMe((me) => seen.push(me));
-    const data = { language: "en", numberFormat: "US", timeZone: "" };
-    await locale.write(data, [{ type: "saveSettings", section: "userLocale", data }]);
-    expect(calls).toEqual([{ url: "http://api/v1/me/settings/userLocale", method: "PUT", body: data }]);
+    const data = { status: "finished" };
+    await tour.write(data, [{ type: "saveSettings", section: "userTour", data }]);
+    expect(calls).toEqual([{ url: "http://api/v1/me/settings/userTour", method: "PUT", body: data }]);
 
     await api.loadMe();
-    expect(seen.map((me) => me.settings.userLocale.language)).toEqual(["en"]);
+    expect(seen.map((me) => me.settings.userTour.status)).toEqual(["skipped"]);
   });
 
   it("keeps lists inside bigger stores in step with the server", async () => {
