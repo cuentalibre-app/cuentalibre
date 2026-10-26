@@ -1,0 +1,3 @@
+# age public keys the nightly database dump is encrypted to (one per line).
+# The matching private keys live off the server: password manager + offline copy.
+age1006lmr0xj8awtqgrge3e4ym2mgplgq2xywmknkumgels8r4ksuuq9hhree
