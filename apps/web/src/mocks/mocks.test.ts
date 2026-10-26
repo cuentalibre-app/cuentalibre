@@ -16,7 +16,6 @@ import {
   productSchema,
   purchaseInvoiceSchema,
   salesDocumentSchema,
-  signingSettingsSchema,
   stockMovementSchema,
   tagSchema,
   taxSetupSchema,
@@ -30,7 +29,7 @@ import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { initialCatalogSettings, initialFamilies, initialMovements, initialProducts } from "./catalog";
 import { initialClosedQuarters } from "./closing";
-import { initialSigning, initialVerifactu } from "./compliance";
+import { initialVerifactu } from "./compliance";
 import { initialClients, initialSuppliers } from "./contacts";
 import { initialExpenses } from "./expenses";
 import { initialNoteTemplates } from "./invoicing";
@@ -65,7 +64,6 @@ const collections: [string, z.ZodType, unknown[]][] = [
 const singletons: [string, z.ZodType, unknown][] = [
   ["catalog settings", catalogSettingsSchema, initialCatalogSettings],
   ["VERI*FACTU setup", verifactuSetupSchema, initialVerifactu],
-  ["signing settings", signingSettingsSchema, initialSigning],
   ["ledger accounts", ledgerAccountSettingsSchema, initialLedgerAccounts],
   ["business profile", businessProfileSchema, initialProfile],
   ["tax setup", taxSetupSchema, initialTaxSetup],

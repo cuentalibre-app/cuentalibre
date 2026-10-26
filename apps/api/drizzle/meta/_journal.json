@@ -99,6 +99,13 @@
       "when": 1793041230672,
       "tag": "0013_email_bcc",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793048310148,
+      "tag": "0014_drop_signing_settings",
+      "breakpoints": true
     }
   ]
 }

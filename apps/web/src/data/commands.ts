@@ -34,7 +34,6 @@ export type Entity =
  */
 export type SettingsSection =
   | OrganizationSection
-  | "certificate"
   | "emailSettings"
   | "userProfile"
   | "notificationPrefs"

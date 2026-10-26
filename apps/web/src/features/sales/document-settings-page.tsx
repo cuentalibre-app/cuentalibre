@@ -1,13 +1,12 @@
 import { Link } from "react-router";
-import { PenLine, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import type { DocumentKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
-import { cn } from "@cuentalibre/ui/lib/cn";
 import { SaveButton, SettingsHeader, UnsavedChangesGuard, useDraft } from "@/features/settings/settings-parts";
-import { CERTIFICATES_PATH, INVOICE_SETTINGS_PATH } from "@/features/settings/settings-model";
+import { INVOICE_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { DefaultMark, LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
 import { documentSettingsStore, useDocumentSettings } from "./invoice-settings";
@@ -191,21 +190,6 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
                 muchos {kind === "draft" ? "borradores" : "albaranes"} en una sola factura.
               </li>
             </ul>
-          </Section>
-        )}
-
-        {kind !== "draft" && (
-          <Section title={`Firma electrónica de ${copy.plural}`} index={index++}>
-            <p className="m-0 max-w-3xl text-muted-foreground">
-              Firma digitalmente {copy.all} en PDF. Firmarlos aporta seguridad y más garantías a tus clientes.
-            </p>
-            <Link
-              to={CERTIFICATES_PATH}
-              className={cn(buttonVariants({ variant: "secondary", size: "md" }), "self-start no-underline")}
-            >
-              <PenLine aria-hidden="true" />
-              Configurar la firma electrónica de {copy.plural}
-            </Link>
           </Section>
         )}
 
