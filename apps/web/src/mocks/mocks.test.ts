@@ -6,7 +6,6 @@ import {
   closedQuarterSchema,
   companyUserSchema,
   contactSchema,
-  emailSettingsSchema,
   expenseSchema,
   ledgerAccountSettingsSchema,
   manualPaymentSchema,
@@ -40,7 +39,7 @@ import { initialAccounts, initialPaymentMethods, initialProfile, initialTaxSetup
 import { initialTags } from "./tags";
 import { initialManualPayments, sampleMovements } from "./treasury";
 import { initialNotificationPrefs, initialUserAccess, initialUserProfile, initialUserTour } from "./user";
-import { initialEmailSettings, initialUsers } from "./users";
+import { initialUsers } from "./users";
 
 // The sample data becomes the seed data of the database, so it must pass the same validation as user input.
 const collections: [string, z.ZodType, unknown[]][] = [
@@ -71,7 +70,6 @@ const singletons: [string, z.ZodType, unknown][] = [
   ["notification preferences", notificationPrefsSchema, initialNotificationPrefs],
   ["user access", userAccessSchema, initialUserAccess],
   ["user tour", userTourSchema, initialUserTour],
-  ["email settings", emailSettingsSchema, initialEmailSettings],
 ];
 
 const issues = (schema: z.ZodType, value: unknown) => schema.safeParse(value).error?.issues ?? [];
