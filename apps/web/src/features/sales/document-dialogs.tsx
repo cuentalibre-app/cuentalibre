@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CircleAlert, Loader2, Paperclip } from "lucide-react";
 import type { EmailMessage, EmailSender, SalesDocument } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
@@ -103,6 +103,7 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
   // Null until edited: then it follows the server's default
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [bccMe, setBccMe] = useState(true);
+  const toInput = useRef<HTMLInputElement>(null);
   const [subject, setSubject] = useState(`${name.charAt(0).toUpperCase()}${name.slice(1)} · ${businessName(profile)}`);
   const [body, setBody] = useState(
     `Hola,\n\nTe adjunto la ${name} por importe de ${formatEUR(documentTotals(doc).total)}.\n\nUn saludo,\n${businessName(profile)}`,
@@ -188,7 +189,14 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent
+        className="max-w-lg"
+        onOpenAutoFocus={(e) => {
+          // The recipient is what people fill first, though the sender's fields come above it
+          e.preventDefault();
+          toInput.current?.focus();
+        }}
+      >
         <DialogTitle>Enviar {name}</DialogTitle>
         <DialogDescription>Se envía con el PDF adjunto, a nombre de tu negocio.</DialogDescription>
         <form
@@ -224,17 +232,8 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
               {sender?.name ?? businessName(profile)}
               {sender && <span className="text-muted-foreground"> &lt;{sender.address}&gt;</span>}
             </p>
-            <p className="m-0 text-xs text-muted-foreground">
-              Sale de cuentalibre con tu nombre, para que no acabe en spam.
-            </p>
           </div>
-          <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
-            {(p) => <Input {...p} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />}
-          </Field>
-          <Field label="CC" error={shown.cc}>
-            {(p) => <Input {...p} type="email" multiple value={cc} onChange={(e) => setCc(e.target.value)} />}
-          </Field>
-          <Field label="Responder a" error={shown.replyTo} hint="Las respuestas de tu cliente llegan aquí.">
+          <Field label="Responder a" error={shown.replyTo}>
             {(p) => <Input {...p} type="email" value={replyAddress} onChange={(e) => setReplyTo(e.target.value)} />}
           </Field>
           <label className="-mt-1 flex cursor-pointer items-start gap-2.5 text-sm">
@@ -244,6 +243,14 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
               {account.email && <span className="text-muted-foreground"> a {account.email}</span>}
             </span>
           </label>
+          <Field label="Para" required error={shown.to} hint="Separa varios emails con comas.">
+            {(p) => (
+              <Input {...p} ref={toInput} type="email" multiple value={to} onChange={(e) => setTo(e.target.value)} />
+            )}
+          </Field>
+          <Field label="CC" error={shown.cc}>
+            {(p) => <Input {...p} type="email" multiple value={cc} onChange={(e) => setCc(e.target.value)} />}
+          </Field>
           <Field label="Asunto" required error={shown.subject}>
             {(p) => <Input {...p} value={subject} onChange={(e) => setSubject(e.target.value)} />}
           </Field>
