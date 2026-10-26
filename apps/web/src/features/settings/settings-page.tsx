@@ -195,7 +195,7 @@ export function SettingsPage() {
       entries: [
         {
           title: "Datos personales",
-          description: "Tu nombre, notificaciones, idioma y zona horaria.",
+          description: "Tu nombre y tus notificaciones.",
           to: PROFILE_PATH,
           icon: UserRound,
         },

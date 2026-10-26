@@ -236,7 +236,6 @@ describe("the user's own settings", () => {
     expect(user.email).toBe(ana.email);
     expect(settings).toEqual({
       userProfile: { firstName: "Ana Ruiz", lastName: "", birthDate: "", phone: "", gender: "" },
-      userLocale: { language: "", numberFormat: "", timeZone: "" },
       userTour: { status: "pending" },
     });
   });
@@ -244,18 +243,14 @@ describe("the user's own settings", () => {
   it("saves each section for the user alone, and renames them with the profile", async () => {
     const ana = await signUp();
     const eve = await signUp("Eve");
-    const locale = { language: "en", numberFormat: "US", timeZone: "Atlantic/Canary" };
 
     expect((await save(ana, "userProfile", profile)).status).toBe(204);
-    expect((await save(ana, "userLocale", locale)).status).toBe(204);
-    expect((await save(ana, "userLocale", { ...locale, timeZone: "" })).status).toBe(204);
     expect((await save(ana, "userTour", { status: "skipped" })).status).toBe(204);
 
     const { user, settings } = await me(ana);
     expect(user.name).toBe("Ana Ruiz Gil");
     expect(settings).toEqual({
       userProfile: profile,
-      userLocale: { ...locale, timeZone: "" },
       userTour: { status: "skipped" },
     });
     expect((await me(eve)).settings.userProfile.firstName).toBe("Eve");
@@ -268,17 +263,18 @@ describe("the user's own settings", () => {
     expect(blank.status).toBe(400);
     expect(await errorCode(blank)).toBe("invalid_settings");
     expect((await save(ana, "userProfile", { ...profile, birthDate: "02/05/1990" })).status).toBe(400);
-    expect((await save(ana, "userLocale", { language: "es" })).status).toBe(400);
+    // Language, number format and time zone are no longer settings
+    expect((await save(ana, "userLocale", { timeZone: "Europe/Madrid" })).status).toBe(400);
     expect((await save(ana, "userTour", { status: "seen" })).status).toBe(400);
     expect((await save(ana, "notificationPrefs", {})).status).toBe(400);
     expect((await me(ana)).user.name).toBe("Ana");
   });
 
   it("needs a signed-in user", async () => {
-    const response = await app.request(`${env.BETTER_AUTH_URL}/v1/me/settings/userLocale`, {
+    const response = await app.request(`${env.BETTER_AUTH_URL}/v1/me/settings/userTour`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ language: "", numberFormat: "", timeZone: "" }),
+      body: JSON.stringify({ status: "finished" }),
     });
     expect(response.status).toBe(401);
   });

@@ -27,14 +27,6 @@ export const notificationPrefsSchema = z.object({
 });
 export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
 
-/** Empty values follow the business defaults. */
-export const userLocaleSchema = z.object({
-  language: z.string(),
-  numberFormat: z.string(),
-  timeZone: z.string(),
-});
-export type UserLocale = z.infer<typeof userLocaleSchema>;
-
 /** How the first-run tour went: it shows by itself while "pending", and never again once finished or skipped. */
 export const tourStatusSchema = z.enum(["pending", "finished", "skipped"]);
 export type TourStatus = z.infer<typeof tourStatusSchema>;
@@ -66,11 +58,6 @@ export const userSettingsSchema = z.object({
     birthDate: isoDate.or(z.literal("")),
     phone: z.string().max(40),
     gender: genderSchema,
-  }),
-  userLocale: z.object({
-    language: z.string().max(20),
-    numberFormat: z.string().max(20),
-    timeZone: z.string().max(60),
   }),
   userTour: userTourSchema,
 });

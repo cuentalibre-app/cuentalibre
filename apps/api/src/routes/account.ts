@@ -57,7 +57,7 @@ const saveUserSettings = createRoute({
   tags: ["Account"],
   summary: "Replace a section of the signed-in user's own settings",
   description:
-    "The body is the whole section: `userProfile` (first and last names, birth date, phone, gender) `userLocale` (language, number format, time zone; empty follows the business) or `userTour` (whether the first-run tour was finished or skipped). Saving the profile also renames the user.",
+    "The body is the whole section: `userProfile` (first and last names, birth date, phone, gender) or `userTour` (whether the first-run tour was finished or skipped). Saving the profile also renames the user.",
   middleware: [requireUser] as const,
   request: {
     params: z.object({ section: userSettingsSectionSchema }),
@@ -174,7 +174,6 @@ async function readUserSettings(db: Db, user: { id: string; name: string }): Pro
   const saved = Object.fromEntries(rows.map((row) => [row.section, row.data])) as Partial<UserSettings>;
   return {
     userProfile: saved.userProfile ?? { firstName: user.name, lastName: "", birthDate: "", phone: "", gender: "" },
-    userLocale: saved.userLocale ?? { language: "", numberFormat: "", timeZone: "" },
     userTour: saved.userTour ?? { status: "pending" },
   };
 }

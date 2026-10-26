@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router";
 import { BellRing, ImageUp, Trash2 } from "lucide-react";
-import type { Gender, NotificationPrefs, UserLocale, UserProfile } from "@cuentalibre/contracts";
+import type { Gender, NotificationPrefs, UserProfile } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
@@ -10,7 +10,6 @@ import { authErrorMessage, currentUser, deleteAccount } from "@/features/auth/au
 import { ForgotPasswordLink } from "@/features/auth/forgot-password-link";
 import { SIGN_IN_PATH, reloadAt, sessionState } from "@/features/auth/session";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
-import { LANGUAGES, NUMBER_FORMATS, defaultNumberFormat, formatSample } from "@/features/sales/invoice-locale";
 import type { Option } from "@/features/sales/sales-model";
 import { EXPORT_PATH } from "@/features/transfer/transfer-model";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
@@ -19,42 +18,13 @@ import { userFullName, userStore, useUserSettings } from "./user-store";
 
 const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
 
-/** Radix Select can't hold an empty value: this stands for "the business default". */
-const BUSINESS_DEFAULT = "default";
+/** Radix Select can't hold an empty value: this stands for it. */
+const UNSET = "default";
 
 const GENDERS: Option<Exclude<Gender, "">>[] = [
   { value: "male", label: "Hombre" },
   { value: "female", label: "Mujer" },
 ];
-
-/** The time zones a business in Spain is likely to need, Spanish ones first. */
-const TIME_ZONES: Option[] = [
-  { value: "Europe/Madrid", label: "(UTC+01:00) Bruselas, Copenhague, Madrid, París" },
-  { value: "Atlantic/Canary", label: "(UTC+00:00) Canarias" },
-  { value: "Europe/Lisbon", label: "(UTC+00:00) Dublín, Edimburgo, Lisboa, Londres" },
-  { value: "Europe/Berlin", label: "(UTC+01:00) Ámsterdam, Berlín, Berna, Roma, Estocolmo, Viena" },
-  { value: "Europe/Warsaw", label: "(UTC+01:00) Sarajevo, Skopie, Varsovia, Zagreb" },
-  { value: "Europe/Athens", label: "(UTC+02:00) Atenas, Bucarest" },
-  { value: "Europe/Helsinki", label: "(UTC+02:00) Helsinki, Kiev, Riga, Sofía, Tallin, Vilna" },
-  { value: "Europe/Istanbul", label: "(UTC+03:00) Estambul" },
-  { value: "Europe/Moscow", label: "(UTC+03:00) Moscú, San Petersburgo" },
-  { value: "Asia/Dubai", label: "(UTC+04:00) Abu Dabi, Mascate" },
-  { value: "Asia/Kolkata", label: "(UTC+05:30) Chennai, Calcuta, Bombay, Nueva Delhi" },
-  { value: "Asia/Shanghai", label: "(UTC+08:00) Pekín, Chongqing, Hong Kong, Urumqi" },
-  { value: "Asia/Tokyo", label: "(UTC+09:00) Osaka, Sapporo, Tokio" },
-  { value: "Australia/Sydney", label: "(UTC+10:00) Canberra, Melbourne, Sídney" },
-  { value: "America/Sao_Paulo", label: "(UTC-03:00) Brasilia" },
-  { value: "America/Argentina/Buenos_Aires", label: "(UTC-03:00) Ciudad de Buenos Aires" },
-  { value: "America/Santiago", label: "(UTC-04:00) Santiago" },
-  { value: "America/Caracas", label: "(UTC-04:00) Caracas" },
-  { value: "America/Bogota", label: "(UTC-05:00) Bogotá, Lima, Quito, Río Branco" },
-  { value: "America/New_York", label: "(UTC-05:00) Hora del Este (EE. UU. y Canadá)" },
-  { value: "America/Mexico_City", label: "(UTC-06:00) Guadalajara, Ciudad de México, Monterrey" },
-  { value: "America/Los_Angeles", label: "(UTC-08:00) Hora del Pacífico (EE. UU. y Canadá)" },
-];
-
-/** Language and format the business uses, which an empty user choice follows. */
-const BUSINESS_LOCALE = { language: "es", numberFormat: "ES" };
 
 export function ProfilePage() {
   const connected = sessionState() === "connected";
@@ -68,7 +38,6 @@ export function ProfilePage() {
         <PersonalSection />
         {/* Nothing sends these notifications yet: only the demo shows them */}
         {!connected && <NotificationsSection />}
-        <LocaleSection index={connected ? 1 : 2} />
         {/* The demo has no account to delete */}
         {connected && <DeleteAccountSection />}
       </div>
@@ -154,9 +123,9 @@ function PersonalSection() {
           {(p) => (
             <GroupedSelect
               {...p}
-              value={draft.gender || BUSINESS_DEFAULT}
-              onChange={(v) => set("gender", v === BUSINESS_DEFAULT ? "" : (v as Gender))}
-              groups={[{ options: [{ value: BUSINESS_DEFAULT, label: "Prefiero no decirlo" }, ...GENDERS] }]}
+              value={draft.gender || UNSET}
+              onChange={(v) => set("gender", v === UNSET ? "" : (v as Gender))}
+              groups={[{ options: [{ value: UNSET, label: "Prefiero no decirlo" }, ...GENDERS] }]}
             />
           )}
         </Field>
@@ -319,101 +288,10 @@ function BrowserNotifications() {
   );
 }
 
-function LocaleSection({ index }: { index: number }) {
-  const saved = useUserSettings().locale;
-  const { draft, set, setDraft, dirty, justSaved, markSaved } = useDraft<UserLocale>(saved);
-  const save = () => {
-    userStore.updateLocale(draft);
-    markSaved();
-  };
-
-  const language = draft.language || BUSINESS_LOCALE.language;
-  const numberFormat =
-    draft.numberFormat || (draft.language ? defaultNumberFormat(draft.language) : BUSINESS_LOCALE.numberFormat);
-  const sample = formatSample(language, numberFormat, new Date());
-  const formats: Option[] = draft.language
-    ? (NUMBER_FORMATS[draft.language] ?? [])
-    : [{ value: BUSINESS_DEFAULT, label: "Formato por defecto de la empresa" }];
-
-  return (
-    <Section
-      title="Idioma, formato numérico y zona horaria"
-      index={index}
-      action={<SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />}
-    >
-      <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
-        <p className="m-0">
-          cuentalibre está en español por ahora. Si eliges otro idioma, los textos seguirán en español, pero los números
-          y las fechas tomarán su formato.
-        </p>
-        <p className="m-0">
-          Este idioma y formato no se aplican a las facturas, albaranes y presupuestos en PDF, que tienen su propia
-          configuración.
-        </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div className="flex flex-col gap-4">
-          <Field label="Idioma">
-            {(p) => (
-              <GroupedSelect
-                {...p}
-                value={draft.language || BUSINESS_DEFAULT}
-                onChange={(v) => {
-                  const next = v === BUSINESS_DEFAULT ? "" : v;
-                  setDraft((d) => ({ ...d, language: next, numberFormat: next ? defaultNumberFormat(next) : "" }));
-                }}
-                groups={[
-                  { options: [{ value: BUSINESS_DEFAULT, label: "Idioma por defecto de la empresa" }, ...LANGUAGES] },
-                ]}
-              />
-            )}
-          </Field>
-          <Field label="Formato numérico">
-            {(p) => (
-              <GroupedSelect
-                {...p}
-                value={draft.language ? numberFormat : BUSINESS_DEFAULT}
-                onChange={(v) => set("numberFormat", v === BUSINESS_DEFAULT ? "" : v)}
-                groups={[{ options: formats }]}
-              />
-            )}
-          </Field>
-          <Field label="Zona horaria" hint="Por ahora solo se aplica al registro de la jornada laboral.">
-            {(p) => (
-              <GroupedSelect
-                {...p}
-                value={draft.timeZone || BUSINESS_DEFAULT}
-                onChange={(v) => set("timeZone", v === BUSINESS_DEFAULT ? "" : v)}
-                groups={[
-                  { options: [{ value: BUSINESS_DEFAULT, label: "Zona horaria por defecto de la empresa" }] },
-                  { label: "Zonas horarias", options: TIME_ZONES },
-                ]}
-              />
-            )}
-          </Field>
-        </div>
-        {sample && (
-          <div className="flex flex-col gap-1.5 self-start rounded-lg bg-muted p-4 text-sm">
-            <span className="font-semibold">Ejemplo de formato</span>
-            <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-              <dt className="text-muted-foreground">Números negativos</dt>
-              <dd className="m-0 amount">{sample.negative}</dd>
-              <dt className="text-muted-foreground">Números positivos</dt>
-              <dd className="m-0 amount">{sample.positive}</dd>
-              <dt className="text-muted-foreground">Fecha</dt>
-              <dd className="m-0 amount">{sample.date}</dd>
-            </dl>
-          </div>
-        )}
-      </div>
-    </Section>
-  );
-}
-
 function DeleteAccountSection() {
   const [open, setOpen] = useState(false);
   return (
-    <Section title="Eliminar cuenta" index={2} defaultOpen={false}>
+    <Section title="Eliminar cuenta" index={1} defaultOpen={false}>
       <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
         <p className="m-0">
           Se borrarán tu usuario y todas las empresas en las que eres el único usuario, con sus facturas, gastos,
