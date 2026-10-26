@@ -149,8 +149,8 @@ export type ContactSettings = z.infer<typeof contactSettingsSchema>;
 /**
  * The settings of an organization, one document per section. The server
  * stores a section once it is saved and fills the others with the defaults
- * below. The signed-in user's own settings and the email account aren't
- * here: they belong to the account and to the server-only email feature.
+ * below. The signed-in user's own settings aren't here: they belong to the
+ * account.
  */
 export const organizationSettingsSchema = z.object({
   businessProfile: businessProfileSchema,
