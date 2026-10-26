@@ -121,25 +121,6 @@ export function InvoiceSettingsPage() {
           </Field>
         </Section>
 
-        <Section title="Subida de facturas a Dropbox o Google Drive" index={5}>
-          <p className="m-0 max-w-3xl text-muted-foreground">
-            Elige si las casillas para subir las facturas emitidas a tus cuentas aparecen marcadas por defecto.
-          </p>
-          <CheckField
-            label="Subir facturas emitidas a tu cuenta de Dropbox"
-            hint="Necesitas conectar tu cuenta."
-            checked={draft.uploadToDropbox}
-            disabled
-            onChange={(v) => set("uploadToDropbox", v)}
-          />
-          <CheckField
-            label="Subir facturas emitidas a tu cuenta de Google Drive"
-            hint="Necesitas conectar tu cuenta."
-            checked={draft.uploadToDrive}
-            disabled
-            onChange={(v) => set("uploadToDrive", v)}
-          />
-        </Section>
       </div>
     </TooltipProvider>
   );
