@@ -13,7 +13,6 @@ import {
   businessProfileSchema,
   ledgerAccountKeySchema,
   ledgerAccountSettingsSchema,
-  signingSettingsSchema,
   taxSetupSchema,
   verifactuSetupSchema,
 } from "./settings";
@@ -150,9 +149,8 @@ export type ContactSettings = z.infer<typeof contactSettingsSchema>;
 /**
  * The settings of an organization, one document per section. The server
  * stores a section once it is saved and fills the others with the defaults
- * below. The signed-in user's own settings, the certificate and the email
- * account aren't here: they belong to the account and to the server-only
- * features (signing, email).
+ * below. The signed-in user's own settings and the email account aren't
+ * here: they belong to the account and to the server-only email feature.
  */
 export const organizationSettingsSchema = z.object({
   businessProfile: businessProfileSchema,
@@ -167,7 +165,6 @@ export const organizationSettingsSchema = z.object({
   emailTemplates: emailTemplateSettingsSchema,
   ledgerAccounts: ledgerAccountSettingsSchema,
   verifactu: verifactuSetupSchema,
-  signing: signingSettingsSchema,
 });
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>;
 
@@ -300,5 +297,4 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     exemptionResolution: "",
     validatedByAeat: false,
   },
-  signing: { invoice: "none", quote: "none", deliveryNote: "none" },
 };
