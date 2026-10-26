@@ -13,7 +13,6 @@ import {
   FileUp,
   KeyRound,
   Landmark,
-  Mail,
   MailPlus,
   Package,
   Percent,
@@ -46,7 +45,6 @@ import {
   CONTACT_SETTINGS_PATH,
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
-  EMAIL_SETTINGS_PATH,
   EMAIL_TEMPLATES_PATH,
   incomeTaxMethodLabel,
   INVOICE_SETTINGS_PATH,
@@ -303,12 +301,6 @@ export function SettingsPage() {
           description: "Cómo se muestran y filtran de entrada tus listados.",
           to: PREFERENCES_PATH,
           icon: ArrowDownWideNarrow,
-        },
-        {
-          title: "Configuración de correo",
-          description: "Desde qué dirección se envían tus facturas por email.",
-          to: EMAIL_SETTINGS_PATH,
-          icon: Mail,
         },
         {
           title: "Plantillas de correo",

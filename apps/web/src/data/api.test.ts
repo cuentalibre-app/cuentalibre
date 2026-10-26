@@ -156,7 +156,7 @@ describe("api backend", () => {
       [],
       [
         { type: "closeQuarter", period: "2026-T3", closedOn: "2026-10-15" },
-        { type: "saveSettings", section: "emailSettings", data: {} },
+        { type: "saveSettings", section: "notificationPrefs", data: {} },
       ],
     );
     expect(calls[0]!.body).toEqual({
@@ -186,7 +186,7 @@ describe("api backend", () => {
     await contacts.write(data, [
       { type: "saveSettings", section: "contactSettings", data },
       // Not stored by the server yet
-      { type: "saveSettings", section: "emailSettings", data: {} },
+      { type: "saveSettings", section: "notificationPrefs", data: {} },
     ]);
     expect(calls[0]!.body).toEqual({ commands: [{ type: "saveSettings", section: "contactSettings", data }] });
 
