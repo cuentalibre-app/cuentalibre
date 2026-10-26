@@ -46,6 +46,23 @@ describe("settings", () => {
     expect(await errorCode(response)).toBe("invalid_settings");
   });
 
+  it("makes only a kind's own email template its default", async () => {
+    const ana = await member();
+    const template = { id: newId(), name: "Recordatorio", kind: "invoice", subject: "Factura {{numero}}", body: "" };
+    const save = (defaults: Record<string, string>) =>
+      send(ana, [{ type: "saveSettings", section: "emailTemplates", data: { templates: [template], defaults } }]);
+
+    const wrongKind = await save({ quote: template.id });
+    expect(wrongKind.status).toBe(400);
+    expect(await errorCode(wrongKind)).toBe("invalid_settings");
+    expect((await save({ invoice: newId() })).status).toBe(400);
+    expect((await save({ invoice: template.id })).status).toBe(200);
+    expect((await workspace(ana)).settings.emailTemplates).toEqual({
+      templates: [template],
+      defaults: { invoice: template.id },
+    });
+  });
+
   it("takes only the organization's payment methods as the default one", async () => {
     const ana = await member();
     const unknown = await send(ana, [{ type: "saveSettings", section: "defaultPaymentMethod", data: newId() }]);

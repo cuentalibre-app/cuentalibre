@@ -22,3 +22,4 @@ export * from "./catalog";
 export * from "./verifactu";
 export * from "./accounting-codes";
 export * from "./facturae";
+export * from "./email-templates";
