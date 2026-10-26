@@ -1,24 +1,19 @@
 import { toIsoDate } from "@cuentalibre/core";
-import type { CompanyUser, EmailSettings, OrganizationMember, UserRole } from "@cuentalibre/contracts";
+import type { CompanyUser, OrganizationMember, UserRole } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
-import { createStore } from "@/data/store";
-import { initialEmailSettings, initialUsers } from "@/mocks/users";
+import { initialUsers } from "@/mocks/users";
 import type { Option } from "@/features/sales/sales-model";
 
-/** Company users and the outgoing email settings. */
+/** Company users. */
 const users = createCollection<CompanyUser>("companyUsers", initialUsers);
-const email = createStore<EmailSettings>(initialEmailSettings);
 
 export const useUsers = users.use;
-export const useEmailSettings = email.use;
 
 export const usersStore = {
   addUser: users.add,
   updateUser: users.update,
   /** The owner always keeps access. */
   removeUser: (id: string) => (users.get(id)?.owner ? Promise.resolve() : users.remove(id)),
-  updateEmail: (settings: EmailSettings) =>
-    email.write(settings, [{ type: "saveSettings", section: "emailSettings", data: settings }]),
 };
 
 export const ROLES: (Option<UserRole> & { hint: string })[] = [

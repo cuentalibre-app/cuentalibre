@@ -208,29 +208,3 @@ export const companyUserSchema = z.object({
 });
 export type CompanyUser = z.infer<typeof companyUserSchema>;
 
-export const emailProviderSchema = z.enum(["cuentalibre", "gmail", "outlook", "smtp"]);
-export type EmailProvider = z.infer<typeof emailProviderSchema>;
-
-export const smtpSecuritySchema = z.enum(["none", "auto", "implicit", "explicit"]);
-export type SmtpSecurity = z.infer<typeof smtpSecuritySchema>;
-
-export const smtpSettingsSchema = z.object({
-  displayName: z.string(),
-  email: z.string(),
-  username: z.string(),
-  password: z.string(),
-  server: z.string(),
-  port: z.string(),
-  security: smtpSecuritySchema,
-  /** Keep a copy in the server's sent folder (IMAP). */
-  saveCopy: z.boolean(),
-});
-export type SmtpSettings = z.infer<typeof smtpSettingsSchema>;
-
-export const emailSettingsSchema = z.object({
-  provider: emailProviderSchema,
-  /** Address of the connected Gmail or Outlook account, if any. */
-  connected: z.object({ gmail: z.string().nullable(), outlook: z.string().nullable() }),
-  smtp: smtpSettingsSchema,
-});
-export type EmailSettings = z.infer<typeof emailSettingsSchema>;
