@@ -172,13 +172,13 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
       const code = e instanceof ApiError ? e.code : null;
       setError(
         code === "email_unavailable"
-          ? "Este servidor no tiene configurado el envío de correo. Usa tu programa de correo."
+          ? "Este servidor no tiene configurado el envío de correo."
           : code === "subscription_required"
             ? "Tu empresa está en solo lectura. Suscríbete para volver a enviar documentos."
             : code === "email_unverified"
               ? "Verifica tu email para enviar documentos desde cuentalibre."
               : code === "email_quota_exceeded"
-                ? "Has llegado al límite de destinatarios de tu empresa por hoy o por este mes. Usa tu programa de correo o inténtalo más adelante."
+                ? "Has llegado al límite de destinatarios de tu empresa por hoy o por este mes. Inténtalo más adelante."
                 : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
       );
     } finally {
@@ -292,9 +292,6 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
             </p>
           )}
           <div className="flex flex-wrap justify-end gap-2.5 pt-1">
-            <Button variant="ghost" className="mr-auto" onClick={() => sendWithMailClient(doc)}>
-              Usar mi programa de correo
-            </Button>
             <DialogClose asChild>
               <Button variant="secondary">Cancelar</Button>
             </DialogClose>
