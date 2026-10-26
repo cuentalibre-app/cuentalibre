@@ -50,6 +50,8 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
   let pulling: Promise<void> | undefined;
   let queue = Promise.resolve();
   const uploads = new Set<Promise<void>>();
+  /** Why an attachment's upload failed, by its ID, so the record that names it fails with that reason. */
+  const failedUploads = new Map<string, unknown>();
 
   async function request<R>(path: string, init: RequestInit = {}): Promise<R> {
     const response = await fetchImpl(`${baseUrl}${path}`, {
@@ -91,11 +93,13 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
         for (const { section, data } of own)
           await request(`/v1/me/settings/${section}`, { method: "PUT", body: JSON.stringify(data) });
         if (synced.length === 0) return;
-        // A record may name files still uploading. If one failed, the server rejects the record.
+        // A record may name files still uploading. If one failed, the record fails with its reason
         await Promise.all(uploads);
+        const body = JSON.stringify({ commands: synced });
+        for (const [id, error] of failedUploads) if (body.includes(id)) throw error;
         const { changes } = await request<{ changes: Change[] }>("/v1/commands", {
           method: "POST",
-          body: JSON.stringify({ commands: synced }),
+          body,
         });
         applyChanges(changes);
       });
@@ -109,7 +113,10 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
       form.set("file", file);
       const uploading = request("/v1/files", { method: "POST", body: form })
         .then(() => undefined)
-        .catch((error: unknown) => console.warn(`Upload of ${file.name} failed:`, error))
+        .catch((error: unknown) => {
+          console.warn(`Upload of ${file.name} failed:`, error);
+          failedUploads.set(id, error);
+        })
         .finally(() => uploads.delete(uploading));
       uploads.add(uploading);
     },

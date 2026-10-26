@@ -15,6 +15,8 @@ const MESSAGES: Record<string, string> = {
   issuer_missing:
     "Para emitir facturas, tu empresa necesita su NIF, su nombre fiscal y su dirección. Complétalos en Configuración › Datos de la empresa.",
   invalid_attachment: "No se ha podido subir uno de los archivos adjuntos. Vuelve a adjuntarlo.",
+  file_too_large: "Uno de los archivos adjuntos es demasiado grande para subirlo.",
+  storage_quota_exceeded: "Tu empresa ha llegado al límite de espacio para archivos y no caben más adjuntos.",
   subscription_required: "Tu empresa está en solo lectura. Suscríbete para volver a guardar cambios.",
 };
 

@@ -108,7 +108,7 @@ Uploaded files are stored by the adapter in `src/storage/` and described in the 
 - `disk` (default): files under `STORAGE_DIR` (`./data/files`). Back that directory up with the database.
 - `s3`: any S3-compatible bucket (MinIO, Hetzner, AWS…), set with `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`. Objects are addressed path-style.
 
-Files never change once uploaded. The web app uploads a file as soon as it is picked, under the attachment's ID, and sends the record that names it once the upload is done; the API rejects attachments that name files the organization never uploaded (`400 invalid_attachment`). Downloads are only for members of the organization; PDFs and common images open in the browser, anything else is downloaded. Uploads are limited to `FILE_MAX_BYTES` (25 MB). Files no record names any more are kept for now.
+Files never change once uploaded. The web app uploads a file as soon as it is picked, under the attachment's ID, and sends the record that names it once the upload is done; the API rejects attachments that name files the organization never uploaded (`400 invalid_attachment`). Downloads are only for members of the organization; PDFs and common images open in the browser, anything else is downloaded. Uploads are limited to `FILE_MAX_BYTES` (10 MB), and an organization's files to `FILE_QUOTA_BYTES` in all (1 GB, 0 for no limit); past it the API answers `413 storage_quota_exceeded`, so an account or API key can't fill the storage. Files no record names any more are kept for now.
 
 ## VERI*FACTU
 

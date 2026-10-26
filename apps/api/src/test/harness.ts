@@ -20,6 +20,7 @@ export const env = loadEnv({
   DATABASE_URL: testDatabaseUrl,
   STORAGE_DIR: storageDir,
   FILE_MAX_BYTES: String(1024 * 1024),
+  FILE_QUOTA_BYTES: String(3 * 1024 * 1024),
 });
 export const db = createDb(env.DATABASE_URL);
 export const storage = diskStorage(storageDir);
