@@ -81,13 +81,6 @@ export const documentSettingsStore = {
   },
 };
 
-/** Whether new documents of a kind propose uploading them to Dropbox and Google Drive. */
-export function useUploadDefaults(kind: SalesKind): Pick<DocumentSettings, "uploadToDropbox" | "uploadToDrive"> {
-  const invoice = settings.use();
-  const documents = documentSettings.use();
-  return kind === "invoice" ? invoice : documents[kind];
-}
-
 /** What the PDF of a document prints and how it looks, from its kind's settings. */
 export interface PrintOptions {
   look: DocumentLook;
