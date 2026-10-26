@@ -92,6 +92,13 @@
       "when": 1793009104992,
       "tag": "0012_email_quota",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793041230672,
+      "tag": "0013_email_bcc",
+      "breakpoints": true
     }
   ]
 }

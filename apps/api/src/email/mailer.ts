@@ -7,6 +7,7 @@ export interface OutgoingEmail {
   replyTo?: string;
   to: string[];
   cc: string[];
+  bcc?: string[];
   subject: string;
   text: string;
   /** A designed version of `text`, for clients that show HTML. */
@@ -19,6 +20,8 @@ export class PermanentEmailError extends Error {}
 
 /** Sends email: over SMTP, or into memory in tests. */
 export interface Mailer {
+  /** The address emails go out from. */
+  readonly address: string;
   send(email: OutgoingEmail): Promise<void>;
 }
 
@@ -26,6 +29,7 @@ export interface Mailer {
 export function smtpMailer(url: string, fromAddress: string): Mailer {
   const transport = createTransport(url);
   return {
+    address: fromAddress,
     async send(email) {
       try {
         await transport.sendMail({
@@ -33,6 +37,7 @@ export function smtpMailer(url: string, fromAddress: string): Mailer {
           replyTo: email.replyTo,
           to: email.to,
           cc: email.cc,
+          bcc: email.bcc,
           subject: email.subject,
           text: email.text,
           html: email.html,

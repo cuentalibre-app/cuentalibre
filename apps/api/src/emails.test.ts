@@ -100,6 +100,22 @@ describe("emails", () => {
     expect(sentEmails[0]).toMatchObject({ fromName: "Ana SL", replyTo: ana.email });
   });
 
+  it("says who emails go out from", async () => {
+    const ana = await sender();
+    const response = await ana.request("/v1/emails/sender");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ name: "Ana SL", address: "facturas@cuentalibre.test", replyTo: ana.email });
+  });
+
+  it("replies where the email says and sends the user a blind copy", async () => {
+    const ana = await sender();
+    const response = await sendEmail(ana, email({ documentId: ana.documentId, replyTo: "cobros@ana.es", bccMe: true }));
+    expect(response.status).toBe(202);
+    expect(await response.json()).toMatchObject({ replyTo: "cobros@ana.es", bcc: [ana.email] });
+    await runJobs();
+    expect(sentEmails[0]).toMatchObject({ replyTo: "cobros@ana.es", bcc: [ana.email] });
+  });
+
   it("only attaches the organization's files and sends one of its documents", async () => {
     const ana = await sender();
     const bea = await sender("Bea");
@@ -157,7 +173,9 @@ describe("emails", () => {
     );
     expect(over.status).toBe(429);
     expect(await errorCode(over)).toBe("email_quota_exceeded");
-    // What fits still goes
+    // What fits still goes, the user's blind copy counted too
+    const overByCopy = await sendEmail(ana, email({ documentId: ana.documentId, to: many(10, "a.es"), bccMe: true }));
+    expect(overByCopy.status).toBe(429);
     const fits = await sendEmail(ana, email({ documentId: ana.documentId, to: many(10, "a.es") }));
     expect(fits.status).toBe(202);
     expect(await emails(ana)).toHaveLength(3);
