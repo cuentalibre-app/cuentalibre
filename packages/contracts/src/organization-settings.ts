@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { cents, hexColor, id } from "./common";
 import { catalogSettingsSchema, type CatalogSettings } from "./catalog";
+import { emailTemplateSettingsSchema } from "./email";
 import {
   invoiceSeriesList,
   invoiceSeriesSchema,
@@ -162,6 +163,8 @@ export const organizationSettingsSchema = z.object({
   documentSettings: z.record(documentKindSchema, documentSettingsSchema),
   catalogSettings: catalogSettingsSchema,
   contactSettings: contactSettingsSchema,
+  /** Subjects and messages for emailing sales documents. */
+  emailTemplates: emailTemplateSettingsSchema,
   ledgerAccounts: ledgerAccountSettingsSchema,
   verifactu: verifactuSetupSchema,
   signing: signingSettingsSchema,
@@ -261,6 +264,7 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
   },
   catalogSettings: catalogDefaults,
   contactSettings: { customFieldNames: ["Personalizado 1", "Personalizado 2"], autocomplete: true },
+  emailTemplates: { templates: [], defaults: {} },
   // The usual accounts of the Spanish chart of accounts (PGC)
   ledgerAccounts: {
     companyCode: "",
