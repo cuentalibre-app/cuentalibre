@@ -77,11 +77,6 @@ export const invoiceSettingsSchema = documentLookSchema
       .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/)
       .max(512 * 1024)
       .optional(),
-    /**
-     * Link in the footer so the recipient can import the invoice. Not offered in the
-     * settings yet: the link needs a public import URL, which needs the backend.
-     */
-    allowImport: z.boolean(),
     uploadToDropbox: z.boolean(),
     uploadToDrive: z.boolean(),
     noteTemplates: z.array(noteTemplateSchema),
@@ -244,7 +239,6 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     showServicePeriod: true,
     showOperationDate: false,
     footer: "",
-    allowImport: true,
     uploadToDropbox: false,
     uploadToDrive: false,
     noteTemplates: [],
