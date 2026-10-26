@@ -28,13 +28,15 @@ jobs:
     env:
       TEST_DATABASE_URL: postgres://cuentalibre:cuentalibre@localhost:5432/cuentalibre_test
     steps:
-      - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Known vulnerabilities in what ships; advisories to skip go in pnpm-workspace.yaml (auditConfig)
+      - run: pnpm audit --prod --audit-level high
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
@@ -55,14 +57,14 @@ jobs:
           test -z "$(git status --porcelain -- apps/api/drizzle)"
       - name: Keep the site build for the deploy job
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: site-dist
           path: apps/site/dist
           retention-days: 1
       - name: Keep the app build for the deploy job
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: web-dist
           path: apps/web/dist
@@ -80,7 +82,7 @@ jobs:
       IMAGE: cuentalibre-api:${{ github.sha }}
       DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - name: Build the API image
         run: docker build -f apps/api/Dockerfile --target api --build-arg SENTRY_RELEASE=${{ github.sha }} -t "$IMAGE" .
       - name: Set up SSH
@@ -121,16 +123,16 @@ jobs:
       group: production
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 22
           package-manager-cache: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: site-dist
           path: apps/site/dist
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: web-dist
           path: apps/web/dist
