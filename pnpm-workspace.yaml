@@ -9,3 +9,9 @@ minimumReleaseAge: 20160
 allowBuilds:
   core-js: false
   esbuild: false
+
+auditConfig:
+  ignoreGhsas:
+    # undici, through astro > unifont, only fetches fonts while the site builds. The fix
+    # (8.12.2) is younger than minimumReleaseAge; drop this once it installs (from 2026-10-29).
+    - GHSA-xjj6-f33q-929c
