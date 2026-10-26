@@ -20,14 +20,12 @@ import {
   stockMovementSchema,
   tagSchema,
   taxSetupSchema,
-  timeEntrySchema,
   treasuryAccountSchema,
   userAccessSchema,
   userLocaleSchema,
   userProfileSchema,
   userTourSchema,
   verifactuSetupSchema,
-  workerSchema,
 } from "@cuentalibre/contracts";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
@@ -51,7 +49,6 @@ import {
   initialUserTour,
 } from "./user";
 import { initialEmailSettings, initialUsers } from "./users";
-import { initialTimeEntries, workers } from "./working-hours";
 
 // The sample data becomes the seed data of the database, so it must pass the same validation as user input.
 const collections: [string, z.ZodType, unknown[]][] = [
@@ -70,8 +67,6 @@ const collections: [string, z.ZodType, unknown[]][] = [
   ["tags", tagSchema, initialTags],
   ["manual payments", manualPaymentSchema, initialManualPayments],
   ["company users", companyUserSchema, initialUsers],
-  ["workers", workerSchema, workers],
-  ["time entries", timeEntrySchema, initialTimeEntries],
 ];
 
 const singletons: [string, z.ZodType, unknown][] = [

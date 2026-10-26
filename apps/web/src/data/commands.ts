@@ -19,7 +19,6 @@ export type Entity =
   | "purchaseInvoices"
   | "expenses"
   | "tags"
-  | "timeEntries"
   | "products"
   | "catalogFamilies"
   | "stockMovements"
