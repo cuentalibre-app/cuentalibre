@@ -1,4 +1,4 @@
-import type { EmailMessage, EmailRequest } from "@cuentalibre/contracts";
+import type { EmailMessage, EmailRequest, EmailSender } from "@cuentalibre/contracts";
 import { currentBackend } from "./backend";
 
 /*
@@ -18,4 +18,9 @@ export function sendEmail(email: Omit<EmailRequest, "attachments">, files: File[
 /** The emails that sent a document, newest first; none without a server. */
 export function emailsOf(documentId: string): Promise<EmailMessage[]> {
   return currentBackend().emailsOf?.(documentId) ?? Promise.resolve([]);
+}
+
+/** Who emails go out from; null without a server that sends them. */
+export function emailSender(): Promise<EmailSender | null> {
+  return currentBackend().emailSender?.() ?? Promise.resolve(null);
 }

@@ -16,6 +16,11 @@ export const emailMessage = pgTable(
     documentId: uuid(),
     to: text().array().notNull(),
     cc: text().array().notNull(),
+    /** The sender's own copy, if they asked for one. */
+    bcc: text()
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     replyTo: text(),
     /** Display name of the sender; the address is the instance's. */
     fromName: text().notNull(),
@@ -26,6 +31,8 @@ export const emailMessage = pgTable(
     status: text().$type<EmailStatus>().notNull().default("queued"),
     error: text(),
     sentBy: uuid().references(() => user.id, { onDelete: "set null" }),
+    /** The API key it was sent with, if any; kept after the key is deleted, to trace abuse. */
+    apiKeyId: uuid(),
     createdAt: createdAt(),
     sentAt: timestamp({ withTimezone: true }),
   },
@@ -36,6 +43,8 @@ export const emailMessage = pgTable(
       foreignColumns: [salesDocument.organizationId, salesDocument.id],
     }),
     index().on(table.organizationId, table.documentId),
+    // The quota sums recent emails; the list shows the newest
+    index().on(table.organizationId, table.createdAt),
     check("email_message_status_check", sql`${table.status} in ('queued', 'sent', 'failed')`),
   ],
 );

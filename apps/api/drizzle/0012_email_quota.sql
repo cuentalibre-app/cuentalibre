@@ -1,0 +1,2 @@
+ALTER TABLE "email_message" ADD COLUMN "api_key_id" uuid;--> statement-breakpoint
+CREATE INDEX "email_message_organization_id_created_at_index" ON "email_message" USING btree ("organization_id","created_at");

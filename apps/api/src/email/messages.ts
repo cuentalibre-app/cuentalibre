@@ -1,8 +1,8 @@
 import { emailRequestSchema, type EmailMessage } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import type { z } from "zod";
-import type { Db } from "../db/client";
+import type { Db, Tx } from "../db/client";
 import { emailMessage, file, organization, salesDocument, user } from "../db/schema";
 import { ApiError } from "../errors";
 import { complete, enqueue } from "../outbox/outbox";
@@ -20,6 +20,8 @@ export const toEmailMessage = (row: Row): EmailMessage => ({
   documentId: row.documentId,
   to: row.to,
   cc: row.cc,
+  bcc: row.bcc,
+  replyTo: row.replyTo,
   subject: row.subject,
   status: row.status,
   error: row.error,
@@ -27,27 +29,81 @@ export const toEmailMessage = (row: Row): EmailMessage => ({
   sentAt: row.sentAt?.toISOString() ?? null,
 });
 
+/** Who sends an email: the scope's user, maybe through an API key, within the organization's quota. */
+export interface Sender extends Scope {
+  apiKeyId: string | null;
+  /** Most recipients the organization's emails reach in a day and in 30 days; 0 means no limit. */
+  quota: { daily: number; monthly: number };
+}
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Recipients (to, cc and bcc) of the organization's emails since then, whether they went out or not. */
+async function recipientsSince(tx: Tx, organizationId: string, since: Date) {
+  const [row] = await tx
+    .select({
+      n: sql<number>`coalesce(sum(cardinality(${emailMessage.to}) + cardinality(${emailMessage.cc}) + cardinality(${emailMessage.bcc})), 0)::int`,
+    })
+    .from(emailMessage)
+    .where(and(eq(emailMessage.organizationId, organizationId), gte(emailMessage.createdAt, since)));
+  return row?.n ?? 0;
+}
+
+/** Refuses an email that would take the organization past its daily or monthly recipients. */
+async function checkQuota(tx: Tx, organizationId: string, quota: Sender["quota"], recipients: number) {
+  const now = Date.now();
+  const limits = [
+    { max: quota.daily, days: 1, period: "day" },
+    { max: quota.monthly, days: 30, period: "30 days" },
+  ];
+  for (const { max, days, period } of limits) {
+    if (max > 0 && (await recipientsSince(tx, organizationId, new Date(now - days * DAY))) + recipients > max)
+      throw new ApiError(
+        429,
+        "email_quota_exceeded",
+        `The organization can email up to ${max} recipients (to, cc and bcc) every ${period}; try again later.`,
+      );
+  }
+}
+
 /**
- * Queues an email from the business: its name as the sender's, replies to
- * its email address (or the user's). It is sent in the background.
+ * Who the organization's emails come from: the business's name, replying to
+ * its email address or else the user's. `userId` is null for no user.
  */
-export async function queueEmail(db: Db, scope: Scope, request: z.output<typeof emailRequestSchema>) {
-  const { organizationId } = scope;
+export async function senderOf(db: Tx, organizationId: string, userId: string | null) {
+  const { businessProfile: profile } = await readSettings(db, organizationId);
+  const [org] = await db
+    .select({ name: organization.name })
+    .from(organization)
+    .where(eq(organization.id, organizationId));
+  const [author] = userId ? await db.select({ email: user.email }).from(user).where(eq(user.id, userId)) : [];
+  return {
+    name: profile.tradeName.trim() || issuerName(profile) || org!.name,
+    replyTo: profile.email.trim() || author?.email || null,
+    userEmail: author?.email ?? null,
+  };
+}
+
+/**
+ * Queues an email from the business (see `senderOf`), replying where the
+ * request says if it does. It is sent in the background.
+ */
+export async function queueEmail(db: Db, sender: Sender, request: z.output<typeof emailRequestSchema>) {
+  const { organizationId } = sender;
   return db.transaction(async (tx) => {
+    // Also makes concurrent sends count each other against the quota
     await lockOrganization(tx, organizationId);
-    if (request.documentId) {
-      const [document] = await tx
-        .select({ id: salesDocument.id })
-        .from(salesDocument)
-        .where(
-          and(
-            eq(salesDocument.organizationId, organizationId),
-            eq(salesDocument.id, request.documentId),
-            isNull(salesDocument.deletedAt),
-          ),
-        );
-      if (!document) throw new ApiError(400, "invalid_email", "documentId: no such document.");
-    }
+    const [document] = await tx
+      .select({ id: salesDocument.id })
+      .from(salesDocument)
+      .where(
+        and(
+          eq(salesDocument.organizationId, organizationId),
+          eq(salesDocument.id, request.documentId),
+          isNull(salesDocument.deletedAt),
+        ),
+      );
+    if (!document) throw new ApiError(400, "invalid_email", "documentId: no such document.");
     const attachments = [...new Set(request.attachments)];
     if (attachments.length > 0) {
       const found = await tx
@@ -57,30 +113,27 @@ export async function queueEmail(db: Db, scope: Scope, request: z.output<typeof 
       if (found.length !== attachments.length)
         throw new ApiError(400, "invalid_attachment", "attachments: upload the files first.");
     }
-
-    const { businessProfile: profile } = await readSettings(tx, organizationId);
-    const [org] = await tx
-      .select({ name: organization.name })
-      .from(organization)
-      .where(eq(organization.id, organizationId));
-    const [sender] = scope.userId
-      ? await tx.select({ email: user.email }).from(user).where(eq(user.id, scope.userId))
-      : [];
+    const from = await senderOf(tx, organizationId, sender.userId);
+    // Only ever to the sender's own address, so it can't widen who the email reaches
+    const bcc = request.bccMe && from.userEmail ? [from.userEmail] : [];
+    await checkQuota(tx, organizationId, sender.quota, request.to.length + request.cc.length + bcc.length);
 
     const [row] = await tx
       .insert(emailMessage)
       .values({
         organizationId,
         id: newId(),
-        documentId: request.documentId ?? null,
+        documentId: request.documentId,
         to: request.to,
         cc: request.cc,
-        replyTo: profile.email.trim() || sender?.email || null,
-        fromName: profile.tradeName.trim() || issuerName(profile) || org!.name,
+        bcc,
+        replyTo: request.replyTo ?? from.replyTo,
+        fromName: from.name,
         subject: request.subject,
         body: request.body,
         attachments,
-        sentBy: scope.userId,
+        sentBy: sender.userId,
+        apiKeyId: sender.apiKeyId,
       })
       .returning();
     await enqueue(tx, { organizationId, topic: "email", payload: { id: row!.id } });
@@ -135,6 +188,7 @@ export function emailHandler(db: Db, storage: FileStorage, mailer: Mailer | null
         ...(message.replyTo && { replyTo: message.replyTo }),
         to: message.to,
         cc: message.cc,
+        ...(message.bcc.length > 0 && { bcc: message.bcc }),
         subject: message.subject,
         text: message.body,
         attachments,

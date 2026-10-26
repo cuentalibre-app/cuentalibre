@@ -1,8 +1,10 @@
-import { DEFAULT_ORGANIZATION_SETTINGS, type EmailMessage } from "@cuentalibre/contracts";
+import { DEFAULT_ORGANIZATION_SETTINGS, type CreatedApiKey, type EmailMessage } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
+import { emailMessage, user } from "./db/schema";
 import { PermanentEmailError } from "./email/mailer";
-import { mailerFailure, sentEmails, type Client } from "./test/harness";
+import { db, mailerFailure, sentEmails, withApiKey, type Client } from "./test/harness";
 import { runJobs } from "./test/outbox";
 import { client, document, errorCode, member, send } from "./test/sync";
 
@@ -15,6 +17,19 @@ async function uploadPdf(user: Client) {
   form.set("file", new File([pdf], "Factura 2026-0001.pdf", { type: "application/pdf" }));
   expect((await user.request("/v1/files", { method: "POST", form })).status).toBe(201);
   return id;
+}
+
+/** A member whose email is verified, with a client and a draft to send them. */
+async function sender(name = "Ana") {
+  const person = await member(name);
+  await db.update(user).set({ emailVerified: true }).where(eq(user.email, person.email));
+  const norte = client();
+  const draft = document(norte.id);
+  await send(person, [
+    { type: "create", entity: "clients", data: norte },
+    { type: "create", entity: "salesDocuments", data: draft },
+  ]);
+  return Object.assign(person, { documentId: draft.id });
 }
 
 const email = (fields: Record<string, unknown> = {}) => ({
@@ -42,6 +57,7 @@ beforeEach(() => {
 describe("emails", () => {
   it("queues an invoice with its PDF and sends it from the business", async () => {
     const ana = await member();
+    await db.update(user).set({ emailVerified: true }).where(eq(user.email, ana.email));
     const norte = client();
     const draft = document(norte.id);
     await send(ana, [
@@ -78,36 +94,106 @@ describe("emails", () => {
   });
 
   it("replies to the user when the business has no email", async () => {
-    const ana = await member();
-    expect((await sendEmail(ana, email())).status).toBe(202);
+    const ana = await sender();
+    expect((await sendEmail(ana, email({ documentId: ana.documentId }))).status).toBe(202);
     await runJobs();
     expect(sentEmails[0]).toMatchObject({ fromName: "Ana SL", replyTo: ana.email });
   });
 
-  it("only attaches the organization's files and names its documents", async () => {
-    const ana = await member();
-    const bea = await member("Bea");
+  it("says who emails go out from", async () => {
+    const ana = await sender();
+    const response = await ana.request("/v1/emails/sender");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ name: "Ana SL", address: "facturas@cuentalibre.test", replyTo: ana.email });
+  });
+
+  it("replies where the email says and sends the user a blind copy", async () => {
+    const ana = await sender();
+    const response = await sendEmail(ana, email({ documentId: ana.documentId, replyTo: "cobros@ana.es", bccMe: true }));
+    expect(response.status).toBe(202);
+    expect(await response.json()).toMatchObject({ replyTo: "cobros@ana.es", bcc: [ana.email] });
+    await runJobs();
+    expect(sentEmails[0]).toMatchObject({ replyTo: "cobros@ana.es", bcc: [ana.email] });
+  });
+
+  it("only attaches the organization's files and sends one of its documents", async () => {
+    const ana = await sender();
+    const bea = await sender("Bea");
     const theirs = await uploadPdf(bea);
 
-    const foreignFile = await sendEmail(ana, email({ attachments: [theirs] }));
+    const foreignFile = await sendEmail(ana, email({ documentId: ana.documentId, attachments: [theirs] }));
     expect(foreignFile.status).toBe(400);
     expect(await errorCode(foreignFile)).toBe("invalid_attachment");
     const unknownDocument = await sendEmail(ana, email({ documentId: newId() }));
     expect(unknownDocument.status).toBe(400);
-    const noRecipient = await sendEmail(ana, email({ to: [] }));
+    const theirDocument = await sendEmail(ana, email({ documentId: bea.documentId }));
+    expect(theirDocument.status).toBe(400);
+    const noDocument = await sendEmail(ana, email());
+    expect(noDocument.status).toBe(400);
+    const noRecipient = await sendEmail(ana, email({ documentId: ana.documentId, to: [] }));
     expect(noRecipient.status).toBe(400);
     expect(await emails(ana)).toEqual([]);
   });
 
+  it("only lets users with a verified email send, with an API key too", async () => {
+    const ana = await sender();
+    await db.update(user).set({ emailVerified: false }).where(eq(user.email, ana.email));
+    const created = await ana.request("/v1/api-keys", { method: "POST", body: { name: "Script" } });
+    const { key } = (await created.json()) as CreatedApiKey;
+
+    for (const client of [ana, withApiKey(key)]) {
+      const response = await sendEmail(client, email({ documentId: ana.documentId }));
+      expect(response.status).toBe(403);
+      expect(await errorCode(response)).toBe("email_unverified");
+    }
+    expect(await emails(ana)).toEqual([]);
+
+    await db.update(user).set({ emailVerified: true }).where(eq(user.email, ana.email));
+    const response = await sendEmail(withApiKey(key), email({ documentId: ana.documentId }));
+    expect(response.status).toBe(202);
+    const { id } = (await response.json()) as EmailMessage;
+    const [row] = await db.select().from(emailMessage).where(eq(emailMessage.id, id));
+    expect(row).toMatchObject({ sentBy: expect.any(String), apiKeyId: expect.any(String) });
+  });
+
+  it("counts recipients against the organization's daily quota", async () => {
+    const ana = await sender();
+    const many = (n: number, domain: string) => Array.from({ length: n }, (_, i) => `p${i}@${domain}`);
+    // 50 a day by default: two emails reach 40 people, a third with 20 more would pass it
+    for (let i = 0; i < 2; i++) {
+      const response = await sendEmail(
+        ana,
+        email({ documentId: ana.documentId, to: many(10, "a.es"), cc: many(10, "b.es") }),
+      );
+      expect(response.status).toBe(202);
+    }
+    const over = await sendEmail(
+      ana,
+      email({ documentId: ana.documentId, to: many(10, "a.es"), cc: many(10, "b.es") }),
+    );
+    expect(over.status).toBe(429);
+    expect(await errorCode(over)).toBe("email_quota_exceeded");
+    // What fits still goes, the user's blind copy counted too
+    const overByCopy = await sendEmail(ana, email({ documentId: ana.documentId, to: many(10, "a.es"), bccMe: true }));
+    expect(overByCopy.status).toBe(429);
+    const fits = await sendEmail(ana, email({ documentId: ana.documentId, to: many(10, "a.es") }));
+    expect(fits.status).toBe(202);
+    expect(await emails(ana)).toHaveLength(3);
+
+    // Other organizations have their own
+    const bea = await sender("Bea");
+    expect((await sendEmail(bea, email({ documentId: bea.documentId }))).status).toBe(202);
+  });
+
   it("retries a failed send, and gives up when the server refuses it", async () => {
-    const ana = await member();
-    await sendEmail(ana, email());
+    const ana = await sender();
+    await sendEmail(ana, email({ documentId: ana.documentId }));
     mailerFailure.error = new Error("Connection timed out");
     await runJobs();
     expect((await emails(ana))[0]).toMatchObject({ status: "queued", error: "Connection timed out" });
 
-    const bea = await member("Bea");
-    await sendEmail(bea, email());
+    const bea = await sender("Bea");
+    await sendEmail(bea, email({ documentId: bea.documentId }));
     mailerFailure.error = new PermanentEmailError("550 Mailbox unavailable");
     await runJobs();
     expect((await emails(bea))[0]).toMatchObject({ status: "failed", error: "550 Mailbox unavailable" });

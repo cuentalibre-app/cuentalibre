@@ -93,6 +93,7 @@ Los errores responden con un código HTTP y este cuerpo:
 | 400  | `issuer_missing`                                             | Al negocio le falta el NIF, el nombre fiscal o la dirección (Configuración › Datos de la empresa) para emitir. El mensaje dice qué campos.                                                  |
 | 401  | `unauthorized`, `invalid_api_key`                            | Falta la clave, o no es válida, ha caducado o se ha revocado.                                                                                                                          |
 | 403  | `no_active_organization`, `not_a_member`                     | La clave ya no tiene acceso a la empresa.                                                                                                                                              |
+| 403  | `email_unverified`                                           | Para enviar correos, el usuario de la clave tiene que haber verificado su email. |
 | 404  | `not_found`                                                  | El registro no existe, se borró o es de otra empresa.                                                                                                                                  |
 | 409  | `already_exists`                                             | Ya hay un registro con ese `id`.                                                                                                                                                       |
 | 409  | `invoice_issued`, `already_issued`                           | La factura está emitida y no se puede cambiar ni borrar (ver [Editar una factura emitida](/docs/api/ventas#editar-una-factura-emitida)), o ya lo estaba y no se puede volver a emitir. |
@@ -105,6 +106,7 @@ Los errores responden con un código HTTP y este cuerpo:
 | 413  | `file_too_large`                                             | El archivo pasa del límite (25 MB por defecto).                                                                                                                                        |
 | 415  | `invalid_request`                                            | El `Content-Type` del cuerpo no es el que admite la operación (casi siempre `application/json`).                                                                                       |
 | 429  | `rate_limited`                                               | Demasiadas peticiones con esta clave.                                                                                                                                                  |
+| 429  | `email_quota_exceeded`                                       | La empresa ha llegado a su límite de destinatarios de correo del día o del mes. |
 | 503  | `email_unavailable`                                          | Este servidor no tiene configurado el envío de correo.                                                                                                                                 |
 
 Un `message` en inglés acompaña siempre al código; programa contra `code`, que no cambia.
