@@ -1,7 +1,7 @@
 import { storedContactSchema, type ContactRole } from "@cuentalibre/contracts";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
-import { contact } from "../db/schema";
+import { contact, expense, purchaseInvoice } from "../db/schema";
 import { ApiError } from "../errors";
 import type { Tx } from "../db/client";
 import { checkAttachments } from "./files";
@@ -82,11 +82,37 @@ export async function updateContact(
 
 export async function deleteContact(tx: Tx, organizationId: string, role: ContactRole, id: string) {
   const [row] = await tx
+    .select({ id: contact.id })
+    .from(contact)
+    .where(live(organizationId, role, id))
+    .for("update");
+  if (!row) notFound();
+  if (role === "supplier") {
+    const use = await supplierUse(tx, organizationId, id);
+    if (use) throw new ApiError(409, "in_use", `Still named by ${use}.`);
+  }
+  await tx
     .update(contact)
     .set({ deletedAt: new Date() })
-    .where(live(organizationId, role, id))
-    .returning({ id: contact.id });
-  if (!row) notFound();
+    .where(live(organizationId, role, id));
+}
+
+/**
+ * The first live received invoice or expense that names the supplier. They
+ * don't keep a copy of its fiscal data, which the books need.
+ */
+async function supplierUse(tx: Tx, organizationId: string, id: string) {
+  for (const [name, table] of [
+    ["purchaseInvoices.supplierId", purchaseInvoice],
+    ["expenses.supplierId", expense],
+  ] as const) {
+    const [found] = await tx
+      .select({ id: table.id })
+      .from(table)
+      .where(and(eq(table.organizationId, organizationId), eq(table.supplierId, id), isNull(table.deletedAt)))
+      .limit(1);
+    if (found) return name;
+  }
 }
 
 /** Contacts of the organization that aren't deleted, oldest first. */

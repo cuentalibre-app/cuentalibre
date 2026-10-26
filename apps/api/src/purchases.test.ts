@@ -126,6 +126,30 @@ describe("received invoices", () => {
     expect((await send(ana, [{ type: "delete", entity: "purchaseInvoices", id: original.id }])).status).toBe(200);
   });
 
+  it("keep their supplier from being deleted", async () => {
+    const ana = await buyer();
+    const bill = invoice(ana.brisa.id);
+    const ticket = expense({ supplierId: ana.brisa.id, otherPayee: undefined });
+    const created = await send(ana, [
+      { type: "create", entity: "purchaseInvoices", data: bill },
+      { type: "create", entity: "expenses", data: ticket },
+    ]);
+    expect(created.status).toBe(200);
+    const remove = () => send(ana, [{ type: "delete", entity: "suppliers", id: ana.brisa.id }]);
+    const blockedBy = async () => {
+      const response = await remove();
+      expect(response.status).toBe(409);
+      return ((await response.json()) as { error: { code: string; message: string } }).error;
+    };
+    expect(await blockedBy()).toMatchObject({ code: "in_use", message: "Still named by purchaseInvoices.supplierId." });
+
+    await send(ana, [{ type: "delete", entity: "purchaseInvoices", id: bill.id }]);
+    expect(await blockedBy()).toMatchObject({ code: "in_use", message: "Still named by expenses.supplierId." });
+
+    await send(ana, [{ type: "delete", entity: "expenses", id: ticket.id }]);
+    expect((await remove()).status).toBe(200);
+  });
+
   it("only takes payments, tags, attachments and notes while their quarter is closed", async () => {
     const ana = await buyer();
     const bill = invoice(ana.brisa.id);
