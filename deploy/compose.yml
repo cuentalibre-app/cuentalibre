@@ -18,6 +18,7 @@ services:
       API_DOMAIN: ${API_DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./origin-pull-ca.pem:/etc/caddy/origin-pull-ca.pem:ro
       - ./certs:/etc/caddy/certs:ro
       - caddy-data:/data
     depends_on:

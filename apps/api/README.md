@@ -27,6 +27,19 @@ To point the web app at the API, set `VITE_API_URL=http://localhost:3000` in `ap
 
 `deploy/` at the repository root runs cuentalibre Cloud on one server: Caddy with a Cloudflare origin certificate in front, the API and Postgres. Caddy only takes the client's IP from Cloudflare's addresses and passes it on as `X-Forwarded-For`, which Better Auth rate-limits by. `deploy/cloud-init.yml` prepares a new server.
 
+Cloudflare's addresses are shared by every Cloudflare customer, so the firewall alone would let anyone point a zone of their own at the server and skip our WAF and rate limits. Caddy therefore requires a client certificate signed by `deploy/origin-pull-ca.pem`, which only our zone presents: Authenticated Origin Pulls with a zone-level certificate on `jesuspb.dev`, the zone that holds `app` and `api.cuentalibre.es` as custom hostnames. Cloudflare's global AOP certificate wouldn't do, since every account can present it. The CA's private key was thrown away once it signed the client certificate, which lives only in Cloudflare (until 2036). To set it up for another zone, or to rotate it:
+
+```sh
+openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 3650 \
+  -keyout ca.key -out origin-pull-ca.pem -subj "/CN=cuentalibre origin pull CA" \
+  -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign"
+openssl req -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -keyout client.key -out client.csr -subj "/CN=cuentalibre origin pull"
+openssl x509 -req -in client.csr -CA origin-pull-ca.pem -CAkey ca.key -days 3650 -out client.pem \
+  -extfile <(printf 'basicConstraints=CA:FALSE\nextendedKeyUsage=clientAuth\n')
+```
+
+Upload `client.pem` and `client.key` in the zone's SSL/TLS › Origin Server › Authenticated Origin Pulls (or `POST /zones/{zone}/origin_tls_client_auth`), turn it on, and only then deploy the new `origin-pull-ca.pem`; delete `ca.key` and `client.key` afterwards. The origin's IP stays out of public DNS: the only records with it are the proxied fallback origin, `cuentalibre-edge.jesuspb.dev`.
+
 Every push to `main` that passes CI deploys it (the `deploy-api` job): the `api` image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
 
 `deploy/backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
