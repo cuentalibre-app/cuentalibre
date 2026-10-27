@@ -3,7 +3,7 @@
 #   docker build -f apps/api/Dockerfile --target api -t cuentalibre-api .    # the API alone, as cuentalibre online runs it
 # Both apply pending migrations, then serve on port 3000.
 
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 RUN npm install --global pnpm@12.8.2
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
@@ -25,7 +25,7 @@ COPY apps/web apps/web
 # The API serves the app, so the app finds it on its own origin. CI typechecks; this only bundles.
 RUN VITE_API_URL=/ pnpm --filter @cuentalibre/web exec vite build
 
-FROM node:22-alpine AS api
+FROM node:26-alpine AS api
 # The commit, for error reports: CI passes --build-arg SENTRY_RELEASE=<sha>.
 ARG SENTRY_RELEASE=""
 ENV NODE_ENV=production STORAGE_DIR=/app/data/files SENTRY_RELEASE=$SENTRY_RELEASE

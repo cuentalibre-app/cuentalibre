@@ -122,7 +122,7 @@ The UI is in Spanish, like the taxes it deals with.
 
 ### Requirements
 
-- [Node.js](https://nodejs.org) 22 or newer.
+- [Node.js](https://nodejs.org) 26 or newer.
 - [pnpm](https://pnpm.io) 12 (`corepack enable` picks the version from `package.json`).
 - [Docker](https://docs.docker.com/get-docker/), for the development database (or your own PostgreSQL 18).
 
