@@ -1,6 +1,9 @@
 # Requests reach the server through Cloudflare's proxy, which checks this
 # certificate (SSL mode Full (strict)). It is a Cloudflare origin certificate,
 # so Caddy needs no ACME challenge.
+# Cloudflare also shows a client certificate of our own (Authenticated Origin
+# Pulls, zone-level), so other Cloudflare accounts can't reach this origin
+# through their own zones: Caddy refuses the TLS handshake without it.
 {
 	servers {
 		# Only Cloudflare may say who the client is. Ranges from https://www.cloudflare.com/ips
@@ -10,7 +13,12 @@
 }
 
 {$API_DOMAIN} {
-	tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key
+	tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key {
+		client_auth {
+			mode require_and_verify
+			trust_pool file /etc/caddy/origin-pull-ca.pem
+		}
+	}
 	encode zstd gzip
 	reverse_proxy api:3000 {
 		# Better Auth rate-limits by this header and only trusts it with a single address.
