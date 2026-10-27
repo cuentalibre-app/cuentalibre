@@ -97,7 +97,7 @@ jobs:
       - name: Send the image and the server config
         run: |
           docker save "$IMAGE" | gzip | ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load'
-          scp deploy/compose.yml deploy/Caddyfile deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          scp deploy/compose.yml deploy/Caddyfile deploy/origin-pull-ca.pem deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
           ssh "deploy@$DEPLOY_HOST" 'command -v age >/dev/null || { sudo apt-get update -q && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q age; }'
       - name: Restart the API
         run: |
