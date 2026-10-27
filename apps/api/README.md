@@ -50,7 +50,26 @@ The zone's WAF filters requests before they reach the origin. All of it fits Clo
 
 The API caps active keys per user and organization at 10 (`MAX_API_KEYS`), so the per-key limit can't be multiplied by creating more keys.
 
-Every push to `main` that passes CI deploys it (the `deploy-api` job): the `api` image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
+### Staging and production
+
+Every push to `main` that passes CI deploys to **staging**, never to production (`deploy-staging-api` and `deploy-staging-web` in `ci.yml`). Only the site skips staging and goes straight to production. Staging runs on the same server and behind the same Caddy as production, with its own database, files and settings (`api-staging` and `postgres-staging` in `compose.yml`), at `staging.api.cuentalibre.es` and `staging.app.cuentalibre.es`: Cloudflare for SaaS hostnames like production's, with their own origin certificate (`certs/staging-origin.pem`, `.key`), and the app behind Cloudflare Access. Both send `X-Robots-Tag: noindex`.
+
+- The `api` image is built on the runner, labelled with its commit, sent over SSH (`docker save | docker load`), so the server needs no registry credentials, and tagged `cuentalibre-api:staging`. `compose.yml` and the `Caddyfile` are copied over too; Caddy is shared, so it reloads them at once, while production's API only picks up its part at the next promotion.
+- Its settings come from the `staging` GitHub environment, with the same names as production's (`deploy/.env.example` lists them): variables for settings, secrets for credentials. `deploy/staging-env.sh` writes them to `.env.staging` and `.env.staging-postgres`, and refuses a live Stripe key or SMTP without `EMAIL_REDIRECT_TO`, which sends every email to the owner instead. Nobody edits them on the server.
+- Its data is made up: on an empty database, `src/db/seed.ts` creates the account in `SEED_EMAIL` and `SEED_PASSWORD` with a few invoices and expenses. Never copy production data into it.
+- The app is built with `VITE_API_URL=https://staging.api.cuentalibre.es` and deployed as its own Worker (`wrangler deploy --env staging`).
+
+**Promoting.** Production changes only through the *Promote to production* workflow (`promote.yml`), run by hand from `main` with a checkbox per app:
+
+- API: the image staging runs, as it is (no rebuild), set as `API_IMAGE` in the server's `.env`, which then restarts only `api`.
+- Web app: built again from `main` with `VITE_API_URL=https://api.cuentalibre.es`, since the address is baked in; it refuses to run until CI has passed on `main`'s last commit, so staging shows the same code.
+- Each one pushes a plain tag on the commit it promoted, `prod-api-2026.10.27` or `prod-web-2026.10.27`, with `.2`, `.3`… for later ones the same day: `git tag -l 'prod-*'` lists what ran in production and when.
+
+**Rolling back.** Run the same workflow from a `prod-*` tag instead of `main` (*Use workflow from* › Tags). The API goes back to that commit's image, built again if the server pruned it (images go after a week); the web app is built from the tag. It leaves a new `prod-*` tag on that commit. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.
+
+The `staging` and `production` environments each hold `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and the `DEPLOY_HOST` variable. Production's server still keeps its own `.env` in `/opt/cuentalibre` (#119).
+
+### Backups
 
 `deploy/backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
 

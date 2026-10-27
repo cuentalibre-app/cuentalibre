@@ -7,5 +7,11 @@
   // app.cuentalibre.es is a Cloudflare for SaaS custom hostname on jesuspb.dev, whose
   // IPs aren't shared with the sites Spanish ISPs block during LaLiga matches (#91).
   // A custom domain would put it back on cuentalibre.es's own, blocked IPs.
-  "routes": [{ "pattern": "app.cuentalibre.es/*", "zone_name": "jesuspb.dev" }]
+  "routes": [{ "pattern": "app.cuentalibre.es/*", "zone_name": "jesuspb.dev" }],
+  "env": {
+    // `wrangler deploy --env staging`: a Worker of its own, behind Cloudflare Access
+    "staging": {
+      "routes": [{ "pattern": "staging.app.cuentalibre.es/*", "zone_name": "jesuspb.dev" }]
+    }
+  }
 }
