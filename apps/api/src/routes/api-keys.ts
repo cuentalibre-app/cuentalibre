@@ -14,6 +14,9 @@ import { requireOrganization, requireSession } from "../middleware";
  * it. Only a person signed in can manage keys; a key can't.
  */
 
+/** Each key has its own rate limit, so a cap on keys caps what one user can send. */
+export const MAX_API_KEYS = 10;
+
 const errors = {
   401: errorContent("Not signed in, or signed in with an API key"),
   403: errorContent("No active organization, or the user doesn't belong to it"),
@@ -74,6 +77,7 @@ const create = createRoute({
   responses: {
     201: { description: "Created", content: json(createdApiKeySchema) },
     400: errorContent("Invalid name or expiry"),
+    409: errorContent(`Already ${MAX_API_KEYS} active keys in the organization`),
     ...errors,
   },
 });
@@ -93,6 +97,14 @@ export const apiKeyRoutes = (auth: Auth) =>
     .openapi(list, async (c) => c.json({ apiKeys: (await keysOf(c)).map(toApiKey) }, 200))
     .openapi(create, async (c) => {
       const { name, expiresInDays } = c.req.valid("json");
+      const now = Date.now();
+      const active = (await keysOf(c)).filter((row) => !row.expiresAt || row.expiresAt.getTime() > now);
+      if (active.length >= MAX_API_KEYS)
+        throw new ApiError(
+          409,
+          "too_many_api_keys",
+          `You already have ${MAX_API_KEYS} active API keys here. Revoke one to create another.`,
+        );
       const created = await auth.api.createApiKey({
         body: {
           name,
