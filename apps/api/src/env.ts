@@ -83,6 +83,8 @@ const envSchema = z
      */
     EMAIL_DAILY_RECIPIENTS: z.coerce.number().int().min(0).default(50),
     EMAIL_MONTHLY_RECIPIENTS: z.coerce.number().int().min(0).default(500),
+    /** Sends every email to this address instead of its recipients, so staging never writes to real people. */
+    EMAIL_REDIRECT_TO: z.email().optional(),
     /** Sends unexpected errors to Sentry (no request data or users). Without it, errors only go to the log. */
     SENTRY_DSN: z.url().optional(),
     /** The version errors are tagged with; the image build sets it to the commit, or leaves it empty. */

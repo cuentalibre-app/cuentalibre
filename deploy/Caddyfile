@@ -12,16 +12,27 @@
 	}
 }
 
-{$API_DOMAIN} {
-	tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin.key {
+# The certificate files are named after the snippet's first argument; the upstream is the second.
+(api) {
+	tls /etc/caddy/certs/{args[0]}.pem /etc/caddy/certs/{args[0]}.key {
 		client_auth {
 			mode require_and_verify
 			trust_pool file /etc/caddy/origin-pull-ca.pem
 		}
 	}
 	encode zstd gzip
-	reverse_proxy api:3000 {
+	reverse_proxy {args[1]}:3000 {
 		# Better Auth rate-limits by this header and only trusts it with a single address.
 		header_up X-Forwarded-For {client_ip}
 	}
+}
+
+{$API_DOMAIN} {
+	import api origin api
+}
+
+# Staging has its own certificate: the production one names only the API's hostname.
+{$STAGING_API_DOMAIN} {
+	import api staging-origin api-staging
+	header X-Robots-Tag "noindex, nofollow"
 }
