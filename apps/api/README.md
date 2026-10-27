@@ -40,6 +40,16 @@ openssl x509 -req -in client.csr -CA origin-pull-ca.pem -CAkey ca.key -days 3650
 
 Upload `client.pem` and `client.key` in the zone's SSL/TLS › Origin Server › Authenticated Origin Pulls (or `POST /zones/{zone}/origin_tls_client_auth`), turn it on, and only then deploy the new `origin-pull-ca.pem`; delete `ca.key` and `client.key` afterwards. The origin's IP stays out of public DNS: the only records with it are the proxied fallback origin, `cuentalibre-edge.jesuspb.dev`.
 
+The zone's WAF filters requests before they reach the origin. All of it fits Cloudflare's Free plan (Security › WAF):
+
+- **Managed rules**: the Cloudflare Free Managed Ruleset, deployed on the zone (an `execute` rule in the `http_request_firewall_managed` phase).
+- **Custom rules**, action Block:
+  - `api.cuentalibre.es` outside `/v1/`, except the `robots.txt` Cloudflare serves: `(http.host eq "api.cuentalibre.es" and not starts_with(http.request.uri.path, "/v1/") and http.request.uri.path ne "/robots.txt")`
+  - methods the API doesn't use: `(http.host eq "api.cuentalibre.es" and not http.request.method in {"GET" "HEAD" "POST" "PUT" "PATCH" "DELETE" "OPTIONS"})`
+- **Rate limiting rule**, counting by IP: more than 200 requests in 10 seconds to `starts_with(http.request.uri.path, "/v1/")` blocks that IP for 10 seconds with a 429. Free can't match the hostname here, so it counts `/v1/` on every hostname of the zone. 200 stays well above what the app sends and above the 600 a minute an API key may make; Better Auth and the per-key limit do the finer work.
+
+The API caps active keys per user and organization at 10 (`MAX_API_KEYS`), so the per-key limit can't be multiplied by creating more keys.
+
 Every push to `main` that passes CI deploys it (the `deploy-api` job): the `api` image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
 
 `deploy/backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
@@ -153,7 +163,7 @@ The `outbox` table holds work written in the same transaction as the change that
 
 ## Public API
 
-Scripts and agents authenticate with an API key (Better Auth's api-key plugin), sent as `Authorization: Bearer fsk_…` or `x-api-key`. A key acts as the user who created it, in the organization that was active then (kept in its metadata), and only while the user still belongs to it; `requireOrganization` checks the membership on every request, as for sessions. Keys are created in the app (Configuración › API y agentes) or with `POST /v1/api-keys`, only by a signed-in person; only a hash is stored, and each key takes up to 600 requests a minute. The public routes write through the same commands as the web app (`src/routes/records.ts`), so they follow the same rules. The OpenAPI document declares the key as bearer auth.
+Scripts and agents authenticate with an API key (Better Auth's api-key plugin), sent as `Authorization: Bearer fsk_…` or `x-api-key`. A key acts as the user who created it, in the organization that was active then (kept in its metadata), and only while the user still belongs to it; `requireOrganization` checks the membership on every request, as for sessions. Keys are created in the app (Configuración › API y agentes) or with `POST /v1/api-keys`, only by a signed-in person; only a hash is stored, each key takes up to 600 requests a minute, and a user can have up to 10 active keys per organization (409 `too_many_api_keys` beyond that). The public routes write through the same commands as the web app (`src/routes/records.ts`), so they follow the same rules. The OpenAPI document declares the key as bearer auth.
 
 Not done yet: an MCP server over these routes, and tax returns (forms 303 and 130) computed on the server, which needs the conversion from documents to tax books moved from the web app into `core`.
 

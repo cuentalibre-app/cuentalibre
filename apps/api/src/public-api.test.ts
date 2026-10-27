@@ -7,7 +7,8 @@ import {
 import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { membership, session } from "./db/schema";
+import { apikey, membership, session } from "./db/schema";
+import { MAX_API_KEYS } from "./routes/api-keys";
 import { addOrganization, app, db, env, withApiKey, type Client } from "./test/harness";
 import { client, document, errorCode, issuer, line, member, send } from "./test/sync";
 
@@ -72,6 +73,27 @@ describe("API keys", () => {
     expect((await carla.request(`/v1/api-keys/${theirs.id}`, { method: "DELETE" })).status).toBe(404);
 
     expect((await withApiKey("fsk_not-a-real-key").request("/v1/organization")).status).toBe(401);
+  });
+
+  it("are capped per user and organization", async () => {
+    const ana = await member();
+    const keys = [];
+    for (let i = 0; i < MAX_API_KEYS; i++) keys.push(await createKey(ana, { name: `Clave ${i}` }));
+    const refused = await ana.request("/v1/api-keys", { method: "POST", body: { name: "Una más" } });
+    expect(refused.status).toBe(409);
+    expect(await errorCode(refused)).toBe("too_many_api_keys");
+
+    // Expired keys don't count, and neither do revoked ones
+    await db.update(apikey).set({ expiresAt: new Date(Date.now() - 1000) }).where(eq(apikey.id, keys[0]!.id));
+    await createKey(ana, { name: "Tras caducar" });
+    expect((await ana.request(`/v1/api-keys/${keys[1]!.id}`, { method: "DELETE" })).status).toBe(204);
+    await createKey(ana, { name: "Tras revocar" });
+
+    // The cap is per organization
+    const other = await addOrganization(ana, "Otra SL");
+    const { user } = (await (await ana.request("/v1/me")).json()) as { user: { id: string } };
+    await db.update(session).set({ activeOrganizationId: other.id }).where(eq(session.userId, user.id));
+    await createKey(ana, { name: "En otra empresa" });
   });
 
   it("expire", async () => {

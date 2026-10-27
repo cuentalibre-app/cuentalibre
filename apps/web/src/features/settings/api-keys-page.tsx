@@ -5,6 +5,7 @@ import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { SITE_URL } from "@/components/legal-links";
+import { ApiError } from "@/data/api";
 import { currentBackend } from "@/data/backend";
 import { API_URL } from "@/features/auth/session";
 import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
@@ -53,8 +54,12 @@ export function ApiKeysPage() {
       setCopied(false);
       setName("");
       load();
-    } catch {
-      setError("No se ha podido crear la clave. Inténtalo de nuevo.");
+    } catch (failure) {
+      setError(
+        failure instanceof ApiError && failure.code === "too_many_api_keys"
+          ? "Ya tienes el máximo de claves activas. Revoca una para crear otra."
+          : "No se ha podido crear la clave. Inténtalo de nuevo.",
+      );
     } finally {
       setBusy(false);
     }
