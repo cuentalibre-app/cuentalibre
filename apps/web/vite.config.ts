@@ -62,10 +62,25 @@ const zodWithoutEval: Plugin = {
   },
 };
 
+/** Tags the page with the commit it was built from, so anyone can tell which one an environment runs. */
+function revisionMeta(revision: string | undefined): Plugin {
+  return {
+    name: "revision-meta",
+    apply: "build",
+    transformIndexHtml: () => (revision ? [{ tag: "meta", attrs: { name: "revision", content: revision } }] : []),
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   return {
-    plugins: [react(), tailwindcss(), zodWithoutEval, securityHeaders(env.VITE_API_URL, env.VITE_NOINDEX === "true")],
+    plugins: [
+      react(),
+      tailwindcss(),
+      zodWithoutEval,
+      securityHeaders(env.VITE_API_URL, env.VITE_NOINDEX === "true"),
+      revisionMeta(env.VITE_REVISION),
+    ],
     resolve: {
       alias: {
         "@": fileURLToPath(new URL("./src", import.meta.url)),

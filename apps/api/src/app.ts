@@ -87,7 +87,13 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
 
   // Not basePath(): OpenAPIHono's copy of the app drops the notFound handler.
   const routes = app
-    .route("/v1", metaRoutes({ google: hasGoogleSignIn(env), email: Boolean(mailer), billing: Boolean(billing) }))
+    .route(
+      "/v1",
+      metaRoutes(
+        { google: hasGoogleSignIn(env), email: Boolean(mailer), billing: Boolean(billing) },
+        env.SENTRY_RELEASE,
+      ),
+    )
     .route("/v1", accountRoutes)
     .route("/v1", syncRoutes)
     .route("/v1", contactRoutes)

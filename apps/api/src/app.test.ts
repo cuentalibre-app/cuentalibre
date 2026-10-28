@@ -12,6 +12,17 @@ describe("meta", () => {
     expect(await response.json()).toEqual({ status: "ok" });
   });
 
+  it("reports the commit it was built from", async () => {
+    const built = createApp({
+      db,
+      auth: createAuth(db, env, accountMailer),
+      env: { ...env, SENTRY_RELEASE: "abc123" },
+      storage,
+      mailer,
+    });
+    expect(await (await built.request("/v1/health")).json()).toEqual({ status: "ok", revision: "abc123" });
+  });
+
   it("serves the OpenAPI document", async () => {
     const response = await app.request("/v1/openapi.json");
     const doc = (await response.json()) as { paths: Record<string, unknown> };
@@ -87,7 +98,9 @@ describe("meta", () => {
   it("sends security headers, on errors and auth routes too", async () => {
     for (const path of ["/v1/health", "/v1/nope", "/v1/auth/get-session"]) {
       const response = await app.request(path);
-      expect(response.headers.get("content-security-policy")).toBe("default-src 'none'; frame-ancestors 'none'; sandbox");
+      expect(response.headers.get("content-security-policy")).toBe(
+        "default-src 'none'; frame-ancestors 'none'; sandbox",
+      );
       expect(response.headers.get("strict-transport-security")).toBe("max-age=31536000; includeSubDomains");
       expect(response.headers.get("x-content-type-options")).toBe("nosniff");
       expect(response.headers.get("x-frame-options")).toBe("DENY");
