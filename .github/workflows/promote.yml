@@ -94,6 +94,11 @@ jobs:
         with:
           name: api-image
           path: ${{ runner.temp }}
+      - name: Write the production settings
+        env:
+          SETTINGS: ${{ toJSON(vars) }}
+          SECRETS: ${{ toJSON(secrets) }}
+        run: deploy/server-env.sh production "$RUNNER_TEMP/production" "$IMAGE"
       - name: Set up SSH
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -103,16 +108,19 @@ jobs:
           printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
       # The server config goes with the image: production runs the compose.yml and Caddyfile of the commit it promotes.
-      - name: Send the image and the server config
+      # The settings are today's, from the production environment, even when rolling back.
+      - name: Send the image, the server config and the production settings
         run: |
           ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load' < "$RUNNER_TEMP/api.tar.gz"
           git checkout "$REVISION"
           scp deploy/compose.yml deploy/Caddyfile deploy/origin-pull-ca.pem deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
           git checkout -
+          # .env, and backup.env when production has a backups bucket
+          find "$RUNNER_TEMP/production" -type f -exec scp -p {} "deploy@$DEPLOY_HOST:/opt/cuentalibre/" \;
+          rm -r "$RUNNER_TEMP/production"
       - name: Restart the API
         run: |
           ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre \
-            && sed -i 's|^API_IMAGE=.*|API_IMAGE=$IMAGE|' .env \
             && docker compose up -d --remove-orphans \
             && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile \
             && docker image prune -af --filter 'until=168h'"
