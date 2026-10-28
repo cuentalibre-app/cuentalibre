@@ -19,13 +19,14 @@ permissions:
   actions: read # whether CI passed
 
 jobs:
-  promote-api:
+  # Staging and production are separate servers, and each environment can only reach its own:
+  # this job takes the image from staging, the next one sends it to production.
+  export-api:
     if: inputs.api
     runs-on: ubuntu-latest
-    environment: production
-    concurrency:
-      group: production-api
-      cancel-in-progress: false
+    environment: staging
+    outputs:
+      revision: ${{ steps.image.outputs.revision }}
     env:
       DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
     steps:
@@ -46,35 +47,75 @@ jobs:
         id: image
         run: |
           if [ "$GITHUB_REF" = refs/heads/main ]; then
-            revision=$(ssh "deploy@$DEPLOY_HOST" "docker image inspect cuentalibre-api:staging -f '{{ index .Config.Labels \"org.opencontainers.image.revision\" }}'")
+            revision=$(ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre && docker inspect \$(docker compose ps -q api) -f '{{ index .Config.Labels \"org.opencontainers.image.revision\" }}'")
           else
             revision=$GITHUB_SHA
           fi
           [ -n "$revision" ] || { echo "Staging runs no image to promote" >&2; exit 1; }
           echo "revision=$revision" | tee -a "$GITHUB_OUTPUT"
-          if ssh "deploy@$DEPLOY_HOST" "docker image inspect cuentalibre-api:$revision" >/dev/null; then
-            echo "missing=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "missing=true" >> "$GITHUB_OUTPUT"
-          fi
-      # Images go after a week on the server; rolling back further builds the tag again.
-      - name: Rebuild an image the server no longer has
-        if: steps.image.outputs.missing == 'true'
-        env:
-          REVISION: ${{ steps.image.outputs.revision }}
-        run: |
-          git checkout "$REVISION"
-          docker build -f apps/api/Dockerfile --target api --build-arg SENTRY_RELEASE="$REVISION" \
-            --label org.opencontainers.image.revision="$REVISION" -t "cuentalibre-api:$REVISION" .
-          docker save "cuentalibre-api:$REVISION" | gzip | ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load'
-      # The server config is main's, sent by the staging deploy; production only changes image.
-      - name: Restart the API
+      # Images go after a week on staging; rolling back further builds the tag again.
+      - name: Take the image from staging, or build it again
         env:
           IMAGE: cuentalibre-api:${{ steps.image.outputs.revision }}
+          REVISION: ${{ steps.image.outputs.revision }}
+        run: |
+          if ssh "deploy@$DEPLOY_HOST" "docker image inspect $IMAGE" >/dev/null; then
+            ssh "deploy@$DEPLOY_HOST" "docker save $IMAGE | gzip" > "$RUNNER_TEMP/api.tar.gz"
+          else
+            git checkout "$REVISION"
+            docker build -f apps/api/Dockerfile --target api --build-arg SENTRY_RELEASE="$REVISION" \
+              --label org.opencontainers.image.revision="$REVISION" -t "$IMAGE" .
+            docker save "$IMAGE" | gzip > "$RUNNER_TEMP/api.tar.gz"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-image
+          path: ${{ runner.temp }}/api.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+  promote-api:
+    needs: export-api
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-api
+      cancel-in-progress: false
+    env:
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      IMAGE: cuentalibre-api:${{ needs.export-api.outputs.revision }}
+      REVISION: ${{ needs.export-api.outputs.revision }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: api-image
+          path: ${{ runner.temp }}
+      - name: Set up SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      # The server config goes with the image: production runs the compose.yml and Caddyfile of the commit it promotes.
+      - name: Send the image and the server config
+        run: |
+          ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load' < "$RUNNER_TEMP/api.tar.gz"
+          git checkout "$REVISION"
+          scp deploy/compose.yml deploy/Caddyfile deploy/origin-pull-ca.pem deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          git checkout -
+      - name: Restart the API
         run: |
           ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre \
             && sed -i 's|^API_IMAGE=.*|API_IMAGE=$IMAGE|' .env \
-            && docker compose up -d --no-deps api"
+            && docker compose up -d --remove-orphans \
+            && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile \
+            && docker image prune -af --filter 'until=168h'"
       - name: Check it answers
         run: |
           for i in $(seq 1 30); do
@@ -84,14 +125,13 @@ jobs:
           ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose logs --tail 50 api'
           exit 1
       - name: Tag what runs in production
-        env:
-          REVISION: ${{ steps.image.outputs.revision }}
         run: .github/scripts/tag-release.sh api "$REVISION"
 
   # After the API, so the app never calls endpoints that aren't live yet
   promote-web:
-    needs: promote-api
-    if: ${{ !cancelled() && inputs.web && contains(fromJSON('["success", "skipped"]'), needs.promote-api.result) }}
+    needs: [export-api, promote-api]
+    # A failed export skips promote-api rather than failing it, so both count
+    if: ${{ !cancelled() && inputs.web && !contains(needs.*.result, 'failure') }}
     runs-on: ubuntu-latest
     environment: production
     concurrency:

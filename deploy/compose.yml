@@ -1,8 +1,7 @@
-# cuentalibre Cloud: Caddy (TLS), the API and Postgres on one server, and a staging
-# copy of the API and Postgres next to them, with their own data and settings.
+# cuentalibre Cloud: Caddy (TLS), the API and Postgres on one server.
+# Production and staging each run it on their own server, with their own `.env`.
 # Copy this folder to the server, fill in `.env` from `.env.example`, put the
-# Cloudflare origin certificates in `certs/`, then `docker compose up -d`.
-# CI writes `.env.staging` and `.env.staging-postgres`, and tags the image staging runs as `cuentalibre-api:staging`.
+# Cloudflare origin certificate in `certs/`, then `docker compose up -d`.
 
 x-logging: &logging
   driver: json-file
@@ -18,7 +17,6 @@ services:
       - "443:443"
     environment:
       API_DOMAIN: ${API_DOMAIN}
-      STAGING_API_DOMAIN: ${STAGING_API_DOMAIN:-staging.api.cuentalibre.es}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./origin-pull-ca.pem:/etc/caddy/origin-pull-ca.pem:ro
@@ -59,40 +57,7 @@ services:
       retries: 20
     logging: *logging
 
-  api-staging:
-    image: cuentalibre-api:staging
-    restart: unless-stopped
-    # Optional, so the production services still start on a server without staging
-    env_file: [{ path: .env.staging, required: false }]
-    environment:
-      NODE_ENV: production
-    volumes:
-      - files-staging:/app/data/files
-    depends_on:
-      postgres-staging:
-        condition: service_healthy
-    logging: *logging
-
-  postgres-staging:
-    image: postgres:18-alpine
-    restart: unless-stopped
-    # Just POSTGRES_PASSWORD, apart from the API's settings
-    env_file: [{ path: .env.staging-postgres, required: false }]
-    environment:
-      POSTGRES_USER: cuentalibre
-      POSTGRES_DB: cuentalibre
-    volumes:
-      - postgres-staging:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cuentalibre"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-    logging: *logging
-
 volumes:
   caddy-data:
   files:
   postgres:
-  files-staging:
-  postgres-staging:

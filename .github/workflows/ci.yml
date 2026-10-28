@@ -103,7 +103,7 @@ jobs:
         env:
           SETTINGS: ${{ toJSON(vars) }}
           SECRETS: ${{ toJSON(secrets) }}
-        run: deploy/staging-env.sh "$RUNNER_TEMP/staging"
+        run: deploy/staging-env.sh "$RUNNER_TEMP/staging" "$IMAGE"
       # The revision label tells the promote workflow which commit staging runs.
       - name: Build the API image
         run: |
@@ -122,17 +122,15 @@ jobs:
         run: |
           docker save "$IMAGE" | gzip | ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load'
           scp deploy/compose.yml deploy/Caddyfile deploy/origin-pull-ca.pem deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
-          scp -p "$RUNNER_TEMP/staging/.env.staging" "$RUNNER_TEMP/staging/.env.staging-postgres" "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          # .env, and backup.env when staging has a backups bucket
+          find "$RUNNER_TEMP/staging" -type f -exec scp -p {} "deploy@$DEPLOY_HOST:/opt/cuentalibre/" \;
           rm -r "$RUNNER_TEMP/staging"
           ssh "deploy@$DEPLOY_HOST" 'command -v age >/dev/null || { sudo apt-get update -q && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q age; }'
-      # Production's API keeps running as it is; Caddy is shared, so it takes the new config.
-      - name: Restart the staging API
+      # Staging has a server of its own, so the whole stack restarts as production's would.
+      - name: Restart the API
         run: |
-          # Caddy refuses its whole config without it, which would take production down too
           ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre \
-            && test -f certs/staging-origin.pem && test -f certs/staging-origin.key \
-            && docker tag $IMAGE cuentalibre-api:staging \
-            && docker compose up -d --no-deps postgres-staging api-staging caddy \
+            && docker compose up -d --remove-orphans \
             && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile \
             && docker image prune -af --filter 'until=168h'"
       - name: Check it answers
@@ -141,10 +139,10 @@ jobs:
             curl -fsS https://${{ vars.API_DOMAIN }}/v1/health && exit 0
             sleep 2
           done
-          ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose logs --tail 50 api-staging'
+          ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose logs --tail 50 api'
           exit 1
       - name: Seed an empty database
-        run: ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose exec -T api-staging node dist/db/seed-cli.js'
+        run: ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose exec -T api node dist/db/seed-cli.js'
 
   # After the API, so the app never calls endpoints that aren't live yet
   deploy-staging-web:
