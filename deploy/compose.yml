@@ -1,4 +1,5 @@
 # cuentalibre Cloud: Caddy (TLS), the API and Postgres on one server.
+# Production and staging each run it on their own server, with their own `.env`.
 # Copy this folder to the server, fill in `.env` from `.env.example`, put the
 # Cloudflare origin certificate in `certs/`, then `docker compose up -d`.
 

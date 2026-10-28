@@ -50,9 +50,28 @@ The zone's WAF filters requests before they reach the origin. All of it fits Clo
 
 The API caps active keys per user and organization at 10 (`MAX_API_KEYS`), so the per-key limit can't be multiplied by creating more keys.
 
-Every push to `main` that passes CI deploys it (the `deploy-api` job): the `api` image is built on the runner and sent over SSH (`docker save | docker load`), so the server needs no registry credentials; then `compose.yml` and the `Caddyfile` are copied over and the stack restarted. The web app deploys after it, built with `VITE_API_URL=https://api.cuentalibre.es`. The `production` environment holds `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS` and the `DEPLOY_HOST` variable; the server keeps its own `.env` in `/opt/cuentalibre`.
+### Staging and production
 
-`deploy/backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
+Every push to `main` that passes CI deploys to **staging**, never to production (`deploy-staging-api` and `deploy-staging-web` in `ci.yml`). Only the site skips staging and goes straight to production. Staging is a server of its own, in its own Hetzner project (`cuentalibre-staging`), so its keys, buckets and SSH access can't reach production. It runs the same `compose.yml` and `Caddyfile`, with its own `.env`, at `staging.api.cuentalibre.es`, a Cloudflare for SaaS hostname like production's with its own origin (`cuentalibre-staging-edge.jesuspb.dev`) and origin certificate, and `staging.app.cuentalibre.es`, behind Cloudflare Access. Access skips SaaS hostnames whose zone is in the same account as the SaaS zone, so the app is a custom domain of its Worker on `cuentalibre.es` instead, and shares that zone's LaLiga blocks; production doesn't. The API sends `X-Robots-Tag: noindex` everywhere, and the staging app does too.
+
+- The `api` image is built on the runner, labelled with its commit, and sent over SSH (`docker save | docker load`), so the server needs no registry credentials. `compose.yml`, the `Caddyfile` and the backup script go with it, and the whole stack restarts.
+- Its settings come from the `staging` GitHub environment, with the same names as production's (`deploy/.env.example` and `deploy/backup.env.example` list them): secrets for credentials and personal data such as email addresses, variables for the rest. `deploy/staging-env.sh` writes them to the server's `.env` and `backup.env`, and refuses a live Stripe key or SMTP without `EMAIL_REDIRECT_TO`, which sends every email to the owner instead. Nobody edits them on the server.
+- Its data is made up: on an empty database, `src/db/seed.ts` creates the account in `SEED_EMAIL` and `SEED_PASSWORD` with a few invoices and expenses. Never copy production data into it.
+- The app is built with `VITE_API_URL=https://staging.api.cuentalibre.es` and deployed as its own Worker, `cuentalibre-app-staging` (`wrangler deploy --env staging`).
+
+**Promoting.** Production changes only through the *Promote to production* workflow (`promote.yml`), run by hand from `main` with a checkbox per app:
+
+- API: the image staging runs, as it is (no rebuild). Each environment only holds the SSH key of its own server, so one job takes the image from staging and hands it as an artifact to another, which loads it on production with that commit's `compose.yml` and `Caddyfile`, sets it as `API_IMAGE` in the server's `.env` and restarts the stack.
+- Web app: built again from `main` with `VITE_API_URL=https://api.cuentalibre.es`, since the address is baked in; it refuses to run until CI has passed on `main`'s last commit, so staging shows the same code.
+- Each one pushes a plain tag on the commit it promoted, `prod-api-2026.10.27` or `prod-web-2026.10.27`, with `.2`, `.3`… for later ones the same day: `git tag -l 'prod-*'` lists what ran in production and when.
+
+**Rolling back.** Run the same workflow from a `prod-*` tag instead of `main` (*Use workflow from* › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It leaves a new `prod-*` tag on that commit. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.
+
+The `staging` and `production` environments each hold `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `DEPLOY_HOST`, each for its own server. `DEPLOY_HOST` is a secret so the logs mask the server's address, which Cloudflare otherwise keeps hidden. Production's server still keeps its own `.env` and `backup.env` in `/opt/cuentalibre` (#119).
+
+### Backups
+
+`deploy/backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Staging runs the same backups to its own bucket, without object lock and kept for 7 days, so changes to them and restores can be tried there first. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
 
 Each dump is encrypted with [age](https://age-encryption.org) to the public keys in `deploy/backup-recipients.txt` before it leaves the server. The private key never goes to the server: it lives in the password manager with an offline copy. The bucket key in `backup.env` can only write to the bucket; restoring uses a separate read key, and the bucket stays private with access logging on. To restore, fetch the dump with the read key and decrypt it (`age -d -i backup.key`), as the header of `backup.sh` shows.
 
