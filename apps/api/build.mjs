@@ -1,10 +1,10 @@
-// Bundles the server and the migration script, with every dependency, so the
+// Bundles the server, the migration script and the staging seed, with every dependency, so the
 // production image needs neither node_modules nor a TypeScript loader.
 // `dist/db/migrate-cli.js` finds the migrations at `../../drizzle`, as the source does.
 import { build } from "esbuild";
 
 await build({
-  entryPoints: ["src/server.ts", "src/db/migrate-cli.ts"],
+  entryPoints: ["src/server.ts", "src/db/migrate-cli.ts", "src/db/seed-cli.ts"],
   outdir: "dist",
   outbase: "src",
   bundle: true,

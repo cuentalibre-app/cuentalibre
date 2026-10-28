@@ -57,12 +57,31 @@ export function smtpMailer(url: string, fromAddress: string): Mailer {
   };
 }
 
+/** Delivers every email to one address, naming the recipients it was meant for in the subject. */
+export function redirectedMailer(mailer: Mailer, to: string): Mailer {
+  return {
+    address: mailer.address,
+    send: (email) =>
+      mailer.send({
+        ...email,
+        to: [to],
+        cc: [],
+        bcc: [],
+        subject: `[${[...email.to, ...email.cc, ...(email.bcc ?? [])].join(", ")}] ${email.subject}`,
+      }),
+  };
+}
+
+function withRedirect(env: Env, mailer: Mailer): Mailer {
+  return env.EMAIL_REDIRECT_TO ? redirectedMailer(mailer, env.EMAIL_REDIRECT_TO) : mailer;
+}
+
 export function createMailer(env: Env): Mailer | null {
-  return env.SMTP_URL && env.EMAIL_FROM ? smtpMailer(env.SMTP_URL, env.EMAIL_FROM) : null;
+  return env.SMTP_URL && env.EMAIL_FROM ? withRedirect(env, smtpMailer(env.SMTP_URL, env.EMAIL_FROM)) : null;
 }
 
 /** For emails about people's accounts, from `ACCOUNT_EMAIL_FROM`: they come from cuentalibre, not a business. */
 export function createAccountMailer(env: Env): Mailer | null {
   const from = env.ACCOUNT_EMAIL_FROM ?? env.EMAIL_FROM;
-  return env.SMTP_URL && from ? smtpMailer(env.SMTP_URL, from) : null;
+  return env.SMTP_URL && from ? withRedirect(env, smtpMailer(env.SMTP_URL, from)) : null;
 }

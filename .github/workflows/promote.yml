@@ -1,0 +1,172 @@
+name: Promote to production
+
+# Sends what runs on staging to production, and tags the commit `prod-<app>-<date>`.
+# Run from `main` to promote; run from an older `prod-*` tag to roll back to it.
+on:
+  workflow_dispatch:
+    inputs:
+      api:
+        description: API
+        type: boolean
+        default: true
+      web:
+        description: Web app
+        type: boolean
+        default: true
+
+permissions:
+  contents: write # the tags
+  actions: read # whether CI passed
+
+jobs:
+  # Staging and production are separate servers, and each environment can only reach its own:
+  # this job takes the image from staging, the next one sends it to production.
+  export-api:
+    if: inputs.api
+    runs-on: ubuntu-latest
+    environment: staging
+    outputs:
+      revision: ${{ steps.image.outputs.revision }}
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - name: Set up SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      # From main, the image staging runs, as it is; from a tag, that commit's image.
+      - name: Find the image
+        id: image
+        run: |
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            revision=$(ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre && docker inspect \$(docker compose ps -q api) -f '{{ index .Config.Labels \"org.opencontainers.image.revision\" }}'")
+          else
+            revision=$GITHUB_SHA
+          fi
+          [ -n "$revision" ] || { echo "Staging runs no image to promote" >&2; exit 1; }
+          echo "revision=$revision" | tee -a "$GITHUB_OUTPUT"
+      # Images go after a week on staging; rolling back further builds the tag again.
+      - name: Take the image from staging, or build it again
+        env:
+          IMAGE: cuentalibre-api:${{ steps.image.outputs.revision }}
+          REVISION: ${{ steps.image.outputs.revision }}
+        run: |
+          if ssh "deploy@$DEPLOY_HOST" "docker image inspect $IMAGE" >/dev/null; then
+            ssh "deploy@$DEPLOY_HOST" "docker save $IMAGE | gzip" > "$RUNNER_TEMP/api.tar.gz"
+          else
+            git checkout "$REVISION"
+            docker build -f apps/api/Dockerfile --target api --build-arg SENTRY_RELEASE="$REVISION" \
+              --label org.opencontainers.image.revision="$REVISION" -t "$IMAGE" .
+            docker save "$IMAGE" | gzip > "$RUNNER_TEMP/api.tar.gz"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: api-image
+          path: ${{ runner.temp }}/api.tar.gz
+          compression-level: 0
+          retention-days: 1
+
+  promote-api:
+    needs: export-api
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-api
+      cancel-in-progress: false
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      IMAGE: cuentalibre-api:${{ needs.export-api.outputs.revision }}
+      REVISION: ${{ needs.export-api.outputs.revision }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: api-image
+          path: ${{ runner.temp }}
+      - name: Set up SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      # The server config goes with the image: production runs the compose.yml and Caddyfile of the commit it promotes.
+      - name: Send the image and the server config
+        run: |
+          ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load' < "$RUNNER_TEMP/api.tar.gz"
+          git checkout "$REVISION"
+          scp deploy/compose.yml deploy/Caddyfile deploy/origin-pull-ca.pem deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          git checkout -
+      - name: Restart the API
+        run: |
+          ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre \
+            && sed -i 's|^API_IMAGE=.*|API_IMAGE=$IMAGE|' .env \
+            && docker compose up -d --remove-orphans \
+            && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile \
+            && docker image prune -af --filter 'until=168h'"
+      - name: Check it answers
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS https://api.cuentalibre.es/v1/health && exit 0
+            sleep 2
+          done
+          ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose logs --tail 50 api'
+          exit 1
+      - name: Tag what runs in production
+        run: .github/scripts/tag-release.sh api "$REVISION"
+
+  # After the API, so the app never calls endpoints that aren't live yet
+  promote-web:
+    needs: [export-api, promote-api]
+    # A failed export skips promote-api rather than failing it, so both count
+    if: ${{ !cancelled() && inputs.web && !contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production-web
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      # Every merge deploys the app to staging, so main's last commit is what staging shows,
+      # as long as its CI run got that far.
+      - name: Check staging runs this commit
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          conclusion=$(gh run list --workflow ci.yml --commit "$GITHUB_SHA" --event push --json conclusion --jq '.[0].conclusion')
+          [ "$conclusion" = success ] || { echo "CI on $GITHUB_SHA is '${conclusion:-not run}', so staging may not show it yet" >&2; exit 1; }
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # The API's address is baked into the build, so production builds its own
+      - run: pnpm exec turbo run build --filter=@cuentalibre/web
+        env:
+          VITE_API_URL: https://api.cuentalibre.es
+          VITE_SITE_URL: https://cuentalibre.es
+      - name: Deploy the app to Cloudflare
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.145.0 deploy
+      - name: Tag what runs in production
+        run: .github/scripts/tag-release.sh web "$GITHUB_SHA"

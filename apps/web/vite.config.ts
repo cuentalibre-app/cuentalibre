@@ -12,8 +12,9 @@ function apiOrigin(apiUrl: string | undefined) {
  * Writes `_headers` next to the built app: Cloudflare sends these with every response,
  * and the API sends the same ones when it serves the app (`WEB_DIR`). Styles stay
  * `unsafe-inline` because React renders `style` attributes; scripts never do.
+ * `noindex` keeps search engines off a copy that isn't the real app, such as staging.
  */
-function securityHeaders(apiUrl: string | undefined): Plugin {
+function securityHeaders(apiUrl: string | undefined, noindex: boolean): Plugin {
   const csp = [
     "default-src 'self'",
     "script-src 'self'",
@@ -36,6 +37,7 @@ function securityHeaders(apiUrl: string | undefined): Plugin {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
     "Cross-Origin-Opener-Policy": "same-origin",
+    ...(noindex && { "X-Robots-Tag": "noindex, nofollow" }),
   };
   return {
     name: "security-headers",
@@ -60,11 +62,14 @@ const zodWithoutEval: Plugin = {
   },
 };
 
-export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), zodWithoutEval, securityHeaders(loadEnv(mode, process.cwd(), "VITE_").VITE_API_URL)],
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "VITE_");
+  return {
+    plugins: [react(), tailwindcss(), zodWithoutEval, securityHeaders(env.VITE_API_URL, env.VITE_NOINDEX === "true")],
+    resolve: {
+      alias: {
+        "@": fileURLToPath(new URL("./src", import.meta.url)),
+      },
     },
-  },
-}));
+  };
+});

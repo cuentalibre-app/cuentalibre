@@ -20,6 +20,8 @@
 		}
 	}
 	encode zstd gzip
+	# Nothing the API serves belongs in a search engine, in production or staging.
+	header X-Robots-Tag "noindex, nofollow"
 	reverse_proxy api:3000 {
 		# Better Auth rate-limits by this header and only trusts it with a single address.
 		header_up X-Forwarded-For {client_ip}
