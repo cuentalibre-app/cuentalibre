@@ -167,6 +167,7 @@ jobs:
           VITE_API_URL: https://${{ vars.API_DOMAIN }}
           VITE_SITE_URL: https://cuentalibre.es
           VITE_NOINDEX: "true"
+          VITE_REVISION: ${{ github.sha }}
       - name: Deploy the app to Cloudflare
         working-directory: apps/web
         env:
