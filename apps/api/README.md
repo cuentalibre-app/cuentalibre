@@ -67,7 +67,7 @@ Every push to `main` that passes CI deploys to **staging**, never to production 
 
 **Rolling back.** Run the same workflow from a `prod-*` tag instead of `main` (*Use workflow from* › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It leaves a new `prod-*` tag on that commit. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.
 
-The `staging` and `production` environments each hold `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and the `DEPLOY_HOST` variable, each for its own server. Production's server still keeps its own `.env` and `backup.env` in `/opt/cuentalibre` (#119).
+The `staging` and `production` environments each hold `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `DEPLOY_HOST`, each for its own server. `DEPLOY_HOST` is a secret so the logs mask the server's address, which Cloudflare otherwise keeps hidden. Production's server still keeps its own `.env` and `backup.env` in `/opt/cuentalibre` (#119).
 
 ### Backups
 

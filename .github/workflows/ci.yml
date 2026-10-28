@@ -96,7 +96,7 @@ jobs:
       cancel-in-progress: false
     env:
       IMAGE: cuentalibre-api:${{ github.sha }}
-      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Write the staging settings

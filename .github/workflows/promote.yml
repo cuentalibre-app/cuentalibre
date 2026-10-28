@@ -28,7 +28,7 @@ jobs:
     outputs:
       revision: ${{ steps.image.outputs.revision }}
     env:
-      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -82,7 +82,7 @@ jobs:
       group: production-api
       cancel-in-progress: false
     env:
-      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
       IMAGE: cuentalibre-api:${{ needs.export-api.outputs.revision }}
       REVISION: ${{ needs.export-api.outputs.revision }}
     steps:
