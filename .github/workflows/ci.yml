@@ -54,10 +54,10 @@ jobs:
           VITE_API_URL: https://api.cuentalibre.es
           VITE_SITE_URL: https://cuentalibre.es
           # The owner shown on the legal pages, kept out of the repository
-          PUBLIC_OWNER_NAME: ${{ vars.OWNER_NAME }}
-          PUBLIC_OWNER_TAX_ID: ${{ vars.OWNER_TAX_ID }}
-          PUBLIC_OWNER_ADDRESS: ${{ vars.OWNER_ADDRESS }}
-          PUBLIC_OWNER_EMAIL: ${{ vars.OWNER_EMAIL }}
+          PUBLIC_OWNER_NAME: ${{ secrets.OWNER_NAME }}
+          PUBLIC_OWNER_TAX_ID: ${{ secrets.OWNER_TAX_ID }}
+          PUBLIC_OWNER_ADDRESS: ${{ secrets.OWNER_ADDRESS }}
+          PUBLIC_OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
       - name: Check the migrations match the schema
         run: |
           pnpm --filter @cuentalibre/api db:generate
