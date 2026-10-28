@@ -103,7 +103,7 @@ jobs:
         env:
           SETTINGS: ${{ toJSON(vars) }}
           SECRETS: ${{ toJSON(secrets) }}
-        run: deploy/staging-env.sh "$RUNNER_TEMP/staging" "$IMAGE"
+        run: deploy/server-env.sh staging "$RUNNER_TEMP/staging" "$IMAGE"
       # The revision label tells the promote workflow which commit staging runs.
       - name: Build the API image
         run: |
