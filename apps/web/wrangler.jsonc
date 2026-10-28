@@ -9,9 +9,11 @@
   // A custom domain would put it back on cuentalibre.es's own, blocked IPs.
   "routes": [{ "pattern": "app.cuentalibre.es/*", "zone_name": "jesuspb.dev" }],
   "env": {
-    // `wrangler deploy --env staging`: a Worker of its own, behind Cloudflare Access
+    // `wrangler deploy --env staging`: a Worker of its own, behind Cloudflare Access.
+    // Access skips SaaS hostnames whose zone is in the same account as the SaaS zone,
+    // so staging takes a custom domain on cuentalibre.es and its LaLiga blocks.
     "staging": {
-      "routes": [{ "pattern": "staging.app.cuentalibre.es/*", "zone_name": "jesuspb.dev" }]
+      "routes": [{ "pattern": "staging.app.cuentalibre.es", "custom_domain": true }]
     }
   }
 }
