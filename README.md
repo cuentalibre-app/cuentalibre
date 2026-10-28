@@ -120,6 +120,9 @@ The UI is in Spanish, like the taxes it deals with.
 
 ## Running it locally
 
+> [!NOTE]
+> **Just want to use cuentalibre?** Follow the [self-hosting guide](https://cuentalibre.es/docs/instalar) to run it on your own server, or sign up at [app.cuentalibre.es](https://app.cuentalibre.es). The rest of this README is for people who work on its code.
+
 ### Requirements
 
 - [Node.js](https://nodejs.org) 26 or newer.
@@ -240,12 +243,12 @@ apps/site              Public site and documentation (Astro, static)
 packages/core          Domain logic shared by front and back: periods, tax calculations, filing calendar
 packages/contracts     zod schemas of the stored data; types are inferred from them
 packages/ui            Design system: tokens, base styles and components
-deploy/                What runs cuentalibre online: Caddy, the API and PostgreSQL on one server
+deploy/                How cuentalibre online runs, for its maintainers: Caddy, the API and PostgreSQL on one server
 selfhost/              Self-hosting: one image with the app and the API, plus PostgreSQL
 .agents/skills/        The cuentalibre skill for AI agents (.claude/skills links to it)
 ```
 
-More in [apps/api/README.md](apps/api/README.md) (endpoints, sync, VERI\*FACTU, production) and [AGENTS.md](AGENTS.md) (conventions for contributors and coding agents).
+More in [apps/api/README.md](apps/api/README.md) (endpoints, sync, VERI\*FACTU, building the images), [deploy/README.md](deploy/README.md) (how cuentalibre online is operated) and [AGENTS.md](AGENTS.md) (conventions for contributors and coding agents).
 
 The web app's design system reference page is at `/sistema-visual`.
 
