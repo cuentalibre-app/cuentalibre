@@ -11,9 +11,10 @@
   "env": {
     // `wrangler deploy --env staging`: a Worker of its own, behind Cloudflare Access.
     // Access skips SaaS hostnames whose zone is in the same account as the SaaS zone,
-    // so staging takes a custom domain on cuentalibre.es and its LaLiga blocks.
+    // so staging takes a custom domain on cuentalibre.es and its LaLiga blocks; one
+    // level of subdomain, which the zone's free certificate covers.
     "staging": {
-      "routes": [{ "pattern": "staging.app.cuentalibre.es", "custom_domain": true }]
+      "routes": [{ "pattern": "app-staging.cuentalibre.es", "custom_domain": true }]
     }
   }
 }
