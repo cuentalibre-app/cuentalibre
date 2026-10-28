@@ -63,6 +63,14 @@ Production changes only through the _Promote to production_ workflow (`promote.y
 - Web app: built again from `main` with `VITE_API_URL=https://api.cuentalibre.es`, since the address is baked in; it refuses to run until CI has passed on `main`'s last commit, so staging shows the same code.
 - Each one pushes a plain tag on the commit it promoted, `prod-api-2026.10.27` or `prod-web-2026.10.27`, with `.2`, `.3`… for later ones the same day: `git tag -l 'prod-*'` lists what ran in production and when.
 
+Each environment says which commit it runs: the API as `revision` in `/v1/health`, the app in its `<meta name="revision">`. Comparing them shows how far staging is ahead:
+
+```sh
+curl -s https://api-staging.cuentalibre.es/v1/health
+curl -s https://api.cuentalibre.es/v1/health
+git log --oneline <production's revision>..<staging's revision>
+```
+
 ### Rolling back
 
 Run the same workflow from a `prod-*` tag instead of `main` (_Use workflow from_ › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It leaves a new `prod-*` tag on that commit. The `production` environment only accepts runs from `main` and from `prod-*` tags. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.

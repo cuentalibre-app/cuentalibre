@@ -8,10 +8,13 @@ const health = createRoute({
   path: "/health",
   tags: ["Meta"],
   summary: "Check that the API and its database are up",
+  description: "`revision`: the commit this API was built from, when the build recorded one.",
   responses: {
     200: {
       description: "Healthy",
-      content: { "application/json": { schema: z.object({ status: z.literal("ok") }) } },
+      content: {
+        "application/json": { schema: z.object({ status: z.literal("ok"), revision: z.string().optional() }) },
+      },
     },
     503: errorContent("The database is unreachable"),
   },
@@ -34,7 +37,7 @@ const signInMethods = createRoute({
   },
 });
 
-export const metaRoutes = (methods: z.infer<typeof signInMethodsSchema>) =>
+export const metaRoutes = (methods: z.infer<typeof signInMethodsSchema>, revision?: string) =>
   new OpenAPIHono<AppEnv>()
     .openapi(health, async (c) => {
       try {
@@ -42,6 +45,6 @@ export const metaRoutes = (methods: z.infer<typeof signInMethodsSchema>) =>
       } catch {
         return errorResponse(c, 503, "database_unavailable", "The database is unreachable.");
       }
-      return c.json({ status: "ok" as const }, 200);
+      return c.json({ status: "ok" as const, ...(revision && { revision }) }, 200);
     })
     .openapi(signInMethods, (c) => c.json(methods, 200));
