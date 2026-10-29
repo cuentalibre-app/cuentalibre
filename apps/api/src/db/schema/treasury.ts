@@ -1,10 +1,10 @@
-import type { AccountKind, MovementSource, PaymentMethodType } from "@cuentalibre/contracts";
-import { boolean, foreignKey, index, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import type { AccountKind, PaymentMethodType } from "@cuentalibre/contracts";
+import { boolean, foreignKey, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization } from "./auth";
 import { createdAt, updatedAt } from "./columns";
 import { amount, day } from "./sales";
 
-/* Treasury accounts, payment methods, manual payments and bank movements. Deleted with a tombstone. */
+/* Treasury accounts, payment methods and manual payments. Deleted with a tombstone. */
 
 const tenant = () =>
   uuid()
@@ -73,34 +73,5 @@ export const manualPayment = pgTable(
       columns: [table.organizationId, table.paymentMethodId],
       foreignColumns: [paymentMethod.organizationId, paymentMethod.id],
     }),
-  ],
-);
-
-/** Movements of a bank statement, imported or typed in, and the payments each one is reconciled with. */
-export const bankMovement = pgTable(
-  "bank_movement",
-  {
-    organizationId: tenant(),
-    id: uuid().notNull(),
-    accountId: uuid().notNull(),
-    date: day().notNull(),
-    concept: text().notNull(),
-    reference: text().notNull(),
-    /** Signed cents: positive money in, negative money out. */
-    amount: amount().notNull(),
-    /** Balance after the movement, when the bank reports it. */
-    balance: amount(),
-    source: text().$type<MovementSource>().notNull(),
-    /** Payments it is reconciled with, by key ("sale:<id>", "purchase:<payment id>"…). */
-    paymentKeys: text().array().notNull(),
-    ...timestamps(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.organizationId, table.id] }),
-    foreignKey({
-      columns: [table.organizationId, table.accountId],
-      foreignColumns: [treasuryAccount.organizationId, treasuryAccount.id],
-    }),
-    index().on(table.organizationId, table.accountId, table.date),
   ],
 );

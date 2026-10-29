@@ -56,8 +56,8 @@
       <p align="center"><b>Gastos</b>: cuota de autónomos, tickets y facturas recibidas con su justificante.</p>
     </td>
     <td valign="top">
-      <img src=".github/assets/screens/bancos.webp" alt="Conciliación bancaria">
-      <p align="center"><b>Bancos</b>: cruza cada movimiento con su factura o gasto.</p>
+      <img src=".github/assets/screens/bancos.webp" alt="Bancos">
+      <p align="center"><b>Bancos</b>: lo que cobras y pagas cada mes, y por qué cuenta pasa.</p>
     </td>
   </tr>
   <tr>
@@ -109,7 +109,7 @@ Puedes usarlo de dos formas:
 - **💸 Gastos deducibles**: cuota de autónomos, tickets y facturas recibidas con su justificante, y bienes de inversión con su amortización.
 - **📊 IVA e IRPF casilla a casilla**: los modelos 303, 130 y 390 calculados con tus documentos, para revisarlos y presentarlos en la AEAT.
 - **📅 Calendario fiscal**: cada plazo que te afecta, con el importe antes de que llegue.
-- **🏦 Conciliación bancaria**: sugerencias para casar cada movimiento con su factura o gasto.
+- **🏦 Cobros y pagos**: cada cobro y pago de tus facturas y gastos, con la cuenta por la que pasó.
 - **🔒 Cierre de trimestre**: una lista de lo pendiente antes de presentar; después, los libros del trimestre quedan congelados.
 - **📈 Informes**: pérdidas y ganancias, tu año frente al anterior.
 - **✅ VERI\*FACTU**: registros de facturación encadenados y enviados a la AEAT.
