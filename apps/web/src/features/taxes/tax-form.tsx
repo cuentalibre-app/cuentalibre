@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Check, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
 import {
   aeatBytes,
+  aeatFileName,
   calendarStatus,
   cents,
   centsToEuros,
@@ -10,6 +11,7 @@ import {
   obligation,
   sumBy,
   toIsoDate,
+  type AeatFiler,
   type Boxes,
   type Cents,
   type Quarter,
@@ -22,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/compone
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { useSettings } from "@/features/settings/settings-store";
 import { copyText } from "@/lib/clipboard";
 import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
 import { downloadBlob } from "@/lib/xlsx";
@@ -392,6 +395,29 @@ export interface AeatFile {
   build: () => string;
   /** Why it can't be built yet, such as a missing NIF. */
   missing?: string;
+}
+
+/** The AEAT file of a quarterly form, filed by the profile's taxpayer. */
+export function useAeatFile(
+  form: FormCode,
+  year: number,
+  quarter: Quarter,
+  build: (filer: AeatFiler) => string,
+): AeatFile {
+  const { profile } = useSettings();
+  const filer = {
+    taxId: profile.taxId,
+    surnames: `${profile.lastName} ${profile.secondLastName}`,
+    name: profile.firstName,
+  };
+  return {
+    name: aeatFileName(form, year, quarter),
+    build: () => build(filer),
+    missing:
+      !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
+        ? "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
+        : undefined,
+  };
 }
 
 const LABEL_AEAT_FILE = "Fichero para la AEAT";

@@ -5,6 +5,9 @@ import {
   aeatFileName,
   aeatText,
   declarationType130,
+  declarationTypeWithholdings,
+  file111,
+  file115,
   file130,
   filerTaxId,
   type AeatFiler,
@@ -21,11 +24,14 @@ const PAGE_START = 329;
 const field = (file: string, position: number, length: number) =>
   file.slice(PAGE_START - 1 + position - 1, PAGE_START - 1 + position - 1 + length);
 
-function boxes130(values: Partial<Record<string, number>>): Boxes {
+/** Every box of a form at zero, with the given ones on top. */
+function boxesOf(count: number, values: Partial<Record<string, number>>): Boxes {
   const all: Boxes = {};
-  for (let n = 1; n <= 19; n++) all[String(n).padStart(2, "0")] = 0;
+  for (let n = 1; n <= count; n++) all[String(n).padStart(2, "0")] = 0;
   return { ...all, ...values } as Boxes;
 }
+
+const boxes130 = (values: Partial<Record<string, number>>) => boxesOf(19, values);
 
 describe("aeatText", () => {
   it("upper-cases, drops accents and symbols, keeps Ñ and Ç and pads to the right", () => {
@@ -159,6 +165,139 @@ describe("file130", () => {
   it("refuses a negative amount in an unsigned box and years without a design", () => {
     expect(() => file130({ ...form, boxes: boxes130({ "06": -1 }) }, filer)).toThrow(RangeError);
     expect(() => file130({ ...form, year: 2018 }, filer)).toThrow(RangeError);
+  });
+});
+
+describe("declarationTypeWithholdings", () => {
+  it("pays a positive result by deposit and files anything else as negative", () => {
+    expect(declarationTypeWithholdings(1)).toBe("I");
+    expect(declarationTypeWithholdings(0)).toBe("N");
+  });
+});
+
+describe("file111", () => {
+  const form = {
+    year: 2026,
+    quarter: 2 as const,
+    boxes: boxesOf(30, {
+      "01": 1,
+      "02": eur(600),
+      "03": eur(90),
+      "07": 3,
+      "08": eur(4250.5),
+      "09": eur(637.58),
+      "28": eur(727.58),
+      "30": eur(727.58),
+    }),
+  };
+  const file = file111(form, filer);
+
+  it("wraps one 1000-position page in the envelope", () => {
+    expect(file).toHaveLength(17 + 311 + 1000 + 18);
+    expect(file.slice(0, 17)).toBe("<T111020262T0000>");
+    expect(file.slice(17, 328)).toBe(`<AUX>${" ".repeat(300)}</AUX>`);
+    expect(file.slice(-18)).toBe("</T111020262T0000>");
+  });
+
+  it("lays out the identification as the record design says", () => {
+    expect(field(file, 1, 11)).toBe("<T11101000>");
+    expect(field(file, 12, 1)).toBe(" ");
+    expect(field(file, 13, 1)).toBe("I");
+    expect(field(file, 14, 9)).toBe("50123456Q");
+    expect(field(file, 23, 60)).toBe("MARTIN GOMEZ".padEnd(60));
+    expect(field(file, 83, 20)).toBe("LUCIA".padEnd(20));
+    expect(field(file, 103, 4)).toBe("2026");
+    expect(field(file, 107, 2)).toBe("2T");
+    expect(field(file, 989, 12)).toBe("</T11101000>");
+  });
+
+  it("puts every box at its position, with perceptor counts in 8 positions", () => {
+    expect(field(file, 109, 8)).toBe("00000001");
+    expect(field(file, 117, 17)).toBe("00000000000060000");
+    expect(field(file, 134, 17)).toBe("00000000000009000");
+    expect(field(file, 193, 8)).toBe("00000003");
+    expect(field(file, 201, 17)).toBe("00000000000425050");
+    expect(field(file, 218, 17)).toBe("00000000000063758");
+    for (let group = 0; group < 9; group++) {
+      const position = 109 + group * 42;
+      const n = 1 + group * 3;
+      const key = (k: number) => String(k).padStart(2, "0");
+      expect(field(file, position, 8), `box ${key(n)}`).toBe(aeatAmount(form.boxes[key(n)]!, 8, false));
+      expect(field(file, position + 8, 17), `box ${key(n + 1)}`).toBe(aeatAmount(form.boxes[key(n + 1)]!, 17, false));
+      expect(field(file, position + 25, 17), `box ${key(n + 2)}`).toBe(aeatAmount(form.boxes[key(n + 2)]!, 17, false));
+    }
+    expect(field(file, 487, 17)).toBe("00000000000072758");
+    expect(field(file, 504, 17)).toBe("0".repeat(17));
+    expect(field(file, 521, 17)).toBe("00000000000072758");
+  });
+
+  it("leaves the complementary fields, IBAN and reserved space blank", () => {
+    expect(field(file, 538, 1 + 13 + 1 + 34 + 389 + 13)).toBe(" ".repeat(451));
+  });
+
+  it("files a return without withholdings as negative with every box at zero", () => {
+    const empty = file111({ year: 2026, quarter: 4, boxes: boxesOf(30, {}) }, filer);
+    expect(field(empty, 13, 1)).toBe("N");
+    expect(field(empty, 109, 9 * 42 + 3 * 17)).toBe("0".repeat(9 * 42 + 3 * 17));
+  });
+
+  it("writes box 29 with its sign and refuses negative amounts elsewhere", () => {
+    expect(field(file111({ ...form, boxes: { ...form.boxes, "29": eur(-10) } }, filer), 504, 17)).toBe(
+      "N0000000000001000",
+    );
+    expect(() => file111({ ...form, boxes: { ...form.boxes, "09": -1 } }, filer)).toThrow(RangeError);
+    expect(() => file111({ ...form, year: 2018 }, filer)).toThrow(RangeError);
+  });
+});
+
+describe("file115", () => {
+  const form = {
+    year: 2026,
+    quarter: 1 as const,
+    boxes: boxesOf(5, { "01": 1, "02": eur(2400), "03": eur(456), "05": eur(456) }),
+  };
+  const file = file115(form, filer);
+
+  it("wraps one 500-position page in the envelope", () => {
+    expect(file).toHaveLength(17 + 311 + 500 + 18);
+    expect(file.slice(0, 17)).toBe("<T115020261T0000>");
+    expect(file.slice(17, 328)).toBe(`<AUX>${" ".repeat(300)}</AUX>`);
+    expect(file.slice(-18)).toBe("</T115020261T0000>");
+  });
+
+  it("lays out the identification as the record design says", () => {
+    expect(field(file, 1, 11)).toBe("<T11501000>");
+    expect(field(file, 12, 1)).toBe(" ");
+    expect(field(file, 13, 1)).toBe("I");
+    expect(field(file, 14, 9)).toBe("50123456Q");
+    expect(field(file, 23, 60)).toBe("MARTIN GOMEZ".padEnd(60));
+    expect(field(file, 83, 20)).toBe("LUCIA".padEnd(20));
+    expect(field(file, 103, 4)).toBe("2026");
+    expect(field(file, 107, 2)).toBe("1T");
+    expect(field(file, 489, 12)).toBe("</T11501000>");
+  });
+
+  it("puts every box at its position, with the landlord count in 15 positions", () => {
+    expect(field(file, 109, 15)).toBe("000000000000001");
+    expect(field(file, 124, 17)).toBe("00000000000240000");
+    expect(field(file, 141, 17)).toBe("00000000000045600");
+    expect(field(file, 158, 17)).toBe("0".repeat(17));
+    expect(field(file, 175, 17)).toBe("00000000000045600");
+  });
+
+  it("leaves the complementary fields, IBAN and reserved space blank", () => {
+    expect(field(file, 192, 1 + 13 + 34 + 236 + 13)).toBe(" ".repeat(297));
+  });
+
+  it("files a return without rentals as negative with every box at zero", () => {
+    const empty = file115({ year: 2026, quarter: 3, boxes: boxesOf(5, {}) }, filer);
+    expect(field(empty, 13, 1)).toBe("N");
+    expect(field(empty, 109, 15 + 4 * 17)).toBe("0".repeat(83));
+  });
+
+  it("refuses negative amounts and years without a design", () => {
+    expect(() => file115({ ...form, boxes: { ...form.boxes, "03": -1 } }, filer)).toThrow(RangeError);
+    expect(() => file115({ ...form, year: 2018 }, filer)).toThrow(RangeError);
   });
 });
 
