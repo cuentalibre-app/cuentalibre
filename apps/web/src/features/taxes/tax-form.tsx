@@ -9,6 +9,7 @@ import {
   daysUntil,
   formatIban,
   isValidIban,
+  normalizeTaxId,
   obligation,
   sumBy,
   toIsoDate,
@@ -17,6 +18,7 @@ import {
   type Cents,
   type Quarter,
 } from "@cuentalibre/core";
+import type { PaymentMethod, TreasuryAccount } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
@@ -427,9 +429,26 @@ function UnavailableFile({ label, reason }: { label: string; reason: string }) {
   );
 }
 
+/**
+ * The IBANs a return can be debited to: active bank accounts, then active transfer and direct
+ * debit methods (which often hold the IBAN without a linked account), once per IBAN.
+ */
+function debitableIbans(accounts: TreasuryAccount[], methods: PaymentMethod[]): { name: string; iban: string }[] {
+  const candidates = [
+    ...accounts.filter((a) => a.active && a.kind === "bank"),
+    ...methods.filter((m) => m.active && (m.type === "transfer" || m.type === "directDebit")),
+  ];
+  const byIban = new Map<string, string>();
+  for (const c of candidates) {
+    const iban = normalizeTaxId(c.number);
+    if (isValidIban(iban) && !byIban.has(iban)) byIban.set(iban, c.name);
+  }
+  return [...byIban].map(([iban, name]) => ({ name, iban }));
+}
+
 /** Downloads the AEAT file; a result to pay asks first how it will be paid. */
 function AeatFileButton({ file }: { file: AeatFile }) {
-  const { accounts } = useSettings();
+  const { accounts, paymentMethods } = useSettings();
   if (file.missing) return <UnavailableFile label={LABEL_AEAT_FILE} reason={file.missing} />;
   try {
     file.build({ kind: "deposit" });
@@ -445,7 +464,7 @@ function AeatFileButton({ file }: { file: AeatFile }) {
 
   const download = (payment: AeatPayment) =>
     downloadBlob(new Blob([aeatBytes(file.build(payment))], { type: "text/plain;charset=iso-8859-1" }), file.name);
-  const banks = accounts.filter((a) => a.active && a.kind === "bank" && isValidIban(a.number));
+  const banks = debitableIbans(accounts, paymentMethods);
 
   if (!file.payable || banks.length === 0)
     return (
@@ -469,10 +488,10 @@ function AeatFileButton({ file }: { file: AeatFile }) {
           Ingreso con NRC o en el banco
         </DropdownMenuItem>
         {banks.map((a) => (
-          <DropdownMenuItem key={a.id} onSelect={() => download({ kind: "directDebit", iban: a.number })}>
+          <DropdownMenuItem key={a.iban} onSelect={() => download({ kind: "directDebit", iban: a.iban })}>
             <span className="flex flex-col">
               <span>Domiciliar en {a.name}</span>
-              <span className="font-mono text-2xs text-muted-foreground">{formatIban(a.number)}</span>
+              <span className="font-mono text-2xs text-muted-foreground">{formatIban(a.iban)}</span>
             </span>
           </DropdownMenuItem>
         ))}
