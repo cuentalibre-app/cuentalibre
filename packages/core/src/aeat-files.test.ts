@@ -11,10 +11,13 @@ import {
   file115,
   file130,
   file303,
+  file349,
   FIRST_YEAR_303,
   filerTaxId,
+  period349,
   type AeatFiler,
   type Return303,
+  type Return349,
 } from "./aeat-files";
 import { cents, eurosToCents } from "./money";
 import type { Boxes } from "./tax-returns";
@@ -529,5 +532,118 @@ describe("aeatBytes", () => {
   it("encodes as ISO-8859-1", () => {
     expect([...aeatBytes("PEÑA")]).toEqual([0x50, 0x45, 0xd1, 0x41]);
     expect(() => aeatBytes("€")).toThrow(RangeError);
+  });
+});
+
+describe("period349", () => {
+  it("codes quarters, months and the first two months of a quarter", () => {
+    expect(period349([3, 4, 5])).toEqual({ period: "2T", bimonthly: false });
+    expect(period349([10])).toEqual({ period: "11", bimonthly: false });
+    expect(period349([6, 7])).toEqual({ period: "08", bimonthly: true });
+  });
+
+  it("has no code for the year or loose months", () => {
+    expect(period349(Array.from({ length: 12 }, (_, m) => m))).toBeNull();
+    expect(period349([1, 2])).toBeNull();
+    expect(period349([])).toBeNull();
+  });
+});
+
+describe("file349", () => {
+  const form: Return349 = {
+    year: 2026,
+    period: "3T",
+    bimonthly: false,
+    operations: [
+      { code: "DE", number: "123456789", name: "Müller Maschinen GmbH", key: "E", base: eur(12500.4) },
+      { code: "FR", number: "12345678901", name: "Société Générale d'Études", key: "S", base: eur(3000) },
+      { code: "DE", number: "123456789", name: "Müller Maschinen GmbH", key: "I", base: eur(250) },
+    ],
+    rectifications: [
+      {
+        code: "IE",
+        number: "6364992H",
+        name: "Cloud Hosting Ltd",
+        key: "I",
+        base: eur(80),
+        year: 2026,
+        period: "1T",
+        declared: eur(120.5),
+      },
+    ],
+  };
+  const records = (file: string) => file.split("\r\n").slice(0, -1);
+  /** A field of a record by its position and length in the record design (1-based). */
+  const at = (record: string, position: number, length: number) => record.slice(position - 1, position - 1 + length);
+
+  it("writes 500-position records, one per line", () => {
+    const file = file349(form, { ...filer, phone: "+34 600 12 34 56" });
+    expect(file.endsWith("\r\n")).toBe(true);
+    const lines = records(file);
+    expect(lines).toHaveLength(5);
+    for (const line of lines) expect(line).toHaveLength(500);
+  });
+
+  it("opens with the declarant and the totals", () => {
+    const [declarant] = records(file349(form, { ...filer, phone: "+34 600 12 34 56" }));
+    expect(at(declarant!, 1, 17)).toBe("1349202650123456Q");
+    expect(at(declarant!, 18, 40)).toBe("MARTIN GOMEZ LUCIA".padEnd(40));
+    expect(at(declarant!, 58, 1)).toBe(" ");
+    expect(at(declarant!, 59, 9)).toBe("600123456");
+    expect(at(declarant!, 68, 40)).toBe("MARTIN GOMEZ LUCIA".padEnd(40));
+    expect(at(declarant!, 108, 13)).toBe("3490000000000");
+    expect(at(declarant!, 121, 2)).toBe("  ");
+    expect(at(declarant!, 123, 13)).toBe("0".repeat(13));
+    expect(at(declarant!, 136, 2)).toBe("3T");
+    expect(at(declarant!, 138, 9)).toBe("000000003");
+    expect(at(declarant!, 147, 15)).toBe("000000001575040");
+    expect(at(declarant!, 162, 9)).toBe("000000001");
+    expect(at(declarant!, 171, 15)).toBe("000000000008000");
+    expect(at(declarant!, 186, 315)).toBe(" ".repeat(315));
+  });
+
+  it("writes one record per operator and key", () => {
+    const [, first, second] = records(file349(form, filer));
+    expect(at(first!, 1, 17)).toBe("2349202650123456Q");
+    expect(at(first!, 18, 58)).toBe(" ".repeat(58));
+    expect(at(first!, 76, 17)).toBe("DE123456789      ");
+    expect(at(first!, 93, 40)).toBe("MULLER MASCHINEN GMBH".padEnd(40));
+    expect(at(first!, 133, 1)).toBe("E");
+    expect(at(first!, 134, 13)).toBe("0000001250040");
+    expect(at(first!, 147, 354)).toBe(" ".repeat(354));
+    expect(at(second!, 76, 17)).toBe("FR12345678901    ");
+    expect(at(second!, 93, 40)).toBe("SOCIETE GENERALE D ETUDES".padEnd(40));
+    expect(at(second!, 133, 14)).toBe("S0000000300000");
+  });
+
+  it("follows with the rectifications of earlier periods", () => {
+    const rectification = records(file349(form, filer))[4]!;
+    expect(at(rectification, 1, 17)).toBe("2349202650123456Q");
+    expect(at(rectification, 76, 17)).toBe("IE6364992H       ");
+    expect(at(rectification, 133, 1)).toBe("I");
+    expect(at(rectification, 134, 13)).toBe(" ".repeat(13));
+    expect(at(rectification, 147, 6)).toBe("20261T");
+    expect(at(rectification, 153, 13)).toBe("0000000008000");
+    expect(at(rectification, 166, 13)).toBe("0000000012050");
+    expect(at(rectification, 179, 322)).toBe(" ".repeat(322));
+  });
+
+  it("marks a return of the first two months of a quarter and fills in a missing phone with zeros", () => {
+    const [declarant] = records(file349({ ...form, period: "05", bimonthly: true }, filer));
+    expect(at(declarant!, 59, 9)).toBe("000000000");
+    expect(at(declarant!, 136, 2)).toBe("05");
+    expect(at(declarant!, 186, 1)).toBe("X");
+  });
+
+  it("files a period without operations as the declarant record alone", () => {
+    const lines = records(file349({ ...form, operations: [], rectifications: [] }, filer));
+    expect(lines).toHaveLength(1);
+    expect(at(lines[0]!, 138, 48)).toBe("0".repeat(48));
+  });
+
+  it("rejects negative bases and years before the design", () => {
+    const negative = { ...form.operations[0]!, base: eur(-10) };
+    expect(() => file349({ ...form, operations: [negative] }, filer)).toThrow(RangeError);
+    expect(() => file349({ ...form, year: 2020 }, filer)).toThrow(RangeError);
   });
 });

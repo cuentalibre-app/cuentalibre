@@ -38,6 +38,9 @@ export interface PartyBooks {
 
 const isAbroad = (contact: Contact | undefined) => Boolean(contact) && (contact!.country || SPAIN) !== SPAIN;
 
+/** The contact's tax ID and country, which identify operators in form 349. */
+const identity = (contact: Contact | undefined) => ({ taxId: contact?.taxId, country: contact?.country });
+
 function fromSale(doc: SalesDocument, contacts: Map<string, Contact>, cash: Set<string>): PartyOperation {
   const totals = documentTotals(doc);
   const total = cents(totals.base + totals.vat + totals.surcharge);
@@ -61,6 +64,8 @@ function fromSale(doc: SalesDocument, contacts: Map<string, Contact>, cash: Set<
       (doc.payments ?? []).filter((p) => cash.has(p.paymentMethodId)),
       (p) => p.amount,
     ),
+    ...identity(contacts.get(doc.clientId)),
+    rectifiesId: doc.rectifiesId,
   };
 }
 
@@ -86,6 +91,8 @@ function fromPurchase(doc: PurchaseInvoice, contacts: Map<string, Contact>, cash
       doc.payments.filter((p) => cash.has(p.paymentMethodId)),
       (p) => p.amount,
     ),
+    ...identity(contacts.get(doc.supplierId)),
+    rectifiesId: doc.rectifiesId,
   };
 }
 
