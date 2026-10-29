@@ -4,8 +4,10 @@ import {
   annualVolume303,
   cents,
   file303,
+  file390,
   filingDeadline,
   FIRST_YEAR_303,
+  FIRST_YEAR_390,
   isInPeriod,
   model303,
   model347,
@@ -288,10 +290,33 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
 
 function Vat390({ year, today }: { year: number; today: Date }) {
   const books = useTaxBooks();
+  const party = usePartyBooks();
   const { tax } = useSettings();
   const [showEmpty, setShowEmpty] = useState(false);
   const r = useMemo(() => model390(books, year), [books, year]);
   const documents = useVatDocuments({ year, quarter: null });
+  const thirdParties = useMemo(
+    () => model347(party.ops, year, party.excludedFrom347).declared.length > 0,
+    [party, year],
+  );
+
+  const aeatFile = useAeatFile("390", year, null, (filer) =>
+    file390(
+      { year, boxes: r.boxes, activities: tax.activities, thirdParties, cashBasis: tax.vatRegime === "cashBasis" },
+      filer,
+    ),
+  );
+  const file = {
+    ...aeatFile,
+    missing:
+      tax.vatRegime === "simplified"
+        ? "El fichero no cubre el régimen simplificado del IVA: rellena el 390 en la sede de la AEAT."
+        : year < FIRST_YEAR_390
+          ? `El fichero solo está disponible desde ${FIRST_YEAR_390}.`
+          : tax.activities.length === 0
+            ? "Para generar el fichero, añade tu actividad en Configuración › Impuestos."
+            : aeatFile.missing,
+  };
 
   const result: ResultSummary = {
     label: "Resultado de la liquidación anual [86]",
@@ -310,6 +335,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         deadline={filingDeadline(year, null)}
         today={today}
         result={result}
+        file={file}
       />
       <section
         aria-label="Resultados de los 303 del año"
@@ -341,8 +367,15 @@ function Vat390({ year, today }: { year: number; today: Date }) {
       <FormAnswers title="Sujeto pasivo y devengo" rows={answers390(tax)} />
       <FormAnswers
         title="Datos estadísticos · Actividades económicas"
-        rows={activities390(tax)}
-        note="Ordenadas de mayor a menor volumen de operaciones, como en Configuración › Impuestos. Marca la casilla [D] solo si tienes que presentar el modelo 347. Los datos del representante se completan en la sede de la AEAT."
+        rows={[
+          ...activities390(tax),
+          {
+            label: "Ha efectuado operaciones por las que tenga obligación de presentar el modelo 347",
+            answer: thirdParties ? "Marcar" : "Dejar desmarcado",
+            box: "D",
+          },
+        ]}
+        note="Ordenadas de mayor a menor volumen de operaciones, como en Configuración › Impuestos. Los datos del representante se completan en la sede de la AEAT."
       />
       <FormSections sections={LAYOUT_390} boxes={r.boxes} showEmpty={showEmpty} />
       <DocumentsPanel title="Documentos del año" groups={documents} />
@@ -351,7 +384,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         items={[
           "Resume todo el año: si empezaste a facturar antes de usar cuentalibre, registra también esas facturas.",
           "Las adquisiciones intracomunitarias de mercaderías (cuentas 600 y 602) se declaran como bienes; el resto, como servicios.",
-          "Los datos estadísticos (actividad y epígrafe) y los del representante se completan en la sede de la AEAT.",
+          "Los datos del representante, la tributación conjunta con Navarra o el País Vasco y la prorrata se completan en la sede de la AEAT.",
           "Si llevas el SII o solo alquilas inmuebles urbanos, no presentas el 390: en su lugar rellenas el apartado de información adicional del 303 del 4T.",
           "Revisa antes el 303 del 4T: sus resultados pasan a este resumen.",
           "Las actividades se listan de mayor a menor volumen de operaciones, en el orden de Configuración › Impuestos. Si no sabes en cuáles estás de alta, míralo en el modelo 036 o 037 que presentaste.",
