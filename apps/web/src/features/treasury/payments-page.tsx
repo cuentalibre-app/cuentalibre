@@ -14,12 +14,12 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
-import { formatDate, formatShortDate, periodCode } from "@/lib/format";
+import { formatDate, formatShortDate, periodCode, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { FlowsChart } from "./flows-chart";
 import { MethodCards } from "./method-cards";
-import { ManualPaymentDialog, PageHeader, SignedAmount } from "./treasury-parts";
+import { ManualPaymentDialog, SignedAmount } from "./treasury-parts";
 import { PAYMENT_SOURCES, PAYMENT_SOURCE_ORDER, type TreasuryPayment } from "./treasury-model";
 import { treasuryStore, usePayments } from "./treasury-store";
 
@@ -55,15 +55,14 @@ export function PaymentsPage() {
   const [creating, setCreating] = useState(false);
   const [removing, setRemoving] = useState<TreasuryPayment | null>(null);
 
+  const periodPayments = useMemo(() => payments.filter((p) => isInPeriod(p.date, period)), [payments, period]);
   const periodRows = useMemo(
     () =>
-      payments
-        .filter((p) => isInPeriod(p.date, period))
-        .map((payment): Row => ({
-          payment,
-          method: paymentMethods.find((m) => m.id === payment.paymentMethodId)?.name ?? "Sin método",
-        })),
-    [payments, period, paymentMethods],
+      periodPayments.map((payment): Row => ({
+        payment,
+        method: paymentMethods.find((m) => m.id === payment.paymentMethodId)?.name ?? "Sin método",
+      })),
+    [periodPayments, paymentMethods],
   );
   const months = useMemo(() => monthlyFlows(payments, today), [payments, today]);
 
@@ -124,24 +123,26 @@ export function PaymentsPage() {
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
-        <PageHeader
-          title="Bancos y caja"
-          description="Tus cuentas y formas de pago, y todo lo que has cobrado y pagado."
-        >
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Bancos y caja</h1>
+              <PeriodSelect
+                value={period}
+                onChange={setPeriod}
+                years={availableYears}
+                today={today}
+                className="h-12 w-full sm:h-10 sm:w-auto"
+              />
+              <span className="hidden text-sm text-muted-foreground sm:inline">{periodRange(period)}</span>
+            </div>
+            <p className="m-0 text-sm text-muted-foreground">Lo que has cobrado y pagado, y por dónde ha pasado.</p>
+          </div>
           <Button onClick={() => setCreating(true)}>
             <Plus strokeWidth={2} aria-hidden="true" />
             Nuevo cobro / pago manual
           </Button>
-        </PageHeader>
-
-        <MethodCards
-          payments={payments}
-          today={today}
-          selected={filters.method === ALL ? null : filters.method}
-          onSelect={pickMethod}
-        />
-
-        <FlowsChart months={months} />
+        </header>
 
         <dl className="m-0 grid animate-rise-in grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
           {[
@@ -149,12 +150,20 @@ export function PaymentsPage() {
             { label: "Pagado", value: <AnimatedAmount value={paid} /> },
             { label: "Neto", value: <AnimatedAmount value={cents(collected - paid)} /> },
           ].map((s) => (
-            <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3">
+            <div key={s.label} className="flex min-w-0 flex-col gap-1 bg-card px-3 py-3 sm:px-4">
               <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-              <dd className="m-0 amount text-lg font-semibold lg:text-xl">{s.value}</dd>
+              <dd className="m-0 amount text-base font-semibold sm:text-lg lg:text-xl">{s.value}</dd>
             </div>
           ))}
         </dl>
+
+        <MethodCards
+          payments={periodPayments}
+          selected={filters.method === ALL ? null : filters.method}
+          onSelect={pickMethod}
+        />
+
+        <FlowsChart months={months} />
 
         <section
           ref={list}
@@ -204,7 +213,6 @@ export function PaymentsPage() {
               ]}
               className="w-auto min-w-40 font-medium"
             />
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
             <Button
               variant="secondary"
               size="md"

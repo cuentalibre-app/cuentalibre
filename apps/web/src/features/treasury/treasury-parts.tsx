@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { toIsoDate, type Cents } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
@@ -11,26 +11,6 @@ import { parseEuros } from "@/lib/format";
 import { treasuryStore } from "./treasury-store";
 
 /* Building blocks shared by the treasury pages. */
-
-export function PageHeader({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: ReactNode;
-  children?: ReactNode;
-}) {
-  return (
-    <header className="flex flex-wrap items-end justify-between gap-4">
-      <div className="flex flex-col gap-1">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-        <p className="m-0 text-sm text-muted-foreground">{description}</p>
-      </div>
-      {children && <div className="flex flex-wrap gap-2.5">{children}</div>}
-    </header>
-  );
-}
 
 /** Green for money in, plain for money out, with an explicit sign. */
 export function SignedAmount({ value, className }: { value: Cents; className?: string }) {
