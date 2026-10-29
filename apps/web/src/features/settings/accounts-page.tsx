@@ -15,7 +15,7 @@ import { ActionsMenu, EmptyState, IconAction, type Action } from "@/features/sal
 import { ACCOUNT_ICONS } from "./account-icons";
 import { accountRemoval, takesMethod } from "./account-methods";
 import { MethodDialog } from "./method-dialog";
-import { accountMovements, methodUsage } from "./method-usage";
+import { methodUsage } from "./method-usage";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import {
   ACCOUNT_KIND_ORDER,
@@ -220,7 +220,6 @@ export function AccountsPage() {
     null,
   );
   const [removing, setRemoving] = useState<TreasuryAccount | null>(null);
-  const [blocked, setBlocked] = useState<{ account: TreasuryAccount; movements: number } | null>(null);
   const [removingMethod, setRemovingMethod] = useState<PaymentMethod | null>(null);
   const [blockedMethod, setBlockedMethod] = useState<{ method: PaymentMethod; uses: number } | null>(null);
 
@@ -231,12 +230,6 @@ export function AccountsPage() {
   const unlinked = methodsOf(null).filter((m) => matches(m.active));
   const removal =
     removing && accountRemoval({ accounts, paymentMethods: methods, defaultPaymentMethodId }, removing.id, isUsed);
-
-  const askRemove = (a: TreasuryAccount) => {
-    const movements = accountMovements(a.id);
-    if (movements > 0) setBlocked({ account: a, movements });
-    else setRemoving(a);
-  };
 
   const askRemoveMethod = (m: PaymentMethod) => {
     const uses = methodUsage(m.id);
@@ -258,7 +251,7 @@ export function AccountsPage() {
       },
       { label: "Activar sincronización (próximamente)", icon: RefreshCw },
     ],
-    [{ label: "Eliminar cuenta", icon: Trash2, danger: true, run: () => askRemove(a) }],
+    [{ label: "Eliminar cuenta", icon: Trash2, danger: true, run: () => setRemoving(a) }],
   ];
 
   const methodActions = (m: PaymentMethod): Action[][] => {
@@ -451,21 +444,6 @@ export function AccountsPage() {
               vinculada.
             </p>
           )}
-        </ConfirmDialog>
-        <ConfirmDialog
-          open={blocked !== null}
-          onOpenChange={(open) => !open && setBlocked(null)}
-          title="Esta cuenta tiene movimientos"
-          confirmLabel="Desactivar"
-          onConfirm={() => blocked && settingsStore.setAccountActive(blocked.account.id, false)}
-        >
-          <p className="m-0">
-            «{blocked?.account.name}» tiene {blocked?.movements}{" "}
-            {blocked?.movements === 1 ? "movimiento bancario" : "movimientos bancarios"}, así que no se puede eliminar.
-          </p>
-          <p className="m-0">
-            Puedes desactivarla: sus métodos de cobro y pago dejarán de proponerse, pero los documentos los conservan.
-          </p>
         </ConfirmDialog>
         <ConfirmDialog
           open={removingMethod !== null}

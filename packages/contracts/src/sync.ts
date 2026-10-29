@@ -14,7 +14,7 @@ import {
   tagSchema,
   treasuryAccountSchema,
 } from "./settings";
-import { bankMovementSchema, manualPaymentSchema } from "./treasury";
+import { manualPaymentSchema } from "./treasury";
 
 /*
  * What the web app and the API exchange to keep the client's copy of the data
@@ -35,7 +35,6 @@ export const syncedEntitySchema = z.enum([
   "treasuryAccounts",
   "paymentMethods",
   "manualPayments",
-  "bankMovements",
   "catalogFamilies",
   "products",
   "stockMovements",
@@ -102,12 +101,6 @@ export const storedPaymentMethodSchema = paymentMethodSchema.extend({ id: z.uuid
 
 export const storedManualPaymentSchema = manualPaymentSchema.extend({ id: z.uuid(), paymentMethodId: z.uuid() });
 
-export const storedBankMovementSchema = bankMovementSchema.extend({
-  id: z.uuid(),
-  accountId: z.uuid(),
-  paymentKeys: z.array(z.string()).max(1000),
-});
-
 export const storedCatalogFamilySchema = catalogFamilySchema.extend({ id: z.uuid(), parentId: z.uuid().nullable() });
 
 export const storedProductSchema = productSchema.extend({ id: z.uuid(), familyId: z.uuid().nullable() });
@@ -126,7 +119,6 @@ export const plainRecordSchemas = {
   treasuryAccounts: storedTreasuryAccountSchema,
   paymentMethods: storedPaymentMethodSchema,
   manualPayments: storedManualPaymentSchema,
-  bankMovements: storedBankMovementSchema,
   catalogFamilies: storedCatalogFamilySchema,
   products: storedProductSchema,
   stockMovements: storedStockMovementSchema,
@@ -160,7 +152,6 @@ export const commandSchema = z.discriminatedUnion("type", [
     plainCreate("treasuryAccounts"),
     plainCreate("paymentMethods"),
     plainCreate("manualPayments"),
-    plainCreate("bankMovements"),
     plainCreate("catalogFamilies"),
     plainCreate("products"),
     plainCreate("stockMovements"),
@@ -212,7 +203,6 @@ export const changeSchema = z.union([
   plainUpsert("treasuryAccounts"),
   plainUpsert("paymentMethods"),
   plainUpsert("manualPayments"),
-  plainUpsert("bankMovements"),
   plainUpsert("catalogFamilies"),
   plainUpsert("products"),
   plainUpsert("stockMovements"),
@@ -241,7 +231,6 @@ export const workspaceSchema = z.object({
   treasuryAccounts: z.array(storedTreasuryAccountSchema),
   paymentMethods: z.array(storedPaymentMethodSchema),
   manualPayments: z.array(storedManualPaymentSchema),
-  bankMovements: z.array(storedBankMovementSchema),
   catalogFamilies: z.array(storedCatalogFamilySchema),
   products: z.array(storedProductSchema),
   stockMovements: z.array(storedStockMovementSchema),

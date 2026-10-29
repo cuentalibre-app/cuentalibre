@@ -56,8 +56,8 @@
       <p align="center"><b>Expenses</b>: the autónomo fee, tickets and received invoices with their receipts.</p>
     </td>
     <td valign="top">
-      <img src=".github/assets/screens/bancos.webp" alt="Bank reconciliation">
-      <p align="center"><b>Banks</b>: match each movement with its invoice or expense.</p>
+      <img src=".github/assets/screens/bancos.webp" alt="Banks">
+      <p align="center"><b>Banks</b>: what you collect and pay each month, and through which account.</p>
     </td>
   </tr>
   <tr>
@@ -111,7 +111,7 @@ The UI is in Spanish, like the taxes it deals with.
 - **💸 Deductible expenses**: the autónomo fee, tickets and received invoices with their receipts attached, and investment goods with their amortization.
 - **📊 VAT and IRPF, box by box**: forms 303, 130 and 390 computed from your documents, to review and file with the AEAT.
 - **📅 Filing calendar**: every deadline that applies to you, with the amount before it arrives.
-- **🏦 Bank reconciliation**: suggestions to match each movement with its invoice or expense.
+- **🏦 Collections and payments**: every collection and payment of your invoices and expenses, with the account it went through.
 - **🔒 Quarter closing**: a checklist before filing, after which the quarter's books are frozen.
 - **📈 Reports**: profit and loss, this year against the last.
 - **✅ VERI\*FACTU**: invoice records chained and sent to the AEAT.

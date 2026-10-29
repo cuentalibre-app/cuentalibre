@@ -1,4 +1,4 @@
-import type { BankMovement, Expense, Product, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
+import type { Expense, Product, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { newId, type Cents, type StockMovement } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { changes, client, document, errorCode, issuer, member, send, workspace } from "./test/sync";
@@ -43,7 +43,7 @@ describe("plain records", () => {
     expect((await changes(ana, cursor)).changes).toEqual([{ op: "delete", entity: "tags", id: tag.id }]);
   });
 
-  it("stores treasury accounts, payment methods, manual payments and bank movements", async () => {
+  it("stores treasury accounts, payment methods and manual payments", async () => {
     const ana = await member();
     const main = account();
     const method = {
@@ -61,40 +61,24 @@ describe("plain records", () => {
       paymentMethodId: method.id,
       description: "Ahorro",
     };
-    const movement: BankMovement = {
-      id: newId(),
-      accountId: main.id,
-      date: "2026-10-01",
-      concept: "TRANSFERENCIA A AHORRO",
-      reference: "",
-      amount: -50000 as Cents,
-      balance: null,
-      source: "import",
-      paymentKeys: [`manual:${payment.id}`],
-    };
     const response = await send(ana, [
       { type: "create", entity: "treasuryAccounts", data: main },
       { type: "create", entity: "paymentMethods", data: method },
       { type: "create", entity: "manualPayments", data: payment },
-      { type: "create", entity: "bankMovements", data: movement },
     ]);
     expect(response.status).toBe(200);
     const stored = await workspace(ana);
     expect(stored.treasuryAccounts).toEqual([main]);
     expect(stored.paymentMethods).toEqual([method]);
     expect(stored.manualPayments).toEqual([payment]);
-    expect(stored.bankMovements).toEqual([movement]);
 
-    // An account can't go while a method or a movement still names it
+    // An account can't go while a method still names it
     const blocked = await send(ana, [{ type: "delete", entity: "treasuryAccounts", id: main.id }]);
     expect(blocked.status).toBe(409);
     expect(await errorCode(blocked)).toBe("in_use");
     const used = await send(ana, [{ type: "delete", entity: "paymentMethods", id: method.id }]);
     expect(await errorCode(used)).toBe("in_use");
-    await send(ana, [
-      { type: "delete", entity: "manualPayments", id: payment.id },
-      { type: "delete", entity: "bankMovements", id: movement.id },
-    ]);
+    await send(ana, [{ type: "delete", entity: "manualPayments", id: payment.id }]);
 
     // Unlinking a method from its account before deleting the account
     await send(ana, [

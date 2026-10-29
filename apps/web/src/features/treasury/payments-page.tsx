@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
-import { Link, useNavigate } from "react-router";
-import { ArrowUpRight, ChevronDown, Download, Link2, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
-import { cents, isInPeriod, periodKey, sumBy, type ReconciliationStatus } from "@cuentalibre/core";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { ArrowUpRight, ChevronDown, Download, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import { cents, isInPeriod, periodKey, sumBy } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
@@ -17,16 +17,9 @@ import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import { ManualPaymentDialog, PageHeader, ReconciliationBadge, SignedAmount } from "./treasury-parts";
-import {
-  PAYMENT_SOURCES,
-  PAYMENT_SOURCE_ORDER,
-  RECONCILIATION,
-  RECONCILIATION_PATH,
-  accountName,
-  type TreasuryPayment,
-} from "./treasury-model";
-import { treasuryStore, usePayments, useTreasury } from "./treasury-store";
+import { ManualPaymentDialog, PageHeader, SignedAmount } from "./treasury-parts";
+import { PAYMENT_SOURCES, PAYMENT_SOURCE_ORDER, accountName, type TreasuryPayment } from "./treasury-model";
+import { treasuryStore, usePayments } from "./treasury-store";
 
 const ALL = "all";
 
@@ -34,9 +27,6 @@ interface Row {
   payment: TreasuryPayment;
   method: string;
   account: string;
-  /** Reconciled once a bank movement links it; a payment is never split across movements. */
-  status: Exclude<ReconciliationStatus, "partial">;
-  movementId: string | null;
 }
 
 interface Filters {
@@ -44,10 +34,9 @@ interface Filters {
   source: string;
   method: string;
   account: string;
-  status: string;
 }
 
-const NO_FILTERS: Filters = { query: "", source: ALL, method: ALL, account: ALL, status: ALL };
+const NO_FILTERS: Filters = { query: "", source: ALL, method: ALL, account: ALL };
 
 type SortKey = "date" | "amount" | "method";
 interface Sort {
@@ -59,32 +48,24 @@ export function PaymentsPage() {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const { accounts, paymentMethods } = useSettings();
-  const { movements } = useTreasury();
   const payments = usePayments();
-  const [filters, setFilters] = useState(NO_FILTERS);
+  const [searchParams] = useSearchParams();
+  // The summary's account cards open this page filtered by that account
+  const [filters, setFilters] = useState(() => ({ ...NO_FILTERS, account: searchParams.get("cuenta") ?? ALL }));
   const [sort, setSort] = useState<Sort>({ key: "date", dir: "desc" });
   const [creating, setCreating] = useState(false);
   const [removing, setRemoving] = useState<TreasuryPayment | null>(null);
 
-  const movementOf = useMemo(
-    () => new Map(movements.flatMap((m) => m.paymentKeys.map((k) => [k, m.id] as const))),
-    [movements],
-  );
   const periodRows = useMemo(
     () =>
       payments
         .filter((p) => isInPeriod(p.date, period))
-        .map((payment): Row => {
-          const movementId = movementOf.get(payment.key) ?? null;
-          return {
-            payment,
-            method: paymentMethods.find((m) => m.id === payment.paymentMethodId)?.name ?? "Sin método",
-            account: accountName(payment.accountId, accounts),
-            status: movementId ? "full" : "none",
-            movementId,
-          };
-        }),
-    [payments, period, movementOf, paymentMethods, accounts],
+        .map((payment): Row => ({
+          payment,
+          method: paymentMethods.find((m) => m.id === payment.paymentMethodId)?.name ?? "Sin método",
+          account: accountName(payment.accountId, accounts),
+        })),
+    [payments, period, paymentMethods, accounts],
   );
 
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters((f) => ({ ...f, [key]: value }));
@@ -96,7 +77,6 @@ export function PaymentsPage() {
         (filters.source === ALL || r.payment.source === filters.source) &&
         (filters.method === ALL || r.payment.paymentMethodId === filters.method) &&
         (filters.account === ALL || r.payment.accountId === filters.account) &&
-        (filters.status === ALL || r.status === filters.status) &&
         (!q ||
           [r.payment.reference, r.payment.counterparty, formatEUR(r.payment.amount)].some((v) =>
             v.toLowerCase().includes(q),
@@ -120,7 +100,6 @@ export function PaymentsPage() {
       (r) => r.payment.amount,
     ),
   );
-  const unreconciled = rows.filter((r) => r.status === "none").length;
 
   const sortHeader = (key: SortKey, label: string, numeric?: boolean) => (
     <SortHeader
@@ -155,7 +134,7 @@ export function PaymentsPage() {
           {[
             { label: "Cobrado", value: <AnimatedAmount value={collected} /> },
             { label: "Pagado", value: <AnimatedAmount value={paid} /> },
-            { label: "Sin conciliar", value: `${unreconciled} de ${rows.length}` },
+            { label: "Neto", value: <AnimatedAmount value={cents(collected - paid)} /> },
           ].map((s) => (
             <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3">
               <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
@@ -226,22 +205,6 @@ export function PaymentsPage() {
               ]}
               className="w-auto min-w-40 font-medium"
             />
-            <GroupedSelect
-              id="pay-status"
-              aria-label="Estado de la conciliación"
-              value={filters.status}
-              onChange={(v) => set("status", v)}
-              groups={[
-                {
-                  options: [
-                    { value: ALL, label: "Todos los estados" },
-                    { value: "none", label: RECONCILIATION.none.label },
-                    { value: "full", label: RECONCILIATION.full.label },
-                  ],
-                },
-              ]}
-              className="w-auto min-w-40 font-medium"
-            />
             <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
             <Button
               variant="secondary"
@@ -281,9 +244,6 @@ export function PaymentsPage() {
                       {sortHeader("date", "Fecha")}
                       {sortHeader("amount", "Importe", true)}
                       {sortHeader("method", "Método de cobro / pago")}
-                      <th scope="col" className={table.th}>
-                        Conciliación
-                      </th>
                       <th scope="col" className={cn(table.th, "text-center")}>
                         Acciones
                       </th>
@@ -333,9 +293,6 @@ export function PaymentsPage() {
                             <span className="max-w-48 truncate text-xs text-muted-foreground">{r.account}</span>
                           </div>
                         </td>
-                        <td className={table.td}>
-                          <ReconciliationBadge status={r.status} />
-                        </td>
                         <td className={cn(table.td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
                           <QuickActions row={r} onRemove={() => setRemoving(r.payment)} />
                         </td>
@@ -350,7 +307,7 @@ export function PaymentsPage() {
                       <td className={cn(table.td, "text-right amount")}>
                         <AnimatedAmount value={cents(collected - paid)} />
                       </td>
-                      <td colSpan={3} className={table.td} />
+                      <td colSpan={2} className={table.td} />
                     </tr>
                   </tfoot>
                 </table>
@@ -371,10 +328,7 @@ export function PaymentsPage() {
                         )}
                       </span>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <SignedAmount value={r.payment.amount} className="text-base" />
-                      <ReconciliationBadge status={r.status} />
-                    </div>
+                    <SignedAmount value={r.payment.amount} className="text-base" />
                     <RowMenu row={r} onRemove={() => setRemoving(r.payment)} />
                   </li>
                 ))}
@@ -393,8 +347,7 @@ export function PaymentsPage() {
           onConfirm={() => removing && treasuryStore.removeManualPayment(removing.key.slice("manual:".length))}
         >
           <p className="m-0">
-            Se eliminará «{removing?.reference}» de {removing && formatEUR(removing.amount)}. Si estaba conciliado, el
-            movimiento bancario vuelve a quedar pendiente.
+            Se eliminará «{removing?.reference}» de {removing && formatEUR(removing.amount)}.
           </p>
         </ConfirmDialog>
       </div>
@@ -416,21 +369,14 @@ function SourceLabel({ payment }: { payment: TreasuryPayment }) {
 
 function usePaymentActions(row: Row, onRemove: () => void) {
   const navigate = useNavigate();
-  const { payment, movementId } = row;
+  const { payment } = row;
   const open: Action = {
     label: payment.href ? "Ir al documento" : "Sin documento vinculado",
     icon: ArrowUpRight,
     run: payment.href ? () => navigate(payment.href!) : undefined,
   };
-  const reconcile: Action = movementId
-    ? {
-        label: "Ver movimiento conciliado",
-        icon: Link2,
-        run: () => navigate(`${RECONCILIATION_PATH}?movimiento=${movementId}`),
-      }
-    : { label: "Conciliar desde Conciliación", icon: Link2, run: () => navigate(RECONCILIATION_PATH) };
   const groups: Action[][] = [
-    [open, reconcile],
+    [open],
     [
       {
         label: payment.source === "manual" ? "Eliminar cobro / pago" : "Se elimina desde su documento",
@@ -440,15 +386,14 @@ function usePaymentActions(row: Row, onRemove: () => void) {
       },
     ],
   ];
-  return { open, reconcile, groups };
+  return { open, groups };
 }
 
 function QuickActions({ row, onRemove }: { row: Row; onRemove: () => void }) {
-  const { open, reconcile, groups } = usePaymentActions(row, onRemove);
+  const { open, groups } = usePaymentActions(row, onRemove);
   return (
     <div className="flex items-center justify-center gap-0.5">
       <IconAction action={open} />
-      <IconAction action={reconcile} />
       <ActionsMenu
         groups={groups}
         trigger={
@@ -486,7 +431,7 @@ function RowMenu({ row, onRemove }: { row: Row; onRemove: () => void }) {
 
 function exportCsv(rows: Row[], name: string) {
   downloadCsv(
-    ["Fecha", "Tipo", "Documento", "Contacto", "Importe", "Método", "Cuenta", "Conciliación"],
+    ["Fecha", "Tipo", "Documento", "Contacto", "Importe", "Método", "Cuenta"],
     rows.map((r) => [
       r.payment.date,
       PAYMENT_SOURCES[r.payment.source].label,
@@ -495,7 +440,6 @@ function exportCsv(rows: Row[], name: string) {
       r.payment.amount,
       r.method,
       r.account,
-      RECONCILIATION[r.status].label,
     ]),
     name,
   );

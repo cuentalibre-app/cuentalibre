@@ -1,7 +1,7 @@
 ---
 title: "Etiquetas, tesorería y catálogo"
 label: "Otros registros"
-description: "Etiquetas, cuentas de tesorería, formas de pago, cobros y pagos sueltos, movimientos bancarios, familias, productos y stock."
+description: "Etiquetas, cuentas de tesorería, formas de pago, cobros y pagos sueltos, familias, productos y stock."
 section: api
 order: 9
 ---
@@ -44,7 +44,7 @@ La API comprueba su forma y que los registros que nombran sean de tu empresa y n
 | `number` | texto                                      | IBAN, número de tarjeta (o sus últimas cifras) o correo de PayPal. |
 | `active` | booleano                                   |                                                         |
 
-No se puede borrar mientras la use una forma de pago o un movimiento bancario.
+No se puede borrar mientras la use una forma de pago.
 
 ## Formas de pago
 
@@ -63,21 +63,6 @@ No se puede borrar mientras la use un cobro o pago suelto. La que se propone en 
 ## Cobros y pagos sueltos
 
 `manualPayments`: dinero que entra o sale sin factura ni gasto (un préstamo, un traspaso a ahorro, un ajuste). `{ id, date, amount, paymentMethodId, description }`, con `amount` en céntimos, positivo si entra.
-
-## Movimientos bancarios
-
-`bankMovements`:
-
-| Campo         | Tipo               |                                                              |
-| ------------- | ------------------ | ------------------------------------------------------------ |
-| `accountId`   | id                 | Cuenta de tesorería.                                         |
-| `date`        | fecha              |                                                              |
-| `concept`     | texto              | Como lo escribe el banco.                                    |
-| `reference`   | texto              |                                                              |
-| `amount`      | céntimos           | Con signo: positivo si entra, negativo si sale.              |
-| `balance`     | céntimos \| null   | Saldo después del movimiento, si el banco lo da.             |
-| `source`      | `import` \| `manual` |                                                            |
-| `paymentKeys` | lista de textos    | Cobros y pagos con los que está conciliado.                  |
 
 ## Familias del catálogo
 
