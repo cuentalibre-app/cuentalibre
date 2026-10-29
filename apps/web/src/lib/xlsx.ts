@@ -1,13 +1,23 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
-import { excelSerialToIso, formatSpanishDate } from "@cuentalibre/core";
+import { excelSerialToIso, formatSpanishDate, isoToExcelSerial } from "@cuentalibre/core";
 
 /*
  * Just enough of the Office Open XML spreadsheet format to export listings and
  * read the files people import, without a spreadsheet library: text goes in as
- * inline strings, numbers as numbers, and the header row in bold.
+ * inline strings, numbers as numbers, dates as date serials shown dd/mm/yyyy,
+ * and the header row in bold.
  */
 
-export type Cell = string | number | null;
+/** A date cell, for files that want real dates rather than text, such as the AEAT's books. */
+export interface DateCell {
+  date: string;
+}
+
+export type Cell = string | number | DateCell | null;
+
+/** The text a cell shows. */
+const cellText = (value: Cell): string =>
+  value === null ? "" : typeof value === "object" ? formatSpanishDate(value.date) : String(value);
 
 export interface Sheet {
   name: string;
@@ -56,6 +66,7 @@ function cellXml(value: Cell, ref: string, style: number): string {
   const s = style ? ` s="${style}"` : "";
   if (value === null || value === "") return "";
   if (typeof value === "number") return Number.isFinite(value) ? `<c r="${ref}"${s}><v>${value}</v></c>` : "";
+  if (typeof value === "object") return `<c r="${ref}" s="3"><v>${isoToExcelSerial(value.date)}</v></c>`;
   return `<c r="${ref}"${s} t="inlineStr"><is><t xml:space="preserve">${escapeXml(value)}</t></is></c>`;
 }
 
@@ -64,7 +75,7 @@ function sheetXml(sheet: Sheet): string {
   const columns = Math.max(sheet.header.length, ...sheet.rows.map((r) => r.length));
   // Width from the longest text in the column, within reason
   const widths = Array.from({ length: columns }, (_, c) => {
-    const longest = Math.max(...all.map((row) => String(row[c] ?? "").length));
+    const longest = Math.max(...all.map((row) => cellText(row[c] ?? null).length));
     return Math.min(60, Math.max(10, longest + 2));
   });
   const cols = widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("");
@@ -87,14 +98,15 @@ function sheetXml(sheet: Sheet): string {
 
 const STYLES =
   `${XML_HEAD}<styleSheet xmlns="${NS}">` +
-  `<numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00"/></numFmts>` +
+  `<numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.00"/><numFmt numFmtId="165" formatCode="dd/mm/yyyy"/></numFmts>` +
   `<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>` +
   `<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>` +
   `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>` +
   `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
-  `<cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+  `<cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
   `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
-  `<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs>` +
+  `<xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>` +
+  `<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs>` +
   `</styleSheet>`;
 
 /** An .xlsx workbook with one sheet per listing. */
@@ -147,7 +159,7 @@ export function xlsxBlob(sheets: Sheet[]): Blob {
 
 /** Semicolon-separated with decimal commas, so Excel in Spanish opens it as-is. */
 export function csvText(sheet: Sheet): string {
-  const cell = (c: Cell) => (typeof c === "number" ? String(c).replace(".", ",") : (c ?? ""));
+  const cell = (c: Cell) => (typeof c === "number" ? String(c).replace(".", ",") : cellText(c));
   const lines = [sheet.header, ...sheet.rows].map((cells) =>
     cells.map((c) => `"${String(cell(c)).replaceAll('"', '""')}"`).join(";"),
   );
