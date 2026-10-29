@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router";
 import { ArrowUpRight, ChevronDown, Download, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import { cents, isInPeriod, monthlyFlows, periodKey, sumBy } from "@cuentalibre/core";
@@ -18,6 +18,7 @@ import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { FlowsChart } from "./flows-chart";
+import { MethodCards } from "./method-cards";
 import { ManualPaymentDialog, PageHeader, SignedAmount } from "./treasury-parts";
 import { PAYMENT_SOURCES, PAYMENT_SOURCE_ORDER, type TreasuryPayment } from "./treasury-model";
 import { treasuryStore, usePayments } from "./treasury-store";
@@ -67,6 +68,12 @@ export function PaymentsPage() {
   const months = useMemo(() => monthlyFlows(payments, today), [payments, today]);
 
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters((f) => ({ ...f, [key]: value }));
+  const list = useRef<HTMLElement>(null);
+  // A card filters the list by its method and brings the list into view
+  const pickMethod = (id: string | null) => {
+    set("method", id ?? ALL);
+    if (id) list.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const q = filters.query.trim().toLowerCase();
   const sign = sort.dir === "asc" ? 1 : -1;
   const rows = periodRows
@@ -118,14 +125,21 @@ export function PaymentsPage() {
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
         <PageHeader
-          title="Cobros y pagos"
-          description="Lo que has cobrado y pagado: facturas emitidas y recibidas, gastos y cobros o pagos manuales."
+          title="Bancos y caja"
+          description="Tus cuentas y formas de pago, y todo lo que has cobrado y pagado."
         >
           <Button onClick={() => setCreating(true)}>
             <Plus strokeWidth={2} aria-hidden="true" />
             Nuevo cobro / pago manual
           </Button>
         </PageHeader>
+
+        <MethodCards
+          payments={payments}
+          today={today}
+          selected={filters.method === ALL ? null : filters.method}
+          onSelect={pickMethod}
+        />
 
         <FlowsChart months={months} />
 
@@ -143,6 +157,7 @@ export function PaymentsPage() {
         </dl>
 
         <section
+          ref={list}
           aria-label="Listado de cobros y pagos"
           className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
           style={{ "--i": 1 } as CSSProperties}
