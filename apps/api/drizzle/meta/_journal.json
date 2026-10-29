@@ -113,6 +113,13 @@
       "when": 1793274982561,
       "tag": "0015_drop_bank_movements",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793275470022,
+      "tag": "0016_drop_treasury_accounts",
+      "breakpoints": true
     }
   ]
 }

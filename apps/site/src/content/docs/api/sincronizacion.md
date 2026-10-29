@@ -9,7 +9,7 @@ Para tener una copia local de todo y mantenerla al día, sin volver a descargarl
 
 ## `GET /v1/workspace`
 
-Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `treasuryAccounts`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products`, `stockMovements` y `settings`, más un `cursor`. `filedReturns` trae todas las versiones, de la más antigua a la más reciente, y `settings` todas las secciones, con los valores por defecto en las que nunca se han guardado.
+Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products`, `stockMovements` y `settings`, más un `cursor`. `filedReturns` trae todas las versiones, de la más antigua a la más reciente, y `settings` todas las secciones, con los valores por defecto en las que nunca se han guardado.
 
 ## `GET /v1/sync?since=<cursor>&limit=500`
 
@@ -17,7 +17,7 @@ Lo que ha cambiado desde el cursor: `{ cursor, changes, hasMore }`. Cada cambio 
 
 ## `POST /v1/commands`
 
-La forma en que escribe la aplicación web: una lista de hasta 500 comandos que se aplican en orden y en una sola transacción. Si uno falla, no se guarda ninguno. Responde `{ changes }` con el estado final de lo que tocaron. Sirve para lo que no tiene ruta propia (etiquetas, formas de pago, cuentas de tesorería, productos…).
+La forma en que escribe la aplicación web: una lista de hasta 500 comandos que se aplican en orden y en una sola transacción. Si uno falla, no se guarda ninguno. Responde `{ changes }` con el estado final de lo que tocaron. Sirve para lo que no tiene ruta propia (etiquetas, formas de pago, productos…).
 
 ```json
 {
@@ -39,7 +39,7 @@ La forma en que escribe la aplicación web: una lista de hasta 500 comandos que 
 | `reopenQuarter` | `{ type, period }`                                                                                                                                                                                                 |
 | `saveSettings`  | `{ type, section, data }`. Sustituye una sección entera de los [ajustes](/docs/api/ajustes).                                                                                                                       |
 
-`entity` puede ser `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses` y los [registros sin ruta propia](/docs/api/otros-registros): `tags`, `treasuryAccounts`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products` y `stockMovements`. En los comandos, los contactos van como `clients` o `suppliers` y no llevan `role`. Todos los `id` son UUID.
+`entity` puede ser `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses` y los [registros sin ruta propia](/docs/api/otros-registros): `tags`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products` y `stockMovements`. En los comandos, los contactos van como `clients` o `suppliers` y no llevan `role`. Todos los `id` son UUID.
 
 Un número importado tiene que encajar en su serie y no existir ya (`409 number_taken`), y no crea registro de VERI\*FACTU: lo hizo el programa que la emitió.
 

@@ -20,7 +20,6 @@ export const EMPTY: Workspace = {
   closedQuarters: [],
   filedReturns: [],
   tags: [],
-  treasuryAccounts: [],
   paymentMethods: [],
   manualPayments: [],
   catalogFamilies: [],

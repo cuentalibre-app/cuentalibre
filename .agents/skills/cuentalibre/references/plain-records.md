@@ -1,4 +1,4 @@
-# Tags, treasury and catalog
+# Tags, payment methods and catalog
 
 These records have no legal effects and no quarter. They have no REST routes: read them from `GET /workspace` (or the change feed) and write them with `POST /commands` (`create`, `update`, `delete`; api.md › Commands). Every `id` is a UUID you generate. The API checks their shape and that the records they name are the organization's and not deleted (`400 invalid_<entity>`), and refuses to delete one another record still names (`409 in_use`).
 
@@ -6,28 +6,15 @@ These records have no legal effects and no quarter. They have no REST routes: re
 
 `{ id, name, color }`, `color` as `#rrggbb`. Any record's `tags` lists tag ids.
 
-## Treasury accounts (`treasuryAccounts`)
-
-| Field    | Type                                   |                                                            |
-| -------- | -------------------------------------- | ---------------------------------------------------------- |
-| `id`     | id                                     |                                                            |
-| `kind`   | `bank` \| `cash` \| `paypal` \| `card` |                                                            |
-| `name`   | text                                   | Required.                                                  |
-| `number` | text                                   | IBAN, card number (often its last digits) or PayPal email. |
-| `active` | boolean                                |                                                            |
-
-Can't be deleted while a payment method names it.
-
 ## Payment methods (`paymentMethods`)
 
-| Field       | Type                                                                        |                                                                                |
-| ----------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `id`        | id                                                                          | Used as `paymentMethodId` in payments, expenses, manual payments and contacts. |
-| `type`      | `cash` \| `card` \| `transfer` \| `directDebit` \| `promissory` \| `paypal` |                                                                                |
-| `name`      | text                                                                        | Required.                                                                      |
-| `number`    | text                                                                        | Account or card number; may hold only the last four digits.                    |
-| `accountId` | id \| null                                                                  | Treasury account it books into.                                                |
-| `active`    | boolean                                                                     |                                                                                |
+| Field    | Type                                                                        |                                                                                |
+| -------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `id`     | id                                                                          | Used as `paymentMethodId` in payments, expenses, manual payments and contacts. |
+| `type`   | `cash` \| `card` \| `transfer` \| `directDebit` \| `promissory` \| `paypal` |                                                                                |
+| `name`   | text                                                                        | Required.                                                                      |
+| `number` | text                                                                        | IBAN, card number or PayPal email; may hold only the last four digits.         |
+| `active` | boolean                                                                     |                                                                                |
 
 Can't be deleted while a contact, an expense, a payment of a sales or received invoice, a manual payment or settings `defaultPaymentMethod` names it (the message says which); deactivate it instead. The method proposed on new documents is settings `defaultPaymentMethod`.
 

@@ -23,7 +23,6 @@ export type Entity =
   | "catalogFamilies"
   | "stockMovements"
   | "manualPayments"
-  | "treasuryAccounts"
   | "paymentMethods"
   | "companyUsers";
 
