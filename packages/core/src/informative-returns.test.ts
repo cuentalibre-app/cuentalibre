@@ -187,15 +187,71 @@ describe("model349", () => {
     op("2026-04-02", 60, { contactId: "s4", operation: "intraEu" }),
   ];
 
-  it("groups by operator and key within the period", () => {
+  it("groups by operator and key within the period, in the design's order of keys", () => {
     const r = model349(ops, { year: 2026, months: [0, 1, 2] });
     expect(r.operations.map((o) => [o.contactId, o.key, o.base])).toEqual([
       ["c1", "E", eur(300)],
-      ["s4", "I", eur(60)],
       ["c1", "S", eur(1500)],
+      ["s4", "I", eur(60)],
     ]);
     expect(r.operators).toBe(3);
     expect(r.total).toBe(eur(1860));
+  });
+
+  it("groups contacts that share a VAT number as one operator", () => {
+    const de = { operation: "intraEu" as const, side: "sale" as const, country: "Alemania" };
+    const r = model349(
+      [
+        op("2026-01-10", 100, { ...de, contactId: "c1", taxId: "DE123456789" }),
+        op("2026-02-10", 400, { ...de, contactId: "c2", taxId: "de 123.456.789" }),
+        op("2026-02-11", 50, { ...de, contactId: "c3", taxId: "123456789" }),
+        op("2026-02-12", 70, { ...de, contactId: "c4" }),
+      ],
+      { year: 2026, months: [0, 1, 2] },
+    );
+    expect(r.operations.map((o) => [o.contactId, o.contactIds, o.code, o.number, o.base])).toEqual([
+      ["c2", ["c1", "c2", "c3"], "DE", "123456789", eur(550)],
+      ["c4", ["c4"], "DE", "", eur(70)],
+    ]);
+    expect(r.operators).toBe(2);
+  });
+
+  it("nets a credit note of the same period in its record", () => {
+    const sale = op("2026-01-10", 1000, { side: "sale", operation: "intraEu", id: "f1" });
+    const credit = op("2026-03-10", -200, { side: "sale", operation: "intraEu", rectifiesId: "f1" });
+    const r = model349([sale, credit], { year: 2026, months: [0, 1, 2] });
+    expect(r.operations.map((o) => o.base)).toEqual([eur(800)]);
+    expect(r.rectifications).toEqual([]);
+  });
+
+  it("rectifies the period an earlier operation was declared in", () => {
+    const intra = { side: "sale" as const, operation: "intraEu" as const, taxId: "FR12345678901" };
+    const ops = [
+      op("2026-02-10", 1000, { ...intra, id: "f1" }),
+      op("2026-03-10", 500, { ...intra, id: "f2" }),
+      op("2026-05-10", -100, { ...intra, id: "r1", rectifiesId: "f1" }),
+      op("2026-08-10", -300, { ...intra, rectifiesId: "f2" }),
+      op("2026-08-11", 50, { ...intra, rectifiesId: "r1" }),
+      op("2026-08-12", 900, intra),
+    ];
+    const r = model349(ops, { year: 2026, months: [6, 7, 8] });
+    expect(r.operations.map((o) => o.base)).toEqual([eur(900)]);
+    expect(r.rectifications.map((o) => [o.key, o.year, o.period, o.declared, o.base])).toEqual([
+      ["S", 2026, "1T", eur(1400), eur(1150)],
+    ]);
+    expect(r.rectifiedTotal).toBe(eur(1150));
+    expect(r.total).toBe(eur(900));
+  });
+
+  it("rectifies months for monthly filers", () => {
+    const intra = { side: "purchase" as const, operation: "intraEu" as const, goods: true };
+    const ops = [
+      op("2026-04-10", 300, { ...intra, id: "p1" }),
+      op("2026-05-02", -300, { ...intra, rectifiesId: "p1" }),
+    ];
+    const r = model349(ops, { year: 2026, months: [4] });
+    expect(r.operations).toEqual([]);
+    expect(r.rectifications.map((o) => [o.key, o.period, o.declared, o.base])).toEqual([["A", "04", eur(300), 0]]);
   });
 
   it("covers one month for monthly filers", () => {

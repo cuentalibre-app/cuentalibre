@@ -395,13 +395,15 @@ export interface AeatFile {
   build: () => string;
   /** Why it can't be built yet, such as a missing NIF. */
   missing?: string;
+  /** Why the file rejects the amounts on screen; there is a default one for edited boxes. */
+  invalid?: string;
 }
 
-/** The AEAT file of a quarterly form, filed by the profile's taxpayer. */
+/** The AEAT file of a form for a quarter, or a month for the 349, filed by the profile's taxpayer. */
 export function useAeatFile(
   form: FormCode,
   year: number,
-  quarter: Quarter,
+  period: Quarter | string,
   build: (filer: AeatFiler) => string,
 ): AeatFile {
   const { profile } = useSettings();
@@ -409,9 +411,10 @@ export function useAeatFile(
     taxId: profile.taxId,
     surnames: `${profile.lastName} ${profile.secondLastName}`,
     name: profile.firstName,
+    phone: profile.phone,
   };
   return {
-    name: aeatFileName(form, year, quarter),
+    name: aeatFileName(form, year, period),
     build: () => build(filer),
     missing:
       !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
@@ -451,7 +454,10 @@ function AeatFileButton({ file }: { file: AeatFile }) {
     return (
       <UnavailableFile
         label={LABEL_AEAT_FILE}
-        reason="Alguna casilla tiene un importe que el fichero de la AEAT no admite. Revisa las casillas que has cambiado a mano."
+        reason={
+          file.invalid ??
+          "Alguna casilla tiene un importe que el fichero de la AEAT no admite. Revisa las casillas que has cambiado a mano."
+        }
       />
     );
   }

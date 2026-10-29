@@ -2,11 +2,13 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Calendar, ChevronDown } from "lucide-react";
 import {
+  file349,
   model349,
   obligation,
-  splitVatNumber,
+  period349,
   toIsoDate,
   type Key349,
+  type Operation349,
   type Periodicity349,
   type Quarter,
 } from "@cuentalibre/core";
@@ -20,8 +22,8 @@ import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { FormInfo } from "./form-info";
 import { usePartyBooks } from "./party-operations";
-import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
-import { Assumptions, Notice, ResultPanel, type ResultSummary } from "./tax-form";
+import { RecordsTable, type RecordColumn, type RecordRow, type RecordValue } from "./records-table";
+import { Assumptions, Notice, ResultPanel, useAeatFile, type AeatFile, type ResultSummary } from "./tax-form";
 import { ONLY_RECORDED } from "./taxes-model";
 import { ModuleBreadcrumb } from "./tax-intro";
 
@@ -38,6 +40,16 @@ const COLUMNS: RecordColumn[] = [
   { label: "Nombre o razón social" },
   { label: "Clave" },
   { label: "Base imponible", amount: true },
+];
+
+const RECTIFICATION_COLUMNS: RecordColumn[] = [
+  { label: "País" },
+  { label: "NIF operador" },
+  { label: "Nombre o razón social" },
+  { label: "Clave" },
+  { label: "Periodo" },
+  { label: "Base declarada", amount: true, secondary: true },
+  { label: "Base rectificada", amount: true },
 ];
 
 const MONTHS = [
@@ -61,6 +73,9 @@ function monthlyDeadline(year: number, lastMonth: number): Date {
   if (lastMonth === 6) return new Date(year, 8, 20);
   return new Date(year, lastMonth + 1, 20);
 }
+
+/** Period of a rectified return: "1T" stays, "05" is the month's name. */
+const periodLabel = (code: string) => (code.endsWith("T") ? code : MONTHS[Number(code) - 1]!);
 
 interface Selection {
   year: number;
@@ -123,31 +138,36 @@ export function IntraEuPage() {
 
   const r = useMemo(() => model349(books.ops, selection), [books, selection]);
 
-  const rows: RecordRow[] = r.operations.map((o) => {
-    const contact = books.contacts.get(o.contactId);
-    const vat = splitVatNumber(contact?.taxId ?? "", contact?.country);
-    const name = contact?.name ?? "Contacto eliminado";
-    return {
-      id: `${o.contactId}-${o.key}`,
-      title: name,
-      values: [
-        { text: vat.code, mono: true },
-        { text: vat.number, mono: true },
-        { text: name },
-        { text: KEY_LABEL[o.key], copy: o.key },
-        { amount: o.base },
-      ],
-      documentIds: o.documentIds,
-    };
-  });
+  const nameOf = (contactId: string) => books.contacts.get(contactId)?.name ?? "Contacto eliminado";
+  const operatorValues = (o: Operation349): RecordValue[] => [
+    { text: o.code, mono: true },
+    { text: o.number, mono: true },
+    { text: nameOf(o.contactId) },
+    { text: KEY_LABEL[o.key], copy: o.key },
+  ];
+  const rows: RecordRow[] = r.operations.map((o) => ({
+    id: `${o.contactId}-${o.key}`,
+    title: nameOf(o.contactId),
+    values: [...operatorValues(o), { amount: o.base }],
+    documentIds: o.documentIds,
+  }));
+  const rectificationRows: RecordRow[] = r.rectifications.map((o) => ({
+    id: `${o.contactId}-${o.key}-${o.year}-${o.period}`,
+    title: nameOf(o.contactId),
+    values: [
+      ...operatorValues(o),
+      { text: `${periodLabel(o.period)} ${o.year}`, copy: o.period },
+      { amount: o.declared },
+      { amount: o.base },
+    ],
+    documentIds: o.documentIds,
+  }));
 
-  const noCountry = r.operations.filter((o) => {
-    const c = books.contacts.get(o.contactId);
-    return !splitVatNumber(c?.taxId ?? "", c?.country).code;
-  });
+  const records = [...r.operations, ...r.rectifications];
+  const noCountry = records.filter((o) => !o.code);
   const notInVies = [
     ...new Map(
-      r.operations.map(
+      records.map(
         (o) =>
           [
             o.contactId,
@@ -164,6 +184,32 @@ export function IntraEuPage() {
     periodicity === "quarterly"
       ? `Declaración anual: hasta el ${formatDate(toIsoDate(new Date(selection.year + 1, 0, 30)))}, solo si tus operaciones no superan 35.000 €`
       : `Plazo hasta el ${formatDate(toIsoDate(monthlyDeadline(selection.year, lastMonth)))}`;
+
+  const filed = period349(selection.months);
+  const built = useAeatFile("349", selection.year, filed?.period ?? "", (filer) =>
+    file349(
+      {
+        year: selection.year,
+        period: filed!.period,
+        bimonthly: filed!.bimonthly,
+        operations: r.operations.map((o) => ({ ...o, name: nameOf(o.contactId) })),
+        rectifications: r.rectifications.map((o) => ({ ...o, name: nameOf(o.contactId) })),
+      },
+      filer,
+    ),
+  );
+  const file: AeatFile = {
+    ...built,
+    missing: !filed
+      ? "El fichero es de un trimestre o un mes: elige uno en el selector de periodo."
+      : records.length === 0
+        ? `Sin operaciones intracomunitarias en ${selection.label} no hay que presentar el 349.`
+        : noCountry.length > 0
+          ? "Falta el código de país de algún operador: completa su NIF-IVA o su país."
+          : built.missing,
+    invalid:
+      "Alguna base imponible sale negativa y el 349 solo admite importes positivos. Revisa las facturas rectificativas del periodo.",
+  };
 
   const result: ResultSummary = {
     label: "Base imponible total",
@@ -239,6 +285,7 @@ export function IntraEuPage() {
           deadlineText={deadlineText}
           today={today}
           result={result}
+          file={file}
         />
 
         {noCountry.length > 0 && (
@@ -279,14 +326,31 @@ export function IntraEuPage() {
           />
         </section>
 
+        {rectificationRows.length > 0 && (
+          <section aria-label="Rectificaciones" className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="m-0 text-md font-semibold">Rectificaciones de periodos anteriores</h2>
+              <span className="text-xs text-muted-foreground">Un registro por operador, clave y periodo</span>
+            </div>
+            <RecordsTable
+              label="Rectificaciones"
+              columns={RECTIFICATION_COLUMNS}
+              rows={rectificationRows}
+              books={books}
+              empty=""
+            />
+          </section>
+        )}
+
         <FormInfo form="349" />
         <Assumptions
           items={[
             "Recoge solo las facturas con el tipo de operación Intracomunitaria, sea cual sea el país del cliente o proveedor.",
             "El código de país sale del prefijo del NIF-IVA y, si no lo tiene, del país de la ficha del contacto. Si falta el país en alguna operación, escribe el NIF-IVA con su prefijo (por ejemplo, FR12345678901) o completa el país en la ficha.",
             "Las ventas de la cuenta 700 y las compras de las cuentas 600 y 602 son bienes (claves E y A); el resto, servicios (S e I).",
-            "Las rectificaciones de periodos anteriores no se separan: se suman en el periodo de la factura rectificativa.",
-            "Se calcula como una única declaración, sin sustitutivas.",
+            "Las facturas rectificativas de operaciones de un periodo anterior van como rectificaciones de ese periodo, con la base declarada y la base una vez rectificada. Las del mismo periodo se suman a su operación.",
+            "Los clientes y proveedores con el mismo NIF-IVA se declaran como un solo operador.",
+            "Se calcula como una única declaración, sin complementarias ni sustitutivas.",
             "La periodicidad es trimestral; pasa a mensual si las entregas y prestaciones a la UE superan 50.000 € (sin IVA) en el trimestre o en alguno de los cuatro anteriores.",
             ONLY_RECORDED,
           ]}

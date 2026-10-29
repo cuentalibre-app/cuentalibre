@@ -1,5 +1,6 @@
 import { normalizeTaxId } from "./contacts";
 import type { Cents } from "./money";
+import type { Key349 } from "./informative-returns";
 import type { Quarter } from "./period";
 import type { Boxes } from "./tax-returns";
 
@@ -17,6 +18,8 @@ export interface AeatFiler {
   surnames: string;
   /** First name of a person; empty for a company. */
   name: string;
+  /** Contact phone, which informative returns such as the 349 ask for. */
+  phone?: string;
 }
 
 /**
@@ -215,7 +218,7 @@ const UNSIGNED_303 = new Set([
   "150", "152", "165", "167", "01", "03", "153", "155", "04", "06", "07", "09", "10", "11", "12", "13",
   "156", "158", "168", "170", "16", "18", "19", "21", "22", "24",
   "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
-  "77", "110", "78", "87", "70", "109", "112",
+  "77", "110", "78", "87", "70", "109", "112", "111",
 ]); // prettier-ignore
 
 /** Boxes of the general regime on page 1, in the order of each design. */
@@ -343,7 +346,7 @@ function page3of303(form: Return303, design: 2025 | 2026): string {
       noActivity ? "X" : blanks(1),
       ...rectification,
       ...(design === 2026
-        ? [blanks(17), blanks(2), blanks(546)] // [111] and the two reasons of a rectification
+        ? [box303(form.boxes, "111"), blanks(2), blanks(546)] // [111] and the two reasons of a rectification
         : [box303(form.boxes, "108"), blanks(17), blanks(120), blanks(2), blanks(443)]),
       "</T30303000>",
     ],
@@ -392,11 +395,146 @@ export function file303(form: Return303, filer: AeatFiler): string {
   return envelope("303", form.year, periodCode(form.quarter), pages);
 }
 
-/** Name of the downloaded file: "130_2026_3T.txt". */
-export function aeatFileName(form: string, year: number, quarter: Quarter | null): string {
-  return `${form}_${year}${quarter === null ? "" : `_${periodCode(quarter)}`}.txt`;
+/* ─────────────────── Form 349: intra-EU operations ─────────────────── */
+
+/**
+ * Record design of form 349 (Orden EHA/769/2010 as amended by HAC/1274/2020), first used for
+ * 2021 returns. Unlike self-assessments it is the informative returns' format: records of 500
+ * positions, one per line, and amounts without sign as euros and cents.
+ */
+export const FIRST_YEAR_349 = 2021;
+
+/** An operator record, or the rectification of one for an earlier period. */
+export interface Operator349 {
+  /** Country code and number of the operator's EU VAT number. */
+  code: string;
+  number: string;
+  name: string;
+  key: Key349;
+  base: Cents;
 }
 
+export interface Rectified349 extends Operator349 {
+  /** Year and period ("1T", "05") the rectified bases were declared in. */
+  year: number;
+  period: string;
+  /** Base declared before the rectification; `base` is the one after it. */
+  declared: Cents;
+}
+
+export interface Return349 {
+  year: number;
+  /** "1T"… "4T", or "01"… "12" for a monthly return. */
+  period: string;
+  /** Monthly return covering the first two months of a quarter. */
+  bimonthly: boolean;
+  operations: Operator349[];
+  rectifications: Rectified349[];
+}
+
+/**
+ * Period of a 349 from its months (0-based): a quarter, a month, or the first two months of a
+ * quarter, which go as a return of the second month. A whole year has no code since 2021.
+ */
+export function period349(months: number[]): { period: string; bimonthly: boolean } | null {
+  const first = months[0];
+  if (first === undefined || months.some((m, i) => m !== first + i)) return null;
+  const month = (m: number) => String(m + 1).padStart(2, "0");
+  if (months.length === 1) return { period: month(first), bimonthly: false };
+  if (first % 3 !== 0) return null;
+  if (months.length === 3) return { period: `${first / 3 + 1}T`, bimonthly: false };
+  if (months.length === 2) return { period: month(first + 1), bimonthly: true };
+  return null;
+}
+
+/** Digits of a phone number, without the Spanish prefix, in the nine positions of the design. */
+function phone349(phone = ""): string {
+  const digits = phone.replace(/\D/g, "").replace(/^(0034|34)(?=\d{9}$)/, "");
+  return digits.length === 9 ? digits : "0".repeat(9);
+}
+
+/** The start every record of the 349 shares: type, form, year and the declarant's NIF. */
+function head349(type: "1" | "2", year: number, filer: AeatFiler): string[] {
+  return [type, "349", String(year), aeatText(filerTaxId(filer.taxId), 9)];
+}
+
+/** The operator's VAT number and name, and the key: positions 76 to 133 of every type 2 record. */
+function operator349(op: Operator349): string[] {
+  return [aeatText(op.code, 2), aeatText(op.number, 15), aeatText(op.name, 40), op.key];
+}
+
+/**
+ * The file the 349 online form imports: the declarant record and one record per operator and
+ * key, then the rectifications of earlier periods. Complementary and substitute returns are
+ * not covered, nor goods sent under call-off stock (keys R, D and C) or triangular operations.
+ */
+export function file349(form: Return349, filer: AeatFiler): string {
+  if (form.year < FIRST_YEAR_349) throw new RangeError(`No form 349 record design for ${form.year}`);
+  const name = aeatText(`${filer.surnames} ${filer.name}`, 40);
+  const declarant = page(
+    [
+      ...head349("1", form.year, filer),
+      name,
+      blanks(1),
+      phone349(filer.phone),
+      name, // person to contact: the declarant
+      "349".padEnd(13, "0"), // receipt number: the sede assigns it
+      blanks(2), // complementary or substitute return
+      "0".repeat(13), // receipt number of the return it complements or substitutes
+      form.period,
+      aeatAmount(form.operations.length, 9, false),
+      aeatAmount(sumOf(form.operations), 15, false),
+      aeatAmount(form.rectifications.length, 9, false),
+      aeatAmount(sumOf(form.rectifications), 15, false),
+      form.bimonthly ? "X" : blanks(1),
+      blanks(204),
+      blanks(9), // NIF of the legal representative of a minor
+      blanks(101),
+    ],
+    500,
+  );
+  const substitute = blanks(17 + 40); // receiver who replaces another under call-off stock (key C)
+  const operations = form.operations.map((op) =>
+    page(
+      [
+        ...head349("2", form.year, filer),
+        blanks(58),
+        ...operator349(op),
+        aeatAmount(op.base, 13, false),
+        blanks(32),
+        substitute,
+        blanks(265),
+      ],
+      500,
+    ),
+  );
+  const rectifications = form.rectifications.map((op) =>
+    page(
+      [
+        ...head349("2", form.year, filer),
+        blanks(58),
+        ...operator349(op),
+        blanks(13),
+        String(op.year),
+        op.period,
+        aeatAmount(op.base, 13, false),
+        aeatAmount(op.declared, 13, false),
+        substitute,
+        blanks(265),
+      ],
+      500,
+    ),
+  );
+  return [declarant, ...operations, ...rectifications].map((record) => `${record}\r\n`).join("");
+}
+
+const sumOf = (ops: { base: Cents }[]) => ops.reduce((total, op) => total + op.base, 0);
+
+/** Name of the downloaded file: "130_2026_3T.txt", "349_2026_05.txt". */
+export function aeatFileName(form: string, year: number, period: Quarter | string | null): string {
+  const code = typeof period === "number" ? periodCode(period) : period;
+  return `${form}_${year}${code === null ? "" : `_${code}`}.txt`;
+}
 /** The bytes of a file as ISO-8859-1, the encoding the AEAT reads. */
 export function aeatBytes(text: string): Uint8Array<ArrayBuffer> {
   const bytes = new Uint8Array(text.length);
