@@ -1,19 +1,13 @@
 import { HandCoins, Receipt, ReceiptText, Wallet, type LucideIcon } from "lucide-react";
 import { cents, type Cents } from "@cuentalibre/core";
-import type {
-  Expense,
-  ManualPayment,
-  PaymentMethod,
-  PurchaseInvoice,
-  SalesDocument,
-  TreasuryAccount,
-} from "@cuentalibre/contracts";
+import type { Expense, ManualPayment, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { PURCHASES_PATH, supplierOf } from "@/features/purchases/purchases-model";
 import { KINDS, clientOf } from "@/features/sales/sales-model";
 
 export const TREASURY_PATH = "/bancos";
-export const PAYMENTS_PATH = "/bancos/cobros-y-pagos";
+/** Old address of the payments list, now the whole of banks. */
+export const OLD_PAYMENTS_PATH = "/bancos/cobros-y-pagos";
 
 export type PaymentSource = "sale" | "purchase" | "expense" | "manual";
 
@@ -40,7 +34,6 @@ export interface TreasuryPayment {
   date: string;
   amount: Cents;
   paymentMethodId: string;
-  accountId: string | null;
   /** The linked document's page, null for manual payments. */
   href: string | null;
 }
@@ -50,7 +43,6 @@ interface Books {
   purchases: PurchaseInvoice[];
   expenses: Expense[];
   manual: ManualPayment[];
-  methods: PaymentMethod[];
 }
 
 export const saleHref = (id: string) => `${KINDS.invoice.path}/${id}`;
@@ -58,8 +50,7 @@ export const purchaseHref = (id: string) => `${PURCHASES_PATH}/${id}`;
 export const expenseHref = (id: string) => `${EXPENSES_PATH}/${id}`;
 
 /** Every recorded collection and payment, newest first. */
-export function collectPayments({ sales, purchases, expenses, manual, methods }: Books): TreasuryPayment[] {
-  const accountOf = (methodId: string) => methods.find((m) => m.id === methodId)?.accountId ?? null;
+export function collectPayments({ sales, purchases, expenses, manual }: Books): TreasuryPayment[] {
   const payments: TreasuryPayment[] = [];
 
   for (const doc of sales) {
@@ -74,7 +65,6 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
         date: p.date,
         amount: p.amount,
         paymentMethodId: p.paymentMethodId,
-        accountId: accountOf(p.paymentMethodId),
         href: saleHref(doc.id),
       });
   }
@@ -90,7 +80,6 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
         date: p.date,
         amount: cents(-p.amount),
         paymentMethodId: p.paymentMethodId,
-        accountId: accountOf(p.paymentMethodId),
         href: purchaseHref(doc.id),
       });
   }
@@ -105,7 +94,6 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
       date: e.payment.date,
       amount: cents(-e.amount),
       paymentMethodId: e.payment.paymentMethodId,
-      accountId: accountOf(e.payment.paymentMethodId),
       href: expenseHref(e.id),
     });
   }
@@ -119,14 +107,8 @@ export function collectPayments({ sales, purchases, expenses, manual, methods }:
       date: m.date,
       amount: m.amount,
       paymentMethodId: m.paymentMethodId,
-      accountId: accountOf(m.paymentMethodId),
       href: null,
     });
 
   return payments.sort((a, b) => b.date.localeCompare(a.date));
-}
-
-export function accountName(id: string | null, accounts: TreasuryAccount[]): string {
-  if (!id) return "Sin cuenta";
-  return accounts.find((a) => a.id === id)?.name ?? "Cuenta eliminada";
 }

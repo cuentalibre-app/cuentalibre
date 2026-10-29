@@ -6,14 +6,7 @@ import { catalogFamilySchema, stockMovementSchema } from "./core";
 import { organizationSettingsSchema, settingsSectionSchema } from "./organization-settings";
 import { expenseSchema, purchaseInvoiceSchema, purchaseLineSchema } from "./purchases";
 import { salesDocumentSchema, salesLineSchema } from "./sales";
-import {
-  closedQuarterSchema,
-  filedReturnSchema,
-  paymentMethodSchema,
-  quarterKeySchema,
-  tagSchema,
-  treasuryAccountSchema,
-} from "./settings";
+import { closedQuarterSchema, filedReturnSchema, paymentMethodSchema, quarterKeySchema, tagSchema } from "./settings";
 import { manualPaymentSchema } from "./treasury";
 
 /*
@@ -32,7 +25,6 @@ export const syncedEntitySchema = z.enum([
   "closedQuarters",
   "filedReturns",
   "tags",
-  "treasuryAccounts",
   "paymentMethods",
   "manualPayments",
   "catalogFamilies",
@@ -95,9 +87,7 @@ export const storedExpenseSchema = expenseSchema.extend({
 
 export const storedTagSchema = tagSchema.extend({ id: z.uuid() });
 
-export const storedTreasuryAccountSchema = treasuryAccountSchema.extend({ id: z.uuid() });
-
-export const storedPaymentMethodSchema = paymentMethodSchema.extend({ id: z.uuid(), accountId: z.uuid().nullable() });
+export const storedPaymentMethodSchema = paymentMethodSchema.extend({ id: z.uuid() });
 
 export const storedManualPaymentSchema = manualPaymentSchema.extend({ id: z.uuid(), paymentMethodId: z.uuid() });
 
@@ -116,7 +106,6 @@ export const storedFiledReturnSchema = filedReturnSchema.extend({ id: z.uuid() }
 /** Each plain record's schema, by entity. */
 export const plainRecordSchemas = {
   tags: storedTagSchema,
-  treasuryAccounts: storedTreasuryAccountSchema,
   paymentMethods: storedPaymentMethodSchema,
   manualPayments: storedManualPaymentSchema,
   catalogFamilies: storedCatalogFamilySchema,
@@ -149,7 +138,6 @@ export const commandSchema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("create"), entity: z.literal("purchaseInvoices"), data: storedPurchaseInvoiceSchema }),
     z.object({ type: z.literal("create"), entity: z.literal("expenses"), data: storedExpenseSchema }),
     plainCreate("tags"),
-    plainCreate("treasuryAccounts"),
     plainCreate("paymentMethods"),
     plainCreate("manualPayments"),
     plainCreate("catalogFamilies"),
@@ -200,7 +188,6 @@ export const changeSchema = z.union([
   z.object({ op: z.literal("upsert"), entity: z.literal("closedQuarters"), data: closedQuarterSchema }),
   z.object({ op: z.literal("upsert"), entity: z.literal("filedReturns"), data: storedFiledReturnSchema }),
   plainUpsert("tags"),
-  plainUpsert("treasuryAccounts"),
   plainUpsert("paymentMethods"),
   plainUpsert("manualPayments"),
   plainUpsert("catalogFamilies"),
@@ -228,7 +215,6 @@ export const workspaceSchema = z.object({
   /** Every version, oldest first. */
   filedReturns: z.array(storedFiledReturnSchema),
   tags: z.array(storedTagSchema),
-  treasuryAccounts: z.array(storedTreasuryAccountSchema),
   paymentMethods: z.array(storedPaymentMethodSchema),
   manualPayments: z.array(storedManualPaymentSchema),
   catalogFamilies: z.array(storedCatalogFamilySchema),

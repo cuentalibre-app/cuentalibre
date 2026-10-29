@@ -1,6 +1,12 @@
-import { checkSpanishTaxId, isValidEmail, missingIssuerFields, type IssuerField } from "@cuentalibre/core";
+import {
+  checkSpanishTaxId,
+  formatIban,
+  isValidEmail,
+  isValidIban,
+  missingIssuerFields,
+  type IssuerField,
+} from "@cuentalibre/core";
 import type {
-  AccountKind,
   BusinessKind,
   BusinessProfile,
   FiscalRegion,
@@ -17,9 +23,9 @@ import { settingsStore, useSettings } from "./settings-store";
 export const SETTINGS_PATH = "/configuracion";
 export const BUSINESS_PATH = "/configuracion/empresa";
 export const TAX_SETTINGS_PATH = "/configuracion/impuestos";
-export const ACCOUNTS_PATH = "/configuracion/cuentas";
-/** Old address of the payment methods, which now live with their accounts. */
-export const PAYMENT_METHODS_PATH = "/configuracion/metodos-de-pago";
+export const PAYMENT_METHODS_PATH = "/configuracion/formas-de-cobro-y-pago";
+/** Old addresses of the payment methods, from when they hung from treasury accounts. */
+export const OLD_PAYMENT_METHODS_PATHS = ["/configuracion/cuentas", "/configuracion/metodos-de-pago"];
 export const INVOICE_SETTINGS_PATH = "/configuracion/facturas";
 export const PROFILE_PATH = "/configuracion/datos-personales";
 export const ACCESS_PATH = "/configuracion/credenciales";
@@ -204,32 +210,7 @@ export const ACTIVITY_TYPES: { group: string; options: Option[] }[] = [
 /** The options in effect for forms 130 and 100. */
 export const taxOptions = () => ({ simplified: settingsStore.get().tax.incomeTaxMethod !== "normal" });
 
-/* ─────────────────────────── Accounts and methods ─────────────────────────── */
-
-export const ACCOUNT_KINDS: Record<AccountKind, { label: string; hint: string; numberLabel: string | null }> = {
-  bank: {
-    label: "Cuenta bancaria",
-    hint: "Una cuenta corriente donde cobras y pagas por transferencia o recibo.",
-    numberLabel: "IBAN",
-  },
-  cash: {
-    label: "Efectivo / Caja",
-    hint: "Para registrar los cobros y pagos en efectivo.",
-    numberLabel: null,
-  },
-  paypal: {
-    label: "PayPal",
-    hint: "Una cuenta de PayPal donde recibes o envías pagos.",
-    numberLabel: "Email de PayPal",
-  },
-  card: {
-    label: "Tarjeta de crédito",
-    hint: "Una tarjeta con la que pagas gastos del negocio.",
-    numberLabel: "Número de tarjeta",
-  },
-};
-
-export const ACCOUNT_KIND_ORDER: AccountKind[] = ["bank", "cash", "paypal", "card"];
+/* ───────────────────────────── Payment methods ───────────────────────────── */
 
 export const METHOD_TYPES: Option<PaymentMethodType>[] = [
   { value: "cash", label: "Efectivo" },
@@ -247,11 +228,23 @@ export const ACTIVE_STATUS: Record<"active" | "inactive", { label: string; tone:
   inactive: { label: "Inactivo", tone: "neutral" },
 };
 
-/** The same statuses for accounts, which take the feminine ("cuenta activa"). */
-export const ACCOUNT_STATUS: typeof ACTIVE_STATUS = {
-  active: { label: "Activa", tone: "success" },
-  inactive: { label: "Inactiva", tone: "neutral" },
-};
+/** Methods that go through a bank account, and so may name its IBAN. */
+export const isBankMethod = (type: PaymentMethodType) =>
+  type === "transfer" || type === "directDebit" || type === "promissory";
+
+/** What the method's number holds; cash has none. */
+export function numberLabel(type: PaymentMethodType): string | null {
+  if (type === "cash") return null;
+  if (type === "paypal") return "Email de PayPal";
+  if (type === "card") return "Número de tarjeta";
+  return "IBAN";
+}
+
+/** IBANs grouped in fours; card numbers masked; anything else as typed. */
+export function displayNumber(method: Pick<PaymentMethod, "type" | "number">): string {
+  if (isBankMethod(method.type) && isValidIban(method.number)) return formatIban(method.number);
+  return method.type === "card" ? maskNumber(method.number) : method.number;
+}
 
 /** Masks all but the last four digits: "•••• 4821". Short numbers are shown whole. */
 export function maskNumber(number: string): string {
