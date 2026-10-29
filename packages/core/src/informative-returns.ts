@@ -44,6 +44,11 @@ export interface PartyOperation {
   rentalLocation?: RentalLocation;
   /** Collected or paid in cash. */
   cash: Cents;
+  /** The contact's tax ID and country: form 349 identifies operators by their EU VAT number. */
+  taxId?: string;
+  country?: string;
+  /** Invoice a rectifying invoice or credit note corrects. */
+  rectifiesId?: string;
 }
 
 export type RentalLocation = "spain" | "basqueCountry" | "navarre" | "noCadastralRef" | "abroad";
@@ -379,40 +384,123 @@ export function splitVatNumber(taxId: string, country?: string): { code: string;
   return { code: (country && EU_VAT_PREFIXES[country]) || "", number: id };
 }
 
+/** A record of form 349: the operations with one operator under one key. */
 export interface Operation349 {
+  /** Contact shown for the operator: the one with the largest base when several share its VAT number. */
   contactId: string;
+  /** Every contact with the operator's VAT number. */
+  contactIds: string[];
+  /** Country code and number of the operator's EU VAT number; the number is empty when the contact has none. */
+  code: string;
+  number: string;
   key: Key349;
   base: Cents;
   documentIds: string[];
 }
 
+/** A rectification of the bases declared for an operator and key in an earlier period. */
+export interface Rectification349 extends Operation349 {
+  /** Period the rectified bases were declared in: "1T"… "4T", or "01"… "12" for monthly filers. */
+  year: number;
+  period: string;
+  /** Base once rectified, which the record carries instead of the change. */
+  base: Cents;
+  /** Base declared before this rectification. */
+  declared: Cents;
+}
+
 export interface Model349 {
   operations: Operation349[];
-  /** Number of operators (box "número total de operadores"). */
+  /** Number of operators (box "número total de operadores"): one per record. */
   operators: number;
   /** Sum of the bases. */
   total: Cents;
+  rectifications: Rectification349[];
+  /** Sum of the rectified bases. */
+  rectifiedTotal: Cents;
 }
 
+/** The operator of an operation: its EU VAT number, or its contact when it has none. */
+function operator349(op: PartyOperation): { id: string; code: string; number: string } {
+  const vat = splitVatNumber(op.taxId ?? "", op.country);
+  return { id: vat.number ? `${vat.code}${vat.number}` : `contact:${op.contactId}`, ...vat };
+}
+
+const month349 = (date: string) => Number(date.slice(5, 7)) - 1;
+
+/**
+ * Operations with intra-EU operators of a period, one record per operator and key. Contacts
+ * sharing a VAT number are one operator, as the AEAT sees them (#63).
+ *
+ * A rectifying invoice of an operation from an earlier period goes in a rectification record
+ * of that period, carrying the base as declared and once rectified; one of the same period
+ * nets in its record. Monthly filers' earlier periods are months, the rest's are quarters.
+ */
 export function model349(ops: PartyOperation[], period: Period349): Model349 {
-  const docs = ops.filter((o) => {
-    if (o.operation !== "intraEu") return false;
-    const [y, m] = o.date.split("-").map(Number);
-    return y === period.year && period.months.includes(m! - 1);
-  });
-  const groups = groupBy(docs, (o) => `${o.contactId}|${key349(o)}`);
-  const operations = [...groups.values()]
-    .map((group) => ({
-      contactId: group[0]!.contactId,
-      key: key349(group[0]!),
+  const intra = ops.filter((o) => o.operation === "intraEu");
+  const byId = new Map(intra.map((o) => [o.id, o]));
+  /** The operation a chain of rectifications goes back to. */
+  const root = (op: PartyOperation) => {
+    let o = op;
+    for (let hops = 0; o.rectifiesId && byId.has(o.rectifiesId) && hops < intra.length; hops++)
+      o = byId.get(o.rectifiesId)!;
+    return o;
+  };
+  const monthly = period.months.length === 1;
+  const declaredIn = (op: PartyOperation) => {
+    const date = root(op).date;
+    const month = month349(date);
+    const code = monthly ? String(month + 1).padStart(2, "0") : `${Math.floor(month / 3) + 1}T`;
+    return { year: Number(date.slice(0, 4)), period: code };
+  };
+  const start = `${period.year}-${String(period.months[0]! + 1).padStart(2, "0")}`;
+  const before = (op: PartyOperation) => op.date.slice(0, 7) < start;
+  const inPeriod = (op: PartyOperation) =>
+    Number(op.date.slice(0, 4)) === period.year && period.months.includes(month349(op.date));
+  const keyOf = (op: PartyOperation) => key349(root(op));
+
+  const record = (group: PartyOperation[]): Operation349 => {
+    const bases = new Map<string, Cents>();
+    for (const o of group) bases.set(o.contactId, cents((bases.get(o.contactId) ?? 0) + o.base));
+    const contactIds = [...bases.keys()];
+    const { code, number } = operator349(group[0]!);
+    return {
+      contactId: contactIds.reduce((a, b) => (Math.abs(bases.get(b)!) > Math.abs(bases.get(a)!) ? b : a)),
+      contactIds,
+      code,
+      number,
+      key: keyOf(group[0]!),
       base: sumBy(group, (o) => o.base),
       documentIds: group.map((o) => o.id),
-    }))
+    };
+  };
+
+  const current = intra.filter(inPeriod);
+  const rectifying = current.filter((o) => before(root(o)));
+  const ofPeriod = current.filter((o) => !before(root(o)));
+  const operations = [...groupBy(ofPeriod, (o) => `${operator349(o).id}|${keyOf(o)}`).values()]
+    .map(record)
     .sort((a, b) => a.key.localeCompare(b.key) || b.base - a.base);
+
+  const target = (o: PartyOperation) => {
+    const { year, period } = declaredIn(o);
+    return `${operator349(o).id}|${keyOf(o)}|${year}|${period}`;
+  };
+  const earlier = groupBy(intra.filter(before), target);
+  const rectifications = [...groupBy(rectifying, target).entries()]
+    .map(([k, group]) => {
+      const declared = sumBy(earlier.get(k) ?? [], (o) => o.base);
+      const base = cents(declared + sumBy(group, (o) => o.base));
+      return { ...record(group), ...declaredIn(group[0]!), declared, base };
+    })
+    .sort((a, b) => a.key.localeCompare(b.key) || a.year - b.year || a.period.localeCompare(b.period));
+
   return {
     operations,
-    operators: new Set(operations.map((o) => `${o.contactId}|${o.key}`)).size,
+    operators: operations.length,
     total: sumBy(operations, (o) => o.base),
+    rectifications,
+    rectifiedTotal: sumBy(rectifications, (o) => o.base),
   };
 }
 
