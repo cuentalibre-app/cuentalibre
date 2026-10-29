@@ -359,6 +359,11 @@ export function model347(
  */
 export type Key349 = "E" | "A" | "S" | "I";
 
+/** Keys in the order the record design lists them, which is how the records go in the file. */
+const KEY_ORDER_349: Key349[] = ["E", "A", "S", "I"];
+const byKey349 = (a: { key: Key349 }, b: { key: Key349 }) =>
+  KEY_ORDER_349.indexOf(a.key) - KEY_ORDER_349.indexOf(b.key);
+
 export type Periodicity349 = "quarterly" | "bimonthly" | "monthly";
 
 /** The period of a 349: its months (0-based) within the year. */
@@ -480,7 +485,7 @@ export function model349(ops: PartyOperation[], period: Period349): Model349 {
   const ofPeriod = current.filter((o) => !before(root(o)));
   const operations = [...groupBy(ofPeriod, (o) => `${operator349(o).id}|${keyOf(o)}`).values()]
     .map(record)
-    .sort((a, b) => a.key.localeCompare(b.key) || b.base - a.base);
+    .sort((a, b) => byKey349(a, b) || b.base - a.base);
 
   const target = (o: PartyOperation) => {
     const { year, period } = declaredIn(o);
@@ -493,7 +498,7 @@ export function model349(ops: PartyOperation[], period: Period349): Model349 {
       const base = cents(declared + sumBy(group, (o) => o.base));
       return { ...record(group), ...declaredIn(group[0]!), declared, base };
     })
-    .sort((a, b) => a.key.localeCompare(b.key) || a.year - b.year || a.period.localeCompare(b.period));
+    .sort((a, b) => byKey349(a, b) || a.year - b.year || a.period.localeCompare(b.period));
 
   return {
     operations,

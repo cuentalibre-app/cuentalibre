@@ -187,12 +187,12 @@ describe("model349", () => {
     op("2026-04-02", 60, { contactId: "s4", operation: "intraEu" }),
   ];
 
-  it("groups by operator and key within the period", () => {
+  it("groups by operator and key within the period, in the design's order of keys", () => {
     const r = model349(ops, { year: 2026, months: [0, 1, 2] });
     expect(r.operations.map((o) => [o.contactId, o.key, o.base])).toEqual([
       ["c1", "E", eur(300)],
-      ["s4", "I", eur(60)],
       ["c1", "S", eur(1500)],
+      ["s4", "I", eur(60)],
     ]);
     expect(r.operators).toBe(3);
     expect(r.total).toBe(eur(1860));

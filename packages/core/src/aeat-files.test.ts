@@ -641,6 +641,40 @@ describe("file349", () => {
     expect(at(lines[0]!, 138, 48)).toBe("0".repeat(48));
   });
 
+  it("matches a file the sede imports, record for record", () => {
+    // A 4T return as another program exports it, with the declarant changed and our receipt number
+    const file = file349(
+      {
+        year: 2026,
+        period: "4T",
+        bimonthly: false,
+        operations: [
+          { code: "CY", number: "10313492Q", name: "Nicosia Testing Ltd", key: "S", base: eur(4750) },
+          { code: "IE", number: "4143435AH", name: "Dublin Cloud Limited", key: "I", base: eur(19.01) },
+          { code: "IE", number: "4276970QH", name: "Cork Models, Limited", key: "I", base: eur(18) },
+        ],
+        rectifications: [],
+      },
+      { ...filer, phone: "600123456" },
+    );
+    const name = "MARTIN GOMEZ LUCIA".padEnd(40);
+    const head = "2349202650123456Q" + " ".repeat(58);
+    expect(records(file)).toEqual([
+      (
+        "1349202650123456Q" +
+        name +
+        " 600123456" +
+        name +
+        "3490000000000  " +
+        "0".repeat(13) +
+        "4T000000003000000000478701000000000000000000000000"
+      ).padEnd(500),
+      (head + "CY10313492Q      " + "NICOSIA TESTING LTD".padEnd(40) + "S0000000475000").padEnd(500),
+      (head + "IE4143435AH      " + "DUBLIN CLOUD LIMITED".padEnd(40) + "I0000000001901").padEnd(500),
+      (head + "IE4276970QH      " + "CORK MODELS LIMITED".padEnd(40) + "I0000000001800").padEnd(500),
+    ]);
+  });
+
   it("rejects negative bases and years before the design", () => {
     const negative = { ...form.operations[0]!, base: eur(-10) };
     expect(() => file349({ ...form, operations: [negative] }, filer)).toThrow(RangeError);
