@@ -1,7 +1,7 @@
 import { eurosToCents } from "@cuentalibre/core";
-import type { BusinessProfile, PaymentMethod, TaxSetup, TreasuryAccount } from "@cuentalibre/contracts";
+import type { BusinessProfile, PaymentMethod, TaxSetup } from "@cuentalibre/contracts";
 
-/** Sample business profile, tax setup, accounts and payment methods until there is a backend. Made up. */
+/** Sample business profile, tax setup and payment methods until there is a backend. Made up. */
 
 export const initialProfile: BusinessProfile = {
   kind: "selfEmployed",
@@ -34,12 +34,6 @@ export const initialTaxSetup: TaxSetup = {
   variousClientsId: null,
 };
 
-export const initialAccounts: TreasuryAccount[] = [
-  { id: "acc-main", kind: "bank", name: "Cuenta principal", number: "ES91 2100 0418 4502 0005 1332", active: true },
-  { id: "acc-cash", kind: "cash", name: "Efectivo / Caja", number: "", active: true },
-  { id: "acc-card", kind: "card", name: "Tarjeta de empresa", number: "4821", active: true },
-];
-
 /** The ids are referenced by the sample documents and contacts. */
 export const initialPaymentMethods: PaymentMethod[] = [
   {
@@ -47,12 +41,12 @@ export const initialPaymentMethods: PaymentMethod[] = [
     type: "transfer",
     name: "Ingreso/Transferencia",
     number: "ES91 2100 0418 4502 0005 1332",
-    accountId: "acc-main",
     active: true,
   },
-  { id: "bank1", type: "directDebit", name: "Cuenta principal", number: "1332", accountId: "acc-main", active: true },
-  { id: "card", type: "card", name: "Tarjeta", number: "4821", accountId: "acc-card", active: true },
-  { id: "cash", type: "cash", name: "Efectivo", number: "", accountId: "acc-cash", active: true },
+  { id: "bank1", type: "directDebit", name: "Cuenta principal", number: "ES91 2100 0418 4502 0005 1332", active: true },
+  { id: "card", type: "card", name: "Tarjeta de empresa", number: "4821", active: true },
+  { id: "paypal", type: "paypal", name: "PayPal", number: "hola@luciamartin.es", active: true },
+  { id: "cash", type: "cash", name: "Efectivo", number: "", active: true },
 ];
 
 export const initialDefaultPaymentMethodId = "transfer";

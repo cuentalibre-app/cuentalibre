@@ -17,7 +17,6 @@ import {
   salesPayment,
   stockMovement,
   tag,
-  treasuryAccount,
   type LoggedEntity,
 } from "../db/schema";
 import { ApiError } from "../errors";
@@ -54,15 +53,9 @@ interface PlainKind {
 
 const KINDS: Record<PlainEntity, PlainKind> = {
   tags: { table: tag, logged: "tag" },
-  treasuryAccounts: {
-    table: treasuryAccount,
-    logged: "treasury_account",
-    usedBy: [{ entity: "paymentMethods", field: "accountId" }],
-  },
   paymentMethods: {
     table: paymentMethod,
     logged: "payment_method",
-    references: [{ field: "accountId", table: treasuryAccount }],
     usedBy: [{ entity: "manualPayments", field: "paymentMethodId" }],
     usedElsewhere: paymentMethodUse,
   },

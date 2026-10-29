@@ -42,7 +42,7 @@ Read the file you need before writing a request; they cover every route and fiel
 
 - [references/api.md](references/api.md): authentication, data formats, create/patch/delete semantics, every error code, account and members, files, email, workspace, change feed and `POST /commands`.
 - [references/records.md](references/records.md): contacts, sales documents (issuing, editing issued invoices, rectifying), received invoices, expenses, lines, payments and closed quarters.
-- [references/plain-records.md](references/plain-records.md): tags, treasury accounts, payment methods, manual payments, bank movements, catalog families, products and stock movements (written through commands).
+- [references/plain-records.md](references/plain-records.md): tags, payment methods, manual payments, catalog families, products and stock movements (written through commands).
 - [references/settings.md](references/settings.md): every settings section, invoice series, and closing or reopening quarters.
 - [references/values.md](references/values.md): operation types, withholdings, income and expense accounts, asset categories, units and statuses.
 

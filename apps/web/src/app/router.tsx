@@ -54,7 +54,6 @@ import { SalesListPage } from "@/features/sales/sales-list-page";
 import { KINDS } from "@/features/sales/sales-model";
 import { DocumentSettingsPage } from "@/features/sales/document-settings-page";
 import { AccessPage } from "@/features/settings/access-page";
-import { AccountsPage } from "@/features/settings/accounts-page";
 import { BillingPage } from "@/features/settings/billing-page";
 import { RequireWritable } from "@/features/settings/read-only-gate";
 import { BusinessPage } from "@/features/settings/business-page";
@@ -62,11 +61,11 @@ import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
 import { ApiKeysPage } from "@/features/settings/api-keys-page";
 import { EmailTemplatesPage } from "@/features/settings/email-templates-page";
 import { LedgerAccountsPage } from "@/features/settings/ledger-accounts-page";
+import { PaymentMethodsPage } from "@/features/settings/payment-methods-page";
 import { PreferencesPage } from "@/features/settings/preferences-page";
 import { ProfilePage } from "@/features/settings/profile-page";
 import {
   ACCESS_PATH,
-  ACCOUNTS_PATH,
   BILLING_PATH,
   BUSINESS_PATH,
   CONTACT_SETTINGS_PATH,
@@ -76,6 +75,7 @@ import {
   API_KEYS_PATH,
   INVOICE_SETTINGS_PATH,
   LEDGER_ACCOUNTS_PATH,
+  OLD_PAYMENT_METHODS_PATHS,
   PAYMENT_METHODS_PATH,
   PREFERENCES_PATH,
   PROFILE_PATH,
@@ -111,8 +111,7 @@ import { ThirdPartiesPage } from "@/features/taxes/third-parties-page";
 import { VatPage } from "@/features/taxes/vat-page";
 import { WithholdingsPage } from "@/features/taxes/withholdings-page";
 import { PaymentsPage } from "@/features/treasury/payments-page";
-import { TreasurySummaryPage } from "@/features/treasury/treasury-summary-page";
-import { PAYMENTS_PATH, TREASURY_PATH } from "@/features/treasury/treasury-model";
+import { OLD_PAYMENTS_PATH, TREASURY_PATH } from "@/features/treasury/treasury-model";
 import { ExportAdvancedPage } from "@/features/transfer/export-advanced-page";
 import { ExportBooksPage } from "@/features/transfer/export-books-page";
 import { ExportPage } from "@/features/transfer/export-page";
@@ -219,11 +218,11 @@ const taxRoutes = [
 ];
 
 const treasuryRoutes = [
-  { path: TREASURY_PATH.slice(1), element: <TreasurySummaryPage /> },
+  { path: TREASURY_PATH.slice(1), element: <PaymentsPage /> },
   // Old links to the bank movements and reconciliation pages, which are gone
   { path: "bancos/movimientos", element: <Navigate to={TREASURY_PATH} replace /> },
   { path: "bancos/conciliacion", element: <Navigate to={TREASURY_PATH} replace /> },
-  { path: PAYMENTS_PATH.slice(1), element: <PaymentsPage /> },
+  { path: OLD_PAYMENTS_PATH.slice(1), element: <Navigate to={TREASURY_PATH} replace /> },
 ];
 
 const closingRoute = { path: CLOSING_PATH.slice(1), element: <QuarterClosePage /> };
@@ -238,8 +237,11 @@ const settingsRoutes = [
   { path: SETTINGS_PATH.slice(1), element: <SettingsPage /> },
   { path: BUSINESS_PATH.slice(1), element: <BusinessPage /> },
   { path: TAX_SETTINGS_PATH.slice(1), element: <TaxSettingsPage /> },
-  { path: ACCOUNTS_PATH.slice(1), element: <AccountsPage /> },
-  { path: PAYMENT_METHODS_PATH.slice(1), element: <Navigate to={ACCOUNTS_PATH} replace /> },
+  { path: PAYMENT_METHODS_PATH.slice(1), element: <PaymentMethodsPage /> },
+  ...OLD_PAYMENT_METHODS_PATHS.map((path) => ({
+    path: path.slice(1),
+    element: <Navigate to={PAYMENT_METHODS_PATH} replace />,
+  })),
   { path: INVOICE_SETTINGS_PATH.slice(1), element: <InvoiceSettingsPage /> },
   { path: CATALOG_SETTINGS_PATH.slice(1), element: <CatalogSettingsPage /> },
   { path: PROFILE_PATH.slice(1), element: <ProfilePage /> },

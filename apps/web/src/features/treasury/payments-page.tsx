@@ -1,7 +1,7 @@
-import { useMemo, useState, type CSSProperties } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { useMemo, useRef, useState, type CSSProperties } from "react";
+import { Link, useNavigate } from "react-router";
 import { ArrowUpRight, ChevronDown, Download, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
-import { cents, isInPeriod, periodKey, sumBy } from "@cuentalibre/core";
+import { cents, isInPeriod, monthlyFlows, periodKey, sumBy } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
@@ -14,11 +14,13 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
-import { formatDate, formatShortDate, periodCode } from "@/lib/format";
+import { formatDate, formatShortDate, periodCode, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import { ManualPaymentDialog, PageHeader, SignedAmount } from "./treasury-parts";
-import { PAYMENT_SOURCES, PAYMENT_SOURCE_ORDER, accountName, type TreasuryPayment } from "./treasury-model";
+import { FlowsChart } from "./flows-chart";
+import { MethodCards } from "./method-cards";
+import { ManualPaymentDialog, SignedAmount } from "./treasury-parts";
+import { PAYMENT_SOURCES, PAYMENT_SOURCE_ORDER, type TreasuryPayment } from "./treasury-model";
 import { treasuryStore, usePayments } from "./treasury-store";
 
 const ALL = "all";
@@ -26,17 +28,15 @@ const ALL = "all";
 interface Row {
   payment: TreasuryPayment;
   method: string;
-  account: string;
 }
 
 interface Filters {
   query: string;
   source: string;
   method: string;
-  account: string;
 }
 
-const NO_FILTERS: Filters = { query: "", source: ALL, method: ALL, account: ALL };
+const NO_FILTERS: Filters = { query: "", source: ALL, method: ALL };
 
 type SortKey = "date" | "amount" | "method";
 interface Sort {
@@ -44,31 +44,35 @@ interface Sort {
   dir: "asc" | "desc";
 }
 
+/** Banks: what came in and went out over the last year, and every collection and payment. */
 export function PaymentsPage() {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
-  const { accounts, paymentMethods } = useSettings();
+  const { paymentMethods } = useSettings();
   const payments = usePayments();
-  const [searchParams] = useSearchParams();
-  // The summary's account cards open this page filtered by that account
-  const [filters, setFilters] = useState(() => ({ ...NO_FILTERS, account: searchParams.get("cuenta") ?? ALL }));
+  const [filters, setFilters] = useState(NO_FILTERS);
   const [sort, setSort] = useState<Sort>({ key: "date", dir: "desc" });
   const [creating, setCreating] = useState(false);
   const [removing, setRemoving] = useState<TreasuryPayment | null>(null);
 
+  const periodPayments = useMemo(() => payments.filter((p) => isInPeriod(p.date, period)), [payments, period]);
   const periodRows = useMemo(
     () =>
-      payments
-        .filter((p) => isInPeriod(p.date, period))
-        .map((payment): Row => ({
-          payment,
-          method: paymentMethods.find((m) => m.id === payment.paymentMethodId)?.name ?? "Sin método",
-          account: accountName(payment.accountId, accounts),
-        })),
-    [payments, period, paymentMethods, accounts],
+      periodPayments.map((payment): Row => ({
+        payment,
+        method: paymentMethods.find((m) => m.id === payment.paymentMethodId)?.name ?? "Sin método",
+      })),
+    [periodPayments, paymentMethods],
   );
+  const months = useMemo(() => monthlyFlows(payments, today), [payments, today]);
 
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters((f) => ({ ...f, [key]: value }));
+  const list = useRef<HTMLElement>(null);
+  // A card filters the list by its method and brings the list into view
+  const pickMethod = (id: string | null) => {
+    set("method", id ?? ALL);
+    if (id) list.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
   const q = filters.query.trim().toLowerCase();
   const sign = sort.dir === "asc" ? 1 : -1;
   const rows = periodRows
@@ -76,7 +80,6 @@ export function PaymentsPage() {
       (r) =>
         (filters.source === ALL || r.payment.source === filters.source) &&
         (filters.method === ALL || r.payment.paymentMethodId === filters.method) &&
-        (filters.account === ALL || r.payment.accountId === filters.account) &&
         (!q ||
           [r.payment.reference, r.payment.counterparty, formatEUR(r.payment.amount)].some((v) =>
             v.toLowerCase().includes(q),
@@ -120,15 +123,26 @@ export function PaymentsPage() {
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
-        <PageHeader
-          title="Cobros y pagos"
-          description="Cada cobro de una factura emitida y cada pago de una factura recibida o un gasto, con el método y la cuenta por la que pasó."
-        >
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Bancos y caja</h1>
+              <PeriodSelect
+                value={period}
+                onChange={setPeriod}
+                years={availableYears}
+                today={today}
+                className="h-12 w-full sm:h-10 sm:w-auto"
+              />
+              <span className="hidden text-sm text-muted-foreground sm:inline">{periodRange(period)}</span>
+            </div>
+            <p className="m-0 text-sm text-muted-foreground">Lo que has cobrado y pagado, y por dónde ha pasado.</p>
+          </div>
           <Button onClick={() => setCreating(true)}>
             <Plus strokeWidth={2} aria-hidden="true" />
             Nuevo cobro / pago manual
           </Button>
-        </PageHeader>
+        </header>
 
         <dl className="m-0 grid animate-rise-in grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
           {[
@@ -136,14 +150,23 @@ export function PaymentsPage() {
             { label: "Pagado", value: <AnimatedAmount value={paid} /> },
             { label: "Neto", value: <AnimatedAmount value={cents(collected - paid)} /> },
           ].map((s) => (
-            <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3">
+            <div key={s.label} className="flex min-w-0 flex-col gap-1 bg-card px-3 py-3 sm:px-4">
               <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-              <dd className="m-0 amount text-lg font-semibold lg:text-xl">{s.value}</dd>
+              <dd className="m-0 amount text-base font-semibold sm:text-lg lg:text-xl">{s.value}</dd>
             </div>
           ))}
         </dl>
 
+        <MethodCards
+          payments={periodPayments}
+          selected={filters.method === ALL ? null : filters.method}
+          onSelect={pickMethod}
+        />
+
+        <FlowsChart months={months} />
+
         <section
+          ref={list}
           aria-label="Listado de cobros y pagos"
           className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
           style={{ "--i": 1 } as CSSProperties}
@@ -190,22 +213,6 @@ export function PaymentsPage() {
               ]}
               className="w-auto min-w-40 font-medium"
             />
-            <GroupedSelect
-              id="pay-account"
-              aria-label="Cuenta relacionada"
-              value={filters.account}
-              onChange={(v) => set("account", v)}
-              groups={[
-                {
-                  options: [
-                    { value: ALL, label: "Todas las cuentas" },
-                    ...accounts.map((a) => ({ value: a.id, label: a.name })),
-                  ],
-                },
-              ]}
-              className="w-auto min-w-40 font-medium"
-            />
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
             <Button
               variant="secondary"
               size="md"
@@ -288,10 +295,7 @@ export function PaymentsPage() {
                           <SignedAmount value={r.payment.amount} />
                         </td>
                         <td className={table.td}>
-                          <div className="flex min-w-0 flex-col">
-                            <span className="max-w-48 truncate">{r.method}</span>
-                            <span className="max-w-48 truncate text-xs text-muted-foreground">{r.account}</span>
-                          </div>
+                          <span className="block max-w-48 truncate">{r.method}</span>
                         </td>
                         <td className={cn(table.td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
                           <QuickActions row={r} onRemove={() => setRemoving(r.payment)} />
@@ -431,7 +435,7 @@ function RowMenu({ row, onRemove }: { row: Row; onRemove: () => void }) {
 
 function exportCsv(rows: Row[], name: string) {
   downloadCsv(
-    ["Fecha", "Tipo", "Documento", "Contacto", "Importe", "Método", "Cuenta"],
+    ["Fecha", "Tipo", "Documento", "Contacto", "Importe", "Método"],
     rows.map((r) => [
       r.payment.date,
       PAYMENT_SOURCES[r.payment.source].label,
@@ -439,7 +443,6 @@ function exportCsv(rows: Row[], name: string) {
       r.payment.counterparty,
       r.payment.amount,
       r.method,
-      r.account,
     ]),
     name,
   );

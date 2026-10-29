@@ -17,7 +17,6 @@ import {
   stockMovementSchema,
   tagSchema,
   taxSetupSchema,
-  treasuryAccountSchema,
   userAccessSchema,
   userProfileSchema,
   userTourSchema,
@@ -34,7 +33,7 @@ import { initialNoteTemplates } from "./invoicing";
 import { initialLedgerAccounts } from "./ledger-accounts";
 import { initialPurchaseInvoices } from "./purchases";
 import { initialSalesDocuments } from "./sales";
-import { initialAccounts, initialPaymentMethods, initialProfile, initialTaxSetup } from "./settings";
+import { initialPaymentMethods, initialProfile, initialTaxSetup } from "./settings";
 import { initialTags } from "./tags";
 import { initialManualPayments } from "./treasury";
 import { initialNotificationPrefs, initialUserAccess, initialUserProfile, initialUserTour } from "./user";
@@ -52,7 +51,6 @@ const collections: [string, z.ZodType, unknown[]][] = [
   ["catalog families", catalogFamilySchema, initialFamilies],
   ["stock movements", stockMovementSchema, initialMovements],
   ["closed quarters", closedQuarterSchema, initialClosedQuarters],
-  ["treasury accounts", treasuryAccountSchema, initialAccounts],
   ["payment methods", paymentMethodSchema, initialPaymentMethods],
   ["tags", tagSchema, initialTags],
   ["manual payments", manualPaymentSchema, initialManualPayments],
