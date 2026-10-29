@@ -154,8 +154,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
   };
   const file: AeatFile = {
     name: aeatFileName("130", year, quarter),
-    build: (payment) => file130(r, filer, payment),
-    payable: r.result > 0,
+    build: () => file130(r, filer),
     missing:
       !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
         ? "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales."

@@ -19,9 +19,6 @@ export interface AeatFiler {
   name: string;
 }
 
-/** How a positive result is paid: a deposit with an NRC or payment slip, or a direct debit. */
-export type AeatPayment = { kind: "deposit" } | { kind: "directDebit"; iban: string };
-
 /**
  * Text as alphanumeric fields take it: upper case, only letters, digits and blanks, left
  * aligned and padded with blanks. Accents go; Ñ and Ç stay, as ISO-8859-1 has them.
@@ -79,12 +76,13 @@ export function filerTaxId(taxId: string): string {
 const FIRST_YEAR_130 = 2019;
 
 /**
- * Declaration type of a 130: I (deposit) or U (direct debit) to pay; B when a negative result
- * is left to deduct in the following quarters of the year; N for a zero result, or a negative
- * one in Q4, when there is nothing left to deduct it from.
+ * Declaration type of a 130: I (deposit) to pay; B when a negative result is left to deduct in
+ * the following quarters of the year; N for a zero result, or a negative one in Q4, when there
+ * is nothing left to deduct it from. Paying by direct debit (U) is chosen in the sede, with the
+ * IBAN, rather than in the file.
  */
-export function declarationType130(result: Cents, quarter: Quarter, payment: AeatPayment): "I" | "U" | "B" | "N" {
-  if (result > 0) return payment.kind === "directDebit" ? "U" : "I";
+export function declarationType130(result: Cents, quarter: Quarter): "I" | "B" | "N" {
+  if (result > 0) return "I";
   return result < 0 && quarter < 4 ? "B" : "N";
 }
 
@@ -99,16 +97,14 @@ const BOXES_130 = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "
 export function file130(
   form: { year: number; quarter: Quarter; boxes: Boxes; result: Cents },
   filer: AeatFiler,
-  payment: AeatPayment,
 ): string {
   if (form.year < FIRST_YEAR_130) throw new RangeError(`No form 130 record design for ${form.year}`);
-  const iban = payment.kind === "directDebit" && form.result > 0 ? normalizeTaxId(payment.iban) : "";
   const period = periodCode(form.quarter);
   const page1 = page(
     [
       "<T13001000>",
       blanks(1), // complementary page indicator
-      declarationType130(form.result, form.quarter, payment),
+      declarationType130(form.result, form.quarter),
       aeatText(filerTaxId(filer.taxId), 9),
       aeatText(filer.surnames, 60),
       aeatText(filer.name, 20),
@@ -117,7 +113,7 @@ export function file130(
       ...BOXES_130.map((box) => aeatAmount(form.boxes[box] ?? 0, 17, SIGNED_130.has(box))),
       blanks(1), // complementary return
       blanks(13), // receipt number of the return it complements
-      aeatText(iban, 34),
+      blanks(34), // IBAN of a direct debit
       blanks(96),
       blanks(13), // electronic stamp
       "</T13001000>",
