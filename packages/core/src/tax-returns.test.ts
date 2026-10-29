@@ -320,6 +320,8 @@ describe("model390", () => {
       "629": eur(50),
       "630": eur(10.5),
     });
+    expect(r.boxes).toMatchObject({ "48": eur(110), "49": eur(23.1), "56": eur(50), "57": eur(10.5) });
+    expect(r.boxes).toMatchObject({ "597": eur(20), "598": eur(4.2), "50": 0, "52": 0, "54": 0, "58": 0 });
     expect(r.boxes).toMatchObject({ "64": eur(37.8), "65": eur(189), "86": eur(189) });
     expect(r.boxes).toMatchObject({ "99": eur(1_000), "103": eur(4_000), "108": eur(5_000) });
   });
@@ -333,6 +335,32 @@ describe("model390", () => {
     expect(r.unmappedBase).toBe(0);
   });
 
+  it("agrees with the four 303s of the year", () => {
+    const b = books({
+      sales: [
+        sale("2026-02-10", eur(1_000)),
+        sale("2026-05-10", eur(300), { vatBreakdown: [{ rate: 0.1, base: eur(300), vat: eur(30) }] }),
+        sale("2026-08-10", eur(-200), { rectifying: true }),
+        sale("2026-11-10", eur(2_000)),
+      ],
+      purchases: [
+        purchase("2026-01-15", eur(400)),
+        purchase("2026-06-01", eur(20), { operation: "intraEu" }),
+        purchase("2026-09-03", eur(3_000), { investment: true }),
+        purchase("2026-12-04", eur(10), { operation: "reverseCharge" }),
+      ],
+    });
+    const r = model390(b, 2026);
+    const quarters = vatReturns(b, 2026);
+    const sum = (box: string) => quarters.reduce((total, q) => total + (q.boxes[box] ?? 0), 0);
+    expect(r.boxes["47"]).toBe(sum("27"));
+    expect(r.boxes["64"]).toBe(sum("45"));
+    expect(r.boxes["65"]).toBe(sum("46"));
+    expect(r.quarters).toEqual(quarters.map((q) => q.result));
+    // Q3 comes out negative and Q4 absorbs part of it: Q4 is zero, and what is left goes in [662]
+    expect(r.boxes).toMatchObject({ "95": eur(156), "97": 0, "662": eur(252), "86": eur(-96) });
+  });
+
   it("takes the quarterly results and what was pending when the year started", () => {
     const b = books({
       sales: [sale("2026-04-10", eur(1_000))],
@@ -340,7 +368,17 @@ describe("model390", () => {
     });
     const r = model390(b, 2026);
     expect(r.quarters).toEqual([0, 105, 0, 0].map(eur));
-    expect(r.boxes).toMatchObject({ "85": eur(105), "95": eur(105), "86": eur(105) });
+    expect(r.boxes).toMatchObject({ "85": eur(105), "95": eur(105), "86": eur(105), "662": 0 });
+  });
+
+  it("leaves what is still pending from earlier years out of [662]", () => {
+    const b = books({
+      sales: [sale("2026-04-10", eur(100))],
+      purchases: [purchase("2025-11-10", eur(500)), purchase("2026-08-10", eur(200))],
+    });
+    const r = model390(b, 2026);
+    // 105 € pending from 2025 takes Q2's 21 €; Q3 adds 42 € of its own, carried with the old 84 €
+    expect(r.boxes).toMatchObject({ "85": eur(105), "95": 0, "97": 0, "662": eur(42), "86": eur(-126) });
   });
 });
 

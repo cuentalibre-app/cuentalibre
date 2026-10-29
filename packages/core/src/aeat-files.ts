@@ -395,6 +395,202 @@ export function file303(form: Return303, filer: AeatFiler): string {
   return envelope("303", form.year, periodCode(form.quarter), pages);
 }
 
+/* ───────────────────────── Form 390: yearly VAT summary ───────────────────────── */
+
+/**
+ * Record designs of form 390 by the first year they apply to. The 2026 one adds the flag for
+ * fuel deliveries on page 1 and the payment on account they bring [112] on page 6.
+ */
+export const FIRST_YEAR_390 = 2025;
+const design390 = (year: number) => (year >= 2026 ? 2026 : 2025);
+
+export interface Return390 {
+  year: number;
+  boxes: Boxes;
+  /** Activities ordered by volume, the main one first: name, type of form 036 and IAE epígrafe. */
+  activities: { name: string; type: string; code: string }[];
+  /** Whether the filer has to file form 347 for the year: box D. */
+  thirdParties: boolean;
+  /** Special cash accounting regime (criterio de caja). */
+  cashBasis: boolean;
+}
+
+/** Each base box followed by its VAT box, the next number on the 390 but for [639] and [62]. */
+const withVat = (...bases: string[]) =>
+  bases.flatMap((base) => [base, String(Number(base) + 1).padStart(base.length, "0")]);
+
+/** Page 2: output VAT of the general regime, by group at 0, 2, 4, 5, 7.5, 10 and 21 %. */
+const OUTPUT_390 = [
+  ...withVat("700", "667", "01", "702", "669", "03", "05"), // ordinary regime
+  ...withVat("704", "671", "500", "706", "673", "502", "504"), // intragroup operations
+  ...withVat("708", "675", "643", "710", "677", "645", "647"), // cash accounting
+  ...withVat("712", "679", "07", "714", "681", "09", "11"), // second-hand goods
+  ...withVat("13"), // travel agencies
+  ...withVat("716", "683", "21", "718", "685", "23", "25"), // intra-EU goods
+  ...withVat("720", "687", "545", "722", "689", "547", "551"), // intra-EU services
+  ...withVat("27", "29", "649", "31", "33"), // reverse charge, modifications and the total
+];
+
+/** Page 2 bis: equivalence surcharge and the total output VAT [47]. */
+const SURCHARGE_390 = [...withVat("663", "691", "35", "665", "693", "599", "601", "41", "43", "45"), "47"];
+
+/** Page 3: deductible VAT by group at 2, 4, 5, 7.5, 10 and 21 %, each with its total. */
+const DEDUCT_390 = [
+  ...withVat("695", "190", "724", "697", "603", "605", "48"), // domestic current
+  ...withVat("745", "506", "726", "747", "607", "609", "512"), // intragroup current
+  ...withVat("749", "196", "728", "751", "611", "613", "50"), // domestic investment
+  ...withVat("753", "514", "730", "755", "615", "617", "520"), // intragroup investment
+  ...withVat("757", "202", "732", "759", "619", "621", "52"), // imports current
+  ...withVat("761", "208", "734", "763", "623", "625", "54"), // imports investment
+  ...withVat("765", "214", "736", "767", "627", "629", "56"), // intra-EU current goods
+];
+
+/** Page 4: the rest of the deductible VAT and the general regime's result. */
+const DEDUCT_REST_390 = [
+  ...withVat("769", "220", "738", "771", "631", "633", "58"), // intra-EU investment goods
+  ...withVat("773", "587", "740", "775", "635", "637", "597"), // intra-EU services
+  ...withVat("60", "660"),
+  ...["639", "62"], // rectification of deductions
+  ...withVat("651"),
+  ...["63", "522", "64", "65"],
+];
+
+/** Page 7: specific operations. */
+const SPECIFIC_390 = ["230", "109", "231", "232", "111", "113", "523", "654", "655", "656", "657"];
+
+/** Page 6, section 9: results of the year's returns. */
+const RESULTS_390 = ["95", "96", "524", "97", "98", "662", "525", "526"];
+
+/** Page 6, section 10: volume of operations, the last box being their total. */
+const VOLUME_390 = ["99", "653", "103", "104", "105", "110", "125", "126", "127", "128", "100", "101", "102", "227", "228", "106", "107", "108"]; // prettier-ignore
+
+/** A page of the 390 that is a run of signed amounts between its markers. */
+function amountsPage390(code: string, boxes: Boxes, keys: string[]): string {
+  return page(
+    [
+      `<T390${code}>`,
+      blanks(1), // complementary page indicator
+      ...keys.map((key) => aeatAmount(boxes[key] ?? 0, 17, true)),
+      blanks(150),
+      `</T390${code}>`,
+    ],
+    12 + 17 * keys.length + 150 + 12,
+  );
+}
+
+function page1of390(form: Return390, filer: AeatFiler, design: 2025 | 2026): string {
+  const activities = form.activities.slice(0, 6); // the main one and five more fit
+  return page(
+    [
+      "<T39001000>",
+      blanks(1), // complementary page indicator
+      blanks(1),
+      aeatText(filerTaxId(filer.taxId), 9),
+      aeatText(filer.surnames, 60),
+      aeatText(filer.name, 20),
+      String(form.year),
+      blanks(2),
+      "0", // monthly refund register (REDEME)
+      "0", // group of entities
+      blanks(7), // group number
+      "0", // dominant entity
+      "0", // dependent entity
+      "0", // type of group regime
+      blanks(9), // NIF of the dominant entity
+      "2", // insolvency proceedings
+      yesNo(form.cashBasis),
+      "2", // recipient of operations under the cash accounting regime
+      ...(design === 2026 ? ["2"] : []), // may deduct the payment on account of fuel deliveries
+      "0", // substitute return
+      "0", // substitute return for a rectification of quotas
+      blanks(13), // receipt number of the return it substitutes
+      ...Array.from({ length: 6 }, (_, i) => {
+        const activity = activities[i];
+        return activity
+          ? aeatText(activity.name, 40) + aeatText(activity.type, 3) + epigraph(activity.code)
+          : blanks(47);
+      }),
+      form.thirdParties ? "1" : "0",
+      blanks(9 + 37), // NIF and name of the joint return
+      blanks(9 + 80 + 2 + 17 + 5 + 2 + 2 + 2 + 9 + 20 + 15 + 5), // representative of a person
+      ...Array.from({ length: 3 }, () => blanks(80) + blanks(9) + "0".repeat(8) + blanks(12)), // representatives of a company
+      blanks(21),
+      blanks(13), // electronic stamp
+      blanks(20), // developer's customer id
+      blanks(150),
+      "</T39001000>",
+    ],
+    design === 2026 ? 1188 : 1187,
+  );
+}
+
+/**
+ * Page 6: the year's result, the returns' results and the volume of operations. The share by
+ * territory (section 8) is only for filers who also pay in Navarra or the Basque Country, so it
+ * stays at zero.
+ */
+function page6of390(boxes: Boxes, design: 2025 | 2026): string {
+  const box = (key: string, signed: boolean) => aeatAmount(boxes[key] ?? 0, 17, signed);
+  const fuel = design === 2026 ? [box("112", false)] : []; // payment on account of fuel deliveries
+  return page(
+    [
+      "<T39006000>",
+      blanks(1), // complementary page indicator
+      box("658", true),
+      box("84", true),
+      box("659", false),
+      box("85", false),
+      ...fuel,
+      box("86", true),
+      ...Array.from({ length: 5 }, () => aeatAmount(0, 5, false)), // share by territory (87…91)
+      ...Array.from({ length: design === 2026 ? 7 : 6 }, () => aeatAmount(0, 17, false)), // result by territory
+      ...RESULTS_390.map((key) => box(key, false)),
+      ...VOLUME_390.map((key) => box(key, true)),
+      blanks(150),
+      "</T39006000>",
+    ],
+    design === 2026 ? 862 : 828,
+  );
+}
+
+/** Page 7: specific operations, and proration left blank. The CNAE code takes 4 positions since 2026. */
+function page7of390(boxes: Boxes, design: 2025 | 2026): string {
+  const cnae = design === 2026 ? 4 : 3;
+  const proration = blanks(40) + blanks(cnae) + aeatAmount(0, 17, false) + aeatAmount(0, 17, false) + blanks(1) + aeatAmount(0, 5, false); // prettier-ignore
+  return page(
+    [
+      "<T39007000>",
+      blanks(1), // complementary page indicator
+      ...SPECIFIC_390.map((key) => aeatAmount(boxes[key] ?? 0, 17, true)),
+      ...Array.from({ length: 5 }, () => proration),
+      blanks(150),
+      "</T39007000>",
+    ],
+    design === 2026 ? 781 : 776,
+  );
+}
+
+/**
+ * The file the 390 online form imports: page 1 (filer, activities), pages 2 to 4 (output and
+ * deductible VAT), page 6 (results and volume of operations) and page 7 (specific operations).
+ * Page 5 (simplified regime), page 8 (differentiated sectors), proration and substitute returns
+ * are not covered.
+ */
+export function file390(form: Return390, filer: AeatFiler): string {
+  if (form.year < FIRST_YEAR_390) throw new RangeError(`No form 390 record design for ${form.year}`);
+  const design = design390(form.year);
+  const pages = [
+    page1of390(form, filer, design),
+    amountsPage390("02000", form.boxes, OUTPUT_390),
+    amountsPage390("02B00", form.boxes, SURCHARGE_390),
+    amountsPage390("03000", form.boxes, DEDUCT_390),
+    amountsPage390("04000", form.boxes, DEDUCT_REST_390),
+    page6of390(form.boxes, design),
+    page7of390(form.boxes, design),
+  ];
+  return envelope("390", form.year, "0A", pages);
+}
+
 /* ─────────────────── Form 349: intra-EU operations ─────────────────── */
 
 /**
