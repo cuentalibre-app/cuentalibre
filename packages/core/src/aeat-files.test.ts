@@ -420,7 +420,9 @@ describe("file303", () => {
     expect(page3(file, 340, 17)).toBe("00000000000167000"); // [69]
     expect(page3(file, 408, 17)).toBe("00000000000167000"); // [71]
     expect(page3(file, 425, 1)).toBe(" ");
-    expect(page3(file, 426, 1 + 13 + 1 + 17 + 2 + 546)).toBe(" ".repeat(580));
+    expect(page3(file, 426, 1 + 13 + 1)).toBe(" ".repeat(15));
+    expect(page3(file, 441, 17)).toBe("0".repeat(17)); // [111]
+    expect(page3(file, 458, 2 + 546)).toBe(" ".repeat(548));
   });
 
   it("files a negative result to carry forward with its sign", () => {

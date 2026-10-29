@@ -215,7 +215,7 @@ const UNSIGNED_303 = new Set([
   "150", "152", "165", "167", "01", "03", "153", "155", "04", "06", "07", "09", "10", "11", "12", "13",
   "156", "158", "168", "170", "16", "18", "19", "21", "22", "24",
   "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39",
-  "77", "110", "78", "87", "70", "109", "112",
+  "77", "110", "78", "87", "70", "109", "112", "111",
 ]); // prettier-ignore
 
 /** Boxes of the general regime on page 1, in the order of each design. */
@@ -343,7 +343,7 @@ function page3of303(form: Return303, design: 2025 | 2026): string {
       noActivity ? "X" : blanks(1),
       ...rectification,
       ...(design === 2026
-        ? [blanks(17), blanks(2), blanks(546)] // [111] and the two reasons of a rectification
+        ? [box303(form.boxes, "111"), blanks(2), blanks(546)] // [111] and the two reasons of a rectification
         : [box303(form.boxes, "108"), blanks(17), blanks(120), blanks(2), blanks(443)]),
       "</T30303000>",
     ],
