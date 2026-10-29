@@ -50,14 +50,14 @@ The OpenAPI 3.1 document at `<API URL>/openapi.json` is the source of truth for 
 
 ## Rules that are easy to get wrong
 
-| What                                                  | Format                                                                                                                                                          |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Amounts of payments, expenses, totals, bank movements | **Integer cents**: `12100` is 121,00 €                                                                                                                          |
-| Unit prices of lines and products                     | **Euros**, without VAT: `100.5`                                                                                                                                 |
-| VAT, surcharge and line discounts                     | Fraction: `0.21` is 21 %                                                                                                                                        |
-| Imputation, contact default discount                  | Number 0–100                                                                                                                                                    |
-| Dates                                                 | `YYYY-MM-DD`                                                                                                                                                    |
-| IDs                                                   | UUID. Generate one (UUIDv7 preferred) for every record you create and every file you upload, so a retry answers `409 already_exists` instead of duplicating it. |
+| What                                  | Format                                                                                                                                                          |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Amounts of payments, expenses, totals | **Integer cents**: `12100` is 121,00 €                                                                                                                          |
+| Unit prices of lines and products     | **Euros**, without VAT: `100.5`                                                                                                                                 |
+| VAT, surcharge and line discounts     | Fraction: `0.21` is 21 %                                                                                                                                        |
+| Imputation, contact default discount  | Number 0–100                                                                                                                                                    |
+| Dates                                 | `YYYY-MM-DD`                                                                                                                                                    |
+| IDs                                   | UUID. Generate one (UUIDv7 preferred) for every record you create and every file you upload, so a retry answers `409 already_exists` instead of duplicating it. |
 
 - `POST` takes the whole record, including required fields that may be empty (`privateNotes: ""`, `payments: []`). `PATCH` takes only what changes; lists (`lines`, `payments`, `tags`, `attachments`) are replaced whole, so send the full list. `null` clears an optional field.
 - An invoice's `status` follows its payments: to mark it paid, add a payment covering the total. Only invoices take payments; drafts and quotes don't.

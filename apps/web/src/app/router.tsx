@@ -110,11 +110,9 @@ import {
 import { ThirdPartiesPage } from "@/features/taxes/third-parties-page";
 import { VatPage } from "@/features/taxes/vat-page";
 import { WithholdingsPage } from "@/features/taxes/withholdings-page";
-import { MovementsPage } from "@/features/treasury/movements-page";
 import { PaymentsPage } from "@/features/treasury/payments-page";
-import { ReconciliationPage } from "@/features/treasury/reconciliation-page";
 import { TreasurySummaryPage } from "@/features/treasury/treasury-summary-page";
-import { MOVEMENTS_PATH, PAYMENTS_PATH, RECONCILIATION_PATH, TREASURY_PATH } from "@/features/treasury/treasury-model";
+import { PAYMENTS_PATH, TREASURY_PATH } from "@/features/treasury/treasury-model";
 import { ExportAdvancedPage } from "@/features/transfer/export-advanced-page";
 import { ExportBooksPage } from "@/features/transfer/export-books-page";
 import { ExportPage } from "@/features/transfer/export-page";
@@ -222,8 +220,9 @@ const taxRoutes = [
 
 const treasuryRoutes = [
   { path: TREASURY_PATH.slice(1), element: <TreasurySummaryPage /> },
-  { path: MOVEMENTS_PATH.slice(1), element: <MovementsPage /> },
-  { path: RECONCILIATION_PATH.slice(1), element: <ReconciliationPage /> },
+  // Old links to the bank movements and reconciliation pages, which are gone
+  { path: "bancos/movimientos", element: <Navigate to={TREASURY_PATH} replace /> },
+  { path: "bancos/conciliacion", element: <Navigate to={TREASURY_PATH} replace /> },
   { path: PAYMENTS_PATH.slice(1), element: <PaymentsPage /> },
 ];
 

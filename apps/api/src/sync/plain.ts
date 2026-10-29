@@ -4,7 +4,6 @@ import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
 import {
-  bankMovement,
   catalogFamily,
   contact,
   expense,
@@ -58,10 +57,7 @@ const KINDS: Record<PlainEntity, PlainKind> = {
   treasuryAccounts: {
     table: treasuryAccount,
     logged: "treasury_account",
-    usedBy: [
-      { entity: "paymentMethods", field: "accountId" },
-      { entity: "bankMovements", field: "accountId" },
-    ],
+    usedBy: [{ entity: "paymentMethods", field: "accountId" }],
   },
   paymentMethods: {
     table: paymentMethod,
@@ -74,11 +70,6 @@ const KINDS: Record<PlainEntity, PlainKind> = {
     table: manualPayment,
     logged: "manual_payment",
     references: [{ field: "paymentMethodId", table: paymentMethod }],
-  },
-  bankMovements: {
-    table: bankMovement,
-    logged: "bank_movement",
-    references: [{ field: "accountId", table: treasuryAccount }],
   },
   catalogFamilies: {
     table: catalogFamily,

@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type BadgeKey = "drafts" | "filingsSoon" | "unreconciled";
+export type BadgeKey = "drafts" | "filingsSoon";
 
 export interface NavLeaf {
   label: string;
@@ -85,11 +85,8 @@ export const mainNav: NavItem[] = [
     label: "Bancos",
     to: "/bancos",
     icon: Landmark,
-    badge: "unreconciled",
     children: [
       { label: "Resumen", to: "/bancos" },
-      { label: "Movimientos", to: "/bancos/movimientos" },
-      { label: "Conciliación", to: "/bancos/conciliacion", badge: "unreconciled" },
       { label: "Cobros y pagos", to: "/bancos/cobros-y-pagos" },
     ],
   },
