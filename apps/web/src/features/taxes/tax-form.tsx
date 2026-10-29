@@ -399,11 +399,11 @@ export interface AeatFile {
   invalid?: string;
 }
 
-/** The AEAT file of a form for a quarter, or a month for the 349, filed by the profile's taxpayer. */
+/** The AEAT file of a form for a quarter, a month for the 349 or the year (null), filed by the profile's taxpayer. */
 export function useAeatFile(
   form: FormCode,
   year: number,
-  period: Quarter | string,
+  period: Quarter | string | null,
   build: (filer: AeatFiler) => string,
 ): AeatFile {
   const { profile } = useSettings();
