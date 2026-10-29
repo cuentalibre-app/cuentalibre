@@ -387,12 +387,14 @@ function labelAbove(section: FormSection, target: FormSection["rows"][number]): 
   return "";
 }
 
-/** The file the AEAT's online form imports, built from the boxes on screen. */
+/** The file the AEAT's online form imports, built from the boxes on screen, or the books Renta WEB imports. */
 export interface AeatFile {
   /** Name of the downloaded file. */
   name: string;
-  /** The file's text; throws a RangeError when an amount doesn't fit the record design. */
-  build: () => string;
+  /** Text of the button, when it isn't the generic one. */
+  label?: string;
+  /** The file; throws a RangeError when an amount doesn't fit the record design. */
+  build: () => Blob;
   /** Why it can't be built yet, such as a missing NIF. */
   missing?: string;
   /** Why the file rejects the amounts on screen; there is a default one for edited boxes. */
@@ -415,7 +417,7 @@ export function useAeatFile(
   };
   return {
     name: aeatFileName(form, year, period),
-    build: () => build(filer),
+    build: () => new Blob([aeatBytes(build(filer))], { type: "text/plain;charset=iso-8859-1" }),
     missing:
       !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
         ? "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
@@ -445,15 +447,16 @@ function UnavailableFile({ label, reason }: { label: string; reason: string }) {
 
 /** Downloads the AEAT file, or says why it can't be built. */
 function AeatFileButton({ file }: { file: AeatFile }) {
-  if (file.missing) return <UnavailableFile label={LABEL_AEAT_FILE} reason={file.missing} />;
-  let text: string;
+  const label = file.label ?? LABEL_AEAT_FILE;
+  if (file.missing) return <UnavailableFile label={label} reason={file.missing} />;
+  let blob: Blob;
   try {
-    text = file.build();
+    blob = file.build();
   } catch (error) {
     if (!(error instanceof RangeError)) throw error;
     return (
       <UnavailableFile
-        label={LABEL_AEAT_FILE}
+        label={label}
         reason={
           file.invalid ??
           "Alguna casilla tiene un importe que el fichero de la AEAT no admite. Revisa las casillas que has cambiado a mano."
@@ -461,12 +464,10 @@ function AeatFileButton({ file }: { file: AeatFile }) {
       />
     );
   }
-  const download = () =>
-    downloadBlob(new Blob([aeatBytes(text)], { type: "text/plain;charset=iso-8859-1" }), file.name);
   return (
-    <Button variant="secondary" size="md" onClick={download}>
+    <Button variant="secondary" size="md" onClick={() => downloadBlob(blob, file.name)}>
       <Download strokeWidth={1.8} aria-hidden="true" />
-      {LABEL_AEAT_FILE}
+      {label}
     </Button>
   );
 }
@@ -502,7 +503,7 @@ export function ResultPanel({
   today: Date;
   result: ResultSummary;
   extra?: ReactNode;
-  /** The file to import in the AEAT's form; without it the button says it is coming soon. */
+  /** The file to import in the AEAT's form; online-only forms have none. */
   file?: AeatFile;
 }) {
   // Each form has its own window: a Q4 111 is due on January 20th, a Q4 303 on the 30th
@@ -559,16 +560,7 @@ export function ResultPanel({
           )}
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
-          {file ? (
-            <AeatFileButton file={file} />
-          ) : (
-            !ONLINE_ONLY_FORMS.has(form) && (
-              <UnavailableFile
-                label={form === "100" ? "Libros para Renta WEB" : LABEL_AEAT_FILE}
-                reason="Disponible próximamente: generará el fichero para importarlo en la sede de la AEAT. Mientras, copia cada casilla haciendo clic en su importe."
-              />
-            )
-          )}
+          {file && <AeatFileButton file={file} />}
           <a
             href={AEAT_LINKS[form]}
             target="_blank"

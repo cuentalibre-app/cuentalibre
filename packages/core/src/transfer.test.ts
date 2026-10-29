@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   excelSerialToIso,
+  isoToExcelSerial,
   formatSpanishDate,
   groupRows,
   parseAmount,
@@ -62,6 +63,13 @@ describe("excelSerialToIso", () => {
   it("counts from the Excel epoch", () => {
     expect(excelSerialToIso(46022)).toBe("2025-12-31");
     expect(excelSerialToIso(45658)).toBe("2025-01-01");
+  });
+});
+
+describe("isoToExcelSerial", () => {
+  it("is the inverse of excelSerialToIso", () => {
+    expect(isoToExcelSerial("2025-12-31")).toBe(46022);
+    expect(excelSerialToIso(isoToExcelSerial("2024-02-29"))).toBe("2024-02-29");
   });
 });
 

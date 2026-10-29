@@ -6,6 +6,7 @@ import {
   filingDeadline,
   incomeTaxYear,
   model130,
+  recordBooksFileName,
   sumCents,
   type Quarter,
 } from "@cuentalibre/core";
@@ -32,9 +33,11 @@ import {
   ResultPanel,
   useAeatFile,
   useEditable,
+  type AeatFile,
   type DocumentGroup,
   type ResultSummary,
 } from "./tax-form";
+import { recordBooksFile } from "./record-books";
 import { ACTIVITY_SCOPE, answers100, LAYOUT_130, layout100, ONLY_RECORDED, quarterOf } from "./taxes-model";
 import { FormInfo } from "./form-info";
 import { ModuleBreadcrumb } from "./tax-intro";
@@ -206,9 +209,39 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
   );
 }
 
+/** The record books Renta WEB imports, for the year and the main activity. */
+function useRecordBooks(year: number): AeatFile {
+  const documents = useSalesDocuments();
+  const purchases = usePurchaseInvoices();
+  const expenses = useExpenses();
+  const { profile, tax } = useSettings();
+  const activity = tax.activities[0];
+  const blob = useMemo(
+    () => (activity ? recordBooksFile(documents, purchases, expenses, year, activity) : null),
+    [documents, purchases, expenses, year, activity],
+  );
+  const filer = {
+    taxId: profile.taxId,
+    surnames: `${profile.lastName} ${profile.secondLastName}`,
+    name: profile.firstName,
+  };
+  return {
+    name: recordBooksFileName(year, filer),
+    label: "Libros para Renta WEB",
+    build: () => blob!,
+    missing:
+      !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
+        ? "Para generar los libros, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
+        : !activity
+          ? "Para generar los libros, añade tu actividad económica en Configuración › Impuestos."
+          : undefined,
+  };
+}
+
 function IncomeTax100({ year, today }: { year: number; today: Date }) {
   const books = useTaxBooks();
   const { tax } = useSettings();
+  const file = useRecordBooks(year);
   const [showEmpty, setShowEmpty] = useState(false);
   const { annual } = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
   const documents = useIncomeDocuments(year, 11);
@@ -232,6 +265,7 @@ function IncomeTax100({ year, today }: { year: number; today: Date }) {
         deadlineText={`Campaña de la renta ${year}: de abril a finales de junio de ${year + 1}`}
         today={today}
         result={result}
+        file={file}
       />
       <div className="flex items-center justify-between gap-3">
         <h2 className="m-0 text-md font-semibold">Apartado D1 y pagos a cuenta</h2>
