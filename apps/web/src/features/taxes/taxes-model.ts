@@ -410,6 +410,7 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row("Total", "48", null, "49"),
       ...ratesRows(
         "Operaciones interiores de bienes de inversión",
         [
@@ -419,6 +420,7 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row("Total", "50", null, "51"),
       ...ratesRows(
         "Importaciones de bienes corrientes",
         [
@@ -428,6 +430,7 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row("Total", "52", null, "53"),
       ...ratesRows(
         "Importaciones de bienes de inversión",
         [
@@ -437,6 +440,7 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row("Total", "54", null, "55"),
       ...ratesRows(
         "Adquisiciones intracomunitarias de bienes corrientes",
         [
@@ -446,6 +450,7 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row("Total", "56", null, "57"),
       ...ratesRows(
         "Adquisiciones intracomunitarias de bienes de inversión",
         [
@@ -455,6 +460,7 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row("Total", "58", null, "59"),
       ...ratesRows(
         "Adquisiciones intracomunitarias de servicios",
         [
@@ -464,6 +470,7 @@ export const LAYOUT_390: FormSection[] = [
         ],
         ["4", "10", "21"],
       ),
+      row("Total", "597", null, "598"),
       row(
         "Cuotas deducibles en virtud de resolución administrativa o sentencia firmes con tipos no vigentes",
         "660",
