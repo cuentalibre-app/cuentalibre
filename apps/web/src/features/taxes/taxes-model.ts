@@ -1,6 +1,13 @@
-import { defaultPeriod, EXPENSE_BOXES_100, type CalendarStatus, type FilingStatus, type Period } from "@cuentalibre/core";
+import {
+  defaultPeriod,
+  EXPENSE_BOXES_100,
+  type CalendarStatus,
+  type FilingStatus,
+  type Period,
+} from "@cuentalibre/core";
 import type { TaxSetup } from "@cuentalibre/contracts";
 import type { BadgeProps } from "@cuentalibre/ui/components/badge";
+import type { ReactNode } from "react";
 
 export const TAXES_PATH = "/impuestos";
 export const VAT_PATH = "/impuestos/iva";
@@ -299,11 +306,28 @@ export const LAYOUT_303: FormSection[] = [
         {
           text: [
             "**Negativo en el 1T, 2T o 3T:** queda a compensar en el trimestre siguiente.",
-            "**Negativo en el 4T:** puedes pedir la devolución, con el IBAN de tu cuenta, o compensarlo el año siguiente. El fichero lo propone a compensar; puedes cambiarlo en la sede.",
+            "**Negativo en el 4T:** puedes pedir la devolución o compensarlo el año siguiente. El fichero lleva lo que elijas junto al resultado; el IBAN de la devolución se indica en la sede.",
           ],
         },
         "71",
       ),
+    ],
+  },
+];
+
+/** Last 303 of the year of filers exempt from form 390: their volume of operations. */
+export const LAYOUT_303_ANNUAL: FormSection[] = [
+  {
+    title: "Operaciones realizadas en el ejercicio",
+    rows: [
+      row("Operaciones en régimen general", "80"),
+      row("Operaciones en criterio de caja que se habrían devengado por la regla general (art. 75 LIVA)", "81"),
+      row("Entregas intracomunitarias de bienes y servicios", "93"),
+      row("Exportaciones y otras operaciones exentas con derecho a deducción", "94"),
+      row("Operaciones exentas sin derecho a deducción", "83"),
+      row("Operaciones no sujetas por reglas de localización (excepto las incluidas en la casilla 126)", "84"),
+      row("Operaciones sujetas con inversión del sujeto pasivo", "125"),
+      total("Total volumen de operaciones", "88"),
     ],
   },
 ];
@@ -837,7 +861,7 @@ export const LAYOUT_115: FormSection[] = [
 
 export interface FormAnswer {
   label: string;
-  answer: string;
+  answer: ReactNode;
   /** Box or key of the form, when it has one. */
   box?: string;
 }
@@ -846,7 +870,11 @@ const yesNo = (yes: boolean) => (yes ? "SÍ" : "NO");
 const BLANK = "Dejar en blanco";
 const UNCHECKED = "Dejar desmarcado";
 
-export function answers303(tax: TaxSetup): FormAnswer[] {
+/**
+ * Identification of the 303. In Q4, `exemption` holds the control that answers whether the filer
+ * is exempt from form 390, and the year's volume of operations when they are.
+ */
+export function answers303(tax: TaxSetup, exemption?: { control: ReactNode; volume: number | null }): FormAnswer[] {
   return [
     { label: "Sujeto pasivo inscrito en el Registro de devolución mensual (art. 30 RIVA)", answer: "NO" },
     {
@@ -869,8 +897,14 @@ export function answers303(tax: TaxSetup): FormAnswer[] {
     },
     { label: "Sujeto pasivo declarado en concurso de acreedores en el presente periodo de liquidación", answer: "NO" },
     { label: "Sujeto pasivo acogido voluntariamente al SII", answer: "NO" },
-    { label: "Sujeto pasivo exonerado de la Declaración-resumen anual del IVA, modelo 390", answer: "NO" },
-    { label: "Sujeto pasivo con volumen anual de operaciones distinto de cero (art. 121 LIVA)", answer: BLANK },
+    {
+      label: "Sujeto pasivo exonerado de la Declaración-resumen anual del IVA, modelo 390",
+      answer: exemption?.control ?? "NO",
+    },
+    {
+      label: "Sujeto pasivo con volumen anual de operaciones distinto de cero (art. 121 LIVA)",
+      answer: exemption?.volume == null ? BLANK : yesNo(exemption.volume !== 0),
+    },
   ];
 }
 
