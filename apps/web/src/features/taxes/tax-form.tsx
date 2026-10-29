@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { Link } from "react-router";
 import { Check, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
 import {
+  aeatBytes,
   calendarStatus,
   cents,
   centsToEuros,
@@ -23,6 +24,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { copyText } from "@/lib/clipboard";
 import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
+import { downloadBlob } from "@/lib/xlsx";
 import {
   AEAT_LINKS,
   CALENDAR_STATUS,
@@ -382,6 +384,61 @@ function labelAbove(section: FormSection, target: FormSection["rows"][number]): 
   return "";
 }
 
+/** The file the AEAT's online form imports, built from the boxes on screen. */
+export interface AeatFile {
+  /** Name of the downloaded file. */
+  name: string;
+  /** The file's text; throws a RangeError when an amount doesn't fit the record design. */
+  build: () => string;
+  /** Why it can't be built yet, such as a missing NIF. */
+  missing?: string;
+}
+
+const LABEL_AEAT_FILE = "Fichero para la AEAT";
+
+/** A button that can't be clicked, with the reason in a tooltip. */
+function UnavailableFile({ label, reason }: { label: string; reason: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* Disabled buttons don't fire pointer events: the wrapper shows the tooltip */}
+        <span tabIndex={0}>
+          <Button variant="secondary" size="md" disabled>
+            <Download strokeWidth={1.8} aria-hidden="true" />
+            {label}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-64">{reason}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** Downloads the AEAT file, or says why it can't be built. */
+function AeatFileButton({ file }: { file: AeatFile }) {
+  if (file.missing) return <UnavailableFile label={LABEL_AEAT_FILE} reason={file.missing} />;
+  let text: string;
+  try {
+    text = file.build();
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    return (
+      <UnavailableFile
+        label={LABEL_AEAT_FILE}
+        reason="Alguna casilla tiene un importe que el fichero de la AEAT no admite. Revisa las casillas que has cambiado a mano."
+      />
+    );
+  }
+  const download = () =>
+    downloadBlob(new Blob([aeatBytes(text)], { type: "text/plain;charset=iso-8859-1" }), file.name);
+  return (
+    <Button variant="secondary" size="md" onClick={download}>
+      <Download strokeWidth={1.8} aria-hidden="true" />
+      {LABEL_AEAT_FILE}
+    </Button>
+  );
+}
+
 export interface ResultSummary {
   label: string;
   amount: Cents;
@@ -401,6 +458,7 @@ export function ResultPanel({
   today,
   result,
   extra,
+  file,
 }: {
   form: FormCode;
   year: number;
@@ -412,6 +470,8 @@ export function ResultPanel({
   today: Date;
   result: ResultSummary;
   extra?: ReactNode;
+  /** The file to import in the AEAT's form; without it the button says it is coming soon. */
+  file?: AeatFile;
 }) {
   // Each form has its own window: a Q4 111 is due on January 20th, a Q4 303 on the 30th
   const status = deadline ? calendarStatus(obligation(form, year, quarter), today) : null;
@@ -467,22 +527,15 @@ export function ResultPanel({
           )}
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
-          {!ONLINE_ONLY_FORMS.has(form) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                {/* Disabled buttons don't fire pointer events: the wrapper shows the tooltip */}
-                <span tabIndex={0}>
-                  <Button variant="secondary" size="md" disabled>
-                    <Download strokeWidth={1.8} aria-hidden="true" />
-                    {form === "100" ? "Libros para Renta WEB" : "Fichero para la AEAT"}
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-64">
-                Disponible próximamente: generará el fichero para importarlo en la sede de la AEAT. Mientras, copia cada
-                casilla haciendo clic en su importe.
-              </TooltipContent>
-            </Tooltip>
+          {file ? (
+            <AeatFileButton file={file} />
+          ) : (
+            !ONLINE_ONLY_FORMS.has(form) && (
+              <UnavailableFile
+                label={form === "100" ? "Libros para Renta WEB" : LABEL_AEAT_FILE}
+                reason="Disponible próximamente: generará el fichero para importarlo en la sede de la AEAT. Mientras, copia cada casilla haciendo clic en su importe."
+              />
+            )
           )}
           <a
             href={AEAT_LINKS[form]}
