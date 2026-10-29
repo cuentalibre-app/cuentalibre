@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import {
+  aeatFileName,
   cents,
   earlierInstallments,
+  file130,
   filingDeadline,
   incomeTaxYear,
   model130,
@@ -30,6 +32,7 @@ import {
   FormSwitch,
   ResultPanel,
   useEditable,
+  type AeatFile,
   type DocumentGroup,
   type ResultSummary,
 } from "./tax-form";
@@ -112,6 +115,7 @@ function useIncomeDocuments(year: number, lastMonth: number): DocumentGroup[] {
 
 function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter; today: Date }) {
   const books = useTaxBooks();
+  const { profile } = useSettings();
   const [showEmpty, setShowEmpty] = useState(false);
   const annual = useMemo(() => incomeTaxYear(books, year, TAX_OPTIONS), [books, year]);
   // Box 05 subtracts the positive installments of the earlier quarters, as filed or computed
@@ -143,6 +147,20 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
           : "Se presenta igualmente, aunque no haya que pagar.",
   };
 
+  const filer = {
+    taxId: profile.taxId,
+    surnames: `${profile.lastName} ${profile.secondLastName}`,
+    name: profile.firstName,
+  };
+  const file: AeatFile = {
+    name: aeatFileName("130", year, quarter),
+    build: () => file130(r, filer),
+    missing:
+      !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
+        ? "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
+        : undefined,
+  };
+
   return (
     <>
       <ResultPanel
@@ -152,6 +170,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
         deadline={filingDeadline(year, quarter)}
         today={today}
         result={result}
+        file={file}
       />
       <div className="flex items-center justify-between gap-3">
         <h2 className="m-0 text-md font-semibold">Casillas del modelo 130</h2>
