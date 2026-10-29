@@ -1,6 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { cents, model111, model190, obligation, sumCents, type Perceptor, type Quarter } from "@cuentalibre/core";
+import {
+  cents,
+  file111,
+  model111,
+  model190,
+  obligation,
+  sumCents,
+  type Perceptor,
+  type Quarter,
+} from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -18,6 +27,7 @@ import {
   Notice,
   QuarterCards,
   ResultPanel,
+  useAeatFile,
   type ResultSummary,
 } from "./tax-form";
 import { COUNT_BOXES_111, LAYOUT_111, modelPath, ONLY_RECORDED, quarterOf, WITHHOLDINGS_PATH } from "./taxes-model";
@@ -90,6 +100,8 @@ function Form111({ year, quarter, today }: { year: number; quarter: Quarter; tod
   const r = useMemo(() => model111(books.ops, year, quarter), [books, year, quarter]);
   const amount = cents(r.boxes["30"]!);
 
+  const file = useAeatFile("111", year, quarter, (filer) => file111({ year, quarter, boxes: r.boxes }, filer));
+
   const result: ResultSummary = {
     label: "Resultado a ingresar [30]",
     amount,
@@ -110,6 +122,7 @@ function Form111({ year, quarter, today }: { year: number; quarter: Quarter; tod
         deadline={obligation("111", year, quarter).dueOn}
         today={today}
         result={result}
+        file={file}
       />
       <MissingProvinces books={books} perceptors={r.perceptors} />
       <div className="flex items-center justify-between gap-3">

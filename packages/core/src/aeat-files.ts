@@ -72,8 +72,25 @@ export function filerTaxId(taxId: string): string {
   return normalizeTaxId(taxId).replace(/^ES(?=[0-9A-Z]{9}$)/, "");
 }
 
-/** Form 130 designs by first year they apply to; the 2019 one (version 1.2) is still current. */
-const FIRST_YEAR_130 = 2019;
+/** The identification every page opens with, after its start marker. */
+function identification(type: string, filer: AeatFiler, year: number, quarter: Quarter): string[] {
+  return [
+    blanks(1), // complementary page indicator
+    type,
+    aeatText(filerTaxId(filer.taxId), 9),
+    aeatText(filer.surnames, 60),
+    aeatText(filer.name, 20),
+    String(year),
+    periodCode(quarter),
+  ];
+}
+
+/** Record designs of forms 111, 115 and 130 by the first year they apply to; the 2019 ones are still current. */
+const FIRST_YEAR = 2019;
+
+function checkYear(form: string, year: number) {
+  if (year < FIRST_YEAR) throw new RangeError(`No form ${form} record design for ${year}`);
+}
 
 /**
  * Declaration type of a 130: I (deposit) to pay; B when a negative result is left to deduct in
@@ -98,18 +115,11 @@ export function file130(
   form: { year: number; quarter: Quarter; boxes: Boxes; result: Cents },
   filer: AeatFiler,
 ): string {
-  if (form.year < FIRST_YEAR_130) throw new RangeError(`No form 130 record design for ${form.year}`);
-  const period = periodCode(form.quarter);
+  checkYear("130", form.year);
   const page1 = page(
     [
       "<T13001000>",
-      blanks(1), // complementary page indicator
-      declarationType130(form.result, form.quarter),
-      aeatText(filerTaxId(filer.taxId), 9),
-      aeatText(filer.surnames, 60),
-      aeatText(filer.name, 20),
-      String(form.year),
-      period,
+      ...identification(declarationType130(form.result, form.quarter), filer, form.year, form.quarter),
       ...BOXES_130.map((box) => aeatAmount(form.boxes[box] ?? 0, 17, SIGNED_130.has(box))),
       blanks(1), // complementary return
       blanks(13), // receipt number of the return it complements
@@ -120,7 +130,72 @@ export function file130(
     ],
     600,
   );
-  return envelope("130", form.year, period, [page1]);
+  return envelope("130", form.year, periodCode(form.quarter), [page1]);
+}
+
+/**
+ * Declaration type of a withholding return (111, 115): I (deposit) to pay, N with nothing to pay.
+ * As with the 130, direct debit (U) is chosen in the sede.
+ */
+export function declarationTypeWithholdings(result: number): "I" | "N" {
+  return result > 0 ? "I" : "N";
+}
+
+/** Boxes of the 111 in groups of three: number of perceptors, amount paid and withholding. */
+const PERCEPTOR_GROUPS_111 = ["01", "04", "07", "10", "13", "16", "19", "22", "25"];
+
+/**
+ * The file the 111 online form imports: one page of 1000 positions. Box 29, the result of
+ * earlier returns, is the only signed one and only applies to complementary returns, which
+ * are not covered.
+ */
+export function file111(form: { year: number; quarter: Quarter; boxes: Boxes }, filer: AeatFiler): string {
+  checkYear("111", form.year);
+  const box = (n: number) => form.boxes[String(n).padStart(2, "0")] ?? 0;
+  const page1 = page(
+    [
+      "<T11101000>",
+      ...identification(declarationTypeWithholdings(box(30)), filer, form.year, form.quarter),
+      ...PERCEPTOR_GROUPS_111.flatMap((first) => {
+        const n = Number(first);
+        return [aeatAmount(box(n), 8, false), aeatAmount(box(n + 1), 17, false), aeatAmount(box(n + 2), 17, false)];
+      }),
+      aeatAmount(box(28), 17, false),
+      aeatAmount(box(29), 17, true),
+      aeatAmount(box(30), 17, false),
+      blanks(1), // complementary return
+      blanks(13), // receipt number of the return it complements
+      blanks(1), // reserved: filed by the Administration for a partner college
+      blanks(34), // IBAN of a direct debit
+      blanks(389),
+      blanks(13), // electronic stamp
+      "</T11101000>",
+    ],
+    1000,
+  );
+  return envelope("111", form.year, periodCode(form.quarter), [page1]);
+}
+
+/** The file the 115 online form imports: one page of 500 positions. Complementary returns are not covered. */
+export function file115(form: { year: number; quarter: Quarter; boxes: Boxes }, filer: AeatFiler): string {
+  checkYear("115", form.year);
+  const box = (key: string) => form.boxes[key] ?? 0;
+  const page1 = page(
+    [
+      "<T11501000>",
+      ...identification(declarationTypeWithholdings(box("05")), filer, form.year, form.quarter),
+      aeatAmount(box("01"), 15, false),
+      ...["02", "03", "04", "05"].map((key) => aeatAmount(box(key), 17, false)),
+      blanks(1), // complementary return
+      blanks(13), // receipt number of the return it complements
+      blanks(34), // IBAN of a direct debit
+      blanks(236),
+      blanks(13), // electronic stamp
+      "</T11501000>",
+    ],
+    500,
+  );
+  return envelope("115", form.year, periodCode(form.quarter), [page1]);
 }
 
 /** Name of the downloaded file: "130_2026_3T.txt". */
