@@ -3,8 +3,8 @@ import { newId, type Cents, type StockMovement } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { changes, client, document, errorCode, issuer, member, send, workspace } from "./test/sync";
 
-const account = () =>
-  ({ id: newId(), kind: "bank", name: "Cuenta principal", number: "ES91…1332", active: true }) as const;
+const method = () =>
+  ({ id: newId(), type: "transfer", name: "Transferencia", number: "ES91…1332", active: true }) as const;
 
 const product = (fields: Partial<Product> = {}): Product => ({
   id: newId(),
@@ -43,61 +43,39 @@ describe("plain records", () => {
     expect((await changes(ana, cursor)).changes).toEqual([{ op: "delete", entity: "tags", id: tag.id }]);
   });
 
-  it("stores treasury accounts, payment methods and manual payments", async () => {
+  it("stores payment methods and manual payments", async () => {
     const ana = await member();
-    const main = account();
-    const method = {
-      id: newId(),
-      type: "transfer",
-      name: "Transferencia",
-      number: "",
-      accountId: main.id,
-      active: true,
-    } as const;
+    const transfer = method();
     const payment = {
       id: newId(),
       date: "2026-10-01",
       amount: -50000 as Cents,
-      paymentMethodId: method.id,
+      paymentMethodId: transfer.id,
       description: "Ahorro",
     };
     const response = await send(ana, [
-      { type: "create", entity: "treasuryAccounts", data: main },
-      { type: "create", entity: "paymentMethods", data: method },
+      { type: "create", entity: "paymentMethods", data: transfer },
       { type: "create", entity: "manualPayments", data: payment },
     ]);
     expect(response.status).toBe(200);
     const stored = await workspace(ana);
-    expect(stored.treasuryAccounts).toEqual([main]);
-    expect(stored.paymentMethods).toEqual([method]);
+    expect(stored.paymentMethods).toEqual([transfer]);
     expect(stored.manualPayments).toEqual([payment]);
 
-    // An account can't go while a method still names it
-    const blocked = await send(ana, [{ type: "delete", entity: "treasuryAccounts", id: main.id }]);
-    expect(blocked.status).toBe(409);
-    expect(await errorCode(blocked)).toBe("in_use");
-    const used = await send(ana, [{ type: "delete", entity: "paymentMethods", id: method.id }]);
+    // A method can't go while a payment still names it
+    const used = await send(ana, [{ type: "delete", entity: "paymentMethods", id: transfer.id }]);
+    expect(used.status).toBe(409);
     expect(await errorCode(used)).toBe("in_use");
-    await send(ana, [{ type: "delete", entity: "manualPayments", id: payment.id }]);
-
-    // Unlinking a method from its account before deleting the account
     await send(ana, [
-      { type: "update", entity: "paymentMethods", id: method.id, changes: { accountId: null } },
-      { type: "delete", entity: "treasuryAccounts", id: main.id },
+      { type: "delete", entity: "manualPayments", id: payment.id },
+      { type: "delete", entity: "paymentMethods", id: transfer.id },
     ]);
-    expect((await workspace(ana)).paymentMethods).toEqual([{ ...method, accountId: null }]);
+    expect((await workspace(ana)).paymentMethods).toEqual([]);
   });
 
   it("keep a payment method while a contact, an expense, a payment or the settings name it", async () => {
     const ana = await issuer();
-    const method = {
-      id: newId(),
-      type: "transfer",
-      name: "Transferencia",
-      number: "",
-      accountId: null,
-      active: true,
-    } as const;
+    const method = { id: newId(), type: "transfer", name: "Transferencia", number: "", active: true } as const;
     await send(ana, [{ type: "create", entity: "paymentMethods", data: method }]);
     const blockedBy = async () => {
       const response = await send(ana, [{ type: "delete", entity: "paymentMethods", id: method.id }]);
@@ -181,27 +159,27 @@ describe("plain records", () => {
   it("only name the organization's own records, and not deleted ones", async () => {
     const ana = await member("Ana");
     const bea = await member("Bea");
-    const beas = account();
-    await send(bea, [{ type: "create", entity: "treasuryAccounts", data: beas }]);
-    const method = {
+    const beas = method();
+    await send(bea, [{ type: "create", entity: "paymentMethods", data: beas }]);
+    const payment = {
       id: newId(),
-      type: "card",
-      name: "Tarjeta",
-      number: "",
-      accountId: beas.id,
-      active: true,
-    } as const;
-    const response = await send(ana, [{ type: "create", entity: "paymentMethods", data: method }]);
+      date: "2026-10-01",
+      amount: 100 as Cents,
+      paymentMethodId: beas.id,
+      description: "",
+    };
+    const response = await send(ana, [{ type: "create", entity: "manualPayments", data: payment }]);
     expect(response.status).toBe(400);
-    expect(await errorCode(response)).toBe("invalid_payment_method");
+    expect(await errorCode(response)).toBe("invalid_manual_payment");
 
-    const anas = account();
+    const anas = method();
     await send(ana, [
-      { type: "create", entity: "treasuryAccounts", data: anas },
-      { type: "delete", entity: "treasuryAccounts", id: anas.id },
+      { type: "create", entity: "paymentMethods", data: anas },
+      { type: "delete", entity: "paymentMethods", id: anas.id },
     ]);
     expect(
-      (await send(ana, [{ type: "create", entity: "paymentMethods", data: { ...method, accountId: anas.id } }])).status,
+      (await send(ana, [{ type: "create", entity: "manualPayments", data: { ...payment, paymentMethodId: anas.id } }]))
+        .status,
     ).toBe(400);
   });
 

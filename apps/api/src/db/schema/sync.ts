@@ -11,7 +11,6 @@ export type LoggedEntity =
   | "filed_return"
   | "organization_setting"
   | "tag"
-  | "treasury_account"
   | "payment_method"
   | "manual_payment"
   | "catalog_family"

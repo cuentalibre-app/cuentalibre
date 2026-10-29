@@ -1,12 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { toIsoDate, type Cents } from "@cuentalibre/core";
-import type { TreasuryAccount } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Input, Textarea } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { defaultPaymentMethodId, maskNumber, paymentMethodOptions } from "@/features/settings/settings-model";
+import { defaultPaymentMethodId, paymentMethodOptions } from "@/features/settings/settings-model";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { parseEuros } from "@/lib/format";
 import { treasuryStore } from "./treasury-store";
@@ -41,11 +40,6 @@ export function SignedAmount({ value, className }: { value: Cents; className?: s
       {formatEUR(value)}
     </span>
   );
-}
-
-export function accountNumber(account: Pick<TreasuryAccount, "kind" | "number">): string {
-  if (!account.number) return "";
-  return account.kind === "bank" || account.kind === "card" ? maskNumber(account.number) : account.number;
 }
 
 /* ─────────────────────────────── Manual payment ─────────────────────────────── */

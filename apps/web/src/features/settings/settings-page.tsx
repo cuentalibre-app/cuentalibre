@@ -37,7 +37,6 @@ import { useBilling } from "./billing-store";
 import { useCompliance } from "./compliance-store";
 import {
   ACCESS_PATH,
-  ACCOUNTS_PATH,
   API_KEYS_PATH,
   BILLING_PATH,
   BUSINESS_PATH,
@@ -49,6 +48,7 @@ import {
   incomeTaxMethodLabel,
   INVOICE_SETTINGS_PATH,
   LEDGER_ACCOUNTS_PATH,
+  PAYMENT_METHODS_PATH,
   PREFERENCES_PATH,
   PROFILE_PATH,
   QUOTE_SETTINGS_PATH,
@@ -179,8 +179,7 @@ function PlanCard({ billing }: { billing: Billing }) {
 }
 
 export function SettingsPage() {
-  const { profile, tax, accounts, paymentMethods } = useSettings();
-  const activeAccounts = accounts.filter((a) => a.active).length;
+  const { profile, tax, paymentMethods } = useSettings();
   const activeMethods = paymentMethods.filter((m) => m.active).length;
   const main = tax.activities[0];
   const billing = useBilling();
@@ -258,14 +257,11 @@ export function SettingsPage() {
           icon: Users,
         },
         {
-          title: "Cuentas y métodos de pago",
-          description: "Tus cuentas, la caja, PayPal y tarjetas, y cómo cobras y pagas con cada una.",
-          to: ACCOUNTS_PATH,
+          title: "Formas de cobro y pago",
+          description: "Tus cuentas bancarias, tarjetas, PayPal y efectivo.",
+          to: PAYMENT_METHODS_PATH,
           icon: Landmark,
-          summary: [
-            `${activeAccounts} ${activeAccounts === 1 ? "cuenta activa" : "cuentas activas"}`,
-            `${activeMethods} ${activeMethods === 1 ? "método activo" : "métodos activos"}`,
-          ].join(" · "),
+          summary: `${activeMethods} ${activeMethods === 1 ? "activa" : "activas"}`,
         },
         {
           title: "Cuentas contables",

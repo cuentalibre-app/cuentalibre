@@ -81,15 +81,7 @@ export const mainNav: NavItem[] = [
       { label: "Intracomunitarias (349)", to: "/impuestos/intracomunitarias" },
     ],
   },
-  {
-    label: "Bancos",
-    to: "/bancos",
-    icon: Landmark,
-    children: [
-      { label: "Resumen", to: "/bancos" },
-      { label: "Cobros y pagos", to: "/bancos/cobros-y-pagos" },
-    ],
-  },
+  { label: "Bancos", to: "/bancos", icon: Landmark },
   {
     label: "Contactos",
     to: "/contactos",

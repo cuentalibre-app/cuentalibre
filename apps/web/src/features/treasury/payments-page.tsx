@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ArrowUpRight, ChevronDown, Download, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
-import { cents, isInPeriod, periodKey, sumBy } from "@cuentalibre/core";
+import { cents, isInPeriod, monthlyFlows, periodKey, sumBy } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
@@ -17,8 +17,9 @@ import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
+import { FlowsChart } from "./flows-chart";
 import { ManualPaymentDialog, PageHeader, SignedAmount } from "./treasury-parts";
-import { PAYMENT_SOURCES, PAYMENT_SOURCE_ORDER, accountName, type TreasuryPayment } from "./treasury-model";
+import { PAYMENT_SOURCES, PAYMENT_SOURCE_ORDER, type TreasuryPayment } from "./treasury-model";
 import { treasuryStore, usePayments } from "./treasury-store";
 
 const ALL = "all";
@@ -26,17 +27,15 @@ const ALL = "all";
 interface Row {
   payment: TreasuryPayment;
   method: string;
-  account: string;
 }
 
 interface Filters {
   query: string;
   source: string;
   method: string;
-  account: string;
 }
 
-const NO_FILTERS: Filters = { query: "", source: ALL, method: ALL, account: ALL };
+const NO_FILTERS: Filters = { query: "", source: ALL, method: ALL };
 
 type SortKey = "date" | "amount" | "method";
 interface Sort {
@@ -44,14 +43,13 @@ interface Sort {
   dir: "asc" | "desc";
 }
 
+/** Banks: what came in and went out over the last year, and every collection and payment. */
 export function PaymentsPage() {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
-  const { accounts, paymentMethods } = useSettings();
+  const { paymentMethods } = useSettings();
   const payments = usePayments();
-  const [searchParams] = useSearchParams();
-  // The summary's account cards open this page filtered by that account
-  const [filters, setFilters] = useState(() => ({ ...NO_FILTERS, account: searchParams.get("cuenta") ?? ALL }));
+  const [filters, setFilters] = useState(NO_FILTERS);
   const [sort, setSort] = useState<Sort>({ key: "date", dir: "desc" });
   const [creating, setCreating] = useState(false);
   const [removing, setRemoving] = useState<TreasuryPayment | null>(null);
@@ -63,10 +61,10 @@ export function PaymentsPage() {
         .map((payment): Row => ({
           payment,
           method: paymentMethods.find((m) => m.id === payment.paymentMethodId)?.name ?? "Sin método",
-          account: accountName(payment.accountId, accounts),
         })),
-    [payments, period, paymentMethods, accounts],
+    [payments, period, paymentMethods],
   );
+  const months = useMemo(() => monthlyFlows(payments, today), [payments, today]);
 
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => setFilters((f) => ({ ...f, [key]: value }));
   const q = filters.query.trim().toLowerCase();
@@ -76,7 +74,6 @@ export function PaymentsPage() {
       (r) =>
         (filters.source === ALL || r.payment.source === filters.source) &&
         (filters.method === ALL || r.payment.paymentMethodId === filters.method) &&
-        (filters.account === ALL || r.payment.accountId === filters.account) &&
         (!q ||
           [r.payment.reference, r.payment.counterparty, formatEUR(r.payment.amount)].some((v) =>
             v.toLowerCase().includes(q),
@@ -122,13 +119,15 @@ export function PaymentsPage() {
       <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
         <PageHeader
           title="Cobros y pagos"
-          description="Cada cobro de una factura emitida y cada pago de una factura recibida o un gasto, con el método y la cuenta por la que pasó."
+          description="Lo que has cobrado y pagado: facturas emitidas y recibidas, gastos y cobros o pagos manuales."
         >
           <Button onClick={() => setCreating(true)}>
             <Plus strokeWidth={2} aria-hidden="true" />
             Nuevo cobro / pago manual
           </Button>
         </PageHeader>
+
+        <FlowsChart months={months} />
 
         <dl className="m-0 grid animate-rise-in grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
           {[
@@ -185,21 +184,6 @@ export function PaymentsPage() {
                   options: [
                     { value: ALL, label: "Todos los métodos" },
                     ...paymentMethods.map((m) => ({ value: m.id, label: m.name })),
-                  ],
-                },
-              ]}
-              className="w-auto min-w-40 font-medium"
-            />
-            <GroupedSelect
-              id="pay-account"
-              aria-label="Cuenta relacionada"
-              value={filters.account}
-              onChange={(v) => set("account", v)}
-              groups={[
-                {
-                  options: [
-                    { value: ALL, label: "Todas las cuentas" },
-                    ...accounts.map((a) => ({ value: a.id, label: a.name })),
                   ],
                 },
               ]}
@@ -288,10 +272,7 @@ export function PaymentsPage() {
                           <SignedAmount value={r.payment.amount} />
                         </td>
                         <td className={table.td}>
-                          <div className="flex min-w-0 flex-col">
-                            <span className="max-w-48 truncate">{r.method}</span>
-                            <span className="max-w-48 truncate text-xs text-muted-foreground">{r.account}</span>
-                          </div>
+                          <span className="block max-w-48 truncate">{r.method}</span>
                         </td>
                         <td className={cn(table.td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
                           <QuickActions row={r} onRemove={() => setRemoving(r.payment)} />
@@ -431,7 +412,7 @@ function RowMenu({ row, onRemove }: { row: Row; onRemove: () => void }) {
 
 function exportCsv(rows: Row[], name: string) {
   downloadCsv(
-    ["Fecha", "Tipo", "Documento", "Contacto", "Importe", "Método", "Cuenta"],
+    ["Fecha", "Tipo", "Documento", "Contacto", "Importe", "Método"],
     rows.map((r) => [
       r.payment.date,
       PAYMENT_SOURCES[r.payment.source].label,
@@ -439,7 +420,6 @@ function exportCsv(rows: Row[], name: string) {
       r.payment.counterparty,
       r.payment.amount,
       r.method,
-      r.account,
     ]),
     name,
   );

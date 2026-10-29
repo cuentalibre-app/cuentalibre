@@ -6,7 +6,7 @@ section: api
 order: 1
 ---
 
-La API de cuentalibre te deja leer y escribir tu contabilidad desde scripts, hojas de cálculo, automatizaciones o agentes de IA: contactos, facturas, borradores, presupuestos, albaranes, facturas recibidas, gastos, archivos, etiquetas, formas de pago, tesorería, catálogo y ajustes. Es la misma API que usa la aplicación web, así que lo que hagas por ella sigue las mismas reglas: la numeración correlativa, los trimestres cerrados y VERI\*FACTU.
+La API de cuentalibre te deja leer y escribir tu contabilidad desde scripts, hojas de cálculo, automatizaciones o agentes de IA: contactos, facturas, borradores, presupuestos, albaranes, facturas recibidas, gastos, archivos, etiquetas, formas de pago, cobros y pagos, catálogo y ajustes. Es la misma API que usa la aplicación web, así que lo que hagas por ella sigue las mismas reglas: la numeración correlativa, los trimestres cerrados y VERI\*FACTU.
 
 Si vas a conectar un agente de IA, empieza por [Conectar un agente](/docs/agentes). Toda esta referencia está también en un solo archivo Markdown, [`/docs/api.md`](/docs/api.md), para dársela tal cual.
 

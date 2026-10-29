@@ -70,19 +70,6 @@ export const taxSetupSchema = z.object({
 });
 export type TaxSetup = z.infer<typeof taxSetupSchema>;
 
-export const accountKindSchema = z.enum(["bank", "cash", "paypal", "card"]);
-export type AccountKind = z.infer<typeof accountKindSchema>;
-
-export const treasuryAccountSchema = z.object({
-  id,
-  kind: accountKindSchema,
-  name: z.string().min(1),
-  /** IBAN, card number (often its last digits) or PayPal email. */
-  number: z.string(),
-  active: z.boolean(),
-});
-export type TreasuryAccount = z.infer<typeof treasuryAccountSchema>;
-
 export const paymentMethodTypeSchema = z.enum(["cash", "card", "transfer", "directDebit", "promissory", "paypal"]);
 export type PaymentMethodType = z.infer<typeof paymentMethodTypeSchema>;
 
@@ -90,10 +77,8 @@ export const paymentMethodSchema = z.object({
   id,
   type: paymentMethodTypeSchema,
   name: z.string().min(1),
-  /** Account or card number the money goes through; may hold only the last four digits. */
+  /** IBAN, card number or PayPal email the money goes through; may hold only the last four digits. */
   number: z.string(),
-  /** Treasury account it books into, if any. */
-  accountId: id.nullable(),
   active: z.boolean(),
 });
 export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
@@ -207,4 +192,3 @@ export const companyUserSchema = z.object({
   owner: z.boolean().optional(),
 });
 export type CompanyUser = z.infer<typeof companyUserSchema>;
-

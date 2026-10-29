@@ -68,7 +68,7 @@ describe("settings", () => {
     const unknown = await send(ana, [{ type: "saveSettings", section: "defaultPaymentMethod", data: newId() }]);
     expect(unknown.status).toBe(400);
 
-    const method = { id: newId(), type: "cash", name: "Efectivo", number: "", accountId: null, active: true } as const;
+    const method = { id: newId(), type: "cash", name: "Efectivo", number: "", active: true } as const;
     const response = await send(ana, [
       { type: "create", entity: "paymentMethods", data: method },
       { type: "saveSettings", section: "defaultPaymentMethod", data: method.id },

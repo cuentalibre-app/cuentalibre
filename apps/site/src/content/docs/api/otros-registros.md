@@ -1,7 +1,7 @@
 ---
-title: "Etiquetas, tesorería y catálogo"
+title: "Etiquetas, formas de pago y catálogo"
 label: "Otros registros"
-description: "Etiquetas, cuentas de tesorería, formas de pago, cobros y pagos sueltos, familias, productos y stock."
+description: "Etiquetas, formas de pago, cobros y pagos sueltos, familias, productos y stock."
 section: api
 order: 9
 ---
@@ -21,7 +21,6 @@ La API comprueba su forma y que los registros que nombran sean de tu empresa y n
         "type": "transfer",
         "name": "Transferencia BBVA",
         "number": "ES21…",
-        "accountId": null,
         "active": true
       }
     }
@@ -33,30 +32,16 @@ La API comprueba su forma y que los registros que nombran sean de tu empresa y n
 
 `tags`: `{ id, name, color }`, con `color` en `#rrggbb`. Cualquier registro las nombra por id en su campo `tags`.
 
-## Cuentas de tesorería
-
-`treasuryAccounts`:
-
-| Campo    | Tipo                                       |                                                         |
-| -------- | ------------------------------------------ | ------------------------------------------------------- |
-| `kind`   | `bank` \| `cash` \| `paypal` \| `card`     | Banco, caja, PayPal o tarjeta.                          |
-| `name`   | texto                                      | Obligatorio.                                            |
-| `number` | texto                                      | IBAN, número de tarjeta (o sus últimas cifras) o correo de PayPal. |
-| `active` | booleano                                   |                                                         |
-
-No se puede borrar mientras la use una forma de pago.
-
 ## Formas de pago
 
 `paymentMethods`. Su `id` es el `paymentMethodId` de los cobros, los pagos, los gastos y los contactos.
 
-| Campo       | Tipo                                                                          |                                                    |
-| ----------- | ----------------------------------------------------------------------------- | -------------------------------------------------- |
-| `type`      | `cash` \| `card` \| `transfer` \| `directDebit` \| `promissory` \| `paypal`   | Efectivo, tarjeta, transferencia, domiciliación, pagaré o PayPal. |
-| `name`      | texto                                                                         | Obligatorio.                                       |
-| `number`    | texto                                                                         | Cuenta o tarjeta; pueden ser solo las cuatro últimas cifras. |
-| `accountId` | id \| null                                                                    | Cuenta de tesorería en la que se apunta.           |
-| `active`    | booleano                                                                      |                                                    |
+| Campo    | Tipo                                                                        |                                                                   |
+| -------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `type`   | `cash` \| `card` \| `transfer` \| `directDebit` \| `promissory` \| `paypal` | Efectivo, tarjeta, transferencia, domiciliación, pagaré o PayPal. |
+| `name`   | texto                                                                       | Obligatorio.                                                      |
+| `number` | texto                                                                       | IBAN, número de tarjeta o correo de PayPal; pueden ser solo las cuatro últimas cifras. |
+| `active` | booleano                                                                    |                                                                   |
 
 No se puede borrar mientras la use un cobro o pago suelto. La que se propone en los documentos nuevos es el ajuste [`defaultPaymentMethod`](/docs/api/ajustes).
 

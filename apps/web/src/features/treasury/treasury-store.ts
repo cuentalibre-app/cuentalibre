@@ -4,7 +4,6 @@ import type { ManualPayment } from "@cuentalibre/contracts";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { useSalesDocuments } from "@/features/sales/sales-store";
-import { useSettings } from "@/features/settings/settings-store";
 import { initialManualPayments } from "@/mocks/treasury";
 import type { Command } from "@/data/commands";
 import { createStore } from "@/data/store";
@@ -39,11 +38,7 @@ export function usePayments() {
   const purchases = usePurchaseInvoices();
   const expenses = useExpenses();
   const { manualPayments: manual } = useTreasury();
-  const { paymentMethods: methods } = useSettings();
-  return useMemo(
-    () => collectPayments({ sales, purchases, expenses, manual, methods }),
-    [sales, purchases, expenses, manual, methods],
-  );
+  return useMemo(() => collectPayments({ sales, purchases, expenses, manual }), [sales, purchases, expenses, manual]);
 }
 
 export const treasuryStore = {
