@@ -18,7 +18,7 @@ import {
   type Cents,
   type Quarter,
 } from "@cuentalibre/core";
-import type { PaymentMethod, TreasuryAccount } from "@cuentalibre/contracts";
+import type { PaymentMethod } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
@@ -429,26 +429,20 @@ function UnavailableFile({ label, reason }: { label: string; reason: string }) {
   );
 }
 
-/**
- * The IBANs a return can be debited to: active bank accounts, then active transfer and direct
- * debit methods (which often hold the IBAN without a linked account), once per IBAN.
- */
-function debitableIbans(accounts: TreasuryAccount[], methods: PaymentMethod[]): { name: string; iban: string }[] {
-  const candidates = [
-    ...accounts.filter((a) => a.active && a.kind === "bank"),
-    ...methods.filter((m) => m.active && (m.type === "transfer" || m.type === "directDebit")),
-  ];
+/** The IBANs a return can be debited to: active transfer and direct debit methods, once per IBAN. */
+function debitableIbans(methods: PaymentMethod[]): { name: string; iban: string }[] {
   const byIban = new Map<string, string>();
-  for (const c of candidates) {
-    const iban = normalizeTaxId(c.number);
-    if (isValidIban(iban) && !byIban.has(iban)) byIban.set(iban, c.name);
+  for (const m of methods) {
+    if (!m.active || (m.type !== "transfer" && m.type !== "directDebit")) continue;
+    const iban = normalizeTaxId(m.number);
+    if (isValidIban(iban) && !byIban.has(iban)) byIban.set(iban, m.name);
   }
   return [...byIban].map(([iban, name]) => ({ name, iban }));
 }
 
 /** Downloads the AEAT file; a result to pay asks first how it will be paid. */
 function AeatFileButton({ file }: { file: AeatFile }) {
-  const { accounts, paymentMethods } = useSettings();
+  const { paymentMethods } = useSettings();
   if (file.missing) return <UnavailableFile label={LABEL_AEAT_FILE} reason={file.missing} />;
   try {
     file.build({ kind: "deposit" });
@@ -464,7 +458,7 @@ function AeatFileButton({ file }: { file: AeatFile }) {
 
   const download = (payment: AeatPayment) =>
     downloadBlob(new Blob([aeatBytes(file.build(payment))], { type: "text/plain;charset=iso-8859-1" }), file.name);
-  const banks = debitableIbans(accounts, paymentMethods);
+  const banks = debitableIbans(paymentMethods);
 
   if (!file.payable || banks.length === 0)
     return (
