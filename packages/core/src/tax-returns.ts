@@ -497,6 +497,20 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
   const quarters = quarterly.map((q) => q.result) as Model390["quarters"];
 
   const v = b.values;
+  // Each group of deductions has its own total on the form
+  const subtotals: [RateBoxes, string, string][] = [
+    [DEDUCT_DOMESTIC_390, "48", "49"],
+    [DEDUCT_DOMESTIC_INVESTMENT_390, "50", "51"],
+    [DEDUCT_IMPORTS_390, "52", "53"],
+    [DEDUCT_IMPORTS_INVESTMENT_390, "54", "55"],
+    [DEDUCT_INTRA_GOODS_390, "56", "57"],
+    [DEDUCT_INTRA_INVESTMENT_390, "58", "59"],
+    [DEDUCT_INTRA_SERVICES_390, "597", "598"],
+  ];
+  for (const [table, base, vat] of subtotals) {
+    v[base] = b.get(...pairs(table).map((p) => p[0]!));
+    v[vat] = b.get(...pairs(table).map((p) => p[1]!));
+  }
   v["33"] = b.get(...outputPairs.map((p) => p[0]!));
   v["34"] = outputVat;
   v["47"] = outputVat;
@@ -507,6 +521,10 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
   v["86"] = result;
   v["95"] = sumCents(quarters.filter((r) => r > 0));
   v["97"] = cents(Math.max(0, -quarters[3]));
+  // Still pending after Q4 from earlier quarters of the year: offsets use up the oldest first
+  const offsets = sumCents(quarterly.map((q) => cents(q.boxes["78"]!)));
+  const oldPending = Math.max(0, pendingAtStart - offsets);
+  v["662"] = cents(Math.max(0, quarterly[3]!.boxes["87"]! - oldPending));
   v["108"] = b.get("99", "653", "103", "104", "105", "110", "125");
 
   return {
