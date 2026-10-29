@@ -65,6 +65,12 @@ export function excelSerialToIso(serial: number): string {
   return new Date(Date.UTC(1899, 11, 30) + ms).toISOString().slice(0, 10);
 }
 
+/** An ISO date as a spreadsheet date serial, the inverse of `excelSerialToIso`. */
+export function isoToExcelSerial(isoDate: string): number {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return (Date.UTC(y!, m! - 1, d!) - Date.UTC(1899, 11, 30)) / 86_400_000;
+}
+
 /** ISO date as it is written in Spain: "31/03/2026". */
 export function formatSpanishDate(isoDate: string): string {
   const [y, m, d] = isoDate.split("-");
