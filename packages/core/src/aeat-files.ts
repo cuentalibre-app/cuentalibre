@@ -313,8 +313,8 @@ function page1of303(form: Return303, filer: AeatFiler, design: 2025 | 2026): str
       "2", // joint return
       yesNo(form.cashBasis),
       "2", // recipient of operations under the cash accounting regime
-      last ? "2" : blanks(1), // opts for the special proration
-      last ? "2" : blanks(1), // revokes the special proration
+      "2", // opts for the special proration: the AEAT rejects a blank in any quarter
+      "2", // revokes the special proration
       "2", // insolvency proceedings
       blanks(8), // date of the insolvency order
       blanks(1), // type of return under insolvency

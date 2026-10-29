@@ -383,8 +383,8 @@ describe("file303", () => {
     expect(page1(file, 107, 2)).toBe("3T");
     // Common territory, no REDEME, only the general regime, no joint return, no cash basis…
     expect(page1(file, 109, 6)).toBe("223222");
-    // …the proration flags blank until Q4, no insolvency, no SII, and the Q4 and fuel flags at zero
-    expect(page1(file, 115, 16)).toBe("  2" + " ".repeat(9) + "2000");
+    // …no special proration, no insolvency, no SII, and the Q4 and fuel flags at zero
+    expect(page1(file, 115, 16)).toBe("222" + " ".repeat(9) + "2000");
   });
 
   it("puts the general regime boxes at their 2026 positions", () => {
