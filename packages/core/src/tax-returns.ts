@@ -519,6 +519,26 @@ export function model390(books: Pick<TaxBooks, "sales" | "purchases">, year: num
   };
 }
 
+/**
+ * Boxes of the last 303 that filers exempt from form 390 fill in: the year's volume of
+ * operations, as form 390 adds it up, all of it in the common territory.
+ */
+export function annualVolume303(books: Pick<TaxBooks, "sales" | "purchases">, year: number): Boxes {
+  const v = model390(books, year).boxes;
+  const at = (box: string) => v[box] ?? 0;
+  return {
+    "80": at("99"),
+    "81": at("653"),
+    "93": at("103"),
+    "94": at("104"),
+    "83": at("105"),
+    "84": at("110"),
+    "125": at("125"),
+    "88": at("108"),
+    "107": 100,
+  };
+}
+
 /* ───────────────────────── Income tax: forms 130 and 100 ───────────────────────── */
 
 /** Annual cap of the hard-to-justify expenses in simplified direct estimation: 2.000 €. */
