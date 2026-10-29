@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  annualVolume303,
   expenseBox100,
   filedReturnsOf,
   hardToJustify,
@@ -251,6 +252,36 @@ describe("filedReturnsOf", () => {
         { form: "303", period: "2026-T1", boxes: { "71": 120 } },
       ]),
     ).toEqual({ "303": { "2026-T1": { "71": 120 } }, "130": { "2026-T1": { "07": 50 } } });
+  });
+});
+
+describe("annualVolume303", () => {
+  it("takes the year's volume of operations from form 390, all in the common territory", () => {
+    const b = books({
+      sales: [
+        sale("2026-02-10", eur(1_000)),
+        sale("2026-11-10", eur(4_000), {
+          operation: "intraEu",
+          vatBreakdown: [{ rate: 0, base: eur(4_000), vat: cents(0) }],
+        }),
+        sale("2026-12-10", eur(500), {
+          operation: "export",
+          vatBreakdown: [{ rate: 0, base: eur(500), vat: cents(0) }],
+        }),
+        sale("2025-12-10", eur(9_000)),
+      ],
+    });
+    expect(annualVolume303(b, 2026)).toEqual({
+      "80": eur(1_000),
+      "81": 0,
+      "93": eur(4_000),
+      "94": eur(500),
+      "83": 0,
+      "84": 0,
+      "125": 0,
+      "88": eur(5_500),
+      "107": 100,
+    });
   });
 });
 

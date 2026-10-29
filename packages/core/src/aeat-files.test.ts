@@ -5,12 +5,16 @@ import {
   aeatFileName,
   aeatText,
   declarationType130,
+  declarationType303,
   declarationTypeWithholdings,
   file111,
   file115,
   file130,
+  file303,
+  FIRST_YEAR_303,
   filerTaxId,
   type AeatFiler,
+  type Return303,
 } from "./aeat-files";
 import { cents, eurosToCents } from "./money";
 import type { Boxes } from "./tax-returns";
@@ -298,6 +302,217 @@ describe("file115", () => {
   it("refuses negative amounts and years without a design", () => {
     expect(() => file115({ ...form, boxes: { ...form.boxes, "03": -1 } }, filer)).toThrow(RangeError);
     expect(() => file115({ ...form, year: 2018 }, filer)).toThrow(RangeError);
+  });
+});
+
+describe("declarationType303", () => {
+  it("pays a positive result by deposit and files a zero result as such", () => {
+    expect(declarationType303(cents(100), 1, false)).toBe("I");
+    expect(declarationType303(cents(0), 4, true)).toBe("N");
+  });
+
+  it("carries a negative result forward, or asks for a refund in Q4", () => {
+    expect(declarationType303(cents(-100), 3, true)).toBe("C");
+    expect(declarationType303(cents(-100), 4, false)).toBe("C");
+    expect(declarationType303(cents(-100), 4, true)).toBe("D");
+  });
+});
+
+describe("file303", () => {
+  /** Rates the 303 prints on its rows, as model303 fills them. */
+  const RATES = { "151": 0, "02": 4, "05": 10, "08": 21, "157": 1.75, "169": 0.5, "20": 1.4, "23": 5.2, "65": 100 };
+  const form: Return303 = {
+    year: 2026,
+    quarter: 3,
+    result: eur(1_670),
+    hasActivity: true,
+    refund: false,
+    cashBasis: false,
+    annual: null,
+    boxes: {
+      ...RATES,
+      "07": eur(10_000),
+      "09": eur(2_100),
+      "14": eur(-200),
+      "15": eur(-42),
+      "27": eur(2_058),
+      "28": eur(1_000),
+      "29": eur(210),
+      "45": eur(210),
+      "46": eur(1_848),
+      "59": eur(3_000),
+      "64": eur(1_848),
+      "66": eur(1_848),
+      "110": eur(500),
+      "78": eur(178),
+      "87": eur(322),
+      "69": eur(1_670),
+      "71": eur(1_670),
+    },
+  };
+  const file = file303(form, filer);
+
+  /** Pages in the file: page 1 (1581), page 3 (1017), optionally page 4 (998), and the bank page (823). */
+  const PAGE_3 = PAGE_START + 1581;
+  const at = (start: number) => (text: string, position: number, length: number) =>
+    text.slice(start - 1 + position - 1, start - 1 + position - 1 + length);
+  const page1 = at(PAGE_START);
+  const page3 = at(PAGE_3);
+
+  it("wraps pages 1 and 3 and the bank page in the envelope", () => {
+    expect(file).toHaveLength(17 + 311 + 1581 + 1017 + 823 + 18);
+    expect(file.slice(0, 17)).toBe("<T303020263T0000>");
+    expect(file.slice(17, 328)).toBe(`<AUX>${" ".repeat(300)}</AUX>`);
+    expect(page1(file, 1, 11)).toBe("<T30301000>");
+    expect(page1(file, 1570, 12)).toBe("</T30301000>");
+    expect(page3(file, 1, 11)).toBe("<T30303000>");
+    expect(page3(file, 1006, 12)).toBe("</T30303000>");
+    expect(file.slice(-18 - 823, -18)).toBe(`<T303DID00>${" ".repeat(182)}0${" ".repeat(617)}</T303DID00>`);
+    expect(file.slice(-18)).toBe("</T303020263T0000>");
+  });
+
+  it("lays out the identification as the record design says", () => {
+    expect(page1(file, 12, 1)).toBe(" ");
+    expect(page1(file, 13, 1)).toBe("I");
+    expect(page1(file, 14, 9)).toBe("50123456Q");
+    expect(page1(file, 23, 80)).toBe("MARTIN GOMEZ LUCIA".padEnd(80));
+    expect(page1(file, 103, 4)).toBe("2026");
+    expect(page1(file, 107, 2)).toBe("3T");
+    // Common territory, no REDEME, only the general regime, no joint return, no cash basis…
+    expect(page1(file, 109, 6)).toBe("223222");
+    // …the proration flags blank until Q4, no insolvency, no SII, and the Q4 and fuel flags at zero
+    expect(page1(file, 115, 16)).toBe("  2" + " ".repeat(9) + "2000");
+  });
+
+  it("puts the general regime boxes at their 2026 positions", () => {
+    expect(page1(file, 131, 17)).toBe("0".repeat(17)); // [150]
+    expect(page1(file, 148, 5)).toBe("00000"); // [151]
+    expect(page1(file, 170, 17 + 5 + 17)).toBe("0".repeat(39)); // [165] [166] [167]
+    expect(page1(file, 226, 5)).toBe("00400"); // [02]
+    expect(page1(file, 265, 5)).toBe("00000"); // [154]
+    expect(page1(file, 304, 5)).toBe("01000"); // [05]
+    expect(page1(file, 326, 17)).toBe("00000000001000000"); // [07]
+    expect(page1(file, 343, 5)).toBe("02100"); // [08]
+    expect(page1(file, 348, 17)).toBe("00000000000210000"); // [09]
+    expect(page1(file, 433, 17)).toBe("N0000000000020000"); // [14]
+    expect(page1(file, 450, 17)).toBe("N0000000000004200"); // [15]
+    expect(page1(file, 484, 5)).toBe("00175"); // [157]
+    expect(page1(file, 523, 5)).toBe("00050"); // [169]
+    expect(page1(file, 562, 5)).toBe("00000"); // [17]
+    expect(page1(file, 601, 5)).toBe("00140"); // [20]
+    expect(page1(file, 640, 5)).toBe("00520"); // [23]
+    expect(page1(file, 696, 17)).toBe("00000000000205800"); // [27]
+    expect(page1(file, 713, 17)).toBe("00000000000100000"); // [28]
+    expect(page1(file, 730, 17)).toBe("00000000000021000"); // [29]
+    expect(page1(file, 1002, 17)).toBe("00000000000021000"); // [45]
+    expect(page1(file, 1019, 17)).toBe("00000000000184800"); // [46]
+    expect(page1(file, 1036, 521 + 13)).toBe(" ".repeat(534));
+  });
+
+  it("puts the additional information and the result on page 3", () => {
+    expect(page3(file, 12, 17)).toBe("00000000000300000"); // [59]
+    expect(page3(file, 199, 17)).toBe("00000000000184800"); // [64]
+    expect(page3(file, 216, 5)).toBe("10000"); // [65]
+    expect(page3(file, 221, 17)).toBe("00000000000184800"); // [66]
+    expect(page3(file, 255, 17)).toBe("00000000000050000"); // [110]
+    expect(page3(file, 272, 17)).toBe("00000000000017800"); // [78]
+    expect(page3(file, 289, 17)).toBe("00000000000032200"); // [87]
+    expect(page3(file, 340, 17)).toBe("00000000000167000"); // [69]
+    expect(page3(file, 408, 17)).toBe("00000000000167000"); // [71]
+    expect(page3(file, 425, 1)).toBe(" ");
+    expect(page3(file, 426, 1 + 13 + 1 + 17 + 2 + 546)).toBe(" ".repeat(580));
+  });
+
+  it("files a negative result to carry forward with its sign", () => {
+    const negative = file303(
+      { ...form, quarter: 1, result: eur(-120), boxes: { ...RATES, "29": eur(120), "45": eur(120), "46": eur(-120), "64": eur(-120), "66": eur(-120), "69": eur(-120), "71": eur(-120) } }, // prettier-ignore
+      filer,
+    );
+    expect(page1(negative, 13, 1)).toBe("C");
+    expect(page1(negative, 1019, 17)).toBe("N0000000000012000");
+    expect(page3(negative, 408, 17)).toBe("N0000000000012000");
+    expect(negative.slice(0, 17)).toBe("<T303020261T0000>");
+  });
+
+  it("asks for a refund in Q4 when told to", () => {
+    const q4 = { ...form, quarter: 4 as const, result: eur(-120), boxes: { ...RATES, "71": eur(-120) } };
+    expect(page1(file303({ ...q4, refund: true }, filer), 13, 1)).toBe("D");
+    expect(page1(file303(q4, filer), 13, 1)).toBe("C");
+    // The proration flags are answered with a no, and the filer files form 390
+    expect(page1(file303(q4, filer), 115, 15)).toBe("22" + "2" + " ".repeat(9) + "220");
+  });
+
+  it("marks a return without activity and leaves the mark off when there is something to carry", () => {
+    const empty = file303({ ...form, quarter: 2, result: cents(0), hasActivity: false, boxes: { ...RATES } }, filer);
+    expect(page1(empty, 13, 1)).toBe("N");
+    expect(page3(empty, 425, 1)).toBe("X");
+    const carrying = file303({ ...form, result: cents(0), hasActivity: false, boxes: { ...RATES, "110": eur(50), "87": eur(50) } }, filer); // prettier-ignore
+    expect(page1(carrying, 13, 1)).toBe("N");
+    expect(page3(carrying, 425, 1)).toBe(" ");
+  });
+
+  it("flags the cash accounting regime", () => {
+    expect(page1(file303({ ...form, cashBasis: true }, filer), 113, 1)).toBe("1");
+  });
+
+  it("adds page 4 in Q4 for filers exempt from form 390", () => {
+    const exempt = file303(
+      {
+        ...form,
+        quarter: 4,
+        annual: {
+          activities: [
+            { type: "A05", code: "751" },
+            { type: "A03", code: "843.9" },
+          ],
+          thirdParties: true,
+          boxes: { "80": eur(40_000), "93": eur(3_000), "88": eur(43_000), "107": 100 },
+        },
+      },
+      filer,
+    );
+    expect(exempt).toHaveLength(17 + 311 + 1581 + 1017 + 998 + 823 + 18);
+    expect(page1(exempt, 128, 2)).toBe("11");
+    const page4 = at(PAGE_3 + 1017);
+    expect(page4(exempt, 1, 12)).toBe("<T30304000> ");
+    expect(page4(exempt, 13, 42)).toBe("A05751 A038439" + " ".repeat(28));
+    expect(page4(exempt, 55, 1)).toBe("X");
+    expect(page4(exempt, 56, 25)).toBe("00000000000000000000" + "10000");
+    expect(page4(exempt, 81, 17)).toBe("00000000004000000"); // [80]
+    expect(page4(exempt, 115, 17)).toBe("00000000000300000"); // [93]
+    expect(page4(exempt, 370, 17)).toBe("00000000004300000"); // [88]
+    expect(page4(exempt, 387, 600)).toBe(" ".repeat(600));
+    expect(page4(exempt, 987, 12)).toBe("</T30304000>");
+  });
+
+  it("flags a filer exempt from form 390 without operations", () => {
+    const idle = file303({ ...form, quarter: 4, annual: { activities: [], thirdParties: false, boxes: {} } }, filer);
+    expect(page1(idle, 128, 2)).toBe("12");
+  });
+
+  it("follows the 2025 design for 2025 returns", () => {
+    const old = file303({ ...form, year: 2025 }, filer);
+    expect(old).toHaveLength(17 + 311 + 1581 + 1017 + 823 + 18);
+    expect(old.slice(0, 17)).toBe("<T303020253T0000>");
+    expect(page1(old, 128, 3)).toBe("000"); // no fuel flag: box 150 starts at 130
+    expect(page1(old, 186, 5)).toBe("00400"); // [02]
+    expect(page1(old, 286, 17)).toBe("00000000001000000"); // [07]
+    expect(page1(old, 303, 5)).toBe("02100"); // [08]
+    expect(page1(old, 393, 17)).toBe("N0000000000020000"); // [14]
+    expect(page1(old, 940, 17)).toBe("00000000000184800"); // [46]
+    expect(page1(old, 957, 17 + 5 + 17)).toBe("0".repeat(39)); // [165] [166] [167]
+    expect(page1(old, 1013, 5)).toBe("00050"); // [169]
+    expect(page1(old, 1035, 522 + 13)).toBe(" ".repeat(535));
+    expect(page3(old, 323, 17)).toBe("00000000000167000"); // [69]
+    expect(page3(old, 374, 17)).toBe("00000000000167000"); // [71]
+    expect(page3(old, 391, 1)).toBe(" ");
+    expect(page3(old, 407, 17)).toBe("0".repeat(17)); // [108]
+    expect(page3(old, 424, 17 + 120 + 2 + 443)).toBe(" ".repeat(582));
+  });
+
+  it("refuses a negative amount in an unsigned box and years without a design", () => {
+    expect(() => file303({ ...form, boxes: { ...form.boxes, "29": -1 } }, filer)).toThrow(RangeError);
+    expect(() => file303({ ...form, year: FIRST_YEAR_303 - 1 }, filer)).toThrow(RangeError);
   });
 });
 

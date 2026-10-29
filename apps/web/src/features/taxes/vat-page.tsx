@@ -1,15 +1,21 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
+  annualVolume303,
   cents,
+  file303,
   filingDeadline,
+  FIRST_YEAR_303,
   isInPeriod,
   model303,
+  model347,
   model390,
   vatReturns,
+  type Annual303,
   type Period,
   type Quarter,
 } from "@cuentalibre/core";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -21,6 +27,7 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 import { useSettings } from "@/features/settings/settings-store";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
+import { usePartyBooks } from "./party-operations";
 import { useTaxBooks } from "./tax-books";
 import {
   Assumptions,
@@ -30,6 +37,7 @@ import {
   FormSections,
   FormSwitch,
   ResultPanel,
+  useAeatFile,
   useEditable,
   type DocumentGroup,
   type ResultSummary,
@@ -40,6 +48,7 @@ import {
   answers303,
   answers390,
   LAYOUT_303,
+  LAYOUT_303_ANNUAL,
   LAYOUT_390,
   modelPath,
   ONLY_RECORDED,
@@ -105,15 +114,52 @@ function useVatDocuments(period: Period): DocumentGroup[] {
 
 function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; today: Date }) {
   const books = useTaxBooks();
+  const party = usePartyBooks();
   const { tax } = useSettings();
   const [showEmpty, setShowEmpty] = useState(false);
   const [refund, setRefund] = useState(false);
+  const [exempt, setExempt] = useState(false);
 
   const computed = useMemo(() => vatReturns(books, year)[quarter - 1]!, [books, year, quarter]);
   // Box 110 can be corrected; the page remounts per period, so the correction doesn't carry over
   const [carry, carryBox] = useEditable(cents(computed.boxes["110"]!));
   const r = useMemo(() => model303(books, year, quarter, carry), [books, year, quarter, carry]);
   const documents = useVatDocuments({ year, quarter });
+
+  // Filers exempt from form 390 sum up the year in the last 303
+  const annual = useMemo((): Annual303 | null => {
+    if (quarter !== 4 || !exempt) return null;
+    return {
+      activities: tax.activities,
+      thirdParties: model347(party.ops, year, party.excludedFrom347).declared.length > 0,
+      boxes: annualVolume303(books, year),
+    };
+  }, [quarter, exempt, tax.activities, party, books, year]);
+
+  const aeatFile = useAeatFile("303", year, quarter, (filer) =>
+    file303(
+      {
+        year,
+        quarter,
+        boxes: r.boxes,
+        result: r.result,
+        hasActivity: r.hasActivity,
+        refund: quarter === 4 && refund,
+        cashBasis: tax.vatRegime === "cashBasis",
+        annual,
+      },
+      filer,
+    ),
+  );
+  const file = {
+    ...aeatFile,
+    missing:
+      tax.vatRegime === "simplified"
+        ? "El fichero no cubre el régimen simplificado del IVA: rellena el 303 en la sede de la AEAT."
+        : year < FIRST_YEAR_303
+          ? `El fichero solo está disponible desde ${FIRST_YEAR_303}.`
+          : aeatFile.missing,
+  };
 
   const negative = r.result < 0;
   const result: ResultSummary = {
@@ -149,6 +195,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         deadline={filingDeadline(year, quarter)}
         today={today}
         result={result}
+        file={file}
         extra={
           negative &&
           quarter === 4 && (
@@ -175,7 +222,28 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         <h2 className="m-0 text-md font-semibold">Casillas del modelo 303</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
-      <FormAnswers title="Identificación" rows={answers303(tax)} />
+      <FormAnswers
+        title="Identificación"
+        rows={answers303(
+          tax,
+          quarter === 4
+            ? {
+                control: (
+                  <SegmentedControl
+                    label="Exonerado del modelo 390"
+                    value={exempt ? "yes" : "no"}
+                    onChange={(v) => setExempt(v === "yes")}
+                    options={[
+                      { value: "no", label: "NO" },
+                      { value: "yes", label: "SÍ" },
+                    ]}
+                  />
+                ),
+                volume: annual ? annual.boxes["88"]! : null,
+              }
+            : undefined,
+        )}
+      />
       <FormSections
         sections={LAYOUT_303}
         boxes={r.boxes}
@@ -183,6 +251,23 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         showEmpty={showEmpty}
         editable={{ "110": carryBox }}
       />
+      {annual && (
+        <>
+          <FormAnswers
+            title="Información adicional · Exonerados del 390"
+            rows={[
+              ...activities390(tax),
+              {
+                label: "Ha efectuado operaciones por las que tenga obligación de presentar el modelo 347",
+                answer: annual.thirdParties ? "Marcar" : "Dejar desmarcado",
+                box: "D",
+              },
+              { label: "Tributación por razón de territorio: territorio común", answer: "100 %", box: "107" },
+            ]}
+          />
+          <FormSections sections={LAYOUT_303_ANNUAL} boxes={annual.boxes} showEmpty={showEmpty} />
+        </>
+      )}
       <DocumentsPanel title="Documentos del trimestre" groups={documents} />
       <FormInfo form="303" />
       <Assumptions
@@ -191,7 +276,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
           "Sin prorrata, sin recargo de equivalencia desglosado y sin ventanilla única (OSS).",
           ACTIVITY_SCOPE,
           ONLY_RECORDED,
-          "Si llevas los libros registro del IVA por el SII, o solo alquilas inmuebles urbanos y tributas en la península o Baleares (no en Navarra ni el País Vasco), no presentas el 390, pero en el 303 del 4T tienes que rellenar en la sede un apartado extra con el resumen del año.",
+          "Si llevas los libros registro del IVA por el SII, o solo alquilas inmuebles urbanos y tributas en la península o Baleares (no en Navarra ni el País Vasco), no presentas el 390: márcalo en el 303 del 4T y se añade el resumen del año.",
           "En las compras intracomunitarias y con inversión del sujeto pasivo se autorrepercute el IVA al 21 % y se deduce en la misma proporción que el resto del IVA de la factura.",
           "Solo se deduce el porcentaje de IVA imputado a la actividad en cada factura recibida. Los gastos sin factura no llevan IVA deducible.",
           "Se calcula como una única declaración, sin complementarias. Un 4T negativo se propone a compensar, como hace el formulario de la AEAT.",
