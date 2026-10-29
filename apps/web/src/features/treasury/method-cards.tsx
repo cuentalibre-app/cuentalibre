@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import { Plus, Settings } from "lucide-react";
-import { monthlyFlows, sumBy } from "@cuentalibre/core";
+import { cents, sumBy } from "@cuentalibre/core";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { METHOD_ICONS } from "@/features/settings/method-icons";
@@ -12,21 +12,19 @@ import {
   methodTypeLabel,
   usePaymentMethods,
 } from "@/features/settings/settings-model";
-import { formatDate } from "@/lib/format";
 import type { TreasuryPayment } from "./treasury-model";
 
 /**
- * The active payment methods at a glance, with what went through each over the last year.
+ * The active payment methods at a glance, with what went through each in the period.
  * Picking one filters the list below by it; picking it again clears the filter.
  */
 export function MethodCards({
   payments,
-  today,
   selected,
   onSelect,
 }: {
+  /** The period's payments. */
   payments: TreasuryPayment[];
-  today: Date;
   selected: string | null;
   onSelect: (id: string | null) => void;
 }) {
@@ -43,10 +41,16 @@ export function MethodCards({
         {active.map((m, i) => {
           const Icon = METHOD_ICONS[m.type];
           const own = payments.filter((p) => p.paymentMethodId === m.id);
-          const months = monthlyFlows(own, today);
-          const collected = sumBy(months, (x) => x.collected);
-          const paid = sumBy(months, (x) => x.paid);
-          const last = own[0];
+          const collected = sumBy(
+            own.filter((p) => p.amount > 0),
+            (p) => p.amount,
+          );
+          const paid = cents(
+            -sumBy(
+              own.filter((p) => p.amount < 0),
+              (p) => p.amount,
+            ),
+          );
           const pressed = selected === m.id;
           return (
             <li key={m.id} className="animate-rise-in" style={{ "--i": i } as CSSProperties}>
@@ -55,7 +59,7 @@ export function MethodCards({
                 aria-pressed={pressed}
                 onClick={() => onSelect(pressed ? null : m.id)}
                 className={cn(
-                  "flex h-full w-full cursor-pointer flex-col gap-3 rounded-xl border bg-card p-4 text-left text-foreground transition-[border-color,box-shadow] duration-150 hover:shadow-sm",
+                  "flex h-full w-full cursor-pointer flex-col gap-4 rounded-xl border bg-card p-4 text-left text-foreground transition-[border-color,box-shadow] duration-150 hover:shadow-sm",
                   pressed ? "border-primary" : "border-border hover:border-muted-strong",
                 )}
               >
@@ -70,20 +74,17 @@ export function MethodCards({
                     </span>
                   </span>
                 </span>
-                <span className="grid grid-cols-2 gap-3">
-                  <span className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Cobrado · 12 meses</span>
-                    <span className={cn("amount font-semibold", collected > 0 && "text-success")}>
+                <span className="mt-auto grid grid-cols-2 gap-3">
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-sm text-muted-foreground">Cobrado</span>
+                    <span className={cn("amount text-lg font-semibold", collected > 0 && "text-success")}>
                       {formatEUR(collected)}
                     </span>
                   </span>
-                  <span className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Pagado · 12 meses</span>
-                    <span className="amount font-semibold">{formatEUR(paid)}</span>
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-sm text-muted-foreground">Pagado</span>
+                    <span className="amount text-lg font-semibold">{formatEUR(paid)}</span>
                   </span>
-                </span>
-                <span className="mt-auto text-xs text-muted-foreground">
-                  {last ? `Último cobro o pago ${formatDate(last.date)}` : "Sin cobros ni pagos"}
                 </span>
               </button>
             </li>
