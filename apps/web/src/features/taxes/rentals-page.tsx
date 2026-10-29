@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
-import { cents, model115, model180, obligation, sumCents, type Quarter } from "@cuentalibre/core";
+import { cents, file115, model115, model180, obligation, sumCents, type Quarter } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { PeriodSelect } from "@/components/period-select";
@@ -19,6 +19,7 @@ import {
   Notice,
   QuarterCards,
   ResultPanel,
+  useAeatFile,
   type DocumentGroup,
   type ResultSummary,
 } from "./tax-form";
@@ -116,6 +117,8 @@ function Form115({ year, quarter, today }: { year: number; quarter: Quarter; tod
   );
   const amount = cents(r.boxes["05"]!);
 
+  const file = useAeatFile("115", year, quarter, (filer) => file115({ year, quarter, boxes: r.boxes }, filer));
+
   const result: ResultSummary = {
     label: "Resultado a ingresar [05]",
     amount,
@@ -136,6 +139,7 @@ function Form115({ year, quarter, today }: { year: number; quarter: Quarter; tod
         deadline={obligation("115", year, quarter).dueOn}
         today={today}
         result={result}
+        file={file}
       />
       <UnusualRates ids={unusual} />
       <div className="flex items-center justify-between gap-3">
