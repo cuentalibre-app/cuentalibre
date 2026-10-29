@@ -1,40 +1,27 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Check, ChevronDown, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
 import {
   aeatBytes,
   calendarStatus,
   cents,
   centsToEuros,
   daysUntil,
-  formatIban,
-  isValidIban,
-  normalizeTaxId,
   obligation,
   sumBy,
   toIsoDate,
-  type AeatPayment,
   type Boxes,
   type Cents,
   type Quarter,
 } from "@cuentalibre/core";
-import type { PaymentMethod } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@cuentalibre/ui/components/dropdown-menu";
 import { Input } from "@cuentalibre/ui/components/input";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { useSettings } from "@/features/settings/settings-store";
 import { copyText } from "@/lib/clipboard";
 import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
 import { downloadBlob } from "@/lib/xlsx";
@@ -402,9 +389,7 @@ export interface AeatFile {
   /** Name of the downloaded file. */
   name: string;
   /** The file's text; throws a RangeError when an amount doesn't fit the record design. */
-  build: (payment: AeatPayment) => string;
-  /** Whether there is something to pay, which can be paid by direct debit. */
-  payable: boolean;
+  build: () => string;
   /** Why it can't be built yet, such as a missing NIF. */
   missing?: string;
 }
@@ -429,23 +414,12 @@ function UnavailableFile({ label, reason }: { label: string; reason: string }) {
   );
 }
 
-/** The IBANs a return can be debited to: active transfer and direct debit methods, once per IBAN. */
-function debitableIbans(methods: PaymentMethod[]): { name: string; iban: string }[] {
-  const byIban = new Map<string, string>();
-  for (const m of methods) {
-    if (!m.active || (m.type !== "transfer" && m.type !== "directDebit")) continue;
-    const iban = normalizeTaxId(m.number);
-    if (isValidIban(iban) && !byIban.has(iban)) byIban.set(iban, m.name);
-  }
-  return [...byIban].map(([iban, name]) => ({ name, iban }));
-}
-
-/** Downloads the AEAT file; a result to pay asks first how it will be paid. */
+/** Downloads the AEAT file, or says why it can't be built. */
 function AeatFileButton({ file }: { file: AeatFile }) {
-  const { paymentMethods } = useSettings();
   if (file.missing) return <UnavailableFile label={LABEL_AEAT_FILE} reason={file.missing} />;
+  let text: string;
   try {
-    file.build({ kind: "deposit" });
+    text = file.build();
   } catch (error) {
     if (!(error instanceof RangeError)) throw error;
     return (
@@ -455,42 +429,13 @@ function AeatFileButton({ file }: { file: AeatFile }) {
       />
     );
   }
-
-  const download = (payment: AeatPayment) =>
-    downloadBlob(new Blob([aeatBytes(file.build(payment))], { type: "text/plain;charset=iso-8859-1" }), file.name);
-  const banks = debitableIbans(paymentMethods);
-
-  if (!file.payable || banks.length === 0)
-    return (
-      <Button variant="secondary" size="md" onClick={() => download({ kind: "deposit" })}>
-        <Download strokeWidth={1.8} aria-hidden="true" />
-        {LABEL_AEAT_FILE}
-      </Button>
-    );
+  const download = () =>
+    downloadBlob(new Blob([aeatBytes(text)], { type: "text/plain;charset=iso-8859-1" }), file.name);
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="secondary" size="md">
-          <Download strokeWidth={1.8} aria-hidden="true" />
-          {LABEL_AEAT_FILE}
-          <ChevronDown strokeWidth={1.8} aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Forma de pago</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => download({ kind: "deposit" })}>
-          Ingreso con NRC o en el banco
-        </DropdownMenuItem>
-        {banks.map((a) => (
-          <DropdownMenuItem key={a.iban} onSelect={() => download({ kind: "directDebit", iban: a.iban })}>
-            <span className="flex flex-col">
-              <span>Domiciliar en {a.name}</span>
-              <span className="font-mono text-2xs text-muted-foreground">{formatIban(a.iban)}</span>
-            </span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Button variant="secondary" size="md" onClick={download}>
+      <Download strokeWidth={1.8} aria-hidden="true" />
+      {LABEL_AEAT_FILE}
+    </Button>
   );
 }
 

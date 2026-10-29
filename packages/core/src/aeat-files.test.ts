@@ -15,7 +15,6 @@ import type { Boxes } from "./tax-returns";
 const eur = eurosToCents;
 
 const filer: AeatFiler = { taxId: "50123456-q", surnames: "Martín Gómez", name: "Lucía" };
-const deposit = { kind: "deposit" } as const;
 
 /** A field of the 130's page by its position and length in the record design (1-based). */
 const PAGE_START = 329;
@@ -64,18 +63,17 @@ describe("filerTaxId", () => {
 });
 
 describe("declarationType130", () => {
-  it("pays a positive result by deposit or direct debit", () => {
-    expect(declarationType130(cents(100), 2, deposit)).toBe("I");
-    expect(declarationType130(cents(100), 2, { kind: "directDebit", iban: "ES9121000418450200051332" })).toBe("U");
+  it("pays a positive result by deposit", () => {
+    expect(declarationType130(cents(100), 2)).toBe("I");
   });
 
   it("leaves a negative result to deduct until Q3, and files it as negative in Q4", () => {
-    expect(declarationType130(cents(-100), 3, deposit)).toBe("B");
-    expect(declarationType130(cents(-100), 4, deposit)).toBe("N");
+    expect(declarationType130(cents(-100), 3)).toBe("B");
+    expect(declarationType130(cents(-100), 4)).toBe("N");
   });
 
   it("files a zero result as negative", () => {
-    expect(declarationType130(cents(0), 1, { kind: "directDebit", iban: "ES9121000418450200051332" })).toBe("N");
+    expect(declarationType130(cents(0), 1)).toBe("N");
   });
 });
 
@@ -98,7 +96,7 @@ describe("file130", () => {
       "19": eur(1150),
     }),
   };
-  const file = file130(form, filer, deposit);
+  const file = file130(form, filer);
 
   it("wraps one 600-position page in the envelope", () => {
     expect(file).toHaveLength(17 + 311 + 600 + 18);
@@ -133,17 +131,11 @@ describe("file130", () => {
     }
   });
 
-  it("leaves the complementary fields, IBAN and reserved space blank when paid by deposit", () => {
+  it("leaves the complementary fields, IBAN and reserved space blank", () => {
     expect(field(file, 432, 1 + 13 + 34 + 96 + 13)).toBe(" ".repeat(157));
   });
 
-  it("carries the IBAN of a direct debit", () => {
-    const debit = file130(form, filer, { kind: "directDebit", iban: "ES91 2100 0418 4502 0005 1332" });
-    expect(field(debit, 13, 1)).toBe("U");
-    expect(field(debit, 446, 34)).toBe("ES9121000418450200051332".padEnd(34));
-  });
-
-  it("writes a negative result to deduct with its sign and no IBAN", () => {
+  it("writes a negative result to deduct with its sign", () => {
     const negative = file130(
       {
         ...form,
@@ -152,23 +144,21 @@ describe("file130", () => {
         boxes: boxes130({ "01": eur(5000), "02": eur(2000), "03": eur(3000), "04": eur(600), "06": eur(910), "07": eur(-310), "12": eur(-310), "14": eur(-310), "17": eur(-310), "19": eur(-310) }), // prettier-ignore
       },
       filer,
-      { kind: "directDebit", iban: "ES9121000418450200051332" },
     );
     expect(field(negative, 13, 1)).toBe("B");
     expect(field(negative, 415, 17)).toBe("N0000000000031000");
-    expect(field(negative, 446, 34)).toBe(" ".repeat(34));
     expect(negative.slice(0, 17)).toBe("<T130020262T0000>");
   });
 
   it("files a return without activity as negative with every box at zero", () => {
-    const empty = file130({ year: 2026, quarter: 1, result: cents(0), boxes: boxes130({}) }, filer, deposit);
+    const empty = file130({ year: 2026, quarter: 1, result: cents(0), boxes: boxes130({}) }, filer);
     expect(field(empty, 13, 1)).toBe("N");
     expect(field(empty, 109, 17 * 19)).toBe("0".repeat(17 * 19));
   });
 
   it("refuses a negative amount in an unsigned box and years without a design", () => {
-    expect(() => file130({ ...form, boxes: boxes130({ "06": -1 }) }, filer, deposit)).toThrow(RangeError);
-    expect(() => file130({ ...form, year: 2018 }, filer, deposit)).toThrow(RangeError);
+    expect(() => file130({ ...form, boxes: boxes130({ "06": -1 }) }, filer)).toThrow(RangeError);
+    expect(() => file130({ ...form, year: 2018 }, filer)).toThrow(RangeError);
   });
 });
 
