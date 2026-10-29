@@ -14,7 +14,6 @@ export type LoggedEntity =
   | "treasury_account"
   | "payment_method"
   | "manual_payment"
-  | "bank_movement"
   | "catalog_family"
   | "product"
   | "stock_movement";

@@ -1,5 +1,4 @@
 import {
-  bankMovementSchema,
   businessProfileSchema,
   catalogFamilySchema,
   catalogSettingsSchema,
@@ -37,7 +36,7 @@ import { initialPurchaseInvoices } from "./purchases";
 import { initialSalesDocuments } from "./sales";
 import { initialAccounts, initialPaymentMethods, initialProfile, initialTaxSetup } from "./settings";
 import { initialTags } from "./tags";
-import { initialManualPayments, sampleMovements } from "./treasury";
+import { initialManualPayments } from "./treasury";
 import { initialNotificationPrefs, initialUserAccess, initialUserProfile, initialUserTour } from "./user";
 import { initialUsers } from "./users";
 
@@ -82,20 +81,5 @@ describe("sample data", () => {
 
   it.each(singletons)("%s match their schema", (_, schema, value) => {
     expect(issues(schema, value)).toEqual([]);
-  });
-
-  it("bank movements match their schema", () => {
-    const payment = {
-      key: "sale:x",
-      source: "sale" as const,
-      date: "2026-01-15",
-      amount: initialManualPayments[0]!.amount,
-      accountId: initialAccounts[0]!.id,
-      counterparty: "Cliente",
-      reference: "F-1",
-    };
-    for (const movement of sampleMovements([payment], "2026-03-31")) {
-      expect(issues(bankMovementSchema, movement)).toEqual([]);
-    }
   });
 });

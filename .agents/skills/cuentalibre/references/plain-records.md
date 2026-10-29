@@ -16,7 +16,7 @@ These records have no legal effects and no quarter. They have no REST routes: re
 | `number` | text                                   | IBAN, card number (often its last digits) or PayPal email. |
 | `active` | boolean                                |                                                            |
 
-Can't be deleted while a payment method or a bank movement names it.
+Can't be deleted while a payment method names it.
 
 ## Payment methods (`paymentMethods`)
 
@@ -36,20 +36,6 @@ Can't be deleted while a contact, an expense, a payment of a sales or received i
 Money in or out not tied to an invoice or expense: a loan, a transfer to savings, an adjustment.
 
 `{ id, date, amount, paymentMethodId, description }`, `amount` in cents, positive for money in.
-
-## Bank movements (`bankMovements`)
-
-| Field         | Type                 |                                                                        |
-| ------------- | -------------------- | ---------------------------------------------------------------------- |
-| `id`          | id                   |                                                                        |
-| `accountId`   | id                   | Treasury account.                                                      |
-| `date`        | date                 |                                                                        |
-| `concept`     | text                 | As the bank writes it.                                                 |
-| `reference`   | text                 |                                                                        |
-| `amount`      | cents                | Signed: positive in, negative out.                                     |
-| `balance`     | cents \| null        | Balance after the movement, if the bank gives it.                      |
-| `source`      | `import` \| `manual` |                                                                        |
-| `paymentKeys` | list of text         | Payments this movement is reconciled with (keys built by the web app). |
 
 ## Catalog families (`catalogFamilies`)
 

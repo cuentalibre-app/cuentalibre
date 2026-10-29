@@ -1,8 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Plus, Settings, Upload } from "lucide-react";
-import { cents, monthlyFlows, reconciliationStatus, sumBy } from "@cuentalibre/core";
-import { Button } from "@cuentalibre/ui/components/button";
+import { ArrowRight, Plus, Settings } from "lucide-react";
+import { cents, monthlyFlows, sumBy } from "@cuentalibre/core";
 import { Card, CardTitle } from "@cuentalibre/ui/components/card";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -13,52 +12,30 @@ import { ACCOUNTS_PATH, ACCOUNT_KINDS } from "@/features/settings/settings-model
 import { SettingsLink } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { MONTHS, MONTHS_SHORT, formatDate, formatThousands } from "@/lib/format";
-import { ImportDialog, MovementDialog, PageHeader, accountNumber } from "./treasury-parts";
-import { MOVEMENTS_PATH, RECONCILIATION_PATH, accountBalance, matchedAmount } from "./treasury-model";
-import { usePayments, useTreasury } from "./treasury-store";
-
-type Dialog = "import" | "movement" | "account" | null;
+import { PageHeader, accountNumber } from "./treasury-parts";
+import { PAYMENTS_PATH } from "./treasury-model";
+import { usePayments } from "./treasury-store";
 
 export function TreasurySummaryPage() {
   const today = useMemo(() => new Date(), []);
   const { accounts } = useSettings();
-  const { movements } = useTreasury();
   const payments = usePayments();
-  const [dialog, setDialog] = useState<Dialog>(null);
+  const [creatingAccount, setCreatingAccount] = useState(false);
 
-  const byKey = useMemo(() => new Map(payments.map((p) => [p.key, p])), [payments]);
   const active = accounts.filter((a) => a.active);
-  const toReconcile = movements.filter((m) => reconciliationStatus(m.amount, matchedAmount(m, byKey)) !== "full");
   const months = useMemo(() => monthlyFlows(payments, today), [payments, today]);
-  const total = sumBy(active, (a) => accountBalance(a.id, movements));
   const collected = sumBy(months, (m) => m.collected);
   const paid = sumBy(months, (m) => m.paid);
-
-  const close = (open: boolean) => !open && setDialog(null);
 
   return (
     <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
       <PageHeader
         title="Bancos y caja"
-        description="El saldo de tus cuentas y todo lo que has cobrado y pagado en el último año."
-      >
-        <Button variant="secondary" onClick={() => setDialog("movement")}>
-          <Plus strokeWidth={2} aria-hidden="true" />
-          Movimiento manual
-        </Button>
-        <Button onClick={() => setDialog("import")}>
-          <Upload strokeWidth={2} aria-hidden="true" />
-          Importar movimientos
-        </Button>
-      </PageHeader>
+        description="Tus cuentas y todo lo que has cobrado y pagado en el último año."
+      />
 
-      <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
+      <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border">
         {[
-          {
-            label: "Saldo en cuentas",
-            value: total,
-            detail: `${active.length} ${active.length === 1 ? "cuenta activa" : "cuentas activas"}`,
-          },
           { label: "Cobrado · 12 meses", value: collected, detail: "Facturas cobradas y cobros manuales" },
           { label: "Pagado · 12 meses", value: paid, detail: "Facturas recibidas, gastos y pagos" },
         ].map((s) => (
@@ -70,21 +47,6 @@ export function TreasurySummaryPage() {
             <dd className="m-0 text-sm text-muted-foreground">{s.detail}</dd>
           </div>
         ))}
-        <div className="flex flex-col gap-1 bg-card px-4 py-3">
-          <dt className="text-sm text-muted-foreground">Por conciliar</dt>
-          <dd className="m-0 text-xl font-semibold">
-            {toReconcile.length} {toReconcile.length === 1 ? "movimiento" : "movimientos"}
-          </dd>
-          <dd className="m-0 text-xs">
-            {toReconcile.length > 0 ? (
-              <Link to={RECONCILIATION_PATH} className="font-medium text-primary no-underline hover:text-primary-hover">
-                Revisar y conciliar →
-              </Link>
-            ) : (
-              <span className="text-muted-foreground">Todo cuadra con tus documentos</span>
-            )}
-          </dd>
-        </div>
       </dl>
 
       <section aria-labelledby="accounts-title" className="flex flex-col gap-3">
@@ -94,13 +56,11 @@ export function TreasurySummaryPage() {
         <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4">
           {active.map((a, i) => {
             const Icon = ACCOUNT_ICONS[a.kind];
-            const own = movements.filter((m) => m.accountId === a.id);
-            const pending = toReconcile.filter((m) => m.accountId === a.id).length;
-            const last = own.at(-1);
+            const last = payments.find((p) => p.accountId === a.id);
             return (
               <li key={a.id} className="animate-rise-in" style={{ "--i": i } as CSSProperties}>
                 <Link
-                  to={`${MOVEMENTS_PATH}?cuenta=${a.id}`}
+                  to={`${PAYMENTS_PATH}?cuenta=${a.id}`}
                   className="group flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-[border-color,box-shadow] duration-150 hover:border-muted-strong hover:shadow-sm"
                 >
                   <div className="flex items-start gap-3">
@@ -119,19 +79,17 @@ export function TreasurySummaryPage() {
                       aria-hidden="true"
                     />
                   </div>
-                  <span className="amount text-2xl font-semibold">{formatEUR(accountBalance(a.id, movements))}</span>
-                  <span className="mt-auto flex flex-wrap gap-x-2 text-xs text-muted-foreground">
-                    {last ? `Último movimiento ${formatDate(last.date)}` : "Sin movimientos"}
-                    {pending > 0 && <span className="font-medium text-warning">· {pending} por conciliar</span>}
+                  <span className="mt-auto text-xs text-muted-foreground">
+                    {last ? `Último cobro o pago ${formatDate(last.date)}` : "Sin cobros ni pagos"}
                   </span>
                 </Link>
               </li>
             );
           })}
-          <li className="grid animate-rise-in grid-rows-2 gap-3" style={{ "--i": active.length } as CSSProperties}>
+          <li className="grid min-h-28 animate-rise-in grid-rows-2 gap-3" style={{ "--i": active.length } as CSSProperties}>
             <button
               type="button"
-              onClick={() => setDialog("account")}
+              onClick={() => setCreatingAccount(true)}
               className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-transparent px-4 text-left font-medium text-foreground transition-colors duration-150 hover:bg-accent"
             >
               <Plus className="size-[18px] text-muted-foreground" strokeWidth={2} aria-hidden="true" />
@@ -151,9 +109,7 @@ export function TreasurySummaryPage() {
 
       <FlowsChart months={months} />
 
-      {dialog === "import" && <ImportDialog open onOpenChange={close} />}
-      {dialog === "movement" && <MovementDialog open onOpenChange={close} />}
-      {dialog === "account" && <AccountDialog open onOpenChange={close} account={null} />}
+      {creatingAccount && <AccountDialog open onOpenChange={setCreatingAccount} account={null} />}
     </div>
   );
 }

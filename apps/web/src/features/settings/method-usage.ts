@@ -14,7 +14,3 @@ export function methodUsage(id: string): number {
     treasuryStore.get().manualPayments.filter((p) => p.paymentMethodId === id).length
   );
 }
-
-/** Bank movements recorded on an account: they keep it from being removed. */
-export const accountMovements = (id: string): number =>
-  treasuryStore.get().movements.filter((m) => m.accountId === id).length;
