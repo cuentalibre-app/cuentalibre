@@ -1,0 +1,1 @@
+ALTER TABLE "verifactu_record" ADD COLUMN "incident" boolean DEFAULT false NOT NULL;
