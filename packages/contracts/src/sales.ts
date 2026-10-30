@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sameSeriesFormat, seriesMaskProblem } from "@cuentalibre/core";
+import { RECTIFICATION_METHODS, RECTIFICATION_REASONS, sameSeriesFormat, seriesMaskProblem } from "@cuentalibre/core";
 import { attachmentSchema, cents, id, isoDate, paymentSchema, rentalLocationSchema } from "./common";
 import { contactSchema } from "./contacts";
 import { invoiceLineSchema, invoiceTotalsSchema, operationTypeSchema, withholdingKindSchema } from "./core";
@@ -84,6 +84,17 @@ export function invoiceSeriesOf(
   return invoiceSeriesList(stored).find((series) => series.id === (doc.seriesId ?? doc.series));
 }
 
+/**
+ * Why and how a rectifying invoice corrects the original. One by substitution
+ * keeps its lines as the change too: the original's reversed, then the
+ * corrected ones (`substitutionLines`).
+ */
+export const rectificationSchema = z.object({
+  reason: z.enum(RECTIFICATION_REASONS),
+  method: z.enum(RECTIFICATION_METHODS),
+});
+export type RectificationData = z.infer<typeof rectificationSchema>;
+
 /** Income account in the Spanish chart of accounts (PGC), group 7. */
 export const incomeTypeSchema = z.enum(["700", "705", "7098", "7099", "740", "746", "747", "752", "769"]);
 export type IncomeType = z.infer<typeof incomeTypeSchema>;
@@ -166,6 +177,8 @@ export const salesDocumentSchema = z.object({
   cadastralRef: z.string().optional(),
   /** Invoice a rectifying invoice corrects. */
   rectifiesId: id.optional(),
+  /** Rectifying invoices only; absent on older ones, which were R1 by differences. */
+  rectification: rectificationSchema.optional(),
   lines: z.array(salesLineSchema),
   /** Expenses paid on the client's behalf (suplidos), outside the taxable base. */
   supplies: cents.optional(),

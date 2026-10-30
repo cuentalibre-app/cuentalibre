@@ -6,6 +6,8 @@ import {
   centsToEuros,
   eurosToCents,
   amountOutstanding,
+  cents,
+  correctedLines,
   invoiceTotals,
   lineBase,
   isOverdue,
@@ -21,6 +23,8 @@ import {
   type Cents,
   type InvoiceTotals,
   type OperationType,
+  type RectificationMethod,
+  type RectificationReason,
   type WithholdingKind,
 } from "@cuentalibre/core";
 import {
@@ -188,6 +192,33 @@ export function documentTotals(
   doc: Pick<SalesDocument, "lines" | "withholding" | "supplies"> & { issued?: SalesDocument["issued"] },
 ): InvoiceTotals {
   return doc.issued?.totals ?? invoiceTotals(doc.lines, WITHHOLDING_RATES[doc.withholding], doc.supplies);
+}
+
+/** Why a rectifying invoice corrects the original (art. 80 LIVA), as VERI*FACTU names each cause. */
+export const RECTIFICATION_REASONS: { value: RectificationReason; label: string }[] = [
+  { value: "R1", label: "Error o art. 80.1, 80.2 y 80.6 LIVA" },
+  { value: "R2", label: "Concurso de acreedores (art. 80.3 LIVA)" },
+  { value: "R3", label: "Crédito incobrable (art. 80.4 LIVA)" },
+  { value: "R4", label: "Otras causas" },
+];
+
+export const RECTIFICATION_METHODS: { value: RectificationMethod; label: string }[] = [
+  { value: "differences", label: "Por diferencias" },
+  { value: "substitution", label: "Por sustitución" },
+];
+
+/**
+ * A rectifying invoice by substitution as printed: the corrected invoice that
+ * replaces `original`, rather than the change it books. Any other document is
+ * printed as it is.
+ */
+export function printedDocument(doc: SalesDocument, original: SalesDocument | undefined): SalesDocument {
+  if (doc.rectification?.method !== "substitution" || !original) return doc;
+  const lines = correctedLines(doc.lines, original.lines);
+  if (!lines) return doc;
+  const supplies = cents((doc.supplies ?? 0) + (original.supplies ?? 0)) || undefined;
+  const totals = invoiceTotals(lines, WITHHOLDING_RATES[doc.withholding], supplies);
+  return { ...doc, lines, supplies, ...(doc.issued && { issued: { ...doc.issued, totals } }) };
 }
 
 /** The client of a document; an issued invoice keeps the fiscal data it was issued with. */

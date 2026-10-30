@@ -64,6 +64,13 @@ describe("facturaeXml", () => {
     const corrective = facturaeXml({ ...invoice, corrects: { number: "2026-0008", issueDate: "2026-09-01" } });
     expect(tag(corrective, "InvoiceClass")).toBe("OR");
     expect(corrective).toContain("<Corrective><InvoiceNumber>2026-0008</InvoiceNumber>");
+    // Facturae 3.2.2, CorrectionMethodType: 01 rectificación íntegra, 02 por diferencias
+    expect(tag(corrective, "CorrectionMethod")).toBe("02");
+    const substitution = facturaeXml({
+      ...invoice,
+      corrects: { number: "2026-0008", issueDate: "2026-09-01", method: "substitution" },
+    });
+    expect(tag(substitution, "CorrectionMethod")).toBe("01");
   });
 
   it("adds supplies outside the taxable base", () => {

@@ -18,6 +18,7 @@ export * from "./informative-returns";
 export * from "./assets";
 export * from "./transfer";
 export * from "./catalog";
+export * from "./rectifying";
 export * from "./verifactu";
 export * from "./accounting-codes";
 export * from "./facturae";

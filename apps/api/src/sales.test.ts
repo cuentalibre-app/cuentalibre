@@ -230,7 +230,17 @@ describe("issued invoices", () => {
     const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "verifactu" as const };
     await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
     const invoice = await issued(ana, document(ana.norte.id));
-    for (const changes of [{ lines: [line({ unitPrice: 1 })] }, { issuedOn: "2026-10-06" }, { number: "2026-0002" }]) {
+    // Every financial field: what the record covers and what the invoice prints
+    for (const changes of [
+      { lines: [line({ unitPrice: 1 })] },
+      { issuedOn: "2026-10-06" },
+      { number: "2026-0002" },
+      { clientId: newId() },
+      { withholding: "none" },
+      { operationType: "exempt" },
+      { supplies: 100 },
+      { publicNotes: "Otra" },
+    ]) {
       const response = await send(ana, [{ type: "update", entity: "salesDocuments", id: invoice.id, changes }]);
       expect(response.status).toBe(409);
       expect(await errorCode(response)).toBe("invoice_issued");
@@ -238,6 +248,11 @@ describe("issued invoices", () => {
     const deleted = await send(ana, [{ type: "delete", entity: "salesDocuments", id: invoice.id }]);
     expect(deleted.status).toBe(409);
     expect(await salesDocuments(ana)).toEqual([invoice]);
+    // Its collections and the app's own bookkeeping still change
+    const tagged = await send(ana, [
+      { type: "update", entity: "salesDocuments", id: invoice.id, changes: { privateNotes: "Llamar" } },
+    ]);
+    expect(tagged.status).toBe(200);
   });
 
   it("can be deleted by a business exempt from VERI*FACTU while the quarter is open", async () => {
