@@ -3,7 +3,7 @@ import type { PaymentMethodType, SalesDocument } from "@cuentalibre/contracts";
 import { businessName } from "@/features/settings/settings-model";
 import { settingsStore } from "@/features/settings/settings-store";
 import { salesStore } from "./sales-store";
-import { clientOf, documentFileName } from "./sales-model";
+import { clientOf, documentFileName, printedDocument } from "./sales-model";
 
 /* Facturae export of an issued invoice, built in core; this file only maps the app's data. */
 
@@ -125,11 +125,12 @@ export function facturaeProblems(doc: SalesDocument): string[] {
   return problems;
 }
 
-export function downloadFacturae(doc: SalesDocument) {
+export function downloadFacturae(stored: SalesDocument) {
   const { profile, paymentMethods } = settingsStore.get();
+  const corrected = stored.rectifiesId ? salesStore.all().find((d) => d.id === stored.rectifiesId) : undefined;
+  const doc = printedDocument(stored, corrected);
   const client = clientOf(doc);
   const method = paymentMethods.find((m) => m.id === (doc.payments?.at(-1)?.paymentMethodId ?? client.paymentMethodId));
-  const corrected = doc.rectifiesId ? salesStore.all().find((d) => d.id === doc.rectifiesId) : undefined;
 
   const xml = facturaeXml({
     number: doc.number ?? "",
@@ -163,7 +164,9 @@ export function downloadFacturae(doc: SalesDocument) {
     withholdingRate: WITHHOLDING_RATES[doc.withholding],
     supplies: doc.supplies,
     paymentMeans: method ? PAYMENT_MEANS[method.type] : undefined,
-    corrects: corrected?.number ? { number: corrected.number, issueDate: corrected.issuedOn } : undefined,
+    corrects: corrected?.number
+      ? { number: corrected.number, issueDate: corrected.issuedOn, method: doc.rectification?.method }
+      : undefined,
     notes: doc.publicNotes,
   });
 

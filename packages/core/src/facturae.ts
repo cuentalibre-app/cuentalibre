@@ -1,5 +1,6 @@
 import { lineBase, type InvoiceLine } from "./invoices";
 import { applyRate, cents, centsToEuros, eurosToCents, sumBy, type Cents } from "./money";
+import type { RectificationMethod } from "./rectifying";
 
 /*
  * Facturae 3.2.2: the XML electronic invoice the Spanish public administration
@@ -69,8 +70,8 @@ export interface FacturaeInvoice {
   supplies?: Cents;
   /** Payment means code of Facturae: 04 transfer, 02 direct debit, 01 cash, 19 card… */
   paymentMeans?: string;
-  /** The invoice this one corrects, for rectifying invoices. */
-  corrects?: { number: string; issueDate: string };
+  /** The invoice this one corrects, for rectifying invoices, and whether by substitution or by differences. */
+  corrects?: { number: string; issueDate: string; method?: RectificationMethod };
   notes?: string;
 }
 
@@ -281,8 +282,10 @@ export function facturaeXml(invoice: FacturaeInvoice): string {
           el("ReasonCode", "01"),
           el("ReasonDescription", "Número de la factura"),
           wrap("TaxPeriod", el("StartDate", invoice.corrects.issueDate), el("EndDate", invoice.corrects.issueDate)),
-          el("CorrectionMethod", "01"),
-          el("CorrectionMethodDescription", "Rectificación íntegra"),
+          // Facturae 3.2.2 CorrectionMethodType: 01 replaces the whole invoice, 02 records the differences
+          ...(invoice.corrects.method === "substitution"
+            ? [el("CorrectionMethod", "01"), el("CorrectionMethodDescription", "Rectificación íntegra")]
+            : [el("CorrectionMethod", "02"), el("CorrectionMethodDescription", "Rectificación por diferencias")]),
         )
       : "",
   );

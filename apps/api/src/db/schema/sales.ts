@@ -3,6 +3,7 @@ import type {
   IncomeType,
   InvoiceSeries,
   IssuedSnapshot,
+  RectificationData,
   RentalLocation,
   SalesKind,
   SalesStatus,
@@ -83,6 +84,7 @@ export const salesDocument = pgTable(
     rentalLocation: text().$type<RentalLocation>(),
     cadastralRef: text(),
     rectifiesId: uuid(),
+    rectification: jsonb().$type<RectificationData>(),
     /** Cents. */
     supplies: amount(),
     tags: text().array(),
