@@ -165,7 +165,12 @@ export function downloadFacturae(stored: SalesDocument) {
     supplies: doc.supplies,
     paymentMeans: method ? PAYMENT_MEANS[method.type] : undefined,
     corrects: corrected?.number
-      ? { number: corrected.number, issueDate: corrected.issuedOn, method: doc.rectification?.method }
+      ? {
+          number: corrected.number,
+          issueDate: corrected.issuedOn,
+          reason: doc.rectification?.reason,
+          method: doc.rectification?.method,
+        }
       : undefined,
     notes: doc.publicNotes,
   });

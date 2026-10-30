@@ -73,6 +73,20 @@ describe("facturaeXml", () => {
     expect(tag(substitution, "CorrectionMethod")).toBe("01");
   });
 
+  it("gives the reason code of the rectifying invoice's cause", () => {
+    const reasonOf = (reason?: "R1" | "R2" | "R3" | "R4") =>
+      tag(
+        facturaeXml({ ...invoice, corrects: { number: "2026-0008", issueDate: "2026-09-01", reason } }),
+        "ReasonCode",
+      );
+    expect(reasonOf()).toBe("01");
+    expect(reasonOf("R1")).toBe("01");
+    // Facturae 3.2.2, ReasonCodeType 85: unpaid outputs, insolvency proceedings
+    expect(reasonOf("R2")).toBe("85");
+    expect(reasonOf("R3")).toBe("85");
+    expect(reasonOf("R4")).toBe("01");
+  });
+
   it("adds supplies outside the taxable base", () => {
     const withSupplies = facturaeXml({ ...invoice, withholdingRate: 0, supplies: eur(30) });
     expect(tag(withSupplies, "InvoiceTotal")).toBe("728.65");
