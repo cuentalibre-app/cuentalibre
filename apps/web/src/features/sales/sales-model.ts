@@ -361,6 +361,7 @@ export interface Option<T extends string = string> {
   label: string;
   /** Longer explanation, shown as a tooltip or hint. */
   title?: string;
+  disabled?: boolean;
 }
 
 /** Options under an optional heading, as in a grouped select. */

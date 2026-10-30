@@ -143,6 +143,13 @@ type Errors = Partial<Record<"clientId" | "number" | "rectifiesId" | "issuedOn" 
 type AfterSave = "list" | "edit" | "send" | "receipt";
 
 /**
+ * A copy of a rectifying invoice by substitution is a new invoice like the one
+ * it issued: its original is already rectified, so it can't be replaced again.
+ */
+const copiesSubstitution = (base: SalesDocument | undefined, isCopy: boolean, rectify: boolean) =>
+  isCopy && !rectify && base?.kind === "invoice" && base.rectification?.method === "substitution";
+
+/**
  * Invoices and drafts keep the series they have; a new one, a rectifying one,
  * and a copy or a draft in an inactive series take the default series of
  * their type. The other kinds have a single series of their own.
@@ -150,6 +157,7 @@ type AfterSave = "list" | "edit" | "send" | "receipt";
 function initialSeries(kind: SalesKind, base: SalesDocument | undefined, isCopy: boolean, rectify: boolean): SeriesRef {
   if (kind !== "invoice" && kind !== "draft") return { series: "normal" };
   if (rectify) return seriesRefOf(defaultSeries("rectifying"));
+  if (copiesSubstitution(base, isCopy, rectify)) return seriesRefOf(defaultSeries("normal"));
   if (base && (base.kind === "invoice" || base.kind === "draft")) {
     const own = seriesOf(base);
     // Drafts don't show their series, so they can't stay in one deactivated since
@@ -178,14 +186,15 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
   const rectified = base?.rectifiesId && salesStore.all().find((d) => d.id === base.rectifiesId);
   // A substitution is edited as the invoice that replaces the original
   const shown = base && !rectify ? printedDocument(base, rectified || undefined) : base;
+  const unlinked = copiesSubstitution(base, isCopy, rectify);
 
   return {
     clientId: base?.clientId ?? "",
     number,
     series,
     seriesId,
-    rectifiesId: rectify && base ? base.id : (base?.rectifiesId ?? ""),
-    rectification: (!rectify && base?.rectification) || DEFAULT_RECTIFICATION,
+    rectifiesId: rectify && base ? base.id : unlinked ? "" : (base?.rectifiesId ?? ""),
+    rectification: (!rectify && !unlinked && base?.rectification) || DEFAULT_RECTIFICATION,
     issuedOn,
     dueOn,
     incomeType: base?.incomeType ?? defaultIncomeAccount(settingsStore.get().tax.activities[0]),
@@ -203,7 +212,12 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
       emptyLine(settingsStore.get().tax.defaultVatRate),
     ],
     supplies: shown?.supplies ? formatEurosInput(shown.supplies) : "0",
-    publicNotes: rectify && base?.number ? `Rectifica la factura ${base.number}.` : (base?.publicNotes ?? ""),
+    publicNotes:
+      rectify && base?.number
+        ? `Rectifica la factura ${base.number}.`
+        : unlinked && rectified && base?.publicNotes === `Rectifica la factura ${rectified.number}.`
+          ? ""
+          : (base?.publicNotes ?? ""),
     privateNotes: isCopy ? "" : (base?.privateNotes ?? ""),
     tags: base?.tags ?? [],
     language: base?.language ?? "",
@@ -353,6 +367,12 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     setForm((f) => (picked && !existing && !substitution ? withClientDefaults(f, picked) : { ...f, clientId }));
     clearError("clientId");
   };
+  /** Whether another invoice already rectifies this one: then only by differences, as the server checks. */
+  const alreadyRectified = (id: string) =>
+    salesStore.all().some((d) => d.kind === "invoice" && d.rectifiesId === id && d.id !== existing?.id);
+  const methods = RECTIFICATION_METHODS.map((o) =>
+    o.value === "substitution" && rectified && alreadyRectified(rectified.id) ? { ...o, disabled: true } : o,
+  );
   /** The original's lines, as a substitution replaces them or reversed to cancel them by differences. */
   const startFrom = (original: SalesDocument, rectification: Rectification): Partial<FormState> =>
     rectification.method === "substitution"
@@ -373,8 +393,11 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   const changeRectified = (rectifiesId: string) => {
     setForm((f) => {
       const original = salesStore.all().find((d) => d.id === rectifiesId);
-      const restart = original && f.rectification.method === "substitution";
-      return { ...f, rectifiesId, ...(restart && startFrom(original, f.rectification)) };
+      if (!original || f.rectification.method !== "substitution") return { ...f, rectifiesId };
+      const rectification: Rectification = alreadyRectified(rectifiesId)
+        ? { ...f.rectification, method: "differences" }
+        : f.rectification;
+      return { ...f, rectifiesId, rectification, ...startFrom(original, rectification) };
     });
     clearError("rectifiesId");
   };
@@ -853,7 +876,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                         {...p}
                         value={form.rectification.method}
                         onChange={(v) => changeRectification({ method: v as Rectification["method"] })}
-                        groups={[{ options: RECTIFICATION_METHODS }]}
+                        groups={[{ options: methods }]}
                         disabled={issued}
                       />
                     )}

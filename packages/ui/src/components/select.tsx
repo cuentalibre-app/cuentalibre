@@ -27,7 +27,7 @@ export function SelectContent({ className, children, ...props }: ComponentProps<
         position="popper"
         sideOffset={6}
         className={cn(
-          "popover-motion z-50 max-h-[min(18rem,var(--radix-select-content-available-height))] origin-(--radix-select-content-transform-origin) min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
+          "z-50 max-h-[min(18rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] origin-(--radix-select-content-transform-origin) popover-motion overflow-y-auto rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-popover",
           className,
         )}
         {...props}
@@ -42,7 +42,7 @@ export function SelectItem({ className, children, ...props }: ComponentProps<typ
   return (
     <Primitive.Item
       className={cn(
-        "flex h-9 cursor-pointer items-center rounded-md px-3 transition-colors duration-150 outline-none select-none data-[highlighted]:bg-muted data-[state=checked]:bg-accent data-[state=checked]:font-semibold",
+        "flex h-9 cursor-pointer items-center rounded-md px-3 transition-colors duration-150 outline-none select-none data-[disabled]:cursor-not-allowed data-[disabled]:text-muted-foreground data-[highlighted]:bg-muted data-[state=checked]:bg-accent data-[state=checked]:font-semibold",
         className,
       )}
       {...props}
