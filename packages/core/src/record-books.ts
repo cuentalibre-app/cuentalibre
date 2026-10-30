@@ -12,6 +12,7 @@ import { splitVatNumber } from "./informative-returns";
 import { isInPeriod } from "./ledger";
 import { cents, centsToEuros, roundHundredths, sumBy, type Cents } from "./money";
 import { quarterOfMonth } from "./period";
+import type { RectificationReason } from "./rectifying";
 import {
   expenseBox100,
   type RateAmounts,
@@ -73,6 +74,8 @@ export interface IncomeEntry extends TaxableSale {
   client: BookParty | null;
   /** Withholding rate as a fraction. */
   withholdingRate: number;
+  /** Why a rectifying invoice corrects the original; R1 when it doesn't say. */
+  rectificationReason?: RectificationReason;
 }
 
 export interface PurchaseEntry extends TaxablePurchase {
@@ -260,7 +263,14 @@ const byDate = <T extends { date: string; number: string }>(entries: T[]) =>
 
 function incomeRows(sale: IncomeEntry, activity: BookCell[]): BookCell[][] {
   const identified = Boolean(normalizeTaxId(sale.client?.taxId ?? ""));
-  const type = identified ? (sale.rectifying ? "R1" : "F1") : sale.rectifying ? "R5" : "F2";
+  // R5 rectifies a simplified invoice, which is what a sale without the client's ID is
+  const type = identified
+    ? sale.rectifying
+      ? (sale.rectificationReason ?? "R1")
+      : "F1"
+    : sale.rectifying
+      ? "R5"
+      : "F2";
   const [idType, country, id] = partyCells(sale.client);
   const name = identified ? text(sale.client!.name, 40) : FINAL_CONSUMER;
   const operationOn = sale.operationOn && sale.operationOn !== sale.date ? sale.operationOn : null;
