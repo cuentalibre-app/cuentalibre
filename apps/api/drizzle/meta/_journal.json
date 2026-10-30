@@ -120,6 +120,13 @@
       "when": 1793275470022,
       "tag": "0016_drop_treasury_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793382330681,
+      "tag": "0017_verifactu_incident",
+      "breakpoints": true
     }
   ]
 }
