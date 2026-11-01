@@ -22,6 +22,7 @@ import {
   yesNo,
 } from "./detail-parts";
 import { LANGUAGES, NUMBER_FORMATS } from "./invoice-locale";
+import { VerifactuState } from "./issued-notice";
 import {
   INCOME_TYPE_GROUPS,
   KINDS,
@@ -94,6 +95,12 @@ export function SalesDocumentDialog({
             {client.name} · {formatDate(current.issuedOn)}
           </DialogDescription>
         </div>
+
+        {current.issued?.verifactu && (
+          <DetailSection title="VERI*FACTU">
+            <VerifactuState invoice={current} title="" />
+          </DetailSection>
+        )}
 
         <DetailSection
           title={`Información ${config.noun.startsWith("el ") ? `del ${config.noun.slice(3)}` : `de ${config.noun}`}`}
