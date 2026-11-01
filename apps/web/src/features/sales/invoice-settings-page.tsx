@@ -95,6 +95,11 @@ export function InvoiceSettingsPage() {
                 checked={draft.showOperationDate}
                 onChange={(v) => set("showOperationDate", v)}
               />
+              <CheckField
+                label="Mostrar forma de pago"
+                checked={draft.showPaymentMethod}
+                onChange={(v) => set("showPaymentMethod", v)}
+              />
             </div>
           </div>
           <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
@@ -120,7 +125,6 @@ export function InvoiceSettingsPage() {
             {(p) => <Textarea {...p} rows={3} value={draft.footer} onChange={(e) => set("footer", e.target.value)} />}
           </Field>
         </Section>
-
       </div>
     </TooltipProvider>
   );
