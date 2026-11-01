@@ -166,7 +166,13 @@ export function GroupedSelect({ value, onChange, groups, disabled, className, ..
             {i > 0 && group.label && <SelectSeparator />}
             {group.label && <SelectLabel>{group.label}</SelectLabel>}
             {group.options.map((o) => (
-              <SelectItem key={o.value} value={o.value} title={o.title} className="h-auto min-h-9 py-2">
+              <SelectItem
+                key={o.value}
+                value={o.value}
+                title={o.title}
+                disabled={o.disabled}
+                className="h-auto min-h-9 py-2"
+              >
                 {o.label}
               </SelectItem>
             ))}

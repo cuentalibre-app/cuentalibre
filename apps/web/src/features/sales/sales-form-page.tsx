@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ChevronDown, FilePen, Landmark, Mail, Pencil, Plus, Settings } from "lucide-react";
 import {
+  DEFAULT_RECTIFICATION,
   newId,
   WITHHOLDING_RATES,
   addDays,
@@ -12,9 +13,12 @@ import {
   isSupportedDate,
   lineBase,
   operationChargesVat,
+  substitutionLines,
   toIsoDate,
+  type Cents,
   type InvoiceLine,
   type OperationType,
+  type Rectification,
   type WithholdingKind,
 } from "@cuentalibre/core";
 import type {
@@ -25,6 +29,7 @@ import type {
   RentalLocation,
   SalesDocument,
   SalesKind,
+  SalesLine,
 } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
@@ -69,6 +74,8 @@ import {
   INCOME_TYPE_GROUPS,
   KINDS,
   OPERATION_TYPES,
+  RECTIFICATION_METHODS,
+  RECTIFICATION_REASONS,
   RENTAL_LOCATIONS,
   WITHHOLDING_GROUPS,
   clientOf,
@@ -79,6 +86,7 @@ import {
   outOfOrderInvoice,
   nextNumber,
   periodKeyOf,
+  printedDocument,
   seriesGroups,
   seriesOf,
   seriesRefOf,
@@ -106,6 +114,7 @@ interface FormState {
   /** Custom series of an invoice; absent for the built-in one of `series`. */
   seriesId?: string;
   rectifiesId: string;
+  rectification: Rectification;
   issuedOn: string;
   dueOn: string | null;
   incomeType: IncomeType;
@@ -134,6 +143,13 @@ type Errors = Partial<Record<"clientId" | "number" | "rectifiesId" | "issuedOn" 
 type AfterSave = "list" | "edit" | "send" | "receipt";
 
 /**
+ * A copy of a rectifying invoice by substitution is a new invoice like the one
+ * it issued: its original is already rectified, so it can't be replaced again.
+ */
+const copiesSubstitution = (base: SalesDocument | undefined, isCopy: boolean, rectify: boolean) =>
+  isCopy && !rectify && base?.kind === "invoice" && base.rectification?.method === "substitution";
+
+/**
  * Invoices and drafts keep the series they have; a new one, a rectifying one,
  * and a copy or a draft in an inactive series take the default series of
  * their type. The other kinds have a single series of their own.
@@ -141,6 +157,7 @@ type AfterSave = "list" | "edit" | "send" | "receipt";
 function initialSeries(kind: SalesKind, base: SalesDocument | undefined, isCopy: boolean, rectify: boolean): SeriesRef {
   if (kind !== "invoice" && kind !== "draft") return { series: "normal" };
   if (rectify) return seriesRefOf(defaultSeries("rectifying"));
+  if (copiesSubstitution(base, isCopy, rectify)) return seriesRefOf(defaultSeries("normal"));
   if (base && (base.kind === "invoice" || base.kind === "draft")) {
     const own = seriesOf(base);
     // Drafts don't show their series, so they can't stay in one deactivated since
@@ -166,13 +183,18 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     !documentSettingsStore.get("deliveryNote").keepLinesOnInvoice;
   const number =
     base && !isCopy && base.number ? base.number : nextNumber(kind, { series, seriesId }, issuedOn, salesStore.all());
+  const rectified = base?.rectifiesId && salesStore.all().find((d) => d.id === base.rectifiesId);
+  // A substitution is edited as the invoice that replaces the original
+  const shown = base && !rectify ? printedDocument(base, rectified || undefined) : base;
+  const unlinked = copiesSubstitution(base, isCopy, rectify);
 
   return {
     clientId: base?.clientId ?? "",
     number,
     series,
     seriesId,
-    rectifiesId: rectify && base ? base.id : (base?.rectifiesId ?? ""),
+    rectifiesId: rectify && base ? base.id : unlinked ? "" : (base?.rectifiesId ?? ""),
+    rectification: (!rectify && !unlinked && base?.rectification) || DEFAULT_RECTIFICATION,
     issuedOn,
     dueOn,
     incomeType: base?.incomeType ?? defaultIncomeAccount(settingsStore.get().tax.activities[0]),
@@ -186,11 +208,16 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     markPaid: !isCopy && base?.status === "paid",
     paidOn: (!isCopy && base?.payments?.at(-1)?.date) || issuedOn,
     paymentMethodId: base?.payments?.at(-1)?.paymentMethodId ?? defaultPaymentMethodId(),
-    lines: (groupedOnInvoice ? groupLinesByTax(base!) : base?.lines)?.map((l) => toLineDraft(l, rectify)) ?? [
+    lines: (groupedOnInvoice ? groupLinesByTax(base!) : shown?.lines)?.map((l) => toLineDraft(l, rectify)) ?? [
       emptyLine(settingsStore.get().tax.defaultVatRate),
     ],
-    supplies: base?.supplies ? formatEurosInput(base.supplies) : "0",
-    publicNotes: rectify && base?.number ? `Rectifica la factura ${base.number}.` : (base?.publicNotes ?? ""),
+    supplies: shown?.supplies ? formatEurosInput(shown.supplies) : "0",
+    publicNotes:
+      rectify && base?.number
+        ? `Rectifica la factura ${base.number}.`
+        : unlinked && rectified && base?.publicNotes === `Rectifica la factura ${rectified.number}.`
+          ? ""
+          : (base?.publicNotes ?? ""),
     privateNotes: isCopy ? "" : (base?.privateNotes ?? ""),
     tags: base?.tags ?? [],
     language: base?.language ?? "",
@@ -327,16 +354,65 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
 
   const isInvoice = kind === "invoice";
   const rectifying = isInvoice && form.series === "rectifying";
+  const rectified = rectifying ? salesStore.all().find((d) => d.id === form.rectifiesId) : undefined;
+  // A substitution keeps the original's withholding and kind of operation, so it books the change
+  const substitution = rectifying && form.rectification.method === "substitution" && rectified;
   const client = clients.find((c) => c.id === form.clientId);
   // New lines take the client's default discount
   const lineDiscount = client?.discount ? formatDecimalInput(client.discount) : "0";
 
   const changeClient = (clientId: string) => {
     const picked = clients.find((c) => c.id === clientId);
-    // An existing document keeps its terms; a new one takes the client's
-    setForm((f) => (picked && !existing ? withClientDefaults(f, picked) : { ...f, clientId }));
+    // An existing document, or a substitution, keeps its terms; a new one takes the client's
+    setForm((f) => (picked && !existing && !substitution ? withClientDefaults(f, picked) : { ...f, clientId }));
     clearError("clientId");
   };
+  /** Whether another invoice already rectifies this one: then only by differences, as the server checks. */
+  const alreadyRectified = (id: string) =>
+    salesStore.all().some((d) => d.kind === "invoice" && d.rectifiesId === id && d.id !== existing?.id);
+  const methods = RECTIFICATION_METHODS.map((o) =>
+    o.value === "substitution" && rectified && alreadyRectified(rectified.id) ? { ...o, disabled: true } : o,
+  );
+  /** The original's lines, as a substitution replaces them or reversed to cancel them by differences. */
+  const startFrom = (original: SalesDocument, rectification: Rectification): Partial<FormState> =>
+    rectification.method === "substitution"
+      ? {
+          lines: original.lines.map((l) => toLineDraft(l)),
+          withholding: original.withholding,
+          operationType: original.operationType,
+          supplies: original.supplies ? formatEurosInput(original.supplies) : "0",
+        }
+      : { lines: original.lines.map((l) => toLineDraft(l, true)) };
+  const changeRectification = (changes: Partial<Rectification>) =>
+    setForm((f) => {
+      const rectification = { ...f.rectification, ...changes };
+      const original = salesStore.all().find((d) => d.id === f.rectifiesId);
+      const restart = original && rectification.method !== f.rectification.method;
+      return { ...f, rectification, ...(restart && startFrom(original, rectification)) };
+    });
+  const changeRectified = (rectifiesId: string) => {
+    setForm((f) => {
+      const original = salesStore.all().find((d) => d.id === rectifiesId);
+      if (!original || f.rectification.method !== "substitution") return { ...f, rectifiesId };
+      const rectification: Rectification = alreadyRectified(rectifiesId)
+        ? { ...f.rectification, method: "differences" }
+        : f.rectification;
+      return { ...f, rectifiesId, rectification, ...startFrom(original, rectification) };
+    });
+    clearError("rectifiesId");
+  };
+  /** What the invoice books: a substitution reverses the original's lines and supplies before its own. */
+  const booked = (lines: SalesLine[], supplies: Cents) =>
+    substitution
+      ? {
+          lines: substitutionLines(
+            substitution.lines.map((l) => ({ ...l, id: newId() })),
+            lines,
+          ),
+          supplies: cents(supplies - (substitution.supplies ?? 0)),
+        }
+      : { lines, supplies };
+
   const rectifiable = salesStore
     .all()
     .filter((d) => d.kind === "invoice" && d.series === "normal" && d.id !== existing?.id);
@@ -429,7 +505,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       next.paymentMethodId = "Elige el método por el que lo cobraste.";
     next.lines =
       linesError(form.lines) ??
-      stockShortageMessage({ id: existing?.id ?? "", kind: asKind, lines: toLines(form.lines) }, originKind(asKind));
+      stockShortageMessage(
+        { id: existing?.id ?? "", kind: asKind, lines: booked(toLines(form.lines), totals.supplies).lines },
+        originKind(asKind),
+      );
     return next;
   }
 
@@ -447,7 +526,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       return;
     }
 
-    const lines = toLines(form.lines);
+    const { lines, supplies } = booked(toLines(form.lines), totals.supplies);
+    const charged = substitution
+      ? invoiceTotals(lines, WITHHOLDING_RATES[form.withholding], supplies).total
+      : totals.total;
     const asInvoice = asKind === "invoice";
     const paid = asInvoice && form.markPaid;
     const number =
@@ -460,6 +542,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       series: form.series,
       seriesId: form.seriesId,
       rectifiesId: rectifying ? form.rectifiesId || undefined : undefined,
+      rectification: rectifying ? form.rectification : undefined,
       clientId: form.clientId,
       issuedOn: form.issuedOn,
       dueOn: KINDS[asKind].dueLabel === null ? null : form.dueOn,
@@ -472,7 +555,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
       rentalLocation: form.rental ? form.rentalLocation : undefined,
       cadastralRef: form.rental ? form.cadastralRef.trim() || undefined : undefined,
       lines,
-      supplies: totals.supplies || undefined,
+      supplies: supplies || undefined,
       status: asInvoice
         ? paid
           ? "paid"
@@ -484,7 +567,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             {
               id: newId(),
               date: form.paidOn || form.issuedOn,
-              amount: totals.total,
+              amount: charged,
               paymentMethodId: form.paymentMethodId,
             },
           ]
@@ -638,7 +721,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         {source && !existing && (
           <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
             {rectify
-              ? `Rectificando la factura ${source.number}. Las cantidades se han puesto en negativo.`
+              ? `Rectificando la factura ${source.number}.${form.rectification.method === "differences" ? " Las cantidades se han puesto en negativo." : ""}`
               : `Copiado de ${KINDS[source.kind].noun} ${source.number ?? "sin número"}. Revisa los datos antes de guardar.`}
           </p>
         )}
@@ -755,7 +838,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               {rectifying && (
                 <Field label="Rectifica la factura" required error={errors.rectifiesId}>
                   {(p) => (
-                    <Select value={form.rectifiesId} onValueChange={(v) => set("rectifiesId", v)} disabled={issued}>
+                    <Select value={form.rectifiesId} onValueChange={changeRectified} disabled={issued}>
                       <SelectTrigger {...p} className="w-full font-normal aria-invalid:border-destructive">
                         <span className="min-w-0 flex-1 truncate text-left">
                           <SelectValue placeholder="No se ha seleccionado ninguna factura" />
@@ -772,6 +855,33 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                     </Select>
                   )}
                 </Field>
+              )}
+
+              {rectifying && (
+                <>
+                  <Field label="Motivo" required>
+                    {(p) => (
+                      <GroupedSelect
+                        {...p}
+                        value={form.rectification.reason}
+                        onChange={(v) => changeRectification({ reason: v as Rectification["reason"] })}
+                        groups={[{ options: RECTIFICATION_REASONS }]}
+                        disabled={issued}
+                      />
+                    )}
+                  </Field>
+                  <Field label="Tipo de rectificación" required>
+                    {(p) => (
+                      <GroupedSelect
+                        {...p}
+                        value={form.rectification.method}
+                        onChange={(v) => changeRectification({ method: v as Rectification["method"] })}
+                        groups={[{ options: methods }]}
+                        disabled={issued}
+                      />
+                    )}
+                  </Field>
+                </>
               )}
 
               <Field label="Fecha" required error={errors.issuedOn}>
@@ -844,6 +954,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                     value={form.withholding}
                     onChange={(v) => set("withholding", v as WithholdingKind)}
                     groups={WITHHOLDING_GROUPS}
+                    disabled={Boolean(substitution)}
                   />
                 )}
               </Field>
@@ -970,8 +1081,15 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                   help="Decide cómo se trata el IVA y en qué casillas de los modelos 303, 349 y 390 aparece."
                 >
                   {(p) => (
-                    <Select value={form.operationType} onValueChange={(v) => changeOperationType(v as OperationType)}>
-                      <SelectTrigger {...p} className="w-full font-normal">
+                    <Select
+                      value={form.operationType}
+                      onValueChange={(v) => changeOperationType(v as OperationType)}
+                      disabled={Boolean(substitution)}
+                    >
+                      <SelectTrigger
+                        {...p}
+                        className="w-full font-normal disabled:cursor-not-allowed disabled:opacity-50"
+                      >
                         <span className="min-w-0 flex-1 truncate text-left">
                           <SelectValue>
                             {OPERATION_TYPES.find((o) => o.value === form.operationType)?.label}

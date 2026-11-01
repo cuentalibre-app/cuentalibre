@@ -172,6 +172,20 @@ describe("recordBooks: income", () => {
     ]);
   });
 
+  // The AEAT's standard books take the invoice type keys of VERI*FACTU and the SII: R1–R4 by cause
+  it("writes a corrective invoice with its cause", () => {
+    const rows = book(
+      books({
+        sales: [
+          sale({ rectifying: true, rectificationReason: "R3" }),
+          sale({ rectifying: true, rectificationReason: "R4" }),
+        ],
+      }),
+      "INGRESOS",
+    ).rows;
+    expect(rows.map((r) => col(r, "F"))).toEqual(["R3", "R4"]);
+  });
+
   it("identifies EU clients by their VAT number and the rest by country", () => {
     const rows = book(
       books({
