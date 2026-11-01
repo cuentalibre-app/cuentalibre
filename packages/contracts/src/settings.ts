@@ -159,8 +159,6 @@ export const verifactuSetupSchema = z.object({
   system: invoicingSystemSchema,
   /** Date the system applies from. */
   startDate: isoDate,
-  /** Resolution that exempts the business from VERI*FACTU. */
-  exemptionResolution: z.string(),
 });
 export type VerifactuSetup = z.infer<typeof verifactuSetupSchema>;
 
