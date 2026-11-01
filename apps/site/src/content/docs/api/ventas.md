@@ -20,6 +20,7 @@ Los borradores, los presupuestos y los albaranes se crean y se cambian librement
 | `DELETE /v1/sales-documents/{id}`     | Lo borra. Una factura emitida, solo [si se puede editar](#editar-una-factura-emitida).                     |
 | `POST /v1/invoices`                   | Emite una factura nueva.                                                                                   |
 | `POST /v1/sales-documents/{id}/issue` | Emite un borrador tal como está.                                                                           |
+| `POST /v1/sales-documents/{id}/correct-record` | Corrige el registro de VERI\*FACTU que la AEAT rechazó o aceptó con errores ([subsanación](#corregir-un-registro-rechazado)). |
 
 ## Campos
 
@@ -131,6 +132,20 @@ Para importar una factura emitida con otro programa conservando su número, usa 
 Con VERI\*FACTU activado, emitir crea además el registro de facturación y lo envía a la Agencia Tributaria en segundo plano; su estado aparece en `issued.verifactu`.
 
 Si es un agente quien emite, haz que te enseñe antes el borrador: con VERI\*FACTU, una factura emitida ya no se puede cambiar.
+
+## Corregir un registro rechazado
+
+Si la AEAT rechaza el registro de una factura (`issued.verifactu.status: "rejected"`) o lo acepta con errores (`acceptedWithErrors`), `issued.verifactu.error` dice por qué. Casi siempre son los datos del cliente, como un NIF que no está en el censo. Envía los datos fiscales del cliente tal como debían ser:
+
+```sh
+curl https://api.cuentalibre.es/v1/sales-documents/01a19755-983c-7005-9eb6-9052a9c525ea/correct-record \
+  -H "Authorization: Bearer fsk_…" -H "Content-Type: application/json" \
+  -d '{ "client": { "name": "Estudio Norte SL", "taxId": "B12345674", "country": "España" } }'
+```
+
+La factura toma esos datos y se envía a la AEAT un registro nuevo que corrige el anterior (subsanación), con el nombre del emisor como lo tenga ahora el perfil del negocio. Mientras llega la respuesta, `issued.verifactu.status` vuelve a `pending`. El número, la fecha y los importes no cambian así: para eso hay que emitir una rectificativa.
+
+Responde `409 record_pending` si la AEAT aún no ha contestado al registro, `409 record_accepted` si lo aceptó sin errores, `409 not_recorded` si la factura no tiene registro y `409 quarter_closed` si su trimestre está cerrado. Un NIF que no cabe en el registro responde `400`.
 
 ## Editar una factura emitida
 

@@ -22,11 +22,12 @@ import {
   Settings,
   SlidersHorizontal,
   Tag,
+  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
 import { cents, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@cuentalibre/core";
-import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
+import type { SalesDocument, SalesKind, VerifactuStatus } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
@@ -82,6 +83,7 @@ import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
+import { VERIFACTU_STATUS } from "./issued-notice";
 
 const ALL = "all";
 /** Status filter for the quotes and delivery notes not invoiced or rejected yet. */
@@ -566,7 +568,11 @@ const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: tru
 
 const COMPARE: Record<SortKey, (a: Row, b: Row) => number> = {
   number: (a, b) => byText(a.doc.number ?? "", b.doc.number ?? ""),
-  date: (a, b) => a.doc.issuedOn.localeCompare(b.doc.issuedOn) || byText(a.doc.number ?? "", b.doc.number ?? ""),
+  // Invoices of the same day in the order they were issued, whatever their series
+  date: (a, b) =>
+    a.doc.issuedOn.localeCompare(b.doc.issuedOn) ||
+    issueOrder(a.doc).localeCompare(issueOrder(b.doc)) ||
+    byText(a.doc.number ?? "", b.doc.number ?? ""),
   client: (a, b) => byText(a.client.name, b.client.name),
   status: (a, b) => byText(STATUS[a.status].label, STATUS[b.status].label),
   base: (a, b) => a.base - b.base,
@@ -574,6 +580,9 @@ const COMPARE: Record<SortKey, (a: Row, b: Row) => number> = {
   withholding: (a, b) => a.withholding - b.withholding,
   total: (a, b) => a.total - b.total,
 };
+
+/** When a document was issued; one being issued now goes last, and other documents first. */
+const issueOrder = (doc: SalesDocument) => (doc.kind === "invoice" ? (doc.issued?.issuedAt ?? "~") : "");
 
 const DEFAULT_SORT: Sort = { key: "date", dir: "desc" };
 
@@ -635,7 +644,10 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                   </div>
                 </td>
                 <td className={td}>
-                  <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
+                  <div className="flex flex-col items-start gap-1">
+                    <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
+                    <VerifactuBadge doc={r.doc} linked />
+                  </div>
                 </td>
                 <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
                 <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
@@ -675,6 +687,41 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
   );
 }
 
+/**
+ * Where an invoice's VERI*FACTU record stands with the AEAT. `linked` makes a
+ * recorded one open the AEAT's checker, where the row isn't a link itself.
+ */
+function VerifactuBadge({ doc, linked = false }: { doc: SalesDocument; linked?: boolean }) {
+  const verifactu = doc.issued?.verifactu;
+  if (!verifactu) return null;
+  const { tone } = VERIFACTU_STATUS[verifactu.status];
+  const label = SHORT_VERIFACTU_LABELS[verifactu.status];
+  if (!linked || !isRecorded(doc)) return <Badge tone={tone}>{label}</Badge>;
+  return (
+    <a
+      href={verifactu.qrUrl}
+      target="_blank"
+      rel="noreferrer"
+      title="Comprobar en la AEAT"
+      className="rounded-md no-underline transition-opacity duration-150 hover:opacity-80"
+    >
+      <Badge tone={tone}>{label}</Badge>
+    </a>
+  );
+}
+
+/** Next to the collection status, in a column that must stay narrow. */
+const SHORT_VERIFACTU_LABELS: Record<VerifactuStatus, string> = {
+  pending: "AEAT: por enviar",
+  accepted: "AEAT: registrada",
+  acceptedWithErrors: "AEAT: con errores",
+  rejected: "AEAT: rechazada",
+};
+
+/** The AEAT holds the invoice's record, so its checker finds it. */
+const isRecorded = (doc: SalesDocument) =>
+  doc.issued?.verifactu?.status === "accepted" || doc.issued?.verifactu?.status === "acceptedWithErrors";
+
 function DocumentsList({ rows }: { rows: Row[] }) {
   return (
     <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
@@ -698,6 +745,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
             <div className="flex flex-col items-end gap-1">
               <span className="amount text-base">{formatEUR(r.total)}</span>
               <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
+              <VerifactuBadge doc={r.doc} />
             </div>
           </Link>
           <RowActions doc={r.doc} status={r.status} />
@@ -861,7 +909,20 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
     ],
     [...(primary ? [primary] : []), ...(changeStatus ? [changeStatus] : []), attach, extras.tags],
-    [pdf, ...(isInvoice ? [extras.facturae] : []), extras.send],
+    [
+      pdf,
+      ...(isInvoice ? [extras.facturae] : []),
+      extras.send,
+      ...(isRecorded(doc)
+        ? [
+            {
+              label: "Comprobar en la AEAT",
+              icon: ShieldCheck,
+              run: () => window.open(doc.issued!.verifactu!.qrUrl, "_blank", "noopener"),
+            },
+          ]
+        : []),
+    ],
     // On a rectifying invoice it rectifies the original again, undoing this one
     original
       ? [
