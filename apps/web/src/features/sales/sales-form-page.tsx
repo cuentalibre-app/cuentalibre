@@ -14,6 +14,7 @@ import {
   lineBase,
   operationChargesVat,
   rectifiedPastZero,
+  unrectifiedLines,
   substitutionLines,
   toIsoDate,
   type Cents,
@@ -33,6 +34,7 @@ import type {
   SalesLine,
 } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -327,6 +329,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   /** The document just saved to be sent, and where to go after. */
   const [sending, setSending] = useState<{ doc: SalesDocument; next: string } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
+  /** The original a rectifying invoice would take past zero, and what's left of it. */
+  const [pastZero, setPastZero] = useState<{ original: SalesDocument; left: SalesLine[] } | null>(null);
   const lockedQuarterOf = useLockedQuarter();
   const verifactuSystem = useCompliance().verifactu.system;
   const issued = existing?.kind === "invoice";
@@ -531,11 +535,6 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
         { id: existing?.id ?? "", kind: asKind, lines: booked(toLines(form.lines), totals.supplies).lines },
         originKind(asKind),
       );
-    if (asKind === "invoice" && rectified && !next.lines) {
-      const others = rectifyingInvoicesOf(rectified.id, salesStore.all(), existing?.id).map((d) => d.lines);
-      if (rectifiedPastZero(rectified.lines, [...others, booked(toLines(form.lines), totals.supplies).lines]))
-        next.lines = `La factura ${rectified.number} quedaría por debajo de cero: rectifica como mucho lo que queda de ella.`;
-    }
     return next;
   }
 
@@ -546,6 +545,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     if (Object.values(found).some(Boolean)) {
       document.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
       return;
+    }
+    // Shown in a dialog: the form looks fine, so an error under the lines goes unnoticed
+    if (asKind === "invoice" && rectified) {
+      const others = rectifyingInvoicesOf(rectified.id, salesStore.all(), existing?.id).map((d) => d.lines);
+      if (rectifiedPastZero(rectified.lines, [...others, booked(toLines(form.lines), totals.supplies).lines])) {
+        setPastZero({ original: rectified, left: unrectifiedLines(rectified.lines, others) });
+        return;
+      }
     }
     // Asked once the rest is valid, so saving the profile goes on to issue
     if (asKind === "invoice" && !issued && missingIssuer && !issuerReady) {
@@ -743,6 +750,23 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             if (issue) save(issue.asKind, issue.after, true);
           }}
         />
+        {pastZero && (
+          <Dialog open onOpenChange={(open) => !open && setPastZero(null)}>
+            <DialogContent className="max-w-md">
+              <DialogTitle>La factura {pastZero.original.number} quedaría por debajo de cero</DialogTitle>
+              <DialogDescription>
+                {pastZero.left.length > 0
+                  ? `Queda por rectificar ${formatEUR(invoiceTotals(pastZero.left, WITHHOLDING_RATES[pastZero.original.withholding]).total)}: rectifica como mucho ese importe.`
+                  : "Ya está rectificada por completo: no queda nada por rectificar."}
+              </DialogDescription>
+              <div className="flex justify-end">
+                <DialogClose asChild>
+                  <Button>Revisar los conceptos</Button>
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
         {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
 
         {source && !existing && (
