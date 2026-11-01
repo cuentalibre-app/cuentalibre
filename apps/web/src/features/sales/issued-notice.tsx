@@ -3,7 +3,8 @@ import { Lock } from "lucide-react";
 import type { SalesDocument, VerifactuStatus } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { useCompliance } from "@/features/settings/compliance-store";
-import { KINDS } from "./sales-model";
+import { salesStore } from "./sales-store";
+import { KINDS, isFullyRectified, originalToRectify } from "./sales-model";
 
 const VERIFACTU_STATUS: Record<VerifactuStatus, { label: string; tone: BadgeProps["tone"] }> = {
   pending: { label: "Pendiente de envío", tone: "primary" },
@@ -19,6 +20,9 @@ const VERIFACTU_STATUS: Record<VerifactuStatus, { label: string; tone: BadgeProp
 export function IssuedNotice({ invoice }: { invoice: SalesDocument }) {
   const verifactu = invoice.issued?.verifactu;
   const exempt = useCompliance().verifactu.system === "exempt" && !verifactu;
+  // A rectifying invoice is undone by rectifying its original again
+  const original = originalToRectify(invoice, salesStore.all());
+  const rectifiable = original && !(invoice.series === "normal" && isFullyRectified(original, salesStore.all()));
   return (
     <div role="status" className="flex flex-col gap-2 rounded-lg bg-muted px-4 py-3 text-sm">
       <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -27,9 +31,9 @@ export function IssuedNotice({ invoice }: { invoice: SalesDocument }) {
           {exempt
             ? "Esta factura está emitida: no se puede modificar, pero sí eliminar desde el listado."
             : "Esta factura está emitida: no se puede modificar ni eliminar."}
-          {invoice.series === "normal" && " Para corregirla, genera una factura rectificativa."}
+          {rectifiable && " Para corregirla, genera una factura rectificativa."}
         </span>
-        {invoice.series === "normal" && (
+        {rectifiable && (
           <Link
             to={`${KINDS.invoice.newPath}?desde=${invoice.id}&rectificar=1`}
             className="font-medium text-primary no-underline hover:text-primary-hover"
