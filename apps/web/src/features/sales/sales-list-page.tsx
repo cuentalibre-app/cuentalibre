@@ -75,7 +75,7 @@ import {
   type StatusKey,
 } from "./sales-model";
 import { canSendEmail } from "@/data/email";
-import { SalesDocumentLink } from "./document-detail";
+import { SalesDocumentDialog, SalesDocumentLink } from "./document-detail";
 import { GroupedSelect } from "./form-fields";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
 import { IssuerDialog } from "./issuer-dialog";
@@ -83,7 +83,7 @@ import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
-import { VERIFACTU_STATUS } from "./issued-notice";
+import { VERIFACTU_STATUS, needsCorrection } from "./issued-notice";
 
 const ALL = "all";
 /** Status filter for the quotes and delivery notes not invoiced or rejected yet. */
@@ -689,13 +689,33 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
 
 /**
  * Where an invoice's VERI*FACTU record stands with the AEAT. `linked` makes a
- * recorded one open the AEAT's checker, where the row isn't a link itself.
+ * recorded one open the AEAT's checker, and one the AEAT found fault with
+ * open the invoice, which says why, where the row isn't a link itself.
  */
 function VerifactuBadge({ doc, linked = false }: { doc: SalesDocument; linked?: boolean }) {
+  const [open, setOpen] = useState(false);
   const verifactu = doc.issued?.verifactu;
   if (!verifactu) return null;
   const { tone } = VERIFACTU_STATUS[verifactu.status];
   const label = SHORT_VERIFACTU_LABELS[verifactu.status];
+  if (linked && verifactu.error && needsCorrection(doc))
+    return (
+      <>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="cursor-pointer rounded-md border-0 bg-transparent p-0 transition-opacity duration-150 hover:opacity-80"
+            >
+              <Badge tone={tone}>{label}</Badge>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">{verifactu.error}</TooltipContent>
+        </Tooltip>
+        {open && <SalesDocumentDialog doc={doc} onOpenChange={setOpen} />}
+      </>
+    );
   if (!linked || !isRecorded(doc)) return <Badge tone={tone}>{label}</Badge>;
   return (
     <a

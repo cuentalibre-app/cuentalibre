@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Lock } from "lucide-react";
 import type { SalesDocument, VerifactuStatus } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { useCompliance } from "@/features/settings/compliance-store";
 import { CorrectRecordDialog } from "./correct-record-dialog";
@@ -34,9 +35,6 @@ export function IssuedNotice({ invoice: opened }: { invoice: SalesDocument }) {
   // A rectifying invoice is undone by rectifying its original again
   const original = originalToRectify(invoice, salesStore.all());
   const rectifiable = original && !(invoice.series === "normal" && isFullyRectified(original, salesStore.all()));
-  const lockedQuarterOf = useLockedQuarter();
-  const correctable = needsCorrection(invoice) && !lockedQuarterOf(invoice.issuedOn);
-  const [correcting, setCorrecting] = useState(false);
   return (
     <div role="status" className="flex flex-col gap-2 rounded-lg bg-muted px-4 py-3 text-sm">
       <p className="m-0 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -56,31 +54,52 @@ export function IssuedNotice({ invoice: opened }: { invoice: SalesDocument }) {
           </Link>
         )}
       </p>
-      {verifactu && (
-        <div className="flex flex-col gap-1">
-          <p className="m-0 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="font-medium">VERI*FACTU</span>
-            <Badge tone={VERIFACTU_STATUS[verifactu.status].tone}>{VERIFACTU_STATUS[verifactu.status].label}</Badge>
-            {correctable && (
-              <button
-                type="button"
-                onClick={() => setCorrecting(true)}
-                className="cursor-pointer border-0 bg-transparent p-0 font-medium text-primary hover:text-primary-hover"
-              >
-                Corregir y reenviar
-              </button>
-            )}
-            <a
-              href={verifactu.qrUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium text-primary no-underline hover:text-primary-hover"
-            >
-              Comprobar en la AEAT
-            </a>
-          </p>
-          {verifactu.error && <p className="m-0 text-muted-foreground">{verifactu.error}</p>}
-        </div>
+      <VerifactuState invoice={invoice} />
+    </div>
+  );
+}
+
+/**
+ * Where an issued invoice's VERI*FACTU record stands with the AEAT and, when
+ * it rejected the record or found errors in it, why, with the way to correct it.
+ */
+export function VerifactuState({ invoice, title = "VERI*FACTU" }: { invoice: SalesDocument; title?: string }) {
+  const verifactu = invoice.issued?.verifactu;
+  const lockedQuarterOf = useLockedQuarter();
+  const correctable = needsCorrection(invoice) && !lockedQuarterOf(invoice.issuedOn);
+  const [correcting, setCorrecting] = useState(false);
+  if (!verifactu) return null;
+  // Only a record the AEAT holds is found by its checker
+  const recorded = verifactu.status === "accepted" || verifactu.status === "acceptedWithErrors";
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <p className="m-0 flex flex-wrap items-center gap-x-3 gap-y-1">
+        {title && <span className="font-medium">{title}</span>}
+        <Badge tone={VERIFACTU_STATUS[verifactu.status].tone}>{VERIFACTU_STATUS[verifactu.status].label}</Badge>
+        {correctable && (
+          <button
+            type="button"
+            onClick={() => setCorrecting(true)}
+            className="cursor-pointer border-0 bg-transparent p-0 font-medium text-primary hover:text-primary-hover"
+          >
+            Corregir y reenviar
+          </button>
+        )}
+        {recorded && (
+          <a
+            href={verifactu.qrUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-primary no-underline hover:text-primary-hover"
+          >
+            Comprobar en la AEAT
+          </a>
+        )}
+      </p>
+      {verifactu.error && (
+        <p className={cn("m-0", verifactu.status === "rejected" ? "text-foreground" : "text-muted-foreground")}>
+          {verifactu.error}
+        </p>
       )}
       {correcting && <CorrectRecordDialog invoice={invoice} onOpenChange={setCorrecting} />}
     </div>
