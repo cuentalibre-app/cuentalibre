@@ -66,6 +66,8 @@ export const invoiceSettingsSchema = documentLookSchema
     hideZeroTaxes: z.boolean(),
     showServicePeriod: z.boolean(),
     showOperationDate: z.boolean(),
+    /** "A pagar por transferencia bancaria en la cuenta…", under the totals. */
+    showPaymentMethod: z.boolean(),
     /** Fixed text printed on the side of every invoice (registry details, GDPR…). */
     footer: z.string(),
     /**
@@ -232,6 +234,7 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     hideZeroTaxes: false,
     showServicePeriod: true,
     showOperationDate: false,
+    showPaymentMethod: true,
     footer: "",
     noteTemplates: [],
   },
