@@ -109,6 +109,7 @@ export function toSalesDocument(
         total: row.total as Cents,
         vatBreakdown: row.vatBreakdown!,
       },
+      issuedAt: row.issuedAt.toISOString(),
       ...(verifactu && { verifactu }),
     } satisfies IssuedSnapshot;
   }
