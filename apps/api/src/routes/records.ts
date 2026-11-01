@@ -1,5 +1,6 @@
 import {
   changeSchema,
+  issuedSnapshotSchema,
   storedExpenseSchema,
   storedPurchaseInvoiceSchema,
   storedSalesDocumentSchema,
@@ -269,6 +270,33 @@ const issueDraft = createRoute({
   },
 });
 
+const correctRecord = createRoute({
+  method: "post",
+  path: "/sales-documents/{id}/correct-record",
+  tags: ["Sales"],
+  summary: "Correct an invoice's VERI*FACTU record",
+  description:
+    "Only when the AEAT rejected the invoice's record or accepted it with errors (`issued.verifactu.status`): " +
+    "send the client's fiscal data as it should have been. The invoice takes it, and a new record correcting " +
+    "the previous one (subsanación) is made and sent to the AEAT, naming the issuer as the business profile " +
+    "does now. The number, date and amounts don't change this way; those take a rectifying invoice.",
+  middleware: [requireOrganization, requireWritable] as const,
+  request: {
+    params: idParam,
+    body: { required: true, content: json(z.object({ client: issuedSnapshotSchema.shape.client })) },
+  },
+  responses: {
+    200: { description: "Corrected; the new record is pending", content: json(storedSalesDocumentSchema) },
+    400: errorContent("Not an issued invoice, or the client's tax ID doesn't fit VERI*FACTU"),
+    404: errorContent("No such invoice"),
+    409: errorContent(
+      "No VERI*FACTU record, its record is waiting for the AEAT or was accepted without errors, or in a closed quarter",
+    ),
+    ...tenantErrors,
+    ...readOnlyError,
+  },
+});
+
 type Document = z.infer<typeof storedSalesDocumentSchema>;
 
 async function issue(c: Context<AppEnv>, data: Document) {
@@ -288,4 +316,12 @@ export const recordRoutes = RESOURCES.reduce(
     const draft = (await read(c, sales, c.req.valid("param").id)) as Document;
     if (draft.kind !== "draft") throw new ApiError(400, "invalid_document", "Only drafts can be issued.");
     return c.json(await issue(c, draft), 201);
+  })
+  .openapi(correctRecord, async (c) => {
+    const { id } = c.req.valid("param");
+    const changes: Change[] = await write(c, [{ type: "correctRecord", id, client: c.req.valid("json").client }]);
+    return c.json(
+      changes.find((change) => change.entity === "salesDocuments" && change.op === "upsert")!.data as Document,
+      200,
+    );
   });

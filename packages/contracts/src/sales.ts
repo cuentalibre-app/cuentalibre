@@ -115,11 +115,6 @@ export const salesLineSchema = invoiceLineSchema.extend({
 export type SalesLine = z.infer<typeof salesLineSchema>;
 
 /**
- * What an invoice froze when it was issued: the client's fiscal data and the
- * totals. Editing the contact, or changing how core rounds, never alters an
- * issued invoice. Set by the server; the app never sends it.
- */
-/**
  * Where the invoice's VERI*FACTU record stands with the AEAT: waiting to be
  * sent, accepted (maybe with errors to fix), or rejected.
  */
@@ -136,6 +131,12 @@ export const verifactuRecordInfoSchema = z.object({
 });
 export type VerifactuRecordInfo = z.infer<typeof verifactuRecordInfoSchema>;
 
+/**
+ * What an invoice froze when it was issued: the client's fiscal data and the
+ * totals. Editing the contact, or changing how core rounds, never alters an
+ * issued invoice; only correcting its VERI*FACTU record changes the client's
+ * data. Set by the server; the app never sends it.
+ */
 export const issuedSnapshotSchema = z.object({
   client: contactSchema.pick({
     name: true,

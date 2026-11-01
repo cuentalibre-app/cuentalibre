@@ -104,7 +104,7 @@ import { SendDialog, sendWithMailClient } from "./document-dialogs";
 import { IssuedNotice } from "./issued-notice";
 import { IssuerDialog } from "./issuer-dialog";
 import { IssuerNotice } from "./issuer-notice";
-import { salesStore } from "./sales-store";
+import { salesStore, useSalesDocuments } from "./sales-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
 const SETTINGS_PATH = "/configuracion/facturas";
@@ -384,6 +384,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   // A substitution keeps the original's withholding and kind of operation, so it books the change
   const substitution = rectifying && form.rectification.method === "substitution" && rectified;
   const client = clients.find((c) => c.id === form.clientId);
+  // An issued invoice shows the client as it froze them, which correcting its VERI*FACTU record may change
+  const frozen = (useSalesDocuments().find((d) => d.id === existing?.id) ?? existing)?.issued?.client;
+  const summaryClient = client && frozen ? { ...client, ...EMPTY_ADDRESS, ...frozen } : client;
   // New lines take the client's default discount
   const lineDiscount = client?.discount ? formatDecimalInput(client.discount) : "0";
 
@@ -782,7 +785,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
           className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
         >
           <Section title={infoTitle(config.noun)} index={1}>
-            {client && <ClientSummary client={client} />}
+            {summaryClient && <ClientSummary client={summaryClient} />}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <Field
@@ -1300,6 +1303,15 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
 }
 
 /** Contact and address of the chosen client, as they will print on the document. */
+/** Address fields an issued invoice froze only when the client had them. */
+const EMPTY_ADDRESS = {
+  address: undefined,
+  postalCode: undefined,
+  city: undefined,
+  province: undefined,
+  country: undefined,
+};
+
 function ClientSummary({ client }: { client: Contact }) {
   const row = (label: string, value: string | undefined) => (
     <div className="flex gap-2">

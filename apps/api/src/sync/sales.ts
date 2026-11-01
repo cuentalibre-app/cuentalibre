@@ -26,7 +26,13 @@ import type { z } from "zod";
 import type { Tx } from "../db/client";
 import { contact, salesDocument, salesLine, salesPayment } from "../db/schema";
 import { ApiError } from "../errors";
-import { recordInfoByInvoice, registerInvoice, usesVerifactu } from "../verifactu/record";
+import {
+  recordInfoByInvoice,
+  recordsOf,
+  registerCorrection,
+  registerInvoice,
+  usesVerifactu,
+} from "../verifactu/record";
 import { checkQuarterOpen } from "./closing";
 import { checkAttachments } from "./files";
 import { alreadyExists, mergeChanges, parseOr, repeatedId, touchedFields } from "./records";
@@ -397,6 +403,46 @@ export async function deleteSalesDocument(tx: Tx, organizationId: string, id: st
   await tx
     .update(salesDocument)
     .set({ deletedAt: new Date() })
+    .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, id)));
+}
+
+/**
+ * Corrects the VERI*FACTU record of an issued invoice that the AEAT rejected
+ * or accepted with errors (subsanación): the invoice takes the client's fiscal
+ * data as given, and a new record with it is sent. Number, date and amounts
+ * can't change this way; they take a rectifying invoice. A record the AEAT
+ * hasn't answered yet, or took without errors, isn't corrected.
+ */
+export async function correctRecord(tx: Tx, organizationId: string, id: string, client: IssuedSnapshot["client"]) {
+  const row = await liveRow(tx, organizationId, id);
+  if (!row) notFound();
+  if (row.kind !== "invoice") invalid("Only issued invoices have a VERI*FACTU record.");
+  const records = await recordsOf(tx, organizationId, id);
+  const latest = records.at(-1);
+  if (!latest) throw new ApiError(409, "not_recorded", "This invoice has no VERI*FACTU record to correct.");
+  if (latest.status === "pending")
+    throw new ApiError(
+      409,
+      "record_pending",
+      "Its record is waiting for the AEAT's answer; correct it once it arrives.",
+    );
+  if (latest.status === "accepted")
+    throw new ApiError(
+      409,
+      "record_accepted",
+      "The AEAT recorded it without errors; correct the invoice with a rectifying invoice.",
+    );
+  await checkQuarterOpen(tx, organizationId, row.issuedOn);
+  const snapshot = Object.fromEntries(
+    Object.entries(client)
+      .map(([field, value]) => [field, value?.trim()])
+      .filter(([, value]) => value),
+  ) as IssuedSnapshot["client"];
+  if (!snapshot.name) invalid("client.name: the client needs a name.");
+  await registerCorrection(tx, organizationId, await readSettings(tx, organizationId), records, snapshot);
+  await tx
+    .update(salesDocument)
+    .set({ clientSnapshot: snapshot })
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, id)));
 }
 

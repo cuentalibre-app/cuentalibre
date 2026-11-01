@@ -82,6 +82,7 @@ import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
+import { VERIFACTU_STATUS, needsCorrection } from "./issued-notice";
 
 const ALL = "all";
 /** Status filter for the quotes and delivery notes not invoiced or rejected yet. */
@@ -635,7 +636,10 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                   </div>
                 </td>
                 <td className={td}>
-                  <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
+                  <div className="flex flex-col items-start gap-1">
+                    <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
+                    <VerifactuAlert doc={r.doc} />
+                  </div>
                 </td>
                 <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
                 <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
@@ -675,6 +679,13 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
   );
 }
 
+/** An invoice whose VERI*FACTU record the AEAT rejected or accepted with errors, to be corrected. */
+function VerifactuAlert({ doc }: { doc: SalesDocument }) {
+  if (!needsCorrection(doc)) return null;
+  const { label, tone } = VERIFACTU_STATUS[doc.issued!.verifactu!.status];
+  return <Badge tone={tone}>{label}</Badge>;
+}
+
 function DocumentsList({ rows }: { rows: Row[] }) {
   return (
     <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
@@ -698,6 +709,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
             <div className="flex flex-col items-end gap-1">
               <span className="amount text-base">{formatEUR(r.total)}</span>
               <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
+              <VerifactuAlert doc={r.doc} />
             </div>
           </Link>
           <RowActions doc={r.doc} status={r.status} />
