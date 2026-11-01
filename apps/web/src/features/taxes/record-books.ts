@@ -25,6 +25,7 @@ function incomeEntry(doc: SalesDocument): IncomeEntry {
     operationOn: doc.operationOn,
     client: doc.clientId ? { taxId: client.taxId, name: client.name, country: client.country } : null,
     withholdingRate: WITHHOLDING_RATES[doc.withholding],
+    rectificationReason: doc.rectification?.reason,
   };
 }
 

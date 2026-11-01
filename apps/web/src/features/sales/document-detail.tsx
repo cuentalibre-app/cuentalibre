@@ -26,11 +26,14 @@ import {
   INCOME_TYPE_GROUPS,
   KINDS,
   OPERATION_TYPES,
+  RECTIFICATION_METHODS,
+  RECTIFICATION_REASONS,
   STATUS,
   WITHHOLDING_GROUPS,
   clientOf,
   displayStatus,
   documentTotals,
+  printedDocument,
 } from "./sales-model";
 import { useSalesDocuments } from "./sales-store";
 
@@ -74,6 +77,8 @@ export function SalesDocumentDialog({
   const status = STATUS[displayStatus(current, new Date())];
   const isInvoice = current.kind === "invoice";
   const rectified = current.rectifiesId ? documents.find((d) => d.id === current.rectifiesId) : undefined;
+  // A substitution shows the invoice that replaces the original, as printed
+  const printed = printedDocument(current, rectified);
   const language = LANGUAGES.find((l) => l.value === current.language);
   const numberFormat = NUMBER_FORMATS[current.language ?? ""]?.find((f) => f.value === current.numberFormat);
 
@@ -102,6 +107,12 @@ export function SalesDocumentDialog({
                 ? [[config.dueLabel, current.dueOn && formatDate(current.dueOn)] as [string, ReactNode]]
                 : []),
               ...(rectified ? [["Rectifica a", rectified.number] as [string, ReactNode]] : []),
+              ...(current.rectification
+                ? ([
+                    ["Motivo", RECTIFICATION_REASONS.find((r) => r.value === current.rectification!.reason)?.label],
+                    ["Tipo", RECTIFICATION_METHODS.find((m) => m.value === current.rectification!.method)?.label],
+                  ] as [string, ReactNode][])
+                : []),
               ["Tipo de ingreso", optionLabel(INCOME_TYPE_GROUPS, current.incomeType)],
               ["Retención", optionLabel(WITHHOLDING_GROUPS, current.withholding)],
               ["Tipo de operación", OPERATION_TYPES.find((o) => o.value === current.operationType)?.label],
@@ -120,8 +131,8 @@ export function SalesDocumentDialog({
         </DetailSection>
 
         <DetailSection title="Conceptos">
-          <LinesTable lines={current.lines} />
-          <TotalsList totals={documentTotals(current)} />
+          <LinesTable lines={printed.lines} />
+          <TotalsList totals={documentTotals(printed)} />
         </DetailSection>
 
         {isInvoice && (

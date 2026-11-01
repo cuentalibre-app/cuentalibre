@@ -6,7 +6,9 @@ import {
   type VerifactuRecordInfo,
 } from "@cuentalibre/contracts";
 import {
+  DEFAULT_RECTIFICATION,
   WITHHOLDING_RATES,
+  correctedLines,
   invoiceTotals,
   laterInvoiceInSeries,
   laterNumberInSeries,
@@ -18,7 +20,7 @@ import {
   type Cents,
   type VerifactuEnvironment,
 } from "@cuentalibre/core";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
 import { contact, salesDocument, salesLine, salesPayment } from "../db/schema";
@@ -57,7 +59,7 @@ export const LINE_FIELDS = [
 /** What can still change once an invoice is issued: its collections and the app's own bookkeeping. */
 const MUTABLE_WHEN_ISSUED = new Set<string>(["status", "payments", "tags", "attachments", "privateNotes"]);
 /** What never changes on an issued invoice, even where it can be revised: its place in the numbering. */
-const FIXED_WHEN_REVISED = new Set<string>(["kind", "number", "series", "seriesId", "rectifiesId"]);
+const FIXED_WHEN_REVISED = new Set<string>(["kind", "number", "series", "seriesId", "rectifiesId", "rectification"]);
 
 /** The record as the API returns it: optional fields that are empty are left out. */
 export function toSalesDocument(
@@ -126,6 +128,8 @@ function parse(data: unknown): StoredSalesDocument {
   if (line !== undefined) invalid(`lines: the ID ${line} is repeated.`);
   const payment = repeatedId(record.payments);
   if (payment !== undefined) invalid(`payments: the ID ${payment} is repeated.`);
+  if (record.rectification && record.series !== "rectifying")
+    invalid("rectification: only rectifying invoices say how they rectify.");
   return record;
 }
 
@@ -319,6 +323,7 @@ async function reviseInvoice(
   if (!record.clientId) invalid("clientId: an invoice needs a client.");
   const client = (await checkClient(tx, organizationId, record.clientId))!;
   if (record.lines.length === 0) invalid("lines: an invoice needs at least one line.");
+  await checkRectified(tx, organizationId, record, false);
 
   if (record.issuedOn !== current.issuedOn) {
     await checkQuarterOpen(tx, organizationId, record.issuedOn);
@@ -424,7 +429,7 @@ export async function issueInvoice(
   const client = (await checkClient(tx, organizationId, record.clientId))!;
   if (record.lines.length === 0) invalid("lines: an invoice needs at least one line.");
   await checkQuarterOpen(tx, organizationId, record.issuedOn);
-  await checkRectified(tx, organizationId, record, number !== undefined);
+  const original = await checkRectified(tx, organizationId, record, number !== undefined);
 
   const settings = await readSettings(tx, organizationId);
   const missing = missingIssuerFields(settings.businessProfile);
@@ -465,6 +470,8 @@ export async function issueInvoice(
     ...record,
     kind: "invoice" as const,
     number: number ?? nextInvoiceNumber(series.mask, record.issuedOn, issued),
+    // Stated on the invoice, so its record and any later read agree on it
+    ...(record.series === "rectifying" && { rectification: record.rectification ?? DEFAULT_RECTIFICATION }),
   };
   const values = { ...toColumns(invoice), organizationId, issuedAt: new Date() };
   if (existing)
@@ -488,6 +495,7 @@ export async function issueInvoice(
         ...invoice,
         number: invoice.number,
         lines: lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
+        ...(original && { original }),
       },
       client,
       verifactuEnvironment,
@@ -535,22 +543,67 @@ async function freezeInvoice(
   return lines;
 }
 
-/** A rectifying invoice names an issued invoice of the normal series; imported ones may predate the app. */
+/**
+ * A rectifying invoice names an issued invoice of the normal series; imported
+ * ones may predate the app. One by substitution keeps the original's
+ * withholding and kind of operation, so its lines add up to the change, and
+ * starts by reversing every line of the original (`substitutionLines`). It
+ * replaces an invoice no other rectifying invoice has corrected yet. Answers
+ * the original of a substitution, which its record names.
+ */
 async function checkRectified(tx: Tx, organizationId: string, record: StoredSalesDocument, imported: boolean) {
   if (record.series === "normal") {
     if (record.rectifiesId) invalid("rectifiesId: only rectifying invoices rectify another one.");
-    return;
+    return undefined;
   }
   if (!record.rectifiesId) {
-    if (imported) return;
+    if (imported) return undefined;
     invalid("rectifiesId: a rectifying invoice must name the invoice it corrects.");
   }
   const [original] = await tx
-    .select({ kind: salesDocument.kind, series: salesDocument.series })
+    .select()
     .from(salesDocument)
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, record.rectifiesId)));
   if (original?.kind !== "invoice" || original.series !== "normal")
     invalid("rectifiesId: must be an issued invoice of the normal series.");
+  if (record.rectification?.method !== "substitution") return undefined;
+
+  if (record.withholding !== original.withholding || record.operationType !== original.operationType)
+    invalid("A rectifying invoice by substitution keeps the original's withholding and kind of operation.");
+  const lines = (await detailsOf(tx, organizationId, [original.id])).lines.get(original.id) ?? [];
+  const corrected = correctedLines(
+    record.lines,
+    lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
+  );
+  if (!corrected?.length)
+    invalid("lines: a substitution reverses every line of the original first, then lists the corrected ones.");
+  const [other] = await tx
+    .select({ number: salesDocument.number })
+    .from(salesDocument)
+    .where(
+      and(
+        eq(salesDocument.organizationId, organizationId),
+        eq(salesDocument.rectifiesId, original.id),
+        eq(salesDocument.kind, "invoice"),
+        ne(salesDocument.id, record.id),
+        isNull(salesDocument.deletedAt),
+      ),
+    )
+    .limit(1);
+  if (other)
+    throw new ApiError(
+      409,
+      "already_rectified",
+      `Rectifying invoice ${other.number} already corrects this one; rectify by differences instead.`,
+    );
+  return {
+    number: original.number!,
+    issuedOn: original.issuedOn,
+    lineCount: lines.length,
+    base: original.totalBase! as Cents,
+    vat: original.totalVat! as Cents,
+    surcharge: original.totalSurcharge! as Cents,
+  };
 }
 
 /** Invoices that aren't deleted: a deleted invoice frees its number for the next one. */

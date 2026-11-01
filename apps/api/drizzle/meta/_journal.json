@@ -127,6 +127,13 @@
       "when": 1793382330681,
       "tag": "0017_verifactu_incident",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793384109731,
+      "tag": "0018_sales_rectification",
+      "breakpoints": true
     }
   ]
 }

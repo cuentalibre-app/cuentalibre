@@ -64,6 +64,27 @@ describe("facturaeXml", () => {
     const corrective = facturaeXml({ ...invoice, corrects: { number: "2026-0008", issueDate: "2026-09-01" } });
     expect(tag(corrective, "InvoiceClass")).toBe("OR");
     expect(corrective).toContain("<Corrective><InvoiceNumber>2026-0008</InvoiceNumber>");
+    // Facturae 3.2.2, CorrectionMethodType: 01 rectificación íntegra, 02 por diferencias
+    expect(tag(corrective, "CorrectionMethod")).toBe("02");
+    const substitution = facturaeXml({
+      ...invoice,
+      corrects: { number: "2026-0008", issueDate: "2026-09-01", method: "substitution" },
+    });
+    expect(tag(substitution, "CorrectionMethod")).toBe("01");
+  });
+
+  it("gives the reason code of the rectifying invoice's cause", () => {
+    const reasonOf = (reason?: "R1" | "R2" | "R3" | "R4") =>
+      tag(
+        facturaeXml({ ...invoice, corrects: { number: "2026-0008", issueDate: "2026-09-01", reason } }),
+        "ReasonCode",
+      );
+    expect(reasonOf()).toBe("01");
+    expect(reasonOf("R1")).toBe("01");
+    // Facturae 3.2.2, ReasonCodeType 85: unpaid outputs, insolvency proceedings
+    expect(reasonOf("R2")).toBe("85");
+    expect(reasonOf("R3")).toBe("85");
+    expect(reasonOf("R4")).toBe("01");
   });
 
   it("adds supplies outside the taxable base", () => {

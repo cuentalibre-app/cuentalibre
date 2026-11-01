@@ -23,7 +23,8 @@ import {
   type Rgb,
   type TemplateStyle,
 } from "./pdf-look";
-import { clientOf, documentFileName, documentTotals, KINDS } from "./sales-model";
+import { clientOf, documentFileName, documentTotals, KINDS, printedDocument } from "./sales-model";
+import { salesStore } from "./sales-store";
 
 /*
  * PDF export. Loaded on demand (dynamic import) so jsPDF stays out of the main bundle.
@@ -82,7 +83,9 @@ interface Sheet {
   y: number;
 }
 
-function render(doc: SalesDocument): jsPDF {
+function render(stored: SalesDocument): jsPDF {
+  const original = stored.rectifiesId ? salesStore.all().find((d) => d.id === stored.rectifiesId) : undefined;
+  const doc = printedDocument(stored, original);
   const options = printOptions(doc.kind);
   const { look } = options;
   const contact = clientOf(doc);

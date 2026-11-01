@@ -1,5 +1,6 @@
 import { lineBase, type InvoiceLine } from "./invoices";
 import { applyRate, cents, centsToEuros, eurosToCents, sumBy, type Cents } from "./money";
+import type { RectificationMethod, RectificationReason } from "./rectifying";
 
 /*
  * Facturae 3.2.2: the XML electronic invoice the Spanish public administration
@@ -8,6 +9,24 @@ import { applyRate, cents, centsToEuros, eurosToCents, sumBy, type Cents } from 
  */
 
 export const FACTURAE_NAMESPACE = "http://www.facturae.gob.es/formato/Versiones/Facturaev3_2_2.xml";
+
+/**
+ * Facturae 3.2.2 ReasonCodeType for a rectifying invoice's cause. 85 is the
+ * art. 80 LIVA code for unpaid outputs (insolvency proceedings and bad debts);
+ * the other causes have no code of their own and keep the generic 01.
+ */
+const CORRECTION_REASONS: Record<RectificationReason, { code: string; description: string }> = {
+  R1: { code: "01", description: "Número de la factura" },
+  R2: {
+    code: "85",
+    description: "Base imponible modificada cuotas repercutidas no satisfechas. Auto de declaración de concurso",
+  },
+  R3: {
+    code: "85",
+    description: "Base imponible modificada cuotas repercutidas no satisfechas. Auto de declaración de concurso",
+  },
+  R4: { code: "01", description: "Número de la factura" },
+};
 
 /** EU member states other than Spain, as ISO 3166-1 alpha-3 codes. */
 const EU_ALPHA3 = new Set([
@@ -69,8 +88,8 @@ export interface FacturaeInvoice {
   supplies?: Cents;
   /** Payment means code of Facturae: 04 transfer, 02 direct debit, 01 cash, 19 card… */
   paymentMeans?: string;
-  /** The invoice this one corrects, for rectifying invoices. */
-  corrects?: { number: string; issueDate: string };
+  /** The invoice this one corrects, for rectifying invoices, why, and whether by substitution or by differences. */
+  corrects?: { number: string; issueDate: string; reason?: RectificationReason; method?: RectificationMethod };
   notes?: string;
 }
 
@@ -278,11 +297,13 @@ export function facturaeXml(invoice: FacturaeInvoice): string {
       ? wrap(
           "Corrective",
           el("InvoiceNumber", invoice.corrects.number),
-          el("ReasonCode", "01"),
-          el("ReasonDescription", "Número de la factura"),
+          el("ReasonCode", CORRECTION_REASONS[invoice.corrects.reason ?? "R1"].code),
+          el("ReasonDescription", CORRECTION_REASONS[invoice.corrects.reason ?? "R1"].description),
           wrap("TaxPeriod", el("StartDate", invoice.corrects.issueDate), el("EndDate", invoice.corrects.issueDate)),
-          el("CorrectionMethod", "01"),
-          el("CorrectionMethodDescription", "Rectificación íntegra"),
+          // Facturae 3.2.2 CorrectionMethodType: 01 replaces the whole invoice, 02 records the differences
+          ...(invoice.corrects.method === "substitution"
+            ? [el("CorrectionMethod", "01"), el("CorrectionMethodDescription", "Rectificación íntegra")]
+            : [el("CorrectionMethod", "02"), el("CorrectionMethodDescription", "Rectificación por diferencias")]),
         )
       : "",
   );

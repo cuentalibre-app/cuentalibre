@@ -9,7 +9,8 @@ import { fillPlaceholders } from "@cuentalibre/core";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { businessName } from "@/features/settings/settings-model";
 import { formatDate } from "@/lib/format";
-import { clientOf, documentTotals, KINDS } from "./sales-model";
+import { clientOf, documentTotals, KINDS, printedDocument } from "./sales-model";
+import { salesStore } from "./sales-store";
 
 /* The subject and message of the email that sends a sales document, written from a template. */
 
@@ -54,7 +55,10 @@ export function placeholderValues(doc: SalesDocument, profile: BusinessProfile):
     numero: doc.number ?? "",
     fecha: formatDate(doc.issuedOn),
     vencimiento: doc.dueOn ? formatDate(doc.dueOn) : "",
-    total: formatEUR(documentTotals(doc).total),
+    // What the attached document says: a substitution's total is the corrected invoice's
+    total: formatEUR(
+      documentTotals(printedDocument(doc, doc.rectifiesId ? salesStore.get(doc.rectifiesId) : undefined)).total,
+    ),
     cliente: doc.clientId ? clientOf(doc).name : "",
     negocio: businessName(profile),
   };
