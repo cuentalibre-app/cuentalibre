@@ -13,6 +13,8 @@ import {
   isSupportedDate,
   lineBase,
   operationChargesVat,
+  rectifiedPastZero,
+  unrectifiedLines,
   substitutionLines,
   toIsoDate,
   type Cents,
@@ -32,6 +34,7 @@ import type {
   SalesLine,
 } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,7 +86,10 @@ import {
   groupLinesByTax,
   invoiceSeriesList,
   laterInvoice,
+  linesToRectify,
+  originalToRectify,
   outOfOrderInvoice,
+  rectifyingInvoicesOf,
   nextNumber,
   periodKeyOf,
   printedDocument,
@@ -187,13 +193,15 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
   // A substitution is edited as the invoice that replaces the original
   const shown = base && !rectify ? printedDocument(base, rectified || undefined) : base;
   const unlinked = copiesSubstitution(base, isCopy, rectify);
+  // Rectifying a rectifying invoice rectifies its original again, undoing it
+  const original = rectify && base ? originalToRectify(base, salesStore.all()) : undefined;
 
   return {
     clientId: base?.clientId ?? "",
     number,
     series,
     seriesId,
-    rectifiesId: rectify && base ? base.id : unlinked ? "" : (base?.rectifiesId ?? ""),
+    rectifiesId: rectify ? (original?.id ?? "") : unlinked ? "" : (base?.rectifiesId ?? ""),
     rectification: (!rectify && !unlinked && base?.rectification) || DEFAULT_RECTIFICATION,
     issuedOn,
     dueOn,
@@ -208,13 +216,16 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     markPaid: !isCopy && base?.status === "paid",
     paidOn: (!isCopy && base?.payments?.at(-1)?.date) || issuedOn,
     paymentMethodId: base?.payments?.at(-1)?.paymentMethodId ?? defaultPaymentMethodId(),
-    lines: (groupedOnInvoice ? groupLinesByTax(base!) : shown?.lines)?.map((l) => toLineDraft(l, rectify)) ?? [
-      emptyLine(settingsStore.get().tax.defaultVatRate),
-    ],
+    lines: (rectify && base
+      ? linesToRectify(base, salesStore.all())
+      : groupedOnInvoice
+        ? groupLinesByTax(base!)
+        : shown?.lines
+    )?.map((l) => toLineDraft(l)) ?? [emptyLine(settingsStore.get().tax.defaultVatRate)],
     supplies: shown?.supplies ? formatEurosInput(shown.supplies) : "0",
     publicNotes:
-      rectify && base?.number
-        ? `Rectifica la factura ${base.number}.`
+      rectify && original?.number
+        ? `Rectifica la factura ${original.number}.`
         : unlinked && rectified && base?.publicNotes === `Rectifica la factura ${rectified.number}.`
           ? ""
           : (base?.publicNotes ?? ""),
@@ -223,6 +234,19 @@ function initialState(kind: SalesKind, base: SalesDocument | undefined, isCopy: 
     language: base?.language ?? "",
     numberFormat: base?.numberFormat ?? "",
   };
+}
+
+/**
+ * What a new rectifying invoice starts from: the original's quantities
+ * reversed, less what earlier rectifying invoices took, or those of the
+ * rectifying invoice it undoes.
+ */
+function rectifyNotice(source: SalesDocument, rectification: Rectification) {
+  if (source.series === "rectifying")
+    return `Deshaciendo la factura rectificativa ${source.number}: sus cantidades se han invertido.`;
+  if (rectification.method !== "differences") return `Rectificando la factura ${source.number}.`;
+  const earlier = rectifyingInvoicesOf(source.id, salesStore.all()).length > 0;
+  return `Rectificando la factura ${source.number}. ${earlier ? "Lo que queda por rectificar se ha puesto en negativo." : "Las cantidades se han puesto en negativo."}`;
 }
 
 /** "la factura" → "Información de la factura"; "el presupuesto" → "Información del presupuesto". */
@@ -305,6 +329,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   /** The document just saved to be sent, and where to go after. */
   const [sending, setSending] = useState<{ doc: SalesDocument; next: string } | null>(null);
   const [errors, setErrors] = useState<Errors>({});
+  /** The original a rectifying invoice would take past zero, and what's left of it. */
+  const [pastZero, setPastZero] = useState<{ original: SalesDocument; left: SalesLine[] } | null>(null);
   const lockedQuarterOf = useLockedQuarter();
   const verifactuSystem = useCompliance().verifactu.system;
   const issued = existing?.kind === "invoice";
@@ -382,7 +408,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
           operationType: original.operationType,
           supplies: original.supplies ? formatEurosInput(original.supplies) : "0",
         }
-      : { lines: original.lines.map((l) => toLineDraft(l, true)) };
+      : { lines: linesToRectify(original, salesStore.all(), existing?.id).map((l) => toLineDraft(l)) };
   const changeRectification = (changes: Partial<Rectification>) =>
     setForm((f) => {
       const rectification = { ...f.rectification, ...changes };
@@ -519,6 +545,14 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     if (Object.values(found).some(Boolean)) {
       document.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
       return;
+    }
+    // Shown in a dialog: the form looks fine, so an error under the lines goes unnoticed
+    if (asKind === "invoice" && rectified) {
+      const others = rectifyingInvoicesOf(rectified.id, salesStore.all(), existing?.id).map((d) => d.lines);
+      if (rectifiedPastZero(rectified.lines, [...others, booked(toLines(form.lines), totals.supplies).lines])) {
+        setPastZero({ original: rectified, left: unrectifiedLines(rectified.lines, others) });
+        return;
+      }
     }
     // Asked once the rest is valid, so saving the profile goes on to issue
     if (asKind === "invoice" && !issued && missingIssuer && !issuerReady) {
@@ -716,12 +750,29 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             if (issue) save(issue.asKind, issue.after, true);
           }}
         />
+        {pastZero && (
+          <Dialog open onOpenChange={(open) => !open && setPastZero(null)}>
+            <DialogContent className="max-w-md">
+              <DialogTitle>La factura {pastZero.original.number} quedaría por debajo de cero</DialogTitle>
+              <DialogDescription>
+                {pastZero.left.length > 0
+                  ? `Queda por rectificar ${formatEUR(invoiceTotals(pastZero.left, WITHHOLDING_RATES[pastZero.original.withholding]).total)}: rectifica como mucho ese importe.`
+                  : "Ya está rectificada por completo: no queda nada por rectificar."}
+              </DialogDescription>
+              <div className="flex justify-end">
+                <DialogClose asChild>
+                  <Button>Revisar los conceptos</Button>
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
         {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
 
         {source && !existing && (
           <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
             {rectify
-              ? `Rectificando la factura ${source.number}.${form.rectification.method === "differences" ? " Las cantidades se han puesto en negativo." : ""}`
+              ? rectifyNotice(source, form.rectification)
               : `Copiado de ${KINDS[source.kind].noun} ${source.number ?? "sin número"}. Revisa los datos antes de guardar.`}
           </p>
         )}

@@ -63,7 +63,9 @@ import {
   documentTotals,
   defaultSeries,
   deleteBlocker,
+  isFullyRectified,
   laterInvoice,
+  originalToRectify,
   seriesOf,
   seriesRefOf,
   nextNumber,
@@ -726,6 +728,9 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const deletable = useCompliance().verifactu.system === "exempt" && !doc.issued?.verifactu;
   const blocker =
     doc.kind !== "invoice" ? null : lockedQuarter ? "trimestre cerrado" : deleteBlocker(doc, salesStore.all());
+  const original = originalToRectify(doc, salesStore.all());
+  const rectifiedAway =
+    doc.series === "normal" && original !== undefined && isFullyRectified(original, salesStore.all());
 
   const attach: Action = {
     label: attachments.length > 0 ? `Documentos adjuntos (${attachments.length})` : "Adjuntar documentos",
@@ -857,12 +862,13 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
     ],
     [...(primary ? [primary] : []), ...(changeStatus ? [changeStatus] : []), attach, extras.tags],
     [pdf, ...(isInvoice ? [extras.facturae] : []), extras.send],
-    isInvoice && doc.series === "normal"
+    // On a rectifying invoice it rectifies the original again, undoing this one
+    original
       ? [
           {
-            label: "Generar factura rectificativa",
+            label: `Generar factura rectificativa${rectifiedAway ? " (ya rectificada por completo)" : ""}`,
             icon: FileX2,
-            run: () => navigate(`${config.newPath}?desde=${doc.id}&rectificar=1`),
+            run: rectifiedAway ? undefined : () => navigate(`${config.newPath}?desde=${doc.id}&rectificar=1`),
           },
         ]
       : [],

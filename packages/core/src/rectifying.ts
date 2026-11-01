@@ -1,4 +1,5 @@
-import type { InvoiceLine } from "./invoices";
+import { invoiceTotals, type InvoiceLine } from "./invoices";
+import { cents, sumBy, type Cents } from "./money";
 
 /*
  * Rectifying invoices (facturas rectificativas) of art. 15 RD 1619/2012 and
@@ -69,4 +70,98 @@ export function correctedLines<L extends InvoiceLine>(
   if (lines.length < original.length) return null;
   const reverses = original.every((line, i) => sameLine(lines[i]!, reversedLine(line)));
   return reverses ? lines.slice(original.length) : null;
+}
+
+/*
+ * One original may have several rectifying invoices by differences (a partial
+ * return, a later discount…), but never rectified past zero. Rectifying
+ * invoices always correct the original: undoing one is another rectifying
+ * invoice of the original, with its lines reversed.
+ */
+
+/** A line as rectifications net it: with a positive price, so a reversed price and a reversed quantity match. */
+const netted = <L extends InvoiceLine>(line: L): L =>
+  line.unitPrice < 0 ? { ...line, unitPrice: -line.unitPrice, quantity: -line.quantity } : line;
+
+const nettingKey = (line: InvoiceLine & { concept?: string }) =>
+  JSON.stringify([line.concept ?? "", line.unitPrice, line.discount, line.vatRate, line.surchargeRate ?? 0]);
+
+/**
+ * What's left of the original once its rectifying invoices are added in, line
+ * by line: lines with the same concept, price, discount and rates add their
+ * quantities, and those that come to zero drop out.
+ */
+export function unrectifiedLines<L extends InvoiceLine & { concept?: string }>(
+  original: readonly L[],
+  rectifying: readonly (readonly L[])[],
+): L[] {
+  const byKey = new Map<string, L>();
+  for (const line of [...original, ...rectifying.flat()].map(netted)) {
+    const key = nettingKey(line);
+    const seen = byKey.get(key);
+    // Quantities take up to a few decimals; rounding keeps 0,1 + 0,2 − 0,3 at zero
+    const quantity = Math.round(((seen?.quantity ?? 0) + line.quantity) * 1e6) / 1e6;
+    byKey.set(key, { ...(seen ?? line), quantity });
+  }
+  return [...byKey.values()].filter((line) => line.quantity !== 0);
+}
+
+/** Base, VAT and surcharge left of an original per VAT rate, as each invoice books them. */
+interface NetByRate {
+  rate: number;
+  base: Cents;
+  vat: Cents;
+  surcharge: Cents;
+}
+
+function netByRate(invoices: readonly (readonly InvoiceLine[])[]): NetByRate[] {
+  const byRate = new Map<number, NetByRate>();
+  for (const lines of invoices)
+    for (const rate of new Set(lines.map((l) => l.vatRate))) {
+      const atRate = lines.filter((l) => l.vatRate === rate);
+      const totals = invoiceTotals(atRate);
+      const net = byRate.get(rate) ?? { rate, base: cents(0), vat: cents(0), surcharge: cents(0) };
+      byRate.set(rate, {
+        rate,
+        base: cents(net.base + totals.base),
+        vat: cents(net.vat + totals.vat),
+        surcharge: cents(net.surcharge + totals.surcharge),
+      });
+    }
+  return [...byRate.values()];
+}
+
+/** The sign each VAT rate of an original keeps: its own, or that of the whole base for a rate it doesn't use. */
+function signOf(original: readonly InvoiceLine[]) {
+  const own = netByRate([original]);
+  const overall = sumBy(own, (n) => n.base) < 0 ? -1 : 1;
+  return (rate: number) => {
+    const base = own.find((n) => n.rate === rate)?.base;
+    return base ? Math.sign(base) : overall;
+  };
+}
+
+/**
+ * Whether the rectifying invoices leave nothing of the original: no base at
+ * any rate, or less than nothing where earlier ones already took it past zero.
+ * Its VAT and surcharge follow, up to each invoice's rounding.
+ */
+export function fullyRectified(original: readonly InvoiceLine[], rectifying: readonly (readonly InvoiceLine[])[]) {
+  const sign = signOf(original);
+  return netByRate([original, ...rectifying]).every((n) => n.base * sign(n.rate) <= 0);
+}
+
+/**
+ * Whether the rectifying invoices take the original past zero: at some VAT
+ * rate its base, VAT or surcharge changes sign. A rate the original doesn't
+ * use takes the sign of its whole base, so a negative original goes up to zero.
+ * Each invoice rounds its own VAT and surcharge, so they may overshoot by a
+ * cent per rectifying invoice once the base is back to zero.
+ */
+export function rectifiedPastZero(original: readonly InvoiceLine[], rectifying: readonly (readonly InvoiceLine[])[]) {
+  const sign = signOf(original);
+  const rounding = rectifying.length;
+  return netByRate([original, ...rectifying]).some(
+    (n) => n.base * sign(n.rate) < 0 || n.vat * sign(n.rate) < -rounding || n.surcharge * sign(n.rate) < -rounding,
+  );
 }
