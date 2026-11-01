@@ -3,10 +3,10 @@ import { bigint, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, u
 import { organization } from "./auth";
 import { createdAt } from "./columns";
 
-export type OutboxTopic = "verifactu" | "email";
+export type OutboxTopic = "verifactu" | "census" | "email";
 
 /**
- * Background work: submissions to the AEAT and emails. Jobs are written in
+ * Background work: submissions to the AEAT, checks of the issuer with its census, and emails. Jobs are written in
  * the same transaction as the change that needs them, and a worker runs them
  * (`src/outbox/worker.ts`), taking each with `FOR UPDATE SKIP LOCKED` and a
  * lease so several API processes can share the table.

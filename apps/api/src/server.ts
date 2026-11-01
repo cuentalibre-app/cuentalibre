@@ -9,6 +9,7 @@ import { loadEnv } from "./env";
 import { startErrorReporting, stopErrorReporting } from "./error-reporting";
 import { startWorker } from "./outbox/worker";
 import { createStorage } from "./storage";
+import { censusHandler } from "./verifactu/check";
 import { verifactuHandler } from "./verifactu/submit";
 import { createVerifactuTransport } from "./verifactu/transport";
 
@@ -26,14 +27,16 @@ const app = createApp({
   billing: createBilling(env),
 });
 
+const verifactuTransport = createVerifactuTransport(env);
 const stopWorker = startWorker(db, {
-  verifactu: verifactuHandler(db, createVerifactuTransport(env), {
+  verifactu: verifactuHandler(db, verifactuTransport, {
     producerName: env.VERIFACTU_PRODUCER_NAME ?? "",
     producerTaxId: env.VERIFACTU_PRODUCER_TAX_ID ?? "",
     name: "cuentalibre",
     id: "FI",
     version: "1.0",
   }),
+  census: censusHandler(db, verifactuTransport),
   email: emailHandler(db, storage, mailer),
 });
 

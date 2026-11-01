@@ -112,6 +112,8 @@ While the business uses VERI*FACTU (the `verifactu` settings section, from its `
 
 The record is queued for submission in the outbox. The worker sends an organization's pending records together (up to 1000) to the AEAT's SOAP service and stores how each went: `accepted`, `acceptedWithErrors` or `rejected`, with the AEAT's error. A record the AEAT already had counts as accepted. The next submission waits as long as the AEAT asks (`verifactu_state`). If the submission fails as a whole (a SOAP fault, the network), the records stay pending with the reason and it is retried with backoff. The invoice carries its status and the URL of its QR code in `issued.verifactu`, and the web app prints the QR on the PDF; status changes reach clients through the change feed.
 
+Once VERI*FACTU is on, and whenever the NIF or name in `businessProfile` change, an outbox job (`census`) asks the AEAT's NIF verification service (VNifV2) whether they match its census, since the AEAT rejects every record whose issuer they don't. The answer is stored as the read-only `verifactuCheck` settings section and reaches clients through the change feed; the web app shows it and warns before issuing when the AEAT doesn't recognise the issuer. VNifV2 has no test environment, so it is asked in production whatever `VERIFACTU_ENV` says, with the same certificate.
+
 Records are always chained; they are only sent when `VERIFACTU_ENV` is `test` or `production`. Sending needs a client certificate in PKCS#12 (`VERIFACTU_CERT_FILE`, `VERIFACTU_CERT_PASSWORD`), and records name the software's producer (`VERIFACTU_PRODUCER_NAME`, `VERIFACTU_PRODUCER_TAX_ID`). Not done yet: cancelling records (anulación), correcting rejected ones (subsanación), and per-organization certificates.
 
 ## Email

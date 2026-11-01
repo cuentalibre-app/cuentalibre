@@ -50,12 +50,17 @@ import { stockShortageMessage } from "@/features/catalog/catalog-store";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
-import { useCompliance } from "@/features/settings/compliance-store";
+import { useAeatValidation, useCompliance } from "@/features/settings/compliance-store";
 import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
-import { defaultPaymentMethodId, missingIssuerData, paymentMethodOptions } from "@/features/settings/settings-model";
+import {
+  BUSINESS_PATH,
+  defaultPaymentMethodId,
+  missingIssuerData,
+  paymentMethodOptions,
+} from "@/features/settings/settings-model";
 import { MethodDialog } from "@/features/settings/method-dialog";
 import { SettingsLink } from "@/features/settings/settings-parts";
 import { settingsStore, useSettings } from "@/features/settings/settings-store";
@@ -332,7 +337,13 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   /** The original a rectifying invoice would take past zero, and what's left of it. */
   const [pastZero, setPastZero] = useState<{ original: SalesDocument; left: SalesLine[] } | null>(null);
   const lockedQuarterOf = useLockedQuarter();
-  const verifactuSystem = useCompliance().verifactu.system;
+  const { verifactu } = useCompliance();
+  const verifactuSystem = verifactu.system;
+  const aeatValidation = useAeatValidation();
+  /** Issuing as `save` was asked to, though the AEAT doesn't recognise the issuer. */
+  const [unrecognised, setUnrecognised] = useState<{ asKind: SalesKind; after: AfterSave; reason: string } | null>(
+    null,
+  );
   const issued = existing?.kind === "invoice";
   // Drafts, quotes and delivery notes are not booked, so only invoices belong to a closed quarter
   const locked = issued ? lockedQuarterOf(existing.issuedOn) : null;
@@ -541,7 +552,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     return next;
   }
 
-  function save(asKind: SalesKind, after: AfterSave = "list", issuerReady = false) {
+  function save(asKind: SalesKind, after: AfterSave = "list", issuerReady = false, unrecognisedOk = false) {
     if (readOnly) return;
     const found = validate(asKind);
     setErrors(found);
@@ -560,6 +571,12 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     // Asked once the rest is valid, so saving the profile goes on to issue
     if (asKind === "invoice" && !issued && missingIssuer && !issuerReady) {
       setAskingIssuer({ issue: { asKind, after } });
+      return;
+    }
+    // The AEAT would reject its record: VERI*FACTU checks the issuer against its census
+    const recorded = verifactuSystem === "verifactu" && form.issuedOn >= verifactu.startDate;
+    if (asKind === "invoice" && !issued && recorded && aeatValidation.state === "no" && !unrecognisedOk) {
+      setUnrecognised({ asKind, after, reason: aeatValidation.reason });
       return;
     }
 
@@ -765,6 +782,40 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               <div className="flex justify-end">
                 <DialogClose asChild>
                   <Button>Revisar los conceptos</Button>
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+        {unrecognised && (
+          <Dialog open onOpenChange={(open) => !open && setUnrecognised(null)}>
+            <DialogContent className="max-w-md">
+              <DialogTitle>La AEAT no reconoce tu NIF y nombre</DialogTitle>
+              <DialogDescription>
+                {unrecognised.reason} Si emites la factura, rechazará su registro VERI*FACTU hasta que corrijas tus
+                datos en{" "}
+                <Link
+                  to={BUSINESS_PATH}
+                  target="_blank"
+                  className="font-medium text-primary no-underline hover:text-primary-hover"
+                >
+                  Datos de la empresa
+                </Link>
+                .
+              </DialogDescription>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const { asKind, after } = unrecognised;
+                    setUnrecognised(null);
+                    save(asKind, after, true, true);
+                  }}
+                >
+                  Emitir igualmente
+                </Button>
+                <DialogClose asChild>
+                  <Button>Volver a la factura</Button>
                 </DialogClose>
               </div>
             </DialogContent>
