@@ -81,7 +81,20 @@ export async function readSettings(tx: Tx, organizationId: string): Promise<Orga
     .select()
     .from(organizationSetting)
     .where(eq(organizationSetting.organizationId, organizationId));
-  return { ...DEFAULT_ORGANIZATION_SETTINGS, ...Object.fromEntries(rows.map((row) => [row.section, row.data])) };
+  return {
+    ...DEFAULT_ORGANIZATION_SETTINGS,
+    ...Object.fromEntries(rows.map((row) => [row.section, withDefaults(row.section, row.data)])),
+  };
+}
+
+/**
+ * A saved section over its defaults, so settings added after it was saved
+ * read as their default instead of missing.
+ */
+export function withDefaults(section: SettingsSection, data: unknown): unknown {
+  const defaults = DEFAULT_ORGANIZATION_SETTINGS[section];
+  const isObject = (v: unknown) => typeof v === "object" && v !== null && !Array.isArray(v);
+  return isObject(defaults) && isObject(data) ? { ...(defaults as object), ...(data as object) } : data;
 }
 
 /** The saved sections among the given ones. */
