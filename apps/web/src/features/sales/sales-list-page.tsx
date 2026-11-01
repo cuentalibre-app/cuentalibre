@@ -22,11 +22,12 @@ import {
   Settings,
   SlidersHorizontal,
   Tag,
+  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
 import { cents, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@cuentalibre/core";
-import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
+import type { SalesDocument, SalesKind, VerifactuStatus } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
@@ -82,7 +83,7 @@ import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
-import { VERIFACTU_STATUS, needsCorrection } from "./issued-notice";
+import { VERIFACTU_STATUS } from "./issued-notice";
 
 const ALL = "all";
 /** Status filter for the quotes and delivery notes not invoiced or rejected yet. */
@@ -638,7 +639,7 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                 <td className={td}>
                   <div className="flex flex-col items-start gap-1">
                     <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
-                    <VerifactuAlert doc={r.doc} />
+                    <VerifactuBadge doc={r.doc} linked />
                   </div>
                 </td>
                 <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
@@ -679,12 +680,40 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
   );
 }
 
-/** An invoice whose VERI*FACTU record the AEAT rejected or accepted with errors, to be corrected. */
-function VerifactuAlert({ doc }: { doc: SalesDocument }) {
-  if (!needsCorrection(doc)) return null;
-  const { label, tone } = VERIFACTU_STATUS[doc.issued!.verifactu!.status];
-  return <Badge tone={tone}>{label}</Badge>;
+/**
+ * Where an invoice's VERI*FACTU record stands with the AEAT. `linked` makes a
+ * recorded one open the AEAT's checker, where the row isn't a link itself.
+ */
+function VerifactuBadge({ doc, linked = false }: { doc: SalesDocument; linked?: boolean }) {
+  const verifactu = doc.issued?.verifactu;
+  if (!verifactu) return null;
+  const { tone } = VERIFACTU_STATUS[verifactu.status];
+  const label = SHORT_VERIFACTU_LABELS[verifactu.status];
+  if (!linked || !isRecorded(doc)) return <Badge tone={tone}>{label}</Badge>;
+  return (
+    <a
+      href={verifactu.qrUrl}
+      target="_blank"
+      rel="noreferrer"
+      title="Comprobar en la AEAT"
+      className="rounded-md no-underline transition-opacity duration-150 hover:opacity-80"
+    >
+      <Badge tone={tone}>{label}</Badge>
+    </a>
+  );
 }
+
+/** Next to the collection status, in a column that must stay narrow. */
+const SHORT_VERIFACTU_LABELS: Record<VerifactuStatus, string> = {
+  pending: "AEAT: por enviar",
+  accepted: "AEAT: registrada",
+  acceptedWithErrors: "AEAT: con errores",
+  rejected: "AEAT: rechazada",
+};
+
+/** The AEAT holds the invoice's record, so its checker finds it. */
+const isRecorded = (doc: SalesDocument) =>
+  doc.issued?.verifactu?.status === "accepted" || doc.issued?.verifactu?.status === "acceptedWithErrors";
 
 function DocumentsList({ rows }: { rows: Row[] }) {
   return (
@@ -709,7 +738,7 @@ function DocumentsList({ rows }: { rows: Row[] }) {
             <div className="flex flex-col items-end gap-1">
               <span className="amount text-base">{formatEUR(r.total)}</span>
               <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
-              <VerifactuAlert doc={r.doc} />
+              <VerifactuBadge doc={r.doc} />
             </div>
           </Link>
           <RowActions doc={r.doc} status={r.status} />
@@ -873,7 +902,20 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
     ],
     [...(primary ? [primary] : []), ...(changeStatus ? [changeStatus] : []), attach, extras.tags],
-    [pdf, ...(isInvoice ? [extras.facturae] : []), extras.send],
+    [
+      pdf,
+      ...(isInvoice ? [extras.facturae] : []),
+      extras.send,
+      ...(isRecorded(doc)
+        ? [
+            {
+              label: "Comprobar en la AEAT",
+              icon: ShieldCheck,
+              run: () => window.open(doc.issued!.verifactu!.qrUrl, "_blank", "noopener"),
+            },
+          ]
+        : []),
+    ],
     // On a rectifying invoice it rectifies the original again, undoing this one
     original
       ? [
