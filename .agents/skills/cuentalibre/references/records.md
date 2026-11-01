@@ -37,15 +37,16 @@ Clients and suppliers. `role` is `client` or `supplier` and can't change.
 
 Invoices, drafts, quotes and delivery notes, told apart by `kind`: `invoice`, `draft`, `quote`, `deliveryNote`.
 
-| Route                              |                                                                                                                               |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `GET /sales-documents?from=&to=`   | → `{ data: [...] }`, optionally between two `issuedOn` dates (inclusive).                                                     |
-| `GET /sales-documents/{id}`        | One document.                                                                                                                 |
-| `POST /sales-documents`            | Create a draft, quote or delivery note. `kind: "invoice"` is rejected: invoices are issued.                                   |
-| `PATCH /sales-documents/{id}`      | Change fields.                                                                                                                |
-| `DELETE /sales-documents/{id}`     | Delete. Issued invoices only when they can be revised (below).                                                                |
-| `POST /invoices`                   | Issue a new invoice (`201`, numbered, with totals). With the `id` of an existing draft, issues that draft with the data sent. |
-| `POST /sales-documents/{id}/issue` | Issue a draft as it is stored. Only drafts: quotes and delivery notes are invoiced by issuing a new invoice.                  |
+| Route                                       |                                                                                                                               |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `GET /sales-documents?from=&to=`            | → `{ data: [...] }`, optionally between two `issuedOn` dates (inclusive).                                                     |
+| `GET /sales-documents/{id}`                 | One document.                                                                                                                 |
+| `POST /sales-documents`                     | Create a draft, quote or delivery note. `kind: "invoice"` is rejected: invoices are issued.                                   |
+| `PATCH /sales-documents/{id}`               | Change fields.                                                                                                                |
+| `DELETE /sales-documents/{id}`              | Delete. Issued invoices only when they can be revised (below).                                                                |
+| `POST /invoices`                            | Issue a new invoice (`201`, numbered, with totals). With the `id` of an existing draft, issues that draft with the data sent. |
+| `POST /sales-documents/{id}/issue`          | Issue a draft as it is stored. Only drafts: quotes and delivery notes are invoiced by issuing a new invoice.                  |
+| `POST /sales-documents/{id}/correct-record` | Correct the VERI\*FACTU record the AEAT rejected or accepted with errors (subsanación), below.                                |
 
 | Field                            | Type                                              |                                                                                                                                                                                                                                                                      |
 | -------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -119,6 +120,10 @@ To import an invoice issued by other software with its own number, use the `issu
 Always allowed: `payments` (and `status`, which follows them), `tags`, `attachments`, `privateNotes`.
 
 Anything else, or deleting it, only while all three hold: the business is exempt from VERI\*FACTU (settings `verifactu.system: "exempt"`), the invoice has no VERI\*FACTU record, and its quarter is open. Then totals and client data are recomputed. `kind`, `number`, `series`, `seriesId` and `rectifiesId` never change (`400`); `issuedOn` can't leave its year (`400`) or break the order of the series (`409 date_out_of_order`). Only the last invoice of its series can be deleted, which frees its number for the next one; deleting any other answers `409 not_last_in_series` (rectify it instead), and one that a rectifying invoice corrects answers `409 in_use`. Otherwise: `409 invoice_issued` or `409 quarter_closed`.
+
+### Correcting a rejected VERI\*FACTU record
+
+When `issued.verifactu.status` is `rejected` or `acceptedWithErrors`, `issued.verifactu.error` says why (usually the client: a NIF not in the census, a name that doesn't match). `POST /sales-documents/{id}/correct-record` with `{ "client": { name, taxId, country?, address?, postalCode?, city?, province? } }` sets the invoice's frozen client data and sends a new record correcting the previous one (subsanación), naming the issuer as the business profile does now; the status goes back to `pending`. Number, date and amounts never change this way: rectify instead. Errors: `409 record_pending` (no answer yet), `409 record_accepted`, `409 not_recorded`, `409 quarter_closed`, `400` for a tax ID that doesn't fit. This sends to the AEAT: preview and confirm first.
 
 ### Rectifying
 

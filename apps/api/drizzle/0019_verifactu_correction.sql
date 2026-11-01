@@ -1,0 +1,2 @@
+ALTER TABLE "verifactu_record" DROP CONSTRAINT "verifactu_record_organizationId_invoiceId_unique";--> statement-breakpoint
+CREATE INDEX "verifactu_record_organization_id_invoice_id_position_index" ON "verifactu_record" USING btree ("organization_id","invoice_id","position");
