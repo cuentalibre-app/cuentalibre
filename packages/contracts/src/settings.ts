@@ -159,12 +159,6 @@ export const verifactuSetupSchema = z.object({
   system: invoicingSystemSchema,
   /** Date the system applies from. */
   startDate: isoDate,
-  /** AEAT authorization number, when the AEAT granted one. */
-  authorizationNumber: z.string(),
-  /** Resolution that exempts the business from VERI*FACTU. */
-  exemptionResolution: z.string(),
-  /** Whether the AEAT recognises the issuer's NIF and name. */
-  validatedByAeat: z.boolean(),
 });
 export type VerifactuSetup = z.infer<typeof verifactuSetupSchema>;
 
