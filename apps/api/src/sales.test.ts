@@ -422,6 +422,39 @@ describe("rectifying invoices", () => {
     const normal = await issue(ana, document(ana.norte.id, { rectifiesId: original.id }));
     expect(normal.status).toBe(400);
   });
+
+  it("can't take the original past zero, however many there are", async () => {
+    const ana = await seller();
+    const original = await issued(ana, document(ana.norte.id, { lines: [line({ quantity: 3 })] }));
+    const rectify = (quantity: number) =>
+      issue(
+        ana,
+        document(ana.norte.id, { series: "rectifying", rectifiesId: original.id, lines: [line({ quantity })] }),
+      );
+
+    expect((await rectify(-2)).status).toBe(200);
+    const past = await rectify(-2);
+    expect(past.status).toBe(409);
+    expect(await errorCode(past)).toBe("rectified_past_zero");
+    // Undoing part of a rectification brings the original back up
+    expect((await rectify(1)).status).toBe(200);
+    expect((await rectify(-2)).status).toBe(200);
+    expect(await errorCode(await rectify(-1))).toBe("rectified_past_zero");
+  });
+
+  it("only rectify an original, never another rectifying invoice", async () => {
+    const ana = await seller();
+    const original = await issued(ana, document(ana.norte.id));
+    const rectifying = await issued(
+      ana,
+      document(ana.norte.id, { series: "rectifying", rectifiesId: original.id, lines: [line({ quantity: -1 })] }),
+    );
+    const chained = await issue(
+      ana,
+      document(ana.norte.id, { series: "rectifying", rectifiesId: rectifying.id, lines: [line()] }),
+    );
+    expect(chained.status).toBe(400);
+  });
 });
 
 describe("custom series", () => {

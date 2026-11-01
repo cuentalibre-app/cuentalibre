@@ -147,3 +147,5 @@ Si no se cumple alguna condición, responde `409 invoice_issued` o `409 quarter_
 ## Rectificar una factura
 
 Emite otra factura con `"series": "rectifying"`, `rectifiesId` con el id de la original y las líneas que corrigen (con cantidades negativas para restar). Se numera en la serie rectificativa (`R-2026-0001`). Las devoluciones se apuntan como cobros negativos.
+
+Una factura puede tener varias rectificativas por diferencias (una devolución parcial, un descuento posterior…), pero entre todas no pueden dejarla por debajo de cero en ningún tipo de IVA, ni en base ni en cuota (`409 rectified_past_zero`): como mucho se rectifica lo que queda, la original más sus rectificativas anteriores. Las rectificativas siempre indican la original, nunca otra rectificativa; para deshacer una, emite otra rectificativa de la original con sus líneas en sentido contrario.
