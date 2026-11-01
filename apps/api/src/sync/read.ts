@@ -15,7 +15,7 @@ import { expensesById, liveExpenses, toExpense } from "./expenses";
 import { livePlain, loggedAs, PLAIN_ENTITIES, plainById } from "./plain";
 import { livePurchaseInvoices, purchaseInvoicesById } from "./purchases";
 import { liveSalesDocuments, salesDocumentsById } from "./sales";
-import { readSettings, settingsBySection } from "./settings";
+import { readSettings, settingsBySection, withDefaults } from "./settings";
 
 const entityOf = (row: ContactRow) => (row.role === ENTITY_ROLES.clients ? "clients" : "suppliers");
 
@@ -135,7 +135,7 @@ export async function changesFor(tx: Tx, organizationId: string, refs: RecordRef
     changes.set(`organization_setting:${row.section}`, {
       op: "upsert",
       entity: "settings",
-      data: { section: row.section, data: row.data },
+      data: { section: row.section, data: withDefaults(row.section, row.data) },
     });
   for (const entity of PLAIN_ENTITIES) {
     const logged = loggedAs(entity);

@@ -88,6 +88,8 @@ export interface PrintOptions {
   showServicePeriod: boolean;
   /** Invoices only; the other kinds have no such setting. */
   showOperationDate: boolean;
+  /** Invoices only: drafts always print it. */
+  showPaymentMethod: boolean;
   showPrices: boolean;
   showTaxes: boolean;
   hideZeroTaxes: boolean;
@@ -104,6 +106,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
       showProductUnits: s.showProductUnits,
       showServicePeriod: s.showServicePeriod,
       showOperationDate: s.showOperationDate,
+      showPaymentMethod: s.showPaymentMethod,
       showPrices: true,
       showTaxes: true,
       hideZeroTaxes: s.hideZeroTaxes,
@@ -117,6 +120,7 @@ export function printOptions(kind: SalesKind): PrintOptions {
     showProductUnits: s.showProductUnits,
     showServicePeriod: s.showServicePeriod,
     showOperationDate: false,
+    showPaymentMethod: true,
     showPrices: s.showPrices,
     showTaxes: kind === "deliveryNote" || s.showTaxes,
     hideZeroTaxes: kind !== "deliveryNote" && s.hideZeroTaxes,

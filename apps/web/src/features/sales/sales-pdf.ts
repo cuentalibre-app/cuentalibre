@@ -40,6 +40,8 @@ const RIGHT = PAGE_WIDTH - LEFT;
 /** Lowest point anything but the side footer reaches. */
 const FOOT = PAGE_HEIGHT - 12;
 const QR_SIZE = 32;
+/** Blank margin around the QR code: the spec asks for at least 2 mm. */
+const QR_MARGIN = 3;
 /** Room for the logo, top left: the proportions of the largest one stored, as tall as the QR code. */
 const LOGO_BOX = { width: 52, height: QR_SIZE };
 const LINE = 4;
@@ -215,15 +217,20 @@ function drawLogo(s: Sheet): number {
 }
 
 /**
- * Under VERI*FACTU the invoice carries the QR code of its record, between 30 and
- * 40 mm wide, top right. Returns where the content starts.
+ * Under VERI*FACTU the invoice carries the QR code of its record at the top of
+ * the first page, centred: 30 to 40 mm wide, error correction M, on a blank
+ * margin of at least 2 mm, with "QR tributario:" above and "VERI*FACTU" below
+ * at least as large as the rest of the text. Returns where the content starts.
  */
 function drawQrCode(s: Sheet): number {
   const verifactu = s.doc.issued?.verifactu;
   if (!verifactu) return LEFT + 3;
-  const x = RIGHT - QR_SIZE;
-  const y = 13;
-  write(s, "QR tributario:", RIGHT - QR_SIZE / 2, y - 2, { size: 7, align: "center" });
+  const center = PAGE_WIDTH / 2;
+  const x = center - QR_SIZE / 2;
+  const y = 16;
+  // Blank margin, white even on tinted paper so readers find the code's edges
+  fill(s, x - QR_MARGIN, y - QR_MARGIN, QR_SIZE + 2 * QR_MARGIN, QR_SIZE + 2 * QR_MARGIN, [255, 255, 255]);
+  write(s, "QR tributario:", center, y - QR_MARGIN - 1, { align: "center" });
   const qr = qrcode(0, "M");
   qr.addData(verifactu.qrUrl);
   qr.make();
@@ -233,8 +240,9 @@ function drawQrCode(s: Sheet): number {
   for (let row = 0; row < count; row++)
     for (let col = 0; col < count; col++)
       if (qr.isDark(row, col)) s.pdf.rect(x + col * module, y + row * module, module, module, "F");
-  write(s, "VERI*FACTU", RIGHT - QR_SIZE / 2, y + QR_SIZE + 3, { size: 7, align: "center" });
-  return y + QR_SIZE + 9;
+  const below = y + QR_SIZE + QR_MARGIN + 3;
+  write(s, "VERI*FACTU", center, below, { align: "center" });
+  return below + 6;
 }
 
 /**
@@ -297,13 +305,19 @@ function metaRows(s: Sheet, { due = true, short = false } = {}): [string, string
 /* ───────────────────────── Headers, one per template family ───────────────────────── */
 
 const HEADERS: Record<TemplateStyle["family"], (s: Sheet) => void> = {
-  /** Issuer with the date on the right, the centered title, the number and the client in a box. */
+  /** Issuer with the dates on the right, the centered title, the number and the client in a box. */
   classic(s) {
     const { doc, t, f } = s;
     const top = s.y;
     write(s, f.date(doc.issuedOn), RIGHT, top + 3, { size: 11, bold: true, align: "right" });
+    let y = top + 8;
     const operation = operationDate(s);
-    if (operation) write(s, `${t.operationDate}: ${f.date(operation)}`, RIGHT, top + 8, { align: "right" });
+    if (operation) {
+      write(s, `${t.operationDate}: ${f.date(operation)}`, RIGHT, y, { align: "right" });
+      y += LINE;
+    }
+    const due = dueLabel(s);
+    if (due && doc.dueOn) write(s, `${due}: ${f.date(doc.dueOn)}`, RIGHT, y, { align: "right" });
     s.y = drawParty(s, issuer(), LEFT, top, 110) + 9;
     write(s, kindName(s).toUpperCase(), PAGE_WIDTH / 2, s.y, { size: 18, bold: true, align: "center" });
     s.y += 10;
@@ -630,11 +644,11 @@ function drawTraditionalTotals(s: Sheet) {
   s.y += 12;
 }
 
-/** Traditional templates: due date and how to pay, under the totals. */
+/** Traditional templates: due date (Clásica has it in the header) and how to pay, under the totals. */
 function drawClosing(s: Sheet) {
   const { doc, f } = s;
   const classic = s.style.family === "classic";
-  const due = dueLabel(s);
+  const due = classic ? null : dueLabel(s);
   if (due && doc.dueOn) {
     write(s, `${due}: ${f.date(doc.dueOn)}`, LEFT, s.y, { bold: classic });
     s.y += classic ? 10 : 8;
@@ -664,22 +678,16 @@ function drawFootTotals(s: Sheet) {
   const breakdown = s.options.showTaxes ? breakdownRows(s) : [];
   const totals = totalRows(s);
   const payment = family === "avantGarde" ? null : paymentLine(s);
-  const due = family === "classic" ? dueLabel(s) : null;
 
   const breakdownHeight = breakdown.length ? 6 + breakdown.length * 5 : 0;
   const totalsHeight = totals.length * 4.6 + 4;
   const stacked = family === "classic" || family === "modern";
   const height =
-    (due ? 8 : 0) +
     (stacked ? breakdownHeight + totalsHeight + 2 : 5 * (Math.max(breakdown.length, totals.length) + 1)) +
     (payment ? 10 : 0);
   if (s.y + height > FOOT) newPage(s);
   s.y = Math.max(s.y, FOOT - height);
 
-  if (due && s.doc.dueOn) {
-    write(s, `${due}: ${s.f.date(s.doc.dueOn)}`, LEFT, s.y + 3, { bold: true });
-    s.y += 8;
-  }
   if (family === "classic") classicFoot(s, breakdown, totals);
   else if (family === "modern") modernFoot(s, breakdown, totals);
   else boxedFoot(s, breakdown, totals);
@@ -808,6 +816,7 @@ function boxedFoot(s: Sheet, breakdown: BreakdownRow[], totals: TotalRow[]) {
  */
 function paymentLine(s: Sheet): string | null {
   if (s.doc.kind !== "invoice" && s.doc.kind !== "draft") return null;
+  if (!s.options.showPaymentMethod) return null;
   const { paymentMethods, defaultPaymentMethodId } = settingsStore.get();
   const id = s.client.paymentMethodId ?? defaultPaymentMethodId;
   const method = paymentMethods.find((m) => m.id === id);
