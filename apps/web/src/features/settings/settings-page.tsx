@@ -34,7 +34,7 @@ import type { Billing } from "@cuentalibre/contracts";
 import { formatDate } from "@/lib/format";
 import { localDate, periodOf, planHeadline, planState, type PlanState } from "./billing-model";
 import { useBilling } from "./billing-store";
-import { useCompliance } from "./compliance-store";
+import { useCompliance, useValidatedByAeat } from "./compliance-store";
 import {
   ACCESS_PATH,
   API_KEYS_PATH,
@@ -96,6 +96,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
 /** VERI*FACTU gets a section of its own: it's new, mandatory and decides how every invoice is issued. */
 function VerifactuCard() {
   const { verifactu } = useCompliance();
+  const validatedByAeat = useValidatedByAeat();
   const { profile } = useSettings();
   const exempt = verifactu.system === "exempt";
   const mandatoryFrom = verifactuMandatoryFrom(profile.kind);
@@ -125,8 +126,8 @@ function VerifactuCard() {
           <Badge tone={exempt ? "neutral" : "success"}>{exempt ? "Exento" : "VERI*FACTU activo"}</Badge>
           {verifactu.startDate && <span>Desde el {formatDate(verifactu.startDate)}</span>}
           {!exempt && (
-            <Badge tone={verifactu.validatedByAeat ? "success" : "warning"}>
-              {verifactu.validatedByAeat ? "NIF validado por la AEAT" : "NIF pendiente de validar"}
+            <Badge tone={validatedByAeat ? "success" : "neutral"}>
+              {validatedByAeat ? "NIF validado por la AEAT" : "NIF pendiente de validar"}
             </Badge>
           )}
         </span>
