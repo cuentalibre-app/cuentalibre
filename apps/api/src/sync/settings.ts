@@ -11,10 +11,13 @@ import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { organizationSetting, paymentMethod, salesDocument } from "../db/schema";
 import { ApiError } from "../errors";
+import { enqueueTaxIdCheck } from "../verifactu/check";
 import { parseOr } from "./records";
 
 /** Replaces a section of the organization's settings with `data`, validated with the section's schema. */
 export async function saveSettings(tx: Tx, organizationId: string, section: SettingsSection, data: unknown) {
+  if (section === "verifactuCheck")
+    throw new ApiError(400, "invalid_settings", "The VERI*FACTU check is written by the server.");
   const parsed = parseOr(organizationSettingsSchema.shape[section], data, "invalid_settings");
   if (section === "defaultPaymentMethod" && parsed) await checkPaymentMethod(tx, organizationId, parsed as string);
   if (section === "invoiceSettings") await checkUsedSeries(tx, organizationId, parsed as InvoiceSettings);
@@ -25,6 +28,9 @@ export async function saveSettings(tx: Tx, organizationId: string, section: Sett
       target: [organizationSetting.organizationId, organizationSetting.section],
       set: { data: parsed },
     });
+  // VERI*FACTU rejects records whose issuer the AEAT doesn't know: check it as soon as it applies or changes
+  if (section === "businessProfile" || section === "verifactu")
+    await enqueueTaxIdCheck(tx, organizationId, await readSettings(tx, organizationId));
 }
 
 async function checkPaymentMethod(tx: Tx, organizationId: string, id: string) {

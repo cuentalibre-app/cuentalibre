@@ -34,7 +34,7 @@ export const changeLog = pgTable(
     entity: text().$type<LoggedEntity>().notNull(),
     /** The record's ID; for closed quarters, the period; for settings, the section. */
     recordId: text().notNull(),
-    /** The command that made the change, or `verifactu` when the AEAT answered about an invoice's record. */
+    /** The command that made the change, or `verifactu` when the AEAT answered about an invoice's record or the issuer. */
     op: text().$type<SyncCommand["type"] | "verifactu">().notNull(),
     userId: uuid().references(() => user.id, { onDelete: "set null" }),
     at: timestamp({ withTimezone: true }).defaultNow().notNull(),
