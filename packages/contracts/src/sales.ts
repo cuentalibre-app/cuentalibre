@@ -148,6 +148,8 @@ export const issuedSnapshotSchema = z.object({
     country: true,
   }),
   totals: invoiceTotalsSchema,
+  /** When it was issued, which orders the invoices of the same day. Absent until the server answers. */
+  issuedAt: z.iso.datetime().optional(),
   verifactu: verifactuRecordInfoSchema.optional(),
 });
 export type IssuedSnapshot = z.infer<typeof issuedSnapshotSchema>;

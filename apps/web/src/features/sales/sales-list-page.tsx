@@ -568,7 +568,11 @@ const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: tru
 
 const COMPARE: Record<SortKey, (a: Row, b: Row) => number> = {
   number: (a, b) => byText(a.doc.number ?? "", b.doc.number ?? ""),
-  date: (a, b) => a.doc.issuedOn.localeCompare(b.doc.issuedOn) || byText(a.doc.number ?? "", b.doc.number ?? ""),
+  // Invoices of the same day in the order they were issued, whatever their series
+  date: (a, b) =>
+    a.doc.issuedOn.localeCompare(b.doc.issuedOn) ||
+    issueOrder(a.doc).localeCompare(issueOrder(b.doc)) ||
+    byText(a.doc.number ?? "", b.doc.number ?? ""),
   client: (a, b) => byText(a.client.name, b.client.name),
   status: (a, b) => byText(STATUS[a.status].label, STATUS[b.status].label),
   base: (a, b) => a.base - b.base,
@@ -576,6 +580,9 @@ const COMPARE: Record<SortKey, (a: Row, b: Row) => number> = {
   withholding: (a, b) => a.withholding - b.withholding,
   total: (a, b) => a.total - b.total,
 };
+
+/** When a document was issued; one being issued now goes last, and other documents first. */
+const issueOrder = (doc: SalesDocument) => (doc.kind === "invoice" ? (doc.issued?.issuedAt ?? "~") : "");
 
 const DEFAULT_SORT: Sort = { key: "date", dir: "desc" };
 
