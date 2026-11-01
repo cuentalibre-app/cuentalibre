@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { apikey, membership, session } from "./db/schema";
 import { MAX_API_KEYS } from "./routes/api-keys";
 import { addOrganization, app, db, env, withApiKey, type Client } from "./test/harness";
+import { fakeAeat, runJobs } from "./test/outbox";
 import { client, document, errorCode, issuer, line, member, send } from "./test/sync";
 
 async function createKey(user: Client, body: Record<string, unknown> = { name: "Agente" }) {
@@ -84,7 +85,10 @@ describe("API keys", () => {
     expect(await errorCode(refused)).toBe("too_many_api_keys");
 
     // Expired keys don't count, and neither do revoked ones
-    await db.update(apikey).set({ expiresAt: new Date(Date.now() - 1000) }).where(eq(apikey.id, keys[0]!.id));
+    await db
+      .update(apikey)
+      .set({ expiresAt: new Date(Date.now() - 1000) })
+      .where(eq(apikey.id, keys[0]!.id));
     await createKey(ana, { name: "Tras caducar" });
     expect((await ana.request(`/v1/api-keys/${keys[1]!.id}`, { method: "DELETE" })).status).toBe(204);
     await createKey(ana, { name: "Tras revocar" });
@@ -133,6 +137,37 @@ describe("public API", () => {
     expect(changed.status).toBe(409);
     expect(await errorCode(changed)).toBe("invoice_issued");
     expect((await api.request(`/v1/sales-documents/${id}`, { method: "DELETE" })).status).toBe(409);
+  });
+
+  it("corrects the VERI*FACTU record of an invoice the AEAT rejected", async () => {
+    const { ana, norte, api } = await agent();
+    const verifactu = {
+      ...DEFAULT_ORGANIZATION_SETTINGS.verifactu,
+      system: "verifactu" as const,
+      startDate: "2026-01-01",
+    };
+    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
+    const { id: _, ...invoice } = document(norte.id, { kind: "invoice" });
+    const { id } = (await (
+      await api.request("/v1/invoices", { method: "POST", body: invoice })
+    ).json()) as SalesDocument;
+    const fixed = { name: "Norte Diseño SL", taxId: "B12345674" };
+    const path = `/v1/sales-documents/${id}/correct-record`;
+
+    const early = await api.request(path, { method: "POST", body: { client: fixed } });
+    expect(early.status).toBe(409);
+    expect(await errorCode(early)).toBe("record_pending");
+
+    const aeat = fakeAeat();
+    aeat.answers.set("2026-0001", { status: "Incorrecto", code: "4104", message: "NIF no identificado" });
+    await runJobs(aeat.transport);
+    const corrected = await api.request(path, { method: "POST", body: { client: fixed } });
+    expect(corrected.status).toBe(200);
+    expect(await corrected.json()).toMatchObject({
+      id,
+      number: "2026-0001",
+      issued: { client: fixed, verifactu: { status: "pending" }, totals: { total: 106000 } },
+    });
   });
 
   it("issues a new invoice directly", async () => {

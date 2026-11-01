@@ -1,4 +1,4 @@
-import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
+import type { IssuedSnapshot, SalesDocument, SalesKind } from "@cuentalibre/contracts";
 import { createCollection } from "@/data/collection";
 import { syncCollection } from "@/data/sync";
 import { releaseDocumentStock, syncDocumentStock } from "@/features/catalog/catalog-store";
@@ -38,6 +38,20 @@ export const salesStore = {
       { type: "issue", data: invoice, ...(imported && invoice.number ? { number: invoice.number } : {}) },
     ]);
     syncDocumentStock(invoice, before && before.kind !== invoice.kind ? before.kind : origin);
+  },
+  /**
+   * Corrects the VERI*FACTU record of an invoice the AEAT rejected or
+   * accepted with errors: the invoice takes the client's data as fixed, and
+   * the new record waits to be sent.
+   */
+  correctRecord: (id: string, client: IssuedSnapshot["client"]) => {
+    const invoice = documents.get(id);
+    const verifactu = invoice?.issued?.verifactu;
+    if (!invoice?.issued || !verifactu) return;
+    void documents.write(
+      { ...invoice, issued: { ...invoice.issued, client, verifactu: { status: "pending", qrUrl: verifactu.qrUrl } } },
+      [{ type: "correctRecord", id, client }],
+    );
   },
   remove: (id: string) => {
     const doc = documents.get(id);

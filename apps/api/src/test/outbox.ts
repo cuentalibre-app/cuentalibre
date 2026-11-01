@@ -15,7 +15,9 @@ const idFactura = (taxId: string, number: string, date: string) =>
 
 /**
  * A fake AEAT web service. It keeps the envelopes it gets and the records it
- * holds, refuses the ones it already holds as duplicates (error 3000), and
+ * holds, refuses the ones it already holds as duplicates (error 3000), takes
+ * a subsanación only for a record it holds, or with RechazoPrevio=X for one it
+ * doesn't, and
  * answers queries about them, as RespuestaSuministro.xsd and
  * RespuestaConsultaLR.xsd describe.
  */
@@ -60,16 +62,24 @@ export function fakeAeat() {
       const key = `${taxId}|${number}|${date}`;
       const held = state.held.get(key);
       const answer = state.answers.get(number!);
+      const fail = (code: string, message: string) =>
+        `<tikR:CodigoErrorRegistro>${code}</tikR:CodigoErrorRegistro><tikR:DescripcionErrorRegistro>${message}</tikR:DescripcionErrorRegistro>`;
+      // A subsanación replaces the record held; with RechazoPrevio=X it says there is none
+      const correction = record!.includes("<sf:Subsanacion>S</sf:Subsanacion>");
+      const unrecorded = record!.includes("<sf:RechazoPrevio>X</sf:RechazoPrevio>");
       let status = "Correcto";
       let error = "";
-      if (held) {
+      if (correction && !unrecorded && !held) {
+        status = "Incorrecto";
+        error = fail("3002", "No existe el registro de facturación.");
+      } else if (held && (!correction || unrecorded)) {
         status = "Incorrecto";
         error =
-          "<tikR:CodigoErrorRegistro>3000</tikR:CodigoErrorRegistro><tikR:DescripcionErrorRegistro>Registro de facturación duplicado.</tikR:DescripcionErrorRegistro>" +
+          fail("3000", "Registro de facturación duplicado.") +
           `<tikR:RegistroDuplicado><tik:IdPeticionRegistroDuplicado>20261005102100000001</tik:IdPeticionRegistroDuplicado><tik:EstadoRegistroDuplicado>${held.status === "Correcto" ? "Correcta" : "AceptadaConErrores"}</tik:EstadoRegistroDuplicado></tikR:RegistroDuplicado>`;
       } else if (answer) {
         status = answer.status;
-        error = `<tikR:CodigoErrorRegistro>${answer.code}</tikR:CodigoErrorRegistro><tikR:DescripcionErrorRegistro>${answer.message}</tikR:DescripcionErrorRegistro>`;
+        error = fail(answer.code, answer.message);
       }
       if (status !== "Incorrecto") state.held.set(key, { hash, status: status as "Correcto" | "AceptadoConErrores" });
       statuses.push(status);

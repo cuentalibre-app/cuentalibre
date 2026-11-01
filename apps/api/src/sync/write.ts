@@ -16,7 +16,7 @@ import { createExpense, deleteExpense, updateExpense } from "./expenses";
 import { createPlain, deletePlain, loggedAs, PLAIN_ENTITIES, updatePlain } from "./plain";
 import { createPurchaseInvoice, deletePurchaseInvoice, updatePurchaseInvoice } from "./purchases";
 import { changesFor, type RecordRef } from "./read";
-import { createSalesDocument, deleteSalesDocument, issueInvoice, updateSalesDocument } from "./sales";
+import { correctRecord, createSalesDocument, deleteSalesDocument, issueInvoice, updateSalesDocument } from "./sales";
 import { saveSettings } from "./settings";
 
 export interface Scope {
@@ -69,6 +69,9 @@ async function apply(tx: Tx, scope: Scope, command: SyncCommand): Promise<Record
     case "issue":
       await issueInvoice(tx, organizationId, command.data, command.number, scope.verifactuEnvironment);
       return [{ entity: "sales_document", id: command.data.id }];
+    case "correctRecord":
+      await correctRecord(tx, organizationId, command.id, command.client);
+      return [{ entity: "sales_document", id: command.id }];
     case "closeQuarter": {
       const returns = command.returns ?? [];
       await closeQuarter(tx, organizationId, command.period, command.closedOn, returns);
