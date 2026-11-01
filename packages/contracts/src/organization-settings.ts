@@ -277,8 +277,5 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
   verifactu: {
     system: "exempt",
     startDate: "2027-07-01",
-    authorizationNumber: "",
-    exemptionResolution: "",
-    validatedByAeat: false,
   },
 };
