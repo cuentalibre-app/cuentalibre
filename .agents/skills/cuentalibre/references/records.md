@@ -124,6 +124,8 @@ Anything else, or deleting it, only while all three hold: the business is exempt
 
 Issue another invoice with `series: "rectifying"`, `rectifiesId` set to the original, and lines that correct it (negative quantities to subtract). It is numbered in the rectifying series (`R-2026-0001`). Refunds are negative payments.
 
+An invoice can have several rectifying invoices by differences (a partial return, a later discount…), but together they can't take it below zero at any VAT rate, in base or VAT (`409 rectified_past_zero`): rectify at most what's left, the original plus its earlier rectifying invoices. Rectifying invoices always name the original, never another rectifying invoice; to undo one, issue another rectifying invoice of the original with its lines reversed.
+
 ### Example
 
 ```json

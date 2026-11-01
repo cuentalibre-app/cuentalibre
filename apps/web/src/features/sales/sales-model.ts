@@ -8,6 +8,9 @@ import {
   amountOutstanding,
   cents,
   correctedLines,
+  fullyRectified,
+  reversedLine,
+  unrectifiedLines,
   invoiceTotals,
   lineBase,
   isOverdue,
@@ -219,6 +222,40 @@ export function printedDocument(doc: SalesDocument, original: SalesDocument | un
   const supplies = cents((doc.supplies ?? 0) + (original.supplies ?? 0)) || undefined;
   const totals = invoiceTotals(lines, WITHHOLDING_RATES[doc.withholding], supplies);
   return { ...doc, lines, supplies, ...(doc.issued && { issued: { ...doc.issued, totals } }) };
+}
+
+/** The issued rectifying invoices of an original, leaving out `except` (the one being edited). */
+export function rectifyingInvoicesOf(originalId: string, docs: SalesDocument[], except?: string) {
+  return docs.filter((d) => d.kind === "invoice" && d.rectifiesId === originalId && d.id !== except);
+}
+
+/**
+ * What "Generar factura rectificativa" rectifies: the invoice itself or, on a
+ * rectifying invoice, its original, since rectifying invoices are never rectified.
+ */
+export function originalToRectify(invoice: SalesDocument, docs: SalesDocument[]): SalesDocument | undefined {
+  if (invoice.kind !== "invoice") return undefined;
+  if (invoice.series === "normal") return invoice;
+  return docs.find((d) => d.kind === "invoice" && d.series === "normal" && d.id === invoice.rectifiesId);
+}
+
+/** Whether the rectifying invoices of an original leave nothing of it to rectify. */
+export function isFullyRectified(original: SalesDocument, docs: SalesDocument[]) {
+  return fullyRectified(
+    original.lines,
+    rectifyingInvoicesOf(original.id, docs).map((d) => d.lines),
+  );
+}
+
+/**
+ * The lines a new rectifying invoice starts from: what's left of the original
+ * reversed, so it cancels the rest, or a rectifying invoice's lines reversed,
+ * so it undoes that one.
+ */
+export function linesToRectify(source: SalesDocument, docs: SalesDocument[], except?: string): SalesLine[] {
+  if (source.series === "rectifying") return source.lines.map(reversedLine);
+  const rectifying = rectifyingInvoicesOf(source.id, docs, except).map((d) => d.lines);
+  return unrectifiedLines(source.lines, rectifying).map(reversedLine);
 }
 
 /** The client of a document; an issued invoice keeps the fiscal data it was issued with. */

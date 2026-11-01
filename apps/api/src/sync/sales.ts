@@ -17,6 +17,7 @@ import {
   outOfOrderInSeries,
   parseSeriesNumber,
   paymentStatus,
+  rectifiedPastZero,
   type Cents,
   type VerifactuEnvironment,
 } from "@cuentalibre/core";
@@ -545,11 +546,12 @@ async function freezeInvoice(
 
 /**
  * A rectifying invoice names an issued invoice of the normal series; imported
- * ones may predate the app. One by substitution keeps the original's
- * withholding and kind of operation, so its lines add up to the change, and
- * starts by reversing every line of the original (`substitutionLines`). It
- * replaces an invoice no other rectifying invoice has corrected yet. Answers
- * the original of a substitution, which its record names.
+ * ones may predate the app. With the other rectifying invoices of the original
+ * it can't take it past zero (`rectifiedPastZero`). One by substitution keeps
+ * the original's withholding and kind of operation, so its lines add up to the
+ * change, and starts by reversing every line of the original
+ * (`substitutionLines`). It replaces an invoice no other rectifying invoice has
+ * corrected yet. Answers the original of a substitution, which its record names.
  */
 async function checkRectified(tx: Tx, organizationId: string, record: StoredSalesDocument, imported: boolean) {
   if (record.series === "normal") {
@@ -566,19 +568,8 @@ async function checkRectified(tx: Tx, organizationId: string, record: StoredSale
     .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, record.rectifiesId)));
   if (original?.kind !== "invoice" || original.series !== "normal")
     invalid("rectifiesId: must be an issued invoice of the normal series.");
-  if (record.rectification?.method !== "substitution") return undefined;
-
-  if (record.withholding !== original.withholding || record.operationType !== original.operationType)
-    invalid("A rectifying invoice by substitution keeps the original's withholding and kind of operation.");
-  const lines = (await detailsOf(tx, organizationId, [original.id])).lines.get(original.id) ?? [];
-  const corrected = correctedLines(
-    record.lines,
-    lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
-  );
-  if (!corrected?.length)
-    invalid("lines: a substitution reverses every line of the original first, then lists the corrected ones.");
-  const [other] = await tx
-    .select({ number: salesDocument.number })
+  const others = await tx
+    .select({ id: salesDocument.id, number: salesDocument.number })
     .from(salesDocument)
     .where(
       and(
@@ -588,8 +579,25 @@ async function checkRectified(tx: Tx, organizationId: string, record: StoredSale
         ne(salesDocument.id, record.id),
         isNull(salesDocument.deletedAt),
       ),
-    )
-    .limit(1);
+    );
+  const stored = (await detailsOf(tx, organizationId, [original.id, ...others.map((other) => other.id)])).lines;
+  const linesOf = (id: string) =>
+    (stored.get(id) ?? []).map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined }));
+  const lines = linesOf(original.id);
+  if (rectifiedPastZero(lines, [...others.map((other) => linesOf(other.id)), record.lines]))
+    throw new ApiError(
+      409,
+      "rectified_past_zero",
+      `Invoice ${original.number} would go past zero; rectify at most what its rectifying invoices left of it.`,
+    );
+  if (record.rectification?.method !== "substitution") return undefined;
+
+  if (record.withholding !== original.withholding || record.operationType !== original.operationType)
+    invalid("A rectifying invoice by substitution keeps the original's withholding and kind of operation.");
+  const corrected = correctedLines(record.lines, lines);
+  if (!corrected?.length)
+    invalid("lines: a substitution reverses every line of the original first, then lists the corrected ones.");
+  const [other] = others;
   if (other)
     throw new ApiError(
       409,
