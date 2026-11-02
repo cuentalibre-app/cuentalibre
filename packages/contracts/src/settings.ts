@@ -187,6 +187,24 @@ export const verifactuCheckSchema = z.object({
 });
 export type VerifactuCheck = z.infer<typeof verifactuCheckSchema>;
 
+/**
+ * What the AEAT's census answered about a client's NIF and name, for
+ * businesses that use VERI*FACTU: the AEAT rejects records whose client it
+ * doesn't know (error 1239). The server writes one per NIF and name it
+ * checked; a client whose NIF and name have none hasn't been checked yet.
+ */
+export const clientTaxIdCheckSchema = z.object({
+  id: z.uuid(),
+  /** As `censusEntry` gives it. */
+  taxId: z.string(),
+  name: z.string(),
+  result: taxIdCheckResultSchema,
+  /** The name the census holds for the NIF, when the AEAT gives it. */
+  censusName: z.string(),
+  checkedAt: z.iso.datetime(),
+});
+export type ClientTaxIdCheck = z.infer<typeof clientTaxIdCheckSchema>;
+
 /** People who work in the company, or an outside advisor (gestoría) who keeps its books. */
 export const userKindSchema = z.enum(["member", "advisor"]);
 export type UserKind = z.infer<typeof userKindSchema>;
