@@ -62,6 +62,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
     c.set("mailer", mailer);
     c.set("billing", billing);
     c.set("verifactuEnvironment", env.VERIFACTU_ENV === "test" ? "test" : "production");
+    c.set("verifactuAvailable", env.VERIFACTU_ENV !== "off");
     c.set("emailQuota", { daily: env.EMAIL_DAILY_RECIPIENTS, monthly: env.EMAIL_MONTHLY_RECIPIENTS });
     c.set("fileMaxBytes", env.FILE_MAX_BYTES);
     c.set("fileQuotaBytes", env.FILE_QUOTA_BYTES);
@@ -90,7 +91,12 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
     .route(
       "/v1",
       metaRoutes(
-        { google: hasGoogleSignIn(env), email: Boolean(mailer), billing: Boolean(billing) },
+        {
+          google: hasGoogleSignIn(env),
+          email: Boolean(mailer),
+          billing: Boolean(billing),
+          verifactu: env.VERIFACTU_ENV !== "off",
+        },
         env.SENTRY_RELEASE,
       ),
     )

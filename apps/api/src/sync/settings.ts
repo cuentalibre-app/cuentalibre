@@ -6,6 +6,7 @@ import {
   type InvoiceSettings,
   type OrganizationSettings,
   type SettingsSection,
+  type VerifactuSetup,
 } from "@cuentalibre/contracts";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import type { Tx } from "../db/client";
@@ -14,11 +15,22 @@ import { ApiError } from "../errors";
 import { enqueueTaxIdCheck } from "../verifactu/check";
 import { parseOr } from "./records";
 
-/** Replaces a section of the organization's settings with `data`, validated with the section's schema. */
-export async function saveSettings(tx: Tx, organizationId: string, section: SettingsSection, data: unknown) {
+/**
+ * Replaces a section of the organization's settings with `data`, validated with the section's schema.
+ * VERI*FACTU can only be turned on where the instance sends its records (`verifactuAvailable`).
+ */
+export async function saveSettings(
+  tx: Tx,
+  organizationId: string,
+  section: SettingsSection,
+  data: unknown,
+  verifactuAvailable: boolean,
+) {
   if (section === "verifactuCheck")
     throw new ApiError(400, "invalid_settings", "The VERI*FACTU check is written by the server.");
   const parsed = parseOr(organizationSettingsSchema.shape[section], data, "invalid_settings");
+  if (section === "verifactu" && (parsed as VerifactuSetup).system === "verifactu" && !verifactuAvailable)
+    throw new ApiError(409, "verifactu_unavailable", "VERI*FACTU isn't available on this server yet.");
   if (section === "defaultPaymentMethod" && parsed) await checkPaymentMethod(tx, organizationId, parsed as string);
   if (section === "invoiceSettings") await checkUsedSeries(tx, organizationId, parsed as InvoiceSettings);
   await tx
