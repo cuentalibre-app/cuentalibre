@@ -49,7 +49,7 @@ Los borradores, los presupuestos y los albaranes se crean y se cambian librement
 | `privateNotes`                   | texto                                                       | Obligatorio (puede ir vacío). Solo se ve en cuentalibre.                                                                                             |
 | `language`, `numberFormat`       | texto                                                       | Idioma y formato del documento; vacíos, los del cliente.                                                                                             |
 | `tags`, `attachments`            | listas                                                      | Etiquetas y [archivos](/docs/api/archivos).                                                                                                          |
-| `issued`                         | objeto                                                      | Solo lectura, en facturas emitidas: `client` (los datos fiscales congelados), `totals` y, con VERI\*FACTU, `verifactu` (`status`, `qrUrl`, `error`). |
+| `issued`                         | objeto                                                      | Solo lectura, en facturas emitidas: `client` (los datos fiscales congelados), `totals` y, con VERI\*FACTU, `verifactu` (`status`, `qrUrl`, `error`, `issuerError`). |
 
 Los totales de una factura emitida (`issued.totals`) van en céntimos: `base`, `vat`, `surcharge`, `withholding`, `supplies`, `total` y `vatBreakdown` (base y cuota por tipo de IVA). El total es base + IVA + recargo − retención + suplidos.
 
@@ -144,6 +144,8 @@ curl https://api.cuentalibre.es/v1/sales-documents/01a19755-983c-7005-9eb6-9052a
 ```
 
 La factura toma esos datos y se envía a la AEAT un registro nuevo que corrige el anterior (subsanación), con el nombre del emisor como lo tenga ahora el perfil del negocio. Mientras llega la respuesta, `issued.verifactu.status` vuelve a `pending`. El número, la fecha y los importes no cambian así: para eso hay que emitir una rectificativa.
+
+Si lo que la AEAT rechazó es tu NIF y nombre (`issued.verifactu.issuerError: true`), corrígelos antes en el [perfil del negocio](/docs/api/ajustes) y envía los datos del cliente tal como están en `issued.client`.
 
 Responde `409 record_pending` si la AEAT aún no ha contestado al registro, `409 record_accepted` si lo aceptó sin errores, `409 not_recorded` si la factura no tiene registro y `409 quarter_closed` si su trimestre está cerrado. Un NIF que no cabe en el registro responde `400`.
 
