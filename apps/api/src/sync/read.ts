@@ -1,7 +1,14 @@
-import { ENTITY_ROLES, type Change, type Changes, type PlainEntity, type Workspace } from "@cuentalibre/contracts";
-import { and, asc, eq, gt, max } from "drizzle-orm";
+import {
+  ENTITY_ROLES,
+  type Change,
+  type Changes,
+  type ClientTaxIdCheck,
+  type PlainEntity,
+  type Workspace,
+} from "@cuentalibre/contracts";
+import { and, asc, eq, gt, inArray, max } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
-import { changeLog, type LoggedEntity } from "../db/schema";
+import { changeLog, taxIdCheck, type LoggedEntity } from "../db/schema";
 import {
   closedQuartersByPeriod,
   filedReturnsById,
@@ -16,6 +23,16 @@ import { livePlain, loggedAs, PLAIN_ENTITIES, plainById } from "./plain";
 import { livePurchaseInvoices, purchaseInvoicesById } from "./purchases";
 import { liveSalesDocuments, salesDocumentsById } from "./sales";
 import { readSettings, settingsBySection, withDefaults } from "./settings";
+
+/** What the census answered about clients' NIFs; all of them, or the given ones. */
+async function taxIdChecks(tx: Tx, organizationId: string, ids?: string[]): Promise<ClientTaxIdCheck[]> {
+  if (ids?.length === 0) return [];
+  const rows = await tx
+    .select()
+    .from(taxIdCheck)
+    .where(and(eq(taxIdCheck.organizationId, organizationId), ids ? inArray(taxIdCheck.id, ids) : undefined));
+  return rows.map(({ organizationId: _, checkedAt, ...check }) => ({ ...check, checkedAt: checkedAt.toISOString() }));
+}
 
 const entityOf = (row: ContactRow) => (row.role === ENTITY_ROLES.clients ? "clients" : "suppliers");
 
@@ -51,6 +68,7 @@ export function readWorkspace(db: Db, organizationId: string): Promise<Workspace
         closedQuarters: (await liveClosedQuarters(tx, organizationId)).map(toClosedQuarter),
         filedReturns: await liveFiledReturns(tx, organizationId),
         ...plain,
+        taxIdChecks: await taxIdChecks(tx, organizationId),
         settings: await readSettings(tx, organizationId),
       };
       for (const row of await liveContacts(tx, organizationId)) workspace[entityOf(row)].push(toContact(row));
@@ -137,6 +155,8 @@ export async function changesFor(tx: Tx, organizationId: string, refs: RecordRef
       entity: "settings",
       data: { section: row.section, data: withDefaults(row.section, row.data) },
     });
+  for (const check of await taxIdChecks(tx, organizationId, idsOf("tax_id_check")))
+    changes.set(`tax_id_check:${check.id}`, { op: "upsert", entity: "taxIdChecks", data: check });
   for (const entity of PLAIN_ENTITIES) {
     const logged = loggedAs(entity);
     for (const { id, record } of await plainById(tx, organizationId, entity, idsOf(logged)))

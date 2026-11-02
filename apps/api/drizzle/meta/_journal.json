@@ -141,6 +141,13 @@
       "when": 1793539889723,
       "tag": "0019_verifactu_correction",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793651082502,
+      "tag": "0020_client_tax_id_check",
+      "breakpoints": true
     }
   ]
 }
