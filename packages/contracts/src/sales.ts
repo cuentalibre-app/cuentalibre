@@ -128,6 +128,11 @@ export const verifactuRecordInfoSchema = z.object({
   qrUrl: z.url(),
   /** The AEAT's error, or why the record couldn't be sent yet. */
   error: z.string().optional(),
+  /**
+   * The AEAT refused the issuer's NIF and name, not the client's: they are
+   * fixed in the business profile, and the record is then sent again as is.
+   */
+  issuerError: z.literal(true).optional(),
 });
 export type VerifactuRecordInfo = z.infer<typeof verifactuRecordInfoSchema>;
 

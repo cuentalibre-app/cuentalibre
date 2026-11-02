@@ -15,6 +15,7 @@ import type {
   PaymentMethodType,
   TaxSetup,
   VatRegime,
+  VerifactuCheck,
 } from "@cuentalibre/contracts";
 import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 import type { Option } from "@/features/sales/sales-model";
@@ -108,6 +109,40 @@ export function fullName(profile: BusinessProfile): string {
     .map((s) => s.trim())
     .filter(Boolean)
     .join(" ");
+}
+
+/** Whether the AEAT recognises the issuer's NIF and name, and in its own words when it doesn't. */
+export type AeatValidation = { state: "yes" | "pending" } | { state: "no"; reason: string };
+
+/**
+ * The census check of the current NIF and name decides. Without one (it
+ * hasn't answered yet, or the NIF or name changed since), an accepted record
+ * proves them: the AEAT rejects every record whose issuer isn't in its census.
+ */
+export function aeatValidation(
+  profile: BusinessProfile,
+  check: VerifactuCheck,
+  recordAccepted: boolean,
+): AeatValidation {
+  const current = check.result !== null && check.taxId === profile.taxId.trim() && check.name === fullName(profile);
+  if (!current) return { state: recordAccepted ? "yes" : "pending" };
+  switch (check.result) {
+    case "identified":
+      return { state: "yes" };
+    case "similar":
+      return {
+        state: "no",
+        reason: check.censusName
+          ? `La AEAT tiene este NIF a nombre de ${check.censusName}.`
+          : "El nombre no coincide con el que tiene la AEAT para este NIF.",
+      };
+    case "deregistered":
+      return { state: "no", reason: "La AEAT tiene este NIF dado de baja." };
+    case "revoked":
+      return { state: "no", reason: "La AEAT tiene este NIF revocado." };
+    default:
+      return { state: "no", reason: "La AEAT no encuentra este NIF con este nombre en su censo." };
+  }
 }
 
 /** The name printed on invoices and reports. */

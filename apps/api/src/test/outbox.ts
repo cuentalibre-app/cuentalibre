@@ -1,6 +1,7 @@
 import { emailHandler } from "../email/messages";
 import { runDueJobs, type Handlers } from "../outbox/worker";
 import type { VerifactuTransport } from "../verifactu/transport";
+import { censusHandler } from "../verifactu/check";
 import { verifactuHandler } from "../verifactu/submit";
 import { db, mailer, storage } from "./harness";
 
@@ -35,6 +36,12 @@ export function fakeAeat() {
     /** Don't answer at all; `afterRecording` records the submission first, as after a lost answer. */
     down: null as null | "before" | "afterRecording",
     waitSeconds: 60,
+    /** The census's Resultado by NIF; any other NIF is identified. */
+    census: new Map<string, string>(),
+    /** The NIF and name of every census check, as `NIF|name`. */
+    censusChecks: [] as string[],
+    /** The census service doesn't answer. */
+    censusDown: false,
   };
   const transport: VerifactuTransport = {
     environment: "test",
@@ -48,6 +55,16 @@ export function fakeAeat() {
       const answer = envelope.includes("ConsultaFactuSistemaFacturacion") ? query(envelope) : submission(envelope);
       if (state.down === "afterRecording") throw new Error("The AEAT didn't answer in time.");
       return answer;
+    },
+    async checkTaxId(envelope) {
+      const taxId = /<vnif:Nif>([^<]*)</.exec(envelope)![1]!;
+      const name = /<vnif:Nombre>([^<]*)</.exec(envelope)![1]!;
+      state.censusChecks.push(`${taxId}|${name}`);
+      if (state.censusDown) throw new Error("The AEAT didn't answer in time.");
+      const result = state.census.get(taxId) ?? "IDENTIFICADO";
+      return soap(
+        `<VNifV2Sal:VNifV2Sal xmlns:VNifV2Sal="http://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/burt/jdit/ws/VNifV2Sal.xsd"><VNifV2Sal:Contribuyente><VNifV2Sal:Nif>${taxId}</VNifV2Sal:Nif><VNifV2Sal:Nombre>${result === "IDENTIFICADO" ? name.toUpperCase().padEnd(40) : name}</VNifV2Sal:Nombre><VNifV2Sal:Resultado>${result}</VNifV2Sal:Resultado></VNifV2Sal:Contribuyente></VNifV2Sal:VNifV2Sal>`,
+      );
     },
   };
 
@@ -131,6 +148,7 @@ export const software = {
 export function runJobs(transport: VerifactuTransport | null = null) {
   const handlers: Handlers = {
     verifactu: verifactuHandler(db, transport, software),
+    census: censusHandler(db, transport),
     email: emailHandler(db, storage, mailer),
   };
   return runDueJobs(db, handlers);

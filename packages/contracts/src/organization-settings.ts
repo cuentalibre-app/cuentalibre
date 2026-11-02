@@ -14,6 +14,7 @@ import {
   ledgerAccountKeySchema,
   ledgerAccountSettingsSchema,
   taxSetupSchema,
+  verifactuCheckSchema,
   verifactuSetupSchema,
 } from "./settings";
 
@@ -155,6 +156,8 @@ export const organizationSettingsSchema = z.object({
   emailTemplates: emailTemplateSettingsSchema,
   ledgerAccounts: ledgerAccountSettingsSchema,
   verifactu: verifactuSetupSchema,
+  /** Written by the server only: saving it is refused. */
+  verifactuCheck: verifactuCheckSchema,
 });
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>;
 
@@ -278,4 +281,5 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     system: "exempt",
     startDate: "2027-07-01",
   },
+  verifactuCheck: { taxId: "", name: "", result: null, censusName: "", checkedAt: null },
 };
