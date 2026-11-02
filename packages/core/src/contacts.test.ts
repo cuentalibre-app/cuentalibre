@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  censusEntry,
   checkSpanishTaxId,
   checkTaxId,
   countryFromVatPrefix,
@@ -185,5 +186,22 @@ describe("provinceFromPostalCode", () => {
     expect(provinceFromPostalCode("00001")).toBeNull();
     expect(provinceFromPostalCode("2801")).toBeNull();
     expect(provinceFromPostalCode("D24")).toBeNull();
+  });
+});
+
+describe("censusEntry", () => {
+  it("asks about Spanish NIFs as VERI*FACTU names them", () => {
+    expect(censusEntry({ taxId: "b-1234567.4", name: "  Pérez   Hijos SL ", country: "España" })).toEqual({
+      taxId: "B12345674",
+      name: "Pérez Hijos SL",
+    });
+    expect(censusEntry({ taxId: "12345678Z", name: "Ana" })).toEqual({ taxId: "12345678Z", name: "Ana" });
+  });
+
+  it("skips foreign contacts and NIFs that aren't well formed", () => {
+    expect(censusEntry({ taxId: "FR40303265045", name: "Société", country: "Francia" })).toBeNull();
+    expect(censusEntry({ taxId: "12345678A", name: "Ana" })).toBeNull();
+    expect(censusEntry({ taxId: "ESB12345674", name: "Empresa SL" })).toBeNull();
+    expect(censusEntry({ taxId: "12345678Z", name: " " })).toBeNull();
   });
 });

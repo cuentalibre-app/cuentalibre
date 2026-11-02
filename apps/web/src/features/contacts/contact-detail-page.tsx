@@ -29,6 +29,7 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 import { MONTHS_SHORT, formatDate, periodCode } from "@/lib/format";
 import { availableYears } from "@/mocks/data";
 import { paymentMethodName } from "@/features/settings/settings-model";
+import { AeatValidationState } from "@/features/settings/aeat-validation-state";
 import { TagChip } from "@/features/settings/tag-chip";
 import { filesAreStored } from "@/data/files";
 import { ContactNotFound } from "./contact-form-page";
@@ -44,6 +45,7 @@ import { useCustomFieldLabels } from "./contact-settings-store";
 import { TagsDialog, useContactActions } from "./contacts-list-page";
 import { ROLES, contactPath, countryOf, editContactPath, formatAddress } from "./contacts-model";
 import { contactsStore, useContacts } from "./contacts-store";
+import { useClientAeatValidation } from "./tax-id-checks-store";
 
 type Tab = "ficha" | "documentos" | "facturacion" | "adjuntos";
 
@@ -237,6 +239,7 @@ const withholdingLabel = new Map(WITHHOLDING_GROUPS.flatMap((g) => g.options.map
 function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
   const country = countryOf(contact);
   const check = checkTaxId(contact.taxId, country);
+  const aeat = useClientAeatValidation(role === "client" ? contact : undefined);
   const address = formatAddress(contact);
   const customLabels = useCustomFieldLabels();
   const language = LANGUAGES.find((l) => l.value === contact.language)?.label;
@@ -268,6 +271,9 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
                 )}
               </span>,
             ],
+            ...(aeat
+              ? ([["Validado por la AEAT", <AeatValidationState validation={aeat} />]] as [string, ReactNode][])
+              : []),
             ["País", country],
             ...(isOtherEuCountry(country)
               ? ([["Operador intracomunitario", contact.vies ? "Inscrito en el VIES" : "No consta en el VIES"]] as [
@@ -277,9 +283,6 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
               : []),
           ]}
         />
-        <p className="m-0 flex items-center gap-1.5 text-xs text-muted-foreground">
-          La comprobación del NIF en el censo de la AEAT y en el VIES llegará con el servidor.
-        </p>
       </InfoCard>
 
       <InfoCard title="Dirección" index={1}>

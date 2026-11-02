@@ -25,6 +25,7 @@ export const EMPTY: Workspace = {
   catalogFamilies: [],
   products: [],
   stockMovements: [],
+  taxIdChecks: [],
   settings: DEFAULT_ORGANIZATION_SETTINGS,
 };
 

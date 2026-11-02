@@ -15,7 +15,8 @@ export type LoggedEntity =
   | "manual_payment"
   | "catalog_family"
   | "product"
-  | "stock_movement";
+  | "stock_movement"
+  | "tax_id_check";
 
 /**
  * Append-only log of every change to an organization's data: the feed clients
@@ -34,7 +35,7 @@ export const changeLog = pgTable(
     entity: text().$type<LoggedEntity>().notNull(),
     /** The record's ID; for closed quarters, the period; for settings, the section. */
     recordId: text().notNull(),
-    /** The command that made the change, or `verifactu` when the AEAT answered about an invoice's record or the issuer. */
+    /** The command that made the change, or `verifactu` when the AEAT answered about an invoice's record, the issuer or a client's NIF. */
     op: text().$type<SyncCommand["type"] | "verifactu">().notNull(),
     userId: uuid().references(() => user.id, { onDelete: "set null" }),
     at: timestamp({ withTimezone: true }).defaultNow().notNull(),

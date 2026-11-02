@@ -6,7 +6,14 @@ import { catalogFamilySchema, stockMovementSchema } from "./core";
 import { organizationSettingsSchema, settingsSectionSchema } from "./organization-settings";
 import { expenseSchema, purchaseInvoiceSchema, purchaseLineSchema } from "./purchases";
 import { issuedSnapshotSchema, salesDocumentSchema, salesLineSchema } from "./sales";
-import { closedQuarterSchema, filedReturnSchema, paymentMethodSchema, quarterKeySchema, tagSchema } from "./settings";
+import {
+  closedQuarterSchema,
+  filedReturnSchema,
+  paymentMethodSchema,
+  quarterKeySchema,
+  tagSchema,
+  clientTaxIdCheckSchema,
+} from "./settings";
 import { manualPaymentSchema } from "./treasury";
 
 /*
@@ -30,6 +37,7 @@ export const syncedEntitySchema = z.enum([
   "catalogFamilies",
   "products",
   "stockMovements",
+  "taxIdChecks",
 ]);
 export type SyncedEntity = z.infer<typeof syncedEntitySchema>;
 
@@ -42,7 +50,7 @@ export const ENTITY_ROLES = { clients: "client", suppliers: "supplier" } as cons
 >;
 
 /** Records whose entity the client may create, update and delete. */
-export const recordEntitySchema = syncedEntitySchema.exclude(["closedQuarters", "filedReturns"]);
+export const recordEntitySchema = syncedEntitySchema.exclude(["closedQuarters", "filedReturns", "taxIdChecks"]);
 export type RecordEntity = z.infer<typeof recordEntitySchema>;
 
 /**
@@ -202,6 +210,7 @@ export const changeSchema = z.union([
   plainUpsert("products"),
   plainUpsert("stockMovements"),
   z.object({ op: z.literal("upsert"), entity: z.literal("settings"), data: settingsChangeSchema }),
+  z.object({ op: z.literal("upsert"), entity: z.literal("taxIdChecks"), data: clientTaxIdCheckSchema }),
   z.object({
     op: z.literal("delete"),
     entity: syncedEntitySchema,
@@ -228,6 +237,8 @@ export const workspaceSchema = z.object({
   catalogFamilies: z.array(storedCatalogFamilySchema),
   products: z.array(storedProductSchema),
   stockMovements: z.array(storedStockMovementSchema),
+  /** Written by the server only: what the AEAT's census answered about clients' NIFs. */
+  taxIdChecks: z.array(clientTaxIdCheckSchema),
   /** Every section, the ones never saved with their defaults. */
   settings: organizationSettingsSchema,
 });
