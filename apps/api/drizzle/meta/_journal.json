@@ -148,6 +148,13 @@
       "when": 1793651082502,
       "tag": "0020_client_tax_id_check",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793654400526,
+      "tag": "0021_verifactu_coming_soon",
+      "breakpoints": true
     }
   ]
 }

@@ -34,7 +34,7 @@ import type { Billing } from "@cuentalibre/contracts";
 import { formatDate } from "@/lib/format";
 import { localDate, periodOf, planHeadline, planState, type PlanState } from "./billing-model";
 import { useBilling } from "./billing-store";
-import { useAeatValidation, useCompliance } from "./compliance-store";
+import { useAeatValidation, useCompliance, useVerifactuAvailable } from "./compliance-store";
 import {
   ACCESS_PATH,
   API_KEYS_PATH,
@@ -95,6 +95,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
 
 /** VERI*FACTU gets a section of its own: it's new, mandatory and decides how every invoice is issued. */
 function VerifactuCard() {
+  const available = useVerifactuAvailable();
   const { verifactu } = useCompliance();
   const validation = useAeatValidation().state;
   const { profile } = useSettings();
@@ -115,12 +116,15 @@ function VerifactuCard() {
           <Badge tone="primary">
             {mandatory ? "Obligatorio" : `Obligatorio desde el ${formatDate(mandatoryFrom)}`}
           </Badge>
+          {!available && <Badge tone="neutral">Próximamente</Badge>}
         </span>
         <span className="text-sm text-muted-foreground">
           El sistema de facturación con el que se registran tus facturas en la AEAT.{" "}
           {mandatory
             ? "Revisa que esté bien configurado antes de emitir."
-            : "Hasta entonces puedes seguir en Exento o activarlo ya para probarlo."}
+            : available
+              ? "Hasta entonces puedes seguir en Exento o activarlo ya para probarlo."
+              : "Hasta entonces puedes seguir en Exento."}
         </span>
         <span className="mt-1.5 flex flex-wrap items-center gap-2 text-sm">
           <Badge tone={exempt ? "neutral" : "success"}>{exempt ? "Exento" : "VERI*FACTU activo"}</Badge>

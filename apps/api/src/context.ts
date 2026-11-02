@@ -15,6 +15,8 @@ export interface AppEnv {
     storage: FileStorage;
     /** Which AEAT environment VERI*FACTU records point to. */
     verifactuEnvironment: VerifactuEnvironment;
+    /** Whether this instance sends VERI*FACTU records to the AEAT; businesses can only turn it on when it does. */
+    verifactuAvailable: boolean;
     /** Sends email; null when the instance has no mail server. */
     mailer: Mailer | null;
     /** Charging for Cloud; null when the instance doesn't bill. */
