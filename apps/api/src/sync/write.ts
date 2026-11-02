@@ -25,6 +25,8 @@ export interface Scope {
   userId: string | null;
   /** Which AEAT environment VERI*FACTU records are made for: it decides where their QR code points. */
   verifactuEnvironment: VerifactuEnvironment;
+  /** Whether the instance sends VERI*FACTU records: without it, no business can turn it on. */
+  verifactuAvailable: boolean;
 }
 
 /**
@@ -84,7 +86,7 @@ async function apply(tx: Tx, scope: Scope, command: SyncCommand): Promise<Record
       await reopenQuarter(tx, organizationId, command.period);
       return [{ entity: "closed_quarter", id: command.period }];
     case "saveSettings":
-      await saveSettings(tx, organizationId, command.section, command.data);
+      await saveSettings(tx, organizationId, command.section, command.data, scope.verifactuAvailable);
       return [{ entity: "organization_setting", id: command.section }];
   }
 

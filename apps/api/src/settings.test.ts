@@ -1,6 +1,9 @@
 import { DEFAULT_ORGANIZATION_SETTINGS, type FiledReturn } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
+import { createApp } from "./app";
+import { createAuth } from "./auth";
+import { accountMailer, createOrganization, db, env, mailer, signUp, storage } from "./test/harness";
 import { changes, errorCode, member, send, workspace } from "./test/sync";
 
 const profile = {
@@ -149,5 +152,36 @@ describe("filed returns", () => {
     ]);
     expect(again.status).toBe(409);
     expect((await workspace(ana)).filedReturns).toEqual([once]);
+  });
+
+  describe("where the instance doesn't send VERI*FACTU records", () => {
+    const off = createApp({
+      db,
+      auth: createAuth(db, env, accountMailer),
+      env: { ...env, VERIFACTU_ENV: "off" },
+      storage,
+      mailer,
+    });
+    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, startDate: "2026-01-01" };
+
+    it("refuses to turn VERI*FACTU on", async () => {
+      const ana = await signUp("Ana", off);
+      await createOrganization(ana, "Ana SL");
+      const response = await send(ana, [
+        { type: "saveSettings", section: "verifactu", data: { ...verifactu, system: "verifactu" } },
+      ]);
+      expect(response.status).toBe(409);
+      expect(await errorCode(response)).toBe("verifactu_unavailable");
+      expect((await workspace(ana)).settings.verifactu).toEqual(DEFAULT_ORGANIZATION_SETTINGS.verifactu);
+    });
+
+    it("still saves it as exempt", async () => {
+      const ana = await signUp("Ana", off);
+      await createOrganization(ana, "Ana SL");
+      const exempt = { ...verifactu, system: "exempt" as const };
+      const response = await send(ana, [{ type: "saveSettings", section: "verifactu", data: exempt }]);
+      expect(response.status).toBe(200);
+      expect((await workspace(ana)).settings.verifactu).toEqual(exempt);
+    });
   });
 });

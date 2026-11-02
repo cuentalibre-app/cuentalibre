@@ -20,7 +20,12 @@ const health = createRoute({
   },
 });
 
-const signInMethodsSchema = z.object({ google: z.boolean(), email: z.boolean(), billing: z.boolean() });
+const signInMethodsSchema = z.object({
+  google: z.boolean(),
+  email: z.boolean(),
+  billing: z.boolean(),
+  verifactu: z.boolean(),
+});
 
 const signInMethods = createRoute({
   method: "get",
@@ -28,7 +33,7 @@ const signInMethods = createRoute({
   tags: ["Meta"],
   summary: "How people can sign in to this instance, besides email and password",
   description:
-    "`google`: sign in with Google. `email`: the instance sends email, so people verify their address and reset a forgotten password. `billing`: the instance charges for its plan (cuentalibre Cloud).",
+    "`google`: sign in with Google. `email`: the instance sends email, so people verify their address and reset a forgotten password. `billing`: the instance charges for its plan (cuentalibre Cloud). `verifactu`: the instance sends VERI*FACTU records to the AEAT, so businesses can turn it on.",
   responses: {
     200: {
       description: "The sign-in methods",
