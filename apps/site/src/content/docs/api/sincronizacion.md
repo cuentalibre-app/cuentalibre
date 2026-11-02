@@ -9,7 +9,7 @@ Para tener una copia local de todo y mantenerla al día, sin volver a descargarl
 
 ## `GET /v1/workspace`
 
-Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products`, `stockMovements` y `settings`, más un `cursor`. `filedReturns` trae todas las versiones, de la más antigua a la más reciente, y `settings` todas las secciones, con los valores por defecto en las que nunca se han guardado.
+Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products`, `stockMovements`, `taxIdChecks` y `settings`, más un `cursor`. `filedReturns` trae todas las versiones, de la más antigua a la más reciente, y `settings` todas las secciones, con los valores por defecto en las que nunca se han guardado. `taxIdChecks` es de solo lectura: con VERI*FACTU activado, lo que respondió el censo de la AEAT sobre el NIF y el nombre de tus clientes españoles, uno por pareja: `{ id, taxId, name, result, censusName, checkedAt }`, con `result` como en [`verifactuCheck`](/docs/api/ajustes). Un cliente cuyo NIF y nombre no tienen ninguno aún no se ha comprobado.
 
 ## `GET /v1/sync?since=<cursor>&limit=500`
 

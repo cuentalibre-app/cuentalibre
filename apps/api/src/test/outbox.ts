@@ -57,13 +57,19 @@ export function fakeAeat() {
       return answer;
     },
     async checkTaxId(envelope) {
-      const taxId = /<vnif:Nif>([^<]*)</.exec(envelope)![1]!;
-      const name = /<vnif:Nombre>([^<]*)</.exec(envelope)![1]!;
-      state.censusChecks.push(`${taxId}|${name}`);
+      const asked = [...envelope.matchAll(/<vnif:Nif>([^<]*)<\/vnif:Nif><vnif:Nombre>([^<]*)</g)].map(
+        ([, taxId, name]) => ({ taxId: taxId!, name: name! }),
+      );
+      state.censusChecks.push(...asked.map(({ taxId, name }) => `${taxId}|${name}`));
       if (state.censusDown) throw new Error("The AEAT didn't answer in time.");
-      const result = state.census.get(taxId) ?? "IDENTIFICADO";
+      const answers = asked.map(({ taxId, name }) => {
+        const result = state.census.get(taxId) ?? "IDENTIFICADO";
+        // Like the AEAT, it may answer about a company under another letter
+        const answered = taxId === "B12345674" ? "H12345674" : taxId;
+        return `<VNifV2Sal:Contribuyente><VNifV2Sal:Nif>${answered}</VNifV2Sal:Nif><VNifV2Sal:Nombre>${result === "IDENTIFICADO" ? name.toUpperCase().padEnd(40) : name}</VNifV2Sal:Nombre><VNifV2Sal:Resultado>${result}</VNifV2Sal:Resultado></VNifV2Sal:Contribuyente>`;
+      });
       return soap(
-        `<VNifV2Sal:VNifV2Sal xmlns:VNifV2Sal="http://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/burt/jdit/ws/VNifV2Sal.xsd"><VNifV2Sal:Contribuyente><VNifV2Sal:Nif>${taxId}</VNifV2Sal:Nif><VNifV2Sal:Nombre>${result === "IDENTIFICADO" ? name.toUpperCase().padEnd(40) : name}</VNifV2Sal:Nombre><VNifV2Sal:Resultado>${result}</VNifV2Sal:Resultado></VNifV2Sal:Contribuyente></VNifV2Sal:VNifV2Sal>`,
+        `<VNifV2Sal:VNifV2Sal xmlns:VNifV2Sal="http://www2.agenciatributaria.gob.es/static_files/common/internet/dep/aplicaciones/es/aeat/burt/jdit/ws/VNifV2Sal.xsd">${answers.join("")}</VNifV2Sal:VNifV2Sal>`,
       );
     },
   };

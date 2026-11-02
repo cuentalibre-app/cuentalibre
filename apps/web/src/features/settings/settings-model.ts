@@ -13,6 +13,7 @@ import type {
   IncomeTaxMethod,
   PaymentMethod,
   PaymentMethodType,
+  TaxIdCheckResult,
   TaxSetup,
   VatRegime,
   VerifactuCheck,
@@ -126,14 +127,19 @@ export function aeatValidation(
 ): AeatValidation {
   const current = check.result !== null && check.taxId === profile.taxId.trim() && check.name === fullName(profile);
   if (!current) return { state: recordAccepted ? "yes" : "pending" };
-  switch (check.result) {
+  return censusValidation(check.result!, check.censusName);
+}
+
+/** What the AEAT's census answered about a NIF and name, in its own words when it doesn't recognise them. */
+export function censusValidation(result: TaxIdCheckResult, censusName: string): AeatValidation {
+  switch (result) {
     case "identified":
       return { state: "yes" };
     case "similar":
       return {
         state: "no",
-        reason: check.censusName
-          ? `La AEAT tiene este NIF a nombre de ${check.censusName}.`
+        reason: censusName
+          ? `La AEAT tiene este NIF a nombre de ${censusName}.`
           : "El nombre no coincide con el que tiene la AEAT para este NIF.",
       };
     case "deregistered":
