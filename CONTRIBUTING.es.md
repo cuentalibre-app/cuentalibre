@@ -98,4 +98,6 @@ No abras un issue público para una vulnerabilidad. Avisa en privado a través d
 
 ## Licencia
 
-cuentalibre tiene licencia [AGPL-3.0](LICENSE) y, como dice la licencia, se ofrece tal cual, sin ninguna garantía. Al contribuir, aceptas que tu contribución quede bajo la misma licencia.
+cuentalibre tiene licencia [AGPL-3.0](LICENSE) y, como dice la licencia, se ofrece tal cual, sin ninguna garantía.
+
+Al abrir un pull request, aceptas nuestro [acuerdo de licencia de contribución](CLA.md) (CLA, en inglés). Conservas los derechos de autor de tu trabajo; el CLA permite al proyecto ofrecer otras licencias en el futuro, y toda contribución sigue disponible bajo la AGPL-3.0 u otra licencia de código abierto.
