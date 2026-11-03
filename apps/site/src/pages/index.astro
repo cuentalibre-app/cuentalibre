@@ -20,9 +20,9 @@ import inicio from "../assets/screens/inicio.jpg";
 import modelo303 from "../assets/screens/modelo-303.jpg";
 import perdidasGanancias from "../assets/screens/perdidas-ganancias.jpg";
 
-const title = "cuentalibre: impuestos al día, 100 % código abierto";
+const title = "cuentalibre: facturas e impuestos para autónomos, gratis y de código abierto";
 const description =
-  "La app de gestión para autónomos privada, gratis y de código abierto: facturas y gastos ilimitados, IVA e IRPF calculados y calendario fiscal.";
+  "Haz facturas, apunta gastos y mira cada trimestre lo que te toca pagar de IVA e IRPF. Gratis en tu servidor o desde 4,08 €/mes en el nuestro.";
 
 /** Screens of the app the hero switches between; captured from the demo. */
 const screens: {
@@ -93,22 +93,22 @@ const screens: {
 const features = [
   {
     tag: "Ventas",
-    title: "Facturas ilimitadas en un minuto",
-    text: "Facturas, presupuestos y albaranes con numeración correlativa y PDF. Sin tope al mes.",
+    title: "Facturas en un minuto",
+    text: "Facturas, presupuestos y albaranes con numeración correlativa y PDF.",
     image: facturaEditor,
     alt: "Editor de facturas",
   },
   {
     tag: "Compras",
-    title: "Gastos deducibles",
+    title: "Cada gasto, con su parte deducible",
     text: "Cuota de autónomos, tickets y facturas recibidas, con su justificante.",
     image: gastos,
     alt: "Lista de gastos",
   },
   {
     tag: "Impuestos",
-    title: "IVA casilla a casilla",
-    text: "El 303 y el 390 calculados con tus documentos, listos para la AEAT.",
+    title: "Tus modelos, ya calculados",
+    text: "El 303 y el 130 cada trimestre y el 390 a final de año, con el fichero para presentarlos en la sede de la AEAT.",
     image: modelo303,
     alt: "Modelo 303 calculado",
   },
@@ -146,17 +146,17 @@ const reasons: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "code",
     title: "Código abierto",
-    text: "Cada cálculo de IVA e IRPF está a la vista. Puedes revisarlo, auditarlo y mejorarlo.",
+    text: "Puedes leer el código que calcula tu IVA y tu IRPF, revisarlo y mejorarlo.",
   },
   {
     icon: "lock-keyhole",
-    title: "Privado por defecto",
-    text: "Tus datos fiscales no son nuestro negocio. Expórtalos o bórralos cuando quieras.",
+    title: "Tus datos, en tu sitio",
+    text: "Tus datos fiscales no son nuestro negocio: no los vendemos ni los cedemos. Expórtalos o bórralos cuando quieras.",
   },
   {
     icon: "hand-coins",
-    title: "Gratis de verdad",
-    text: "Facturas y gastos ilimitados, impuestos incluidos. Sin plan recortado.",
+    title: "Gratis en tu servidor",
+    text: "Instalado en tu servidor tienes todas las funciones, sin pagar nada. Cloud cuesta desde 4,08 €/mes y no tienes que instalar nada.",
   },
 ];
 
@@ -167,7 +167,6 @@ const comparison: { label: string; badge?: string; others: string | boolean; our
   { label: "Conéctalo a tus agentes de IA", badge: "API incluida", others: "De pago", ours: "Gratis" },
   { label: "Código abierto y auditable", others: false, ours: true },
   { label: "Puedes instalarlo en tu servidor", others: false, ours: true },
-  { label: "Tus datos son privados", others: false, ours: true },
 ];
 
 const freePlan = [
@@ -184,6 +183,25 @@ const onlinePlan = [
   "Actualizaciones automáticas",
   "Copia de seguridad diaria",
   "Exporta tus datos cuando quieras",
+];
+
+/** Questions people ask before trusting the app with their taxes. */
+const faqs = [
+  {
+    question: "¿Presenta los modelos por mí?",
+    answer:
+      "No. Calcula cada casilla y te da el fichero del modelo. Lo subes en la sede electrónica de la AEAT y lo presentas tú, con tu certificado o Cl@ve.",
+  },
+  {
+    question: "¿Qué pasa si cuentalibre deja de existir?",
+    answer:
+      "El código es abierto y seguirá publicado, así que siempre podrás instalarlo en tu servidor. Y puedes exportar tus datos cuando quieras.",
+  },
+  {
+    question: "¿Cuál de los dos elijo?",
+    answer:
+      "Si no tienes un servidor o no sabes qué es Docker, Cloud: te registras y empiezas. Si ya tienes uno, instálalo desde GitHub y úsalo gratis.",
+  },
 ];
 
 const defaultBilling = "yearly";
@@ -208,18 +226,18 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
   <main>
     <section class="mx-auto max-w-[1200px] px-4 pt-8 text-center sm:px-6 sm:pt-14 md:pt-22">
       <h1
-        class="mx-auto mt-4 mb-0 max-w-[880px] animate-rise-in font-display text-[clamp(40px,6.6vw,80px)] sm:mt-7 leading-[1.02] font-semibold tracking-[-0.025em] text-balance"
+        class="mx-auto mt-4 mb-0 max-w-[1000px] animate-rise-in font-display text-[clamp(40px,6.6vw,80px)] sm:mt-7 leading-[1.02] font-semibold tracking-[-0.025em] text-balance"
       >
-        Impuestos al día.<br /><span class="text-gradient-brand">100&nbsp;% código abierto.</span>
+        Impuestos al día.<br /><span class="text-gradient-brand">Gratis y de código abierto.</span>
       </h1>
       <p class="mx-auto mt-5 mb-0 max-w-[560px] animate-rise-in text-[17px] [--i:2] leading-normal sm:mt-6 sm:text-[19px] text-pretty text-muted-foreground">
-        La primera app de gestión para autónomos 100&nbsp;% privada, gratis y de código abierto.
+        Haz facturas, apunta gastos y mira cada trimestre lo que te toca pagar de IVA e IRPF. Puedes leer el código que lo calcula.
       </p>
       <div class:list={[buttonRow, "mt-8 animate-rise-in [--i:4] sm:mt-9"]}>
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Probar la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href="#precio" class={secondaryButton}>Empezar gratis</a>
+        <a href="#precio" class={secondaryButton}>Ver precios</a>
       </div>
     </section>
 
@@ -286,7 +304,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           <div class={eyebrow}>Funciones</div>
           <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Todo tu trimestre, en una app</h2>
           <p class="mt-2.5 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
-            Sin límite de facturas ni de gastos, y sin funciones reservadas a un plan caro.
+            Facturas, gastos, modelos de la AEAT, bancos e informes. Las mismas funciones en los dos planes.
           </p>
         </div>
         <div class="hidden items-center gap-4 sm:flex">
@@ -459,7 +477,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
     <section id="precio" class="mx-auto mt-16 sm:mt-24 md:mt-34 max-w-[1200px] px-4 sm:px-6" data-billing={defaultBilling}>
       <div data-reveal class="text-center">
         <div class={eyebrow}>Precio</div>
-        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Gratis. Y online si lo prefieres.</h2>
+        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Gratis en tu servidor. O en el nuestro.</h2>
         <p class="mx-auto mt-3.5 mb-0 max-w-[540px] text-[17px] text-muted-foreground">
           Las dos opciones tienen todas las funciones. Solo cambia quién se encarga del servidor.
         </p>
@@ -588,6 +606,25 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
       <p class="mx-auto mt-5 mb-0 max-w-[620px] text-center text-[14px] text-muted-foreground">Precios sin IVA.</p>
     </section>
 
+    <section id="preguntas" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)] lg:gap-16">
+        <h2 data-reveal class:list={[sectionTitle, "m-0"]}>Antes de empezar</h2>
+        <div data-reveal style={{ "--i": 1 }} class="mt-6 border-b border-divider lg:mt-0">
+          {
+            faqs.map((faq) => (
+              <details class="group border-t border-divider">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[18px] font-semibold tracking-[-0.01em] [&::-webkit-details-marker]:hidden">
+                  {faq.question}
+                  <Icon name="chevron-down" class="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <p class="mt-0 mb-5 max-w-[580px] text-muted-foreground">{faq.answer}</p>
+              </details>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
     <section data-reveal class="mx-auto mt-16 max-w-[1200px] px-4 text-center sm:mt-24 sm:px-6 md:mt-34">
       <h2
         class="mx-auto my-0 max-w-[720px] font-display text-[clamp(34px,5vw,56px)] leading-[1.04] font-semibold tracking-[-0.025em] text-balance"
@@ -601,7 +638,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Abrir la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href="#precio" class={secondaryButton}>Empezar gratis</a>
+        <a href="#precio" class={secondaryButton}>Ver precios</a>
       </div>
     </section>
   </main>
