@@ -48,7 +48,7 @@ export const legalPages = [
 ] as const;
 
 /** Date of the last change to the legal pages. */
-export const legalUpdated = "24 de octubre de 2026";
+export const legalUpdated = "3 de noviembre de 2026";
 
 /** The groups of the documentation's index, in the order it shows them. */
 export const docSections = [
