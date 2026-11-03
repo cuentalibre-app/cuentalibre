@@ -6,7 +6,7 @@ section: api
 order: 1
 ---
 
-La API de cuentalibre te deja leer y escribir tu contabilidad desde scripts, hojas de cálculo, automatizaciones o agentes de IA: contactos, facturas, borradores, presupuestos, albaranes, facturas recibidas, gastos, archivos, etiquetas, formas de pago, cobros y pagos, catálogo y ajustes. Es la misma API que usa la aplicación web, así que lo que hagas por ella sigue las mismas reglas: la numeración correlativa, los trimestres cerrados y VERI\*FACTU.
+La API de cuentalibre te deja leer y escribir tu contabilidad desde scripts, hojas de cálculo, automatizaciones o agentes de IA: contactos, facturas, borradores, presupuestos, albaranes, facturas recibidas, gastos, archivos, etiquetas, formas de pago, cobros y pagos, catálogo y ajustes. Es la misma API que usa la aplicación web, así que lo que hagas por ella sigue las mismas reglas: la numeración correlativa y los trimestres cerrados.
 
 Si vas a conectar un agente de IA, empieza por [Conectar un agente](/docs/agentes). Toda esta referencia está también en un solo archivo Markdown, [`/docs/api.md`](/docs/api.md), para dársela tal cual.
 
@@ -96,13 +96,12 @@ Los errores responden con un código HTTP y este cuerpo:
 | 403  | `email_unverified`                                           | Para enviar correos, el usuario de la clave tiene que haber verificado su email. |
 | 404  | `not_found`                                                  | El registro no existe, se borró o es de otra empresa.                                                                                                                                  |
 | 409  | `already_exists`                                             | Ya hay un registro con ese `id`.                                                                                                                                                       |
-| 409  | `invoice_issued`, `already_issued`                           | La factura está emitida y no se puede cambiar ni borrar (ver [Editar una factura emitida](/docs/api/ventas#editar-una-factura-emitida)), o ya lo estaba y no se puede volver a emitir. |
+| 409  | `already_issued`                                             | La factura ya está emitida y no se puede volver a emitir.                                                                                                                       |
 | 409  | `date_out_of_order`                                          | La factura tiene fecha anterior a la última de su serie.                                                                                                                               |
 | 409  | `series_inactive`                                            | La serie está desactivada y no admite facturas nuevas.                                                                                                                                 |
 | 409  | `series_in_use`                                              | La serie ya numera facturas o borradores: se puede renombrar o desactivar, pero no quitar ni cambiar su formato.                                                                       |
 | 409  | `number_taken`                                               | Al importar una factura con su número, ya hay otra con ese número.                                                                                                                     |
 | 409  | `quarter_closed`                                             | El trimestre está cerrado. Reábrelo en la aplicación para cambiar sus registros.                                                                                                       |
-| 409  | `verifactu_unavailable`                                      | Este servidor aún no envía registros de VERI\*FACTU, así que no se puede activar.                                                                                                     |
 | 409  | `in_use`                                                     | No se puede borrar porque otro registro lo usa (una forma de pago, un producto…).                                                                                                      |
 | 413  | `file_too_large`                                             | El archivo pasa del límite (25 MB por defecto).                                                                                                                                        |
 | 415  | `invalid_request`                                            | El `Content-Type` del cuerpo no es el que admite la operación (casi siempre `application/json`).                                                                                       |

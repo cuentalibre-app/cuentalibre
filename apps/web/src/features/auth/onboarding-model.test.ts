@@ -18,21 +18,8 @@ const withProfile = (changes: Partial<Setup["profile"]>): Setup => {
 
 describe("onboardingSteps", () => {
   it("asks to confirm the email first, only when it needs verifying", () => {
-    expect(onboardingSteps(true).map((s) => s.key)).toEqual([
-      "email",
-      "regime",
-      "identity",
-      "address",
-      "activity",
-      "verifactu",
-    ]);
-    expect(onboardingSteps(false).map((s) => s.key)).toEqual([
-      "regime",
-      "identity",
-      "address",
-      "activity",
-      "verifactu",
-    ]);
+    expect(onboardingSteps(true).map((s) => s.key)).toEqual(["email", "regime", "identity", "address", "activity"]);
+    expect(onboardingSteps(false).map((s) => s.key)).toEqual(["regime", "identity", "address", "activity"]);
   });
 
   it("ends with the plan, only where the instance charges for one", () => {
@@ -41,19 +28,7 @@ describe("onboardingSteps", () => {
   });
 });
 
-describe("newSetup", () => {
-  it("leaves VERI*FACTU off, from the day the business is created", () => {
-    expect(newSetup("2026-10-24").verifactu).toMatchObject({ system: "exempt", startDate: "2026-10-24" });
-  });
-});
-
 describe("skipStep", () => {
-  it("leaves the business exempt from VERI*FACTU when its step is skipped, even if it was chosen", () => {
-    const setup = newSetup();
-    const chosen = { ...setup, verifactu: { ...setup.verifactu, system: "verifactu" as const } };
-    expect(skipStep("verifactu", chosen).verifactu.system).toBe("exempt");
-  });
-
   it("drops the activity when its step is skipped, and keeps what was typed elsewhere", () => {
     const setup = newSetup();
     const activity = { id: "a1", type: "A03", code: "763", name: "Programadores" };
@@ -100,16 +75,15 @@ describe("organizationName", () => {
 });
 
 describe("setupCommands", () => {
-  it("saves the profile, with the tax ID normalized, the tax setup and the invoicing system", () => {
+  it("saves the profile, with the tax ID normalized, and the tax setup", () => {
     const setup = withProfile({ taxId: " 12.345.678-z " });
-    const [profile, tax, verifactu] = setupCommands(setup);
+    const [profile, tax] = setupCommands(setup);
     expect(profile).toEqual({
       type: "saveSettings",
       section: "businessProfile",
       data: { ...setup.profile, taxId: "12345678Z" },
     });
     expect(tax).toEqual({ type: "saveSettings", section: "taxSetup", data: setup.tax });
-    expect(verifactu).toEqual({ type: "saveSettings", section: "verifactu", data: setup.verifactu });
   });
 });
 

@@ -117,7 +117,5 @@ export function scopeOf(c: Context<AppEnv>): Scope {
   return {
     organizationId: c.get("organizationId"),
     userId: c.get("user")!.id,
-    verifactuEnvironment: c.get("verifactuEnvironment"),
-    verifactuAvailable: c.get("verifactuAvailable"),
   };
 }

@@ -17,7 +17,6 @@ import {
   Package,
   Percent,
   ReceiptText,
-  ShieldCheck,
   Tags,
   UserRound,
   Users,
@@ -27,14 +26,12 @@ import {
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { CATALOG_SETTINGS_PATH } from "@/features/catalog/catalog-model";
-import { isVerifactuMandatory, verifactuMandatoryFrom } from "@cuentalibre/core";
 import { IMPORT_PATH } from "@/features/transfer/transfer-model";
 import { LegalLinks } from "@/components/legal-links";
 import type { Billing } from "@cuentalibre/contracts";
 import { formatDate } from "@/lib/format";
 import { localDate, periodOf, planHeadline, planState, type PlanState } from "./billing-model";
 import { useBilling } from "./billing-store";
-import { useAeatValidation, useCompliance, useVerifactuAvailable } from "./compliance-store";
 import {
   ACCESS_PATH,
   API_KEYS_PATH,
@@ -56,7 +53,6 @@ import {
   TAX_SETTINGS_PATH,
   USERS_PATH,
   vatRegimeLabel,
-  VERIFACTU_PATH,
 } from "./settings-model";
 import { useSettings } from "./settings-store";
 
@@ -93,62 +89,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
   );
 }
 
-/** VERI*FACTU gets a section of its own: it's new, mandatory and decides how every invoice is issued. */
-function VerifactuCard() {
-  const available = useVerifactuAvailable();
-  const { verifactu } = useCompliance();
-  const validation = useAeatValidation().state;
-  const { profile } = useSettings();
-  const exempt = verifactu.system === "exempt";
-  const mandatoryFrom = verifactuMandatoryFrom(profile.kind);
-  const mandatory = isVerifactuMandatory(profile.kind, new Date().toISOString().slice(0, 10));
-  return (
-    <Link
-      to={VERIFACTU_PATH}
-      className="group flex min-w-0 animate-rise-in flex-col gap-4 rounded-xl border border-primary/30 bg-primary-soft/40 p-5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-primary-soft active:scale-[0.995] sm:flex-row sm:items-center"
-    >
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-        <ShieldCheck className="size-6" strokeWidth={1.8} aria-hidden="true" />
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="text-lg font-semibold">Sistema VERI*FACTU</span>
-          <Badge tone="primary">
-            {mandatory ? "Obligatorio" : `Obligatorio desde el ${formatDate(mandatoryFrom)}`}
-          </Badge>
-          {!available && <Badge tone="neutral">Próximamente</Badge>}
-        </span>
-        <span className="text-sm text-muted-foreground">
-          El sistema de facturación con el que se registran tus facturas en la AEAT.{" "}
-          {mandatory
-            ? "Revisa que esté bien configurado antes de emitir."
-            : available
-              ? "Hasta entonces puedes seguir en Exento o activarlo ya para probarlo."
-              : "Hasta entonces puedes seguir en Exento."}
-        </span>
-        <span className="mt-1.5 flex flex-wrap items-center gap-2 text-sm">
-          <Badge tone={exempt ? "neutral" : "success"}>{exempt ? "Exento" : "VERI*FACTU activo"}</Badge>
-          {verifactu.startDate && <span>Desde el {formatDate(verifactu.startDate)}</span>}
-          {!exempt && (
-            <Badge tone={validation === "yes" ? "success" : validation === "no" ? "danger" : "neutral"}>
-              {validation === "yes"
-                ? "NIF validado por la AEAT"
-                : validation === "no"
-                  ? "La AEAT no reconoce tu NIF"
-                  : "NIF pendiente de validar"}
-            </Badge>
-          )}
-        </span>
-      </span>
-      <ChevronRight
-        className="hidden size-5 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 sm:block"
-        aria-hidden="true"
-      />
-    </Link>
-  );
-}
-
-/** The plan gets a card like VERI*FACTU's: when the trial runs out, nobody should miss it. */
+/** The plan gets a card of its own: when the trial runs out, nobody should miss it. */
 function PlanCard({ billing }: { billing: Billing }) {
   const { title, badge, tone } = planHeadline(billing);
   const { subscription } = billing;
@@ -345,13 +286,6 @@ export function SettingsPage() {
           <PlanCard billing={billing} />
         </section>
       )}
-
-      <section aria-label="Facturación verificable" className="flex flex-col gap-3">
-        <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Facturación verificable
-        </h2>
-        <VerifactuCard />
-      </section>
 
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title} className="flex flex-col gap-3">

@@ -75,10 +75,6 @@
       <img src=".github/assets/screens/perdidas-ganancias.webp" alt="Profit and loss">
       <p align="center"><b>Profit and loss</b>: this year against the last, exportable to PDF.</p>
     </td>
-    <td valign="top">
-      <img src=".github/assets/screens/verifactu.webp" alt="VERI*FACTU settings">
-      <p align="center"><b>VERI*FACTU</b>: the invoicing system the AEAT requires, built in.</p>
-    </td>
   </tr>
 </table>
 
@@ -114,7 +110,6 @@ The UI is in Spanish, like the taxes it deals with.
 - **🏦 Collections and payments**: every collection and payment of your invoices and expenses, with the account it went through.
 - **🔒 Quarter closing**: a checklist before filing, after which the quarter's books are frozen.
 - **📈 Reports**: profit and loss, this year against the last.
-- **✅ VERI\*FACTU**: invoice records chained and sent to the AEAT.
 - **🤖 API and agents**: a public REST API with API keys, an [OpenAPI document](https://api.cuentalibre.es/v1/openapi.json) and a ready-made skill so your AI agent can book expenses or prepare invoices for you ([see below](#use-it-with-your-ai-agent)).
 - **📱 Works on any device**: a fast web app, designed for the desktop and the phone.
 
@@ -177,13 +172,12 @@ To run a single app: `pnpm --filter @cuentalibre/web dev` (or `api`, `site`).
 
 All of these are off by default and set in `apps/api/.env`; [`.env.example`](apps/api/.env.example) documents each one.
 
-| Feature                                                    | Variables                                                                                      |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Sign in with Google                                        | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                     |
-| Sending email (invoices, verification, password reset)     | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM`                                                 |
-| Files in an S3-compatible bucket instead of local disk     | `STORAGE_DRIVER=s3`, `S3_*`                                                                    |
-| Sending VERI\*FACTU records to the AEAT's test environment | `VERIFACTU_ENV=test`, `VERIFACTU_CERT_FILE`, `VERIFACTU_CERT_PASSWORD`, `VERIFACTU_PRODUCER_*` |
-| Reporting unexpected errors to Sentry                      | `SENTRY_DSN`                                                                                   |
+| Feature                                                | Variables                                      |
+| ------------------------------------------------------ | ---------------------------------------------- |
+| Sign in with Google                                    | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`     |
+| Sending email (invoices, verification, password reset) | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM` |
+| Files in an S3-compatible bucket instead of local disk | `STORAGE_DRIVER=s3`, `S3_*`                    |
+| Reporting unexpected errors to Sentry                  | `SENTRY_DSN`                                   |
 
 ### Checks
 
@@ -196,7 +190,7 @@ pnpm format    # Prettier
 
 ## Use it with your AI agent
 
-cuentalibre's API is the one the app uses, so an AI agent (Claude Code, Codex, a ChatGPT GPT, n8n…) can do anything you can, under the same rules: gapless numbering, closed quarters and VERI\*FACTU. The repository ships a skill that teaches agents the whole API and when to stop and ask you.
+cuentalibre's API is the one the app uses, so an AI agent (Claude Code, Codex, a ChatGPT GPT, n8n…) can do anything you can, under the same rules: gapless numbering and closed quarters. The repository ships a skill that teaches agents the whole API and when to stop and ask you.
 
 ### 1. Create a key
 
@@ -248,7 +242,7 @@ selfhost/              Self-hosting: one image with the app and the API, plus Po
 .agents/skills/        The cuentalibre skill for AI agents (.claude/skills links to it)
 ```
 
-More in [apps/api/README.md](apps/api/README.md) (endpoints, sync, VERI\*FACTU, building the images), [deploy/README.md](deploy/README.md) (how cuentalibre online is operated) and [AGENTS.md](AGENTS.md) (conventions for contributors and coding agents).
+More in [apps/api/README.md](apps/api/README.md) (endpoints, sync, building the images), [deploy/README.md](deploy/README.md) (how cuentalibre online is operated) and [AGENTS.md](AGENTS.md) (conventions for contributors and coding agents).
 
 The web app's design system reference page is at `/sistema-visual`.
 

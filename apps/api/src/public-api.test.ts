@@ -1,16 +1,11 @@
-import {
-  DEFAULT_ORGANIZATION_SETTINGS,
-  type ApiKey,
-  type CreatedApiKey,
-  type SalesDocument,
-} from "@cuentalibre/contracts";
+import { type ApiKey, type CreatedApiKey, type SalesDocument } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { apikey, membership, session } from "./db/schema";
 import { MAX_API_KEYS } from "./routes/api-keys";
 import { addOrganization, app, db, env, withApiKey, type Client } from "./test/harness";
-import { fakeAeat, runJobs } from "./test/outbox";
+
 import { client, document, errorCode, issuer, line, member, send } from "./test/sync";
 
 async function createKey(user: Client, body: Record<string, unknown> = { name: "Agente" }) {
@@ -109,10 +104,7 @@ describe("API keys", () => {
 
 describe("public API", () => {
   it("creates a draft, issues it and reads the invoice", async () => {
-    const { ana, norte, api } = await agent();
-    // Under VERI*FACTU, so the issued invoice can't be changed
-    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "verifactu" as const };
-    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
+    const { norte, api } = await agent();
     const { id: _, ...draft } = document(norte.id);
     const created = await api.request("/v1/sales-documents", { method: "POST", body: draft });
     expect(created.status).toBe(201);
@@ -132,42 +124,6 @@ describe("public API", () => {
     };
     expect(listed.data.map((d) => d.number)).toEqual(["2026-0001"]);
     expect((await (await api.request("/v1/sales-documents?from=2026-11-01")).json()) as object).toEqual({ data: [] });
-
-    const changed = await api.request(`/v1/sales-documents/${id}`, { method: "PATCH", body: { publicNotes: "Otra" } });
-    expect(changed.status).toBe(409);
-    expect(await errorCode(changed)).toBe("invoice_issued");
-    expect((await api.request(`/v1/sales-documents/${id}`, { method: "DELETE" })).status).toBe(409);
-  });
-
-  it("corrects the VERI*FACTU record of an invoice the AEAT rejected", async () => {
-    const { ana, norte, api } = await agent();
-    const verifactu = {
-      ...DEFAULT_ORGANIZATION_SETTINGS.verifactu,
-      system: "verifactu" as const,
-      startDate: "2026-01-01",
-    };
-    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
-    const { id: _, ...invoice } = document(norte.id, { kind: "invoice" });
-    const { id } = (await (
-      await api.request("/v1/invoices", { method: "POST", body: invoice })
-    ).json()) as SalesDocument;
-    const fixed = { name: "Norte Diseño SL", taxId: "B12345674" };
-    const path = `/v1/sales-documents/${id}/correct-record`;
-
-    const early = await api.request(path, { method: "POST", body: { client: fixed } });
-    expect(early.status).toBe(409);
-    expect(await errorCode(early)).toBe("record_pending");
-
-    const aeat = fakeAeat();
-    aeat.answers.set("2026-0001", { status: "Incorrecto", code: "4104", message: "NIF no identificado" });
-    await runJobs(aeat.transport);
-    const corrected = await api.request(path, { method: "POST", body: { client: fixed } });
-    expect(corrected.status).toBe(200);
-    expect(await corrected.json()).toMatchObject({
-      id,
-      number: "2026-0001",
-      issued: { client: fixed, verifactu: { status: "pending" }, totals: { total: 106000 } },
-    });
   });
 
   it("issues a new invoice directly", async () => {
@@ -178,10 +134,8 @@ describe("public API", () => {
     expect(await response.json()).toMatchObject({ kind: "invoice", number: "2026-0001" });
   });
 
-  it("revises and deletes issued invoices of a business exempt from VERI*FACTU while the quarter is open", async () => {
+  it("revises and deletes issued invoices while the quarter is open", async () => {
     const { ana, norte, api } = await agent();
-    const verifactu = { ...DEFAULT_ORGANIZATION_SETTINGS.verifactu, system: "exempt" as const };
-    await send(ana, [{ type: "saveSettings", section: "verifactu", data: verifactu }]);
     const issue = async (fields: Partial<SalesDocument>) => {
       const { id: _, ...invoice } = document(norte.id, { kind: "invoice", ...fields });
       const response = await api.request("/v1/invoices", { method: "POST", body: invoice });

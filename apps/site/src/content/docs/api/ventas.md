@@ -7,7 +7,7 @@ order: 4
 
 Las facturas, los borradores, los presupuestos y los albaranes son **documentos de venta**, y se distinguen por `kind`: `invoice`, `draft`, `quote` o `deliveryNote`.
 
-Los borradores, los presupuestos y los albaranes se crean y se cambian libremente. Las facturas solo nacen al **emitirlas**: el servidor les da el siguiente número de su serie y guarda los datos del cliente y los totales. Que después se puedan editar o borrar depende de VERI\*FACTU y del trimestre: lo explica [Editar una factura emitida](#editar-una-factura-emitida).
+Los borradores, los presupuestos y los albaranes se crean y se cambian libremente. Las facturas solo nacen al **emitirlas**: el servidor les da el siguiente número de su serie y guarda los datos del cliente y los totales. Que después se puedan editar o borrar depende del trimestre: lo explica [Editar una factura emitida](#editar-una-factura-emitida).
 
 ## Rutas
 
@@ -20,7 +20,6 @@ Los borradores, los presupuestos y los albaranes se crean y se cambian librement
 | `DELETE /v1/sales-documents/{id}`     | Lo borra. Una factura emitida, solo [si se puede editar](#editar-una-factura-emitida).                     |
 | `POST /v1/invoices`                   | Emite una factura nueva.                                                                                   |
 | `POST /v1/sales-documents/{id}/issue` | Emite un borrador tal como está.                                                                           |
-| `POST /v1/sales-documents/{id}/correct-record` | Corrige el registro de VERI\*FACTU que la AEAT rechazó o aceptó con errores ([subsanación](#corregir-un-registro-rechazado)). |
 
 ## Campos
 
@@ -49,11 +48,9 @@ Los borradores, los presupuestos y los albaranes se crean y se cambian librement
 | `privateNotes`                   | texto                                                       | Obligatorio (puede ir vacío). Solo se ve en cuentalibre.                                                                                             |
 | `language`, `numberFormat`       | texto                                                       | Idioma y formato del documento; vacíos, los del cliente.                                                                                             |
 | `tags`, `attachments`            | listas                                                      | Etiquetas y [archivos](/docs/api/archivos).                                                                                                          |
-| `issued`                         | objeto                                                      | Solo lectura, en facturas emitidas: `client` (los datos fiscales congelados), `totals` y, con VERI\*FACTU, `verifactu` (`status`, `qrUrl`, `error`, `issuerError`). |
+| `issued`                         | objeto                                                      | Solo lectura, en facturas emitidas: `client` (los datos fiscales congelados) y `totals`. |
 
 Los totales de una factura emitida (`issued.totals`) van en céntimos: `base`, `vat`, `surcharge`, `withholding`, `supplies`, `total` y `vatBreakdown` (base y cuota por tipo de IVA). El total es base + IVA + recargo − retención + suplidos.
-
-El estado de VERI\*FACTU (`issued.verifactu.status`) es `pending`, `accepted`, `acceptedWithErrors` o `rejected`.
 
 El estado de una factura sigue a sus cobros: es `paid` cuando los `payments` cubren el total y `pending` mientras no. Para marcarla como cobrada, añade el cobro.
 
@@ -124,42 +121,19 @@ Se rechaza (`400` o `409`) una factura:
 - en un trimestre cerrado;
 - rectificativa que no indique en `rectifiesId` una factura emitida de la serie normal, o normal que lo indique;
 - en una serie desactivada (`409 series_inactive`) o que no es de su tipo;
-- si al negocio le falta el NIF, el nombre fiscal o la dirección (`400 issuer_missing`): la razón social de una sociedad, o el nombre y el primer apellido de un autónomo, y la dirección, el código postal y la población;
-- con VERI\*FACTU, si el cliente no tiene NIF.
+- si al negocio le falta el NIF, el nombre fiscal o la dirección (`400 issuer_missing`): la razón social de una sociedad, o el nombre y el primer apellido de un autónomo, y la dirección, el código postal y la población.
 
 Para importar una factura emitida con otro programa conservando su número, usa el comando [`issue` con `number`](/docs/api/sincronizacion#post-v1commands).
 
-Con VERI\*FACTU activado, emitir crea además el registro de facturación y lo envía a la Agencia Tributaria en segundo plano; su estado aparece en `issued.verifactu`.
-
-Si es un agente quien emite, haz que te enseñe antes el borrador: con VERI\*FACTU, una factura emitida ya no se puede cambiar.
-
-## Corregir un registro rechazado
-
-Si la AEAT rechaza el registro de una factura (`issued.verifactu.status: "rejected"`) o lo acepta con errores (`acceptedWithErrors`), `issued.verifactu.error` dice por qué. Casi siempre son los datos del cliente, como un NIF que no está en el censo. Envía los datos fiscales del cliente tal como debían ser:
-
-```sh
-curl https://api.cuentalibre.es/v1/sales-documents/01a19755-983c-7005-9eb6-9052a9c525ea/correct-record \
-  -H "Authorization: Bearer fsk_…" -H "Content-Type: application/json" \
-  -d '{ "client": { "name": "Estudio Norte SL", "taxId": "B12345674", "country": "España" } }'
-```
-
-La factura toma esos datos y se envía a la AEAT un registro nuevo que corrige el anterior (subsanación), con el nombre del emisor como lo tenga ahora el perfil del negocio. Mientras llega la respuesta, `issued.verifactu.status` vuelve a `pending`. El número, la fecha y los importes no cambian así: para eso hay que emitir una rectificativa.
-
-Si lo que la AEAT rechazó es tu NIF y nombre (`issued.verifactu.issuerError: true`), corrígelos antes en el [perfil del negocio](/docs/api/ajustes) y envía los datos del cliente tal como están en `issued.client`.
-
-Responde `409 record_pending` si la AEAT aún no ha contestado al registro, `409 record_accepted` si lo aceptó sin errores, `409 not_recorded` si la factura no tiene registro y `409 quarter_closed` si su trimestre está cerrado. Un NIF que no cabe en el registro responde `400`.
+Si es un agente quien emite, haz que te enseñe antes el borrador.
 
 ## Editar una factura emitida
 
-Una factura emitida se puede editar con `PATCH` y borrar con `DELETE` mientras se cumplan las tres condiciones:
-
-1. La empresa está **exenta de VERI\*FACTU** (Configuración › VERI\*FACTU).
-2. La factura **no tiene registro de VERI\*FACTU**: si se emitió con VERI\*FACTU activado, sigue fija aunque después la empresa pase a exenta.
-3. Su **trimestre está abierto**.
+Una factura emitida se puede editar con `PATCH` y borrar con `DELETE` mientras su **trimestre esté abierto**.
 
 Al editarla se recalculan sus totales y, si cambias el cliente, sus datos fiscales. Lo que no cambia nunca es su sitio en la numeración: `kind`, `number`, `series`, `seriesId` y `rectifiesId` (`400`). La fecha puede moverse, pero sin salir del año (que forma parte del número), sin entrar en un trimestre cerrado y sin quedar desordenada respecto a las otras facturas de la serie (`409 date_out_of_order`). Al borrar una factura, su número queda libre para la siguiente.
 
-Si no se cumple alguna condición, responde `409 invoice_issued` o `409 quarter_closed`, y la factura solo admite cambios en `status`, `payments`, `tags`, `attachments` y `privateNotes`. Para corregir otra cosa hay que emitir una rectificativa.
+Con el trimestre cerrado responde `409 quarter_closed`, y la factura solo admite cambios en `status`, `payments`, `tags`, `attachments` y `privateNotes`. Para corregir otra cosa hay que emitir una rectificativa.
 
 ## Rectificar una factura
 

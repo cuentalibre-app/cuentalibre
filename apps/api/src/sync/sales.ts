@@ -3,7 +3,6 @@ import {
   invoiceSeriesOf,
   storedSalesDocumentSchema,
   type IssuedSnapshot,
-  type VerifactuRecordInfo,
 } from "@cuentalibre/contracts";
 import {
   DEFAULT_RECTIFICATION,
@@ -19,20 +18,12 @@ import {
   paymentStatus,
   rectifiedPastZero,
   type Cents,
-  type VerifactuEnvironment,
 } from "@cuentalibre/core";
 import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import type { z } from "zod";
 import type { Tx } from "../db/client";
 import { contact, salesDocument, salesLine, salesPayment } from "../db/schema";
 import { ApiError } from "../errors";
-import {
-  recordInfoByInvoice,
-  recordsOf,
-  registerCorrection,
-  registerInvoice,
-  usesVerifactu,
-} from "../verifactu/record";
 import { checkQuarterOpen } from "./closing";
 import { checkAttachments } from "./files";
 import { alreadyExists, mergeChanges, parseOr, repeatedId, touchedFields } from "./records";
@@ -69,12 +60,7 @@ const MUTABLE_WHEN_ISSUED = new Set<string>(["status", "payments", "tags", "atta
 const FIXED_WHEN_REVISED = new Set<string>(["kind", "number", "series", "seriesId", "rectifiesId", "rectification"]);
 
 /** The record as the API returns it: optional fields that are empty are left out. */
-export function toSalesDocument(
-  row: DocumentRow,
-  lines: LineRow[],
-  payments: PaymentRow[],
-  verifactu?: VerifactuRecordInfo,
-): StoredSalesDocument {
+export function toSalesDocument(row: DocumentRow, lines: LineRow[], payments: PaymentRow[]): StoredSalesDocument {
   const out: Record<string, unknown> = {};
   for (const field of FIELDS) {
     const value = row[field as keyof DocumentRow];
@@ -110,7 +96,6 @@ export function toSalesDocument(
         vatBreakdown: row.vatBreakdown!,
       },
       issuedAt: row.issuedAt.toISOString(),
-      ...(verifactu && { verifactu }),
     } satisfies IssuedSnapshot;
   }
   return out as StoredSalesDocument;
@@ -143,10 +128,6 @@ function parse(data: unknown): StoredSalesDocument {
 
 function notFound(): never {
   throw new ApiError(404, "not_found", "Sales document not found.");
-}
-
-function issuedError(): never {
-  throw new ApiError(409, "invoice_issued", "Issued invoices can't be changed or deleted; rectify them instead.");
 }
 
 async function liveRow(tx: Tx, organizationId: string, id: string) {
@@ -311,8 +292,7 @@ export async function updateSalesDocument(
 }
 
 /**
- * Rewrites an issued invoice, as a business exempt from VERI*FACTU may while
- * the invoice has no record and its quarter is open, like deleting it. Its
+ * Rewrites an issued invoice while its quarter is open, like deleting it. Its
  * number and series stay; a new date must keep it in order within them.
  */
 async function reviseInvoice(
@@ -323,8 +303,6 @@ async function reviseInvoice(
   touched: string[],
 ) {
   const settings = await readSettings(tx, organizationId);
-  if (settings.verifactu.system !== "exempt" || (await recordInfoByInvoice(tx, organizationId, [current.id])).size > 0)
-    issuedError();
   const fixed = touched.find((field) => FIXED_WHEN_REVISED.has(field));
   if (fixed) invalid(`${fixed}: can't be changed on an issued invoice.`);
   await checkQuarterOpen(tx, organizationId, current.issuedOn);
@@ -363,9 +341,8 @@ async function reviseInvoice(
 }
 
 /**
- * Deletes a document. An issued invoice can only be deleted by a business
- * exempt from VERI*FACTU, never once it has a record, while its quarter is
- * open, if it is the last of its series (numbering stays gapless) and no
+ * Deletes a document. An issued invoice can only be deleted while its quarter
+ * is open, if it is the last of its series (numbering stays gapless) and no
  * rectifying invoice corrects it.
  */
 export async function deleteSalesDocument(tx: Tx, organizationId: string, id: string) {
@@ -373,8 +350,6 @@ export async function deleteSalesDocument(tx: Tx, organizationId: string, id: st
   if (!row) notFound();
   if (row.kind === "invoice") {
     const settings = await readSettings(tx, organizationId);
-    if (settings.verifactu.system !== "exempt" || (await recordInfoByInvoice(tx, organizationId, [id])).size > 0)
-      issuedError();
     await checkQuarterOpen(tx, organizationId, row.issuedOn);
     const series = invoiceSeriesOf(
       { series: row.series, seriesId: row.seriesId ?? undefined },
@@ -408,57 +383,11 @@ export async function deleteSalesDocument(tx: Tx, organizationId: string, id: st
 }
 
 /**
- * Corrects the VERI*FACTU record of an issued invoice that the AEAT rejected
- * or accepted with errors (subsanación): the invoice takes the client's fiscal
- * data as given, and a new record with it is sent. Number, date and amounts
- * can't change this way; they take a rectifying invoice. A record the AEAT
- * hasn't answered yet, or took without errors, isn't corrected.
- */
-export async function correctRecord(tx: Tx, organizationId: string, id: string, client: IssuedSnapshot["client"]) {
-  const row = await liveRow(tx, organizationId, id);
-  if (!row) notFound();
-  if (row.kind !== "invoice") invalid("Only issued invoices have a VERI*FACTU record.");
-  const records = await recordsOf(tx, organizationId, id);
-  const latest = records.at(-1);
-  if (!latest) throw new ApiError(409, "not_recorded", "This invoice has no VERI*FACTU record to correct.");
-  if (latest.status === "pending")
-    throw new ApiError(
-      409,
-      "record_pending",
-      "Its record is waiting for the AEAT's answer; correct it once it arrives.",
-    );
-  if (latest.status === "accepted")
-    throw new ApiError(
-      409,
-      "record_accepted",
-      "The AEAT recorded it without errors; correct the invoice with a rectifying invoice.",
-    );
-  await checkQuarterOpen(tx, organizationId, row.issuedOn);
-  const snapshot = Object.fromEntries(
-    Object.entries(client)
-      .map(([field, value]) => [field, value?.trim()])
-      .filter(([, value]) => value),
-  ) as IssuedSnapshot["client"];
-  if (!snapshot.name) invalid("client.name: the client needs a name.");
-  await registerCorrection(tx, organizationId, await readSettings(tx, organizationId), records, snapshot);
-  await tx
-    .update(salesDocument)
-    .set({ clientSnapshot: snapshot })
-    .where(and(eq(salesDocument.organizationId, organizationId), eq(salesDocument.id, id)));
-}
-
-/**
  * Issues an invoice: a new one, or the draft with the same ID. It takes the
  * next number of its series (or `number`, for an imported invoice), and its
  * client data and totals are frozen.
  */
-export async function issueInvoice(
-  tx: Tx,
-  organizationId: string,
-  data: unknown,
-  number: string | undefined,
-  verifactuEnvironment: VerifactuEnvironment,
-) {
+export async function issueInvoice(tx: Tx, organizationId: string, data: unknown, number: string | undefined) {
   const { issued: _, ...record } = parse(data);
   const existing = await liveRow(tx, organizationId, record.id);
   if (existing?.kind === "invoice") throw new ApiError(409, "already_issued", "This invoice is already issued.");
@@ -477,7 +406,7 @@ export async function issueInvoice(
   const client = (await checkClient(tx, organizationId, record.clientId))!;
   if (record.lines.length === 0) invalid("lines: an invoice needs at least one line.");
   await checkQuarterOpen(tx, organizationId, record.issuedOn);
-  const original = await checkRectified(tx, organizationId, record, number !== undefined);
+  await checkRectified(tx, organizationId, record, number !== undefined);
 
   const settings = await readSettings(tx, organizationId);
   const missing = missingIssuerFields(settings.businessProfile);
@@ -518,7 +447,7 @@ export async function issueInvoice(
     ...record,
     kind: "invoice" as const,
     number: number ?? nextInvoiceNumber(series.mask, record.issuedOn, issued),
-    // Stated on the invoice, so its record and any later read agree on it
+    // Stated on the invoice, so any later read agrees on it
     ...(record.series === "rectifying" && { rectification: record.rectification ?? DEFAULT_RECTIFICATION }),
   };
   const values = { ...toColumns(invoice), organizationId, issuedAt: new Date() };
@@ -530,29 +459,12 @@ export async function issueInvoice(
   else await tx.insert(salesDocument).values(values);
   await writeLines(tx, organizationId, invoice);
   await writePayments(tx, organizationId, invoice);
-
-  const lines = await freezeInvoice(tx, organizationId, invoice, client);
-
-  // Invoices issued elsewhere and imported were recorded by the software that issued them
-  if (number === undefined && usesVerifactu(settings, invoice.issuedOn))
-    await registerInvoice(
-      tx,
-      organizationId,
-      settings,
-      {
-        ...invoice,
-        number: invoice.number,
-        lines: lines.map((line) => ({ ...line, surchargeRate: line.surchargeRate ?? undefined })),
-        ...(original && { original }),
-      },
-      client,
-      verifactuEnvironment,
-    );
+  await freezeInvoice(tx, organizationId, invoice, client);
 }
 
 /**
  * Stores what an issued invoice keeps as it was: its client's fiscal data and
- * its totals, from the lines as stored so they match what the record returns.
+ * its totals, from the lines as stored so they match what a later read returns.
  * Answers the stored lines.
  */
 async function freezeInvoice(
@@ -684,10 +596,7 @@ export async function liveSalesDocuments(tx: Tx, organizationId: string) {
     .where(and(eq(salesDocument.organizationId, organizationId), isNull(salesDocument.deletedAt)))
     .orderBy(salesDocument.id);
   const { lines, payments } = await detailsOf(tx, organizationId);
-  const records = await recordInfoByInvoice(tx, organizationId);
-  return rows.map((row) =>
-    toSalesDocument(row, lines.get(row.id) ?? [], payments.get(row.id) ?? [], records.get(row.id)),
-  );
+  return rows.map((row) => toSalesDocument(row, lines.get(row.id) ?? [], payments.get(row.id) ?? []));
 }
 
 /** Current rows, tombstones included, for the given IDs, with their lines. */
@@ -702,14 +611,9 @@ export async function salesDocumentsById(tx: Tx, organizationId: string, ids: st
     organizationId,
     rows.filter((row) => !row.deletedAt).map((row) => row.id),
   );
-  const records = await recordInfoByInvoice(
-    tx,
-    organizationId,
-    rows.filter((row) => row.issuedAt).map((row) => row.id),
-  );
   return rows.map((row) => ({
     id: row.id,
     deleted: row.deletedAt !== null,
-    record: toSalesDocument(row, lines.get(row.id) ?? [], payments.get(row.id) ?? [], records.get(row.id)),
+    record: toSalesDocument(row, lines.get(row.id) ?? [], payments.get(row.id) ?? []),
   }));
 }

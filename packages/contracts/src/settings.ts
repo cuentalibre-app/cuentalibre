@@ -152,59 +152,6 @@ export const ledgerAccountSettingsSchema = z.object({
 });
 export type LedgerAccountSettings = z.infer<typeof ledgerAccountSettingsSchema>;
 
-export const invoicingSystemSchema = z.enum(["verifactu", "exempt"]);
-export type InvoicingSystem = z.infer<typeof invoicingSystemSchema>;
-
-export const verifactuSetupSchema = z.object({
-  system: invoicingSystemSchema,
-  /** Date the system applies from. */
-  startDate: isoDate,
-});
-export type VerifactuSetup = z.infer<typeof verifactuSetupSchema>;
-
-/**
- * What the AEAT's census answered about the issuer's NIF and name
- * (VNifV2): `identified`; `similar` when the name differs slightly from the
- * census's; `notIdentified`; or, for companies, `deregistered` and `revoked`
- * when the NIF is no longer active.
- */
-export const taxIdCheckResultSchema = z.enum(["identified", "similar", "notIdentified", "deregistered", "revoked"]);
-export type TaxIdCheckResult = z.infer<typeof taxIdCheckResultSchema>;
-
-/**
- * The last check of the issuer's NIF and name with the AEAT. The server
- * writes it, after VERI*FACTU is switched on or the NIF or name change; it
- * holds the pair it checked, so a check of an earlier pair reads as pending.
- */
-export const verifactuCheckSchema = z.object({
-  taxId: z.string(),
-  name: z.string(),
-  /** Null until the AEAT has answered. */
-  result: taxIdCheckResultSchema.nullable(),
-  /** The name the census holds for the NIF, when the AEAT gives it. */
-  censusName: z.string(),
-  checkedAt: z.iso.datetime().nullable(),
-});
-export type VerifactuCheck = z.infer<typeof verifactuCheckSchema>;
-
-/**
- * What the AEAT's census answered about a client's NIF and name, for
- * businesses that use VERI*FACTU: the AEAT rejects records whose client it
- * doesn't know (error 1239). The server writes one per NIF and name it
- * checked; a client whose NIF and name have none hasn't been checked yet.
- */
-export const clientTaxIdCheckSchema = z.object({
-  id: z.uuid(),
-  /** As `censusEntry` gives it. */
-  taxId: z.string(),
-  name: z.string(),
-  result: taxIdCheckResultSchema,
-  /** The name the census holds for the NIF, when the AEAT gives it. */
-  censusName: z.string(),
-  checkedAt: z.iso.datetime(),
-});
-export type ClientTaxIdCheck = z.infer<typeof clientTaxIdCheckSchema>;
-
 /** People who work in the company, or an outside advisor (gestoría) who keeps its books. */
 export const userKindSchema = z.enum(["member", "advisor"]);
 export type UserKind = z.infer<typeof userKindSchema>;

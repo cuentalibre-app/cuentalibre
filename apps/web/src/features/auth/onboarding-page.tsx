@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { ChevronLeft, Loader2, Star, TriangleAlert } from "lucide-react";
-import { isVerifactuMandatory, normalizeTaxId, verifactuMandatoryFrom } from "@cuentalibre/core";
+import { normalizeTaxId } from "@cuentalibre/core";
 import type {
   BillingPeriod,
   BusinessProfile,
   FiscalRegion,
   IncomeTaxMethod,
-  InvoicingSystem,
   TaxSetup,
   VatRegime,
 } from "@cuentalibre/contracts";
-import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
@@ -21,7 +19,6 @@ import { currentBackend } from "@/data/backend";
 import { AddressFields } from "@/features/contacts/contact-fields";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ActivityPicker } from "@/features/settings/activity-picker";
-import { useVerifactuAvailable } from "@/features/settings/compliance-store";
 import { localDate, TRIAL_DAYS } from "@/features/settings/billing-model";
 import { PeriodPicker } from "@/features/settings/period-picker";
 import { formatDate } from "@/lib/format";
@@ -44,7 +41,6 @@ import {
   signInMethods,
   startCheckout,
 } from "./auth-api";
-import verifactuLogo from "./assets/verifactu.webp";
 import { EmailCode } from "./email-code";
 import { AuthButton, AuthLayout, runAction } from "./auth-layout";
 import {
@@ -295,86 +291,6 @@ function ActivityStep({ tax, set }: { tax: TaxSetup; set: SetTax }) {
   return <ActivityPicker existing={tax.activities} onPick={(a) => set("activities", [a])} listClassName="max-h-64" />;
 }
 
-const SYSTEMS: { value: InvoicingSystem; label: string; hint: string }[] = [
-  {
-    value: "exempt",
-    label: "Todavía no",
-    hint: "Emites tus facturas como hasta ahora, sin enviarlas a Hacienda.",
-  },
-  {
-    value: "verifactu",
-    label: "Sí, activar",
-    hint: "Cada factura se envía a la AEAT al emitirla. Una vez emitas la primera, sigues en el sistema hasta el 31 de diciembre.",
-  },
-];
-
-/** Until the instance sends VERI*FACTU records, turning it on shows as coming soon and can't be chosen. */
-function VerifactuStep({ setup, set }: { setup: Setup; set: (system: InvoicingSystem) => void }) {
-  const available = useVerifactuAvailable();
-  const kind = setup.profile.kind;
-  const mandatoryFrom = verifactuMandatoryFrom(kind);
-  const mandatory = isVerifactuMandatory(kind, setup.verifactu.startDate);
-  return (
-    <>
-      <div role="radiogroup" aria-label="Sistema de facturación" className="flex flex-col gap-3">
-        {SYSTEMS.map((option) => {
-          const selected = setup.verifactu.system === option.value;
-          const soon = option.value === "verifactu" && !available;
-          return (
-            <label
-              key={option.value}
-              className={cn(
-                "flex items-start gap-3 rounded-xl border px-4 py-3.5 transition-[background-color,border-color] duration-150",
-                soon ? "cursor-not-allowed" : "cursor-pointer hover:bg-accent",
-                selected ? "border-primary ring-1 ring-primary" : "border-border",
-              )}
-            >
-              <input
-                type="radio"
-                name="verifactu"
-                checked={selected}
-                disabled={soon}
-                onChange={() => set(option.value)}
-                className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <span className="flex flex-col gap-0.5">
-                <span
-                  className={cn(
-                    "flex flex-wrap items-center gap-x-2 gap-y-1 font-medium",
-                    soon && "text-muted-foreground",
-                  )}
-                >
-                  {option.label}
-                  {option.value === "verifactu" && (
-                    // The logo is drawn for a light background
-                    <img
-                      src={verifactuLogo}
-                      alt="VERI*FACTU"
-                      width={480}
-                      height={113}
-                      className={cn(
-                        "dark:rounded h-6 w-auto dark:box-content dark:bg-white dark:px-1.5 dark:py-0.5",
-                        soon && "opacity-50",
-                      )}
-                    />
-                  )}
-                  {soon && <Badge tone="primary">Próximamente</Badge>}
-                </span>
-                <span className={cn("text-sm text-muted-foreground", soon && "opacity-70")}>{option.hint}</span>
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      <p className="m-0 rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
-        {mandatory
-          ? `Como ${kind === "company" ? "sociedad" : "autónomo"}, VERI*FACTU ya es obligatorio para ti salvo que una resolución te exima. Podrás indicarla en Configuración › VERI*FACTU.`
-          : `Como ${kind === "company" ? "sociedad" : "autónomo"}, será obligatorio a partir del ${formatDate(mandatoryFrom)}.${available ? " Hasta entonces puedes activarlo cuando quieras en Configuración › VERI*FACTU." : ""}`}
-      </p>
-    </>
-  );
-}
-
 /**
  * Once the business exists, where the instance charges for it: straight into the app on
  * the free trial, or paying now in Stripe Checkout, which keeps the trial's days.
@@ -448,9 +364,8 @@ function PlanStep({ trialEndsAt }: { trialEndsAt: string | null }) {
 }
 
 /**
- * After signing up: a code to confirm the email, if it needs verifying, then the business's tax setup, tax ID and name, address,
- * activity and whether to send its invoices with VERI*FACTU, step by step. The business is created then, with everything
- * at once, and the app opens with the first-run tour; on Cloud, after a last step to start the trial or subscribe.
+ * After signing up: a code to confirm the email, if it needs verifying, then the business's tax setup, tax ID and name, address
+ * and activity, step by step. The business is created then, with everything at once, and the app opens with the first-run tour; on Cloud, after a last step to start the trial or subscribe.
  */
 export function OnboardingPage() {
   // The email to confirm, or null when it needs no verifying; undefined until known
@@ -586,12 +501,6 @@ export function OnboardingPage() {
             )}
             {current.key === "address" && <AddressFields compact draft={setup.profile} set={setProfile} />}
             {current.key === "activity" && <ActivityStep tax={setup.tax} set={setTax} />}
-            {current.key === "verifactu" && (
-              <VerifactuStep
-                setup={setup}
-                set={(system) => setSetup((s) => ({ ...s, verifactu: { ...s.verifactu, system } }))}
-              />
-            )}
 
             {error && (
               <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">

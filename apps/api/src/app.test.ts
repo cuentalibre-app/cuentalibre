@@ -32,18 +32,7 @@ describe("meta", () => {
   it("says whether Google sign-in is on", async () => {
     const response = await app.request("/v1/sign-in-methods");
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ google: false, email: true, billing: false, verifactu: true });
-  });
-
-  it("says whether it sends VERI*FACTU records", async () => {
-    const off = createApp({
-      db,
-      auth: createAuth(db, env, accountMailer),
-      env: { ...env, VERIFACTU_ENV: "off" },
-      storage,
-      mailer,
-    });
-    expect(await (await off.request("/v1/sign-in-methods")).json()).toMatchObject({ verifactu: false });
+    expect(await response.json()).toEqual({ google: false, email: true, billing: false });
   });
 
   it("sends people to Google when it is set up", async () => {
@@ -59,7 +48,6 @@ describe("meta", () => {
       google: true,
       email: true,
       billing: false,
-      verifactu: true,
     });
 
     const origin = env.BETTER_AUTH_URL;

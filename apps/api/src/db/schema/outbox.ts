@@ -3,13 +3,13 @@ import { bigint, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, u
 import { organization } from "./auth";
 import { createdAt } from "./columns";
 
-export type OutboxTopic = "verifactu" | "census" | "email";
+export type OutboxTopic = "email";
 
 /**
- * Background work: submissions to the AEAT, checks of the issuer with its census, and emails. Jobs are written in
- * the same transaction as the change that needs them, and a worker runs them
- * (`src/outbox/worker.ts`), taking each with `FOR UPDATE SKIP LOCKED` and a
- * lease so several API processes can share the table.
+ * Background work: emails. Jobs are written in the same transaction as the
+ * change that needs them, and a worker runs them (`src/outbox/worker.ts`),
+ * taking each with `FOR UPDATE SKIP LOCKED` and a lease so several API
+ * processes can share the table.
  */
 export const outbox = pgTable(
   "outbox",

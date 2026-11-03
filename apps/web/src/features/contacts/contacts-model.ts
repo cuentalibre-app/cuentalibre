@@ -1,6 +1,5 @@
-import { SPAIN, censusEntry, checkTaxId, hasEuVatPrefix, isOtherEuCountry } from "@cuentalibre/core";
-import type { ClientTaxIdCheck, Contact, ContactRole } from "@cuentalibre/contracts";
-import { censusValidation, type AeatValidation } from "@/features/settings/settings-model";
+import { SPAIN, checkTaxId, hasEuVatPrefix, isOtherEuCountry } from "@cuentalibre/core";
+import type { Contact, ContactRole } from "@cuentalibre/contracts";
 
 export interface RoleConfig {
   /** "Clientes", for titles and the sidebar. */
@@ -156,21 +155,6 @@ export function formatAddress(contact: Contact): string {
 }
 
 /** Intra-EU when it is in another member state and registered in VIES. */
-/**
- * Whether the AEAT recognises a client's NIF and name, from the server's
- * check of that pair; pending until it answers. Null for clients the census
- * doesn't hold or whose NIF isn't well formed: there is nothing to ask.
- */
-export function clientAeatValidation(
-  contact: Pick<Contact, "taxId" | "name" | "country">,
-  checks: ClientTaxIdCheck[],
-): AeatValidation | null {
-  const entry = censusEntry(contact);
-  if (!entry) return null;
-  const check = checks.find((c) => c.taxId === entry.taxId && c.name === entry.name);
-  return check ? censusValidation(check.result, check.censusName) : { state: "pending" };
-}
-
 export const isIntraEu = (contact: Contact) => isOtherEuCountry(countryOf(contact)) && !!contact.vies;
 
 /** vCard 3.0 for the address book, as Contasimple's "Descargar vCard". */

@@ -336,17 +336,3 @@ export function provinceFromPostalCode(postalCode: string): string | null {
   if (!match) return null;
   return PROVINCES[Number(match[1]) - 1] ?? null;
 }
-
-/**
- * The NIF and name of a Spanish contact as the AEAT's census is asked about
- * them, or null when there is nothing to ask: a foreign contact (the census
- * only holds Spanish taxpayers), or a NIF that isn't well formed, which the
- * contact form already flags. VERI*FACTU records name the client the same way.
- */
-export function censusEntry(contact: { taxId: string; name: string; country?: string | null }) {
-  if (contact.country && contact.country !== SPAIN) return null;
-  const taxId = normalizeTaxId(contact.taxId);
-  const name = contact.name.trim().replace(/\s+/g, " ");
-  if (taxId.length !== 9 || !name || !checkSpanishTaxId(taxId).valid) return null;
-  return { taxId, name };
-}

@@ -3,13 +3,12 @@ import { cents, sumBy, type Cents } from "./money";
 
 /*
  * Rectifying invoices (facturas rectificativas) of art. 15 RD 1619/2012 and
- * art. 80 LIVA, with the causes and methods the VERI*FACTU record names
- * (Orden HAC/1177/2024 and SuministroInformacion.xsd: ClaveTipoFacturaType,
- * ClaveTipoRectificativaType).
+ * art. 80 LIVA, with the causes (R1–R4) and methods (substitution or
+ * differences) the AEAT's keys name.
  */
 
 /**
- * Why an invoice is rectified, as the record's TipoFactura names it. R1: an
+ * Why an invoice is rectified, by the AEAT's key for it. R1: an
  * error founded in law or the causes of art. 80.1, 80.2 and 80.6 LIVA (returns,
  * discounts after the sale, price changes). R2: the client's insolvency
  * proceedings (art. 80.3). R3: unpaid debts (art. 80.4). R4: any other cause.
@@ -19,9 +18,9 @@ export const RECTIFICATION_REASONS = ["R1", "R2", "R3", "R4"] as const;
 export type RectificationReason = (typeof RECTIFICATION_REASONS)[number];
 
 /**
- * How a rectifying invoice corrects the original: by differences (TipoRectificativa
- * I), recording only the change, or by substitution (S), replacing it with the
- * corrected invoice.
+ * How a rectifying invoice corrects the original: by differences (I), recording
+ * only the change, or by substitution (S), replacing it with the corrected
+ * invoice.
  */
 export const RECTIFICATION_METHODS = ["differences", "substitution"] as const;
 export type RectificationMethod = (typeof RECTIFICATION_METHODS)[number];
@@ -39,7 +38,7 @@ export const DEFAULT_RECTIFICATION: Rectification = { reason: "R1", method: "dif
  * books and collections add it up like any other. One by substitution stores
  * the original's lines reversed, then the corrected lines: together they are
  * the change, and the corrected lines alone are the invoice that replaces the
- * original, as printed and as recorded.
+ * original, as printed.
  */
 
 /** A line with its quantity reversed, so it cancels the original. */

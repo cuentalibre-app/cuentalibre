@@ -9,12 +9,7 @@
  * them.
  */
 
-import type {
-  FiledReturn,
-  IssuedSnapshot,
-  SalesDocument,
-  SettingsSection as OrganizationSection,
-} from "@cuentalibre/contracts";
+import type { FiledReturn, SalesDocument, SettingsSection as OrganizationSection } from "@cuentalibre/contracts";
 
 /** Collections of records, named like the tables they will be stored in. */
 export type Entity =
@@ -44,8 +39,7 @@ export type Command =
   | { type: "saveSettings"; section: SettingsSection; data: unknown }
   /** Issues an invoice, new or from a draft: the server numbers it, unless `number` keeps an imported one. */
   | { type: "issue"; data: SalesDocument; number?: string }
-  /** Corrects the VERI*FACTU record the AEAT rejected or accepted with errors (subsanación) with the client fixed. */
-  | { type: "correctRecord"; id: string; client: IssuedSnapshot["client"] }
+
   /** Closes a quarter and stores its returns as filed. */
   | { type: "closeQuarter"; period: string; closedOn: string; returns?: FiledReturn[] }
   | { type: "reopenQuarter"; period: string };

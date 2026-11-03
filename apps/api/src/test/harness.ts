@@ -21,11 +21,6 @@ export const env = loadEnv({
   STORAGE_DIR: storageDir,
   FILE_MAX_BYTES: String(1024 * 1024),
   FILE_QUOTA_BYTES: String(3 * 1024 * 1024),
-  // Lets businesses turn VERI*FACTU on; tests send through a fake AEAT, never with this certificate
-  VERIFACTU_ENV: "production",
-  VERIFACTU_CERT_FILE: "/dev/null",
-  VERIFACTU_PRODUCER_NAME: "cuentalibre",
-  VERIFACTU_PRODUCER_TAX_ID: "B00000000",
 });
 export const db = createDb(env.DATABASE_URL);
 export const storage = diskStorage(storageDir);

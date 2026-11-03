@@ -109,5 +109,4 @@ Tipos históricos, solo para facturas de antes de cada cambio: `legacyProfession
 | ------------------------------------------ | ------------------------------------------------------------- |
 | Facturas y borradores (`status`)           | `pending`, `paid`                                             |
 | Presupuestos y albaranes (`status`)        | `created`, `sent`, `accepted`, `rejected`, `invoiced`         |
-| Registro de VERI\*FACTU (`issued.verifactu.status`) | `pending`, `accepted`, `acceptedWithErrors`, `rejected` |
 | Correos (`status`)                         | `queued`, `sent`, `failed`                                    |

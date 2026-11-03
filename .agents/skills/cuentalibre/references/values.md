@@ -95,7 +95,6 @@ Maximum yearly rate / maximum years: `buildings` 3 %/68 · `installations` 10 %/
 ## Statuses
 
 - Sales documents: invoices and drafts `pending`, `paid`; quotes and delivery notes `created`, `sent`, `accepted`, `rejected`, `invoiced`.
-- VERI\*FACTU record (`issued.verifactu.status`): `pending`, `accepted`, `acceptedWithErrors`, `rejected`.
 - Email: `queued`, `sent`, `failed`.
 
 ## Quarters
