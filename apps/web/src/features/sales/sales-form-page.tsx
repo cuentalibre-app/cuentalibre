@@ -50,18 +50,11 @@ import { stockShortageMessage } from "@/features/catalog/catalog-store";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
-import { useAeatValidation, useCompliance } from "@/features/settings/compliance-store";
-import { editContactPath, isIntraEu } from "@/features/contacts/contacts-model";
-import { useClientAeatValidation } from "@/features/contacts/tax-id-checks-store";
+import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros } from "@/lib/format";
-import {
-  BUSINESS_PATH,
-  defaultPaymentMethodId,
-  missingIssuerData,
-  paymentMethodOptions,
-} from "@/features/settings/settings-model";
+import { defaultPaymentMethodId, missingIssuerData, paymentMethodOptions } from "@/features/settings/settings-model";
 import { MethodDialog } from "@/features/settings/method-dialog";
 import { SettingsLink } from "@/features/settings/settings-parts";
 import { settingsStore, useSettings } from "@/features/settings/settings-store";
@@ -110,7 +103,7 @@ import { SendDialog, sendWithMailClient } from "./document-dialogs";
 import { IssuedNotice } from "./issued-notice";
 import { IssuerDialog } from "./issuer-dialog";
 import { IssuerNotice } from "./issuer-notice";
-import { salesStore, useSalesDocuments } from "./sales-store";
+import { salesStore } from "./sales-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
 const SETTINGS_PATH = "/configuracion/facturas";
@@ -338,22 +331,11 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   /** The original a rectifying invoice would take past zero, and what's left of it. */
   const [pastZero, setPastZero] = useState<{ original: SalesDocument; left: SalesLine[] } | null>(null);
   const lockedQuarterOf = useLockedQuarter();
-  const { verifactu } = useCompliance();
-  const verifactuSystem = verifactu.system;
-  const aeatValidation = useAeatValidation();
-  /** Issuing as `save` was asked to, though the AEAT doesn't recognise the issuer or the client: why, for each. */
-  const [unrecognised, setUnrecognised] = useState<{
-    asKind: SalesKind;
-    after: AfterSave;
-    issuer?: string;
-    client?: string;
-  } | null>(null);
   const issued = existing?.kind === "invoice";
   // Drafts, quotes and delivery notes are not booked, so only invoices belong to a closed quarter
   const locked = issued ? lockedQuarterOf(existing.issuedOn) : null;
-  // Issued invoices are corrected with a rectifying invoice, unless they could be deleted
-  // anyway: without VERI*FACTU, while the quarter is open, they can be revised too
-  const revisable = issued && verifactuSystem === "exempt" && !existing.issued?.verifactu && !locked;
+  // Issued invoices can be revised while their quarter is open, as they could be deleted
+  const revisable = issued && !locked;
   const readOnly = issued && !revisable;
   // New invoices and drafts are the documents this form issues
   const issuable = (kind === "invoice" && !existing) || kind === "draft";
@@ -399,9 +381,8 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
   // A substitution keeps the original's withholding and kind of operation, so it books the change
   const substitution = rectifying && form.rectification.method === "substitution" && rectified;
   const client = clients.find((c) => c.id === form.clientId);
-  const clientAeat = useClientAeatValidation(client);
-  // An issued invoice shows the client as it froze them, which correcting its VERI*FACTU record may change
-  const frozen = (useSalesDocuments().find((d) => d.id === existing?.id) ?? existing)?.issued?.client;
+  // An issued invoice shows the client as it froze them
+  const frozen = existing?.issued?.client;
   const summaryClient = client && frozen ? { ...client, ...EMPTY_ADDRESS, ...frozen } : client;
   // New lines take the client's default discount
   const lineDiscount = client?.discount ? formatDecimalInput(client.discount) : "0";
@@ -557,7 +538,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     return next;
   }
 
-  function save(asKind: SalesKind, after: AfterSave = "list", issuerReady = false, unrecognisedOk = false) {
+  function save(asKind: SalesKind, after: AfterSave = "list", issuerReady = false) {
     if (readOnly) return;
     const found = validate(asKind);
     setErrors(found);
@@ -576,14 +557,6 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
     // Asked once the rest is valid, so saving the profile goes on to issue
     if (asKind === "invoice" && !issued && missingIssuer && !issuerReady) {
       setAskingIssuer({ issue: { asKind, after } });
-      return;
-    }
-    // The AEAT would reject its record: VERI*FACTU checks the issuer and the client against its census
-    const recorded = verifactuSystem === "verifactu" && form.issuedOn >= verifactu.startDate;
-    const issuerProblem = aeatValidation.state === "no" ? aeatValidation.reason : undefined;
-    const clientProblem = clientAeat?.state === "no" ? clientAeat.reason : undefined;
-    if (asKind === "invoice" && !issued && recorded && (issuerProblem || clientProblem) && !unrecognisedOk) {
-      setUnrecognised({ asKind, after, issuer: issuerProblem, client: clientProblem });
       return;
     }
 
@@ -789,67 +762,6 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
               <div className="flex justify-end">
                 <DialogClose asChild>
                   <Button>Revisar los conceptos</Button>
-                </DialogClose>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-        {unrecognised && (
-          <Dialog open onOpenChange={(open) => !open && setUnrecognised(null)}>
-            <DialogContent className="max-w-md">
-              <DialogTitle>
-                {unrecognised.issuer && unrecognised.client
-                  ? "La AEAT no reconoce tus datos ni los del cliente"
-                  : unrecognised.issuer
-                    ? "La AEAT no reconoce tu NIF y nombre"
-                    : "La AEAT no reconoce el NIF del cliente"}
-              </DialogTitle>
-              <DialogDescription asChild>
-                <div className="flex flex-col gap-2">
-                  {unrecognised.issuer && (
-                    <p className="m-0">
-                      {unrecognised.client && "Tus datos: "}
-                      {unrecognised.issuer} Si emites la factura, rechazará su registro VERI*FACTU hasta que corrijas
-                      tus datos en{" "}
-                      <Link
-                        to={BUSINESS_PATH}
-                        target="_blank"
-                        className="font-medium text-primary no-underline hover:text-primary-hover"
-                      >
-                        Datos de la empresa
-                      </Link>
-                      .
-                    </p>
-                  )}
-                  {unrecognised.client && client && (
-                    <p className="m-0">
-                      {client.name}: {unrecognised.client} Si emites la factura, rechazará su registro VERI*FACTU.
-                      Corrige su NIF o nombre en{" "}
-                      <Link
-                        to={editContactPath("client", client.id)}
-                        target="_blank"
-                        className="font-medium text-primary no-underline hover:text-primary-hover"
-                      >
-                        su ficha
-                      </Link>{" "}
-                      antes de emitirla.
-                    </p>
-                  )}
-                </div>
-              </DialogDescription>
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    const { asKind, after } = unrecognised;
-                    setUnrecognised(null);
-                    save(asKind, after, true, true);
-                  }}
-                >
-                  Emitir igualmente
-                </Button>
-                <DialogClose asChild>
-                  <Button>Volver a la factura</Button>
                 </DialogClose>
               </div>
             </DialogContent>

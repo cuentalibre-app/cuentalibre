@@ -75,10 +75,6 @@
       <img src=".github/assets/screens/perdidas-ganancias.webp" alt="Pérdidas y ganancias">
       <p align="center"><b>Pérdidas y ganancias</b>: tu año frente al anterior, exportable a PDF.</p>
     </td>
-    <td valign="top">
-      <img src=".github/assets/screens/verifactu.webp" alt="Ajustes de VERI*FACTU">
-      <p align="center"><b>VERI*FACTU</b>: el sistema de facturación que exige la AEAT, incluido.</p>
-    </td>
   </tr>
 </table>
 
@@ -112,7 +108,6 @@ Puedes usarlo de dos formas:
 - **🏦 Cobros y pagos**: cada cobro y pago de tus facturas y gastos, con la cuenta por la que pasó.
 - **🔒 Cierre de trimestre**: una lista de lo pendiente antes de presentar; después, los libros del trimestre quedan congelados.
 - **📈 Informes**: pérdidas y ganancias, tu año frente al anterior.
-- **✅ VERI\*FACTU**: registros de facturación encadenados y enviados a la AEAT.
 - **🤖 API y agentes**: una API REST pública con claves, un [documento OpenAPI](https://api.cuentalibre.es/v1/openapi.json) y una skill lista para que tu agente de IA registre gastos o prepare facturas por ti ([más abajo](#úsalo-con-tu-agente-de-ia)).
 - **📱 En cualquier dispositivo**: una aplicación web rápida, pensada para el ordenador y el móvil.
 
@@ -175,13 +170,12 @@ Para arrancar una sola aplicación: `pnpm --filter @cuentalibre/web dev` (o `api
 
 Todos vienen desactivados y se configuran en `apps/api/.env`; [`.env.example`](apps/api/.env.example) explica cada uno.
 
-| Qué                                                              | Variables                                                                                      |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Entrar con Google                                                | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                                                     |
-| Enviar correos (facturas, verificación, recuperar la contraseña) | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM`                                                 |
-| Archivos en un bucket compatible con S3 en vez del disco         | `STORAGE_DRIVER=s3`, `S3_*`                                                                    |
-| Enviar registros de VERI\*FACTU al entorno de pruebas de la AEAT | `VERIFACTU_ENV=test`, `VERIFACTU_CERT_FILE`, `VERIFACTU_CERT_PASSWORD`, `VERIFACTU_PRODUCER_*` |
-| Enviar los errores inesperados a Sentry                          | `SENTRY_DSN`                                                                                   |
+| Qué                                                              | Variables                                      |
+| ---------------------------------------------------------------- | ---------------------------------------------- |
+| Entrar con Google                                                | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`     |
+| Enviar correos (facturas, verificación, recuperar la contraseña) | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM` |
+| Archivos en un bucket compatible con S3 en vez del disco         | `STORAGE_DRIVER=s3`, `S3_*`                    |
+| Enviar los errores inesperados a Sentry                          | `SENTRY_DSN`                                   |
 
 ### Comprobaciones
 
@@ -194,7 +188,7 @@ pnpm format    # Prettier
 
 ## Úsalo con tu agente de IA
 
-La API de cuentalibre es la misma que usa la aplicación, así que un agente de IA (Claude Code, Codex, un GPT de ChatGPT, n8n…) puede hacer todo lo que haces tú, con las mismas reglas: numeración correlativa, trimestres cerrados y VERI\*FACTU. El repositorio incluye una skill que le enseña al agente toda la API y cuándo debe pararse a preguntarte.
+La API de cuentalibre es la misma que usa la aplicación, así que un agente de IA (Claude Code, Codex, un GPT de ChatGPT, n8n…) puede hacer todo lo que haces tú, con las mismas reglas: numeración correlativa y trimestres cerrados. El repositorio incluye una skill que le enseña al agente toda la API y cuándo debe pararse a preguntarte.
 
 ### 1. Crea una clave
 
@@ -246,7 +240,7 @@ selfhost/              Para instalarlo en tu servidor: una imagen con la aplicac
 .agents/skills/        La skill de cuentalibre para agentes de IA (.claude/skills enlaza a ella)
 ```
 
-Más en [apps/api/README.md](apps/api/README.md) (rutas, sincronización, VERI\*FACTU, cómo se construyen las imágenes, en inglés), en [deploy/README.md](deploy/README.md) (cómo se opera cuentalibre online, en inglés) y en [AGENTS.md](AGENTS.md) (convenciones para quien contribuye y para agentes de programación).
+Más en [apps/api/README.md](apps/api/README.md) (rutas, sincronización, cómo se construyen las imágenes, en inglés), en [deploy/README.md](deploy/README.md) (cómo se opera cuentalibre online, en inglés) y en [AGENTS.md](AGENTS.md) (convenciones para quien contribuye y para agentes de programación).
 
 La página de referencia del sistema de diseño de la aplicación está en `/sistema-visual`.
 

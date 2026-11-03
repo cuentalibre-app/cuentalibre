@@ -12,4 +12,3 @@ export * from "./settings";
 export * from "./sync";
 export * from "./tags";
 export * from "./treasury";
-export * from "./verifactu";

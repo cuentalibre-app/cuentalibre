@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { contact, expense, purchaseInvoice } from "../db/schema";
 import { ApiError } from "../errors";
 import type { Tx } from "../db/client";
-import { enqueueClientCheck } from "../verifactu/check";
+
 import { checkAttachments } from "./files";
 import { alreadyExists } from "./records";
 
@@ -49,7 +49,6 @@ export async function createContact(tx: Tx, organizationId: string, role: Contac
     .onConflictDoNothing()
     .returning({ id: contact.id });
   if (!row) alreadyExists();
-  if (role === "client") await enqueueClientCheck(tx, organizationId, parsed.data);
 }
 
 /** Applies the changes over the stored record and validates the result as a whole. */
@@ -80,8 +79,6 @@ export async function updateContact(
     .update(contact)
     .set(toColumns(parsed.data))
     .where(live(organizationId, role, id));
-  // VERI*FACTU rejects records whose client the AEAT doesn't know: check it before an invoice names it
-  if (role === "client") await enqueueClientCheck(tx, organizationId, parsed.data);
 }
 
 export async function deleteContact(tx: Tx, organizationId: string, role: ContactRole, id: string) {

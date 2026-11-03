@@ -16,7 +16,7 @@ Dos contenedores, definidos en [`selfhost/compose.yml`](https://github.com/jesus
 
 | Contenedor    | Qué es                                                                                                                                                         |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cuentalibre` | La aplicación que abres en el navegador y la API que guarda los datos, calcula, emite las facturas y envía VERI\*FACTU. Todo en un puerto, el 3000 por defecto. |
+| `cuentalibre` | La aplicación que abres en el navegador y la API que guarda los datos, calcula y emite las facturas. Todo en un puerto, el 3000 por defecto. |
 | `postgres`    | La base de datos.                                                                                                                                              |
 
 cuentalibre no se ocupa del HTTPS: lo dejas en manos de lo que ya uses para llegar a tus servicios (Cloudflare Tunnel, Tailscale, un proxy inverso…). Lo explicamos [más abajo](#ponlo-detras-de-https).
@@ -91,7 +91,6 @@ Todo se configura con variables en el `.env`. Están explicadas en [`apps/api/.e
 - **Correo** (`SMTP_URL`, `EMAIL_FROM`): para enviar las facturas desde cuentalibre, verificar el correo al registrarse y recuperar la contraseña. Sin él, las facturas se envían con tu programa de correo y no hay recuperación de contraseña.
 - **Entrar con Google** (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`), con `<PUBLIC_URL>/v1/auth/callback/google` como URI de redirección.
 - **Archivos en un bucket S3** (`STORAGE_DRIVER=s3` y las variables `S3_*`): por defecto se guardan en el volumen `files`.
-- **VERI\*FACTU** (`VERIFACTU_ENV` y el certificado): para enviar los registros de facturación a la Agencia Tributaria.
 - **El puerto** (`PORT`): el del servidor en el que escucha cuentalibre, 3000 si no dices nada.
 
 Después de cambiar el `.env`, aplica los cambios con `docker compose up -d`.

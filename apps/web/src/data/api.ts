@@ -184,7 +184,6 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
 function toWire(command: Command): SyncCommand[] {
   switch (command.type) {
     case "issue":
-    case "correctRecord":
       return isSynced("salesDocuments") ? [command as SyncCommand] : [];
     case "closeQuarter":
     case "reopenQuarter":

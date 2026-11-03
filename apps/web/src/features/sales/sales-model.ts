@@ -197,7 +197,7 @@ export function documentTotals(
   return doc.issued?.totals ?? invoiceTotals(doc.lines, WITHHOLDING_RATES[doc.withholding], doc.supplies);
 }
 
-/** Why a rectifying invoice corrects the original (art. 80 LIVA), as VERI*FACTU names each cause. */
+/** Why a rectifying invoice corrects the original (art. 80 LIVA), with the AEAT's key for each cause. */
 export const RECTIFICATION_REASONS: { value: RectificationReason; label: string }[] = [
   { value: "R1", label: "Error o art. 80.1, 80.2 y 80.6 LIVA" },
   { value: "R2", label: "Concurso de acreedores (art. 80.3 LIVA)" },

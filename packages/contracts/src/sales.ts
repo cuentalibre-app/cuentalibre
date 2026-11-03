@@ -115,32 +115,9 @@ export const salesLineSchema = invoiceLineSchema.extend({
 export type SalesLine = z.infer<typeof salesLineSchema>;
 
 /**
- * Where the invoice's VERI*FACTU record stands with the AEAT: waiting to be
- * sent, accepted (maybe with errors to fix), or rejected.
- */
-export const verifactuStatusSchema = z.enum(["pending", "accepted", "acceptedWithErrors", "rejected"]);
-export type VerifactuStatus = z.infer<typeof verifactuStatusSchema>;
-
-/** The invoice's VERI*FACTU record, when the business uses the system. */
-export const verifactuRecordInfoSchema = z.object({
-  status: verifactuStatusSchema,
-  /** What the QR code printed on the invoice encodes. */
-  qrUrl: z.url(),
-  /** The AEAT's error, or why the record couldn't be sent yet. */
-  error: z.string().optional(),
-  /**
-   * The AEAT refused the issuer's NIF and name, not the client's: they are
-   * fixed in the business profile, and the record is then sent again as is.
-   */
-  issuerError: z.literal(true).optional(),
-});
-export type VerifactuRecordInfo = z.infer<typeof verifactuRecordInfoSchema>;
-
-/**
  * What an invoice froze when it was issued: the client's fiscal data and the
  * totals. Editing the contact, or changing how core rounds, never alters an
- * issued invoice; only correcting its VERI*FACTU record changes the client's
- * data. Set by the server; the app never sends it.
+ * issued invoice. Set by the server; the app never sends it.
  */
 export const issuedSnapshotSchema = z.object({
   client: contactSchema.pick({
@@ -155,7 +132,6 @@ export const issuedSnapshotSchema = z.object({
   totals: invoiceTotalsSchema,
   /** When it was issued, which orders the invoices of the same day. Absent until the server answers. */
   issuedAt: z.iso.datetime().optional(),
-  verifactu: verifactuRecordInfoSchema.optional(),
 });
 export type IssuedSnapshot = z.infer<typeof issuedSnapshotSchema>;
 

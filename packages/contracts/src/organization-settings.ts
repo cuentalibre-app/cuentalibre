@@ -9,14 +9,7 @@ import {
   salesKindSchema,
   storedInvoiceSeriesSchema,
 } from "./sales";
-import {
-  businessProfileSchema,
-  ledgerAccountKeySchema,
-  ledgerAccountSettingsSchema,
-  taxSetupSchema,
-  verifactuCheckSchema,
-  verifactuSetupSchema,
-} from "./settings";
+import { businessProfileSchema, ledgerAccountKeySchema, ledgerAccountSettingsSchema, taxSetupSchema } from "./settings";
 
 /* ───────────────────────── Sales documents ───────────────────────── */
 
@@ -155,9 +148,6 @@ export const organizationSettingsSchema = z.object({
   /** Subjects and messages for emailing sales documents. */
   emailTemplates: emailTemplateSettingsSchema,
   ledgerAccounts: ledgerAccountSettingsSchema,
-  verifactu: verifactuSetupSchema,
-  /** Written by the server only: saving it is refused. */
-  verifactuCheck: verifactuCheckSchema,
 });
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>;
 
@@ -276,10 +266,4 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     contactCodes: {},
     methodCodes: {},
   },
-  // Nobody sends records to the AEAT without choosing to
-  verifactu: {
-    system: "exempt",
-    startDate: "2027-07-01",
-  },
-  verifactuCheck: { taxId: "", name: "", result: null, censusName: "", checkedAt: null },
 };

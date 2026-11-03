@@ -55,17 +55,7 @@ const envSchema = z
       .int()
       .min(0)
       .default(1024 * 1024 * 1024),
-    /**
-     * VERI*FACTU: records are always chained when a business uses the system;
-     * they are only sent to the AEAT's test or production service when set.
-     */
-    VERIFACTU_ENV: z.enum(["off", "test", "production"]).default("off"),
-    /** Client certificate (PKCS#12) the AEAT authenticates submissions with. */
-    VERIFACTU_CERT_FILE: z.string().min(1).optional(),
-    VERIFACTU_CERT_PASSWORD: z.string().optional(),
-    /** Who produces the invoicing software, as records name it. */
-    VERIFACTU_PRODUCER_NAME: z.string().min(1).optional(),
-    VERIFACTU_PRODUCER_TAX_ID: z.string().min(1).optional(),
+
     /**
      * Rejects new passwords found in data breaches, asking Have I Been Pwned with the first
      * five characters of their hash. Turn it off on servers that can't reach the internet.
@@ -117,15 +107,6 @@ const envSchema = z
     message: "Google sign-in needs both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET",
     path: ["GOOGLE_CLIENT_ID"],
   })
-  .refine(
-    (env) =>
-      env.VERIFACTU_ENV === "off" ||
-      (env.VERIFACTU_CERT_FILE && env.VERIFACTU_PRODUCER_NAME && env.VERIFACTU_PRODUCER_TAX_ID),
-    {
-      message: "Sending to VERI*FACTU needs VERIFACTU_CERT_FILE, VERIFACTU_PRODUCER_NAME and VERIFACTU_PRODUCER_TAX_ID",
-      path: ["VERIFACTU_ENV"],
-    },
-  )
   .refine((env) => !env.SMTP_URL || env.EMAIL_FROM, {
     message: "SMTP_URL needs EMAIL_FROM",
     path: ["EMAIL_FROM"],

@@ -5,7 +5,7 @@ description: Read and write a business's accounting in cuentalibre through its p
 
 # cuentalibre API
 
-cuentalibre is open-source accounting for Spanish self-employed workers. Its API is the same one the web app uses, so every write follows the app's rules: gapless invoice numbering, closed quarters and VERI\*FACTU.
+cuentalibre is open-source accounting for Spanish self-employed workers. Its API is the same one the web app uses, so every write follows the app's rules: gapless invoice numbering and closed quarters.
 
 ## Setup
 
@@ -63,14 +63,14 @@ The OpenAPI 3.1 document at `<API URL>/openapi.json` is the source of truth for 
 - An invoice's `status` follows its payments: to mark it paid, add a payment covering the total. Only invoices take payments; drafts and quotes don't.
 - Payment method IDs come from `GET /workspace` (`paymentMethods`), which returns everything: read it once and reuse it.
 - A record's quarter is decided by `issuedOn` (invoices), `bookedOn` (received invoices) or `date` (expenses). In a closed quarter they only take changes to payments, tags, attachments and private notes.
-- On an error, read `error.code` and explain it. Don't work around `quarter_closed`, `invoice_issued`, `date_out_of_order` or `number_taken`: they protect the books. On `429 rate_limited`, wait a few seconds and retry.
+- On an error, read `error.code` and explain it. Don't work around `quarter_closed`, `date_out_of_order` or `number_taken`: they protect the books. On `429 rate_limited`, wait a few seconds and retry.
 - Before reporting amounts back, convert cents to euros (`127200` → 1.272,00 €).
 
 ## Ask before you act
 
 Show the user exactly what you will send and wait for an explicit yes before:
 
-- issuing an invoice (`POST /invoices`, `POST /sales-documents/{id}/issue`, the `issue` command): it takes the next number of its series and, under VERI\*FACTU, is reported to the tax agency and can never change again;
+- issuing an invoice (`POST /invoices`, `POST /sales-documents/{id}/issue`, the `issue` command): it takes the next number of its series, and once issued it can only be rectified or, while its quarter is open, revised;
 - deleting anything;
 - changing an issued invoice;
 - sending an email (`POST /emails`);
@@ -115,7 +115,7 @@ Use an expense for tickets, the autónomo fee, fees and anything without a full 
 
 ### Prepare and issue an invoice
 
-1. Find the client in `GET /contacts?role=client` (by `taxId` when you have it), or create it. Reuse its default `withholding`, `discount` and `paymentMethodId`; under VERI\*FACTU it needs a `taxId`.
+1. Find the client in `GET /contacts?role=client` (by `taxId` when you have it), or create it. Reuse its default `withholding`, `discount` and `paymentMethodId`.
 2. Create a **draft** (`POST /sales-documents`, `kind: "draft"`, `number: null`, `series: "normal"`, `status: "pending"`), with `incomeType`, `operationType`, `lines`, `dueOn`, `publicNotes`.
 3. Show the user the client, lines, base, VAT, withholding and total in euros.
 4. Before issuing, check `settings.businessProfile` (from `GET /workspace`): it needs `taxId`, the fiscal name (`legalName` of a company, `firstName` and `lastName` of a self-employed worker) and `address`, `postalCode` and `city`. Ask the user for what's missing and save it (`saveSettings`, references/settings.md), or issuing fails with `400 issuer_missing`.

@@ -1,4 +1,4 @@
-import { emailRequestSchema, type EmailMessage } from "@cuentalibre/contracts";
+import { emailRequestSchema, type BusinessProfile, type EmailMessage } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { and, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import type { z } from "zod";
@@ -10,7 +10,7 @@ import { MAX_ATTEMPTS, RetryLater, type Handler } from "../outbox/worker";
 import type { FileStorage } from "../storage";
 import { readSettings } from "../sync/settings";
 import { lockOrganization, type Scope } from "../sync/write";
-import { issuerName } from "../verifactu/record";
+
 import { PermanentEmailError, type Mailer } from "./mailer";
 
 type Row = typeof emailMessage.$inferSelect;
@@ -66,6 +66,15 @@ async function checkQuota(tx: Tx, organizationId: string, quota: Sender["quota"]
   }
 }
 
+/** The full name of a self-employed worker, or the legal name of a company. */
+function legalName(profile: BusinessProfile) {
+  if (profile.kind === "company") return profile.legalName.trim();
+  return [profile.firstName, profile.lastName, profile.secondLastName]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 /**
  * Who the organization's emails come from: the business's name, replying to
  * its email address or else the user's. `userId` is null for no user.
@@ -78,7 +87,7 @@ export async function senderOf(db: Tx, organizationId: string, userId: string | 
     .where(eq(organization.id, organizationId));
   const [author] = userId ? await db.select({ email: user.email }).from(user).where(eq(user.id, userId)) : [];
   return {
-    name: profile.tradeName.trim() || issuerName(profile) || org!.name,
+    name: profile.tradeName.trim() || legalName(profile) || org!.name,
     replyTo: profile.email.trim() || author?.email || null,
     userEmail: author?.email ?? null,
   };

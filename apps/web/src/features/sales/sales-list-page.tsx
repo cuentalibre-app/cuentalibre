@@ -22,12 +22,11 @@ import {
   Settings,
   SlidersHorizontal,
   Tag,
-  ShieldCheck,
   Trash2,
   X,
 } from "lucide-react";
 import { cents, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Period } from "@cuentalibre/core";
-import type { SalesDocument, SalesKind, VerifactuStatus } from "@cuentalibre/contracts";
+import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
@@ -38,7 +37,6 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { useLockedQuarter } from "@/features/closing/closing-store";
-import { useCompliance } from "@/features/settings/compliance-store";
 import {
   DELIVERY_NOTE_SETTINGS_PATH,
   DRAFT_SETTINGS_PATH,
@@ -75,7 +73,7 @@ import {
   type StatusKey,
 } from "./sales-model";
 import { canSendEmail } from "@/data/email";
-import { SalesDocumentDialog, SalesDocumentLink } from "./document-detail";
+import { SalesDocumentLink } from "./document-detail";
 import { GroupedSelect } from "./form-fields";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
 import { IssuerDialog } from "./issuer-dialog";
@@ -83,7 +81,6 @@ import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
-import { VERIFACTU_STATUS, needsCorrection } from "./issued-notice";
 
 const ALL = "all";
 /** Status filter for the quotes and delivery notes not invoiced or rejected yet. */
@@ -644,10 +641,7 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                   </div>
                 </td>
                 <td className={td}>
-                  <div className="flex flex-col items-start gap-1">
-                    <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
-                    <VerifactuBadge doc={r.doc} linked />
-                  </div>
+                  <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
                 </td>
                 <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
                 <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
@@ -687,61 +681,6 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
   );
 }
 
-/**
- * Where an invoice's VERI*FACTU record stands with the AEAT. `linked` makes a
- * recorded one open the AEAT's checker, and one the AEAT found fault with
- * open the invoice, which says why, where the row isn't a link itself.
- */
-function VerifactuBadge({ doc, linked = false }: { doc: SalesDocument; linked?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const verifactu = doc.issued?.verifactu;
-  if (!verifactu) return null;
-  const { tone } = VERIFACTU_STATUS[verifactu.status];
-  const label = SHORT_VERIFACTU_LABELS[verifactu.status];
-  if (linked && verifactu.error && needsCorrection(doc))
-    return (
-      <>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
-              className="cursor-pointer rounded-md border-0 bg-transparent p-0 transition-opacity duration-150 hover:opacity-80"
-            >
-              <Badge tone={tone}>{label}</Badge>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs">{verifactu.error}</TooltipContent>
-        </Tooltip>
-        {open && <SalesDocumentDialog doc={doc} onOpenChange={setOpen} />}
-      </>
-    );
-  if (!linked || !isRecorded(doc)) return <Badge tone={tone}>{label}</Badge>;
-  return (
-    <a
-      href={verifactu.qrUrl}
-      target="_blank"
-      rel="noreferrer"
-      title="Comprobar en la AEAT"
-      className="rounded-md no-underline transition-opacity duration-150 hover:opacity-80"
-    >
-      <Badge tone={tone}>{label}</Badge>
-    </a>
-  );
-}
-
-/** Next to the collection status, in a column that must stay narrow. */
-const SHORT_VERIFACTU_LABELS: Record<VerifactuStatus, string> = {
-  pending: "AEAT: por enviar",
-  accepted: "AEAT: registrada",
-  acceptedWithErrors: "AEAT: con errores",
-  rejected: "AEAT: rechazada",
-};
-
-/** The AEAT holds the invoice's record, so its checker finds it. */
-const isRecorded = (doc: SalesDocument) =>
-  doc.issued?.verifactu?.status === "accepted" || doc.issued?.verifactu?.status === "acceptedWithErrors";
-
 function DocumentsList({ rows }: { rows: Row[] }) {
   return (
     <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
@@ -765,7 +704,6 @@ function DocumentsList({ rows }: { rows: Row[] }) {
             <div className="flex flex-col items-end gap-1">
               <span className="amount text-base">{formatEUR(r.total)}</span>
               <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
-              <VerifactuBadge doc={r.doc} />
             </div>
           </Link>
           <RowActions doc={r.doc} status={r.status} />
@@ -792,8 +730,6 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const attachments = doc.attachments ?? [];
   // Drafts can't be issued into a closed quarter, nor invoices deleted from one
   const lockedQuarter = useLockedQuarter()(doc.issuedOn);
-  // An invoice already recorded under VERI*FACTU stays, even if the business is exempt now
-  const deletable = useCompliance().verifactu.system === "exempt" && !doc.issued?.verifactu;
   const blocker =
     doc.kind !== "invoice" ? null : lockedQuarter ? "trimestre cerrado" : deleteBlocker(doc, salesStore.all());
   const original = originalToRectify(doc, salesStore.all());
@@ -929,20 +865,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       { label: "Crear por copia", icon: Copy, run: () => navigate(`${config.newPath}?desde=${doc.id}`) },
     ],
     [...(primary ? [primary] : []), ...(changeStatus ? [changeStatus] : []), attach, extras.tags],
-    [
-      pdf,
-      ...(isInvoice ? [extras.facturae] : []),
-      extras.send,
-      ...(isRecorded(doc)
-        ? [
-            {
-              label: "Comprobar en la AEAT",
-              icon: ShieldCheck,
-              run: () => window.open(doc.issued!.verifactu!.qrUrl, "_blank", "noopener"),
-            },
-          ]
-        : []),
-    ],
+    [pdf, ...(isInvoice ? [extras.facturae] : []), extras.send],
     // On a rectifying invoice it rectifies the original again, undoing this one
     original
       ? [
@@ -953,23 +876,19 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
           },
         ]
       : [],
-    // Under VERI*FACTU issued invoices are never deleted: they are corrected with a rectifying invoice
-    isInvoice && !deletable
-      ? []
-      : [
-          {
-            label:
-              `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim() + (blocker ? ` (${blocker})` : ""),
-            icon: Trash2,
-            danger: true,
-            run: blocker
-              ? undefined
-              : () => {
-                  if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`))
-                    salesStore.remove(doc.id);
-                },
-          },
-        ],
+    [
+      {
+        label:
+          `Eliminar ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim() + (blocker ? ` (${blocker})` : ""),
+        icon: Trash2,
+        danger: true,
+        run: blocker
+          ? undefined
+          : () => {
+              if (window.confirm(`¿Eliminar ${config.noun} ${label}? No se puede deshacer.`)) salesStore.remove(doc.id);
+            },
+      },
+    ],
   ].filter((g) => g.length > 0);
 
   const close = (open: boolean) => !open && setDialog(null);

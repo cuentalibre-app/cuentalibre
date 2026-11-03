@@ -5,15 +5,8 @@ import { contactRoleSchema, contactSchema } from "./contacts";
 import { catalogFamilySchema, stockMovementSchema } from "./core";
 import { organizationSettingsSchema, settingsSectionSchema } from "./organization-settings";
 import { expenseSchema, purchaseInvoiceSchema, purchaseLineSchema } from "./purchases";
-import { issuedSnapshotSchema, salesDocumentSchema, salesLineSchema } from "./sales";
-import {
-  closedQuarterSchema,
-  filedReturnSchema,
-  paymentMethodSchema,
-  quarterKeySchema,
-  tagSchema,
-  clientTaxIdCheckSchema,
-} from "./settings";
+import { salesDocumentSchema, salesLineSchema } from "./sales";
+import { closedQuarterSchema, filedReturnSchema, paymentMethodSchema, quarterKeySchema, tagSchema } from "./settings";
 import { manualPaymentSchema } from "./treasury";
 
 /*
@@ -37,7 +30,6 @@ export const syncedEntitySchema = z.enum([
   "catalogFamilies",
   "products",
   "stockMovements",
-  "taxIdChecks",
 ]);
 export type SyncedEntity = z.infer<typeof syncedEntitySchema>;
 
@@ -50,7 +42,7 @@ export const ENTITY_ROLES = { clients: "client", suppliers: "supplier" } as cons
 >;
 
 /** Records whose entity the client may create, update and delete. */
-export const recordEntitySchema = syncedEntitySchema.exclude(["closedQuarters", "filedReturns", "taxIdChecks"]);
+export const recordEntitySchema = syncedEntitySchema.exclude(["closedQuarters", "filedReturns"]);
 export type RecordEntity = z.infer<typeof recordEntitySchema>;
 
 /**
@@ -165,20 +157,13 @@ export const commandSchema = z.discriminatedUnion("type", [
     /**
      * The invoice to issue: a new one, or a draft with the same ID. The server
      * gives it the next number of its series and freezes its client data and
-     * totals; from then on it can't be edited or deleted.
+     * totals.
      */
     data: storedSalesDocumentSchema,
     /** Only for invoices issued elsewhere and imported: keep this number instead of taking the next one. */
     number: z.string().trim().min(1).optional(),
   }),
-  /**
-   * Corrects the VERI*FACTU record of an issued invoice that the AEAT
-   * rejected or accepted with errors (subsanación): `client` is the client's
-   * fiscal data as it should have been, which the invoice takes. A new record
-   * is made and sent; the invoice's number, date and amounts stay, since
-   * changing those takes a rectifying invoice.
-   */
-  z.object({ type: z.literal("correctRecord"), id: z.uuid(), client: issuedSnapshotSchema.shape.client }),
+
   /**
    * Freezes the books of a quarter: its invoices can't be issued or changed
    * until it is reopened. `returns` are the quarter's returns as filed.
@@ -210,7 +195,7 @@ export const changeSchema = z.union([
   plainUpsert("products"),
   plainUpsert("stockMovements"),
   z.object({ op: z.literal("upsert"), entity: z.literal("settings"), data: settingsChangeSchema }),
-  z.object({ op: z.literal("upsert"), entity: z.literal("taxIdChecks"), data: clientTaxIdCheckSchema }),
+
   z.object({
     op: z.literal("delete"),
     entity: syncedEntitySchema,
@@ -237,8 +222,6 @@ export const workspaceSchema = z.object({
   catalogFamilies: z.array(storedCatalogFamilySchema),
   products: z.array(storedProductSchema),
   stockMovements: z.array(storedStockMovementSchema),
-  /** Written by the server only: what the AEAT's census answered about clients' NIFs. */
-  taxIdChecks: z.array(clientTaxIdCheckSchema),
   /** Every section, the ones never saved with their defaults. */
   settings: organizationSettingsSchema,
 });

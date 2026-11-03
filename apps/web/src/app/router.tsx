@@ -84,13 +84,12 @@ import {
   TAGS_PATH,
   TAX_SETTINGS_PATH,
   USERS_PATH,
-  VERIFACTU_PATH,
 } from "@/features/settings/settings-model";
 import { SettingsPage } from "@/features/settings/settings-page";
 import { TagsPage } from "@/features/settings/tags-page";
 import { TaxSettingsPage } from "@/features/settings/tax-settings-page";
 import { UsersPage } from "@/features/settings/users-page";
-import { VerifactuPage } from "@/features/settings/verifactu-page";
+
 import { FiscalCalendarPage } from "@/features/taxes/fiscal-calendar-page";
 import { IncomeTaxPage } from "@/features/taxes/income-tax-page";
 import { TaxesSummaryPage } from "@/features/taxes/taxes-summary-page";
@@ -246,7 +245,7 @@ const settingsRoutes = [
   { path: CATALOG_SETTINGS_PATH.slice(1), element: <CatalogSettingsPage /> },
   { path: PROFILE_PATH.slice(1), element: <ProfilePage /> },
   { path: ACCESS_PATH.slice(1), element: <AccessPage /> },
-  { path: VERIFACTU_PATH.slice(1), element: <VerifactuPage /> },
+
   { path: DRAFT_SETTINGS_PATH.slice(1), element: <DocumentSettingsPage key="draft" kind="draft" /> },
   { path: QUOTE_SETTINGS_PATH.slice(1), element: <DocumentSettingsPage key="quote" kind="quote" /> },
   {

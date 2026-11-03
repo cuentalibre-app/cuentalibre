@@ -1,6 +1,5 @@
 import { jsPDF } from "jspdf";
 import { zipSync } from "fflate";
-import qrcode from "qrcode-generator";
 import { applyRate, cents, eurosToCents, lineBase, WITHHOLDING_RATES, type InvoiceTotals } from "@cuentalibre/core";
 import type { SalesDocument, SalesLine } from "@cuentalibre/contracts";
 import { businessName } from "@/features/settings/settings-model";
@@ -39,11 +38,8 @@ const PAGE_HEIGHT = 297;
 const RIGHT = PAGE_WIDTH - LEFT;
 /** Lowest point anything but the side footer reaches. */
 const FOOT = PAGE_HEIGHT - 12;
-const QR_SIZE = 32;
-/** Blank margin around the QR code: the spec asks for at least 2 mm. */
-const QR_MARGIN = 3;
-/** Room for the logo, top left: the proportions of the largest one stored, as tall as the QR code. */
-const LOGO_BOX = { width: 52, height: QR_SIZE };
+/** Room for the logo, top left: the proportions of the largest one stored. */
+const LOGO_BOX = { width: 52, height: 32 };
 const LINE = 4;
 /** Between the lines of a wrapped table header label. */
 const HEADER_LINE = 3.4;
@@ -114,7 +110,7 @@ function render(stored: SalesDocument): jsPDF {
   };
 
   paintPaper(s);
-  s.y = Math.max(drawQrCode(s), drawLogo(s));
+  s.y = drawLogo(s);
   HEADERS[s.style.family](s);
   drawLines(s);
   if (s.style.traditional) {
@@ -214,35 +210,6 @@ function drawLogo(s: Sheet): number {
   const { width, height } = fitWithin(image, LOGO_BOX);
   s.pdf.addImage(logo, "PNG", LEFT, 13, width, height);
   return 13 + height + 9;
-}
-
-/**
- * Under VERI*FACTU the invoice carries the QR code of its record at the top of
- * the first page, centred: 30 to 40 mm wide, error correction M, on a blank
- * margin of at least 2 mm, with "QR tributario:" above and "VERI*FACTU" below
- * at least as large as the rest of the text. Returns where the content starts.
- */
-function drawQrCode(s: Sheet): number {
-  const verifactu = s.doc.issued?.verifactu;
-  if (!verifactu) return LEFT + 3;
-  const center = PAGE_WIDTH / 2;
-  const x = center - QR_SIZE / 2;
-  const y = 16;
-  // Blank margin, white even on tinted paper so readers find the code's edges
-  fill(s, x - QR_MARGIN, y - QR_MARGIN, QR_SIZE + 2 * QR_MARGIN, QR_SIZE + 2 * QR_MARGIN, [255, 255, 255]);
-  write(s, "QR tributario:", center, y - QR_MARGIN - 1, { align: "center" });
-  const qr = qrcode(0, "M");
-  qr.addData(verifactu.qrUrl);
-  qr.make();
-  const count = qr.getModuleCount();
-  const module = QR_SIZE / count;
-  s.pdf.setFillColor(0, 0, 0);
-  for (let row = 0; row < count; row++)
-    for (let col = 0; col < count; col++)
-      if (qr.isDark(row, col)) s.pdf.rect(x + col * module, y + row * module, module, module, "F");
-  const below = y + QR_SIZE + QR_MARGIN + 3;
-  write(s, "VERI*FACTU", center, below, { align: "center" });
-  return below + 6;
 }
 
 /**

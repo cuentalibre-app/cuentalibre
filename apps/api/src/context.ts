@@ -1,5 +1,5 @@
 import type { MembershipRole } from "@cuentalibre/contracts";
-import type { VerifactuEnvironment } from "@cuentalibre/core";
+
 import type { Auth } from "./auth";
 import type { Billing } from "./billing";
 import type { Mailer } from "./email/mailer";
@@ -13,10 +13,6 @@ export interface AppEnv {
   Variables: {
     db: Db;
     storage: FileStorage;
-    /** Which AEAT environment VERI*FACTU records point to. */
-    verifactuEnvironment: VerifactuEnvironment;
-    /** Whether this instance sends VERI*FACTU records to the AEAT; businesses can only turn it on when it does. */
-    verifactuAvailable: boolean;
     /** Sends email; null when the instance has no mail server. */
     mailer: Mailer | null;
     /** Charging for Cloud; null when the instance doesn't bill. */

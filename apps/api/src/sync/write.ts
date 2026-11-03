@@ -6,7 +6,7 @@ import {
   type RecordEntity,
   type SyncCommand,
 } from "@cuentalibre/contracts";
-import type { VerifactuEnvironment } from "@cuentalibre/core";
+
 import { sql } from "drizzle-orm";
 import type { Db, Tx } from "../db/client";
 import { changeLog, type LoggedEntity } from "../db/schema";
@@ -16,22 +16,18 @@ import { createExpense, deleteExpense, updateExpense } from "./expenses";
 import { createPlain, deletePlain, loggedAs, PLAIN_ENTITIES, updatePlain } from "./plain";
 import { createPurchaseInvoice, deletePurchaseInvoice, updatePurchaseInvoice } from "./purchases";
 import { changesFor, type RecordRef } from "./read";
-import { correctRecord, createSalesDocument, deleteSalesDocument, issueInvoice, updateSalesDocument } from "./sales";
+import { createSalesDocument, deleteSalesDocument, issueInvoice, updateSalesDocument } from "./sales";
 import { saveSettings } from "./settings";
 
 export interface Scope {
   organizationId: string;
   /** Null for work the server does by itself. */
   userId: string | null;
-  /** Which AEAT environment VERI*FACTU records are made for: it decides where their QR code points. */
-  verifactuEnvironment: VerifactuEnvironment;
-  /** Whether the instance sends VERI*FACTU records: without it, no business can turn it on. */
-  verifactuAvailable: boolean;
 }
 
 /**
  * Serializes writes per organization, so the change feed's sequence follows commit order.
- * It also makes invoice numbering and the VERI*FACTU chain race-free.
+ * It also makes invoice numbering race-free.
  */
 export async function lockOrganization(tx: Tx, organizationId: string) {
   await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${organizationId}, 0))`);
@@ -69,11 +65,8 @@ async function apply(tx: Tx, scope: Scope, command: SyncCommand): Promise<Record
   const { organizationId } = scope;
   switch (command.type) {
     case "issue":
-      await issueInvoice(tx, organizationId, command.data, command.number, scope.verifactuEnvironment);
+      await issueInvoice(tx, organizationId, command.data, command.number);
       return [{ entity: "sales_document", id: command.data.id }];
-    case "correctRecord":
-      await correctRecord(tx, organizationId, command.id, command.client);
-      return [{ entity: "sales_document", id: command.id }];
     case "closeQuarter": {
       const returns = command.returns ?? [];
       await closeQuarter(tx, organizationId, command.period, command.closedOn, returns);
@@ -86,7 +79,7 @@ async function apply(tx: Tx, scope: Scope, command: SyncCommand): Promise<Record
       await reopenQuarter(tx, organizationId, command.period);
       return [{ entity: "closed_quarter", id: command.period }];
     case "saveSettings":
-      await saveSettings(tx, organizationId, command.section, command.data, scope.verifactuAvailable);
+      await saveSettings(tx, organizationId, command.section, command.data);
       return [{ entity: "organization_setting", id: command.section }];
   }
 

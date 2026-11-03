@@ -342,7 +342,7 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
             .from(subscription)
             .where(inArray(subscription.organizationId, solo))
         : [];
-      // Everything an organization holds cascades from it: records, settings, files, outbox, VERI*FACTU…
+      // Everything an organization holds cascades from it: records, settings, files, outbox…
       if (solo.length) await tx.delete(organization).where(inArray(organization.id, solo));
       await tx.delete(invitation).where(sql`lower(${invitation.email}) = lower(${email})`);
       await tx.delete(verification).where(eq(verification.value, userId));

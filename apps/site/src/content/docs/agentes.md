@@ -75,7 +75,7 @@ En n8n, Make o Zapier, usa el paso de petición HTTP con la cabecera `Authorizat
 
 ## Qué puede salir mal y cómo evitarlo
 
-- **Operaciones que no se deshacen.** Con VERI\*FACTU, una factura emitida no se puede cambiar ni borrar, solo [rectificar](/docs/api/ventas#rectificar-una-factura). Haz que el agente te pida confirmación antes de emitir.
+- **Operaciones que no se deshacen.** Una factura emitida toma su número de la serie, y con el trimestre cerrado solo se puede [rectificar](/docs/api/ventas#rectificar-una-factura). Haz que el agente te pida confirmación antes de emitir.
 - **Trimestres cerrados.** La API no deja cambiar nada de un trimestre cerrado (`409 quarter_closed`), aunque el agente lo intente.
 - **Revisa lo que hace.** Los cambios del agente aparecen en la aplicación al momento. Échales un vistazo las primeras veces.
 - **Revoca la clave** en Configuración › API y agentes en cuanto dejes de usar el agente.

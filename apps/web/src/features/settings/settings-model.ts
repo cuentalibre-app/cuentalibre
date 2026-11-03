@@ -13,10 +13,8 @@ import type {
   IncomeTaxMethod,
   PaymentMethod,
   PaymentMethodType,
-  TaxIdCheckResult,
   TaxSetup,
   VatRegime,
-  VerifactuCheck,
 } from "@cuentalibre/contracts";
 import type { BadgeProps } from "@cuentalibre/ui/components/badge";
 import type { Option } from "@/features/sales/sales-model";
@@ -31,7 +29,6 @@ export const OLD_PAYMENT_METHODS_PATHS = ["/configuracion/cuentas", "/configurac
 export const INVOICE_SETTINGS_PATH = "/configuracion/facturas";
 export const PROFILE_PATH = "/configuracion/datos-personales";
 export const ACCESS_PATH = "/configuracion/credenciales";
-export const VERIFACTU_PATH = "/configuracion/verifactu";
 export const DRAFT_SETTINGS_PATH = "/configuracion/facturas-borrador";
 export const QUOTE_SETTINGS_PATH = "/configuracion/presupuestos";
 export const DELIVERY_NOTE_SETTINGS_PATH = "/configuracion/albaranes";
@@ -110,45 +107,6 @@ export function fullName(profile: BusinessProfile): string {
     .map((s) => s.trim())
     .filter(Boolean)
     .join(" ");
-}
-
-/** Whether the AEAT recognises the issuer's NIF and name, and in its own words when it doesn't. */
-export type AeatValidation = { state: "yes" | "pending" } | { state: "no"; reason: string };
-
-/**
- * The census check of the current NIF and name decides. Without one (it
- * hasn't answered yet, or the NIF or name changed since), an accepted record
- * proves them: the AEAT rejects every record whose issuer isn't in its census.
- */
-export function aeatValidation(
-  profile: BusinessProfile,
-  check: VerifactuCheck,
-  recordAccepted: boolean,
-): AeatValidation {
-  const current = check.result !== null && check.taxId === profile.taxId.trim() && check.name === fullName(profile);
-  if (!current) return { state: recordAccepted ? "yes" : "pending" };
-  return censusValidation(check.result!, check.censusName);
-}
-
-/** What the AEAT's census answered about a NIF and name, in its own words when it doesn't recognise them. */
-export function censusValidation(result: TaxIdCheckResult, censusName: string): AeatValidation {
-  switch (result) {
-    case "identified":
-      return { state: "yes" };
-    case "similar":
-      return {
-        state: "no",
-        reason: censusName
-          ? `La AEAT tiene este NIF a nombre de ${censusName}.`
-          : "El nombre no coincide con el que tiene la AEAT para este NIF.",
-      };
-    case "deregistered":
-      return { state: "no", reason: "La AEAT tiene este NIF dado de baja." };
-    case "revoked":
-      return { state: "no", reason: "La AEAT tiene este NIF revocado." };
-    default:
-      return { state: "no", reason: "La AEAT no encuentra este NIF con este nombre en su censo." };
-  }
 }
 
 /** The name printed on invoices and reports. */

@@ -79,23 +79,9 @@ function party(out: ReactNode[], x: number, y: number, heading = false): number 
 
 /* ───────────────────────── Headers ───────────────────────── */
 
-/** The VERI*FACTU code, top right. */
-function QrCode() {
-  const x = RIGHT - 32;
-  return (
-    <g fill={INK} opacity={0.75}>
-      <rect x={x} y={13} width={32} height={32} fill="none" stroke={INK} strokeWidth={4} />
-      <rect x={x + 7} y={20} width={8} height={8} />
-      <rect x={x + 17} y={20} width={8} height={8} />
-      <rect x={x + 7} y={30} width={8} height={8} />
-      <rect x={x + 19} y={32} width={4} height={4} />
-    </g>
-  );
-}
-
 const TOP = 54;
 
-/** Each family's header, from under the code; returns where the lines table starts. */
+/** Each family's header, from the top; returns where the lines table starts. */
 const HEADERS: Record<TemplateFamily, (out: ReactNode[], traditional: boolean) => number> = {
   classic(out) {
     out.push(<Text key="date" x={RIGHT} y={TOP + 4} w={24} h={4.5} bold align="right" />);
@@ -432,7 +418,6 @@ export function TemplateThumbnail({ template, look }: { template: InvoiceTemplat
       className="block aspect-[210/297] w-full rounded-sm border border-border shadow-sm"
     >
       <rect width={210} height={297} fill={PAPER} />
-      <QrCode />
       {out}
     </svg>
   );

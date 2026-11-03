@@ -7,7 +7,6 @@ import { refreshBilling } from "@/features/settings/billing-store";
 /** What the user reads when the server rejects a change, by the API's error code. */
 const MESSAGES: Record<string, string> = {
   quarter_closed: "El trimestre de esa fecha está cerrado. Reábrelo para registrar o cambiar documentos en él.",
-  invoice_issued: "Las facturas emitidas no se pueden modificar ni eliminar. Corrígelas con una factura rectificativa.",
   date_out_of_order:
     "Ya hay una factura de la serie con una fecha posterior: la nueva no puede tener una fecha anterior.",
   number_taken: "Ya existe una factura con ese número.",

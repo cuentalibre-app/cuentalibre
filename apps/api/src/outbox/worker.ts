@@ -7,7 +7,7 @@ import { complete, type Job } from "./outbox";
 export type Handler = (job: Job) => Promise<void>;
 export type Handlers = Record<OutboxTopic, Handler>;
 
-/** A failure worth retrying at a given time, such as the AEAT asking to wait. */
+/** A failure worth retrying at a given time. */
 export class RetryLater extends Error {
   constructor(
     message: string,

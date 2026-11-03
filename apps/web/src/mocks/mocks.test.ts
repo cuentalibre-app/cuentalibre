@@ -20,13 +20,12 @@ import {
   userAccessSchema,
   userProfileSchema,
   userTourSchema,
-  verifactuSetupSchema,
 } from "@cuentalibre/contracts";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { initialCatalogSettings, initialFamilies, initialMovements, initialProducts } from "./catalog";
 import { initialClosedQuarters } from "./closing";
-import { initialVerifactu } from "./compliance";
+
 import { initialClients, initialSuppliers } from "./contacts";
 import { initialExpenses } from "./expenses";
 import { initialNoteTemplates } from "./invoicing";
@@ -59,7 +58,7 @@ const collections: [string, z.ZodType, unknown[]][] = [
 
 const singletons: [string, z.ZodType, unknown][] = [
   ["catalog settings", catalogSettingsSchema, initialCatalogSettings],
-  ["VERI*FACTU setup", verifactuSetupSchema, initialVerifactu],
+
   ["ledger accounts", ledgerAccountSettingsSchema, initialLedgerAccounts],
   ["business profile", businessProfileSchema, initialProfile],
   ["tax setup", taxSetupSchema, initialTaxSetup],

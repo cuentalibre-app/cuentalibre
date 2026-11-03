@@ -9,7 +9,7 @@ Para tener una copia local de todo y mantenerla al día, sin volver a descargarl
 
 ## `GET /v1/workspace`
 
-Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products`, `stockMovements`, `taxIdChecks` y `settings`, más un `cursor`. `filedReturns` trae todas las versiones, de la más antigua a la más reciente, y `settings` todas las secciones, con los valores por defecto en las que nunca se han guardado. `taxIdChecks` es de solo lectura: con VERI*FACTU activado, lo que respondió el censo de la AEAT sobre el NIF y el nombre de tus clientes españoles, uno por pareja: `{ id, taxId, name, result, censusName, checkedAt }`, con `result` como en [`verifactuCheck`](/docs/api/ajustes). Un cliente cuyo NIF y nombre no tienen ninguno aún no se ha comprobado.
+Todo lo que guarda la empresa: `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses`, `closedQuarters`, `filedReturns`, `tags`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products`, `stockMovements` y `settings`, más un `cursor`. `filedReturns` trae todas las versiones, de la más antigua a la más reciente, y `settings` todas las secciones, con los valores por defecto en las que nunca se han guardado.
 
 ## `GET /v1/sync?since=<cursor>&limit=500`
 
@@ -35,13 +35,12 @@ La forma en que escribe la aplicación web: una lista de hasta 500 comandos que 
 | `update`        | `{ type, entity, id, changes }`. Como un `PATCH`: solo los campos que cambian.                                                                                                                                      |
 | `delete`        | `{ type, entity, id }`                                                                                                                                                                                             |
 | `issue`         | `{ type, data, number? }`. Emite `data` como factura: una nueva o un borrador con el mismo `id`. `number` solo para importar facturas emitidas con otro programa: conserva ese número en vez de tomar el siguiente. |
-| `correctRecord` | `{ type, id, client }`. Corrige el registro de VERI\*FACTU que la AEAT rechazó o aceptó con errores. Ver [Corregir un registro rechazado](/docs/api/ventas#corregir-un-registro-rechazado). |
 | `closeQuarter`  | `{ type, period, closedOn, returns? }`. Ver [Ajustes y trimestres](/docs/api/ajustes#cerrar-y-reabrir-trimestres).                                                                                                 |
 | `reopenQuarter` | `{ type, period }`                                                                                                                                                                                                 |
 | `saveSettings`  | `{ type, section, data }`. Sustituye una sección entera de los [ajustes](/docs/api/ajustes).                                                                                                                       |
 
 `entity` puede ser `clients`, `suppliers`, `salesDocuments`, `purchaseInvoices`, `expenses` y los [registros sin ruta propia](/docs/api/otros-registros): `tags`, `paymentMethods`, `manualPayments`, `catalogFamilies`, `products` y `stockMovements`. En los comandos, los contactos van como `clients` o `suppliers` y no llevan `role`. Todos los `id` son UUID.
 
-Un número importado tiene que encajar en su serie y no existir ya (`409 number_taken`), y no crea registro de VERI\*FACTU: lo hizo el programa que la emitió.
+Un número importado tiene que encajar en su serie y no existir ya (`409 number_taken`).
 
 Para contactos, documentos, compras y gastos es más cómodo usar sus rutas. La forma exacta de cada comando está en el [documento OpenAPI](https://api.cuentalibre.es/v1/openapi.json).

@@ -172,7 +172,7 @@ describe("recordBooks: income", () => {
     ]);
   });
 
-  // The AEAT's standard books take the invoice type keys of VERI*FACTU and the SII: R1–R4 by cause
+  // The AEAT's standard books key corrective invoices R1–R4 by cause
   it("writes a corrective invoice with its cause", () => {
     const rows = book(
       books({
