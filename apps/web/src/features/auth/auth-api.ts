@@ -1,6 +1,6 @@
 import { newId } from "@cuentalibre/core";
 import type { BillingPeriod, SyncCommand } from "@cuentalibre/contracts";
-import { API_URL, ONBOARDING_PATH, RESET_PASSWORD_PATH, SIGN_IN_PATH, SIGN_UP_PATH } from "./session";
+import { API_URL, ONBOARDING_PATH, RESET_PASSWORD_PATH, SIGN_UP_PATH, signInPath } from "./session";
 
 /** Better Auth rejected the request; `code` says why. */
 export class AuthError extends Error {
@@ -60,15 +60,15 @@ export const changePassword = (currentPassword: string, newPassword: string) =>
 /**
  * Goes to Google to sign in, creating the user if there is none: both screens
  * say that accepts the terms. New users go on to onboarding; Google brings
- * people back to the screen they came from if it fails.
+ * people back to the screen they came from if it fails. Signing in comes back to `returnPath`.
  */
-export async function signInWithGoogle(intent: "sign-in" | "sign-up") {
+export async function signInWithGoogle(intent: "sign-in" | "sign-up", returnPath = "/") {
   const origin = window.location.origin;
   const { url } = await post<{ url: string }>("/sign-in/social", {
     provider: "google",
-    callbackURL: `${origin}/`,
+    callbackURL: `${origin}${returnPath}`,
     newUserCallbackURL: `${origin}${ONBOARDING_PATH}`,
-    errorCallbackURL: `${origin}${intent === "sign-up" ? SIGN_UP_PATH : SIGN_IN_PATH}`,
+    errorCallbackURL: `${origin}${intent === "sign-up" ? SIGN_UP_PATH : signInPath({ back: returnPath })}`,
     requestSignUp: true,
   });
   window.location.assign(url);

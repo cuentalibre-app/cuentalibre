@@ -1,8 +1,10 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { SESSION_EXPIRES_IN } from "./auth";
+import { BACKGROUND_HEADER } from "./middleware";
 import { session } from "./db/schema";
 import { db, signUp, type Client } from "./test/harness";
+import { member } from "./test/sync";
 
 const HOUR = 60 * 60 * 1000;
 
@@ -50,6 +52,18 @@ describe("sessions", () => {
     expect(later.status).toBe(200);
     expect(sessionCookie(later)).toMatch(new RegExp(`Max-Age=${SESSION_EXPIRES_IN}`));
     expect((await expiresAtOf(anaId)) - Date.now()).toBeGreaterThan(8 * HOUR - 60_000);
+  });
+
+  it("aren't extended by what the app does in the background", async () => {
+    const ana = await member();
+    const anaId = await userIdOf(ana);
+    await lastExtended(anaId, 2 * HOUR);
+    const before = await expiresAtOf(anaId);
+
+    const sync = await ana.request("/v1/sync?since=0", { headers: { [BACKGROUND_HEADER]: "1" } });
+    expect(sync.status).toBe(200);
+    expect(sessionCookie(sync)).toBeUndefined();
+    expect(await expiresAtOf(anaId)).toBe(before);
   });
 
   it("end after eight hours without activity", async () => {

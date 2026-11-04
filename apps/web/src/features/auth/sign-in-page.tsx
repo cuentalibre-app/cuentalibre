@@ -6,12 +6,14 @@ import { authErrorMessage, oauthErrorMessage, signIn, signInMethods } from "./au
 import { PasswordInput } from "./password-input";
 import { AuthForm, AuthLayout, runAction } from "./auth-layout";
 import { GoogleSignIn } from "./google-sign-in";
-import { DEMO_PATH, FORGOT_PASSWORD_PATH, SIGN_UP_PATH, leaveDemo, reloadAt } from "./session";
+import { DEMO_PATH, FORGOT_PASSWORD_PATH, SIGN_UP_PATH, leaveDemo, reloadAt, signInQuery } from "./session";
 
 export function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [searchParams] = useSearchParams();
+  // Sent here when the session ended, or from a page that needed one: back there once signed in
+  const { expired, back } = signInQuery(searchParams);
   const [pending, setPending] = useState(false);
   // Google sends people back here with ?error= when signing in with it fails
   const [error, setError] = useState(() => oauthErrorMessage(searchParams.get("error")));
@@ -31,7 +33,7 @@ export function SignInPage() {
       async () => {
         await signIn(email.trim(), password);
         leaveDemo();
-        reloadAt("/");
+        reloadAt(back);
       },
       setPending,
       setError,
@@ -40,8 +42,12 @@ export function SignInPage() {
 
   return (
     <AuthLayout
-      title="Hola de nuevo"
-      description="Entra para seguir con tus facturas e impuestos."
+      title={expired ? "Tu sesión ha caducado" : "Hola de nuevo"}
+      description={
+        expired
+          ? "Han pasado 8 horas sin actividad. Vuelve a entrar para seguir donde lo dejaste."
+          : "Entra para seguir con tus facturas e impuestos."
+      }
       footer={
         <>
           <span>
@@ -56,7 +62,7 @@ export function SignInPage() {
         </>
       }
     >
-      <GoogleSignIn intent="sign-in" onError={setError} />
+      <GoogleSignIn intent="sign-in" returnPath={back} onError={setError} />
       <AuthForm onSubmit={submit} submitLabel="Entrar" pending={pending} error={error}>
         <Field label="Email">
           {(props) => (

@@ -6,16 +6,8 @@ export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
 export const DialogClose = Primitive.Close;
 
-/**
- * Centered panel over a dimmed page; on phones it fills the width and scrolls. Without
- * `closeButton`, it has no ✕: for a dialog that only closes by answering it.
- */
-export function DialogContent({
-  className,
-  children,
-  closeButton = true,
-  ...props
-}: ComponentProps<typeof Primitive.Content> & { closeButton?: boolean }) {
+/** Centered panel over a dimmed page; on phones it fills the width and scrolls. */
+export function DialogContent({ className, children, ...props }: ComponentProps<typeof Primitive.Content>) {
   return (
     <Primitive.Portal>
       <Primitive.Overlay className="fixed inset-0 z-50 animate-fade-in bg-black/50" />
@@ -27,23 +19,21 @@ export function DialogContent({
         {...props}
       >
         {children}
-        {closeButton && (
-          <Primitive.Close
-            aria-label="Cerrar"
-            className="absolute top-4 right-4 flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+        <Primitive.Close
+          aria-label="Cerrar"
+          className="absolute top-4 right-4 flex size-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="size-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
-            >
-              <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
-            </svg>
-          </Primitive.Close>
-        )}
+            <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+          </svg>
+        </Primitive.Close>
       </Primitive.Content>
     </Primitive.Portal>
   );

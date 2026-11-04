@@ -1,27 +1,28 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { AuthButton, AuthLayout } from "./auth-layout";
 import {
   API_URL,
   DEMO_PATH,
   ONBOARDING_PATH,
-  SIGN_IN_PATH,
   SIGN_UP_PATH,
   canExitDemo,
   exitDemo,
   leaveDemo,
   reloadAt,
   sessionState,
+  signInPath,
 } from "./session";
 
 /** Lets the app through once it runs on the API or the demo; otherwise sends the user where they need to go. */
 export function RequireSession({ children }: { children: ReactNode }) {
+  const { pathname, search } = useLocation();
   switch (sessionState()) {
     case "connected":
     case "demo":
       return children;
     case "signed-out":
-      return <Navigate to={SIGN_IN_PATH} replace />;
+      return <Navigate to={signInPath({ back: `${pathname}${search}` })} replace />;
     case "no-organization":
       return <Navigate to={ONBOARDING_PATH} replace />;
     case "unavailable":

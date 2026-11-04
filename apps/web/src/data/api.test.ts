@@ -9,7 +9,7 @@ import {
   type Tag,
 } from "@cuentalibre/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApiBackend, ApiError, type ApiBackendOptions } from "./api";
+import { BACKGROUND_HEADER, createApiBackend, ApiError, type ApiBackendOptions } from "./api";
 import { localBackend, onCommandError, setBackend } from "./backend";
 import { createCollection } from "./collection";
 import { attachFile, attachmentUrl } from "./files";
@@ -324,28 +324,35 @@ describe("api backend", () => {
     expect(clients.all()).toEqual([]);
   });
 
-  it("keeps changes waiting while the user signs in again after the session ends, then sends them", async () => {
+  it("sends the user to sign in when the session ends, without reporting the change as rejected", async () => {
     const me = { user: { id: "0199f0a0-0000-7000-8000-000000000020", name: "Ana", email: "ana@example.com" } };
-    const unauthorized = { status: 401, body: { error: { code: "unauthorized", message: "Sign in to continue." } } };
-    let signedInAgain!: () => void;
-    const expired = vi.fn((_me: Me) => new Promise<void>((resolve) => (signedInAgain = resolve)));
-    const { api, calls, clients } = setupWith({ onSessionExpired: expired }, { body: me }, unauthorized, {
-      body: { changes: [] },
-    });
+    const expired = vi.fn();
+    const { api, clients } = setupWith(
+      { onSessionExpired: expired },
+      { body: me },
+      { status: 401, body: { error: { code: "unauthorized", message: "Sign in to continue." } } },
+    );
     await api.loadMe();
+    const errors: unknown[] = [];
+    const stop = onCommandError((error) => errors.push(error));
 
-    const saving = clients.add(norte);
-    await vi.waitFor(() => expect(expired).toHaveBeenCalledWith(me));
-    expect(clients.all()).toEqual([norte]);
+    void clients.add(norte);
+    await vi.waitFor(() => expect(expired).toHaveBeenCalledOnce());
+    stop();
+    expect(errors).toEqual([]);
+  });
 
-    signedInAgain();
-    await saving;
-    expect(calls.map((call) => call.url)).toEqual([
-      "http://api/v1/me",
-      "http://api/v1/commands",
-      "http://api/v1/commands",
-    ]);
-    expect(clients.all()).toEqual([norte]);
+  it("marks the pulls made in the background, which don't keep the session alive", async () => {
+    const page = { body: { cursor: 1, changes: [], hasMore: false } };
+    const requests: Headers[] = [];
+    const fetchImpl = (async (_url: string, init: RequestInit = {}) => {
+      requests.push(new Headers(init.headers));
+      return new Response(JSON.stringify(page.body));
+    }) as typeof fetch;
+    const api = createApiBackend("http://api", { fetch: fetchImpl });
+    await api.pull({ background: true });
+    await api.pull();
+    expect(requests.map((headers) => headers.get(BACKGROUND_HEADER))).toEqual(["1", null]);
   });
 
   it("fails with a 401 before anyone is signed in", async () => {
