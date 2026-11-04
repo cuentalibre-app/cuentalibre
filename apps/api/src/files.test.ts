@@ -1,7 +1,11 @@
+import type { Cents } from "@cuentalibre/core";
+import type { Expense, FileListing } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
+import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import type { Client } from "./test/harness";
-import { client, errorCode, member, send, workspace } from "./test/sync";
+import { file, user } from "./db/schema";
+import { db, storage, type Client } from "./test/harness";
+import { client, document, errorCode, member, send, workspace } from "./test/sync";
 
 const pdf = new TextEncoder().encode("%PDF-1.7 factura");
 
@@ -15,6 +19,28 @@ async function upload(
   if (fields.id) form.set("id", fields.id);
   return user.request("/v1/files", { method: "POST", form });
 }
+
+async function listing(user: Client) {
+  const response = await user.request("/v1/files");
+  expect(response.status).toBe(200);
+  return (await response.json()) as FileListing;
+}
+
+const expense = (fields: Partial<Expense> = {}): Expense => ({
+  id: newId(),
+  date: "2026-10-07",
+  number: "",
+  concept: "Parking",
+  amount: 1250 as Cents,
+  expenseType: "629",
+  imputation: 100,
+  supplierId: null,
+  otherPayee: { name: "Aparcamiento Centro", taxId: "" },
+  payment: { date: "2026-10-07", paymentMethodId: "card" },
+  rental: false,
+  privateNotes: "",
+  ...fields,
+});
 
 describe("files", () => {
   it("uploads a file under the ID the client chose and serves it back", async () => {
@@ -107,6 +133,121 @@ describe("files", () => {
       },
     ]);
     expect(await errorCode(missing)).toBe("invalid_attachment");
+  });
+
+  it("lists the files with the records that name them, deleted ones included, and the bytes they take", async () => {
+    const ana = await member();
+    const [contract, receipt, invoicePdf, loose] = await Promise.all(
+      ["contrato.pdf", "ticket.jpg", "factura.pdf", "suelto.pdf"].map(async (name) => {
+        const response = await upload(ana, pdf, { name });
+        return ((await response.json()) as { id: string }).id;
+      }),
+    );
+    const attach = (id: string) => [{ id, name: "x.pdf", size: pdf.byteLength }];
+    const norte = client({ attachments: attach(contract!) });
+    const parking = expense({ attachments: attach(receipt!) });
+    const draft = document(norte.id, { attachments: attach(invoicePdf!) });
+    await send(ana, [
+      { type: "create", entity: "clients", data: norte },
+      { type: "create", entity: "expenses", data: parking },
+      { type: "create", entity: "salesDocuments", data: draft },
+    ]);
+    expect((await send(ana, [{ type: "delete", entity: "expenses", id: parking.id }])).status).toBe(200);
+
+    const { files, usedBytes, quotaBytes } = await listing(ana);
+    expect(usedBytes).toBe(4 * pdf.byteLength);
+    expect(quotaBytes).toBe(3 * 1024 * 1024);
+    const usersOf = (id: string) => files.find((f) => f.id === id)!.usedBy;
+    expect(usersOf(contract!)).toEqual([{ kind: "client", id: norte.id, label: "Estudio Norte S.L.", deleted: false }]);
+    expect(usersOf(receipt!)).toEqual([
+      { kind: "expense", id: parking.id, label: "Aparcamiento Centro", deleted: true },
+    ]);
+    expect(usersOf(invoicePdf!)).toEqual([{ kind: "draft", id: draft.id, label: "BOR-2026-0001", deleted: false }]);
+    expect(usersOf(loose!)).toEqual([]);
+    expect(files.find((f) => f.id === loose)).toMatchObject({ name: "suelto.pdf", size: pdf.byteLength });
+    expect(Date.parse(files[0]!.uploadedAt)).not.toBeNaN();
+
+    // Files stay to their organization
+    expect((await listing(await member("Eve"))).files).toEqual([]);
+  });
+
+  it("deletes an unused file and its bytes, freeing them from the quota", async () => {
+    const ana = await member();
+    const big = new Uint8Array(1024 * 1024);
+    const ids = await Promise.all(
+      [1, 2, 3].map(async () => ((await (await upload(ana, big)).json()) as { id: string }).id),
+    );
+    expect((await upload(ana, big)).status).toBe(413);
+
+    const [row] = await db
+      .select({ key: file.storageKey })
+      .from(file)
+      .where(and(eq(file.organizationId, ana.organizationId), eq(file.id, ids[0]!)));
+    const response = await ana.request(`/v1/files/${ids[0]}`, { method: "DELETE" });
+    expect(response.status).toBe(204);
+    expect(await storage.get(row!.key)).toBeNull();
+    expect((await ana.request(`/v1/files/${ids[0]}`)).status).toBe(404);
+    expect((await listing(ana)).usedBytes).toBe(2 * big.byteLength);
+    expect((await upload(ana, big)).status).toBe(201);
+
+    expect((await ana.request(`/v1/files/${ids[0]}`, { method: "DELETE" })).status).toBe(404);
+    // Nor can another organization delete Ana's files
+    expect((await (await member("Eve")).request(`/v1/files/${ids[1]}`, { method: "DELETE" })).status).toBe(404);
+  });
+
+  it("refuses to delete a file any record names, live or deleted, or an email", async () => {
+    const ana = await member();
+    await db.update(user).set({ emailVerified: true }).where(eq(user.email, ana.email));
+    const ids = await Promise.all(
+      [1, 2, 3].map(async () => ((await (await upload(ana, pdf)).json()) as { id: string }).id),
+    );
+    const [live, deleted, emailed] = ids as [string, string, string];
+    const attach = (id: string) => [{ id, name: "x.pdf", size: pdf.byteLength }];
+    const norte = client({ attachments: attach(live) });
+    const draft = document(norte.id, { attachments: attach(deleted) });
+    await send(ana, [
+      { type: "create", entity: "clients", data: norte },
+      { type: "create", entity: "salesDocuments", data: draft },
+    ]);
+    const sent = await ana.request("/v1/emails", {
+      method: "POST",
+      body: {
+        documentId: draft.id,
+        to: ["cliente@example.com"],
+        subject: "Factura",
+        body: "Hola",
+        attachments: [emailed],
+      },
+    });
+    expect(sent.status).toBe(202);
+    await send(ana, [{ type: "delete", entity: "salesDocuments", id: draft.id }]);
+
+    for (const id of ids) {
+      const response = await ana.request(`/v1/files/${id}`, { method: "DELETE" });
+      expect(response.status).toBe(409);
+      expect(await errorCode(response)).toBe("file_in_use");
+      expect((await ana.request(`/v1/files/${id}`)).status).toBe(200);
+    }
+    const emailUser = (await listing(ana)).files.find((f) => f.id === emailed)!.usedBy;
+    expect(emailUser).toEqual([
+      { kind: "email", id: expect.any(String), label: "Factura", documentId: draft.id, deleted: false },
+    ]);
+  });
+
+  it("never leaves a record naming a file deleted at the same time", async () => {
+    const ana = await member();
+    for (let round = 0; round < 10; round++) {
+      const { id } = (await (await upload(ana, pdf)).json()) as { id: string };
+      const contact = client({ attachments: [{ id, name: "x.pdf", size: pdf.byteLength }] });
+      const [deleted, named] = await Promise.all([
+        ana.request(`/v1/files/${id}`, { method: "DELETE" }),
+        send(ana, [{ type: "create", entity: "clients", data: contact }]),
+      ]);
+      // Either the file went first and the record was refused, or the record kept it
+      expect([deleted.status, named.status]).toSatisfy(
+        ([d, n]: number[]) => (d === 204 && n === 400) || (d === 409 && n === 200),
+      );
+    }
   });
 
   it("needs a session and an organization", async () => {

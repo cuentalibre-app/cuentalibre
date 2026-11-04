@@ -33,6 +33,14 @@ Un adjunto con el id de un archivo que no se ha subido se rechaza con `400 inval
 
 Descarga el archivo. Los PDF y las imágenes se sirven con su tipo; el resto, como descarga.
 
+### `GET /v1/files`
+
+Los archivos de la empresa, del más reciente al más antiguo, con lo que ocupan: `usedBytes` y `quotaBytes` (`null` si no hay límite). Cada archivo trae `uploadedAt` y, en `usedBy`, los registros que lo adjuntan, también los eliminados: `kind` (`invoice`, `draft`, `quote`, `deliveryNote`, `client`, `supplier`, `purchaseInvoice`, `asset`, `expense` o `email`), `id`, `label` (su número, nombre o asunto), `deleted` y, en un correo, `documentId`.
+
+### `DELETE /v1/files/{id}`
+
+Elimina un archivo que ningún registro adjunta y deja de contar en el espacio. Responde `204`. Si algún registro lo adjunta, aunque esté eliminado, responde `409 file_in_use`: un justificante adjunto puede tener que conservarse. Para eliminarlo, quítalo antes de sus registros.
+
 ## Correo
 
 ### `POST /v1/emails`

@@ -244,3 +244,48 @@ export const storedFileSchema = z.object({
   contentType: z.string(),
 });
 export type StoredFile = z.infer<typeof storedFileSchema>;
+
+/** Kinds of record that can name a file: sales documents by their kind, contacts by their role. */
+export const fileUserKindSchema = z.enum([
+  "invoice",
+  "draft",
+  "quote",
+  "deliveryNote",
+  "client",
+  "supplier",
+  "purchaseInvoice",
+  "asset",
+  "expense",
+  "email",
+]);
+export type FileUserKind = z.infer<typeof fileUserKindSchema>;
+
+/** A record that names a file in its attachments. */
+export const fileUserSchema = z.object({
+  kind: fileUserKindSchema,
+  id: z.uuid(),
+  /** What the record is called: a number, a name, a supplier, an email's subject. Null if it has none. */
+  label: z.string().nullable(),
+  /** For an email, the document it sent. */
+  documentId: z.uuid().optional(),
+  /** Deleted, but kept: the file is still its supporting document. */
+  deleted: z.boolean(),
+});
+export type FileUser = z.infer<typeof fileUserSchema>;
+
+/** A stored file and the records that name it. A file no record names can be deleted. */
+export const fileUsageSchema = storedFileSchema.extend({
+  uploadedAt: z.iso.datetime(),
+  usedBy: z.array(fileUserSchema),
+});
+export type FileUsage = z.infer<typeof fileUsageSchema>;
+
+/** The organization's files, newest first, and the bytes they take. */
+export const fileListSchema = z.object({
+  files: z.array(fileUsageSchema),
+  /** Bytes the files take in all. */
+  usedBytes: z.int().nonnegative(),
+  /** The most bytes they may take; null if there is no limit. */
+  quotaBytes: z.int().positive().nullable(),
+});
+export type FileListing = z.infer<typeof fileListSchema>;

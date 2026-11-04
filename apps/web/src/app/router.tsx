@@ -60,6 +60,7 @@ import { BusinessPage } from "@/features/settings/business-page";
 import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
 import { ApiKeysPage } from "@/features/settings/api-keys-page";
 import { EmailTemplatesPage } from "@/features/settings/email-templates-page";
+import { FilesPage } from "@/features/settings/files-page";
 import { LedgerAccountsPage } from "@/features/settings/ledger-accounts-page";
 import { PaymentMethodsPage } from "@/features/settings/payment-methods-page";
 import { PreferencesPage } from "@/features/settings/preferences-page";
@@ -73,6 +74,7 @@ import {
   DRAFT_SETTINGS_PATH,
   EMAIL_TEMPLATES_PATH,
   API_KEYS_PATH,
+  FILES_PATH,
   INVOICE_SETTINGS_PATH,
   LEDGER_ACCOUNTS_PATH,
   OLD_PAYMENT_METHODS_PATHS,
@@ -259,6 +261,7 @@ const settingsRoutes = [
   { path: PREFERENCES_PATH.slice(1), element: <PreferencesPage /> },
   { path: EMAIL_TEMPLATES_PATH.slice(1), element: <EmailTemplatesPage /> },
   { path: API_KEYS_PATH.slice(1), element: <ApiKeysPage /> },
+  { path: FILES_PATH.slice(1), element: <FilesPage /> },
   { path: BILLING_PATH.slice(1), element: <BillingPage /> },
 ];
 

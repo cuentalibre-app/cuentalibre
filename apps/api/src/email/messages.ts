@@ -8,6 +8,7 @@ import { ApiError } from "../errors";
 import { complete, enqueue } from "../outbox/outbox";
 import { MAX_ATTEMPTS, RetryLater, type Handler } from "../outbox/worker";
 import type { FileStorage } from "../storage";
+import { lockFiles } from "../sync/files";
 import { readSettings } from "../sync/settings";
 import { lockOrganization, type Scope } from "../sync/write";
 
@@ -114,14 +115,8 @@ export async function queueEmail(db: Db, sender: Sender, request: z.output<typeo
       );
     if (!document) throw new ApiError(400, "invalid_email", "documentId: no such document.");
     const attachments = [...new Set(request.attachments)];
-    if (attachments.length > 0) {
-      const found = await tx
-        .select({ id: file.id })
-        .from(file)
-        .where(and(eq(file.organizationId, organizationId), inArray(file.id, attachments)));
-      if (found.length !== attachments.length)
-        throw new ApiError(400, "invalid_attachment", "attachments: upload the files first.");
-    }
+    if ((await lockFiles(tx, organizationId, attachments)).length !== attachments.length)
+      throw new ApiError(400, "invalid_attachment", "attachments: upload the files first.");
     const from = await senderOf(tx, organizationId, sender.userId);
     // Only ever to the sender's own address, so it can't widen who the email reaches
     const bcc = request.bccMe && from.userEmail ? [from.userEmail] : [];

@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { BACKGROUND_HEADER, createApiBackend, ApiError, type ApiBackendOptions } from "./api";
 import { localBackend, onCommandError, setBackend } from "./backend";
 import { createCollection } from "./collection";
-import { attachFile, attachmentUrl } from "./files";
+import { attachFile, attachmentUrl, discardAttachments } from "./files";
 import { createStore } from "./store";
 import { listTarget, syncCollection, syncMe, syncSettings, syncTarget } from "./sync";
 
@@ -285,37 +285,78 @@ describe("api backend", () => {
     ]);
   });
 
-  it("uploads attached files and sends the record that names them once they are stored", async () => {
-    const { calls, clients } = setup({ status: 201, body: {} }, { body: { changes: [] } });
+  it("uploads attached files when the record that names them is saved, then shows the stored copy", async () => {
+    const { calls, clients } = setup({ status: 201, body: {} }, { body: { changes: [] } }, { body: { changes: [] } });
     URL.createObjectURL = () => "blob:local";
+    const revoked = vi.fn();
+    URL.revokeObjectURL = revoked;
     const attachment = attachFile(new File(["%PDF"], "contrato.pdf", { type: "application/pdf" }));
     expect(attachment).toMatchObject({ name: "contrato.pdf", size: 4, url: "blob:local" });
+    // Picking it uploads nothing yet
+    expect(calls).toEqual([]);
     await clients.add({ ...norte, attachments: [attachment] });
+    expect(revoked).toHaveBeenCalledWith("blob:local");
+    // A later change naming it doesn't send it again
+    await clients.update(norte.id, { name: "Norte" });
 
     expect(calls.map((call) => [call.method, call.url])).toEqual([
       ["POST", "http://api/v1/files"],
+      ["POST", "http://api/v1/commands"],
       ["POST", "http://api/v1/commands"],
     ]);
     expect(attachmentUrl({ ...attachment, url: undefined })).toBe(`http://api/v1/files/${attachment.id}`);
   });
 
+  it("uploads nothing for a file left out before saving, and lets it go", async () => {
+    const { calls, clients } = setup({ body: { changes: [] } });
+    URL.createObjectURL = () => "blob:cancelled";
+    const revoked = vi.fn();
+    URL.revokeObjectURL = revoked;
+    const attachment = attachFile(new File(["%PDF"], "contrato.pdf", { type: "application/pdf" }));
+    // The form is cancelled, or the attachment removed
+    discardAttachments([attachment]);
+    expect(revoked).toHaveBeenCalledWith("blob:cancelled");
+
+    // Gone for good: even a record that still named it couldn't send it
+    await clients.add({ ...norte, attachments: [attachment] });
+    expect(calls.map((call) => call.url)).toEqual(["http://api/v1/commands"]);
+  });
+
+  it("keeps a file a sent command named until it is answered, even if its form goes away", async () => {
+    const { calls, clients } = setup({ status: 201, body: {} }, { body: { changes: [] } });
+    URL.createObjectURL = () => "blob:saved";
+    const attachment = attachFile(new File(["%PDF"], "contrato.pdf", { type: "application/pdf" }));
+    const saved = clients.add({ ...norte, attachments: [attachment] });
+    // The form navigates away at once
+    discardAttachments([attachment]);
+    await saved;
+    expect(calls.map((call) => call.url)).toEqual(["http://api/v1/files", "http://api/v1/commands"]);
+  });
+
   it("fails the record that names a file whose upload failed, with the upload's reason", async () => {
-    const { calls, clients } = setup({
-      status: 413,
-      body: { error: { code: "storage_quota_exceeded", message: "Full." } },
-    });
+    const { calls, clients } = setup(
+      { status: 413, body: { error: { code: "storage_quota_exceeded", message: "Full." } } },
+      { status: 201, body: {} },
+      { body: { changes: [] } },
+    );
     URL.createObjectURL = () => "blob:local";
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const errors: unknown[] = [];
     const stop = onCommandError((error) => errors.push(error));
     const attachment = attachFile(new File(["%PDF"], "contrato.pdf", { type: "application/pdf" }));
     await clients.add({ ...norte, attachments: [attachment] });
     stop();
-    warn.mockRestore();
 
     expect(calls.map((call) => call.url)).toEqual(["http://api/v1/files"]);
     expect(clients.all()).toEqual([]);
     expect(errors).toEqual([new ApiError(413, "storage_quota_exceeded", "Full.")]);
+
+    // Saving again tries the upload again
+    await clients.add({ ...norte, attachments: [attachment] });
+    expect(calls.map((call) => call.url)).toEqual([
+      "http://api/v1/files",
+      "http://api/v1/files",
+      "http://api/v1/commands",
+    ]);
   });
 
   it("undoes a change the server rejects", async () => {
