@@ -1,3 +1,4 @@
+import type { Me } from "@cuentalibre/contracts";
 import { SITE_URL } from "@/components/legal-links";
 import { connectApi, type ConnectResult } from "@/data/api";
 
@@ -77,7 +78,38 @@ export async function startSession() {
     state = "demo";
     return;
   }
-  state = API_URL ? await connectApi(API_URL) : "demo";
+  state = API_URL ? await connectApi(API_URL, sessionExpired) : "demo";
+}
+
+/** The session that ended while the app ran on it: who was signed in, and how to carry on once they are again. */
+let expired: { me: Me; resume: () => void; resumed: Promise<void> } | null = null;
+const expiryListeners = new Set<() => void>();
+
+/** The API's requests wait on it after a 401, so the changes they carry are sent once the user is back. */
+function sessionExpired(me: Me) {
+  if (!expired) {
+    let resume!: () => void;
+    const resumed = new Promise<void>((resolve) => (resume = resolve));
+    expired = { me, resume, resumed };
+    expiryListeners.forEach((listener) => listener());
+  }
+  return expired.resumed;
+}
+
+/** Who was signed in when the session ended, until they sign in again; null otherwise. */
+export const expiredSession = () => expired?.me ?? null;
+
+export function onSessionExpiry(listener: () => void) {
+  expiryListeners.add(listener);
+  return () => void expiryListeners.delete(listener);
+}
+
+/** Signed in again: the requests that were waiting are sent. */
+export function resumeSession() {
+  const ended = expired;
+  expired = null;
+  expiryListeners.forEach((listener) => listener());
+  ended?.resume();
 }
 
 function demoReturn(): DemoReturn {

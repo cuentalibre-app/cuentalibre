@@ -39,14 +39,29 @@ export interface ApiBackend extends Backend {
   pull: () => Promise<void>;
 }
 
+export interface ApiBackendOptions {
+  fetch?: typeof fetch;
+  /**
+   * Called when the session ends while the app runs on it, with who was signed in. Requests
+   * wait until it resolves, signed in again, and are then retried: the changes waiting to
+   * be saved aren't lost. Without it, they fail with a 401.
+   */
+  onSessionExpired?: (me: Me) => Promise<void>;
+}
+
 /**
  * The backend that talks to the API. Commands for data the server stores are
  * sent in one request and its answer replaces the optimistic records; the
  * user's own settings are saved apart, since they aren't the organization's.
  * The rest stay local until their part of the API exists.
  */
-export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetch): ApiBackend {
+export function createApiBackend(
+  baseUrl: string,
+  { fetch: fetchImpl = fetch, onSessionExpired }: ApiBackendOptions = {},
+): ApiBackend {
   let cursor = 0;
+  /** Who is signed in, once loaded: until then, a 401 means there was no session to begin with. */
+  let me: Me | undefined;
   let pulling: Promise<void> | undefined;
   let queue = Promise.resolve();
   const uploads = new Set<Promise<void>>();
@@ -60,6 +75,10 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
       // Form data sets its own type, with the multipart boundary
       headers: typeof init.body === "string" ? { "content-type": "application/json" } : undefined,
     });
+    if (response.status === 401 && me && onSessionExpired) {
+      await onSessionExpired(me);
+      return request(path, init);
+    }
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { error?: { code: string; message: string } } | null;
       throw new ApiError(
@@ -170,7 +189,8 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
     },
 
     async loadMe() {
-      applyMe(await request<Me>("/v1/me"));
+      me = await request<Me>("/v1/me");
+      applyMe(me);
     },
 
     pull() {
@@ -220,8 +240,11 @@ export type ConnectResult = "connected" | "signed-out" | "no-organization" | "un
  * Without a session, or without an active organization, the backend stays
  * local and the result says what's missing.
  */
-export async function connectApi(baseUrl: string): Promise<ConnectResult> {
-  const api = createApiBackend(baseUrl);
+export async function connectApi(
+  baseUrl: string,
+  onSessionExpired?: ApiBackendOptions["onSessionExpired"],
+): Promise<ConnectResult> {
+  const api = createApiBackend(baseUrl, { onSessionExpired });
   try {
     await Promise.all([api.loadWorkspace(), api.loadMe()]);
   } catch (error) {

@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from "react-router";
+import { SessionExpiredDialog } from "@/features/auth/session-expired-dialog";
 import { DemoBanner } from "@/features/auth/session-gate";
 import { VerifyEmailBanner } from "@/features/auth/verify-email-banner";
 import { ReadOnlyBanner } from "@/features/settings/read-only-banner";
@@ -37,6 +38,7 @@ export function AppLayout() {
         <BottomNav className="lg:hidden" />
       </div>
       <FirstRunTour />
+      <SessionExpiredDialog />
     </>
   );
 }
