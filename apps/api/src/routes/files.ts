@@ -1,4 +1,4 @@
-import { storedFileSchema } from "@cuentalibre/contracts";
+import { fileListSchema, storedFileSchema } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
@@ -6,7 +6,7 @@ import { createMiddleware } from "hono/factory";
 import type { AppEnv } from "../context";
 import { ApiError, errorContent, errorResponse } from "../errors";
 import { readOnlyError, requireOrganization, requireWritable } from "../middleware";
-import { findFile, uploadFile } from "../sync/files";
+import { deleteFile, findFile, listFiles, uploadFile } from "../sync/files";
 
 /*
  * Uploaded files. Records name them by ID in their `attachments`; the bytes
@@ -64,6 +64,40 @@ const upload = createRoute({
   },
 });
 
+const list = createRoute({
+  method: "get",
+  path: "/files",
+  tags: ["Files"],
+  summary: "List the files",
+  description:
+    "The organization's files, newest first, each with the records that name it in their attachments " +
+    "(deleted records included), and the bytes they take against the quota. A file no record names can be deleted.",
+  middleware: [requireOrganization] as const,
+  responses: {
+    200: { description: "The files", content: { "application/json": { schema: fileListSchema } } },
+    ...tenantErrors,
+  },
+});
+
+const remove = createRoute({
+  method: "delete",
+  path: "/files/{id}",
+  tags: ["Files"],
+  summary: "Delete an unused file",
+  description:
+    "Only a file no record names, not even a deleted one: an attached file may be a supporting document " +
+    "that has to be kept. To delete one, remove it from its records' attachments first. Its bytes no longer count toward the quota.",
+  middleware: [requireOrganization, requireWritable] as const,
+  request: { params: z.object({ id: z.uuid() }) },
+  responses: {
+    204: { description: "Deleted" },
+    404: errorContent("No such file"),
+    409: errorContent("A record names the file (`file_in_use`)"),
+    ...tenantErrors,
+    ...readOnlyError,
+  },
+});
+
 const download = createRoute({
   method: "get",
   path: "/files/{id}",
@@ -94,6 +128,19 @@ export const fileRoutes = new OpenAPIHono<AppEnv>()
       },
     );
     return c.json(stored, 201);
+  })
+  .openapi(list, async (c) =>
+    c.json(await listFiles(c.get("db"), c.get("organizationId"), c.get("fileQuotaBytes")), 200),
+  )
+  .openapi(remove, async (c) => {
+    const { id } = c.req.valid("param");
+    const storageKey = await deleteFile(c.get("db"), c.get("organizationId"), id);
+    // Committed: the file is gone even if its bytes linger
+    await c
+      .get("storage")
+      .delete(storageKey)
+      .catch((error: unknown) => console.error(`Couldn't delete file ${storageKey}`, error));
+    return c.body(null, 204);
   })
   .openapi(download, async (c) => {
     const row = await findFile(c.get("db"), c.get("organizationId"), c.req.valid("param").id);

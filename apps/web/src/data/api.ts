@@ -8,6 +8,7 @@ import {
   type CreatedApiKey,
   type EmailMessage,
   type EmailSender,
+  type FileListing,
   type Me,
   type OrganizationMember,
   type StoredFile,
@@ -16,6 +17,7 @@ import {
   type Workspace,
 } from "@cuentalibre/contracts";
 import { setBackend, type Backend } from "./backend";
+import { settleFiles, takeFiles } from "./files";
 import type { Command } from "./commands";
 import { applyChanges, applyMe, applyWorkspace, isSettingsSynced, isSynced } from "./sync";
 
@@ -67,9 +69,27 @@ export function createApiBackend(
   let signedIn = false;
   let pulling: Promise<void> | undefined;
   let queue = Promise.resolve();
-  const uploads = new Set<Promise<void>>();
-  /** Why an attachment's upload failed, by its ID, so the record that names it fails with that reason. */
-  const failedUploads = new Map<string, unknown>();
+  /** Uploads by attachment ID; one that succeeded stays, so a later command naming the file doesn't send it again. */
+  const uploads = new Map<string, Promise<void>>();
+
+  function upload(id: string, file: File) {
+    let uploading = uploads.get(id);
+    if (!uploading) {
+      const form = new FormData();
+      form.set("id", id);
+      form.set("file", file);
+      uploading = request("/v1/files", { method: "POST", body: form }).then(
+        () => undefined,
+        (error: unknown) => {
+          // A command naming it later tries again
+          uploads.delete(id);
+          throw error;
+        },
+      );
+      uploads.set(id, uploading);
+    }
+    return uploading;
+  }
 
   async function request<R>(path: string, init: RequestInit = {}, background = false): Promise<R> {
     const headers: Record<string, string> = {};
@@ -109,40 +129,39 @@ export function createApiBackend(
       const synced = commands.flatMap(toWire);
       const own = commands.flatMap(toUserSettings);
       if (synced.length === 0 && own.length === 0) return Promise.resolve();
+      const body = JSON.stringify({ commands: synced });
+      // Taken now: the form that picked them may be gone by the time the command goes
+      const files = synced.length ? takeFiles(body) : [];
       // One request at a time, in order: an invoice must not reach the server before the client it names
       const sent = queue.then(async () => {
         for (const { section, data } of own)
           await request(`/v1/me/settings/${section}`, { method: "PUT", body: JSON.stringify(data) });
         if (synced.length === 0) return;
-        // A record may name files still uploading. If one failed, the record fails with its reason
-        await Promise.all(uploads);
-        const body = JSON.stringify({ commands: synced });
-        for (const [id, error] of failedUploads) if (body.includes(id)) throw error;
+        // The files a record names are stored first. If one can't be, the record fails with its reason
+        await Promise.all(files.map(({ id, file }) => upload(id, file)));
         const { changes } = await request<{ changes: Change[] }>("/v1/commands", {
           method: "POST",
           body,
         });
         applyChanges(changes);
       });
+      const ids = files.map((file) => file.id);
+      sent.then(
+        () => settleFiles(ids, true),
+        () => settleFiles(ids, false),
+      );
       queue = sent.catch(() => undefined);
       return sent;
     },
 
-    upload(id, file) {
-      const form = new FormData();
-      form.set("id", id);
-      form.set("file", file);
-      const uploading = request("/v1/files", { method: "POST", body: form })
-        .then(() => undefined)
-        .catch((error: unknown) => {
-          console.warn(`Upload of ${file.name} failed:`, error);
-          failedUploads.set(id, error);
-        })
-        .finally(() => uploads.delete(uploading));
-      uploads.add(uploading);
-    },
+    upload,
 
     fileUrl: (id) => `${baseUrl}/v1/files/${id}`,
+
+    files: {
+      list: () => request<FileListing>("/v1/files"),
+      delete: (id) => request(`/v1/files/${id}`, { method: "DELETE" }),
+    },
 
     async sendEmail(email, files) {
       const attachments = await Promise.all(
