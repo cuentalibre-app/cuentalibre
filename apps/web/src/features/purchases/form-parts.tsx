@@ -5,10 +5,10 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { Input } from "@cuentalibre/ui/components/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { parseDecimal } from "@/lib/format";
+import { formatFileSize, parseDecimal } from "@/lib/format";
 import { isValidImputation } from "@cuentalibre/core";
 import type { Attachment } from "@cuentalibre/contracts";
-import { attachFile, attachmentUrl, filesAreStored } from "@/data/files";
+import { attachFile, attachmentUrl, discardAttachments, filesAreStored } from "@/data/files";
 
 /* Form building blocks shared by received invoices and expenses. Tooltips need a TooltipProvider above. */
 
@@ -49,8 +49,8 @@ export function PercentInput({
 }
 
 /**
- * The supplier's PDF or a photo of the receipt. Picked files upload in the background when there is
- * an API; otherwise they stay in this browser tab. Reading the data from them (OCR) comes later.
+ * The supplier's PDF or a photo of the receipt. With an API, picked files are uploaded when the record
+ * that names them is saved; otherwise they stay in this browser tab. Reading the data from them (OCR) comes later.
  */
 export function ReceiptDrop({
   attachments,
@@ -126,7 +126,10 @@ export function ReceiptDrop({
       {attachments.length > 0 && (
         <AttachmentList
           attachments={attachments}
-          onRemove={(a) => onChange(attachments.filter((x) => x.id !== a.id))}
+          onRemove={(a) => {
+            onChange(attachments.filter((x) => x.id !== a.id));
+            discardAttachments([a]);
+          }}
         />
       )}
     </section>
@@ -149,7 +152,7 @@ export function AttachmentList({
           <li key={a.id} className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
             <Paperclip className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate">{a.name}</span>
-            <span className="text-xs text-muted-foreground">{formatSize(a.size)}</span>
+            <span className="text-xs text-muted-foreground">{formatFileSize(a.size)}</span>
             {url ? (
               <a
                 href={url}
@@ -230,9 +233,4 @@ export function AttachmentsDialog({
       </DialogContent>
     </Dialog>
   );
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
 }

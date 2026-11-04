@@ -22,6 +22,7 @@ import { Input, Textarea } from "@cuentalibre/ui/components/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { useDiscardOnLeave } from "@/data/files";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
@@ -193,6 +194,8 @@ function ExpenseForm({
       ? prefillFromPayee(initial, presetSupplierId)
       : initial;
   });
+  // Files picked here are only stored if the form is saved
+  useDiscardOnLeave(form.attachments);
   const suppliers = useContacts("supplier");
   const [creatingSupplier, setCreatingSupplier] = useState(false);
   const [creatingMethod, setCreatingMethod] = useState(false);
