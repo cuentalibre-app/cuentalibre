@@ -9,7 +9,7 @@ import {
   type Tag,
 } from "@cuentalibre/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApiBackend, ApiError } from "./api";
+import { BACKGROUND_HEADER, createApiBackend, ApiError, type ApiBackendOptions } from "./api";
 import { localBackend, onCommandError, setBackend } from "./backend";
 import { createCollection } from "./collection";
 import { attachFile, attachmentUrl } from "./files";
@@ -59,7 +59,13 @@ function fakeFetch(...responses: { status?: number; body: unknown }[]) {
   return { calls, fetchImpl };
 }
 
-function setup(...responses: { status?: number; body: unknown }[]) {
+type FakeResponse = { status?: number; body: unknown };
+
+function setup(...responses: FakeResponse[]) {
+  return setupWith({}, ...responses);
+}
+
+function setupWith(options: Omit<ApiBackendOptions, "fetch">, ...responses: FakeResponse[]) {
   const clients = createCollection<Contact>("clients", []);
   const suppliers = createCollection<Contact>("suppliers", []);
   const salesDocuments = createCollection<SalesDocument>("salesDocuments", []);
@@ -67,7 +73,7 @@ function setup(...responses: { status?: number; body: unknown }[]) {
   syncCollection("suppliers", suppliers);
   syncCollection("salesDocuments", salesDocuments);
   const { calls, fetchImpl } = fakeFetch(...responses);
-  const api = createApiBackend("http://api", fetchImpl);
+  const api = createApiBackend("http://api", { ...options, fetch: fetchImpl });
   setBackend(api);
   return { api, calls, clients, suppliers, salesDocuments };
 }
@@ -316,6 +322,47 @@ describe("api backend", () => {
     const { clients } = setup({ status: 409, body: { error: { code: "already_exists", message: "Taken." } } });
     await clients.add(norte);
     expect(clients.all()).toEqual([]);
+  });
+
+  it("sends the user to sign in when the session ends, without reporting the change as rejected", async () => {
+    const me = { user: { id: "0199f0a0-0000-7000-8000-000000000020", name: "Ana", email: "ana@example.com" } };
+    const expired = vi.fn();
+    const { api, clients } = setupWith(
+      { onSessionExpired: expired },
+      { body: me },
+      { status: 401, body: { error: { code: "unauthorized", message: "Sign in to continue." } } },
+    );
+    await api.loadMe();
+    const errors: unknown[] = [];
+    const stop = onCommandError((error) => errors.push(error));
+
+    void clients.add(norte);
+    await vi.waitFor(() => expect(expired).toHaveBeenCalledOnce());
+    stop();
+    expect(errors).toEqual([]);
+  });
+
+  it("marks the pulls made in the background, which don't keep the session alive", async () => {
+    const page = { body: { cursor: 1, changes: [], hasMore: false } };
+    const requests: Headers[] = [];
+    const fetchImpl = (async (_url: string, init: RequestInit = {}) => {
+      requests.push(new Headers(init.headers));
+      return new Response(JSON.stringify(page.body));
+    }) as typeof fetch;
+    const api = createApiBackend("http://api", { fetch: fetchImpl });
+    await api.pull({ background: true });
+    await api.pull();
+    expect(requests.map((headers) => headers.get(BACKGROUND_HEADER))).toEqual(["1", null]);
+  });
+
+  it("fails with a 401 before anyone is signed in", async () => {
+    const expired = vi.fn(() => Promise.resolve());
+    const { api } = setupWith(
+      { onSessionExpired: expired },
+      { status: 401, body: { error: { code: "unauthorized", message: "Sign in to continue." } } },
+    );
+    await expect(api.loadMe()).rejects.toEqual(new ApiError(401, "unauthorized", "Sign in to continue."));
+    expect(expired).not.toHaveBeenCalled();
   });
 
   it("reports API errors with their code", async () => {

@@ -35,8 +35,21 @@ export interface ApiBackend extends Backend {
   loadWorkspace: () => Promise<void>;
   /** Downloads the signed-in user's account and own settings. */
   loadMe: () => Promise<void>;
-  /** Applies what changed on the server since the last download or pull. */
-  pull: () => Promise<void>;
+  /**
+   * Applies what changed on the server since the last download or pull. In the `background`,
+   * when the user did nothing, it doesn't keep their session alive.
+   */
+  pull: (options?: { background?: boolean }) => Promise<void>;
+}
+
+export interface ApiBackendOptions {
+  fetch?: typeof fetch;
+  /**
+   * Called when the session ends while the app runs on it, to send the user to sign in again.
+   * The request that found out never settles, so nothing reports an error on the way out.
+   * Without it, requests fail with a 401.
+   */
+  onSessionExpired?: () => void;
 }
 
 /**
@@ -45,21 +58,29 @@ export interface ApiBackend extends Backend {
  * user's own settings are saved apart, since they aren't the organization's.
  * The rest stay local until their part of the API exists.
  */
-export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetch): ApiBackend {
+export function createApiBackend(
+  baseUrl: string,
+  { fetch: fetchImpl = fetch, onSessionExpired }: ApiBackendOptions = {},
+): ApiBackend {
   let cursor = 0;
+  /** Whether someone is signed in, once known: until then, a 401 means there was no session to begin with. */
+  let signedIn = false;
   let pulling: Promise<void> | undefined;
   let queue = Promise.resolve();
   const uploads = new Set<Promise<void>>();
   /** Why an attachment's upload failed, by its ID, so the record that names it fails with that reason. */
   const failedUploads = new Map<string, unknown>();
 
-  async function request<R>(path: string, init: RequestInit = {}): Promise<R> {
-    const response = await fetchImpl(`${baseUrl}${path}`, {
-      ...init,
-      credentials: "include",
-      // Form data sets its own type, with the multipart boundary
-      headers: typeof init.body === "string" ? { "content-type": "application/json" } : undefined,
-    });
+  async function request<R>(path: string, init: RequestInit = {}, background = false): Promise<R> {
+    const headers: Record<string, string> = {};
+    // Form data sets its own type, with the multipart boundary
+    if (typeof init.body === "string") headers["content-type"] = "application/json";
+    if (background) headers[BACKGROUND_HEADER] = "1";
+    const response = await fetchImpl(`${baseUrl}${path}`, { ...init, credentials: "include", headers });
+    if (response.status === 401 && signedIn && onSessionExpired) {
+      onSessionExpired();
+      return new Promise<R>(() => {});
+    }
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { error?: { code: string; message: string } } | null;
       throw new ApiError(
@@ -73,10 +94,10 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
     return (await response.json()) as R;
   }
 
-  async function pullAll() {
+  async function pullAll(background: boolean) {
     let more = true;
     while (more) {
-      const page = await request<Changes>(`/v1/sync?since=${cursor}`);
+      const page = await request<Changes>(`/v1/sync?since=${cursor}`, {}, background);
       applyChanges(page.changes);
       cursor = page.cursor;
       more = page.hasMore;
@@ -171,10 +192,11 @@ export function createApiBackend(baseUrl: string, fetchImpl: typeof fetch = fetc
 
     async loadMe() {
       applyMe(await request<Me>("/v1/me"));
+      signedIn = true;
     },
 
-    pull() {
-      pulling ??= pullAll().finally(() => (pulling = undefined));
+    pull({ background = false } = {}) {
+      pulling ??= pullAll(background).finally(() => (pulling = undefined));
       return pulling;
     },
   };
@@ -210,18 +232,29 @@ function toUserSettings(command: Command): { section: UserSettingsSection; data:
   return section.success ? [{ section: section.data, data: command.data }] : [];
 }
 
+/** Marks a request the app made on its own, which doesn't count as the user being active. */
+export const BACKGROUND_HEADER = "x-cuentalibre-background";
+
+/** What counts as someone using the app, between two pulls. */
+const ACTIVITY_EVENTS = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+
 /** How connecting to the API went: the app runs on it only when "connected". */
 export type ConnectResult = "connected" | "signed-out" | "no-organization" | "unavailable";
 
 /**
  * Loads the workspace from the API and switches to it as the backend, then
- * keeps the data fresh when the window regains focus and every 30 seconds.
+ * keeps the data fresh when the window regains focus and every 30 seconds. Those pulls
+ * keep the session alive only if the user did something since the last one: a tab left
+ * open isn't someone working, and its session ends after 8 hours like any other.
  * The stores must be loaded first, so their collections are registered.
  * Without a session, or without an active organization, the backend stays
  * local and the result says what's missing.
  */
-export async function connectApi(baseUrl: string): Promise<ConnectResult> {
-  const api = createApiBackend(baseUrl);
+export async function connectApi(
+  baseUrl: string,
+  onSessionExpired?: ApiBackendOptions["onSessionExpired"],
+): Promise<ConnectResult> {
+  const api = createApiBackend(baseUrl, { onSessionExpired });
   try {
     await Promise.all([api.loadWorkspace(), api.loadMe()]);
   } catch (error) {
@@ -231,7 +264,14 @@ export async function connectApi(baseUrl: string): Promise<ConnectResult> {
     return "unavailable";
   }
   setBackend(api);
-  const pull = () => void api.pull().catch((error: unknown) => console.warn("Sync failed:", error));
+  let active = false;
+  for (const event of ACTIVITY_EVENTS)
+    window.addEventListener(event, () => (active = true), { capture: true, passive: true });
+  const pull = () => {
+    const background = !active;
+    active = false;
+    void api.pull({ background }).catch((error: unknown) => console.warn("Sync failed:", error));
+  };
   window.addEventListener("focus", pull);
   setInterval(pull, 30_000);
   return "connected";

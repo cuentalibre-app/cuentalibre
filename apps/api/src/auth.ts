@@ -63,6 +63,13 @@ export const CLOSED_EMAIL_OTP_PATHS = [
 ];
 
 /**
+ * How long a session lasts without activity: a working day with breaks, signed out overnight.
+ * Each request extends it, writing to the database at most once every `SESSION_UPDATE_AGE`.
+ */
+export const SESSION_EXPIRES_IN = 8 * 60 * 60;
+export const SESSION_UPDATE_AGE = 5 * 60;
+
+/**
  * Authentication with Better Auth: email and password sign-in, Google when
  * configured, sessions in Postgres, and organizations. Users belong to organizations through
  * `membership`, which carries their role. Scripts and agents use API keys.
@@ -82,6 +89,7 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
     trustedOrigins: [env.WEB_ORIGIN],
     disabledPaths: [...CLOSED_ORGANIZATION_PATHS, ...CLOSED_EMAIL_OTP_PATHS],
     database: drizzleAdapter(db, { provider: "pg", schema }),
+    session: { expiresIn: SESSION_EXPIRES_IN, updateAge: SESSION_UPDATE_AGE },
     emailAndPassword: {
       enabled: true,
       // Whoever reset the password owns the mailbox: anyone else signed in is out
