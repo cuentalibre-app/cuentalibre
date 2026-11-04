@@ -76,7 +76,10 @@ const origin = env.BETTER_AUTH_URL;
 /** A signed-in user: sends requests with their session cookie. */
 export interface Client {
   /** `body` is sent as JSON; `form` as multipart/form-data. */
-  request(path: string, init?: { method?: string; body?: unknown; form?: FormData }): Promise<Response>;
+  request(
+    path: string,
+    init?: { method?: string; body?: unknown; form?: FormData; headers?: Record<string, string> },
+  ): Promise<Response>;
 }
 
 let counter = 0;
@@ -108,6 +111,7 @@ export async function signUp(
           cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join("; "),
           origin,
           ...(init.body ? { "content-type": "application/json" } : {}),
+          ...init.headers,
         },
         body: init.form ?? (init.body ? JSON.stringify(init.body) : undefined),
       });

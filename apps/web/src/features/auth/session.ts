@@ -77,7 +77,37 @@ export async function startSession() {
     state = "demo";
     return;
   }
-  state = API_URL ? await connectApi(API_URL) : "demo";
+  state = API_URL ? await connectApi(API_URL, sessionExpired) : "demo";
+}
+
+/** Where the session ended, when it ends while the app runs: the sign-in page says so, and comes back. */
+function sessionExpired() {
+  reloadAt(signInPath({ back: `${window.location.pathname}${window.location.search}`, expired: true }));
+}
+
+/** The query of the sign-in page: whether the session ended, and where to go back to after signing in. */
+const EXPIRED_PARAM = "caducada";
+const BACK_PARAM = "volver";
+
+/** The sign-in page, coming back to `back` (a path in the app) once signed in. */
+export function signInPath({ back, expired = false }: { back?: string; expired?: boolean } = {}) {
+  const params = new URLSearchParams();
+  if (expired) params.set(EXPIRED_PARAM, "1");
+  const path = back && returnPath(back);
+  if (path && path !== "/") params.set(BACK_PARAM, path);
+  const query = params.toString();
+  return query ? `${SIGN_IN_PATH}?${query}` : SIGN_IN_PATH;
+}
+
+/** What the sign-in page's query says: whether the session ended, and where to go once signed in. */
+export function signInQuery(params: URLSearchParams) {
+  return { expired: params.get(EXPIRED_PARAM) === "1", back: returnPath(params.get(BACK_PARAM)) };
+}
+
+/** A path in this app to go back to; anything else, which could lead to another site, goes home. */
+export function returnPath(value: string | null | undefined) {
+  if (!value?.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return "/";
+  return value;
 }
 
 function demoReturn(): DemoReturn {

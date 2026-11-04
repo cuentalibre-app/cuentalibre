@@ -15,9 +15,13 @@ function apiKeyOf(headers: Headers): string | null {
   return key?.startsWith(API_KEY_PREFIX) ? key : null;
 }
 
+/** Sent by the web app on the requests it makes on its own, which don't keep the session alive. */
+export const BACKGROUND_HEADER = "x-cuentalibre-background";
+
 /**
  * Authenticates the request: with an API key, which acts as its user in its
- * organization, or with the session cookie. Puts the user on the context.
+ * organization, or with the session cookie, which each request keeps alive unless it says it
+ * comes from the app in the background. Puts the user on the context.
  */
 export const loadSession = (auth: Auth) =>
   createMiddleware<AppEnv>(async (c, next) => {
@@ -39,11 +43,18 @@ export const loadSession = (auth: Auth) =>
       c.set("apiKeyId", result.key.id);
       return next();
     }
-    const data = await auth.api.getSession({ headers: c.req.raw.headers });
+    const { headers, response: data } = await auth.api.getSession({
+      headers: c.req.raw.headers,
+      // What the app does on its own, like syncing every 30 seconds, isn't someone using it
+      query: { disableRefresh: c.req.header(BACKGROUND_HEADER) === "1" },
+      returnHeaders: true,
+    });
     c.set("user", data?.user ?? null);
     c.set("session", data?.session ?? null);
     c.set("activeOrganizationId", data?.session.activeOrganizationId ?? null);
     await next();
+    // An extended session comes with a fresh cookie: without it the browser's would expire on time
+    for (const cookie of headers.getSetCookie()) c.res.headers.append("set-cookie", cookie);
   });
 
 export const requireUser = createMiddleware<AppEnv>(async (c, next) => {
