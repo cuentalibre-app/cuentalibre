@@ -19,7 +19,7 @@ import { CLIENT_DEFAULT, Field, GroupedSelect, LocaleFields, Section } from "@/f
 import { defaultNumberFormat } from "@/features/sales/invoice-locale";
 import { WITHHOLDING_GROUPS } from "@/features/sales/sales-model";
 import { paymentMethodOptions } from "@/features/settings/settings-model";
-import { filesAreStored } from "@/data/files";
+import { filesAreStored, useDiscardOnLeave } from "@/data/files";
 import {
   NO_DEFAULT,
   fromDraft,
@@ -96,6 +96,8 @@ function ContactForm({
     // A copy keeps the data but not the files, which belong to the original
     return source ? { ...base, attachments: [] } : base;
   });
+  // Files picked here are only stored if the contact is saved
+  useDiscardOnLeave(draft.attachments);
   const [errors, setErrors] = useState<DraftErrors>({});
   const isClient = role === "client";
   const customLabels = useCustomFieldLabels();

@@ -1,14 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
-import {
-  ArrowLeft,
-  ChevronDown,
-  FilePen,
-  FilePlus2,
-  Landmark,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark, Plus, Trash2 } from "lucide-react";
 import {
   ASSET_CATEGORIES,
   newId,
@@ -47,6 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { useDiscardOnLeave } from "@/data/files";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
@@ -308,6 +301,8 @@ function PurchaseForm({
       ? prefillFromSupplier(initial, presetSupplierId, kind)
       : initial;
   });
+  // Files picked here are only stored if the form is saved
+  useDiscardOnLeave(form.attachments);
   const [errors, setErrors] = useState<Errors>({});
   const lockedQuarterOf = useLockedQuarter();
   // The booking date decides the quarter, so it's the one a closed quarter locks

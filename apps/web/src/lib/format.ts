@@ -61,6 +61,13 @@ export function formatDate(isoDate: string): string {
   return `${String(d).padStart(2, "0")} ${MONTHS_SHORT[m! - 1]!.toLowerCase()} ${y}`;
 }
 
+/** "12 KB", "1,4 MB", "1 GB": a file's size. */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  const [value, unit] = bytes < 1024 ** 3 ? [bytes / 1024 ** 2, "MB"] : [bytes / 1024 ** 3, "GB"];
+  return `${value.toFixed(1).replace(/\.0$/, "").replace(".", ",")} ${unit}`;
+}
+
 /** "28 sep" */
 export function formatShortDate(isoDate: string): string {
   return formatDate(isoDate).slice(0, -5);

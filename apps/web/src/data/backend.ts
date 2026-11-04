@@ -7,6 +7,7 @@ import type {
   EmailMessage,
   EmailRequest,
   EmailSender,
+  FileListing,
   NewApiKey,
   OrganizationMember,
 } from "@cuentalibre/contracts";
@@ -20,11 +21,16 @@ export interface Backend {
   send(commands: Command[]): Promise<void>;
   /**
    * Stores a file picked as an attachment, under the attachment's ID. Commands
-   * sent later wait for it. Without it, files stay in this browser tab.
+   * upload the files they name before they are sent. Without it, files stay in this browser tab.
    */
-  upload?(id: string, file: File): void;
+  upload?(id: string, file: File): Promise<void>;
   /** Where to open a stored file. */
   fileUrl?(id: string): string;
+  /** The organization's stored files, and deleting those no record names. Without a server there are none. */
+  files?: {
+    list(): Promise<FileListing>;
+    delete(id: string): Promise<void>;
+  };
   /** Sends an email with these files attached. Without it, the user's mail client sends it. */
   sendEmail?(email: Omit<EmailRequest, "attachments">, files: File[]): Promise<EmailMessage>;
   /** The emails that sent a document, newest first. */
