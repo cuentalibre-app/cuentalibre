@@ -6,6 +6,8 @@ import { leaveDemo } from "./session";
 
 interface GoogleSignInProps {
   intent: "sign-in" | "sign-up";
+  /** Where signing in comes back to, in the app. */
+  returnPath?: string;
   onError: (message: string) => void;
 }
 
@@ -13,7 +15,7 @@ interface GoogleSignInProps {
  * "Continue with Google" above the email form, on instances that have it set up.
  * It creates the account if there is none, so signing in says what that accepts.
  */
-export function GoogleSignIn({ intent, onError }: GoogleSignInProps) {
+export function GoogleSignIn({ intent, returnPath, onError }: GoogleSignInProps) {
   const [available, setAvailable] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -31,7 +33,7 @@ export function GoogleSignIn({ intent, onError }: GoogleSignInProps) {
     setPending(true);
     try {
       leaveDemo();
-      await signInWithGoogle(intent);
+      await signInWithGoogle(intent, returnPath);
     } catch (error) {
       onError(authErrorMessage(error));
       setPending(false);

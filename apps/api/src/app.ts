@@ -55,7 +55,8 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
       strictTransportSecurity: "max-age=31536000; includeSubDomains",
     }),
   );
-  app.use("/v1/*", cors({ origin: env.WEB_ORIGIN, credentials: true }));
+  // Preflights are remembered: the web app's background syncs send a header that needs one
+  app.use("/v1/*", cors({ origin: env.WEB_ORIGIN, credentials: true, maxAge: 600 }));
   app.use("/v1/*", async (c, next) => {
     c.set("db", db);
     c.set("storage", storage);

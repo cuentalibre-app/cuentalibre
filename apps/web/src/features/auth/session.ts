@@ -1,4 +1,3 @@
-import type { Me } from "@cuentalibre/contracts";
 import { SITE_URL } from "@/components/legal-links";
 import { connectApi, type ConnectResult } from "@/data/api";
 
@@ -81,35 +80,34 @@ export async function startSession() {
   state = API_URL ? await connectApi(API_URL, sessionExpired) : "demo";
 }
 
-/** The session that ended while the app ran on it: who was signed in, and how to carry on once they are again. */
-let expired: { me: Me; resume: () => void; resumed: Promise<void> } | null = null;
-const expiryListeners = new Set<() => void>();
-
-/** The API's requests wait on it after a 401, so the changes they carry are sent once the user is back. */
-function sessionExpired(me: Me) {
-  if (!expired) {
-    let resume!: () => void;
-    const resumed = new Promise<void>((resolve) => (resume = resolve));
-    expired = { me, resume, resumed };
-    expiryListeners.forEach((listener) => listener());
-  }
-  return expired.resumed;
+/** Where the session ended, when it ends while the app runs: the sign-in page says so, and comes back. */
+function sessionExpired() {
+  reloadAt(signInPath({ back: `${window.location.pathname}${window.location.search}`, expired: true }));
 }
 
-/** Who was signed in when the session ended, until they sign in again; null otherwise. */
-export const expiredSession = () => expired?.me ?? null;
+/** The query of the sign-in page: whether the session ended, and where to go back to after signing in. */
+const EXPIRED_PARAM = "caducada";
+const BACK_PARAM = "volver";
 
-export function onSessionExpiry(listener: () => void) {
-  expiryListeners.add(listener);
-  return () => void expiryListeners.delete(listener);
+/** The sign-in page, coming back to `back` (a path in the app) once signed in. */
+export function signInPath({ back, expired = false }: { back?: string; expired?: boolean } = {}) {
+  const params = new URLSearchParams();
+  if (expired) params.set(EXPIRED_PARAM, "1");
+  const path = back && returnPath(back);
+  if (path && path !== "/") params.set(BACK_PARAM, path);
+  const query = params.toString();
+  return query ? `${SIGN_IN_PATH}?${query}` : SIGN_IN_PATH;
 }
 
-/** Signed in again: the requests that were waiting are sent. */
-export function resumeSession() {
-  const ended = expired;
-  expired = null;
-  expiryListeners.forEach((listener) => listener());
-  ended?.resume();
+/** What the sign-in page's query says: whether the session ended, and where to go once signed in. */
+export function signInQuery(params: URLSearchParams) {
+  return { expired: params.get(EXPIRED_PARAM) === "1", back: returnPath(params.get(BACK_PARAM)) };
+}
+
+/** A path in this app to go back to; anything else, which could lead to another site, goes home. */
+export function returnPath(value: string | null | undefined) {
+  if (!value?.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) return "/";
+  return value;
 }
 
 function demoReturn(): DemoReturn {
