@@ -86,3 +86,34 @@ Nobody edits `.env` or `backup.env` on a server. Each deploy writes them from th
 `backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Staging runs the same backups to its own bucket, without object lock and kept for 7 days, so changes to them and restores can be tried there first. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
 
 Each dump is encrypted with [age](https://age-encryption.org) to the public keys in `backup-recipients.txt` before it leaves the server. The private key never goes to the server: it lives in the password manager with an offline copy. The bucket key in `backup.env` can only write to the bucket; restoring uses a separate read key, and the bucket stays private with access logging on. To restore, fetch the dump with the read key and decrypt it (`age -d -i backup.key`), as the header of `backup.sh` shows.
+
+### Uploaded files
+
+The files buckets (`cuentalibre-files`, and `cuentalibre-files-staging` in staging) have versioning on, so deleting an object only hides it behind a delete marker. The lifecycle rule in `files-lifecycle.json` removes those hidden versions after 31 days, and the delete markers once nothing is left under them. That matches the dumps, so a file deleted by a bug of ours or by hand can be brought back whole within the same window. It doesn't protect against a leaked key, which can delete versions too. To set it up on a new bucket, with a key of its Hetzner project:
+
+```sh
+export AWS_ENDPOINT_URL=https://fsn1.your-objectstorage.com AWS_REGION=fsn1
+aws s3api put-bucket-versioning --bucket <bucket> --versioning-configuration Status=Enabled
+aws s3api put-bucket-lifecycle-configuration --bucket <bucket> --lifecycle-configuration file://files-lifecycle.json
+```
+
+Deleting a file in the app also deletes its `file` row (name, type, size), so bringing the bytes back isn't enough. To restore one by hand:
+
+1. Find its object. The key is `<organizationId>/<fileId>/<uuid>`, and the delete marker is the version on top:
+
+   ```sh
+   aws s3api list-object-versions --bucket cuentalibre-files --prefix <organizationId>/<fileId>/
+   aws s3api delete-object --bucket cuentalibre-files --key <key> --version-id <the delete marker's VersionId>
+   ```
+
+2. Recreate its row from the last dump that holds it. Decrypt the dump as above, copy it to the server and, in `/opt/cuentalibre`, extract the table:
+
+   ```sh
+   docker compose exec -T postgres pg_restore --data-only --table=file -f - < dump > file-rows.sql
+   grep -E '^COPY|<fileId>|^\\\.$' file-rows.sql > file-row.sql
+   docker compose exec -T postgres psql -U cuentalibre -d cuentalibre -v ON_ERROR_STOP=1 < file-row.sql
+   ```
+
+   If the person who uploaded it is gone, write `\N` in its `uploaded_by` column. A file uploaded and deleted the same day is in no dump, so its row has to be written by hand: `head-object` gives its type and size, but its name is lost.
+
+3. For a deleted account, the rows of its organizations are gone too. Restore the dump into a scratch database (`createdb`, then `pg_restore -d`), copy the organization's rows back from there, and bring back each of its objects as in step 1.
