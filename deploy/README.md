@@ -103,8 +103,10 @@ Deleting a file in the app also deletes its `file` row (name, type, size), so br
 
    ```sh
    aws s3api list-object-versions --bucket cuentalibre-files --prefix <organizationId>/<fileId>/
-   aws s3api delete-object --bucket cuentalibre-files --key <key> --version-id <the delete marker's VersionId>
+   aws s3api delete-object --bucket cuentalibre-files --key <key> --version-id=<the delete marker's VersionId>
    ```
+
+   Keep the `=`: version IDs can start with `-`, which `aws` would otherwise read as an option.
 
 2. Recreate its row from the last dump that holds it. Decrypt the dump as above, copy it to the server and, in `/opt/cuentalibre`, extract the table:
 
@@ -116,4 +118,23 @@ Deleting a file in the app also deletes its `file` row (name, type, size), so br
 
    If the person who uploaded it is gone, write `\N` in its `uploaded_by` column. A file uploaded and deleted the same day is in no dump, so its row has to be written by hand: `head-object` gives its type and size, but its name is lost.
 
-3. For a deleted account, the rows of its organizations are gone too. Restore the dump into a scratch database (`createdb`, then `pg_restore -d`), copy the organization's rows back from there, and bring back each of its objects as in step 1.
+3. For a deleted account, the rows of its organizations are gone too, and its user with them. Restore the dump into a scratch database, keep only that user and their organizations, and load what's left back:
+
+   ```sh
+   docker compose exec -T postgres createdb -U cuentalibre restore
+   docker compose exec -T postgres pg_restore -U cuentalibre -d restore --no-owner < dump
+   docker compose exec -T postgres psql -U cuentalibre -d restore -v ON_ERROR_STOP=1 \
+     -c "delete from organization where id not in ('<organizationId>')" \
+     -c "delete from \"user\" where id <> '<userId>'" -c "delete from session"
+   docker compose exec -T postgres pg_dump -U cuentalibre -d restore --data-only --schema=public --disable-triggers > rows.sql
+   docker compose exec -T postgres psql -U cuentalibre -d cuentalibre -v ON_ERROR_STOP=1 --single-transaction < rows.sql
+   docker compose exec -T postgres dropdb -U cuentalibre restore
+   ```
+
+   Tables that don't belong to an organization or a user, such as `stripe_event`, may clash with rows still in the database; empty them in the scratch database first. If the person signed up again with the same email, delete that new account (through the app, or its user and organizations) before loading, and not in the same transaction: `--disable-triggers` also turns off the cascades. Then bring back every object under `<organizationId>/`:
+
+   ```sh
+   aws s3api list-object-versions --bucket cuentalibre-files --prefix <organizationId>/ --output json |
+     jq -r '.DeleteMarkers[]? | select(.IsLatest) | "\(.Key) \(.VersionId)"' |
+     while read -r key id; do aws s3api delete-object --bucket cuentalibre-files --key "$key" --version-id="$id"; done
+   ```
