@@ -88,9 +88,9 @@ export function CatalogImportPage() {
         >
           <Info className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <p className="m-0">
-            Importa un Excel (.xlsx) o un CSV con las mismas columnas que Contasimple. Elige el tipo de datos, arrastra
-            el archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de
-            confirmarlo. Si el código de producto de una fila ya existe en tu catálogo, se actualiza ese producto.
+            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, arrastra el
+            archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de confirmarlo.
+            Si el código de producto de una fila ya existe en tu catálogo, se actualiza ese producto.
           </p>
         </div>
 

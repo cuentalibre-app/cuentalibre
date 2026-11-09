@@ -48,7 +48,7 @@ export function ExpenseLink({
   );
 }
 
-/** Basic information of an expense, as Contasimple shows it for received invoices. */
+/** Basic information of an expense, laid out like a received invoice's. */
 export function ExpenseDialog({ doc, onOpenChange }: { doc: Expense; onOpenChange: (open: boolean) => void }) {
   // Follows the store, so marking it as paid from the list shows up while it is open
   const current = useExpenses().find((e) => e.id === doc.id) ?? doc;

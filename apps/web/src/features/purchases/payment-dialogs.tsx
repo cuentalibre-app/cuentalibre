@@ -18,7 +18,7 @@ import { expensesStore, useExpenses } from "./expenses-store";
 import { PURCHASE_STATUS, purchaseStatus, purchaseTotals } from "./purchases-model";
 import { purchasesStore, usePurchaseInvoices } from "./purchases-store";
 
-/** Payments of a received invoice, as Contasimple's "Gestión de pagos". Changes apply at once. */
+/** Payments of a received invoice. Changes apply at once. */
 export function PurchasePaymentsDialog({
   doc,
   onOpenChange,

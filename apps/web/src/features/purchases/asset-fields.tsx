@@ -248,7 +248,7 @@ function AmortizationPreview({ asset }: { asset: AmortizedAsset }) {
   );
 }
 
-/** The amortization table, as in Contasimple: pick the state of use, then the kind of good. */
+/** The amortization table: pick the state of use, then the kind of good. */
 function CategoryDialog({
   open,
   onOpenChange,

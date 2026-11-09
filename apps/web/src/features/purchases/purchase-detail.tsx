@@ -58,7 +58,7 @@ export function PurchaseLink({
   );
 }
 
-/** Basic information of a received invoice or investment good, as Contasimple's "Detalle de la factura recibida". */
+/** Basic information of a received invoice or investment good. */
 export function PurchaseDialog({ doc, onOpenChange }: { doc: PurchaseInvoice; onOpenChange: (open: boolean) => void }) {
   // Follows the store, so a payment registered from the list shows up while it is open
   const invoices = usePurchaseInvoices();

@@ -44,7 +44,7 @@ const LANDLORD_COLUMNS: RecordColumn[] = [
   { label: "Retenciones", amount: true },
 ];
 
-/** Rentals with an unusual withholding rate, as Contasimple warns: not an error, but rare. */
+/** Rentals with an unusual withholding rate: not an error, but rare. */
 function UnusualRates({ ids }: { ids: string[] }) {
   const books = usePartyBooks();
   if (ids.length === 0) return null;

@@ -78,7 +78,7 @@ import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
 import { purchasesStore } from "./purchases-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
-/** Default expense account, as in Contasimple, when the supplier has no previous invoices. */
+/** Default expense account when the supplier has no previous invoices. */
 const DEFAULT_EXPENSE_TYPE: ExpenseType = "600";
 
 /** The form registers received invoices and investment goods, which are received invoices that get amortized. */

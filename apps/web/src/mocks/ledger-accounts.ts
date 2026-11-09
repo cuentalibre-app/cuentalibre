@@ -1,6 +1,6 @@
 import type { LedgerAccountSettings } from "@cuentalibre/contracts";
 
-/** Ledger account numbers for exporting to accounting software. Contasimple's defaults until there is a backend. */
+/** Ledger account numbers for exporting to accounting software. PGC defaults until there is a backend. */
 
 export const initialLedgerAccounts: LedgerAccountSettings = {
   companyCode: "",

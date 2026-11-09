@@ -120,7 +120,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
   );
 }
 
-/** The report's lines as ranked bars, like the pie charts in Contasimple but readable on a phone. */
+/** The report's lines as ranked bars, readable on a phone. */
 function Distribution({ pnl, year }: { pnl: ProfitAndLoss; year: number }) {
   const ranking = (keys: readonly PnlLine[]) =>
     rankCounterparties(

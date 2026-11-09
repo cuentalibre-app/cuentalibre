@@ -20,7 +20,7 @@ import {
 } from "./taxes-model";
 
 /*
- * Each tax module opens on what its forms are, who files them and when, as Contasimple does;
+ * Each tax module opens on what its forms are, who files them and when;
  * "Calcular datos" opens the calculation on the selected period (?periodo=…).
  */
 

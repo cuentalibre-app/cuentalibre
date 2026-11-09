@@ -27,8 +27,8 @@ import { salesStore } from "./sales-store";
 
 /*
  * PDF export. Loaded on demand (dynamic import) so jsPDF stays out of the main bundle.
- * The layout follows the template chosen in the settings of the document's kind,
- * after Contasimple's (see pdf-look.ts); text, line and paper colors and the font
+ * The layout follows the template chosen in the settings of the document's kind
+ * (see pdf-look.ts); text, line and paper colors and the font
  * come from there too.
  */
 

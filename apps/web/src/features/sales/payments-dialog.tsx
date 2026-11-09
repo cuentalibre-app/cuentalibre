@@ -40,7 +40,7 @@ const WORDS: Record<
 };
 
 /**
- * The payments of an invoice, as in Contasimple's "Gestión de cobros/pagos": register what
+ * The payments of an invoice: register what
  * was paid (all of it, or part), see the payments so far and remove a wrong one. Each change
  * is applied at once through `onChange`.
  */

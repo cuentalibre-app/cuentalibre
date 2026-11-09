@@ -91,10 +91,10 @@ export function ImportPage() {
         >
           <Info className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <p className="m-0">
-            Importa un Excel (.xlsx) o un CSV con las mismas columnas que Contasimple. Elige el tipo de datos, descarga
-            la plantilla si no la tienes, arrastra el archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo
-            que se va a importar antes de confirmarlo. Las facturas con varios conceptos ocupan una fila por concepto
-            con el mismo número.
+            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, descarga la
+            plantilla si no la tienes, arrastra el archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que
+            se va a importar antes de confirmarlo. Las facturas con varios conceptos ocupan una fila por concepto con el
+            mismo número.
           </p>
         </div>
 
