@@ -2,14 +2,12 @@ import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   ArrowLeftRight,
-  ChevronDown,
   Contact as ContactIcon,
   Copy,
   Download,
   Eye,
   FilePlus2,
   Filter,
-  MoreHorizontal,
   Paperclip,
   Pencil,
   Plus,
@@ -22,8 +20,7 @@ import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { SearchField } from "@cuentalibre/ui/components/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@cuentalibre/ui/components/dialog";
-import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
@@ -36,6 +33,7 @@ import { TagsField } from "@/features/sales/document-editor";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import {
   ActionsMenu,
+  MoreActionsTrigger,
   EmptyState,
   IconAction,
   SortHeader,
@@ -563,18 +561,7 @@ function QuickActions({ role, row, onTags }: { role: ContactRole; row: Row; onTa
       <IconAction action={newDocument} />
       <ActionsMenu
         groups={groups}
-        trigger={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${row.contact.name}`}>
-                  <ChevronDown strokeWidth={1.8} aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Más acciones</TooltipContent>
-          </Tooltip>
-        }
+        trigger={<MoreActionsTrigger label={`Más acciones de ${row.contact.name}`} tooltip />}
       />
     </div>
   );
@@ -585,13 +572,7 @@ function RowActions({ role, row, onTags }: { role: ContactRole; row: Row; onTags
   return (
     <ActionsMenu
       groups={groups}
-      trigger={
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${row.contact.name}`}>
-            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-      }
+      trigger={<MoreActionsTrigger label={`Acciones de ${row.contact.name}`} />}
     />
   );
 }
