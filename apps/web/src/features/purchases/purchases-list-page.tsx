@@ -8,7 +8,6 @@ import {
   ExternalLink,
   FileX2,
   Filter,
-  MoreHorizontal,
   Paperclip,
   Pencil,
   Plus,
@@ -20,7 +19,6 @@ import { amortizationBetween, cents, periodKey, periodMonths, sumBy, type Cents,
 import type { Contact, ExpenseType, PurchaseInvoice } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Input, SearchField } from "@cuentalibre/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
@@ -31,7 +29,7 @@ import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
-import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
+import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { TagChips } from "@/features/settings/tag-chip";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
@@ -949,7 +947,7 @@ function usePurchaseActions(row: Row) {
   return { attach, primary, groups, dialogs, attachments: attachments.length, label: `la factura ${doc.number}` };
 }
 
-/** Desktop: the usual operations one click away, the rest behind the arrow. */
+/** Desktop: the usual operations one click away, the rest behind the ellipsis. */
 function QuickActions({ row }: { row: Row }) {
   const { attach, primary, groups, dialogs, attachments, label } = usePurchaseActions(row);
   return (
@@ -959,18 +957,7 @@ function QuickActions({ row }: { row: Row }) {
       <IconAction action={primary} />
       <ActionsMenu
         groups={groups}
-        trigger={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${label}`}>
-                  <ChevronDown strokeWidth={1.8} aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Más acciones</TooltipContent>
-          </Tooltip>
-        }
+        trigger={<MoreActionsTrigger label={`Más acciones de ${label}`} tooltip />}
       />
     </div>
   );
@@ -984,13 +971,7 @@ function RowActions({ row }: { row: Row }) {
       {dialogs}
       <ActionsMenu
         groups={groups}
-        trigger={
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${label}`}>
-              <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-        }
+        trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />}
       />
     </>
   );

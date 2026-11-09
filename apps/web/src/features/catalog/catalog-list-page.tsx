@@ -4,9 +4,6 @@ import {
   ArrowRightLeft,
   Copy,
   Download,
-  EllipsisVertical,
-  Eye,
-  EyeOff,
   FileDown,
   FileUp,
   Filter,
@@ -14,6 +11,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Power,
   Settings,
   Trash2,
   X,
@@ -24,13 +22,13 @@ import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Input, SearchField } from "@cuentalibre/ui/components/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { GroupedSelect, Help } from "@/features/sales/form-fields";
-import { ActionsMenu, EmptyState, IconAction, SortHeader, type Action } from "@/features/sales/list-parts";
+import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, type Action } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
 import { TagChips } from "@/features/settings/tag-chip";
 import { parseDecimal } from "@/lib/format";
@@ -200,7 +198,7 @@ export function CatalogListPage() {
                 trigger={
                   <DropdownMenuTrigger asChild>
                     <Button variant="secondary" size="icon" aria-label="Opciones del catálogo">
-                      <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
+                      <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
                     </Button>
                   </DropdownMenuTrigger>
                 }
@@ -647,8 +645,8 @@ function useProductActions(product: Product) {
     ],
     [
       product.active
-        ? { label: "Desactivar", icon: EyeOff, run: () => catalogStore.setActive(product.id, false) }
-        : { label: "Activar", icon: Eye, run: () => catalogStore.setActive(product.id, true) },
+        ? { label: "Desactivar", icon: Power, run: () => catalogStore.setActive(product.id, false) }
+        : { label: "Activar", icon: Power, run: () => catalogStore.setActive(product.id, true) },
       {
         label: "Eliminar",
         icon: Trash2,
@@ -671,18 +669,7 @@ function QuickActions({ product }: { product: Product }) {
       <IconAction action={regularize} />
       <ActionsMenu
         groups={groups}
-        trigger={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${product.name}`}>
-                  <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Más acciones</TooltipContent>
-          </Tooltip>
-        }
+        trigger={<MoreActionsTrigger label={`Más acciones de ${product.name}`} tooltip />}
       />
     </div>
   );
@@ -693,13 +680,7 @@ function RowActions({ product }: { product: Product }) {
   return (
     <ActionsMenu
       groups={groups}
-      trigger={
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${product.name}`}>
-            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-      }
+      trigger={<MoreActionsTrigger label={`Acciones de ${product.name}`} />}
     />
   );
 }

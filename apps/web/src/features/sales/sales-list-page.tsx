@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 import {
-  ArrowRight,
+  ExternalLink,
   ChevronDown,
   CircleDollarSign,
   CircleDot,
@@ -13,7 +13,6 @@ import {
   FileX2,
   Filter,
   Mail,
-  MoreHorizontal,
   Paperclip,
   Pencil,
   Plus,
@@ -28,13 +27,12 @@ import { cents, periodKey, periodMonths, sumBy, toIsoDate, type Cents, type Peri
 import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Input, SearchField } from "@cuentalibre/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import {
   DELIVERY_NOTE_SETTINGS_PATH,
@@ -79,7 +77,7 @@ import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./doc
 import { IssuerDialog } from "./issuer-dialog";
 import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
-import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "./list-parts";
+import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, downloadCsv, type Action } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
 
 const ALL = "all";
@@ -744,7 +742,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   const extras = {
     view: {
       label: `Ver ${config.singular.toLowerCase()} ${doc.number ?? ""}`.trim(),
-      icon: ArrowRight,
+      icon: ExternalLink,
       run: () => {
         // Opened now, while the click still counts, and filled once the PDF code loads
         const tab = window.open("", "_blank");
@@ -914,7 +912,7 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
   };
 }
 
-/** Desktop: the usual operations one click away, the rest behind the arrow. */
+/** Desktop: the usual operations one click away, the rest behind the ellipsis. */
 function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) {
   const { attach, pdf, primary, groups, dialogs, attachments, label } = useDocumentActions(doc, status);
   return (
@@ -925,18 +923,7 @@ function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }
       {primary ? <IconAction action={primary} /> : <span className="size-8" aria-hidden="true" />}
       <ActionsMenu
         groups={groups}
-        trigger={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${label}`}>
-                  <ChevronDown strokeWidth={1.8} aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Más acciones</TooltipContent>
-          </Tooltip>
-        }
+        trigger={<MoreActionsTrigger label={`Más acciones de ${label}`} tooltip />}
       />
     </div>
   );
@@ -951,13 +938,7 @@ function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) 
       <ActionsMenu
         groups={groups}
         inlineChoices
-        trigger={
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${label}`}>
-              <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-            </Button>
-          </DropdownMenuTrigger>
-        }
+        trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />}
       />
     </>
   );
