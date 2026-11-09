@@ -70,7 +70,7 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
           </p>
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
-              <thead className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
+              <thead className="text-xs text-muted-foreground">
                 <tr>
                   {["Estado", "Nombre", "Por defecto", "Máscara"].map((h) => (
                     <th key={h} scope="col" className="px-3 py-2.5 font-medium">
@@ -88,7 +88,7 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
                   <td className="px-3 py-2.5">
                     <DefaultMark />
                   </td>
-                  <td className="px-3 py-2.5 font-mono">{config.numberPrefix}AAAA-####</td>
+                  <td className="px-3 py-2.5 tabular-nums">{config.numberPrefix}AAAA-####</td>
                 </tr>
               </tbody>
             </table>
@@ -192,7 +192,6 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
             </ul>
           </Section>
         )}
-
       </div>
     </TooltipProvider>
   );

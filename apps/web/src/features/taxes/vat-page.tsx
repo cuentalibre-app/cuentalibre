@@ -221,7 +221,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         </p>
       )}
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-md font-semibold">Casillas del modelo 303</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 303</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormAnswers
@@ -337,15 +337,12 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         result={result}
         file={file}
       />
-      <section
-        aria-label="Resultados de los 303 del año"
-        className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4"
-      >
+      <section aria-label="Resultados de los 303 del año" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         {r.quarters.map((q, i) => (
           <Link
             key={i}
             to={modelPath(VAT_PATH, { year, quarter: (i + 1) as Quarter })}
-            className="flex flex-col gap-1 bg-card px-4 py-3 text-foreground no-underline transition-colors duration-150 hover:bg-accent"
+            className="flex flex-col gap-1 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
           >
             <span className="text-sm text-muted-foreground">303 · T{i + 1}</span>
             <span className="amount text-lg font-semibold">{formatEUR(q)}</span>
@@ -361,7 +358,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         </p>
       )}
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-md font-semibold">Casillas del modelo 390</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 390</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormAnswers title="Sujeto pasivo y devengo" rows={answers390(tax)} />

@@ -224,7 +224,7 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
                 </label>
               ))}
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="md"
                 onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
                 className="justify-self-start"
@@ -367,7 +367,7 @@ function ContactsTable({
                     <TagChips tags={c.tags} />
                   </div>
                 </td>
-                <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>{c.taxId}</td>
+                <td className={cn(td, "whitespace-nowrap tabular-nums")}>{c.taxId}</td>
                 <td className={cn(td, "text-sm")}>
                   <span className="block max-w-56 truncate" title={r.address}>
                     {r.place || countryOf(c)}
@@ -444,7 +444,7 @@ function ContactsList({ role, rows, onTags }: { role: ContactRole; rows: Row[]; 
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="truncate font-medium">{r.contact.name}</span>
               <span className="truncate text-sm text-muted-foreground">
-                <span className="font-mono">{r.contact.taxId}</span>
+                <span className="tabular-nums">{r.contact.taxId}</span>
                 {r.place && ` · ${r.place}`}
               </span>
             </div>
@@ -650,7 +650,7 @@ function TagsEditor({ role, contact, onClose }: { role: ContactRole; contact: Co
         </div>
       )}
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" size="md" onClick={onClose}>
+        <Button variant="secondary" size="md" onClick={onClose}>
           Cancelar
         </Button>
         <Button

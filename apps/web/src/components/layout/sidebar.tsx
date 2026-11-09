@@ -111,7 +111,7 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
             >
               {child.label}
               {child.badge && badges[child.badge] > 0 && (
-                <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">{badges[child.badge]}</span>
               )}
             </DropdownMenuItem>
           </Fragment>
@@ -172,7 +172,7 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
                 >
                   {child.label}
                   {child.badge && badges[child.badge] > 0 && (
-                    <span className="font-mono text-xs text-muted-foreground">{badges[child.badge]}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{badges[child.badge]}</span>
                   )}
                 </NavLink>
               </Fragment>

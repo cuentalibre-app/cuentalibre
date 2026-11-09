@@ -161,7 +161,7 @@ export function ApiKeysPage() {
                           {key.expiresAt ? `Caduca el ${day(key.expiresAt)}` : "No caduca"}
                         </span>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => void revoke(key)}>
+                      <Button variant="secondary" size="sm" onClick={() => void revoke(key)}>
                         <Trash2 aria-hidden="true" />
                         Revocar
                       </Button>

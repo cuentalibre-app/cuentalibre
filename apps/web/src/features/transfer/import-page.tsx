@@ -1,4 +1,5 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link, useSearchParams } from "react-router";
 import { CircleAlert, CircleCheck, FileSpreadsheet, Info, TriangleAlert, Upload, X } from "lucide-react";
 import { sumBy } from "@cuentalibre/core";
@@ -138,7 +139,7 @@ export function ImportPage() {
             <button
               type="button"
               onClick={downloadSample}
-              className="flex h-10 cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-sm font-medium text-primary hover:text-primary-hover"
+              className={cn(buttonVariants({ variant: "secondary" }), "no-underline [&_svg]:size-4")}
             >
               <FileSpreadsheet className="size-4" strokeWidth={1.8} aria-hidden="true" />
               Descargar Excel de ejemplo para {config.label.toLowerCase()}
@@ -257,7 +258,7 @@ function Preview({
   if (preview.fileErrors.length)
     return (
       <section className="flex animate-rise-in flex-col gap-2 rounded-xl border border-destructive bg-destructive-soft/40 p-5">
-        <h2 className="m-0 flex items-center gap-2 text-md font-semibold text-destructive">
+        <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive lg:text-title">
           <CircleAlert className="size-5" strokeWidth={1.8} aria-hidden="true" />
           No se puede importar el archivo
         </h2>
@@ -275,7 +276,7 @@ function Preview({
       className="flex animate-rise-in flex-col overflow-hidden rounded-xl border border-border bg-card"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5">
-        <h2 className="m-0 text-md font-semibold">Vista previa</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Vista previa</h2>
         <span className="text-sm">
           <span className="font-semibold">{valid.length}</span>{" "}
           {valid.length === 1 ? `${singular} lista` : `${plural} listas`} para importar ·{" "}
@@ -325,10 +326,10 @@ function Preview({
               const ok = item.errors.length === 0;
               return (
                 <tr key={`${item.rows[0]}-${i}`} className={cn(table.row, !ok && "bg-destructive-soft/40")}>
-                  <td className={cn(table.td, "font-mono text-sm whitespace-nowrap text-muted-foreground")}>
+                  <td className={cn(table.td, "whitespace-nowrap text-muted-foreground tabular-nums")}>
                     {item.rows.length > 1 ? `${item.rows[0]}–${item.rows.at(-1)}` : item.rows[0]}
                   </td>
-                  <td className={cn(table.td, "font-mono text-sm")}>{item.number || "—"}</td>
+                  <td className={cn(table.td, "tabular-nums")}>{item.number || "—"}</td>
                   <td className={cn(table.td, "whitespace-nowrap text-muted-foreground")}>
                     {item.date ? formatDate(item.date) : "—"}
                   </td>
@@ -356,7 +357,7 @@ function Preview({
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-border px-4 py-3">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancelar
         </Button>
         <Button onClick={onConfirm} disabled={valid.length === 0}>

@@ -215,7 +215,7 @@ export function CompanyReportsPage() {
                       {c.name}
                       {c.city && <span className="text-muted-foreground"> ({c.city})</span>}
                     </span>
-                    <span className="font-mono text-xs text-muted-foreground">{c.taxId}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{c.taxId}</span>
                   </button>
                 </li>
               ))}
@@ -253,11 +253,11 @@ function CompanyResult({ company }: { company: Company }) {
             <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <h2 id="registry-title" className="m-0 text-lg font-semibold">
+            <h2 id="registry-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
               Últimos cambios registrales{known && ` de ${company.name}`}
             </h2>
             <span className="text-sm text-muted-foreground">
-              NIF <span className="font-mono">{company.taxId}</span>
+              NIF <span className="tabular-nums">{company.taxId}</span>
               {company.city && ` · ${company.city}`}
               {company.contact && (
                 <>
@@ -322,7 +322,7 @@ function CompanyResult({ company }: { company: Company }) {
         aria-labelledby="paid-title"
         className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:p-5"
       >
-        <h2 id="paid-title" className="m-0 text-md font-semibold">
+        <h2 id="paid-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           Más información en un proveedor de informes
         </h2>
         <p className="m-0 text-sm text-muted-foreground">Informes de pago que se compran en la web de un proveedor de informes.</p>
@@ -336,7 +336,7 @@ function CompanyResult({ company }: { company: Company }) {
                   href={REPORTS_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-primary no-underline hover:text-primary-hover"
+                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline [&_svg]:size-3.5")}
                 >
                   Comprar
                   <ExternalLink className="size-3.5" strokeWidth={2} aria-hidden="true" />

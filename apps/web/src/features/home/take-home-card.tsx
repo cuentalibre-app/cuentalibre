@@ -74,7 +74,9 @@ function IncomeTaxHint({ estimate, year }: { estimate: HomeData["incomeTax"]; ye
 
 /** What's left of the period's income after expenses and an estimate of its yearly income tax. */
 export function TakeHomeCard({ data, className }: { data: HomeData; className?: string }) {
-  const { income, outputVat } = data.totals;
+  const { income } = data.totals;
+  // Net VAT (the 303), the same figure as in the tax reserve card
+  const vatDue = data.taxes.vat;
   const { takeHome, incomeTax } = data.takeHome;
   const fee = useSettings().tax.socialSecurityFee;
   const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
@@ -82,7 +84,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   const parts = [
     { label: "Neto", value: takeHome, color: "bg-chart-income" },
     {
-      label: `IRPF estimado (~${formatPercent(data.incomeTax.rate * 100)})`,
+      label: `IRPF anual estimado (~${formatPercent(data.incomeTax.rate * 100)})`,
       hint: <IncomeTaxHint estimate={data.incomeTax} year={data.period.year} />,
       value: incomeTax,
       color: "bg-chart-tax",
@@ -91,23 +93,18 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   ];
 
   return (
-    <Card aria-labelledby="take-home-title" className={cn("gap-3 p-4 lg:gap-3 lg:p-4", className)}>
-      <div className="flex flex-col gap-1">
-        <CardTitle id="take-home-title" className="text-md lg:text-lg">
-          Neto después de impuestos
-        </CardTitle>
-        <span className="text-sm text-muted-foreground">Estimación sobre {formatEUR(income)} facturados sin IVA</span>
-      </div>
+    <Card aria-labelledby="take-home-title" className={cn("gap-4 p-4 lg:gap-5", className)}>
+      <CardTitle id="take-home-title">Neto después de impuestos</CardTitle>
 
       <div className="flex flex-col gap-1.5">
-        <AnimatedAmount value={takeHome} className="amount text-2xl font-medium lg:text-4xl" />
+        <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-4xl" />
         <span className="text-sm font-medium text-success">{formatPercent(share(takeHome))} de lo facturado</span>
       </div>
 
       <div
         role="img"
         aria-label={parts.map((p) => `${p.label}: ${formatEUR(p.value)}`).join(", ")}
-        className="flex h-3 animate-reveal-x gap-0.5 overflow-hidden rounded-xs bg-muted lg:h-3.5"
+        className="flex h-2.5 animate-reveal-x gap-0.5 overflow-hidden rounded-full bg-muted"
       >
         {parts.map((p) => (
           <div
@@ -121,7 +118,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
       <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:gap-2.5">
         {parts.map((p) => (
           <li key={p.label} className="flex items-center gap-2.5">
-            <span className={cn("size-2.5 shrink-0 rounded-xs", p.color)} aria-hidden="true" />
+            <span className={cn("size-2.5 shrink-0 rounded-full", p.color)} aria-hidden="true" />
             <span className="flex flex-1 items-center gap-1.5">
               {p.label}
               {"hint" in p && p.hint}
@@ -131,20 +128,20 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
         ))}
       </ul>
 
-      <div className="mt-auto flex flex-col gap-1 border-t border-divider pt-3 text-xs text-muted-foreground">
-        <span>
-          Además has cobrado <span className="amount text-foreground">{formatEUR(outputVat)}</span> de IVA, que es de
-          Hacienda.
-        </span>
-        {data.socialSecurityBooked > 0 ? (
-          <span>
-            Los gastos incluyen tu cuota de autónomos:{" "}
-            <span className="amount text-foreground">{formatEUR(data.socialSecurityBooked)}</span> en el periodo.
-          </span>
-        ) : (
-          <span>No incluye tu cuota de autónomos ({formatEUR(fee)} al mes).</span>
-        )}
-      </div>
+      {/* VAT sits on top of what was invoiced, so it stays out of the bar and the split above */}
+      {vatDue > 0 && (
+        <div className="flex items-center gap-2.5 border-t border-divider pt-3 lg:pt-4">
+          <span className="size-2.5 shrink-0 rounded-full border-2 border-muted-foreground" aria-hidden="true" />
+          <span className="flex-1">IVA a pagar</span>
+          <span className="amount">{formatEUR(vatDue)}</span>
+        </div>
+      )}
+
+      {data.socialSecurityBooked === 0 && (
+        <p className="m-0 mt-auto text-xs text-muted-foreground">
+          No incluye tu cuota de autónomos ({formatEUR(fee)} al mes).
+        </p>
+      )}
     </Card>
   );
 }

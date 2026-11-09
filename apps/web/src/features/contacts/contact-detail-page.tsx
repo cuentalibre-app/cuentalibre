@@ -212,7 +212,7 @@ function InfoCard({
       )}
       style={{ "--i": index } as CSSProperties}
     >
-      <h2 className="m-0 text-lg font-semibold">{title}</h2>
+      <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
       {children}
     </section>
   );
@@ -260,7 +260,7 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
             [
               "NIF",
               <span className="flex flex-wrap items-center gap-2">
-                <span className="font-mono">{contact.taxId}</span>
+                <span className="tabular-nums">{contact.taxId}</span>
                 {check.valid ? (
                   <Badge tone="neutral">{TAX_ID_KIND[check.kind]}</Badge>
                 ) : (
@@ -294,7 +294,10 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
             href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(address)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 self-start text-sm font-medium text-primary no-underline hover:text-primary-hover"
+            className={cn(
+              buttonVariants({ variant: "secondary", size: "sm" }),
+              "self-start no-underline [&_svg]:size-4",
+            )}
           >
             <MapPin className="size-4" strokeWidth={1.8} aria-hidden="true" />
             Ver en el mapa
@@ -367,13 +370,13 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
               <tbody>
                 {contact.bankAccounts.map((a) => (
                   <tr key={a.id} className={table.row}>
-                    <td className={cn(table.td, "font-mono whitespace-nowrap")}>
+                    <td className={cn(table.td, "whitespace-nowrap tabular-nums")}>
                       {formatIban(a.iban)}
                       {a.isDefault && (
                         <span className="ml-2 font-sans text-xs font-semibold text-primary">Por defecto</span>
                       )}
                     </td>
-                    <td className={cn(table.td, "font-mono")}>{a.bic ?? "—"}</td>
+                    <td className={cn(table.td, "tabular-nums")}>{a.bic ?? "—"}</td>
                     <td className={table.td}>{a.notes ?? "—"}</td>
                   </tr>
                 ))}
@@ -409,10 +412,10 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
         <InfoCard title="Factura electrónica" index={6}>
           <Rows
             rows={[
-              ["Oficina contable", e.accountingOffice && <span className="font-mono">{e.accountingOffice}</span>],
-              ["Órgano gestor", e.managementBody && <span className="font-mono">{e.managementBody}</span>],
-              ["Unidad tramitadora", e.processingUnit && <span className="font-mono">{e.processingUnit}</span>],
-              ["Órgano proponente", e.proposingBody && <span className="font-mono">{e.proposingBody}</span>],
+              ["Oficina contable", e.accountingOffice && <span className="tabular-nums">{e.accountingOffice}</span>],
+              ["Órgano gestor", e.managementBody && <span className="tabular-nums">{e.managementBody}</span>],
+              ["Unidad tramitadora", e.processingUnit && <span className="tabular-nums">{e.processingUnit}</span>],
+              ["Órgano proponente", e.proposingBody && <span className="tabular-nums">{e.proposingBody}</span>],
             ]}
           />
         </InfoCard>
@@ -484,7 +487,7 @@ function Documents({ role, rows }: { role: ContactRole; rows: ActivityRow[] }) {
                 <td className={table.td}>
                   <Link
                     to={r.path}
-                    className="block max-w-56 truncate font-mono text-sm font-medium text-foreground no-underline hover:text-primary"
+                    className="block max-w-56 truncate text-sm font-medium text-foreground tabular-nums no-underline hover:text-primary"
                   >
                     {r.number}
                   </Link>

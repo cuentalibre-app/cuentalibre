@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -19,14 +20,17 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
   return (
     <section
       aria-labelledby="recent-invoices-title"
-      className={cn("flex flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border", className)}
+      className={cn("flex flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border lg:bg-card", className)}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5 lg:items-center lg:px-4 lg:py-3">
-        <h2 id="recent-invoices-title" className="m-0 text-md font-semibold lg:text-lg">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5 lg:items-center lg:px-5 lg:pt-5 lg:pb-3">
+        <h2 id="recent-invoices-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           <span className="lg:hidden">Últimas facturas</span>
           <span className="hidden lg:inline">Últimas facturas emitidas</span>
         </h2>
-        <Link to="/ventas/facturas" className="font-medium text-primary no-underline hover:text-primary-hover">
+        <Link
+          to="/ventas/facturas"
+          className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
+        >
           Ver todas
         </Link>
       </div>
@@ -37,11 +41,7 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           <thead>
             <tr className={table.headRow}>
               {headers.map((h) => (
-                <th
-                  key={h}
-                  scope="col"
-                  className={cn(table.th, h === "Total" && "text-right")}
-                >
+                <th key={h} scope="col" className={cn(table.th, h === "Total" && "text-right")}>
                   {h}
                 </th>
               ))}
@@ -50,14 +50,14 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           <tbody>
             {data.invoices.map((inv) => (
               <tr key={inv.id} className={table.row}>
-                <td className={cn(table.td, "font-mono text-sm")}>
+                <td className={cn(table.td, "amount")}>
                   <Link to={`/ventas/facturas/${inv.id}`} className="text-foreground no-underline hover:text-primary">
                     {inv.number}
                   </Link>
                 </td>
                 <td className={cn(table.td, "font-medium")}>{inv.client}</td>
                 <td className={cn(table.td, "text-muted-foreground")}>{formatDate(inv.issuedOn)}</td>
-                <td className={cn(table.td, "amount text-right")}>{formatEUR(inv.total)}</td>
+                <td className={cn(table.td, "text-right amount")}>{formatEUR(inv.total)}</td>
                 <td className={table.td}>
                   <Badge tone={STATUS[inv.status].tone}>{STATUS[inv.status].label}</Badge>
                 </td>
@@ -91,10 +91,7 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       </ul>
 
       {/* Pinned to the bottom so the card can stretch to match the tax calendar beside it */}
-      <CollectionSummary
-        data={data}
-        className="mt-4 lg:mt-auto lg:border-t lg:border-border lg:bg-muted/40 lg:px-4 lg:py-3.5"
-      />
+      <CollectionSummary data={data} className="mt-4 lg:mt-auto lg:border-t lg:border-divider lg:px-5 lg:py-4" />
     </section>
   );
 }

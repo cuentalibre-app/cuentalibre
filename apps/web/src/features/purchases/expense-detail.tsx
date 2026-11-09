@@ -76,7 +76,7 @@ export function ExpenseDialog({ doc, onOpenChange }: { doc: Expense; onOpenChang
           <DetailList
             items={[
               ["Periodo", periodCode(quarterOfDate(current.date))],
-              ["Número de recibo", current.number && <span className="font-mono">{current.number}</span>],
+              ["Número de recibo", current.number && <span className="tabular-nums">{current.number}</span>],
               ["Fecha", formatDate(current.date)],
               ["Concepto", current.concept],
               ["Tipo de gasto", expenseTypeLabel(current.expenseType)],
@@ -109,7 +109,7 @@ export function ExpenseDialog({ doc, onOpenChange }: { doc: Expense; onOpenChang
               <DetailList
                 items={[
                   ["Nombre o razón social", payee.name],
-                  ["NIF", payee.taxId && <span className="font-mono">{payee.taxId}</span>],
+                  ["NIF", payee.taxId && <span className="tabular-nums">{payee.taxId}</span>],
                 ]}
               />
             )}
@@ -120,7 +120,7 @@ export function ExpenseDialog({ doc, onOpenChange }: { doc: Expense; onOpenChang
 
         <DetailFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cerrar</Button>
+            <Button variant="secondary">Cerrar</Button>
           </DialogClose>
           <Link to={expensePath(current)} className={cn(buttonVariants(), "no-underline")}>
             <Pencil strokeWidth={1.8} aria-hidden="true" />

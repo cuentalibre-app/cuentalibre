@@ -262,7 +262,7 @@ export function SalesFormPage({ kind: routeKind }: { kind: SalesKind }) {
       <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
         <p className="m-0 text-muted-foreground">Este documento no existe o se ha eliminado.</p>
-        <Link to={config.path} className="font-medium text-primary no-underline hover:text-primary-hover">
+        <Link to={config.path} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
           Volver a {config.title.toLowerCase()}
         </Link>
       </div>
@@ -793,7 +793,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                   <button
                     type="button"
                     onClick={() => setCreatingClient(true)}
-                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                    className={cn(
+                      buttonVariants({ variant: "secondary", size: "sm" }),
+                      "h-6 px-2.5 text-xs no-underline",
+                    )}
                   >
                     Nuevo cliente
                   </button>
@@ -821,7 +824,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                         .sort((a, b) => a.name.localeCompare(b.name, "es"))
                         .map((c) => (
                           <SelectItem key={c.id} value={c.id}>
-                            {c.name} · <span className="font-mono text-sm">{c.taxId}</span>
+                            {c.name} · <span className="tabular-nums">{c.taxId}</span>
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -838,7 +841,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                       : "Se asigna al emitir la factura: el siguiente de la serie, en orden de fecha."
                   }
                 >
-                  {(p) => <Input {...p} readOnly value={invoiceNumber(kind) ?? form.number} className="font-mono" />}
+                  {(p) => <Input {...p} readOnly value={invoiceNumber(kind) ?? form.number} className="tabular-nums" />}
                 </Field>
               ) : (
                 <Field
@@ -850,7 +853,10 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                     <button
                       type="button"
                       onClick={() => set("number", suggestedNumber(form))}
-                      className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                      className={cn(
+                        buttonVariants({ variant: "secondary", size: "sm" }),
+                        "h-6 px-2.5 text-xs no-underline",
+                      )}
                     >
                       Obtener número
                     </button>
@@ -861,7 +867,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                       {...p}
                       value={form.number}
                       onChange={(e) => set("number", e.target.value)}
-                      className="font-mono"
+                      className="tabular-nums"
                     />
                   )}
                 </Field>
@@ -899,7 +905,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                       <SelectContent>
                         {rectifiable.map((d) => (
                           <SelectItem key={d.id} value={d.id}>
-                            <span className="font-mono text-sm">{d.number}</span> · {clientOf(d).name}
+                            <span className="tabular-nums">{d.number}</span> · {clientOf(d).name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1025,7 +1031,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                   type="button"
                   aria-pressed={advanced}
                   onClick={() => setAdvanced((a) => !a)}
-                  className="flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium text-primary hover:text-primary-hover"
+                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "[&_svg]:size-4")}
                 >
                   <ChevronDown
                     className={cn("size-4 transition-transform duration-200", advanced && "rotate-180")}
@@ -1204,7 +1210,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                           value={form.cadastralRef}
                           onChange={(e) => set("cadastralRef", e.target.value)}
                           disabled={form.rentalLocation === "noCadastralRef" || form.rentalLocation === "abroad"}
-                          className="font-mono"
+                          className="tabular-nums"
                         />
                       )}
                     </Field>
@@ -1246,9 +1252,9 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                         </Field>
                         <Button
                           type="button"
-                          variant="ghost"
+                          variant="secondary"
                           size="lg"
-                          className="text-primary"
+
                           onClick={() => setCreatingMethod(true)}
                         >
                           <Plus aria-hidden="true" />
@@ -1419,7 +1425,7 @@ function InvoiceNotes({ label, value, onChange }: { label: string; value: string
                 onChange={(e) => setEditing({ ...editing, text: e.target.value })}
               />
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setEditing(null)}>
+                <Button variant="secondary" size="sm" onClick={() => setEditing(null)}>
                   Cancelar edición
                 </Button>
                 <Button size="sm" onClick={saveTemplate} disabled={!editing.title.trim()}>

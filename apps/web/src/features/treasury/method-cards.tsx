@@ -34,7 +34,7 @@ export function MethodCards({
 
   return (
     <section aria-labelledby="methods-title" className="flex flex-col gap-3">
-      <h2 id="methods-title" className="m-0 text-md font-semibold">
+      <h2 id="methods-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
         Cuentas y formas de pago
       </h2>
       <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4">
@@ -70,7 +70,11 @@ export function MethodCards({
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-semibold">{m.name}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {m.number ? <span className="font-mono">{maskNumber(m.number)}</span> : methodTypeLabel(m.type)}
+                      {m.number ? (
+                        <span className="tabular-nums">{maskNumber(m.number)}</span>
+                      ) : (
+                        methodTypeLabel(m.type)
+                      )}
                     </span>
                   </span>
                 </span>

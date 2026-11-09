@@ -99,7 +99,7 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
             onChange={(e) => onChange(e.target.value)}
             className="size-7 cursor-pointer rounded-sm border-0 bg-transparent p-0"
           />
-          <span className="font-mono text-sm uppercase">{value}</span>
+          <span className="text-sm uppercase tabular-nums">{value}</span>
         </span>
       )}
     </Field>

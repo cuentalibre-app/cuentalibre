@@ -290,14 +290,14 @@ export function SettingsPage() {
 
       {billing && (
         <section aria-label="Tu plan" className="flex flex-col gap-3">
-          <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">Tu plan</h2>
+          <h2 className="m-0 text-lg font-semibold tracking-tight">Tu plan</h2>
           <PlanCard billing={billing} />
         </section>
       )}
 
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title} className="flex flex-col gap-3">
-          <h2 className="m-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">{group.title}</h2>
+          <h2 className="m-0 text-lg font-semibold tracking-tight">{group.title}</h2>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {group.entries.map((entry) => (
               <EntryCard key={entry.to} entry={entry} index={index++} />

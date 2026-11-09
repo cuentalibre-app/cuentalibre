@@ -105,7 +105,7 @@ export function MethodDialog({
                   spellCheck={false}
                   inputMode={type === "card" ? "numeric" : type === "paypal" ? "email" : undefined}
                   onChange={(e) => setNumber(e.target.value)}
-                  className={cn(type !== "paypal" && "font-mono uppercase")}
+                  className={cn(type !== "paypal" && "uppercase tabular-nums")}
                 />
               )}
             </Field>

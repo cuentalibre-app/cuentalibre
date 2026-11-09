@@ -201,7 +201,7 @@ function PlanPanel({ billing }: { billing: Billing }) {
         </span>
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="m-0 text-lg font-semibold">{title}</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
             <Badge tone={tone}>{badge}</Badge>
           </div>
           <p className="m-0 text-sm text-muted-foreground">{body[planState(billing)]}</p>
