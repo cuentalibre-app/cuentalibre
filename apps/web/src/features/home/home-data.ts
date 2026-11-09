@@ -7,6 +7,7 @@ import {
   isInPeriod,
   ledgerYearTotals,
   periodMonths,
+  pendingSocialSecurity,
   periodTotals,
   previousPeriod,
   rankCounterparties,
@@ -195,6 +196,11 @@ export function buildHomeData(
   // The progressive scale needs the whole year: its rate is spread over the period
   const incomeTax = estimateIncomeTax(year, period.year, TAX_OPTIONS.simplified);
 
+  // Self-employed fees (PGC 6422) not booked yet are estimated from the settings, so the take-home doesn't overshoot
+  const monthlyFee = settingsStore.get().tax.socialSecurityFee;
+  const feesBookedOn = otherExpenses.filter((e) => e.expenseType === "6422").map((e) => e.date);
+  const socialSecurityEstimate = pendingSocialSecurity(months, period.year, today, feesBookedOn, monthlyFee);
+
   let running = cents(0);
   const monthly: (MonthPoint | null)[] = year.map((m, month) => {
     if (!m) return null;
@@ -228,7 +234,10 @@ export function buildHomeData(
     },
     taxes: { vat },
     incomeTax,
-    takeHome: takeHomeEstimate(totals, incomeTax.rate),
+    takeHome: takeHomeEstimate(
+      { income: totals.income, expenses: cents(totals.expenses + socialSecurityEstimate) },
+      incomeTax.rate,
+    ),
     months,
     monthly,
     lastMonthWithData,
@@ -240,10 +249,10 @@ export function buildHomeData(
     suppliers: rankCounterparties(
       periodExpenses.flatMap((e) => (e.supplier ? [{ name: e.supplier, amount: e.base }] : [])),
     ),
-    /** Self-employed fees (PGC 6422) booked in the period, already counted as expenses. */
-    socialSecurityBooked: otherExpenses
-      .filter((e) => e.expenseType === "6422" && isInPeriod(e.date, period))
-      .reduce((acc, e) => cents(acc + e.amount), cents(0)),
+    /** Self-employed fees of the period not booked as expenses yet, at the monthly fee in the settings. */
+    socialSecurityEstimate,
+    /** No fee booked in the period and none in the settings to estimate it with. */
+    socialSecurityFeeMissing: monthlyFee === 0 && !feesBookedOn.some((date) => isInPeriod(date, period)),
     economicallyDependent: isEconomicallyDependent(clients),
     collection: collectionStatus(periodInvoices),
   };

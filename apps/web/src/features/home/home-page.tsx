@@ -19,6 +19,7 @@ import { usePeriod } from "@/lib/use-period";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { useSalesDocuments } from "@/features/sales/sales-store";
+import { useSettings } from "@/features/settings/settings-store";
 
 // Panels are separate cards with room between them; rows rise in one after another.
 const sheet = "flex flex-col gap-5 lg:gap-5";
@@ -31,9 +32,11 @@ export function HomePage() {
   const documents = useSalesDocuments();
   const purchases = usePurchaseInvoices();
   const expenses = useExpenses();
+  // Read inside through the store; listed so the estimate follows a change of fee
+  const fee = useSettings().tax.socialSecurityFee;
   const data = useMemo(
     () => buildHomeData(period, today, documents, purchases, expenses),
-    [period, today, documents, purchases, expenses],
+    [period, today, documents, purchases, expenses, fee],
   );
   // Charts keep their own selection; remount them when the period changes
   const chartKey = periodKey(period);

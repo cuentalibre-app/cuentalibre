@@ -54,15 +54,19 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
 }
 
 /**
- * What to set aside for the period: the VAT due (303) plus the period's share of the yearly income tax estimate,
- * the same figure as in "Neto después de impuestos". The 130 advances are paid out of this reserve.
+ * What to set aside for the period: the VAT due (303), the period's share of the yearly income tax estimate and
+ * the self-employed fees not booked yet, the same figures as in "Neto después de impuestos". The 130 advances
+ * are paid out of this reserve.
  */
 function taxReserve(data: HomeData) {
   const { vat } = data.taxes;
   const irpf = data.takeHome.incomeTax;
-  const due = [vat > 0 && `IVA ${formatEUR(vat)}`, `IRPF ${formatEUR(irpf)}`].filter(Boolean).join(" + ");
+  const fees = data.socialSecurityEstimate;
+  const due = [vat > 0 && `IVA ${formatEUR(vat)}`, `IRPF ${formatEUR(irpf)}`, fees > 0 && `cuota ${formatEUR(fees)}`]
+    .filter(Boolean)
+    .join(" + ");
   return {
-    value: cents(Math.max(0, vat) + irpf),
+    value: cents(Math.max(0, vat) + irpf + fees),
     note: vat < 0 ? `${due} · IVA a compensar ${formatEUR(cents(-vat))}` : due,
   };
 }
