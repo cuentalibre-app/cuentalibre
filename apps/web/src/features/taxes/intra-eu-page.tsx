@@ -15,6 +15,7 @@ import {
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { contactPath } from "@/features/contacts/contacts-model";
 import { formatDate } from "@/lib/format";
@@ -224,51 +225,49 @@ export function IntraEuPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <ModuleBreadcrumb module="intraEu" form="349" />
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Operaciones intracomunitarias</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              Modelo 349: compras y ventas con empresas de otros países de la UE inscritas en el VIES.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <SegmentedControl
-              label="Periodicidad"
-              value={periodicity}
-              onChange={(v) => {
-                setPeriodicity(v);
-                setMonthKey(null);
-              }}
-              options={[
-                { value: "quarterly", label: "Trimestral" },
-                { value: "bimonthly", label: "Bimensual" },
-                { value: "monthly", label: "Mensual" },
-              ]}
-            />
-            {periodicity === "quarterly" ? (
-              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-            ) : (
-              <Select value={monthKey ?? options[0]!.key} onValueChange={setMonthKey}>
-                <SelectTrigger aria-label={`Periodo: ${selection.label}`} className="min-w-48">
-                  <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="flex-1 text-center">
-                    <SelectValue />
-                  </span>
-                  <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-                </SelectTrigger>
-                <SelectContent>
-                  {options.map((o) => (
-                    <SelectItem key={o.key} value={o.key}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          eyebrow={<ModuleBreadcrumb module="intraEu" form="349" />}
+          title="Operaciones intracomunitarias"
+          description="Modelo 349: compras y ventas con empresas de otros países de la UE inscritas en el VIES."
+          actions={
+            <>
+              <SegmentedControl
+                label="Periodicidad"
+                value={periodicity}
+                onChange={(v) => {
+                  setPeriodicity(v);
+                  setMonthKey(null);
+                }}
+                options={[
+                  { value: "quarterly", label: "Trimestral" },
+                  { value: "bimonthly", label: "Bimensual" },
+                  { value: "monthly", label: "Mensual" },
+                ]}
+              />
+              {periodicity === "quarterly" ? (
+                <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+              ) : (
+                <Select value={monthKey ?? options[0]!.key} onValueChange={setMonthKey}>
+                  <SelectTrigger aria-label={`Periodo: ${selection.label}`} className="min-w-48">
+                    <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="flex-1 text-center">
+                      <SelectValue />
+                    </span>
+                    <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {options.map((o) => (
+                      <SelectItem key={o.key} value={o.key}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </>
+          }
+        />
 
         {periodicity === "bimonthly" && (
           <Notice tone="info">
@@ -357,7 +356,7 @@ export function IntraEuPage() {
             ONLY_RECORDED,
           ]}
         />
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

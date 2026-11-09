@@ -1,11 +1,10 @@
 import type { CSSProperties } from "react";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link } from "react-router";
-import { TriangleAlert } from "lucide-react";
 import { ECONOMIC_DEPENDENCY_THRESHOLD, type CounterpartyRanking } from "@cuentalibre/core";
-import { Card, CardTitle } from "@cuentalibre/ui/components/card";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Notice, Section } from "@/components/page";
 import { formatPercent } from "@/lib/format";
 
 interface Props {
@@ -29,28 +28,27 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
   const titleId = `${id}-title`;
 
   return (
-    <Card aria-labelledby={titleId} className={cn("gap-4 p-4", className)}>
-      <div className="flex items-baseline justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <CardTitle id={titleId}>{title}</CardTitle>
-          {noun && (
-            <span className="text-sm text-muted-foreground">
-              {ranking.count} {noun} · <span className="amount">{formatEUR(ranking.total)}</span> sin IVA
-            </span>
-          )}
-        </div>
-        {href && (
-          <Link to={href} className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}>
+    <Section
+      id={titleId}
+      title={title}
+      subtitle={
+        noun && (
+          <span className="text-sm text-muted-foreground">
+            {ranking.count} {noun} · <span className="amount">{formatEUR(ranking.total)}</span> sin IVA
+          </span>
+        )
+      }
+      action={
+        href && (
+          <Link to={href} className={buttonVariants({ variant: "secondary", size: "sm" })}>
             Ver todos
           </Link>
-        )}
-      </div>
-
+        )
+      }
+      className={className}
+    >
       {warning && (
-        <p className="m-0 flex gap-2 rounded-lg bg-warning-soft px-3.5 py-3 text-sm text-foreground">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={2} aria-hidden="true" />
-          {warning}
-        </p>
+<Notice tone="warning">{warning}</Notice>
       )}
 
       {ranking.items.length === 0 ? (
@@ -81,7 +79,7 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
           ))}
         </ol>
       )}
-    </Card>
+    </Section>
   );
 }
 

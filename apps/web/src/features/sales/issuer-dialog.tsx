@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { missingIssuerFields, normalizeTaxId } from "@cuentalibre/core";
 import type { BusinessProfile } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { AddressFields } from "@/features/contacts/contact-fields";
 import { missingIssuerData, profileErrors } from "@/features/settings/settings-model";
@@ -150,12 +150,12 @@ function IssuerForm({ issues, onCancel, onSaved }: { issues: boolean; onCancel: 
         </div>
       )}
 
-      <div className="flex justify-end gap-2">
+      <DialogFooter>
         <Button variant="secondary" onClick={onCancel}>
           Cancelar
         </Button>
         <Button type="submit">{issues ? "Guardar y emitir" : "Guardar"}</Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

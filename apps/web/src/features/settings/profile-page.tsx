@@ -4,7 +4,14 @@ import { BellRing, ImageUp, Trash2 } from "lucide-react";
 import type { Gender, NotificationPrefs, UserProfile } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { authErrorMessage, currentUser, deleteAccount } from "@/features/auth/auth-api";
 import { ForgotPasswordLink } from "@/features/auth/forgot-password-link";
@@ -15,6 +22,7 @@ import { EXPORT_PATH } from "@/features/transfer/transfer-model";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { initials } from "./settings-model";
 import { userFullName, userStore, useUserSettings } from "./user-store";
+import { Page } from "@/components/page";
 
 const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
 
@@ -30,7 +38,7 @@ export function ProfilePage() {
   const connected = sessionState() === "connected";
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader
           title="Datos personales"
           description="Tus datos como usuario de cuentalibre, no los de tu empresa."
@@ -40,7 +48,7 @@ export function ProfilePage() {
         {!connected && <NotificationsSection />}
         {/* The demo has no account to delete */}
         {connected && <DeleteAccountSection />}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }
@@ -172,12 +180,12 @@ function AvatarField({
           </span>
         )}
         <div className="flex flex-wrap gap-2.5">
-          <Button variant="secondary" size="md" onClick={() => input.current?.click()}>
+          <Button variant="secondary" onClick={() => input.current?.click()}>
             <ImageUp aria-hidden="true" />
             Elegir imagen de perfil
           </Button>
           {url && (
-            <Button variant="secondary" size="md" onClick={() => onChange(null)}>
+            <Button variant="secondary" onClick={() => onChange(null)}>
               <Trash2 aria-hidden="true" />
               Eliminar imagen de perfil
             </Button>
@@ -277,7 +285,6 @@ function BrowserNotifications() {
       {permission === "default" && (
         <Button
           variant="secondary"
-          size="md"
           className="self-start sm:self-auto"
           onClick={() => void Notification.requestPermission().then(setPermission)}
         >
@@ -384,11 +391,11 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             </Field>
           )}
           {error && (
-            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+            <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
               {error}
             </p>
           )}
-          <div className="flex justify-end gap-2.5 pt-1">
+          <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary" disabled={pending}>
                 Cancelar
@@ -397,7 +404,7 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
             <Button type="submit" variant="destructive" disabled={pending || (hasPassword && !password)}>
               {pending ? "Eliminando…" : "Eliminar cuenta"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

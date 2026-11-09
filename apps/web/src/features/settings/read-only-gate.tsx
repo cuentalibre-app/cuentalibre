@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { Lock } from "lucide-react";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { cn } from "@cuentalibre/ui/lib/cn";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { EXPORT_PATH } from "@/features/transfer/transfer-model";
 import { planState } from "./billing-model";
 import { useBilling } from "./billing-store";
@@ -31,20 +30,16 @@ export function RequireWritable({ children }: { children: ReactNode }) {
         suscripción.
       </p>
       <div className="mt-3 flex flex-wrap justify-center gap-2">
-        <Link to={BILLING_PATH} className={cn(buttonVariants(), "no-underline")}>
+        <Link to={BILLING_PATH} className={buttonVariants()}>
           Suscribirme
         </Link>
-        <Link to={EXPORT_PATH} className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
+        <Link to={EXPORT_PATH} className={buttonVariants({ variant: "secondary" })}>
           Exportar mis datos
         </Link>
       </div>
-      <button
-        type="button"
-        onClick={back}
-        className={cn(buttonVariants({ variant: "secondary" }), "mt-2 no-underline")}
-      >
+      <Button variant="secondary" onClick={back} className="mt-2">
         Volver
-      </button>
+      </Button>
     </div>
   );
 }

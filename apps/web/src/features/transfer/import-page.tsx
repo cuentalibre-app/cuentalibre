@@ -1,10 +1,9 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link, useSearchParams } from "react-router";
 import { CircleAlert, CircleCheck, FileSpreadsheet, Info, TriangleAlert, Upload, X } from "lucide-react";
 import { sumBy } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -85,11 +84,8 @@ export function ImportPage() {
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <PageShell title="Importación de facturas y gastos">
-        <div
-          className="flex animate-rise-in gap-3 rounded-xl bg-primary-soft px-4 py-3.5 text-sm text-primary"
-          role="note"
-        >
-          <Info className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <div className="flex animate-rise-in gap-2 rounded-xl bg-primary-soft px-3.5 py-3 text-sm" role="note">
+          <Info className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.8} aria-hidden="true" />
           <p className="m-0">
             Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, descarga la
             plantilla si no la tienes, arrastra el archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que
@@ -101,9 +97,9 @@ export function ImportPage() {
         {imported && (
           <div
             role="status"
-            className="flex animate-rise-in flex-wrap items-center gap-3 rounded-xl bg-success-soft px-4 py-3.5 text-sm text-success"
+            className="flex animate-rise-in flex-wrap gap-2 rounded-xl bg-success-soft px-3.5 py-3 text-sm"
           >
-            <CircleCheck className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+            <CircleCheck className="mt-0.5 size-4 shrink-0 text-success" strokeWidth={1.8} aria-hidden="true" />
             <span className="flex-1">
               {imported.count === 1
                 ? `Se ha importado 1 ${IMPORT_KINDS[imported.kind].noun[0]}`
@@ -112,17 +108,14 @@ export function ImportPage() {
                 ` y ${imported.contacts === 1 ? "1 contacto nuevo" : `${imported.contacts} contactos nuevos`}`}
               .
             </span>
-            <Link
-              to={IMPORT_KINDS[imported.kind].listPath}
-              className="font-medium text-success underline underline-offset-2"
-            >
+            <Link to={IMPORT_KINDS[imported.kind].listPath} className={buttonVariants({ variant: "link" })}>
               Ver {IMPORT_KINDS[imported.kind].listLabel}
             </Link>
           </div>
         )}
 
         <section
-          className="flex animate-rise-in flex-col gap-5 rounded-xl border border-border bg-card p-5 text-card-foreground"
+          className="flex animate-rise-in flex-col gap-5 surface p-5 text-card-foreground"
           style={{ "--i": 1 } as CSSProperties}
         >
           <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
@@ -136,14 +129,10 @@ export function ImportPage() {
                 />
               )}
             </Field>
-            <button
-              type="button"
-              onClick={downloadSample}
-              className={cn(buttonVariants({ variant: "secondary" }), "no-underline [&_svg]:size-4")}
-            >
-              <FileSpreadsheet className="size-4" strokeWidth={1.8} aria-hidden="true" />
+            <Button variant="secondary" onClick={downloadSample}>
+              <FileSpreadsheet strokeWidth={1.8} aria-hidden="true" />
               Descargar Excel de ejemplo para {config.label.toLowerCase()}
-            </button>
+            </Button>
           </div>
 
           <DropZone file={file} onPick={pick} />
@@ -205,13 +194,7 @@ export function DropZone({ file, onPick }: { file: File | null; onPick: (file: F
           <FileSpreadsheet className="size-5 text-primary" strokeWidth={1.8} aria-hidden="true" />
           <span className="font-medium">{file.name}</span>
           <span className="text-sm text-muted-foreground">{Math.max(1, Math.round(file.size / 1024))} KB</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="size-8 px-0"
-            aria-label="Quitar archivo"
-            onClick={() => onPick(null)}
-          >
+          <Button variant="ghost" size="icon-sm" aria-label="Quitar archivo" onClick={() => onPick(null)}>
             <X strokeWidth={1.8} aria-hidden="true" />
           </Button>
         </div>
@@ -220,13 +203,9 @@ export function DropZone({ file, onPick }: { file: File | null; onPick: (file: F
           <Upload className="size-6 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
           <p className="m-0">
             Arrastra aquí el archivo a importar o{" "}
-            <button
-              type="button"
-              onClick={() => input.current?.click()}
-              className="cursor-pointer border-0 bg-transparent p-0 font-medium text-primary underline-offset-2 hover:underline"
-            >
+            <Button variant="link" onClick={() => input.current?.click()}>
               haz clic para buscarlo
-            </button>
+            </Button>
             .
           </p>
           <p className="m-0 text-xs text-muted-foreground">
@@ -257,7 +236,7 @@ function Preview({
 
   if (preview.fileErrors.length)
     return (
-      <section className="flex animate-rise-in flex-col gap-2 rounded-xl border border-destructive bg-destructive-soft/40 p-5">
+      <section className="flex animate-rise-in flex-col gap-2 rounded-xl bg-destructive-soft p-5">
         <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive lg:text-title">
           <CircleAlert className="size-5" strokeWidth={1.8} aria-hidden="true" />
           No se puede importar el archivo
@@ -273,7 +252,7 @@ function Preview({
   return (
     <section
       aria-label="Vista previa de la importación"
-      className="flex animate-rise-in flex-col overflow-hidden rounded-xl border border-border bg-card"
+      className="flex animate-rise-in flex-col overflow-hidden surface"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5">
         <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Vista previa</h2>

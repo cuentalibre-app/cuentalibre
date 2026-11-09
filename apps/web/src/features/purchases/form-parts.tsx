@@ -1,7 +1,14 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { ExternalLink, Paperclip, ScanText, Trash2, Upload } from "lucide-react";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -95,13 +102,9 @@ export function ReceiptDrop({
         <Upload className="size-5 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         <p className="m-0 font-medium">
           {prompt} o{" "}
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="cursor-pointer border-0 bg-transparent p-0 font-medium text-primary underline-offset-2 hover:underline"
-          >
+          <Button variant="link" onClick={() => inputRef.current?.click()}>
             elige un archivo
-          </button>
+          </Button>
         </p>
         <p className="m-0 flex items-center gap-1.5 text-xs text-muted-foreground">
           <ScanText className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
@@ -159,7 +162,7 @@ export function AttachmentList({
                 target="_blank"
                 rel="noopener"
                 aria-label={`Abrir ${a.name}`}
-                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "size-8 px-0")}
+                className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
               >
                 <ExternalLink strokeWidth={1.8} aria-hidden="true" />
               </a>
@@ -178,10 +181,10 @@ export function AttachmentList({
             {onRemove && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 aria-label={`Quitar ${a.name}`}
                 onClick={() => onRemove(a)}
-                className="size-8 px-0 text-muted-foreground hover:text-destructive"
+                className="hover:text-destructive"
               >
                 <Trash2 strokeWidth={1.8} aria-hidden="true" />
               </Button>
@@ -225,11 +228,11 @@ export function AttachmentsDialog({
           accept=""
           note={filesAreStored() ? examples : `${examples} Se guardan solo en esta sesión.`}
         />
-        <div className="flex justify-end">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cerrar</Button>
           </DialogClose>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -1,12 +1,11 @@
 import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, cents, centsToEuros, type Cents } from "@cuentalibre/core";
-import { Info } from "lucide-react";
 import { Link } from "react-router";
-import { Card, CardTitle } from "@cuentalibre/ui/components/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
+import { HelpTip, Section } from "@/components/page";
 import { formatPercent } from "@/lib/format";
 import type { HomeData } from "./home-data";
 
@@ -26,17 +25,7 @@ function TaxesHint({ data }: { data: HomeData }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label="Cómo se estiman los impuestos"
-            className="cursor-help text-muted-foreground"
-          >
-            <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="block max-w-80 px-3.5 py-3 leading-snug font-normal">
+      <HelpTip label="Cómo se estiman los impuestos" side="left" contentClassName="max-w-80 px-3.5 py-3">
           <p className="m-0 mb-1.5 text-center font-semibold">Impuestos estimados</p>
           <div className="flex flex-col gap-2">
             {data.socialSecurityEstimate > 0 && (
@@ -87,8 +76,7 @@ function TaxesHint({ data }: { data: HomeData }) {
               un 20 %; la diferencia se paga o devuelve en la renta.
             </p>
           </div>
-        </TooltipContent>
-      </Tooltip>
+      </HelpTip>
     </TooltipProvider>
   );
 }
@@ -114,8 +102,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   ];
 
   return (
-    <Card aria-labelledby="take-home-title" className={cn("gap-4 p-4 lg:gap-5", className)}>
-      <CardTitle id="take-home-title">Neto después de impuestos</CardTitle>
+    <Section id="take-home-title" title="Neto después de impuestos" className={className}>
 
       <div className="flex flex-col gap-1.5">
         <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-4xl" />
@@ -166,6 +153,6 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
           </Link>
         </p>
       )}
-    </Card>
+    </Section>
   );
 }

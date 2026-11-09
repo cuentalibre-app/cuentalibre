@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
@@ -41,11 +42,11 @@ export function SignUpPage() {
         <>
           <span>
             ¿Ya tienes cuenta?{" "}
-            <Link to={SIGN_IN_PATH} className="font-medium text-primary hover:text-primary-hover">
+            <Link to={SIGN_IN_PATH} className={buttonVariants({ variant: "link" })}>
               Entrar
             </Link>
           </span>
-          <a href={DEMO_PATH} className="font-medium text-primary hover:text-primary-hover">
+          <a href={DEMO_PATH} className={buttonVariants({ variant: "link" })}>
             Probar la demo sin cuenta
           </a>
         </>

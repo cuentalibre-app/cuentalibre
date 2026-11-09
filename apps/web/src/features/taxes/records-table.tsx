@@ -2,6 +2,7 @@ import { Fragment, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Check, ChevronRight, Copy } from "lucide-react";
 import { cents, sumBy, type Cents } from "@cuentalibre/core";
+import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
@@ -149,7 +150,7 @@ export function RecordsTable({
 
   return (
     <>
-      <div className="hidden overflow-x-auto rounded-xl border border-border lg:block">
+      <div className="hidden overflow-x-auto surface lg:block">
         <table aria-label={label} className="w-full min-w-[760px] border-collapse">
           <thead>
             <tr className={table.headRow}>
@@ -234,7 +235,7 @@ export function RecordsTable({
         {rows.map((r) => {
           const expanded = open.has(r.id);
           return (
-            <li key={r.id} className="flex flex-col gap-2 rounded-xl border border-border p-3.5">
+            <li key={r.id} className="flex flex-col gap-2 surface p-3.5">
               <span className="font-medium">{r.title}</span>
               <dl className="m-0 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
                 {r.values.map((v, j) => (
@@ -250,11 +251,11 @@ export function RecordsTable({
                   </div>
                 ))}
               </dl>
-              <button
-                type="button"
+              <Button
+                variant="link"
                 aria-expanded={expanded}
                 onClick={() => toggle(r.id)}
-                className="flex cursor-pointer items-center gap-1 self-start text-sm text-primary"
+                className="gap-1 self-start text-sm"
               >
                 <ChevronRight
                   className={cn("size-4 transition-transform duration-150", expanded && "rotate-90")}
@@ -262,7 +263,7 @@ export function RecordsTable({
                   aria-hidden="true"
                 />
                 {r.documentIds.length === 1 ? "1 documento" : `${r.documentIds.length} documentos`}
-              </button>
+              </Button>
               {expanded && <DocumentList books={books} ids={r.documentIds} />}
             </li>
           );

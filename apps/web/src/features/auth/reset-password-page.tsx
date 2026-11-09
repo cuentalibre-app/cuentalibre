@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link, useSearchParams } from "react-router";
 import { Field } from "@/features/sales/form-fields";
 import { MIN_PASSWORD_LENGTH, authErrorMessage, oauthErrorMessage, resetPassword } from "./auth-api";
@@ -45,7 +46,7 @@ export function ResetPasswordPage() {
       title="Elige una contraseña nueva"
       description="Al cambiarla se cerrarán todas las sesiones abiertas."
       footer={
-        <Link to={FORGOT_PASSWORD_PATH} className="font-medium text-primary hover:text-primary-hover">
+        <Link to={FORGOT_PASSWORD_PATH} className={buttonVariants({ variant: "link" })}>
           Pedir otro enlace
         </Link>
       }

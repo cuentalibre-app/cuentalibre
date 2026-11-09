@@ -53,7 +53,6 @@ export function LookFields({
       </div>
       <Button
         variant="secondary"
-        size="md"
         className="self-start"
         onClick={() =>
           onChange({

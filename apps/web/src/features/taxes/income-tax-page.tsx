@@ -12,6 +12,7 @@ import {
 } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { deductibleOf, EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { useExpenses } from "@/features/purchases/expenses-store";
@@ -296,31 +297,31 @@ export function IncomeTaxPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <ModuleBreadcrumb module="incomeTax" form={annual ? "100" : "130"} />
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">IRPF</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              {annual
-                ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."
-                : "Modelo 130: pago a cuenta del 20 % de lo que llevas ganado en el año."}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <FormSwitch
-              value={annual ? "100" : "130"}
-              onChange={(v) =>
-                setPeriod(v === "100" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
-              }
-              options={[
-                { value: "130", label: "130 · Trimestral" },
-                { value: "100", label: "100 · Anual" },
-              ]}
-            />
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          eyebrow={<ModuleBreadcrumb module="incomeTax" form={annual ? "100" : "130"} />}
+          title="IRPF"
+          description={
+            annual
+              ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."
+              : "Modelo 130: pago a cuenta del 20 % de lo que llevas ganado en el año."
+          }
+          actions={
+            <>
+              <FormSwitch
+                value={annual ? "100" : "130"}
+                onChange={(v) =>
+                  setPeriod(v === "100" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
+                }
+                options={[
+                  { value: "130", label: "130 · Trimestral" },
+                  { value: "100", label: "100 · Anual" },
+                ]}
+              />
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+            </>
+          }
+        />
         {period.quarter === null ? (
           <IncomeTax100 key={period.year} year={period.year} today={today} />
         ) : (
@@ -331,7 +332,7 @@ export function IncomeTaxPage() {
             today={today}
           />
         )}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

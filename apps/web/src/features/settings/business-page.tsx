@@ -17,6 +17,7 @@ import {
   profileErrors,
 } from "./settings-model";
 import { settingsStore, useSettings } from "./settings-store";
+import { Page } from "@/components/page";
 
 /** How the issuer block of an invoice will look with the current draft. */
 function InvoicePreview({ profile }: { profile: BusinessProfile }) {
@@ -33,7 +34,7 @@ function InvoicePreview({ profile }: { profile: BusinessProfile }) {
   return (
     <aside
       aria-label="Vista previa en la factura"
-      className="flex animate-rise-in flex-col gap-3 rounded-xl border border-border bg-card p-5 lg:sticky lg:top-6"
+      className="flex animate-rise-in flex-col gap-3 surface p-5 lg:sticky lg:top-6"
     >
       <span className="text-sm font-semibold">Así apareces en tus facturas</span>
       <div className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3.5">
@@ -75,7 +76,7 @@ export function BusinessPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader
           title="Datos de la empresa"
           description="Tus datos fiscales, tal y como aparecen en facturas e informes."
@@ -217,7 +218,7 @@ export function BusinessPage() {
 
           <InvoicePreview profile={draft} />
         </div>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

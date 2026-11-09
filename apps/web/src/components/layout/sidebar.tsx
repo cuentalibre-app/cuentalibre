@@ -202,7 +202,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
       <nav
         aria-label="Principal"
         className={cn(
-          "sticky top-0 h-dvh shrink-0 flex-col gap-1 overflow-x-hidden overflow-y-auto border-r border-sidebar-border bg-sidebar px-3.5 py-5 transition-[width] duration-300 ease-out",
+          "sticky top-0 h-dvh shrink-0 flex-col gap-1 overflow-x-hidden overflow-y-auto border-r border-sidebar-border bg-sidebar px-3.5 backdrop-blur-2xl py-5 transition-[width] duration-300 ease-out",
           collapsed ? "w-18" : "w-66",
           className,
         )}

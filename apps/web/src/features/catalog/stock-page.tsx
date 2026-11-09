@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
-import { ExternalLink, Filter, Plus, Search, Trash2, X } from "lucide-react";
+import { ExternalLink, Filter, Plus, Trash2, X } from "lucide-react";
 import {
   familyWithDescendants,
   stockOf,
@@ -9,11 +9,12 @@ import {
   type StockReason,
 } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
-import { Input, Textarea } from "@cuentalibre/ui/components/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Input, SearchField, Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Page, PageHeader, Toolbar } from "@/components/page";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { EmptyState, SortHeader } from "@/features/sales/list-parts";
 import { KINDS } from "@/features/sales/sales-model";
@@ -116,46 +117,41 @@ export function StockPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Regularización de stock</h1>
-            <p className="m-0 max-w-2xl text-sm text-muted-foreground">
-              Todos los movimientos de stock: los que hacen las facturas y albaranes, y los ajustes que haces a mano por
-              pérdidas, compras o recuentos.
-            </p>
-          </div>
-          <Button onClick={() => setCreating(true)} disabled={stocked.length === 0}>
-            <Plus strokeWidth={2} aria-hidden="true" />
-            Nueva regularización
-          </Button>
-        </header>
+      <Page>
+        <PageHeader
+          title="Regularización de stock"
+          description="Todos los movimientos de stock: los que hacen las facturas y albaranes, y los ajustes que haces a mano por pérdidas, compras o recuentos."
+          actions={
+            <Button onClick={() => setCreating(true)} disabled={stocked.length === 0}>
+              <Plus strokeWidth={2} aria-hidden="true" />
+              Nueva regularización
+            </Button>
+          }
+        />
 
         <section
           aria-label="Últimas regularizaciones"
-          className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+          className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
           style={{ "--i": 1 } as CSSProperties}
         >
-          <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-            <div className="min-w-0 flex-[1_1_240px] lg:max-w-96">
-              <GroupedSelect
-                id="stock-product"
-                aria-label="Producto"
-                value={filters.product}
-                onChange={(v) => set("product", v)}
-                groups={[
-                  {
-                    options: [
-                      { value: ALL, label: "Todos los productos" },
-                      ...stocked.map((p) => ({ value: p.id, label: p.sku ? `${p.name} · ${p.sku}` : p.name })),
-                    ],
-                  },
-                ]}
-              />
-            </div>
+          <Toolbar>
+            <GroupedSelect
+              id="stock-product"
+              aria-label="Producto"
+              className="lg:max-w-96 lg:flex-[1_1_240px]"
+              value={filters.product}
+              onChange={(v) => set("product", v)}
+              groups={[
+                {
+                  options: [
+                    { value: ALL, label: "Todos los productos" },
+                    ...stocked.map((p) => ({ value: p.id, label: p.sku ? `${p.name} · ${p.sku}` : p.name })),
+                  ],
+                },
+              ]}
+            />
             <Button
               variant="secondary"
-              size="md"
               aria-expanded={showFilters}
               aria-controls="stock-filters"
               onClick={() => setShowFilters((s) => !s)}
@@ -168,7 +164,7 @@ export function StockPage() {
                 </span>
               )}
             </Button>
-          </div>
+          </Toolbar>
 
           {showFilters && (
             <div
@@ -194,15 +190,12 @@ export function StockPage() {
                 />
               </FilterBox>
               <FilterBox label="Por código (SKU)">
-                <div className="flex h-10 items-center gap-2 rounded-lg border border-input bg-background px-3 text-muted-foreground">
-                  <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                  <input
-                    value={filters.sku}
-                    onChange={(e) => set("sku", e.target.value)}
-                    aria-label="Código de producto"
-                    className="min-w-0 flex-1 border-0 bg-transparent text-foreground tabular-nums outline-none"
-                  />
-                </div>
+                <SearchField
+                  value={filters.sku}
+                  onChange={(e) => set("sku", e.target.value)}
+                  aria-label="Código de producto"
+                  className="tabular-nums"
+                />
               </FilterBox>
               <FilterBox label="Por tipo/razón">
                 <GroupedSelect
@@ -252,7 +245,6 @@ export function StockPage() {
               </FilterBox>
               <Button
                 variant="secondary"
-                size="md"
                 onClick={() => setFilters(NO_FILTERS)}
                 className="self-end justify-self-start"
               >
@@ -360,8 +352,8 @@ export function StockPage() {
                             {m.kind === "manual" && (
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                className="size-8 px-0 text-muted-foreground hover:text-destructive"
+                                size="icon-sm"
+                                className="hover:text-destructive"
                                 aria-label="Eliminar regularización"
                                 title="Eliminar regularización"
                                 onClick={() => remove(m)}
@@ -376,7 +368,7 @@ export function StockPage() {
                   </tbody>
                 </table>
               </div>
-              <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+              <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
                 {rows.map((m) => {
                   const type = movementType(m);
                   return (
@@ -401,7 +393,7 @@ export function StockPage() {
             </>
           )}
         </section>
-      </div>
+      </Page>
 
       <Dialog open={creating} onOpenChange={closeDialog}>
         <DialogContent className="max-w-xl">
@@ -533,12 +525,12 @@ function RegularizationForm({ initialProduct, onDone }: { initialProduct: string
       <Field label="Comentarios">
         {(p) => <Textarea {...p} rows={3} value={comments} onChange={(e) => setComments(e.target.value)} />}
       </Field>
-      <div className="flex justify-end gap-2">
+      <DialogFooter>
         <Button variant="secondary" onClick={onDone}>
-          Cerrar
+          Cancelar
         </Button>
         <Button type="submit">Guardar</Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

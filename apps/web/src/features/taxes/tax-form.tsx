@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Check, ChevronDown, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
+import { Check, ChevronDown, CircleHelp, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
 import {
   aeatBytes,
   aeatFileName,
@@ -24,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/compone
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Notice as PageNotice } from "@/components/page";
 import { useSettings } from "@/features/settings/settings-store";
 import { copyText } from "@/lib/clipboard";
 import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
@@ -160,20 +161,14 @@ function EditableValue({ box, edit }: { box: string; edit: EditableBox }) {
       {edit.overridden ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="size-7 px-0"
-              aria-label="Volver al valor calculado"
-              onClick={edit.onReset}
-            >
-              <RotateCcw className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
+            <Button variant="ghost" size="icon-sm" aria-label="Volver al valor calculado" onClick={edit.onReset}>
+              <RotateCcw strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Volver al valor calculado</TooltipContent>
         </Tooltip>
       ) : (
-        <span className="size-7" aria-hidden="true" />
+        <span className="size-8" aria-hidden="true" />
       )}
     </span>
   );
@@ -198,14 +193,18 @@ function RichText({ text }: { text: string }) {
   return text.split(/\*\*(.+?)\*\*/).map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
 }
 
+/** HelpTip's trigger, for a tooltip whose content needs more room than HelpTip gives. */
+const helpTipClass =
+  "inline-grid size-5 cursor-help place-items-center rounded-full border-0 bg-transparent p-0 text-muted-foreground transition-colors duration-150 hover:text-foreground";
+
 /** The help of a row of boxes, titled with its boxes as on the form. */
 function BoxHint({ boxes, hint }: { boxes: string[]; hint: Hint }) {
   const { text, table: helpTable, after = [] } = typeof hint === "string" ? { text: [hint] } : hint;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" aria-label="Más información" className="cursor-help text-muted-foreground">
-          <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
+        <button type="button" aria-label="Más información" className={helpTipClass}>
+          <CircleHelp className="size-3.5" strokeWidth={2} aria-hidden="true" />
         </button>
       </TooltipTrigger>
       <TooltipContent className="block max-w-80 px-3.5 py-3 leading-snug font-normal">
@@ -288,7 +287,7 @@ export function FormSections({
           <section
             key={section.title}
             aria-label={section.title}
-            className="animate-rise-in overflow-hidden rounded-xl border border-border"
+            className="animate-rise-in overflow-hidden surface"
             style={{ "--i": s } as CSSProperties}
           >
             <div className="flex items-center gap-4 px-4 py-2 text-xs text-muted-foreground lg:grid" style={columns}>
@@ -431,7 +430,7 @@ function UnavailableFile({ label, reason }: { label: string; reason: string }) {
       <TooltipTrigger asChild>
         {/* Disabled buttons don't fire pointer events: the wrapper shows the tooltip */}
         <span tabIndex={0}>
-          <Button variant="secondary" size="md" disabled>
+          <Button variant="secondary" disabled>
             <Download strokeWidth={1.8} aria-hidden="true" />
             {label}
           </Button>
@@ -462,7 +461,7 @@ function AeatFileButton({ file }: { file: AeatFile }) {
     );
   }
   return (
-    <Button variant="secondary" size="md" onClick={() => downloadBlob(blob, file.name)}>
+    <Button variant="secondary" onClick={() => downloadBlob(blob, file.name)}>
       <Download strokeWidth={1.8} aria-hidden="true" />
       {label}
     </Button>
@@ -510,7 +509,7 @@ export function ResultPanel({
   return (
     <section
       aria-label="Resultado"
-      className="flex animate-rise-in flex-col gap-5 rounded-xl border border-border bg-card p-5 lg:flex-row lg:items-center lg:justify-between"
+      className="flex animate-rise-in flex-col gap-5 surface p-5 lg:flex-row lg:items-center lg:justify-between"
     >
       <div className="flex flex-col gap-1">
         <span className="text-sm text-muted-foreground">{result.label}</span>
@@ -562,7 +561,7 @@ export function ResultPanel({
             href={AEAT_LINKS[form]}
             target="_blank"
             rel="noreferrer"
-            className={cn(buttonVariants({ variant: "secondary", size: "md" }), "no-underline")}
+            className={buttonVariants({ variant: "secondary" })}
           >
             <ExternalLink strokeWidth={1.8} aria-hidden="true" />
             {form === "100"
@@ -617,10 +616,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
   const td = cn(table.td, "px-2.5");
 
   return (
-    <section
-      aria-label={title}
-      className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
-    >
+    <section aria-label={title} className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:surface">
       <div className="flex flex-wrap items-center justify-between gap-3 lg:px-4 lg:pt-3">
         <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
         <SegmentedControl
@@ -697,7 +693,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
             </table>
           </div>
 
-          <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+          <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
             {group.rows.map((r) => (
               <li key={r.id}>
                 <Link
@@ -733,7 +729,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
 export function FormAnswers({ title, rows, note }: { title: string; rows: FormAnswer[]; note?: ReactNode }) {
   const columns = { gridTemplateColumns: "minmax(0,1fr) minmax(0,22rem)" };
   return (
-    <section aria-label={title} className="animate-rise-in overflow-hidden rounded-xl border border-border">
+    <section aria-label={title} className="animate-rise-in overflow-hidden surface">
       <div className="flex items-center gap-4 px-4 py-2 text-xs text-muted-foreground lg:grid" style={columns}>
         <h2 className="m-0 text-xs font-semibold text-foreground">{title}</h2>
         <span className="hidden text-right font-medium lg:block">Respuesta</span>
@@ -772,7 +768,7 @@ export function FormAnswers({ title, rows, note }: { title: string; rows: FormAn
 /** What the calculation assumes; open by default, foldable. */
 export function Assumptions({ items }: { items: ReactNode[] }) {
   return (
-    <details open className="group rounded-xl border border-border bg-card px-5 py-4">
+    <details open className="group surface px-5 py-4">
       <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold [&::-webkit-details-marker]:hidden">
         <Info className="size-4.5 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         Qué tiene en cuenta este cálculo
@@ -832,7 +828,7 @@ export function QuarterCards({
           <Link
             key={i}
             to={to(quarter)}
-            className="flex flex-col gap-1 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
+            className="flex flex-col gap-1 surface p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
           >
             <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
               {form} · T{quarter}
@@ -852,13 +848,8 @@ export function QuarterCards({
 /** A warning above the figures, with optional links to the documents to review. */
 export function Notice({ children, tone = "warning" }: { children: ReactNode; tone?: "warning" | "info" }) {
   return (
-    <div
-      className={cn(
-        "m-0 flex flex-col gap-1.5 rounded-lg px-4 py-2.5 text-sm",
-        tone === "warning" ? "bg-warning-soft text-warning" : "bg-muted text-muted-foreground",
-      )}
-    >
-      {children}
-    </div>
+    <PageNotice tone={tone}>
+      <div className="flex flex-col gap-1.5">{children}</div>
+    </PageNotice>
   );
 }

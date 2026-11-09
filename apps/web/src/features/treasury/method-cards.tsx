@@ -59,8 +59,8 @@ export function MethodCards({
                 aria-pressed={pressed}
                 onClick={() => onSelect(pressed ? null : m.id)}
                 className={cn(
-                  "flex h-full w-full cursor-pointer flex-col gap-4 rounded-xl border bg-card p-4 text-left text-foreground transition-[border-color,box-shadow] duration-150 hover:shadow-sm",
-                  pressed ? "border-primary" : "border-border hover:border-muted-strong",
+                  "flex h-full w-full cursor-pointer flex-col gap-4 surface p-4 text-left text-foreground transition-[border-color,box-shadow] duration-150 hover:shadow-sm",
+                  pressed ? "border-primary" : "hover:border-muted-strong",
                 )}
               >
                 <span className="flex items-start gap-3">
@@ -101,7 +101,7 @@ export function MethodCards({
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-input bg-transparent px-4 text-left font-medium text-foreground transition-colors duration-150 hover:bg-accent"
+            className="flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-input bg-transparent px-4 text-left font-medium text-foreground transition-colors duration-150 hover:bg-accent"
           >
             <Plus className="size-[18px] text-muted-foreground" strokeWidth={2} aria-hidden="true" />
             Nueva forma de pago
@@ -109,7 +109,7 @@ export function MethodCards({
           <SettingsLink
             from="Bancos"
             to={PAYMENT_METHODS_PATH}
-            className="flex items-center gap-3 rounded-xl border border-border px-4 font-medium text-foreground no-underline transition-colors duration-150 hover:bg-accent"
+            className="flex items-center gap-3 surface px-4 font-medium text-foreground no-underline transition-colors duration-150 hover:bg-accent"
           >
             <Settings className="size-[18px] text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
             Configurar formas de pago

@@ -14,6 +14,7 @@ import { methodUsage } from "./method-usage";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { ACTIVE_STATUS, displayNumber, maskNumber, methodTypeLabel, usePaymentMethods } from "./settings-model";
 import { settingsStore, useSettings } from "./settings-store";
+import { Page } from "@/components/page";
 
 type StatusFilter = "all" | "active" | "inactive";
 
@@ -69,7 +70,7 @@ export function PaymentMethodsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
+      <Page>
         <SettingsHeader
           title="Formas de cobro y pago"
           description="Cómo te pagan tus clientes y cómo pagas a tus proveedores: tus cuentas, tarjetas, PayPal o efectivo."
@@ -93,7 +94,7 @@ export function PaymentMethodsPage() {
         />
 
         {shown.length === 0 ? (
-          <div className="rounded-xl border border-border">
+          <div className="surface">
             <EmptyState
               message={
                 methods.length === 0
@@ -109,7 +110,7 @@ export function PaymentMethodsPage() {
           </div>
         ) : (
           <>
-            <ul className="m-0 flex list-none flex-col overflow-hidden rounded-xl border border-border p-0">
+            <ul className="m-0 flex list-none flex-col overflow-hidden surface p-0">
               {shown.map((m, i) => {
                 const Icon = METHOD_ICONS[m.type];
                 const number = m.number && displayNumber(m);
@@ -149,12 +150,7 @@ export function PaymentMethodsPage() {
                         groups={actions(m)}
                         trigger={
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              aria-label={`Más opciones de ${m.name}`}
-                              className="size-8 px-0"
-                            >
+                            <Button variant="ghost" size="icon-sm" aria-label={`Más opciones de ${m.name}`}>
                               <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -203,7 +199,7 @@ export function PaymentMethodsPage() {
           </p>
           <p className="m-0">Puedes desactivarla: dejará de proponerse, pero los documentos la conservan.</p>
         </ConfirmDialog>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

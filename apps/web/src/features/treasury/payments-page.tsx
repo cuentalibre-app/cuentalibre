@@ -1,14 +1,16 @@
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router";
-import { ArrowUpRight, ChevronDown, Download, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Download, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { cents, isInPeriod, monthlyFlows, periodKey, sumBy } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
+import { SearchField } from "@cuentalibre/ui/components/input";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { AnimatedAmount } from "@/components/animated-amount";
+import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
@@ -122,26 +124,26 @@ export function PaymentsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex w-full min-w-0 flex-col gap-1 sm:w-auto">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-              <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Bancos y caja</h1>
-              <PeriodSelect
-                value={period}
-                onChange={setPeriod}
-                years={availableYears}
-                today={today}
-                className="h-12 w-full sm:h-10 sm:w-auto"
-              />
-            </div>
-            <p className="m-0 text-sm text-muted-foreground">Lo que has cobrado y pagado, y por dónde ha pasado.</p>
-          </div>
-          <Button onClick={() => setCreating(true)}>
-            <Plus strokeWidth={2} aria-hidden="true" />
-            Nuevo cobro / pago manual
-          </Button>
-        </header>
+      <Page>
+        <PageHeader
+          title="Bancos y caja"
+          inline={
+            <PeriodSelect
+              value={period}
+              onChange={setPeriod}
+              years={availableYears}
+              today={today}
+              className="h-12 w-full sm:h-10 sm:w-auto"
+            />
+          }
+          description="Lo que has cobrado y pagado, y por dónde ha pasado."
+          actions={
+            <Button onClick={() => setCreating(true)}>
+              <Plus strokeWidth={2} aria-hidden="true" />
+              Nuevo cobro / pago manual
+            </Button>
+          }
+        />
 
         <dl className="m-0 grid animate-rise-in grid-cols-3 gap-3 lg:gap-4">
           {[
@@ -149,10 +151,7 @@ export function PaymentsPage() {
             { label: "Pagado", value: <AnimatedAmount value={paid} /> },
             { label: "Neto", value: <AnimatedAmount value={cents(collected - paid)} /> },
           ].map((s) => (
-            <div
-              key={s.label}
-              className="flex min-w-0 flex-col gap-1 rounded-xl border border-border bg-card p-3 sm:p-4"
-            >
+            <div key={s.label} className="flex min-w-0 flex-col gap-1 surface p-3 sm:p-4">
               <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
               <dd className="m-0 amount text-base font-semibold sm:text-lg lg:text-xl">{s.value}</dd>
             </div>
@@ -170,21 +169,16 @@ export function PaymentsPage() {
         <section
           ref={list}
           aria-label="Listado de cobros y pagos"
-          className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+          className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
           style={{ "--i": 1 } as CSSProperties}
         >
-          <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-            <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-72">
-              <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(e) => set("query", e.target.value)}
-                placeholder="Buscar por documento, contacto o importe"
-                aria-label="Buscar"
-                className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
+          <Toolbar>
+            <SearchField
+              value={filters.query}
+              onChange={(e) => set("query", e.target.value)}
+              placeholder="Buscar por documento, contacto o importe"
+              aria-label="Buscar"
+            />
             <GroupedSelect
               id="pay-source"
               aria-label="Tipo de documento vinculado"
@@ -198,7 +192,7 @@ export function PaymentsPage() {
                   ],
                 },
               ]}
-              className="w-auto min-w-40 font-medium"
+              className="w-auto min-w-40"
             />
             <GroupedSelect
               id="pay-method"
@@ -213,19 +207,18 @@ export function PaymentsPage() {
                   ],
                 },
               ]}
-              className="w-auto min-w-40 font-medium"
+              className="w-auto min-w-40"
             />
             <Button
               variant="secondary"
-              size="md"
-              className="ml-auto"
+              className="lg:ml-auto"
               disabled={rows.length === 0}
               onClick={() => exportCsv(rows, `cobros-y-pagos-${periodCode(period)}`.toLowerCase())}
             >
               <Download strokeWidth={1.8} aria-hidden="true" />
               CSV
             </Button>
-          </div>
+          </Toolbar>
 
           {rows.length === 0 ? (
             <EmptyState
@@ -319,7 +312,10 @@ export function PaymentsPage() {
                 </table>
               </div>
 
-              <ul key={`list-${periodKey(period)}`} className="m-0 flex list-none flex-col p-0 lg:hidden">
+              <ul
+                key={`list-${periodKey(period)}`}
+                className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden"
+              >
                 {rows.map((r, i) => (
                   <li
                     key={r.payment.key}
@@ -356,7 +352,7 @@ export function PaymentsPage() {
             Se eliminará «{removing?.reference}» de {removing && formatEUR(removing.amount)}.
           </p>
         </ConfirmDialog>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }
@@ -406,7 +402,7 @@ function QuickActions({ row, onRemove }: { row: Row; onRemove: () => void }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 px-0" aria-label="Más acciones">
+                <Button variant="ghost" size="icon-sm" aria-label="Más acciones">
                   <ChevronDown strokeWidth={1.8} aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
@@ -426,7 +422,7 @@ function RowMenu({ row, onRemove }: { row: Row; onRemove: () => void }) {
       groups={groups}
       trigger={
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${row.payment.reference}`}>
+          <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${row.payment.reference}`}>
             <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
