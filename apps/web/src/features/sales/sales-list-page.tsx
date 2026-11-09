@@ -18,7 +18,6 @@ import {
   Pencil,
   Plus,
   ReceiptText,
-  Search,
   Settings,
   SlidersHorizontal,
   Tag,
@@ -30,7 +29,7 @@ import type { SalesDocument, SalesKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
-import { Input } from "@cuentalibre/ui/components/input";
+import { Input, SearchField } from "@cuentalibre/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -49,6 +48,7 @@ import { SettingsLink } from "@/features/settings/settings-parts";
 import { settingsStore } from "@/features/settings/settings-store";
 import { TagChips } from "@/features/settings/tag-chip";
 import { AnimatedAmount } from "@/components/animated-amount";
+import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { MONTHS, formatDate, formatPercent, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -205,48 +205,45 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   const [exporting, setExporting] = useState(false);
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{config.title}</h1>
-        <div className="flex items-center gap-2.5">
-          <SettingsLink
-            to={SETTINGS_PATHS[kind]}
-            from={config.title.toLowerCase()}
-            aria-label={`Configurar ${config.title.toLowerCase()}`}
-            title={`Configurar ${config.title.toLowerCase()}`}
-            className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-          >
-            <Settings strokeWidth={1.8} aria-hidden="true" />
-          </SettingsLink>
-          <Link to={config.newPath} className={cn(buttonVariants(), "hidden no-underline lg:inline-flex")}>
-            <Plus strokeWidth={2} aria-hidden="true" />
-            {config.newLabel}
-          </Link>
-        </div>
-      </header>
+    <Page>
+      <PageHeader
+        title={config.title}
+        actions={
+          <>
+            <SettingsLink
+              to={SETTINGS_PATHS[kind]}
+              from={config.title.toLowerCase()}
+              aria-label={`Configurar ${config.title.toLowerCase()}`}
+              title={`Configurar ${config.title.toLowerCase()}`}
+              className={buttonVariants({ variant: "secondary", size: "icon" })}
+            >
+              <Settings strokeWidth={1.8} aria-hidden="true" />
+            </SettingsLink>
+            <Link to={config.newPath} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
+              <Plus strokeWidth={2} aria-hidden="true" />
+              {config.newLabel}
+            </Link>
+          </>
+        }
+      />
 
       {kind === "invoice" && <InvoiceSummary rows={periodRows} />}
 
       <section
         aria-label={`Listado de ${config.title.toLowerCase()}`}
-        className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+        className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
         style={{ "--i": 1 } as CSSProperties}
       >
-        <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-          <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-80">
-            <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por número, cliente o NIF"
-              aria-label="Buscar"
-              className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-            />
-          </div>
+        <Toolbar>
+          <SearchField
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por número, cliente o NIF"
+            aria-label="Buscar"
+          />
           {config.statuses.length > 0 && (
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44 font-medium">
+              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44">
                 <span className="flex-1 text-left">
                   <SelectValue />
                 </span>
@@ -275,15 +272,14 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             today={today}
           />
           {thisMonth && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() => setThisMonth(false)}
               aria-label="Quitar el filtro del mes en curso"
-              className="flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-primary-soft px-3 text-sm font-medium text-primary hover:bg-accent"
             >
               Solo {MONTH_NAME.format(today)}
-              <X className="size-4" aria-hidden="true" />
-            </button>
+              <X aria-hidden="true" />
+            </Button>
           )}
           {defaults && (
             <SettingsLink
@@ -291,14 +287,13 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               from={config.title.toLowerCase()}
               aria-label="Filtros por defecto"
               title="Filtros por defecto"
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
+              className={buttonVariants({ variant: "secondary", size: "icon" })}
             >
               <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
             </SettingsLink>
           )}
           <Button
             variant="secondary"
-            size="md"
             aria-expanded={showFilters}
             aria-controls="sales-filters"
             onClick={() => setShowFilters((s) => !s)}
@@ -311,40 +306,37 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               </span>
             )}
           </Button>
-          <div className="ml-auto flex gap-2">
-            <Button
-              variant="secondary"
-              size="md"
-              disabled={rows.length === 0}
-              onClick={() => exportCsv(rows, exportName)}
-            >
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              CSV
-            </Button>
-            <Button
-              variant="secondary"
-              size="md"
-              disabled={rows.length === 0 || exporting}
-              aria-label={`Descargar ${rows.length} PDF en un .zip`}
-              title="Un PDF por documento, en un .zip"
-              onClick={async () => {
-                setExporting(true);
-                try {
-                  const { downloadPdfZip } = await import("./sales-pdf");
-                  downloadPdfZip(
-                    rows.map((r) => r.doc),
-                    exportName,
-                  );
-                } finally {
-                  setExporting(false);
-                }
-              }}
-            >
-              <FileArchive strokeWidth={1.8} aria-hidden="true" />
-              PDF (.zip)
-            </Button>
-          </div>
-        </div>
+          <Button
+            variant="secondary"
+            className="lg:ml-auto"
+            disabled={rows.length === 0}
+            onClick={() => exportCsv(rows, exportName)}
+          >
+            <Download strokeWidth={1.8} aria-hidden="true" />
+            CSV
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={rows.length === 0 || exporting}
+            aria-label={`Descargar ${rows.length} PDF en un .zip`}
+            title="Un PDF por documento, en un .zip"
+            onClick={async () => {
+              setExporting(true);
+              try {
+                const { downloadPdfZip } = await import("./sales-pdf");
+                downloadPdfZip(
+                  rows.map((r) => r.doc),
+                  exportName,
+                );
+              } finally {
+                setExporting(false);
+              }
+            }}
+          >
+            <FileArchive strokeWidth={1.8} aria-hidden="true" />
+            PDF (.zip)
+          </Button>
+        </Toolbar>
 
         {showFilters && (
           <FiltersPanel
@@ -367,7 +359,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             }
             action={
               !filtered && (
-                <Link to={config.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}>
+                <Link to={config.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
                   <Plus strokeWidth={2} aria-hidden="true" />
                   {config.newLabel}
                 </Link>
@@ -382,7 +374,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           </>
         )}
       </section>
-    </div>
+    </Page>
   );
 }
 
@@ -482,7 +474,7 @@ function FiltersPanel({
           />
         </div>
       </fieldset>
-      <Button variant="secondary" size="md" onClick={onClear} className="justify-self-start">
+      <Button variant="secondary" onClick={onClear} className="justify-self-start">
         <X strokeWidth={1.8} aria-hidden="true" />
         Quitar filtros
       </Button>
@@ -531,7 +523,7 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
   return (
     <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 lg:p-5">
+        <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
           <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
             <AnimatedAmount value={s.value} />
@@ -683,7 +675,7 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
 
 function DocumentsList({ rows }: { rows: Row[] }) {
   return (
-    <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+    <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
       {rows.map((r, i) => (
         <li
           key={r.doc.id}
@@ -937,7 +929,7 @@ function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 px-0" aria-label={`Más acciones de ${label}`}>
+                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${label}`}>
                   <ChevronDown strokeWidth={1.8} aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
@@ -961,7 +953,7 @@ function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) 
         inlineChoices
         trigger={
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
+            <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${label}`}>
               <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>

@@ -12,6 +12,7 @@ import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { copyText } from "@/lib/clipboard";
 import { formatDate } from "@/lib/format";
 import { SettingsHeader } from "./settings-parts";
+import { Page } from "@/components/page";
 
 const EXPIRY = [
   { value: "never", label: "Nunca" },
@@ -78,7 +79,7 @@ export function ApiKeysPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader
           title="API y agentes"
           description="Claves para que tus scripts y asistentes de IA trabajen con tus datos."
@@ -123,7 +124,7 @@ export function ApiKeysPage() {
               </form>
 
               {created && (
-                <div role="status" className="flex flex-col gap-2 rounded-lg bg-success-soft px-4 py-3 text-sm">
+                <div role="status" className="flex flex-col gap-2 rounded-xl bg-success-soft px-3.5 py-3 text-sm">
                   <strong className="font-semibold text-success">Clave «{created.name}» creada</strong>
                   <p className="m-0">Cópiala ahora: por seguridad no se volverá a mostrar.</p>
                   <div className="flex flex-wrap items-center gap-2">
@@ -138,7 +139,7 @@ export function ApiKeysPage() {
                 </div>
               )}
               {error && (
-                <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
+                <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
                   {error}
                 </p>
               )}
@@ -214,7 +215,7 @@ export function ApiKeysPage() {
             </Section>
           </>
         )}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

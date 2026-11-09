@@ -6,6 +6,7 @@ import { Button } from "@cuentalibre/ui/components/button";
 import { Checkbox, Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
+import { Page } from "@/components/page";
 import { ConfirmDialog, SaveButton, SettingsHeader, useDraft } from "@/features/settings/settings-parts";
 import { RadioOption } from "@/features/transfer/transfer-parts";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
@@ -38,7 +39,7 @@ function Card({
   return (
     <section
       id={id}
-      className="flex animate-rise-in scroll-mt-6 flex-col gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground"
+      className="flex animate-rise-in scroll-mt-6 flex-col gap-4 surface p-5 text-card-foreground"
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex flex-col gap-1">
@@ -106,7 +107,7 @@ export function CatalogSettingsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
+      <Page>
         <SettingsHeader
           title="Configuración del catálogo"
           description="Campos personalizados, cómo pasan los productos a las facturas y el control de stock."
@@ -343,7 +344,7 @@ export function CatalogSettingsPage() {
             Borrar elementos
           </Button>
         </Card>
-      </div>
+      </Page>
 
       <ConfirmDialog
         open={confirming}

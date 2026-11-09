@@ -2,7 +2,14 @@ import { useState } from "react";
 import { formatIban, isValidEmail, isValidIban, newId } from "@cuentalibre/core";
 import type { PaymentMethod, PaymentMethodType } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
@@ -110,12 +117,12 @@ export function MethodDialog({
               )}
             </Field>
           )}
-          <div className="flex justify-end gap-2.5 pt-1">
+          <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary">Cancelar</Button>
             </DialogClose>
             <Button type="submit">{method ? "Guardar" : "Crear"}</Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

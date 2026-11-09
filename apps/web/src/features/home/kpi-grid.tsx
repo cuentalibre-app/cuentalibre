@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import { cents, type Cents } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { formatPercent, periodShortLabel } from "@/lib/format";
 import type { HomeData } from "./home-data";
@@ -15,8 +14,6 @@ interface Kpi {
   change: number | null;
   /** Whether going up is good news (true), bad news (false) or neither (null). */
   upIsGood: boolean | null;
-  /** Shown in place of the change when there is none. */
-  note?: string;
 }
 
 function tone(change: number, upIsGood: boolean | null) {
@@ -31,7 +28,7 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
 
   return (
     <div
-      className="flex animate-rise-in flex-col gap-1.5 rounded-xl border border-border bg-card p-3.5 lg:gap-2.5 lg:p-5"
+      className="flex animate-rise-in flex-col gap-1.5 surface p-3.5 lg:gap-2.5 lg:p-5"
       style={{ "--i": index } as CSSProperties}
     >
       <span className="flex min-w-0 items-center gap-2 text-sm font-semibold lg:text-lg">
@@ -47,7 +44,7 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
           vs. {compareLabel}
         </span>
       ) : (
-        <span className="text-xs text-muted-foreground lg:text-sm">{kpi.note ?? "\u00a0"}</span>
+        <span className="text-xs text-muted-foreground lg:text-sm">{"\u00a0"}</span>
       )}
     </div>
   );
@@ -58,22 +55,25 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
  * the self-employed fees not booked yet, the same figures as in "Neto después de impuestos". The 130 advances
  * are paid out of this reserve.
  */
-function taxReserve(data: HomeData) {
-  const { vat } = data.taxes;
-  const irpf = data.takeHome.incomeTax;
-  const fees = data.socialSecurityEstimate;
-  const due = [vat > 0 && `IVA ${formatEUR(vat)}`, `IRPF ${formatEUR(irpf)}`, fees > 0 && `cuota ${formatEUR(fees)}`]
-    .filter(Boolean)
-    .join(" + ");
-  return {
-    value: cents(Math.max(0, vat) + irpf + fees),
-    note: vat < 0 ? `${due} · IVA a compensar ${formatEUR(cents(-vat))}` : due,
-  };
+function reserveOf(data: HomeData): Cents {
+  return cents(Math.max(0, data.taxes.vat) + data.takeHome.incomeTax + data.socialSecurityEstimate);
 }
 
-export function KpiGrid({ data }: { data: HomeData }) {
+export interface TaxReserve {
+  value: Cents;
+  /** Percentage change against the previous period, or null when it had nothing to set aside. */
+  change: number | null;
+}
+
+/** The period's tax reserve and how it moved against the previous period's. */
+export function taxReserve(data: HomeData, previous: HomeData): TaxReserve {
+  const value = reserveOf(data);
+  const before = reserveOf(previous);
+  return { value, change: before ? ((value - before) / before) * 100 : null };
+}
+
+export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve: TaxReserve; className?: string }) {
   const compareLabel = periodShortLabel(data.previous, data.period.year);
-  const reserve = taxReserve(data);
 
   const kpis: Kpi[] = [
     {
@@ -101,14 +101,14 @@ export function KpiGrid({ data }: { data: HomeData }) {
       label: "Reserva para impuestos",
       dot: "bg-chart-tax",
       value: reserve.value,
-      change: null,
-      upIsGood: null,
-      note: reserve.note,
+      change: reserve.change,
+      // More to set aside means more taxes to pay, as with expenses
+      upIsGood: false,
     },
   ];
 
   return (
-    <section aria-label="Resumen del periodo" className="grid grid-cols-2 gap-2.5 lg:gap-5 xl:grid-cols-4">
+    <section aria-label="Resumen del periodo" className={cn("grid grid-cols-2 gap-2.5 lg:gap-5 xl:grid-cols-4", className)}>
       {kpis.map((kpi, i) => (
         <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />
       ))}

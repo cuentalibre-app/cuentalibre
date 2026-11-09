@@ -19,6 +19,7 @@ import {
   type FilesSort,
 } from "./files-model";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
+import { Page } from "@/components/page";
 
 const SORTS = [
   { value: "recent", label: "Más recientes" },
@@ -63,7 +64,7 @@ export function FilesPage() {
   const unusedCount = listing?.files.filter((file) => file.usedBy.length === 0).length ?? 0;
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+    <Page>
       <SettingsHeader title="Archivos" description="Los documentos que adjuntas y el espacio que ocupan." />
 
       {!api ? (
@@ -72,7 +73,7 @@ export function FilesPage() {
         </p>
       ) : listing === null ? (
         error ? (
-          <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
+          <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
             {error}
           </p>
         ) : (
@@ -105,7 +106,7 @@ export function FilesPage() {
             </div>
 
             {error && (
-              <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
+              <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
                 {error}
               </p>
             )}
@@ -117,7 +118,7 @@ export function FilesPage() {
                   : "Aún no has adjuntado archivos. Los justificantes de tus gastos y facturas aparecerán aquí."}
               </p>
             ) : (
-              <ul className="m-0 flex list-none flex-col divide-y divide-border rounded-xl border border-border bg-card p-0">
+              <ul className="m-0 flex list-none flex-col divide-y divide-border surface p-0">
                 {files.map((file) => (
                   <FileRow
                     key={file.id}
@@ -141,7 +142,7 @@ export function FilesPage() {
       >
         <p className="m-0">Se eliminará «{deleting?.name}» y dejará de ocupar espacio. No se puede deshacer.</p>
       </ConfirmDialog>
-    </div>
+    </Page>
   );
 }
 
@@ -154,7 +155,7 @@ function Usage({ listing }: { listing: FileListing }) {
   return (
     <section
       aria-label="Espacio"
-      className="flex max-w-4xl animate-rise-in flex-col gap-3 rounded-xl border border-border bg-card p-5"
+      className="flex max-w-4xl animate-rise-in flex-col gap-3 surface p-5"
       style={{ "--i": 0 } as CSSProperties}
     >
       <p className="m-0 flex flex-wrap items-baseline gap-x-2">
@@ -244,10 +245,10 @@ function FileRow({ file, onDelete }: { file: FileUsage; onDelete?: () => void })
       {onDelete && (
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           aria-label={`Eliminar ${file.name}`}
           onClick={onDelete}
-          className="size-8 px-0 text-muted-foreground hover:text-destructive"
+          className="hover:text-destructive"
         >
           <Trash2 strokeWidth={1.8} aria-hidden="true" />
         </Button>

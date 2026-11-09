@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ChevronRight, Folder, FolderOpen, Pencil, Plus, Trash2 } from "lucide-react";
 import type { CatalogFamily } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { catalogStore, useCatalog } from "./catalog-store";
@@ -158,15 +158,15 @@ function FamilyPicker({
       </DialogDescription>
 
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" size="md" onClick={startNew}>
+        <Button variant="secondary" onClick={startNew}>
           <Plus strokeWidth={2} aria-hidden="true" />
           {current ? "Nueva subfamilia" : "Nueva familia"}
         </Button>
-        <Button variant="secondary" size="md" onClick={startRename} disabled={!current}>
+        <Button variant="secondary" onClick={startRename} disabled={!current}>
           <Pencil strokeWidth={1.8} aria-hidden="true" />
           Editar familia
         </Button>
-        <Button variant="secondary" size="md" onClick={remove} disabled={!current} className="text-destructive">
+        <Button variant="secondary" onClick={remove} disabled={!current} className="text-destructive">
           <Trash2 strokeWidth={1.8} aria-hidden="true" />
           Borrar familia
         </Button>
@@ -192,10 +192,8 @@ function FamilyPicker({
                 setError(null);
               }}
             />
-            <Button type="submit" size="lg">
-              {editing.mode === "new" ? "Crear" : "Guardar"}
-            </Button>
-            <Button variant="secondary" size="lg" onClick={() => setEditing(null)}>
+            <Button type="submit">{editing.mode === "new" ? "Crear" : "Guardar"}</Button>
+            <Button variant="secondary" onClick={() => setEditing(null)}>
               Cancelar
             </Button>
           </div>
@@ -233,12 +231,12 @@ function FamilyPicker({
         </ul>
       </div>
 
-      <div className="flex justify-end gap-2">
+      <DialogFooter>
         <Button variant="secondary" onClick={onCancel}>
-          Cerrar
+          Cancelar
         </Button>
         <Button onClick={() => onSelect(selected)}>Seleccionar</Button>
-      </div>
+      </DialogFooter>
     </>
   );
 }

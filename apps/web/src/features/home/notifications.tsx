@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Bell, Check, PackageX } from "lucide-react";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from "@cuentalibre/ui/components/popover";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { PRODUCTS_PATH, formatQuantity, productPath, productStock } from "@/features/catalog/catalog-model";
@@ -84,7 +84,7 @@ export function Notifications({ className }: { className?: string }) {
           variant="secondary"
           size="icon"
           aria-label={count ? `Avisos, ${count} sin leer` : "Avisos"}
-          className={cn("relative border-border", className)}
+          className={cn("relative", className)}
         >
           <Bell strokeWidth={1.8} aria-hidden="true" />
           {count > 0 && (
@@ -98,13 +98,9 @@ export function Notifications({ className }: { className?: string }) {
         <div className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3">
           <h2 className="m-0 text-base font-semibold">Avisos</h2>
           {count > 1 && (
-            <button
-              type="button"
-              onClick={() => markRead(unread.map((n) => n.id))}
-              className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
+            <Button variant="link" className="text-sm" onClick={() => markRead(unread.map((n) => n.id))}>
               Marcar todos como leídos
-            </button>
+            </Button>
           )}
         </div>
 
@@ -133,11 +129,10 @@ export function Notifications({ className }: { className?: string }) {
                 </div>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   aria-label={`Marcar como leído: ${n.title}`}
                   title="Marcar como leído"
                   onClick={() => markRead([n.id])}
-                  className="size-8 shrink-0 border-transparent text-muted-foreground"
                 >
                   <Check strokeWidth={2} aria-hidden="true" />
                 </Button>
@@ -148,10 +143,7 @@ export function Notifications({ className }: { className?: string }) {
 
         <div className="border-t border-divider px-4 py-2.5">
           <PopoverClose asChild>
-            <Link
-              to={`${PRODUCTS_PATH}?alarma=1`}
-              className="text-sm font-medium text-foreground underline-offset-2 hover:underline"
-            >
+            <Link to={`${PRODUCTS_PATH}?alarma=1`} className={cn(buttonVariants({ variant: "link" }), "text-sm")}>
               Ver el stock en el catálogo
             </Link>
           </PopoverClose>

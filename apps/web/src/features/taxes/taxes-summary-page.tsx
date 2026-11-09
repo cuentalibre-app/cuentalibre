@@ -26,6 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuent
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { daysLeftLabel, deadlineTitle, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -107,10 +108,7 @@ function NextFiling({ today }: { today: Date }) {
   const days = daysUntil(today, first.date);
 
   return (
-    <section
-      aria-labelledby="next-filing-title"
-      className="animate-rise-in overflow-hidden rounded-xl border border-border bg-card"
-    >
+    <section aria-labelledby="next-filing-title" className="animate-rise-in overflow-hidden surface">
       <div className="flex flex-wrap items-center justify-between gap-4 p-5">
         <div className="flex items-center gap-4">
           <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-warning-soft py-1.5 text-warning">
@@ -212,7 +210,7 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
         {yearSelect}
       </div>
 
-      <div className="hidden overflow-x-auto rounded-xl border border-border lg:block">
+      <div className="hidden overflow-x-auto surface lg:block">
         <table className="w-full min-w-[720px] border-collapse">
           <thead>
             <tr className={table.headRow}>
@@ -283,10 +281,7 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
         {rows.map((r) => (
           <li
             key={r.quarter}
-            className={cn(
-              "flex flex-col gap-3 rounded-xl border border-border p-4",
-              r.current && "border-primary/40 bg-primary-soft/40",
-            )}
+            className={cn("flex flex-col gap-3 surface p-4", r.current && "border-primary/40 bg-primary-soft/40")}
           >
             <div className="flex items-center justify-between">
               <span>
@@ -367,7 +362,7 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
           <Link
             key={c.code}
             to={c.to}
-            className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.99]"
+            className="group flex flex-col gap-3 surface p-4 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.99]"
           >
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-2.5">
@@ -450,7 +445,7 @@ function OtherForms({ year }: { year: number }) {
       style={{ "--i": 3 } as CSSProperties}
     >
       <SectionTitle id="other-forms-title">Retenciones e informativas</SectionTitle>
-      <ul className="m-0 list-none overflow-hidden rounded-xl border border-border bg-card p-0">
+      <ul className="m-0 list-none overflow-hidden surface p-0">
         {forms.map((f) => {
           const [quarterly, yearly] = f.codes;
           return (
@@ -541,38 +536,36 @@ export function TaxesSummaryPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-6 px-5 pt-6 pb-8 lg:gap-8 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Impuestos</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT.
-            </p>
-          </div>
-          <nav aria-label="Atajos de impuestos" className="-ml-3 flex flex-wrap gap-1 lg:ml-0">
-            <Link
-              to={CALENDAR_PATH}
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground no-underline")}
-            >
-              <CalendarDays strokeWidth={1.8} aria-hidden="true" />
-              Calendario fiscal
-            </Link>
-            <SettingsLink
-              from="Impuestos"
-              to={TAX_SETTINGS_PATH}
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground no-underline")}
-            >
-              <Settings strokeWidth={1.8} aria-hidden="true" />
-              Configurar impuestos
-            </SettingsLink>
-          </nav>
-        </header>
+      <Page>
+        <PageHeader
+          title="Impuestos"
+          description="Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT."
+          actions={
+            <nav aria-label="Atajos de impuestos" className="-ml-3 flex flex-wrap gap-1 lg:ml-0">
+              <Link
+                to={CALENDAR_PATH}
+                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
+              >
+                <CalendarDays strokeWidth={1.8} aria-hidden="true" />
+                Calendario fiscal
+              </Link>
+              <SettingsLink
+                from="Impuestos"
+                to={TAX_SETTINGS_PATH}
+                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
+              >
+                <Settings strokeWidth={1.8} aria-hidden="true" />
+                Configurar impuestos
+              </SettingsLink>
+            </nav>
+          }
+        />
 
         <NextFiling today={today} />
         <QuartersTable year={year} today={today} yearSelect={yearSelect} />
         <AnnualForms year={year} today={today} />
         <OtherForms year={year} />
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Page, PageHeader } from "@/components/page";
 import { MONTHS, MONTHS_SHORT } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { useSettings } from "@/features/settings/settings-store";
@@ -341,10 +342,7 @@ function CalendarGrid({
     cn("border-l border-divider px-1 py-1", month === currentMonth && "bg-primary-soft/40");
 
   return (
-    <div
-      className="hidden animate-rise-in overflow-x-auto rounded-xl border border-border lg:block"
-      style={{ "--i": 1 } as CSSProperties}
-    >
+    <div className="hidden animate-rise-in overflow-x-auto surface lg:block" style={{ "--i": 1 } as CSSProperties}>
       <table className="w-full min-w-[920px] table-fixed border-collapse">
         <thead>
           <tr className="text-xs text-muted-foreground">
@@ -526,7 +524,7 @@ function CalendarList({
             {MONTHS[month]} {calendarYear}
             {isCurrentYear && month === today.getMonth() && <Badge tone="primary">Este mes</Badge>}
           </h2>
-          <ul className="m-0 list-none overflow-hidden rounded-xl border border-border p-0">
+          <ul className="m-0 list-none overflow-hidden surface p-0">
             {monthEntries.map((entry) => (
               <AgendaItem
                 key={entryKey(entry)}
@@ -561,32 +559,29 @@ export function FiscalCalendarPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Calendario fiscal</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              Plazos de cada modelo en {year}. Si un plazo acaba en fin de semana, pasa al lunes; los festivos aún no se
-              tienen en cuenta.
-            </p>
-          </div>
-          <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}>
-            <SelectTrigger aria-label={`Año ${year}`} className="min-w-32">
-              <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-              <span className="flex-1 text-center">
-                <SelectValue />
-              </span>
-              <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((y) => (
-                <SelectItem key={y} value={String(y)}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </header>
+      <Page>
+        <PageHeader
+          title="Calendario fiscal"
+          description={`Plazos de cada modelo en ${year}. Si un plazo acaba en fin de semana, pasa al lunes; los festivos aún no se tienen en cuenta.`}
+          actions={
+            <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}>
+              <SelectTrigger aria-label={`Año ${year}`} className="min-w-32">
+                <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+                <span className="flex-1 text-center">
+                  <SelectValue />
+                </span>
+                <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SegmentedControl<Scope>
@@ -618,7 +613,7 @@ export function FiscalCalendarPage() {
           today={today}
           className={view === "grid" ? "lg:hidden" : undefined}
         />
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

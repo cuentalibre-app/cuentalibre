@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark, Plus } from "lucide-react";
+import { ChevronDown, FilePen, FilePlus2, Landmark, Plus } from "lucide-react";
 import {
   cents,
   deductibleExpense,
@@ -27,6 +27,7 @@ import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
 import { AnimatedAmount } from "@/components/animated-amount";
+import { BackLink, Notice, Page, PageHeader } from "@/components/page";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { TagsField } from "@/features/sales/document-editor";
@@ -150,13 +151,13 @@ export function ExpenseFormPage() {
 
   if (id && !existing) {
     return (
-      <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
+      <Page>
+        <PageHeader title="No encontrado" />
         <p className="m-0 text-muted-foreground">Este gasto no existe o se ha eliminado.</p>
-        <Link to={EXPENSES_PATH} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
+        <Link to={EXPENSES_PATH} className={cn(buttonVariants({ variant: "secondary" }), "self-start")}>
           Volver a gastos
         </Link>
-      </div>
+      </Page>
     );
   }
 
@@ -371,34 +372,26 @@ function ExpenseForm({
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              to={EXPENSES_PATH}
-              aria-label="Volver a gastos"
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-          </div>
-          {!locked && actions("hidden lg:flex")}
-        </header>
+      <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+        <PageHeader
+          back={<BackLink to={EXPENSES_PATH} label="Volver a gastos" />}
+          title={title}
+          actions={!locked && actions("hidden lg:flex")}
+        />
 
         {locked && <LockedNotice period={locked} noun="Este gasto" />}
 
         {justSaved && !source && (
-          <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
+          <Notice role="status" tone="success">
             Gasto «{justSaved.concept}» de {formatEUR(justSaved.amount)} registrado. Ya puedes añadir el siguiente.
-          </p>
+          </Notice>
         )}
 
         {source && !existing && (
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
+          <Notice tone="info">
             Copiado del gasto «{source.concept}»{payeeOf(source) ? ` de ${payeeOf(source)!.name}` : ""}. Revisa la fecha
             y el importe.
-          </p>
+          </Notice>
         )}
 
         <fieldset
@@ -416,14 +409,9 @@ function ExpenseForm({
               <div role="group" aria-label="Gastos frecuentes" className="flex flex-wrap items-center gap-1.5">
                 <span className="mr-1 text-sm text-muted-foreground">Gastos frecuentes:</span>
                 {PRESETS.map((preset) => (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => applyPreset(preset)}
-                    className="h-7 cursor-pointer rounded-sm border border-border bg-transparent px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
-                  >
+                  <Button key={preset.label} variant="chip" onClick={() => applyPreset(preset)}>
                     {preset.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -506,16 +494,9 @@ function ExpenseForm({
               <Field
                 label="Pagado a"
                 action={
-                  <button
-                    type="button"
-                    onClick={() => setCreatingSupplier(true)}
-                    className={cn(
-                      buttonVariants({ variant: "secondary", size: "sm" }),
-                      "h-6 px-2.5 text-xs no-underline",
-                    )}
-                  >
+                  <Button variant="link" onClick={() => setCreatingSupplier(true)}>
                     Nuevo proveedor
-                  </button>
+                  </Button>
                 }
               >
                 {(p) => <GroupedSelect {...p} value={form.payee} onChange={changePayee} groups={payeeGroups} />}
@@ -561,7 +542,7 @@ function ExpenseForm({
             </div>
             <p className="m-0 text-sm text-muted-foreground">
               ¿El proveedor te ha dado una factura con IVA?{" "}
-              <Link to={NEW_PURCHASE_PATH} className="font-medium text-primary no-underline hover:text-primary-hover">
+              <Link to={NEW_PURCHASE_PATH} className={buttonVariants({ variant: "link" })}>
                 Regístrala como factura recibida
               </Link>{" "}
               para deducir también el IVA.
@@ -607,7 +588,7 @@ function ExpenseForm({
             <div className="flex flex-wrap items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="secondary" size="md" aria-disabled className="cursor-not-allowed opacity-50">
+                  <Button variant="secondary" aria-disabled className="cursor-not-allowed opacity-50">
                     <Landmark strokeWidth={1.8} aria-hidden="true" />
                     Elegir movimiento bancario
                   </Button>
@@ -616,13 +597,7 @@ function ExpenseForm({
                   Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
                 </TooltipContent>
               </Tooltip>
-              <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                className="ml-auto"
-                onClick={() => setCreatingMethod(true)}
-              >
+              <Button type="button" variant="secondary" className="ml-auto" onClick={() => setCreatingMethod(true)}>
                 <Plus aria-hidden="true" />
                 Nuevo método
               </Button>

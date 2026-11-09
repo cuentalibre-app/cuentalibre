@@ -3,9 +3,17 @@ import { Plus, Trash2 } from "lucide-react";
 import { amountOutstanding, newId, toIsoDate, type Cents } from "@cuentalibre/core";
 import type { Payment } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Notice } from "@/components/page";
 import { defaultPaymentMethodId, paymentMethodName, paymentMethodOptions } from "@/features/settings/settings-model";
 import { MethodDialog } from "@/features/settings/method-dialog";
 import { formatDate, formatEurosInput, parseEuros } from "@/lib/format";
@@ -106,7 +114,7 @@ export function PaymentsDialog({
         <DialogTitle>{words.title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
         {pending === 0 ? (
-          <p className="m-0 rounded-lg bg-success-soft px-3 py-2.5 text-sm text-success">{words.done}</p>
+          <Notice tone="success">{words.done}</Notice>
         ) : (
           <form
             className="flex flex-col gap-4"
@@ -153,7 +161,6 @@ export function PaymentsDialog({
                     <Button
                       type="button"
                       variant="secondary"
-                      size="md"
                       className="shrink-0 px-2.5"
                       onClick={() => setCreatingMethod(true)}
                     >
@@ -212,10 +219,10 @@ export function PaymentsDialog({
                     <td className="px-1.5 py-1 text-right">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon-sm"
                         aria-label={`Quitar el ${words.noun} del ${formatDate(p.date)}`}
                         onClick={() => save(payments.filter((x) => x.id !== p.id))}
-                        className="size-8 px-0 text-muted-foreground hover:text-destructive"
+                        className="hover:text-destructive"
                       >
                         <Trash2 strokeWidth={1.8} aria-hidden="true" />
                       </Button>
@@ -227,11 +234,11 @@ export function PaymentsDialog({
           )}
         </section>
 
-        <div className="flex justify-end">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cerrar</Button>
           </DialogClose>
-        </div>
+        </DialogFooter>
         {creatingMethod && <MethodDialog open onOpenChange={setCreatingMethod} method={null} onCreated={setMethodId} />}
       </DialogContent>
     </Dialog>

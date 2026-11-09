@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router";
-import { CircleAlert, CircleCheck, FileSpreadsheet, Info, List, TriangleAlert } from "lucide-react";
+import { CircleAlert, CircleCheck, FileSpreadsheet, List, TriangleAlert } from "lucide-react";
 import { eurosToCents } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuent
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Notice } from "@/components/page";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { DropZone } from "@/features/transfer/import-page";
 import { PageShell } from "@/features/transfer/transfer-parts";
@@ -76,31 +77,23 @@ export function CatalogImportPage() {
         title="Importar productos o servicios"
         back={{ to: PRODUCTS_PATH, label: "productos" }}
         actions={
-          <Link to={PRODUCTS_PATH} className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
+          <Link to={PRODUCTS_PATH} className={buttonVariants({ variant: "secondary" })}>
             <List strokeWidth={1.8} aria-hidden="true" />
             Listar elementos del catálogo
           </Link>
         }
       >
-        <div
-          className="flex animate-rise-in gap-3 rounded-xl bg-primary-soft px-4 py-3.5 text-sm text-primary"
-          role="note"
-        >
-          <Info className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <Notice role="note" className="animate-rise-in">
           <p className="m-0">
             Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, arrastra el
             archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de confirmarlo.
             Si el código de producto de una fila ya existe en tu catálogo, se actualiza ese producto.
           </p>
-        </div>
+        </Notice>
 
         {done && (
-          <div
-            role="status"
-            className="flex animate-rise-in flex-wrap items-center gap-3 rounded-xl bg-success-soft px-4 py-3.5 text-sm text-success"
-          >
-            <CircleCheck className="size-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-            <span className="flex-1">
+          <Notice role="status" tone="success" className="animate-rise-in">
+            <span>
               {[
                 done.created && (done.created === 1 ? "1 producto nuevo" : `${done.created} productos nuevos`),
                 done.updated && (done.updated === 1 ? "1 actualizado" : `${done.updated} actualizados`),
@@ -108,15 +101,15 @@ export function CatalogImportPage() {
                 .filter(Boolean)
                 .join(" y ")}
               .
-            </span>
-            <Link to={PRODUCTS_PATH} className="font-medium text-success underline underline-offset-2">
+            </span>{" "}
+            <Link to={PRODUCTS_PATH} className={buttonVariants({ variant: "link" })}>
               Ver el catálogo
             </Link>
-          </div>
+          </Notice>
         )}
 
         <section
-          className="flex animate-rise-in flex-col gap-5 rounded-xl border border-border bg-card p-5 text-card-foreground"
+          className="flex animate-rise-in flex-col gap-5 surface p-5 text-card-foreground"
           style={{ "--i": 1 } as CSSProperties}
         >
           <div className="flex flex-wrap items-end gap-x-5 gap-y-3">
@@ -130,8 +123,8 @@ export function CatalogImportPage() {
                 />
               )}
             </Field>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={() =>
                 downloadSheets(
                   sampleSheets(kind),
@@ -139,11 +132,10 @@ export function CatalogImportPage() {
                   kind === "productsStock" ? "plantilla-catalogo-con-stock" : "plantilla-catalogo",
                 )
               }
-              className={cn(buttonVariants({ variant: "secondary" }), "[&_svg]:size-4")}
             >
-              <FileSpreadsheet className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+              <FileSpreadsheet strokeWidth={1.8} aria-hidden="true" />
               Descargar Excel de ejemplo para {label.toLowerCase()}
-            </button>
+            </Button>
           </div>
 
           <DropZone file={file} onPick={pick} />
@@ -183,7 +175,7 @@ function Preview({
 
   if (preview.fileErrors.length)
     return (
-      <section className="flex animate-rise-in flex-col gap-2 rounded-xl border border-destructive bg-destructive-soft/40 p-5">
+      <section className="flex animate-rise-in flex-col gap-2 rounded-xl bg-destructive-soft p-5">
         <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive lg:text-title">
           <CircleAlert className="size-5" strokeWidth={1.8} aria-hidden="true" />
           No se puede importar el archivo
@@ -199,7 +191,7 @@ function Preview({
   return (
     <section
       aria-label="Vista previa de la importación"
-      className="flex animate-rise-in flex-col overflow-hidden rounded-xl border border-border bg-card"
+      className="flex animate-rise-in flex-col overflow-hidden surface"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5">
         <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Vista previa</h2>

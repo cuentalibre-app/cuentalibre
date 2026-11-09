@@ -1,8 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Link } from "react-router";
-import { ArrowLeft, Download } from "lucide-react";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { cn } from "@cuentalibre/ui/lib/cn";
+import { Download } from "lucide-react";
+import { Button } from "@cuentalibre/ui/components/button";
+import { BackLink, Page, PageHeader } from "@/components/page";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import type { SpreadsheetFormat } from "@/lib/xlsx";
 import { FORMAT_OPTIONS } from "./transfer-model";
@@ -22,24 +21,14 @@ export function PageShell({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          {back && (
-            <Link
-              to={back.to}
-              aria-label={`Volver a ${back.label}`}
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-          )}
-          <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-        </div>
-        {actions}
-      </header>
+    <Page>
+      <PageHeader
+        title={title}
+        back={back && <BackLink to={back.to} label={`Volver a ${back.label}`} />}
+        actions={actions}
+      />
       {children}
-    </div>
+    </Page>
   );
 }
 
@@ -56,7 +45,7 @@ export function Panel({
 }) {
   return (
     <section
-      className="flex animate-rise-in flex-col gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground"
+      className="flex animate-rise-in flex-col gap-4 surface p-5 text-card-foreground"
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex flex-col gap-1">

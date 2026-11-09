@@ -1,5 +1,5 @@
 import { useId, useState, type CSSProperties, type ReactNode } from "react";
-import { ChevronDown, CircleHelp } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Checkbox } from "@cuentalibre/ui/components/input";
 import {
   Select,
@@ -11,8 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@cuentalibre/ui/components/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
+import { HelpTip } from "@/components/page";
 import { LANGUAGES, NUMBER_FORMATS, formatSample } from "./invoice-locale";
 import type { OptionGroup } from "./sales-model";
 
@@ -38,7 +38,7 @@ export function Section({
   const id = useId();
   return (
     <section
-      className="flex animate-rise-in flex-col gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground"
+      className="flex animate-rise-in flex-col gap-4 surface p-5 text-card-foreground"
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -104,7 +104,7 @@ export function Field({ label, required, error, hint, help, action, className, c
           )}
         </label>
         {help && <Help text={help} />}
-        {action && <span className="ml-auto flex">{action}</span>}
+        {action && <span className="ml-auto flex text-sm">{action}</span>}
       </div>
       {children({
         id,
@@ -121,20 +121,7 @@ export function Field({ label, required, error, hint, help, action, className, c
 }
 
 export function Help({ text }: { text: string }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={text}
-          className="flex cursor-help items-center border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
-        >
-          <CircleHelp className="size-3.5" strokeWidth={2} aria-hidden="true" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent className="max-w-72 font-normal">{text}</TooltipContent>
-    </Tooltip>
-  );
+  return <HelpTip label={text}>{text}</HelpTip>;
 }
 
 export interface GroupedSelectProps extends FieldControlProps {
@@ -152,10 +139,7 @@ export function GroupedSelect({ value, onChange, groups, disabled, className, ..
   return (
     // Radix fires "" when the options change under a form (native select sync); ignore it
     <Select value={value} onValueChange={(v) => v && onChange(v)} disabled={disabled}>
-      <SelectTrigger
-        {...aria}
-        className={cn("w-full font-normal disabled:cursor-not-allowed disabled:opacity-50", className)}
-      >
+      <SelectTrigger {...aria} className={cn("w-full disabled:cursor-not-allowed disabled:opacity-50", className)}>
         <span className="min-w-0 flex-1 truncate text-left">
           <SelectValue />
         </span>

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
@@ -57,7 +58,7 @@ function rows(books: PartyBooks, parties: Declared347[]): RecordRow[] {
 function BelowThreshold({ books, parties }: { books: PartyBooks; parties: Declared347[] }) {
   if (parties.length === 0) return null;
   return (
-    <details className="group rounded-xl border border-border px-4 py-3 text-sm">
+    <details className="group surface px-4 py-3 text-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-medium [&::-webkit-details-marker]:hidden">
         <span>Por debajo del umbral · {parties.length}</span>
         <span className="text-xs font-normal text-muted-foreground">No se declaran</span>
@@ -97,7 +98,7 @@ function Excluded({ books, excluded }: { books: PartyBooks; excluded: ReturnType
   }, [excluded]);
   if (excluded.length === 0) return null;
   return (
-    <details className="group rounded-xl border border-border px-4 py-3 text-sm">
+    <details className="group surface px-4 py-3 text-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-medium [&::-webkit-details-marker]:hidden">
         <span>Operaciones que no cuentan · {excluded.length}</span>
         <span className="text-xs font-normal text-muted-foreground">Se declaran en otros modelos</span>
@@ -151,33 +152,35 @@ export function ThirdPartiesPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <ModuleBreadcrumb module="thirdParties" form="347" />
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Operaciones con terceras personas</h1>
-            <p className="m-0 text-sm text-muted-foreground">
+      <Page>
+        <PageHeader
+          eyebrow={<ModuleBreadcrumb module="thirdParties" form="347" />}
+          title="Operaciones con terceras personas"
+          description={
+            <>
               Modelo 347: clientes y proveedores con los que has superado {formatEUR(THRESHOLD_347)} en el año, IVA
               incluido. No existe modelo trimestral.
-            </p>
-          </div>
-          <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: null })}>
-            <SelectTrigger aria-label={`Ejercicio ${year}`} className="min-w-32">
-              <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-              <span className="flex-1 text-center">
-                <SelectValue />
-              </span>
-              <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableYears.map((y) => (
-                <SelectItem key={y} value={String(y)}>
-                  Ejercicio {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </header>
+            </>
+          }
+          actions={
+            <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: null })}>
+              <SelectTrigger aria-label={`Ejercicio ${year}`} className="min-w-32">
+                <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+                <span className="flex-1 text-center">
+                  <SelectValue />
+                </span>
+                <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    Ejercicio {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
 
         <ResultPanel
           form="347"
@@ -236,7 +239,7 @@ export function ThirdPartiesPage() {
             ONLY_RECORDED,
           ]}
         />
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

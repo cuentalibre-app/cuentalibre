@@ -14,7 +14,7 @@ import {
 } from "@cuentalibre/core";
 import type { InvestmentAsset } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -116,7 +116,7 @@ export function AssetSection({
         >
           {(p) => (
             <div className="flex flex-wrap items-center gap-3">
-              <Button {...p} variant="secondary" size="md" onClick={() => setPicking(true)}>
+              <Button {...p} variant="secondary" onClick={() => setPicking(true)}>
                 {draft.category ? "Cambiar el tipo de bien" : "Seleccionar el tipo de bien"}
               </Button>
               <span className={cn("text-sm", !draft.category && "text-muted-foreground")}>
@@ -353,14 +353,14 @@ function CategoryDialog({
           </p>
         </fieldset>
 
-        <div className="flex justify-end gap-2.5">
+        <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button disabled={!selected} onClick={() => selected && onPick(selected, state)}>
             Seleccionar
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

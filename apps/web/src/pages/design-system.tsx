@@ -179,7 +179,7 @@ export function DesignSystemPage() {
           <Button size="sm" variant="secondary">
             sm · 36
           </Button>
-          <Button size="md" variant="secondary">
+          <Button variant="secondary">
             md · 40
           </Button>
           <Button size="lg" variant="secondary">

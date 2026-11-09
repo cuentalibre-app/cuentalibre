@@ -361,7 +361,7 @@ export function FormFactsList({ form }: { form: FormCode }) {
 export function FormInfo({ form }: { form: FormCode }) {
   const facts = FACTS[form];
   return (
-    <details open className="group rounded-xl border border-border bg-card px-5 py-4">
+    <details open className="group surface px-5 py-4">
       <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold [&::-webkit-details-marker]:hidden">
         <BookOpen className="size-4.5 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         Sobre el modelo {form} y cómo presentarlo

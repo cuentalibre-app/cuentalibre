@@ -1,9 +1,16 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useBlocker, useLocation, type LinkProps } from "react-router";
-import { ArrowLeft, Check } from "lucide-react";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
-import { cn } from "@cuentalibre/ui/lib/cn";
+import { Check } from "lucide-react";
+import { Button } from "@cuentalibre/ui/components/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
+import { BackLink, PageHeader } from "@/components/page";
 import { sameValue } from "@/lib/same-value";
 import { SETTINGS_PATH } from "./settings-model";
 
@@ -36,25 +43,13 @@ export function SettingsHeader({
   children?: ReactNode;
 }) {
   const origin = (useLocation().state as { from?: Origin } | null)?.from;
-  const backLabel = `Volver a ${origin?.label ?? "configuración"}`;
   return (
-    <header className="flex flex-wrap items-center justify-between gap-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <Link
-          to={origin?.path ?? back}
-          aria-label={backLabel}
-          title={backLabel}
-          className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-        >
-          <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-        </Link>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-          {description && <p className="m-0 text-sm text-muted-foreground">{description}</p>}
-        </div>
-      </div>
-      {children && <div className="flex flex-wrap items-center gap-3">{children}</div>}
-    </header>
+    <PageHeader
+      title={title}
+      description={description}
+      back={<BackLink to={origin?.path ?? back} label={`Volver a ${origin?.label ?? "configuración"}`} />}
+      actions={children}
+    />
   );
 }
 
@@ -145,7 +140,7 @@ export function ConfirmDialog({
         <DialogDescription asChild>
           <div className="flex flex-col gap-2">{children}</div>
         </DialogDescription>
-        <div className="flex justify-end gap-2.5 pt-1">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cancelar</Button>
           </DialogClose>
@@ -158,7 +153,7 @@ export function ConfirmDialog({
           >
             {confirmLabel}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

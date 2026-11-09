@@ -13,10 +13,14 @@
   --color-current: currentColor;
 
   --color-background: var(--background);
+  --color-canvas: var(--canvas);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
+  --color-glass: var(--glass);
+  --color-glass-edge: var(--glass-edge);
+  --color-modal: var(--modal);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -86,6 +90,8 @@
   --text-3xl--line-height: 2.125rem;
   --text-4xl: 1.875rem; /* 30px: hero figure */
   --text-4xl--line-height: 2.25rem;
+  --text-5xl: 2.5rem; /* 40px: mobile home hero figure */
+  --text-5xl--line-height: 2.75rem;
 
   --tracking-tight: -0.02em; /* headings and amounts */
   --tracking-wide: 0.04em; /* uppercase table headers */
@@ -98,8 +104,13 @@
   --radius-lg: 8px; /* buttons, inputs, navigation */
   --radius-xl: 12px; /* cards */
   --radius-2xl: 16px; /* mobile floating action button */
+  --radius-3xl: 24px; /* dialogs and bottom sheets */
 
   --shadow-popover: none; /* flat UI: popovers rely on their border */
+  /* The one exception: the mobile tab bar floats over the page as it scrolls */
+  --shadow-floating: 0 10px 30px -10px rgb(0 0 0 / 0.25), 0 2px 8px -2px rgb(0 0 0 / 0.08);
+  /* Mobile cards lift a little off the page; desktop stays flat */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 10px 28px -14px rgb(0 0 0 / 0.16);
 }
 
 /*
@@ -124,6 +135,9 @@
   --animate-grow-up: grow-up 600ms var(--ease-out) both;
   --animate-reveal-x: reveal-x 900ms var(--ease-out) both;
   --animate-fade-in: fade-in 200ms var(--ease-out) both;
+  --animate-fade-out: fade-out 180ms ease-in both;
+  --animate-sheet-in: sheet-in 320ms var(--ease-out) both;
+  --animate-sheet-out: sheet-out 200ms ease-in both;
 
   @keyframes page-in {
     from {
@@ -168,6 +182,21 @@
   @keyframes fade-in {
     from {
       opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes sheet-out {
+    to {
+      transform: translateY(100%);
     }
   }
 }

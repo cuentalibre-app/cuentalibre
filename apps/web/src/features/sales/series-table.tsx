@@ -119,12 +119,7 @@ export function SeriesTable() {
                         groups={actions(s)}
                         trigger={
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              aria-label={`Más acciones de la serie ${s.name}`}
-                              className="size-8 px-0"
-                            >
+                            <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de la serie ${s.name}`}>
                               <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -138,7 +133,7 @@ export function SeriesTable() {
           </tbody>
         </table>
       </div>
-      <Button variant="secondary" size="md" className="self-start" onClick={() => setEditing("new")}>
+      <Button variant="secondary" className="self-start" onClick={() => setEditing("new")}>
         <Plus aria-hidden="true" />
         Nueva serie
       </Button>

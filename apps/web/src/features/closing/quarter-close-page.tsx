@@ -25,12 +25,20 @@ import {
 import type { ClosedQuarter } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Page, PageHeader } from "@/components/page";
 import { useFormsInUse } from "@/features/taxes/forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "@/features/taxes/tax-books";
 import { FILING_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "@/features/taxes/taxes-model";
@@ -79,7 +87,7 @@ function Step({
   return (
     <section
       aria-labelledby={`step-${index}`}
-      className="flex animate-rise-in flex-col gap-3 rounded-xl border border-border bg-card p-4 lg:p-5"
+      className="flex animate-rise-in flex-col gap-3 surface p-4 lg:p-5"
       style={style}
     >
       <h2
@@ -109,10 +117,7 @@ function Checks({ checks }: { checks: QuarterCheck[] }) {
               <span className="text-sm text-muted-foreground">{check.detail}</span>
             </div>
             {check.to && check.tone !== "ok" && (
-              <Link
-                to={check.to}
-                className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "shrink-0 no-underline")}
-              >
+              <Link to={check.to} className={buttonVariants({ variant: "secondary", size: "sm" })}>
                 <span className="sr-only sm:not-sr-only">Revisar</span>
                 <ArrowRight aria-hidden="true" />
               </Link>
@@ -183,7 +188,7 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
           <li key={f.code}>
             <Link
               to={f.to}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border px-3.5 py-2.5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.98]"
+              className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3.5 py-2.5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.98]"
             >
               <span className="flex flex-col">
                 <span className="text-xs text-muted-foreground">
@@ -236,7 +241,7 @@ function ConfirmDialog({
         <DialogDescription asChild>
           <div className="flex flex-col gap-2">{children}</div>
         </DialogDescription>
-        <div className="flex justify-end gap-2.5 pt-1">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cancelar</Button>
           </DialogClose>
@@ -248,7 +253,7 @@ function ConfirmDialog({
           >
             {confirmLabel}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -337,7 +342,7 @@ function OpenQuarter({
   );
 }
 
-function ReopenButton({ period, size }: { period: Period; size?: "sm" | "md" }) {
+function ReopenButton({ period, size }: { period: Period; size?: "sm" }) {
   const [confirming, setConfirming] = useState(false);
   const name = quarterName(period);
   return (
@@ -375,7 +380,7 @@ function ClosedQuarterPanel({
     <>
       <section
         aria-label="Trimestre cerrado"
-        className="flex animate-rise-in flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 lg:p-5"
+        className="flex animate-rise-in flex-wrap items-center justify-between gap-4 surface p-4 lg:p-5"
         style={{ "--i": 2 } as CSSProperties}
       >
         <div className="flex items-center gap-3.5">
@@ -429,8 +434,8 @@ function QuarterPicker({
             aria-checked={active}
             onClick={() => onSelect(quarter)}
             className={cn(
-              "flex cursor-pointer flex-col items-start gap-2 rounded-xl border bg-card p-3.5 text-left transition-[border-color,background-color,scale] duration-150 hover:bg-accent active:scale-[0.98]",
-              active ? "border-primary ring-1 ring-primary" : "border-border",
+              "flex cursor-pointer flex-col items-start gap-2 surface p-3.5 text-left transition-[border-color,background-color,scale] duration-150 hover:bg-accent active:scale-[0.98]",
+              active && "border-primary ring-1 ring-primary",
             )}
           >
             <span className="flex w-full items-baseline justify-between gap-2">
@@ -470,7 +475,7 @@ function ClosedList({ closed, onSelect }: { closed: ClosedQuarter[]; onSelect: (
           Aún no has cerrado ningún trimestre.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
+        <div className="overflow-hidden surface">
           <table className="w-full border-collapse">
             <thead>
               <tr className={table.headRow}>
@@ -535,35 +540,32 @@ export function QuarterClosePage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex max-w-2xl flex-col gap-1">
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Cierre de trimestres</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              Cuando hayas presentado los impuestos de un trimestre, ciérralo para que sus documentos no se puedan
-              modificar.
-            </p>
-          </div>
-          <Select
-            value={String(period.year)}
-            onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}
-          >
-            <SelectTrigger aria-label={`Año ${period.year}`} className="min-w-32">
-              <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-              <span className="flex-1 text-center">
-                <SelectValue />
-              </span>
-              <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((y) => (
-                <SelectItem key={y} value={String(y)}>
-                  {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </header>
+      <Page>
+        <PageHeader
+          title="Cierre de trimestres"
+          description="Cuando hayas presentado los impuestos de un trimestre, ciérralo para que sus documentos no se puedan modificar."
+          actions={
+            <Select
+              value={String(period.year)}
+              onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}
+            >
+              <SelectTrigger aria-label={`Año ${period.year}`} className="min-w-32">
+                <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+                <span className="flex-1 text-center">
+                  <SelectValue />
+                </span>
+                <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
 
         <QuarterPicker
           year={period.year}
@@ -582,7 +584,7 @@ export function QuarterClosePage() {
         </div>
 
         <ClosedList closed={closed} onSelect={setPeriod} />
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

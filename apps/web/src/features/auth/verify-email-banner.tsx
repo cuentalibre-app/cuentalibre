@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { cn } from "@cuentalibre/ui/lib/cn";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link } from "react-router";
 import { MailWarning, X } from "lucide-react";
 import { ACCESS_PATH } from "@/features/settings/settings-model";
@@ -53,26 +52,17 @@ export function VerifyEmailBanner() {
       <p className="m-0 flex flex-1 flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center sm:justify-start sm:text-left">
         <span>Tu email no está verificado: sin él no podrás recuperar tu cuenta si olvidas la contraseña.</span>
         <span className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
-          >
+          <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
             Verificar mi email
-          </button>
-          <Link to={ACCESS_PATH} className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}>
+          </Button>
+          <Link to={ACCESS_PATH} className={buttonVariants({ variant: "secondary", size: "sm" })}>
             Credenciales de acceso
           </Link>
         </span>
       </p>
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label="Cerrar el aviso"
-        className="flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
-      >
-        <X className="size-4" aria-hidden="true" />
-      </button>
+      <Button variant="ghost" size="icon-sm" aria-label="Cerrar el aviso" onClick={dismiss} className="-my-1.5">
+        <X aria-hidden="true" />
+      </Button>
       <VerifyEmailDialog
         email={profile.email}
         open={open}

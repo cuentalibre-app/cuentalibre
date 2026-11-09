@@ -12,6 +12,7 @@ import {
 } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { editContactPath } from "@/features/contacts/contacts-model";
 import { usePeriod } from "@/lib/use-period";
@@ -236,37 +237,37 @@ export function WithholdingsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <ModuleBreadcrumb module="withholdings" form={annual ? "190" : "111"} />
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Retenciones</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              {annual
-                ? "Modelo 190: resumen anual de las retenciones practicadas, perceptor por perceptor."
-                : "Modelo 111: lo que has retenido a los profesionales que te facturan, a ingresar en Hacienda."}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <FormSwitch
-              value={annual ? "190" : "111"}
-              onChange={(v) =>
-                setPeriod(v === "190" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
-              }
-              options={[
-                { value: "111", label: "111 · Trimestral" },
-                { value: "190", label: "190 · Anual" },
-              ]}
-            />
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          eyebrow={<ModuleBreadcrumb module="withholdings" form={annual ? "190" : "111"} />}
+          title="Retenciones"
+          description={
+            annual
+              ? "Modelo 190: resumen anual de las retenciones practicadas, perceptor por perceptor."
+              : "Modelo 111: lo que has retenido a los profesionales que te facturan, a ingresar en Hacienda."
+          }
+          actions={
+            <>
+              <FormSwitch
+                value={annual ? "190" : "111"}
+                onChange={(v) =>
+                  setPeriod(v === "190" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
+                }
+                options={[
+                  { value: "111", label: "111 · Trimestral" },
+                  { value: "190", label: "190 · Anual" },
+                ]}
+              />
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+            </>
+          }
+        />
         {period.quarter === null ? (
           <Form190 key={period.year} year={period.year} today={today} />
         ) : (
           <Form111 key={`${period.year}-${period.quarter}`} year={period.year} quarter={period.quarter} today={today} />
         )}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

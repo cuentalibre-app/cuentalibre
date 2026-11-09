@@ -20,6 +20,7 @@ import {
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Notice as PageNotice, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { deductible, PURCHASE_OPERATION_TYPES, purchaseTotals, supplierOf } from "@/features/purchases/purchases-model";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
@@ -215,10 +216,10 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         }
       />
       {r.unmappedBase !== 0 && (
-        <p className="m-0 rounded-lg bg-warning-soft px-4 py-2.5 text-sm text-warning">
+        <PageNotice tone="warning">
           Hay {formatEUR(r.unmappedBase)} de base con tipos de IVA que el modelo ya no tiene (2 %, 5 %, 7,5 % o
           históricos). No se incluyen: revisa esas facturas.
-        </p>
+        </PageNotice>
       )}
       <div className="flex items-center justify-between gap-3">
         <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 303</h2>
@@ -342,7 +343,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
           <Link
             key={i}
             to={modelPath(VAT_PATH, { year, quarter: (i + 1) as Quarter })}
-            className="flex flex-col gap-1 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
+            className="flex flex-col gap-1 surface p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
           >
             <span className="text-sm text-muted-foreground">303 · T{i + 1}</span>
             <span className="amount text-lg font-semibold">{formatEUR(q)}</span>
@@ -353,9 +354,9 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         ))}
       </section>
       {r.unmappedBase !== 0 && (
-        <p className="m-0 rounded-lg bg-warning-soft px-4 py-2.5 text-sm text-warning">
+        <PageNotice tone="warning">
           Hay {formatEUR(r.unmappedBase)} de base con tipos de IVA que el modelo no recoge. Revisa esas facturas.
-        </p>
+        </PageNotice>
       )}
       <div className="flex items-center justify-between gap-3">
         <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 390</h2>
@@ -401,37 +402,37 @@ export function VatPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <ModuleBreadcrumb module="vat" form={annual ? "390" : "303"} />
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">IVA</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              {annual
-                ? "Modelo 390: resumen anual del IVA repercutido y soportado. Es informativo."
-                : "Modelo 303: el IVA que has cobrado menos el que puedes deducir en el trimestre."}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <FormSwitch
-              value={annual ? "390" : "303"}
-              onChange={(v) =>
-                setPeriod(v === "390" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
-              }
-              options={[
-                { value: "303", label: "303 · Trimestral" },
-                { value: "390", label: "390 · Anual" },
-              ]}
-            />
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          eyebrow={<ModuleBreadcrumb module="vat" form={annual ? "390" : "303"} />}
+          title="IVA"
+          description={
+            annual
+              ? "Modelo 390: resumen anual del IVA repercutido y soportado. Es informativo."
+              : "Modelo 303: el IVA que has cobrado menos el que puedes deducir en el trimestre."
+          }
+          actions={
+            <>
+              <FormSwitch
+                value={annual ? "390" : "303"}
+                onChange={(v) =>
+                  setPeriod(v === "390" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
+                }
+                options={[
+                  { value: "303", label: "303 · Trimestral" },
+                  { value: "390", label: "390 · Anual" },
+                ]}
+              />
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+            </>
+          }
+        />
         {period.quarter === null ? (
           <Vat390 key={period.year} year={period.year} today={today} />
         ) : (
           <Vat303 key={`${period.year}-${period.quarter}`} year={period.year} quarter={period.quarter} today={today} />
         )}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

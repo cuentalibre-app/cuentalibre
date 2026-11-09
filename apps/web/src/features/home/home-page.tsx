@@ -1,14 +1,15 @@
 import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { Camera, Plus } from "lucide-react";
-import { periodKey } from "@cuentalibre/core";
+import { periodKey, previousPeriod } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { cn } from "@cuentalibre/ui/lib/cn";
 import { availableYears } from "@/mocks/data";
-import { CashFlowChart, ProfitChart } from "./charts";
+import { CashFlowChart } from "./charts";
 import { buildHomeData } from "./home-data";
-import { KpiGrid } from "./kpi-grid";
+import { KpiGrid, taxReserve } from "./kpi-grid";
+import { MobileOverview } from "./mobile-overview";
 import { Notifications } from "./notifications";
+import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { UserMenu } from "@/components/layout/user-menu";
 import { RecentInvoices } from "./recent-invoices";
@@ -22,9 +23,8 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 import { useSettings } from "@/features/settings/settings-store";
 
 // Panels are separate cards with room between them; rows rise in one after another.
-const sheet = "flex flex-col gap-5 lg:gap-5";
+const sheet = "flex flex-col gap-5";
 const row = "flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch";
-const panel = "lg:p-5";
 
 export function HomePage() {
   const today = useMemo(() => new Date(), []);
@@ -38,6 +38,12 @@ export function HomePage() {
     () => buildHomeData(period, today, documents, purchases, expenses),
     [period, today, documents, purchases, expenses, fee],
   );
+  // The previous period, to see how the tax reserve moved
+  const previousData = useMemo(
+    () => buildHomeData(previousPeriod(period), today, documents, purchases, expenses),
+    [period, today, documents, purchases, expenses, fee],
+  );
+  const reserve = taxReserve(data, previousData);
   // Charts keep their own selection; remount them when the period changes
   const chartKey = periodKey(period);
 
@@ -46,75 +52,66 @@ export function HomePage() {
   );
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-6 lg:px-10 lg:pt-8 lg:pb-10">
-      {/* Mobile header */}
-      <header className="flex flex-col gap-5 lg:hidden">
-        <div className="flex items-center justify-between">
-          <h1 className="m-0 text-2xl font-semibold tracking-tight">Inicio</h1>
-          <div className="flex items-center gap-2.5">
-            <Notifications />
-            <UserMenu />
-          </div>
-        </div>
-        {periodSelect("h-12 w-full")}
-      </header>
+    <Page>
+      {/* Mobile: round shortcuts on the right, then the period's profit and its line through the year */}
+      <div className="flex flex-col gap-4 lg:hidden">
+        <MobileOverview
+          data={data}
+          period={period}
+          onPeriodChange={setPeriod}
+          years={availableYears}
+          today={today}
+          reserve={reserve}
+          actions={
+            <>
+              <Notifications className="size-11 rounded-full border-glass-edge bg-glass backdrop-blur-xl hover:bg-glass" />
+              <UserMenu className="size-11" />
+            </>
+          }
+        />
+      </div>
 
       {/* Desktop header */}
-      <header className="hidden flex-wrap items-end justify-between gap-4 lg:flex">
-        <div className="flex flex-wrap items-center gap-4">
-          <h1 className="m-0 text-3xl font-semibold tracking-tight">Inicio</h1>
-          {periodSelect()}
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Link to="/compras/gastos/nuevo" className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
-            <Camera strokeWidth={1.8} aria-hidden="true" />
-            Subir gasto
-          </Link>
-          <Link to="/ventas/facturas/nueva" className={cn(buttonVariants(), "no-underline")}>
-            <Plus strokeWidth={2} aria-hidden="true" />
-            Nueva factura
-          </Link>
-          <div className="ml-2 flex items-center gap-2.5 border-l border-divider pl-4">
-            <Notifications />
-            <UserMenu />
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        className="hidden lg:flex"
+        title="Inicio"
+        inline={periodSelect()}
+        actions={
+          <>
+            <Link to="/compras/gastos/nuevo" className={buttonVariants({ variant: "secondary" })}>
+              <Camera strokeWidth={1.8} aria-hidden="true" />
+              Subir gasto
+            </Link>
+            <Link to="/ventas/facturas/nueva" className={buttonVariants()}>
+              <Plus strokeWidth={2} aria-hidden="true" />
+              Nueva factura
+            </Link>
+            <div className="ml-2 flex items-center gap-2.5 border-l border-divider pl-4">
+              <Notifications />
+              <UserMenu />
+            </div>
+          </>
+        }
+      />
 
       <div className={sheet}>
-        <KpiGrid data={data} />
+        <KpiGrid data={data} reserve={reserve} className="hidden lg:grid" />
 
         <div className={row} style={{ "--i": 4 } as CSSProperties}>
           <CashFlowChart
             key={`cash-${chartKey}`}
             data={data}
-            className={cn(panel, "hidden min-w-0 lg:flex lg:flex-[2_1_560px]")}
+            className="hidden min-w-0 lg:flex lg:flex-[2_1_560px]"
           />
-          <ProfitChart key={`profit-${chartKey}`} data={data} className="lg:hidden" />
-          <TakeHomeCard data={data} className={cn(panel, "min-w-0 lg:flex-[1_1_320px]")} />
-        </div>
-
-        {/* Mobile quick actions */}
-        <div className="grid animate-rise-in grid-cols-2 gap-2.5 lg:hidden" style={{ "--i": 5 } as CSSProperties}>
-          <Link to="/ventas/facturas/nueva" className={cn(buttonVariants({ size: "xl" }), "no-underline")}>
-            <Plus strokeWidth={2} aria-hidden="true" />
-            Factura
-          </Link>
-          <Link
-            to="/compras/gastos/nuevo"
-            className={cn(buttonVariants({ variant: "secondary", size: "xl" }), "font-semibold no-underline")}
-          >
-            <Camera strokeWidth={1.8} aria-hidden="true" />
-            Foto gasto
-          </Link>
+          <TakeHomeCard data={data} className="min-w-0 lg:flex-[1_1_320px]" />
         </div>
 
         <div className={row} style={{ "--i": 6 } as CSSProperties}>
-          <RecentInvoices data={data} className={cn("order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]")} />
+          <RecentInvoices data={data} className="order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]" />
           <TaxCalendar
             data={data}
             today={today}
-            className={cn(panel, "order-1 min-w-0 lg:order-none lg:flex-[1_1_320px]")}
+            className="order-1 min-w-0 lg:order-none lg:flex-[1_1_320px]"
           />
         </div>
 
@@ -127,7 +124,7 @@ export function HomePage() {
             href="/contactos/clientes"
             empty="No hay ingresos en este periodo."
             warning={data.economicallyDependent ? dependencyWarning(data.clients) : undefined}
-            className={cn(panel, "min-w-0 lg:flex-[1_1_320px]")}
+            className="min-w-0 lg:flex-[1_1_320px]"
           />
           <TopCounterparties
             id="top-suppliers"
@@ -136,10 +133,10 @@ export function HomePage() {
             barClass="bg-chart-expense"
             href="/contactos/proveedores"
             empty="No hay gastos en este periodo."
-            className={cn(panel, "min-w-0 lg:flex-[1_1_320px]")}
+            className="min-w-0 lg:flex-[1_1_320px]"
           />
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

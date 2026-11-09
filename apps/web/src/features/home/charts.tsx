@@ -4,7 +4,7 @@ import { Card, CardTitle } from "@cuentalibre/ui/components/card";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { formatThousands, MONTHS, MONTHS_INITIAL, MONTHS_SHORT } from "@/lib/format";
+import { formatThousands, MONTHS, MONTHS_SHORT } from "@/lib/format";
 import type { HomeData } from "./home-data";
 
 /** Rounds `value` up to a multiple of `step`, never below `step`. */
@@ -228,63 +228,6 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
             ))}
           </div>
         </div>
-      </div>
-    </Card>
-  );
-}
-
-/** Mobile chart: profit per month. */
-export function ProfitChart({ data, className }: { data: HomeData; className?: string }) {
-  const [selected, setSelected] = useState(data.lastMonthWithData);
-  const { monthly, months, period } = data;
-  const max = niceMax(Math.max(0, ...monthly.map((m) => m?.profit ?? 0)), eurosToCents(2_000));
-  const current = monthly[selected];
-
-  return (
-    <Card aria-labelledby="profit-title" className={cn("gap-3 p-4", className)}>
-      <h2 id="profit-title" className="m-0 text-md font-semibold">
-        Beneficio por mes · {period.year}
-      </h2>
-      <div aria-live="polite" className="flex justify-between text-sm text-muted-foreground">
-        <span>
-          {MONTHS[selected]}
-          {current && ` ${period.year}`}
-        </span>
-        <span className="amount text-foreground">{current ? formatEUR(current.profit) : "Sin datos"}</span>
-      </div>
-      <div className="relative h-[120px]">
-        <Gridlines />
-        <div className="absolute inset-0 flex items-end gap-1">
-          {monthly.map((m, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={m ? `${MONTHS[i]}: beneficio ${formatEUR(m.profit)}` : `${MONTHS[i]}: sin datos`}
-              aria-pressed={i === selected}
-              onClick={() => setSelected(i)}
-              className={cn(
-                "flex h-full min-w-0 flex-1 cursor-pointer items-end justify-center rounded-xs transition-colors duration-200",
-                i === selected && "bg-chart-highlight",
-                !months.includes(i) && "opacity-30",
-              )}
-            >
-              <span className={cn(barClass, "w-[70%] bg-chart-income")} style={barStyle(m?.profit ?? 0, max, i)} />
-            </button>
-          ))}
-        </div>
-      </div>
-      <div aria-hidden="true" className="flex gap-1">
-        {MONTHS_INITIAL.map((label, i) => (
-          <span
-            key={i}
-            className={cn(
-              "flex-1 text-center text-2xs",
-              months.includes(i) ? "font-semibold text-foreground" : "text-muted-foreground",
-            )}
-          >
-            {label}
-          </span>
-        ))}
       </div>
     </Card>
   );

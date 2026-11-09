@@ -9,6 +9,7 @@ import {
 } from "@/features/sales/list-preferences";
 import { RadioOption } from "@/features/transfer/transfer-parts";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
+import { Page } from "@/components/page";
 
 const LISTS: { kind: FilteredKind; title: string; plural: string }[] = [
   { kind: "deliveryNote", title: "Filtro por defecto de los listados de albaranes", plural: "albaranes" },
@@ -26,7 +27,7 @@ export function PreferencesPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader title="Ordenación y filtrado" description="Cómo se abren tus listados.">
           <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />
         </SettingsHeader>
@@ -40,7 +41,7 @@ export function PreferencesPage() {
             />
           </Section>
         ))}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

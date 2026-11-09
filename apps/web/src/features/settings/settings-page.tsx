@@ -57,6 +57,7 @@ import {
   vatRegimeLabel,
 } from "./settings-model";
 import { useSettings } from "./settings-store";
+import { Page, PageHeader } from "@/components/page";
 
 interface Entry {
   title: string;
@@ -71,7 +72,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
   return (
     <Link
       to={entry.to}
-      className="group flex min-w-0 animate-rise-in items-start gap-3.5 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.99]"
+      className="group flex min-w-0 animate-rise-in items-start gap-3.5 surface p-4 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.99]"
       // Cap the stagger so the last cards of a long hub don't lag
       style={{ "--i": Math.min(index, 6) } as CSSProperties}
     >
@@ -280,13 +281,8 @@ export function SettingsPage() {
 
   let index = 0;
   return (
-    <div className="flex flex-col gap-6 px-5 pt-6 pb-8 lg:px-8">
-      <header className="flex flex-col gap-1">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Configuración</h1>
-        <p className="m-0 text-sm text-muted-foreground">
-          Los datos de tu negocio y cómo trabaja cuentalibre con ellos.
-        </p>
-      </header>
+    <Page>
+      <PageHeader title="Configuración" description="Los datos de tu negocio y cómo trabaja cuentalibre con ellos." />
 
       {billing && (
         <section aria-label="Tu plan" className="flex flex-col gap-3">
@@ -307,6 +303,6 @@ export function SettingsPage() {
       ))}
 
       <LegalLinks className="pt-2" />
-    </div>
+    </Page>
   );
 }

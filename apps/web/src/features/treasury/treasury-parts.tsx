@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { toIsoDate, type Cents } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input, Textarea } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -98,12 +105,12 @@ export function ManualPaymentDialog({ open, onOpenChange }: { open: boolean; onO
           <Field label="Descripción" required error={show("description")}>
             {(p) => <Textarea {...p} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />}
           </Field>
-          <div className="flex justify-end gap-2.5 pt-1">
+          <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary">Cancelar</Button>
             </DialogClose>
             <Button type="submit">Guardar</Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

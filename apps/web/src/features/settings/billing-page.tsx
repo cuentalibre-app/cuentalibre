@@ -26,6 +26,7 @@ import {
 import { setBilling as setSharedBilling } from "./billing-store";
 import { PeriodPicker } from "./period-picker";
 import { SettingsHeader } from "./settings-parts";
+import { Page } from "@/components/page";
 
 const READ_ONLY =
   "Tus datos están a salvo: puedes consultarlos y exportarlos. Suscríbete para volver a emitir facturas y registrar gastos.";
@@ -106,7 +107,7 @@ export function BillingPage() {
 
   return (
     // One narrow column: the page is short, and the prices read better side by side than stretched
-    <div className="flex max-w-4xl flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+    <Page className="max-w-4xl">
       <SettingsHeader title="Plan y facturación" description="Tu suscripción a cuentalibre Cloud y sus pagos." />
 
       {enabled === false ? (
@@ -114,7 +115,7 @@ export function BillingPage() {
           Esta instalación de cuentalibre no tiene planes de pago: la usas gratis, en tu propio servidor.
         </p>
       ) : error ? (
-        <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-4 py-3 text-sm text-destructive">
+        <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
           {error}
         </p>
       ) : !billing ? (
@@ -122,7 +123,7 @@ export function BillingPage() {
       ) : (
         <BillingDetails billing={billing} justPaid={justPaid} />
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -131,7 +132,7 @@ function BillingDetails({ billing, justPaid }: { billing: Billing; justPaid: boo
   return (
     <>
       {justPaid && (
-        <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm">
+        <p role="status" className="m-0 rounded-xl bg-success-soft px-3.5 py-3 text-sm">
           {subscribed ? (
             <strong className="font-semibold text-success">Pago recibido. Tu suscripción está activa.</strong>
           ) : (
@@ -251,7 +252,7 @@ function SubscribeSection({ plan }: { plan: Plan }) {
         teniendo acceso hasta el final de lo que has pagado.
       </p>
       {error && (
-        <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
+        <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
