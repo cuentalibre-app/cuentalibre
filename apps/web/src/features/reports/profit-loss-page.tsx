@@ -55,15 +55,22 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
     <table className="w-full border-collapse text-sm sm:text-base">
       <thead>
         <tr className="bg-foreground text-background">
-          <th scope="col" className="px-3 py-2 text-left font-medium">
+          <th scope="col" className="border-l border-border px-3 py-2 text-left font-semibold first:border-l-0">
             <span className="sr-only">Concepto</span>
           </th>
           {years.map((y) => (
-            <th key={y} scope="col" className="px-3 py-2 text-right amount font-semibold">
+            <th
+              key={y}
+              scope="col"
+              className="border-l border-border px-3 py-2 text-right amount font-semibold first:border-l-0"
+            >
               {y}
             </th>
           ))}
-          <th scope="col" className="hidden w-20 px-3 py-2 text-right text-xs font-medium sm:table-cell">
+          <th
+            scope="col"
+            className="hidden w-20 border-l border-border px-3 py-2 text-right text-xs font-medium first:border-l-0 sm:table-cell"
+          >
             Var.
           </th>
         </tr>
@@ -86,7 +93,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
               <th
                 scope="row"
                 className={cn(
-                  "px-3 py-1.5 text-left font-normal",
+                  "border-l border-border px-3 py-1.5 text-left font-normal first:border-l-0",
                   row.kind === "section" && "text-md font-medium",
                   row.kind === "line" && "pl-6",
                   row.kind === "account" && "pl-10 text-sm text-muted-foreground",
@@ -99,7 +106,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
                 <td
                   key={j}
                   className={cn(
-                    "px-3 py-1.5 text-right amount whitespace-nowrap",
+                    "border-l border-border px-3 py-1.5 text-right amount whitespace-nowrap first:border-l-0",
                     isTotal ? "font-semibold" : "pr-5",
                     row.kind === "account" && "text-sm text-muted-foreground",
                     v === 0 && row.kind === "line" && "text-muted-foreground",
@@ -109,7 +116,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
                   {formatEUR(v)}
                 </td>
               ))}
-              <td className="hidden px-3 py-1.5 text-right amount text-xs sm:table-cell">
+              <td className="hidden border-l border-border px-3 py-1.5 text-right amount text-xs first:border-l-0 sm:table-cell">
                 {row.kind !== "account" && <Variation current={current} previous={previous} />}
               </td>
             </tr>
