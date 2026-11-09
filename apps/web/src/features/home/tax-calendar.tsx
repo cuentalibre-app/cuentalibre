@@ -7,7 +7,7 @@ import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
 import { daysLeftLabel, deadlineTitle, MONTHS_SHORT } from "@/lib/format";
 import type { DeadlineItem, HomeData } from "./home-data";
-import { ListGroup, listRowClass } from "@/components/page";
+import { ListGroup, listRowClass, SeeAllLink } from "@/components/page";
 
 function DateBlock({ date, className }: { date: Date; className?: string }) {
   return (
@@ -40,7 +40,7 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-baseline justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2
             id="tax-calendar-title"
@@ -51,9 +51,7 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
           </h2>
           {daysLeft !== null && <span className="text-sm font-semibold text-warning">{daysLeftLabel(daysLeft)}</span>}
         </div>
-        <Link to={CALENDAR_PATH} className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}>
-          Ver calendario
-        </Link>
+        <SeeAllLink to={CALENDAR_PATH}>Ver calendario</SeeAllLink>
       </div>
 
       {/* Desktop: full list */}

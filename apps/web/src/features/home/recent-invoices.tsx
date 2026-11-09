@@ -1,11 +1,10 @@
 import { Link } from "react-router";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { formatDate, formatShortDate } from "@/lib/format";
-import { ListGroup, listRowClass } from "@/components/page";
+import { ListGroup, listRowClass, SeeAllLink } from "@/components/page";
 import { CollectionSummary } from "./collection-summary";
 import type { HomeData, InvoiceStatus } from "./home-data";
 
@@ -23,17 +22,12 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       aria-labelledby="recent-invoices-title"
       className={cn("flex flex-col lg:overflow-hidden lg:surface", className)}
     >
-      <div className="flex items-center justify-between gap-3 pb-2.5 lg:px-5 lg:pt-5 lg:pb-3">
+      <div className="flex items-baseline justify-between gap-3 pb-2.5 lg:px-5 lg:pt-5 lg:pb-3">
         <h2 id="recent-invoices-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           <span className="lg:hidden">Últimas facturas</span>
           <span className="hidden lg:inline">Últimas facturas emitidas</span>
         </h2>
-        <Link
-          to="/ventas/facturas"
-          className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
-        >
-          Ver todas
-        </Link>
+        <SeeAllLink to="/ventas/facturas">Ver todas</SeeAllLink>
       </div>
 
       {/* Desktop: table */}

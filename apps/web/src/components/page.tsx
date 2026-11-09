@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import { Link, type LinkProps } from "react-router";
-import { ArrowLeft, CircleAlert, CircleCheck, CircleHelp, Info, TriangleAlert, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ChevronRight, CircleAlert, CircleCheck, CircleHelp, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -41,11 +41,13 @@ interface PageHeaderProps {
   inline?: ReactNode;
   /** Actions at the end of the header. */
   actions?: ReactNode;
+  /** Classes for the actions' row, such as taking a line of its own on phones. */
+  actionsClassName?: string;
   className?: string;
 }
 
 /** Title, optional back link and description on the left; actions on the right. */
-export function PageHeader({ title, description, back, eyebrow, inline, actions, className }: PageHeaderProps) {
+export function PageHeader({ title, description, back, eyebrow, inline, actions, actionsClassName, className }: PageHeaderProps) {
   return (
     <header className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -59,7 +61,7 @@ export function PageHeader({ title, description, back, eyebrow, inline, actions,
           {description && <p className="m-0 max-w-[72ch] text-sm text-muted-foreground">{description}</p>}
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
+      {actions && <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>{actions}</div>}
     </header>
   );
 }
@@ -123,7 +125,7 @@ interface SectionProps {
   title: ReactNode;
   /** A short line under the title, such as a count or a warning. */
   subtitle?: ReactNode;
-  /** One small button at the end of the title row, such as "Ver todas". */
+  /** One link at the end of the title row, usually a <SeeAllLink>. */
   action?: ReactNode;
   className?: string;
   /** Classes for the body; on phones it is the card. */
@@ -138,7 +140,7 @@ interface SectionProps {
 export function Section({ id, title, subtitle, action, className, bodyClassName, children }: SectionProps) {
   return (
     <section aria-labelledby={id} className={cn("flex flex-col gap-2.5 lg:gap-4 lg:surface lg:p-5", className)}>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-baseline justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 id={id} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
             {title}
@@ -149,6 +151,29 @@ export function Section({ id, title, subtitle, action, className, bodyClassName,
       </div>
       <div className={cn("flex flex-col gap-4 surface p-4 lg:contents", bodyClassName)}>{children}</div>
     </section>
+  );
+}
+
+/**
+ * "Ver todas" at the end of a card's title row: quiet text that lines up with the title,
+ * so it never weighs more than the heading it belongs to.
+ */
+export function SeeAllLink({ className, children, ...props }: LinkProps) {
+  return (
+    <Link
+      className={cn(
+        "group -mr-1.5 inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-1 text-sm font-medium text-primary no-underline transition-colors duration-150 hover:bg-primary-soft hover:text-primary-hover",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <ChevronRight
+        className="size-4 transition-transform duration-150 group-hover:translate-x-0.5 motion-reduce:transition-none"
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+    </Link>
   );
 }
 

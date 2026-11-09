@@ -540,11 +540,12 @@ export function TaxesSummaryPage() {
         <PageHeader
           title="Impuestos"
           description="Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT."
+          actionsClassName="max-lg:w-full"
           actions={
-            <nav aria-label="Atajos de impuestos" className="-ml-3 flex flex-wrap gap-1 lg:ml-0">
+            <nav aria-label="Atajos de impuestos" className="flex flex-1 gap-2.5 *:max-lg:flex-1">
               <Link
                 to={CALENDAR_PATH}
-                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
+                className={buttonVariants({ variant: "secondary" })}
               >
                 <CalendarDays strokeWidth={1.8} aria-hidden="true" />
                 Calendario fiscal
@@ -552,7 +553,7 @@ export function TaxesSummaryPage() {
               <SettingsLink
                 from="Impuestos"
                 to={TAX_SETTINGS_PATH}
-                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground")}
+                className={buttonVariants({ variant: "secondary" })}
               >
                 <Settings strokeWidth={1.8} aria-hidden="true" />
                 Configurar impuestos

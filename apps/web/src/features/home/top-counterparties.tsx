@@ -1,10 +1,8 @@
 import type { CSSProperties } from "react";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { Link } from "react-router";
 import { ECONOMIC_DEPENDENCY_THRESHOLD, type CounterpartyRanking } from "@cuentalibre/core";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Notice, Section } from "@/components/page";
+import { Notice, SeeAllLink, Section } from "@/components/page";
 import { formatPercent } from "@/lib/format";
 
 interface Props {
@@ -40,9 +38,7 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
       }
       action={
         href && (
-          <Link to={href} className={buttonVariants({ variant: "secondary", size: "sm" })}>
-            Ver todos
-          </Link>
+          <SeeAllLink to={href}>Ver todos</SeeAllLink>
         )
       }
       className={className}

@@ -171,7 +171,7 @@ export function DesignSystemPage() {
             Nueva factura
           </Button>
           <Button variant="secondary">Subir gasto</Button>
-          <Button variant="ghost">Ver todas</Button>
+          <Button variant="ghost">Ver más</Button>
           <Button variant="destructive">Eliminar</Button>
           <Button disabled>Desactivado</Button>
         </div>
