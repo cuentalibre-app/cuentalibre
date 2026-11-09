@@ -1,19 +1,22 @@
-import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, centsToEuros, type Cents } from "@cuentalibre/core";
+import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, cents, centsToEuros, type Cents } from "@cuentalibre/core";
 import { Info } from "lucide-react";
+import { Link } from "react-router";
 import { Card, CardTitle } from "@cuentalibre/ui/components/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { useSettings } from "@/features/settings/settings-store";
+import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { formatPercent } from "@/lib/format";
 import type { HomeData } from "./home-data";
 
 /** Whole euros for the bracket limits: "12.450 €". */
 const euros = (amount: Cents) => `${centsToEuros(amount).toLocaleString("es-ES", { useGrouping: "always" })} €`;
 
-/** How the income tax estimate is worked out: the scale and the figures of the year. */
-function IncomeTaxHint({ estimate, year }: { estimate: HomeData["incomeTax"]; year: number }) {
+/** What the estimated taxes add up to, and how the income tax is worked out: the scale and the figures of the year. */
+function TaxesHint({ data }: { data: HomeData }) {
+  const estimate = data.incomeTax;
+  const year = data.period.year;
   let from = 0 as Cents;
   const brackets = INCOME_TAX_BRACKETS.map(({ upTo, rate }) => {
     const label = upTo === null ? `Más de ${euros(from)}` : `${euros(from)} – ${euros(upTo)}`;
@@ -25,13 +28,31 @@ function IncomeTaxHint({ estimate, year }: { estimate: HomeData["incomeTax"]; ye
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button type="button" aria-label="Cómo se estima el IRPF" className="cursor-help text-muted-foreground">
+          <button
+            type="button"
+            aria-label="Cómo se estiman los impuestos"
+            className="cursor-help text-muted-foreground"
+          >
             <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="left" className="block max-w-80 px-3.5 py-3 leading-snug font-normal">
-          <p className="m-0 mb-1.5 text-center font-semibold">IRPF estimado</p>
+          <p className="m-0 mb-1.5 text-center font-semibold">Impuestos estimados</p>
           <div className="flex flex-col gap-2">
+            {data.socialSecurityEstimate > 0 && (
+              <table className="w-full border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="py-0.5">IRPF (~{formatPercent(estimate.rate * 100)})</td>
+                    <td className="py-0.5 text-right font-semibold">{formatEUR(data.takeHome.incomeTax)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-0.5">Cuota de autónomos sin registrar</td>
+                    <td className="py-0.5 text-right font-semibold">{formatEUR(data.socialSecurityEstimate)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
             <p className="m-0">
               El IRPF es <strong>progresivo</strong>: cada tramo de tu rendimiento anual paga su tipo, así que el tipo
               medio sube cuanto más ganas. Los primeros {euros(PERSONAL_ALLOWANCE)} (mínimo personal) no tributan.
@@ -78,15 +99,15 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   // Net VAT (the 303), the same figure as in the tax reserve card
   const vatDue = data.taxes.vat;
   const { takeHome, incomeTax } = data.takeHome;
-  const fee = useSettings().tax.socialSecurityFee;
   const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
 
   const parts = [
     { label: "Neto", value: takeHome, color: "bg-chart-income" },
     {
-      label: `IRPF anual estimado (~${formatPercent(data.incomeTax.rate * 100)})`,
-      hint: <IncomeTaxHint estimate={data.incomeTax} year={data.period.year} />,
-      value: incomeTax,
+      label: "Impuestos estimados",
+      hint: <TaxesHint data={data} />,
+      // The self-employed fees not booked yet go here; the booked ones are already among the expenses
+      value: cents(incomeTax + data.socialSecurityEstimate),
       color: "bg-chart-tax",
     },
     { label: "Gastos", value: data.totals.expenses, color: "bg-chart-expense" },
@@ -137,9 +158,12 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
         </div>
       )}
 
-      {data.socialSecurityBooked === 0 && (
+      {data.socialSecurityFeeMissing && (
         <p className="m-0 mt-auto text-xs text-muted-foreground">
-          No incluye tu cuota de autónomos ({formatEUR(fee)} al mes).
+          No incluye tu cuota de autónomos.{" "}
+          <Link to={TAX_SETTINGS_PATH} className="font-medium text-foreground">
+            Indícala en Configuración
+          </Link>
         </p>
       )}
     </Card>
