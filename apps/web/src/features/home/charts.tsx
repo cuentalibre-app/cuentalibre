@@ -28,14 +28,14 @@ function Gridlines() {
 
 /** Bars grow from the baseline on mount, left to right; later changes in height ease. */
 const barClass =
-  "origin-bottom animate-grow-up rounded-t-xs [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
+  "origin-bottom animate-grow-up rounded-t-sm [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
 
 function barStyle(value: number, max: number, index: number) {
   return { height: pct(value, max), "--i": index } as CSSProperties;
 }
 
 function Dot({ className }: { className: string }) {
-  return <span className={cn("size-2 shrink-0 rounded-xs", className)} aria-hidden="true" />;
+  return <span className={cn("size-2 shrink-0 rounded-full", className)} aria-hidden="true" />;
 }
 
 type View = "monthly" | "cumulative";
@@ -63,7 +63,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
     first && last ? `${(first.month + 0.5) * 100},200 ${linePoints} ${(last.month + 0.5) * 100},200` : "";
 
   return (
-    <Card aria-labelledby="cash-flow-title" className={className}>
+    <Card aria-labelledby="cash-flow-title" className={cn("gap-4", className)}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <CardTitle id="cash-flow-title">Ingresos y gastos {period.year}</CardTitle>
         <SegmentedControl
@@ -119,7 +119,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
       <div className="flex gap-2.5">
         <div
           aria-hidden="true"
-          className="-mt-1.5 mb-1.5 flex h-[200px] min-w-10 flex-col justify-between text-right font-mono text-2xs text-muted-foreground"
+          className="-mt-1.5 mb-1.5 flex h-[200px] min-w-10 flex-col justify-between text-right text-2xs text-muted-foreground tabular-nums"
         >
           <span>{formatThousands(max)}</span>
           <span>{formatThousands(cents(max / 2))}</span>
@@ -228,18 +228,6 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-xs bg-chart-income" aria-hidden="true" />
-          Ingresos (base)
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-xs bg-chart-expense" aria-hidden="true" />
-          Gastos
-        </span>
-        <span>Resaltado: periodo seleccionado</span>
       </div>
     </Card>
   );

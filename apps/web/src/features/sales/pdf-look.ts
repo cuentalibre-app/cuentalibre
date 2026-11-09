@@ -8,7 +8,7 @@ import type { DocumentFont, InvoiceTemplate, PaymentMethodType, SalesKind } from
 
 /* ───────────────────────── Templates ───────────────────────── */
 
-/** Layout families, after Contasimple's: Clásica, Moderna, Profesional (our Elegante) and Vanguardista. */
+/** Layout families: Clásica, Moderna, Elegante and Vanguardista. */
 export type TemplateFamily = "classic" | "modern" | "professional" | "avantGarde";
 
 export interface TemplateStyle {

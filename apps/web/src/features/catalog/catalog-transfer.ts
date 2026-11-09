@@ -18,8 +18,8 @@ import type { Cell, Sheet } from "@/lib/xlsx";
 import { catalogStore, type CatalogState } from "./catalog-store";
 
 /*
- * Catalog import and export with Contasimple's columns, so a catalog exported
- * there (or its sample filled in by hand) comes in as-is. A row whose product
+ * Catalog import and export with a fixed set of columns, so an exported catalog
+ * (or the sample filled in by hand) comes back in as-is. A row whose product
  * code already exists updates that product instead of adding a new one.
  */
 
@@ -86,7 +86,7 @@ const SAMPLE: Cell[] = [
   "",
 ];
 
-/** The sample workbook: a filled-in row and a legend sheet, like Contasimple's. */
+/** The sample workbook: a filled-in row and a legend sheet. */
 export function sampleSheets(kind: CatalogImportKind): Sheet[] {
   const stock = kind === "productsStock";
   const legend: Cell[][] = [

@@ -43,3 +43,23 @@ export function isDuplicateExpense(candidate: ExpenseIdentity, existing: Require
     );
   });
 }
+
+/**
+ * Self-employed fee still missing from the books: the monthly fee for each month of the
+ * period, up to the current one, that has no fee booked. Months to come don't count.
+ */
+export function pendingSocialSecurity(
+  periodMonths: number[],
+  year: number,
+  today: Date,
+  /** ISO dates (YYYY-MM-DD) of the fees already booked. */
+  bookedOn: string[],
+  monthlyFee: Cents,
+): Cents {
+  const booked = new Set(bookedOn.map((date) => date.slice(0, 7)));
+  const elapsed = periodMonths.filter(
+    (m) => year < today.getFullYear() || (year === today.getFullYear() && m <= today.getMonth()),
+  );
+  const missing = elapsed.filter((m) => !booked.has(`${year}-${String(m + 1).padStart(2, "0")}`));
+  return cents(missing.length * monthlyFee);
+}

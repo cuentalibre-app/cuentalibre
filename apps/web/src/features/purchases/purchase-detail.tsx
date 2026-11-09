@@ -58,7 +58,7 @@ export function PurchaseLink({
   );
 }
 
-/** Basic information of a received invoice or investment good, as Contasimple's "Detalle de la factura recibida". */
+/** Basic information of a received invoice or investment good. */
 export function PurchaseDialog({ doc, onOpenChange }: { doc: PurchaseInvoice; onOpenChange: (open: boolean) => void }) {
   // Follows the store, so a payment registered from the list shows up while it is open
   const invoices = usePurchaseInvoices();
@@ -87,7 +87,7 @@ export function PurchaseDialog({ doc, onOpenChange }: { doc: PurchaseInvoice; on
           <DetailList
             items={[
               ["Periodo", periodCode(quarterOfDate(current.bookedOn))],
-              ["Número", <span className="font-mono">{current.number}</span>],
+              ["Número", <span className="tabular-nums">{current.number}</span>],
               ["Fecha de factura", formatDate(current.issuedOn)],
               ...(current.bookedOn !== current.issuedOn
                 ? [["Fecha contable", formatDate(current.bookedOn)] as [string, ReactNode]]
@@ -135,7 +135,7 @@ export function PurchaseDialog({ doc, onOpenChange }: { doc: PurchaseInvoice; on
 
         <DetailFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cerrar</Button>
+            <Button variant="secondary">Cerrar</Button>
           </DialogClose>
           <Link to={purchasePath(current)} className={cn(buttonVariants(), "no-underline")}>
             <Pencil strokeWidth={1.8} aria-hidden="true" />

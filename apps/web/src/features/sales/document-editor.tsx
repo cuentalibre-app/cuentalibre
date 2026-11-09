@@ -284,7 +284,7 @@ export function LinesEditor({
       ...(settings.copyDescription && p.description ? { detail: p.description } : {}),
     };
   };
-  const head = "text-xs font-medium tracking-wide text-muted-foreground uppercase";
+  const head = "text-xs font-medium text-muted-foreground";
   const label = "text-xs font-medium text-muted-foreground lg:sr-only";
   const readOnlyBox =
     "flex h-10 items-center justify-end rounded-lg bg-muted px-3 text-sm text-muted-foreground amount";
@@ -562,7 +562,7 @@ function ProductPicker({
             <DropdownMenuItem key={p.id} onSelect={() => onPick(p)} className="h-auto justify-between gap-3 py-1.5">
               <span className="flex min-w-0 flex-col">
                 <span className="truncate">{p.name}</span>
-                {p.sku && <span className="truncate font-mono text-xs text-muted-foreground">{p.sku}</span>}
+                {p.sku && <span className="truncate text-xs text-muted-foreground tabular-nums">{p.sku}</span>}
               </span>
               <span className="amount text-sm text-muted-foreground">
                 {price === null ? "—" : formatEUR(eurosToCents(price))}

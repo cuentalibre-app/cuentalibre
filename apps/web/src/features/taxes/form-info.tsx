@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { BookOpen, Globe } from "lucide-react";
+import { BookOpen, ChevronDown, Globe } from "lucide-react";
 import { table } from "@cuentalibre/ui/lib/table";
 import { AEAT_LINKS, type FormCode } from "./taxes-model";
 
-/* What each form is for, who files it and when, as Contasimple explains it before computing it. */
+/* What each form is for, who files it and when, shown before computing it. */
 
 export const TAXPAYER_CALENDAR =
   "https://sede.agenciatributaria.gob.es/Sede/Bibl_virtual/folletos/calendario_contribuyente.shtml";
@@ -25,7 +25,7 @@ const Calendar = () => (
 interface FormFacts {
   title: string;
   description: ReactNode[];
-  /** "Liquidación (puede conllevar un pago a la Agencia Tributaria)." */
+  /** "Liquidación: puede salir a pagar." */
   kind: string;
   periodicity: ReactNode;
   /** One row per quarter, or a text for yearly and special deadlines. */
@@ -35,12 +35,7 @@ interface FormFacts {
   steps: string[];
 }
 
-const QUARTERS = [
-  "Primer Trimestre (1T, de Enero a Marzo)",
-  "Segundo Trimestre (2T, de Abril a Junio)",
-  "Tercer Trimestre (3T, de Julio a Septiembre)",
-  "Cuarto Trimestre (4T, de Octubre a Diciembre)",
-];
+const QUARTERS = ["1T (enero a marzo)", "2T (abril a junio)", "3T (julio a septiembre)", "4T (octubre a diciembre)"];
 
 /** Quarterly deadlines; 303, 130 and 349 give until January 30th for the fourth quarter. */
 const quarterDeadlines = (lastDay: 20 | 30): [string, string][] => [
@@ -49,30 +44,26 @@ const quarterDeadlines = (lastDay: 20 | 30): [string, string][] => [
   [QUARTERS[2]!, "Del 1 al 20 de octubre."],
   [
     QUARTERS[3]!,
-    lastDay === 30
-      ? "Del 1 al 30 de enero (en el cuarto trimestre se permite un plazo mayor)."
-      : "Del 1 al 20 de enero.",
+    lastDay === 30 ? "Del 1 al 30 de enero: el último trimestre tiene diez días más." : "Del 1 al 20 de enero.",
   ],
 ];
 
 const PAPER_OR_ONLINE = (
   <>
-    Este modelo puede presentarse por vía telemática (si se dispone de Certificado Digital, lector de DNI Electrónico o{" "}
-    <ClavePin />) o mediante papel; en ambos casos, la forma de proceder es cumplimentando un formulario en la web de la
-    Agencia Tributaria que, o bien generará el PDF para su impresión en papel (proceso que recibe el nombre de
-    predeclaración), o bien realizará la presentación telemática del modelo.
+    Se rellena en la sede de la AEAT. Desde ahí lo envías por internet (con certificado digital, DNI electrónico o{" "}
+    <ClavePin />) o sacas una predeclaración en PDF para entregarla en papel.
   </>
 );
 
 const ONLINE_ONLY = (form: string) => [
-  `La cumplimentación de este modelo debe realizarse directamente a través de la web de la Agencia Tributaria: ya no está disponible la cumplimentación a través del programa de ayuda Plataformas Informativas.`,
   <>
-    Se requiere de Certificado Digital o <ClavePin /> para poder presentar el modelo {form}.
+    El {form} solo se rellena en el formulario de la sede de la AEAT, y para entrar hace falta certificado digital o{" "}
+    <ClavePin />.
   </>,
 ];
 
 const NO_VAT_REGIONS =
-  "Los usuarios de las Islas Canarias, Ceuta o Melilla, al no trabajar con IVA, no deben presentarlo; no obstante, existe un modelo equivalente para el impuesto aplicable a su región.";
+  "En Canarias, Ceuta y Melilla no se aplica el IVA, así que no se presenta: allí hay un modelo propio para su impuesto indirecto.";
 
 const IMPORT_STEPS = (form: string) => [
   "Descarga el fichero cuando esté disponible o ten a mano las casillas de esta página.",
@@ -91,15 +82,15 @@ const ONLINE_STEPS = (form: string) => [
 ];
 
 const presentation = (form: FormCode) => ({
-  label: `Página de presentación del modelo ${form} en la web de la Agencia Tributaria`,
+  label: `Presentar el modelo ${form} en la sede de la AEAT`,
   href: AEAT_LINKS[form],
 });
 const fillIn = (form: FormCode) => ({
-  label: `Página para la cumplimentación y presentación del modelo ${form} en la web de la Agencia Tributaria`,
+  label: `Rellenar y presentar el modelo ${form} en la sede de la AEAT`,
   href: AEAT_LINKS[form],
 });
 const claveInfo = {
-  label: "Información sobre el sistema Cl@ve PIN en la web de la Agencia Tributaria",
+  label: "Qué es Cl@ve PIN y cómo obtenerlo",
   href: CLAVE_PIN,
 };
 
@@ -108,7 +99,7 @@ const ANNUAL_INFORMATIVE: Pick<FormFacts, "kind" | "periodicity" | "deadlines"> 
   periodicity: "Anual",
   deadlines: (
     <>
-      Presentación telemática: del 1 al 31 de enero. Para más información, consulta el <Calendar />.
+      Por internet, del 1 al 31 de enero. Fechas exactas en el <Calendar />.
     </>
   ),
 };
@@ -117,16 +108,12 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "303": {
     title: "Modelo 303",
     description: [
-      "Declara a la Agencia Tributaria la diferencia entre los importes de IVA facturados y soportados durante el periodo (trimestre) informado. El resultado puede ser cero (si durante el periodo no se ha tenido actividad), positivo (si sale a pagar) o negativo (cuando se ha soportado más IVA del que se ha repercutido).",
-      "Cuando es negativo, la Agencia Tributaria te lo guarda para compensarlo en el siguiente periodo, y puedes solicitar la devolución del importe en el último trimestre del año.",
-      <>
-        Este modelo puede presentarse por vía telemática a través de la web de la Agencia Tributaria identificándose con
-        el Certificado Digital, el DNI Electrónico o el sistema <ClavePin />, o mediante papel siempre que se haya
-        generado cumplimentando el formulario de predeclaración de la web de la Agencia Tributaria.
-      </>,
+      "La autoliquidación trimestral del IVA: el IVA que has cobrado en tus facturas menos el que has pagado en tus compras. Sale a pagar si cobraste más del que pagaste, a cero si no hubo movimiento y negativo en caso contrario.",
+      "Un resultado negativo se arrastra para descontarlo en los trimestres siguientes; en el 4T puedes pedir que te lo devuelvan.",
+      PAPER_OR_ONLINE,
       NO_VAT_REGIONS,
     ],
-    kind: "Liquidación (puede conllevar un pago a la Agencia Tributaria).",
+    kind: "Liquidación: puede salir a pagar.",
     periodicity: "Trimestral",
     deadlines: quarterDeadlines(30),
     links: [presentation("303"), claveInfo],
@@ -135,10 +122,9 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "390": {
     title: "Modelo 390",
     description: [
-      "Declara a la Agencia Tributaria un resumen del IVA facturado y soportado durante el ejercicio (año) informado.",
+      "El resumen del año de todo el IVA cobrado y pagado, que tiene que cuadrar con los 303 de cada trimestre.",
       <>
-        Este modelo puede presentarse por vía telemática a través de la web de la Agencia Tributaria identificándose con
-        el Certificado Digital, el DNI Electrónico o el sistema <ClavePin />.
+        Se presenta por internet en la sede de la AEAT, con certificado digital, DNI electrónico o <ClavePin />.
       </>,
       NO_VAT_REGIONS,
     ],
@@ -156,13 +142,13 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "130": {
     title: "Modelo 130",
     description: [
-      "Declara a la Agencia Tributaria el resumen de los ingresos, los gastos y las retenciones obtenidos desde principios de año hasta el periodo (trimestre) seleccionado.",
-      "Este modelo solo tienen que presentarlo los autónomos, pero los que facturan más de un 70 % con retención pueden quedar exentos siempre que lo soliciten a la Agencia Tributaria (mediante el modelo 036 o 037). Si cumples las condiciones para no presentarlo pero no has solicitado la exoneración, debes presentarlo hasta que la solicites.",
-      "La retención para actividades profesionales es del 15 %; no obstante, los autónomos que acaban de darse de alta pueden aplicar un tipo reducido (del 7 %) durante el año del alta y los dos siguientes.",
-      "La retención solo debe aplicarse al facturar a quienes tienen obligación de ingresar las retenciones, es decir, sociedades y autónomos, pero no al facturar a particulares.",
+      "El pago a cuenta del IRPF de los autónomos: ingresos, gastos y retenciones acumulados desde el 1 de enero hasta el final del trimestre.",
+      "Si al menos el 70 % de lo que facturas lleva retención, puedes dejar de presentarlo, pero solo después de comunicarlo con el modelo 036 o 037. Mientras no lo comuniques, sigue siendo obligatorio.",
+      "Los profesionales retienen un 15 % en sus facturas, o un 7 % el año en que se dan de alta y los dos siguientes.",
+      "Solo se retiene al facturar a empresas y autónomos; a los particulares no.",
       PAPER_OR_ONLINE,
     ],
-    kind: "Liquidación (puede conllevar un pago a la Agencia Tributaria).",
+    kind: "Liquidación: puede salir a pagar.",
     periodicity: "Trimestral",
     deadlines: quarterDeadlines(30),
     links: [presentation("130")],
@@ -171,23 +157,20 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "100": {
     title: "Modelo 100 - Declaración de la renta anual",
     description: [
-      "Declara a la Agencia Tributaria el resumen de los ingresos, los gastos y las retenciones obtenidos durante el año informado.",
-      "La Agencia Tributaria ofrece una aplicación online gratuita, Renta WEB, para ayudarte a realizar esta declaración. Esta aplicación sustituye al programa PADRE, que ha dejado de estar disponible.",
-      "Además, la Agencia Tributaria ofrece un servicio para descargar e importar tus datos fiscales en Renta WEB. Requiere un código de referencia que puedes solicitar en la propia web de la Agencia Tributaria.",
-      "Para solicitar el código de referencia necesitas un certificado digital o conocer ciertos datos de tu renta del año anterior, que validan tu identidad.",
-      "Te recomendamos encarecidamente que repases los datos fiscales que te faciliten, ya que en ocasiones contienen errores, y aunque esos errores vengan de la información de la Agencia Tributaria, tú eres el único responsable de tu declaración.",
+      "La declaración anual del IRPF. Aquí ves el rendimiento de tu actividad en el año, que es lo que pasa a la renta.",
+      "La renta se hace en Renta WEB, en la sede de la AEAT. Para entrar necesitas certificado digital, Cl@ve o un número de referencia, que se pide con la casilla 505 de la renta del año anterior.",
+      "Renta WEB carga tus datos fiscales, pero a veces tienen errores: revísalos, porque responde de la declaración quien la firma.",
     ],
-    kind: "Liquidación (puede conllevar un pago a la Agencia Tributaria).",
+    kind: "Liquidación: puede salir a pagar.",
     periodicity: "Anual",
     deadlines: (
       <>
-        Pueden variar ligeramente de un año a otro, pero generalmente el plazo va desde principios de abril hasta
-        finales de junio. Para más información, consulta el <Calendar />.
+        Suele ir de principios de abril a finales de junio; las fechas exactas de cada año están en el <Calendar />.
       </>
     ),
     links: [
       {
-        label: "Página oficial de la campaña de la renta en la web de la Agencia Tributaria",
+        label: "Campaña de la renta en la sede de la AEAT",
         href: "https://sede.agenciatributaria.gob.es/Sede/procedimientoini/G229.shtml",
       },
     ],
@@ -201,10 +184,10 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "111": {
     title: "Modelo 111",
     description: [
-      "Declara a la Agencia Tributaria el importe a pagar por las retenciones aplicadas a las facturas recibidas, al sueldo de los trabajadores y a los premios por la participación en juegos, concursos, rifas o combinaciones aleatorias.",
+      "Ingresa en Hacienda lo que has retenido en el trimestre: a los profesionales que te facturan, a tus trabajadores en sus nóminas y a quienes hayas dado premios.",
       PAPER_OR_ONLINE,
     ],
-    kind: "Liquidación (puede conllevar un pago a la Agencia Tributaria).",
+    kind: "Liquidación: puede salir a pagar.",
     periodicity: "Trimestral",
     deadlines: quarterDeadlines(20),
     links: [presentation("111"), claveInfo],
@@ -217,7 +200,7 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "190": {
     title: "Modelo 190",
     description: [
-      "Informa a la Agencia Tributaria de las retenciones aplicadas a las facturas recibidas, al sueldo de los trabajadores y a los premios por la participación en juegos, concursos, rifas o combinaciones aleatorias a lo largo del ejercicio (año).",
+      "El resumen anual del 111: cuánto has pagado y retenido a cada profesional, trabajador o premiado durante el año.",
       ...ONLINE_ONLY("190"),
     ],
     ...ANNUAL_INFORMATIVE,
@@ -227,10 +210,10 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "115": {
     title: "Modelo 115",
     description: [
-      "Declara a la Agencia Tributaria las retenciones a pagar por el alquiler de inmuebles urbanos; por ejemplo, por el alquiler del local donde desarrollas tu actividad, si lo alquilas.",
+      "Ingresa en Hacienda la retención de los alquileres de inmuebles urbanos que pagas, como el del local o la oficina donde trabajas.",
       PAPER_OR_ONLINE,
     ],
-    kind: "Liquidación (siempre conlleva un pago a Hacienda).",
+    kind: "Liquidación: siempre sale a pagar.",
     periodicity: "Trimestral",
     deadlines: quarterDeadlines(20),
     links: [presentation("115")],
@@ -239,14 +222,14 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "180": {
     title: "Modelo 180",
     description: [
-      "Informa a la Agencia Tributaria de las retenciones de los alquileres de inmuebles urbanos durante el ejercicio (año) informado.",
+      "El resumen anual del 115: cada arrendador e inmueble, con lo pagado y retenido en el año.",
       ...ONLINE_ONLY("180"),
     ],
     ...ANNUAL_INFORMATIVE,
     links: [
       fillIn("180"),
       {
-        label: "Ver preguntas frecuentes del modelo 180",
+        label: "Preguntas frecuentes del modelo 180",
         href: "https://sede.agenciatributaria.gob.es/Sede/impuestos-tasas/declaraciones-informativas/modelo-180-decla_____arrendamiento-inmuebles-urbanos-anual_/preguntas-frecuentes.html",
       },
     ],
@@ -255,19 +238,16 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "347": {
     title: "Modelo 347",
     description: [
-      "Informa a la Agencia Tributaria de las operaciones realizadas con un cliente o proveedor que en cómputo anual superen los 3.005,06 € (IVA incluido) y que no se hayan declarado en otro modelo: se excluyen del cómputo las facturas con retención, las intracomunitarias y las de exportación e importación.",
-      "Al informar de las operaciones se indica si son compras o ventas. Si con la misma empresa o autónomo has operado como cliente y como proveedor, y cada conjunto supera esa cantidad, se declaran ambos por separado.",
-      "Desde el 1 de febrero de 2018 este modelo se cumplimenta directamente en la web de la Agencia Tributaria: ya no está disponible el programa de ayuda Plataformas Informativas.",
-      <>
-        Se requiere de Certificado Digital o <ClavePin /> para acceder a esa página.
-      </>,
+      "Lista los clientes y proveedores con los que has superado 3.005,06 € en el año, IVA incluido. No cuentan las operaciones que ya van en otro modelo: facturas con retención, intracomunitarias, importaciones y exportaciones.",
+      "Compras y ventas se declaran por separado: si con alguien has comprado y vendido por encima del límite, aparece dos veces.",
+      ...ONLINE_ONLY("347"),
     ],
-    kind: "Informativo, no conlleva ningún pago ni cobro a la Agencia Tributaria.",
+    kind: "Informativo: no se paga ni se cobra nada.",
     periodicity: "Anual",
     deadlines: (
       <>
-        Del 1 al 28 de febrero (o 29 en años bisiestos). Si el último día cae en fin de semana o festivo, generalmente
-        se aplaza al siguiente día laborable; en caso de duda, consulta el <Calendar />.
+        Febrero entero. Si el último día es inhábil, el plazo pasa al siguiente día hábil; confírmalo en el <Calendar />
+        .
       </>
     ),
     links: [fillIn("347")],
@@ -276,37 +256,33 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "349": {
     title: "Modelo 349",
     description: [
-      "Informa a la Agencia Tributaria de las operaciones realizadas con un cliente o proveedor intracomunitario, es decir, tanto de las compras como de las ventas de bienes o servicios a empresas de otro país de la Unión Europea.",
-      "Una operación es intracomunitaria si tanto el emisor como el receptor están inscritos en el Registro de Operadores Intracomunitarios (ROI), también conocido como VIES (VAT Information Exchange System). En ese caso las facturas van sin IVA y deben registrarse con el tipo de operación Intracomunitaria.",
-      "No existe un formulario en PDF para este modelo: se genera y presenta desde la página de presentación del modelo 349 de la Agencia Tributaria.",
+      "Las compras y ventas de bienes y servicios con empresas de otros países de la UE, empresa por empresa.",
+      "Para que una operación sea intracomunitaria, las dos partes tienen que estar dadas de alta en el ROI, el registro que se consulta en el VIES. Esas facturas van sin IVA y se registran con el tipo de operación Intracomunitaria.",
+      "No hay PDF: se rellena y se envía desde la sede de la AEAT.",
     ],
-    kind: "Informativo, no conlleva ningún pago ni cobro a la Agencia Tributaria.",
+    kind: "Informativo: no se paga ni se cobra nada.",
     periodicity: (
       <ul className="m-0 flex flex-col gap-1 pl-4">
         <li>
-          Trimestral: cuando ni en el trimestre de referencia ni en ninguno de los cuatro trimestres naturales
-          anteriores el importe total de las entregas de bienes y prestaciones de servicios intracomunitarias supere
-          50.000 €, sin IVA.
+          Trimestral, si las ventas de bienes y servicios a la UE no pasan de 50.000 € (sin IVA) ni en el trimestre ni
+          en ninguno de los cuatro anteriores.
         </li>
         <li>
-          Bimensual: si al final del segundo mes de un trimestre natural se supera ese importe, se presenta una
-          declaración por los meses transcurridos del trimestre. A partir del tercer mes, ya es mensual.
+          Si se pasa del límite en el segundo mes de un trimestre, se presenta una declaración por esos dos meses y
+          desde ahí, cada mes.
         </li>
         <li>Mensual: en cualquier otro caso.</li>
       </ul>
     ),
     deadlines: (
       <ul className="m-0 flex flex-col gap-1 pl-4">
+        <li>Trimestral: del 1 al 20 de abril, julio y octubre, y hasta el 30 de enero para el 4T.</li>
         <li>
-          Presentación trimestral: del 1 al 20 del mes siguiente al trimestre (abril, julio y octubre). La del 4T se
-          prolonga hasta el 30 de enero.
+          Mensual: del 1 al 20 del mes siguiente. Julio se presenta hasta el 20 de septiembre y diciembre, hasta el 30
+          de enero.
         </li>
         <li>
-          Presentación mensual: del 1 al 20 del mes siguiente, salvo diciembre, que se extiende hasta el 30 de enero, y
-          julio, que puede presentarse en agosto y los 20 primeros días de septiembre.
-        </li>
-        <li>
-          Para más información, consulta el <Calendar />.
+          Fechas exactas en el <Calendar />.
         </li>
       </ul>
     ),
@@ -325,24 +301,24 @@ export function FormFactsList({ form }: { form: FormCode }) {
   const facts = FACTS[form];
   return (
     <div className="flex flex-col gap-4">
-      <dl className="m-0 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[9rem_minmax(0,1fr)]">
-        <dt className="font-medium">Descripción</dt>
-        <dd className="m-0 flex flex-col gap-2 text-muted-foreground">
+      <dl className="m-0 grid gap-x-6 gap-y-4 text-[0.9375rem] leading-relaxed sm:grid-cols-[10rem_minmax(0,1fr)]">
+        <dt className="font-semibold">Descripción</dt>
+        <dd className="m-0 flex flex-col gap-2.5 text-foreground/85">
           {facts.description.map((p, i) => (
             <p key={i} className="m-0">
               {p}
             </p>
           ))}
         </dd>
-        <dt className="font-medium">Tipo de modelo</dt>
-        <dd className="m-0 text-muted-foreground">{facts.kind}</dd>
-        <dt className="font-medium">Periodicidad</dt>
-        <dd className="m-0 text-muted-foreground">{facts.periodicity}</dd>
-        <dt className="font-medium">Plazos</dt>
-        <dd className="m-0 text-muted-foreground">
+        <dt className="font-semibold">Tipo de modelo</dt>
+        <dd className="m-0 text-foreground/85">{facts.kind}</dd>
+        <dt className="font-semibold">Periodicidad</dt>
+        <dd className="m-0 text-foreground/85">{facts.periodicity}</dd>
+        <dt className="font-semibold">Plazos</dt>
+        <dd className="m-0 text-foreground/85">
           {Array.isArray(facts.deadlines) ? (
             <div className="overflow-hidden rounded-lg border border-border">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr className={table.headRow}>
                     <th className={table.th}>Trimestre</th>
@@ -369,10 +345,10 @@ export function FormFactsList({ form }: { form: FormCode }) {
           )}
         </dd>
       </dl>
-      <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+      <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[0.9375rem]">
         {facts.links.map((l) => (
           <li key={l.href} className="flex items-start gap-2">
-            <Globe className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+            <Globe className="mt-1 size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
             <ExternalLink href={l.href}>{l.label}</ExternalLink>
           </li>
         ))}
@@ -381,20 +357,25 @@ export function FormFactsList({ form }: { form: FormCode }) {
   );
 }
 
-/** The same facts next to the computed boxes, folded away, with the steps to file it. */
+/** The same facts next to the computed boxes, with the steps to file it; open by default, foldable. */
 export function FormInfo({ form }: { form: FormCode }) {
   const facts = FACTS[form];
   return (
-    <details className="group rounded-xl border border-border px-4 py-3 text-sm">
-      <summary className="flex cursor-pointer list-none items-center gap-2 font-medium [&::-webkit-details-marker]:hidden">
-        <BookOpen className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+    <details open className="group rounded-xl border border-border bg-card px-5 py-4">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold [&::-webkit-details-marker]:hidden">
+        <BookOpen className="size-4.5 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         Sobre el modelo {form} y cómo presentarlo
+        <ChevronDown
+          className="ml-auto size-4 text-muted-foreground transition-transform duration-150 group-open:rotate-180"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </summary>
-      <div className="mt-3 flex flex-col gap-4">
+      <div className="mt-4 flex flex-col gap-5">
         <FormFactsList form={form} />
-        <div className="flex flex-col gap-1.5">
-          <span className="font-medium">Cómo presentarlo</span>
-          <ol className="m-0 flex flex-col gap-0.5 pl-4 text-muted-foreground">
+        <div className="flex flex-col gap-2 text-[0.9375rem] leading-relaxed">
+          <span className="font-semibold">Cómo presentarlo</span>
+          <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-foreground/85 marker:text-muted-foreground">
             {facts.steps.map((s) => (
               <li key={s}>{s}</li>
             ))}

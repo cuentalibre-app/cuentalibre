@@ -49,7 +49,7 @@ function CopyValue({ value, copied, onCopy }: { value: RecordValue; copied: bool
       className={cn(
         "group inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-md px-1 py-0.5 text-left transition-colors duration-150 hover:bg-accent",
         isAmount(value) && "amount",
-        !isAmount(value) && value.mono && "font-mono text-sm",
+        !isAmount(value) && value.mono && "tabular-nums",
         !isAmount(value) && value.muted && "text-muted-foreground",
         isAmount(value) && value.amount === 0 && "text-muted-foreground",
       )}
@@ -90,7 +90,7 @@ function DocumentList({ books, ids }: { books: PartyBooks; ids: string[] }) {
               <span className="text-muted-foreground">{formatDate(d.date)}</span>
               <span className="truncate">
                 <span className="text-muted-foreground">{d.kind}</span>{" "}
-                <span className="font-mono font-medium">{d.number || "sin número"}</span>
+                <span className="font-medium tabular-nums">{d.number || "sin número"}</span>
               </span>
               {op && (
                 <span className="amount text-muted-foreground">

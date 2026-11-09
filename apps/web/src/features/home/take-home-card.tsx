@@ -1,19 +1,22 @@
-import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, centsToEuros, type Cents } from "@cuentalibre/core";
+import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, cents, centsToEuros, type Cents } from "@cuentalibre/core";
 import { Info } from "lucide-react";
+import { Link } from "react-router";
 import { Card, CardTitle } from "@cuentalibre/ui/components/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { useSettings } from "@/features/settings/settings-store";
+import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { formatPercent } from "@/lib/format";
 import type { HomeData } from "./home-data";
 
 /** Whole euros for the bracket limits: "12.450 €". */
 const euros = (amount: Cents) => `${centsToEuros(amount).toLocaleString("es-ES", { useGrouping: "always" })} €`;
 
-/** How the income tax estimate is worked out: the scale and the figures of the year. */
-function IncomeTaxHint({ estimate, year }: { estimate: HomeData["incomeTax"]; year: number }) {
+/** What the estimated taxes add up to, and how the income tax is worked out: the scale and the figures of the year. */
+function TaxesHint({ data }: { data: HomeData }) {
+  const estimate = data.incomeTax;
+  const year = data.period.year;
   let from = 0 as Cents;
   const brackets = INCOME_TAX_BRACKETS.map(({ upTo, rate }) => {
     const label = upTo === null ? `Más de ${euros(from)}` : `${euros(from)} – ${euros(upTo)}`;
@@ -25,13 +28,31 @@ function IncomeTaxHint({ estimate, year }: { estimate: HomeData["incomeTax"]; ye
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button type="button" aria-label="Cómo se estima el IRPF" className="cursor-help text-muted-foreground">
+          <button
+            type="button"
+            aria-label="Cómo se estiman los impuestos"
+            className="cursor-help text-muted-foreground"
+          >
             <Info className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
           </button>
         </TooltipTrigger>
         <TooltipContent side="left" className="block max-w-80 px-3.5 py-3 leading-snug font-normal">
-          <p className="m-0 mb-1.5 text-center font-semibold">IRPF estimado</p>
+          <p className="m-0 mb-1.5 text-center font-semibold">Impuestos estimados</p>
           <div className="flex flex-col gap-2">
+            {data.socialSecurityEstimate > 0 && (
+              <table className="w-full border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="py-0.5">IRPF (~{formatPercent(estimate.rate * 100)})</td>
+                    <td className="py-0.5 text-right font-semibold">{formatEUR(data.takeHome.incomeTax)}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-0.5">Cuota de autónomos sin registrar</td>
+                    <td className="py-0.5 text-right font-semibold">{formatEUR(data.socialSecurityEstimate)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
             <p className="m-0">
               El IRPF es <strong>progresivo</strong>: cada tramo de tu rendimiento anual paga su tipo, así que el tipo
               medio sube cuanto más ganas. Los primeros {euros(PERSONAL_ALLOWANCE)} (mínimo personal) no tributan.
@@ -74,40 +95,37 @@ function IncomeTaxHint({ estimate, year }: { estimate: HomeData["incomeTax"]; ye
 
 /** What's left of the period's income after expenses and an estimate of its yearly income tax. */
 export function TakeHomeCard({ data, className }: { data: HomeData; className?: string }) {
-  const { income, outputVat } = data.totals;
+  const { income } = data.totals;
+  // Net VAT (the 303), the same figure as in the tax reserve card
+  const vatDue = data.taxes.vat;
   const { takeHome, incomeTax } = data.takeHome;
-  const fee = useSettings().tax.socialSecurityFee;
   const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
 
   const parts = [
     { label: "Neto", value: takeHome, color: "bg-chart-income" },
     {
-      label: `IRPF estimado (~${formatPercent(data.incomeTax.rate * 100)})`,
-      hint: <IncomeTaxHint estimate={data.incomeTax} year={data.period.year} />,
-      value: incomeTax,
+      label: "Impuestos estimados",
+      hint: <TaxesHint data={data} />,
+      // The self-employed fees not booked yet go here; the booked ones are already among the expenses
+      value: cents(incomeTax + data.socialSecurityEstimate),
       color: "bg-chart-tax",
     },
     { label: "Gastos", value: data.totals.expenses, color: "bg-chart-expense" },
   ];
 
   return (
-    <Card aria-labelledby="take-home-title" className={cn("gap-3 p-4 lg:gap-3 lg:p-4", className)}>
-      <div className="flex flex-col gap-1">
-        <CardTitle id="take-home-title" className="text-md lg:text-lg">
-          Neto después de impuestos
-        </CardTitle>
-        <span className="text-sm text-muted-foreground">Estimación sobre {formatEUR(income)} facturados sin IVA</span>
-      </div>
+    <Card aria-labelledby="take-home-title" className={cn("gap-4 p-4 lg:gap-5", className)}>
+      <CardTitle id="take-home-title">Neto después de impuestos</CardTitle>
 
       <div className="flex flex-col gap-1.5">
-        <AnimatedAmount value={takeHome} className="amount text-2xl font-medium lg:text-4xl" />
+        <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-4xl" />
         <span className="text-sm font-medium text-success">{formatPercent(share(takeHome))} de lo facturado</span>
       </div>
 
       <div
         role="img"
         aria-label={parts.map((p) => `${p.label}: ${formatEUR(p.value)}`).join(", ")}
-        className="flex h-3 animate-reveal-x gap-0.5 overflow-hidden rounded-xs bg-muted lg:h-3.5"
+        className="flex h-2.5 animate-reveal-x gap-0.5 overflow-hidden rounded-full bg-muted"
       >
         {parts.map((p) => (
           <div
@@ -121,7 +139,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
       <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:gap-2.5">
         {parts.map((p) => (
           <li key={p.label} className="flex items-center gap-2.5">
-            <span className={cn("size-2.5 shrink-0 rounded-xs", p.color)} aria-hidden="true" />
+            <span className={cn("size-2.5 shrink-0 rounded-full", p.color)} aria-hidden="true" />
             <span className="flex flex-1 items-center gap-1.5">
               {p.label}
               {"hint" in p && p.hint}
@@ -131,20 +149,23 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
         ))}
       </ul>
 
-      <div className="mt-auto flex flex-col gap-1 border-t border-divider pt-3 text-xs text-muted-foreground">
-        <span>
-          Además has cobrado <span className="amount text-foreground">{formatEUR(outputVat)}</span> de IVA, que es de
-          Hacienda.
-        </span>
-        {data.socialSecurityBooked > 0 ? (
-          <span>
-            Los gastos incluyen tu cuota de autónomos:{" "}
-            <span className="amount text-foreground">{formatEUR(data.socialSecurityBooked)}</span> en el periodo.
-          </span>
-        ) : (
-          <span>No incluye tu cuota de autónomos ({formatEUR(fee)} al mes).</span>
-        )}
-      </div>
+      {/* VAT sits on top of what was invoiced, so it stays out of the bar and the split above */}
+      {vatDue > 0 && (
+        <div className="flex items-center gap-2.5 border-t border-divider pt-3 lg:pt-4">
+          <span className="size-2.5 shrink-0 rounded-full border-2 border-muted-foreground" aria-hidden="true" />
+          <span className="flex-1">IVA a pagar</span>
+          <span className="amount">{formatEUR(vatDue)}</span>
+        </div>
+      )}
+
+      {data.socialSecurityFeeMissing && (
+        <p className="m-0 mt-auto text-xs text-muted-foreground">
+          No incluye tu cuota de autónomos.{" "}
+          <Link to={TAX_SETTINGS_PATH} className="font-medium text-foreground">
+            Indícala en Configuración
+          </Link>
+        </p>
+      )}
     </Card>
   );
 }

@@ -163,16 +163,11 @@ export function FirstRunTour() {
           </div>
           <div className="flex items-center gap-2 pt-1">
             {step === 0 ? (
-              <Button
-                variant="ghost"
-                size="md"
-                className="-ml-2 text-muted-foreground"
-                onClick={() => finish("skipped")}
-              >
+              <Button variant="secondary" size="md" className="text-muted-foreground" onClick={() => finish("skipped")}>
                 Saltar
               </Button>
             ) : (
-              <Button variant="ghost" size="md" className="-ml-2" onClick={() => goToStep(step - 1)}>
+              <Button variant="secondary" size="md" className="-ml-2" onClick={() => goToStep(step - 1)}>
                 Anterior
               </Button>
             )}

@@ -83,7 +83,7 @@ function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open
                     onChange={(e) => setColor(e.target.value)}
                     className="size-7 cursor-pointer rounded-sm border-0 bg-transparent p-0"
                   />
-                  <span className="font-mono text-sm uppercase">{color}</span>
+                  <span className="text-sm uppercase tabular-nums">{color}</span>
                 </span>
               </div>
             )}
@@ -122,7 +122,7 @@ export function TagsPage() {
         style={{ backgroundColor: t.color }}
         aria-hidden="true"
       />
-      <span className="font-mono text-sm uppercase">{t.color}</span>
+      <span className="text-sm uppercase tabular-nums">{t.color}</span>
     </span>
   );
   const operations = (t: Tag) => (

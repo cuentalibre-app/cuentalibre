@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link } from "react-router";
 import { MailWarning, X } from "lucide-react";
 import { ACCESS_PATH } from "@/features/settings/settings-model";
@@ -54,11 +56,11 @@ export function VerifyEmailBanner() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="cursor-pointer font-semibold text-primary hover:text-primary-hover"
+            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
           >
             Verificar mi email
           </button>
-          <Link to={ACCESS_PATH} className="font-medium text-primary hover:text-primary-hover">
+          <Link to={ACCESS_PATH} className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}>
             Credenciales de acceso
           </Link>
         </span>

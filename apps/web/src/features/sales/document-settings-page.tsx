@@ -70,10 +70,14 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
           </p>
           <div className="overflow-x-auto rounded-lg border border-border">
             <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
-              <thead className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
+              <thead className="text-xs text-foreground">
                 <tr>
                   {["Estado", "Nombre", "Por defecto", "Máscara"].map((h) => (
-                    <th key={h} scope="col" className="px-3 py-2.5 font-medium">
+                    <th
+                      key={h}
+                      scope="col"
+                      className="border-l border-border px-3 py-2.5 font-semibold first:border-l-0"
+                    >
                       {h}
                     </th>
                   ))}
@@ -81,14 +85,18 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
               </thead>
               <tbody>
                 <tr className="border-t border-divider">
-                  <td className="px-3 py-2.5">
+                  <td className="border-l border-border px-3 py-2.5 first:border-l-0">
                     <Badge tone="success">Activa</Badge>
                   </td>
-                  <td className="px-3 py-2.5 font-medium">{config.seriesLabel}</td>
-                  <td className="px-3 py-2.5">
+                  <td className="border-l border-border px-3 py-2.5 font-medium first:border-l-0">
+                    {config.seriesLabel}
+                  </td>
+                  <td className="border-l border-border px-3 py-2.5 first:border-l-0">
                     <DefaultMark />
                   </td>
-                  <td className="px-3 py-2.5 font-mono">{config.numberPrefix}AAAA-####</td>
+                  <td className="border-l border-border px-3 py-2.5 tabular-nums first:border-l-0">
+                    {config.numberPrefix}AAAA-####
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -192,7 +200,6 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
             </ul>
           </Section>
         )}
-
       </div>
     </TooltipProvider>
   );

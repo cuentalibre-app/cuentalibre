@@ -161,8 +161,9 @@ export function SortHeader({
         type="button"
         onClick={onClick}
         className={cn(
-          "group flex w-full cursor-pointer items-center gap-1.5 border-0 bg-transparent px-3 py-2 whitespace-pre text-inherit uppercase transition-colors duration-150 hover:text-foreground in-[th:first-child]:pl-4",
-          numeric && "justify-end",
+          "group flex w-full cursor-pointer items-center gap-1.5 border-0 bg-transparent px-3 py-2.5 whitespace-pre text-inherit transition-colors duration-150 hover:text-foreground in-[th:first-child]:pl-5",
+          // On numeric columns the sort icon goes first, so the label lines up with the figures
+          numeric && "flex-row-reverse",
           dir !== null && "text-foreground",
         )}
       >

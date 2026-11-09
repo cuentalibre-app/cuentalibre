@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import {
@@ -16,7 +18,7 @@ import {
 type Lookup =
   { key: string; status: "loading" | "notFound" | "error" } | { key: string; status: "found"; place: Place };
 
-const link = "inline-flex items-center gap-1.5 font-medium text-primary no-underline hover:text-primary-hover";
+const link = cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline [&_svg]:size-4");
 
 /** A small map of the place: OpenStreetMap tiles with a pin in the middle, no map library. */
 function PlaceMap({ place }: { place: Place }) {
@@ -87,7 +89,7 @@ export function AddressMap({ address }: { address: MapAddress }) {
     return (
       <div className="flex flex-col gap-2">
         <PlaceMap place={current.place} />
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
           <span className="min-w-0 text-muted-foreground">{current.place.label}</span>
           <a href={placeUrl(current.place)} target="_blank" rel="noopener noreferrer" className={link}>
             Abrir el mapa

@@ -166,13 +166,7 @@ function FamilyPicker({
           <Pencil strokeWidth={1.8} aria-hidden="true" />
           Editar familia
         </Button>
-        <Button
-          variant="ghost"
-          size="md"
-          onClick={remove}
-          disabled={!current}
-          className="text-destructive hover:text-destructive"
-        >
+        <Button variant="secondary" size="md" onClick={remove} disabled={!current} className="text-destructive">
           <Trash2 strokeWidth={1.8} aria-hidden="true" />
           Borrar familia
         </Button>
@@ -201,7 +195,7 @@ function FamilyPicker({
             <Button type="submit" size="lg">
               {editing.mode === "new" ? "Crear" : "Guardar"}
             </Button>
-            <Button variant="ghost" size="lg" onClick={() => setEditing(null)}>
+            <Button variant="secondary" size="lg" onClick={() => setEditing(null)}>
               Cancelar
             </Button>
           </div>
@@ -240,7 +234,7 @@ function FamilyPicker({
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cerrar
         </Button>
         <Button onClick={() => onSelect(selected)}>Seleccionar</Button>

@@ -346,7 +346,7 @@ export function CatalogListPage() {
                 />
               </FilterField>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="md"
                 onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
                 className="justify-self-start sm:col-span-2 lg:col-span-4"
@@ -377,7 +377,10 @@ export function CatalogListPage() {
                       <Plus strokeWidth={2} aria-hidden="true" />
                       Nuevo producto o servicio
                     </Link>
-                    <Link to={CATALOG_IMPORT_PATH} className={cn(buttonVariants({ variant: "ghost" }), "no-underline")}>
+                    <Link
+                      to={CATALOG_IMPORT_PATH}
+                      className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}
+                    >
                       <FileUp strokeWidth={1.8} aria-hidden="true" />
                       Importar
                     </Link>
@@ -565,7 +568,7 @@ function ProductsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSort
                     <TagChips tags={p.tags} />
                   </div>
                 </td>
-                <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>{p.sku || "—"}</td>
+                <td className={cn(td, "whitespace-nowrap tabular-nums")}>{p.sku || "—"}</td>
                 <td className={cn(td, "text-right amount")}>
                   {formatEUR(eurosToCents(p.price))}
                   {p.unit && <span className="ml-0.5 font-sans text-xs text-muted-foreground">/{p.unit}</span>}

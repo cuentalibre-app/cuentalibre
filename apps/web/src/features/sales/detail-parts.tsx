@@ -12,8 +12,8 @@ import { formatDate } from "@/lib/format";
 import { ratePercent } from "./sales-model";
 
 /*
- * Building blocks of the detail dialogs opened from a document's number in the lists
- * (as Contasimple's "Detalle de la factura"): read-only, with the edit form one click away.
+ * Building blocks of the detail dialogs opened from a document's number in the lists:
+ * read-only, with the edit form one click away.
  */
 
 /**
@@ -47,7 +47,7 @@ export function DetailSection({ title, children }: { title: string; children: Re
   );
 }
 
-/** Label and value pairs; empty values show a dash, as in Contasimple. */
+/** Label and value pairs; empty values show a dash. */
 export function DetailList({ items }: { items: [label: string, value: ReactNode][] }) {
   return (
     <dl className="m-0 grid grid-cols-[minmax(0,10rem)_1fr] gap-x-4 gap-y-1.5 text-sm">
@@ -68,7 +68,7 @@ export function ContactDetails({ contact }: { contact: Contact }) {
     <DetailList
       items={[
         ["Nombre o razón social", contact.name],
-        ["NIF", contact.taxId && <span className="font-mono">{contact.taxId}</span>],
+        ["NIF", contact.taxId && <span className="tabular-nums">{contact.taxId}</span>],
         ["Dirección", contact.address],
         ["Código postal", contact.postalCode],
         ["Población", contact.city],

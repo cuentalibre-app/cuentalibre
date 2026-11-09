@@ -88,9 +88,9 @@ export function CatalogImportPage() {
         >
           <Info className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <p className="m-0">
-            Importa un Excel (.xlsx) o un CSV con las mismas columnas que Contasimple. Elige el tipo de datos, arrastra
-            el archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de
-            confirmarlo. Si el código de producto de una fila ya existe en tu catálogo, se actualiza ese producto.
+            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, arrastra el
+            archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de confirmarlo.
+            Si el código de producto de una fila ya existe en tu catálogo, se actualiza ese producto.
           </p>
         </div>
 
@@ -139,7 +139,7 @@ export function CatalogImportPage() {
                   kind === "productsStock" ? "plantilla-catalogo-con-stock" : "plantilla-catalogo",
                 )
               }
-              className="flex h-10 cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left text-sm font-medium text-primary hover:text-primary-hover"
+              className={cn(buttonVariants({ variant: "secondary" }), "[&_svg]:size-4")}
             >
               <FileSpreadsheet className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
               Descargar Excel de ejemplo para {label.toLowerCase()}
@@ -184,7 +184,7 @@ function Preview({
   if (preview.fileErrors.length)
     return (
       <section className="flex animate-rise-in flex-col gap-2 rounded-xl border border-destructive bg-destructive-soft/40 p-5">
-        <h2 className="m-0 flex items-center gap-2 text-md font-semibold text-destructive">
+        <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive lg:text-title">
           <CircleAlert className="size-5" strokeWidth={1.8} aria-hidden="true" />
           No se puede importar el archivo
         </h2>
@@ -202,7 +202,7 @@ function Preview({
       className="flex animate-rise-in flex-col overflow-hidden rounded-xl border border-border bg-card"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5">
-        <h2 className="m-0 text-md font-semibold">Vista previa</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Vista previa</h2>
         <span className="text-sm">
           <span className="font-semibold">{valid.length}</span>{" "}
           {valid.length === 1 ? "producto listo" : "productos listos"} para importar
@@ -251,9 +251,9 @@ function Preview({
               const ok = r.errors.length === 0;
               return (
                 <tr key={r.row} className={cn(table.row, !ok && "bg-destructive-soft/40")}>
-                  <td className={cn(table.td, "font-mono text-sm text-muted-foreground")}>{r.row}</td>
+                  <td className={cn(table.td, "text-muted-foreground tabular-nums")}>{r.row}</td>
                   <td className={table.td}>{r.name || "—"}</td>
-                  <td className={cn(table.td, "font-mono text-sm")}>{r.sku || "—"}</td>
+                  <td className={cn(table.td, "tabular-nums")}>{r.sku || "—"}</td>
                   <td className={cn(table.td, "text-right amount")}>
                     {r.price === null ? "—" : formatEUR(eurosToCents(r.price))}
                   </td>
@@ -284,7 +284,7 @@ function Preview({
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-border px-4 py-3">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancelar
         </Button>
         <Button onClick={onConfirm} disabled={valid.length === 0}>

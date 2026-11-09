@@ -55,15 +55,22 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
     <table className="w-full border-collapse text-sm sm:text-base">
       <thead>
         <tr className="bg-foreground text-background">
-          <th scope="col" className="px-3 py-2 text-left font-medium">
+          <th scope="col" className="border-l border-border px-3 py-2 text-left font-semibold first:border-l-0">
             <span className="sr-only">Concepto</span>
           </th>
           {years.map((y) => (
-            <th key={y} scope="col" className="px-3 py-2 text-right amount font-semibold">
+            <th
+              key={y}
+              scope="col"
+              className="border-l border-border px-3 py-2 text-right amount font-semibold first:border-l-0"
+            >
               {y}
             </th>
           ))}
-          <th scope="col" className="hidden w-20 px-3 py-2 text-right text-xs font-medium sm:table-cell">
+          <th
+            scope="col"
+            className="hidden w-20 border-l border-border px-3 py-2 text-right text-xs font-medium first:border-l-0 sm:table-cell"
+          >
             Var.
           </th>
         </tr>
@@ -86,11 +93,11 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
               <th
                 scope="row"
                 className={cn(
-                  "px-3 py-1.5 text-left font-normal",
+                  "border-l border-border px-3 py-1.5 text-left font-normal first:border-l-0",
                   row.kind === "section" && "text-md font-medium",
                   row.kind === "line" && "pl-6",
                   row.kind === "account" && "pl-10 text-sm text-muted-foreground",
-                  row.kind === "result" && "font-semibold uppercase",
+                  row.kind === "result" && "font-semibold",
                 )}
               >
                 {row.label}
@@ -99,7 +106,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
                 <td
                   key={j}
                   className={cn(
-                    "px-3 py-1.5 text-right amount whitespace-nowrap",
+                    "border-l border-border px-3 py-1.5 text-right amount whitespace-nowrap first:border-l-0",
                     isTotal ? "font-semibold" : "pr-5",
                     row.kind === "account" && "text-sm text-muted-foreground",
                     v === 0 && row.kind === "line" && "text-muted-foreground",
@@ -109,7 +116,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
                   {formatEUR(v)}
                 </td>
               ))}
-              <td className="hidden px-3 py-1.5 text-right amount text-xs sm:table-cell">
+              <td className="hidden border-l border-border px-3 py-1.5 text-right amount text-xs first:border-l-0 sm:table-cell">
                 {row.kind !== "account" && <Variation current={current} previous={previous} />}
               </td>
             </tr>
@@ -120,7 +127,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
   );
 }
 
-/** The report's lines as ranked bars, like the pie charts in Contasimple but readable on a phone. */
+/** The report's lines as ranked bars, readable on a phone. */
 function Distribution({ pnl, year }: { pnl: ProfitAndLoss; year: number }) {
   const ranking = (keys: readonly PnlLine[]) =>
     rankCounterparties(
@@ -227,7 +234,7 @@ export function ProfitLossPage() {
         className="flex animate-rise-in flex-col gap-5 rounded-xl border border-border bg-card p-4 sm:p-6 lg:p-8"
       >
         <div className="flex flex-col gap-2 border-b border-foreground pb-3">
-          <h2 id="pnl-title" className="m-0 text-lg font-semibold lg:text-xl">
+          <h2 id="pnl-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
             Informe de pérdidas y ganancias
           </h2>
           <dl className="m-0 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
@@ -241,7 +248,7 @@ export function ProfitLossPage() {
             </div>
             <div className="flex gap-1.5">
               <dt className="text-muted-foreground">NIF:</dt>
-              <dd className="m-0 font-mono font-medium">{profile.taxId}</dd>
+              <dd className="m-0 font-medium tabular-nums">{profile.taxId}</dd>
             </div>
             <div className="flex gap-1.5 sm:justify-end">
               <dt className="text-muted-foreground">Periodo:</dt>
@@ -272,7 +279,7 @@ export function ProfitLossPage() {
           style={{ "--i": 2 } as CSSProperties}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="m-0 text-md font-semibold">Distribución en el ejercicio</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Distribución en el ejercicio</h2>
             <SegmentedControl
               label="Ejercicio"
               value={chartYear}

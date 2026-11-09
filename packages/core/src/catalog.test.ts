@@ -55,7 +55,7 @@ describe("surchargeFitsVat", () => {
 });
 
 describe("units", () => {
-  it("knows Contasimple's unit codes", () => {
+  it("knows the unit codes", () => {
     expect(isCatalogUnit("h")).toBe(true);
     expect(isCatalogUnit("1/2j")).toBe(true);
     expect(isCatalogUnit("horas")).toBe(false);

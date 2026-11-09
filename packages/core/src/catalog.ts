@@ -7,7 +7,7 @@ import { applyRate, cents, eurosToCents, type Cents } from "./money";
  * documents make), so deleting a movement keeps every figure consistent.
  */
 
-/** Units of measure a product can be sold in, as Contasimple lists them. */
+/** Units of measure a product can be sold in. */
 export const CATALOG_UNITS = [
   ["uds", "unidades"],
   ["dec", "decenas"],

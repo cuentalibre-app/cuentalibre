@@ -418,11 +418,11 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
     },
   ];
   return (
-    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
+    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
+        <div key={s.label} className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-          <dd className="m-0 amount text-xl font-semibold">
+          <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
             <AnimatedAmount value={s.value} />
           </dd>
           <dd className="m-0 text-sm text-muted-foreground">{s.detail}</dd>
@@ -459,11 +459,11 @@ function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: Cents
     },
   ];
   return (
-    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
+    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
+        <div key={s.label} className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-          <dd className="m-0 amount text-xl font-semibold">
+          <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
             <AnimatedAmount value={s.value} />
           </dd>
           <dd className="m-0 text-sm text-muted-foreground">{s.detail}</dd>
@@ -565,7 +565,7 @@ function FiltersPanel({
           />
         </div>
       </fieldset>
-      <Button variant="ghost" size="md" onClick={onClear} className="justify-self-start">
+      <Button variant="secondary" size="md" onClick={onClear} className="justify-self-start">
         <X strokeWidth={1.8} aria-hidden="true" />
         Quitar filtros
       </Button>
@@ -682,7 +682,7 @@ function PurchasesTable({
                 className={cn(table.row, "animate-row-in", r.status === "overdue" && "bg-destructive-soft/40")}
                 style={{ "--i": i } as CSSProperties}
               >
-                <td className={cn(td, "font-mono text-sm whitespace-nowrap")}>
+                <td className={cn(td, "whitespace-nowrap tabular-nums")}>
                   <PurchaseLink doc={r.doc} className="text-foreground no-underline hover:text-primary">
                     {r.doc.number}
                   </PurchaseLink>
@@ -716,7 +716,7 @@ function PurchasesTable({
                       <span className="max-w-40 truncate font-medium whitespace-nowrap" title={r.supplier.name}>
                         {r.supplier.name}
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">{r.supplier.taxId}</span>
+                      <span className="text-xs text-muted-foreground tabular-nums">{r.supplier.taxId}</span>
                     </div>
                     <Tooltip>
                       <TooltipTrigger asChild>

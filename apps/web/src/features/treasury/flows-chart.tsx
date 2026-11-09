@@ -6,7 +6,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { MONTHS, MONTHS_SHORT, formatThousands } from "@/lib/format";
 
 const barClass =
-  "origin-bottom animate-grow-up rounded-t-xs [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
+  "origin-bottom animate-grow-up rounded-t-sm [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
 
 export function FlowsChart({ months }: { months: ReturnType<typeof monthlyFlows> }) {
   // Start on the latest month with figures, not on a current month that has barely begun
@@ -37,7 +37,7 @@ export function FlowsChart({ months }: { months: ReturnType<typeof monthlyFlows>
           ] as const
         ).map(([label, value, dot]) => (
           <span key={label} className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <span className={cn("size-2 rounded-xs", dot)} aria-hidden="true" />
+            <span className={cn("size-2 rounded-full", dot)} aria-hidden="true" />
             {label} <span className="amount text-foreground">{formatEUR(value)}</span>
           </span>
         ))}
@@ -45,7 +45,7 @@ export function FlowsChart({ months }: { months: ReturnType<typeof monthlyFlows>
       <div className="flex gap-2.5">
         <div
           aria-hidden="true"
-          className="-mt-1.5 mb-6 flex h-[200px] min-w-10 flex-col justify-between text-right font-mono text-2xs text-muted-foreground"
+          className="-mt-1.5 mb-6 flex h-[200px] min-w-10 flex-col justify-between text-right text-2xs text-muted-foreground tabular-nums"
         >
           <span>{formatThousands(max)}</span>
           <span>{formatThousands(cents(max / 2))}</span>
@@ -100,16 +100,6 @@ export function FlowsChart({ months }: { months: ReturnType<typeof monthlyFlows>
             ))}
           </div>
         </div>
-      </div>
-      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-xs bg-chart-income" aria-hidden="true" />
-          Cobros
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-xs bg-chart-expense" aria-hidden="true" />
-          Pagos
-        </span>
       </div>
     </Card>
   );

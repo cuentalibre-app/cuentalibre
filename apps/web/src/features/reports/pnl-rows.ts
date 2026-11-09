@@ -18,7 +18,7 @@ export type PnlRow =
   | { kind: "account"; label: string; values: [Cents, Cents] }
   | { kind: "result"; label: string; values: [Cents, Cents]; final?: boolean };
 
-/** The rows in Contasimple's order. The extended version lists each account under its line. */
+/** The rows in the report's order. The extended version lists each account under its line. */
 export function pnlRows(current: ProfitAndLoss, previous: ProfitAndLoss, extended: boolean): PnlRow[] {
   const both = (pick: (p: ProfitAndLoss) => Cents): [Cents, Cents] => [pick(current), pick(previous)];
   const accounts = [...new Set([...Object.keys(current.accounts), ...Object.keys(previous.accounts)])].sort();

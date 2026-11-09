@@ -31,11 +31,11 @@ export function CollectionSummary({ data, className }: { data: HomeData; classNa
       ) : (
         <>
           <div className="flex items-center gap-3">
-            <span className="amount shrink-0 text-lg font-medium">{formatPercent(share(byStatus.paid.amount))}</span>
+            <span className="shrink-0 amount text-lg font-medium">{formatPercent(share(byStatus.paid.amount))}</span>
             <div
               role="img"
               aria-label={STATUSES.map((s) => `${s.label}: ${formatEUR(byStatus[s.key].amount)}`).join(", ")}
-              className="flex h-2.5 flex-1 animate-reveal-x gap-0.5 overflow-hidden rounded-xs bg-muted"
+              className="flex h-2 flex-1 animate-reveal-x gap-0.5 overflow-hidden rounded-full bg-muted"
             >
               {STATUSES.map((s) => (
                 <div

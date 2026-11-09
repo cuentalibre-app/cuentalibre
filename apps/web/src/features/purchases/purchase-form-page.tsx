@@ -78,7 +78,7 @@ import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
 import { purchasesStore } from "./purchases-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
-/** Default expense account, as in Contasimple, when the supplier has no previous invoices. */
+/** Default expense account when the supplier has no previous invoices. */
 const DEFAULT_EXPENSE_TYPE: ExpenseType = "600";
 
 /** The form registers received invoices and investment goods, which are received invoices that get amortized. */
@@ -250,7 +250,7 @@ export function PurchaseFormPage({ kind = "invoice" }: { kind?: PurchaseFormKind
       <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrada</h1>
         <p className="m-0 text-muted-foreground">Esta factura no existe o se ha eliminado.</p>
-        <Link to={copy.listPath} className="font-medium text-primary no-underline hover:text-primary-hover">
+        <Link to={copy.listPath} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
           {copy.back}
         </Link>
       </div>
@@ -607,7 +607,10 @@ function PurchaseForm({
                   <button
                     type="button"
                     onClick={() => setCreatingSupplier(true)}
-                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                    className={cn(
+                      buttonVariants({ variant: "secondary", size: "sm" }),
+                      "h-6 px-2.5 text-xs no-underline",
+                    )}
                   >
                     Nuevo proveedor
                   </button>
@@ -630,7 +633,7 @@ function PurchaseForm({
                         .sort((a, b) => a.name.localeCompare(b.name, "es"))
                         .map((s) => (
                           <SelectItem key={s.id} value={s.id}>
-                            {s.name} · <span className="font-mono text-sm">{s.taxId}</span>
+                            {s.name} · <span className="tabular-nums">{s.taxId}</span>
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -649,7 +652,7 @@ function PurchaseForm({
                     {...p}
                     value={form.number}
                     onChange={(e) => set("number", e.target.value)}
-                    className="font-mono"
+                    className="tabular-nums"
                   />
                 )}
               </Field>
@@ -804,7 +807,7 @@ function PurchaseForm({
                   type="button"
                   aria-pressed={advanced}
                   onClick={() => setAdvanced((a) => !a)}
-                  className="flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium text-primary hover:text-primary-hover"
+                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "[&_svg]:size-4")}
                 >
                   <ChevronDown
                     className={cn("size-4 transition-transform duration-200", advanced && "rotate-180")}
@@ -992,7 +995,7 @@ function PurchaseForm({
                       {...p}
                       value={form.customsDocument}
                       onChange={(e) => set("customsDocument", e.target.value)}
-                      className="font-mono"
+                      className="tabular-nums"
                     />
                   )}
                 </Field>
@@ -1034,7 +1037,7 @@ function PurchaseForm({
                         value={form.cadastralRef}
                         onChange={(e) => set("cadastralRef", e.target.value)}
                         disabled={form.rentalLocation === "noCadastralRef" || form.rentalLocation === "abroad"}
-                        className="font-mono"
+                        className="tabular-nums"
                       />
                     )}
                   </Field>
@@ -1275,7 +1278,7 @@ function Payments({
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="md" aria-disabled className="cursor-not-allowed opacity-50">
+            <Button variant="secondary" size="md" aria-disabled className="cursor-not-allowed opacity-50">
               <Landmark strokeWidth={1.8} aria-hidden="true" />
               Elegir movimiento bancario
             </Button>
@@ -1284,13 +1287,7 @@ function Payments({
             Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
           </TooltipContent>
         </Tooltip>
-        <Button
-          type="button"
-          variant="ghost"
-          size="md"
-          className="ml-auto text-primary"
-          onClick={() => setCreatingMethod(true)}
-        >
+        <Button type="button" variant="secondary" size="md" className="ml-auto" onClick={() => setCreatingMethod(true)}>
           <Plus aria-hidden="true" />
           Nuevo método
         </Button>

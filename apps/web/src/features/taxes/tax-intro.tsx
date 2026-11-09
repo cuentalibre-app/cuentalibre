@@ -20,7 +20,7 @@ import {
 } from "./taxes-model";
 
 /*
- * Each tax module opens on what its forms are, who files them and when, as Contasimple does;
+ * Each tax module opens on what its forms are, who files them and when;
  * "Calcular datos" opens the calculation on the selected period (?periodo=…).
  */
 
@@ -115,7 +115,7 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
           className="flex animate-rise-in flex-col gap-4 rounded-xl border border-border bg-card p-5"
           style={{ "--i": i } as CSSProperties}
         >
-          <h2 id={`modelo-${f.code}`} className="m-0 text-lg font-semibold">
+          <h2 id={`modelo-${f.code}`} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
             {FACTS[f.code].title}
           </h2>
           <FormFactsList form={f.code} />

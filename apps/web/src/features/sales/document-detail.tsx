@@ -61,7 +61,7 @@ export function SalesDocumentLink({
   );
 }
 
-/** Basic information of an invoice, draft, quote or delivery note, as Contasimple's "Detalle de la factura". */
+/** Basic information of an invoice, draft, quote or delivery note. */
 export function SalesDocumentDialog({
   doc,
   onOpenChange,
@@ -101,7 +101,7 @@ export function SalesDocumentDialog({
           <DetailList
             items={[
               ["Periodo", periodCode(quarterOfDate(current.issuedOn))],
-              ["Número", current.number && <span className="font-mono">{current.number}</span>],
+              ["Número", current.number && <span className="tabular-nums">{current.number}</span>],
               ["Fecha", formatDate(current.issuedOn)],
               ...(config.dueLabel
                 ? [[config.dueLabel, current.dueOn && formatDate(current.dueOn)] as [string, ReactNode]]
@@ -145,7 +145,7 @@ export function SalesDocumentDialog({
 
         <DetailFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cerrar</Button>
+            <Button variant="secondary">Cerrar</Button>
           </DialogClose>
           <Button
             variant="secondary"

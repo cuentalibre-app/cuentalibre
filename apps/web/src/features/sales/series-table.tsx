@@ -72,14 +72,14 @@ export function SeriesTable() {
     <>
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
-          <thead className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
+          <thead className="text-xs text-foreground">
             <tr>
               {HEADERS.map((h) => (
-                <th key={h} scope="col" className="px-3 py-2.5 font-medium">
+                <th key={h} scope="col" className="border-l border-border px-3 py-2.5 font-semibold first:border-l-0">
                   {h}
                 </th>
               ))}
-              <th scope="col" className="px-3 py-2.5 font-medium">
+              <th scope="col" className="border-l border-border px-3 py-2.5 font-semibold first:border-l-0">
                 <span className="sr-only">Acciones</span>
               </th>
             </tr>
@@ -89,15 +89,28 @@ export function SeriesTable() {
               const active = s.active !== false;
               return (
                 <tr key={s.id} className="border-t border-divider">
-                  <td className="px-3 py-2.5">
+                  <td className="border-l border-border px-3 py-2.5 first:border-l-0">
                     <Badge tone={active ? "success" : "neutral"}>{active ? "Activa" : "Inactiva"}</Badge>
                   </td>
-                  <td className="px-3 py-2.5">{SERIES_TYPES.find((t) => t.value === s.type)!.label}</td>
-                  <td className={cn("px-3 py-2.5 font-medium", !active && "text-muted-foreground")}>{s.name}</td>
-                  <td className="px-3 py-2.5">{s.type === "normal" && isDefault(s) && <DefaultMark />}</td>
-                  <td className="px-3 py-2.5">{s.type === "rectifying" && isDefault(s) && <DefaultMark />}</td>
-                  <td className="px-3 py-2.5 font-mono">{s.mask}</td>
-                  <td className="px-3 py-1.5">
+                  <td className="border-l border-border px-3 py-2.5 first:border-l-0">
+                    {SERIES_TYPES.find((t) => t.value === s.type)!.label}
+                  </td>
+                  <td
+                    className={cn(
+                      "border-l border-border px-3 py-2.5 font-medium first:border-l-0",
+                      !active && "text-muted-foreground",
+                    )}
+                  >
+                    {s.name}
+                  </td>
+                  <td className="border-l border-border px-3 py-2.5 first:border-l-0">
+                    {s.type === "normal" && isDefault(s) && <DefaultMark />}
+                  </td>
+                  <td className="border-l border-border px-3 py-2.5 first:border-l-0">
+                    {s.type === "rectifying" && isDefault(s) && <DefaultMark />}
+                  </td>
+                  <td className="border-l border-border px-3 py-2.5 tabular-nums first:border-l-0">{s.mask}</td>
+                  <td className="border-l border-border px-3 py-1.5 first:border-l-0">
                     <span className="flex justify-end gap-0.5">
                       <IconAction
                         action={{ label: `Editar serie ${s.name}`, icon: Pencil, run: () => setEditing(s) }}
