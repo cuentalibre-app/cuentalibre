@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BookOpen, Globe } from "lucide-react";
+import { BookOpen, ChevronDown, Globe } from "lucide-react";
 import { table } from "@cuentalibre/ui/lib/table";
 import { AEAT_LINKS, type FormCode } from "./taxes-model";
 
@@ -301,24 +301,24 @@ export function FormFactsList({ form }: { form: FormCode }) {
   const facts = FACTS[form];
   return (
     <div className="flex flex-col gap-4">
-      <dl className="m-0 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[9rem_minmax(0,1fr)]">
-        <dt className="font-medium">Descripción</dt>
-        <dd className="m-0 flex flex-col gap-2 text-muted-foreground">
+      <dl className="m-0 grid gap-x-6 gap-y-4 text-[0.9375rem] leading-relaxed sm:grid-cols-[10rem_minmax(0,1fr)]">
+        <dt className="font-semibold">Descripción</dt>
+        <dd className="m-0 flex flex-col gap-2.5 text-foreground/85">
           {facts.description.map((p, i) => (
             <p key={i} className="m-0">
               {p}
             </p>
           ))}
         </dd>
-        <dt className="font-medium">Tipo de modelo</dt>
-        <dd className="m-0 text-muted-foreground">{facts.kind}</dd>
-        <dt className="font-medium">Periodicidad</dt>
-        <dd className="m-0 text-muted-foreground">{facts.periodicity}</dd>
-        <dt className="font-medium">Plazos</dt>
-        <dd className="m-0 text-muted-foreground">
+        <dt className="font-semibold">Tipo de modelo</dt>
+        <dd className="m-0 text-foreground/85">{facts.kind}</dd>
+        <dt className="font-semibold">Periodicidad</dt>
+        <dd className="m-0 text-foreground/85">{facts.periodicity}</dd>
+        <dt className="font-semibold">Plazos</dt>
+        <dd className="m-0 text-foreground/85">
           {Array.isArray(facts.deadlines) ? (
             <div className="overflow-hidden rounded-lg border border-border">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr className={table.headRow}>
                     <th className={table.th}>Trimestre</th>
@@ -345,10 +345,10 @@ export function FormFactsList({ form }: { form: FormCode }) {
           )}
         </dd>
       </dl>
-      <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+      <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[0.9375rem]">
         {facts.links.map((l) => (
           <li key={l.href} className="flex items-start gap-2">
-            <Globe className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+            <Globe className="mt-1 size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
             <ExternalLink href={l.href}>{l.label}</ExternalLink>
           </li>
         ))}
@@ -357,20 +357,25 @@ export function FormFactsList({ form }: { form: FormCode }) {
   );
 }
 
-/** The same facts next to the computed boxes, folded away, with the steps to file it. */
+/** The same facts next to the computed boxes, with the steps to file it; open by default, foldable. */
 export function FormInfo({ form }: { form: FormCode }) {
   const facts = FACTS[form];
   return (
-    <details className="group rounded-xl border border-border px-4 py-3 text-sm">
-      <summary className="flex cursor-pointer list-none items-center gap-2 font-medium [&::-webkit-details-marker]:hidden">
-        <BookOpen className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+    <details open className="group rounded-xl border border-border bg-card px-5 py-4">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold [&::-webkit-details-marker]:hidden">
+        <BookOpen className="size-4.5 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         Sobre el modelo {form} y cómo presentarlo
+        <ChevronDown
+          className="ml-auto size-4 text-muted-foreground transition-transform duration-150 group-open:rotate-180"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </summary>
-      <div className="mt-3 flex flex-col gap-4">
+      <div className="mt-4 flex flex-col gap-5">
         <FormFactsList form={form} />
-        <div className="flex flex-col gap-1.5">
-          <span className="font-medium">Cómo presentarlo</span>
-          <ol className="m-0 flex flex-col gap-0.5 pl-4 text-muted-foreground">
+        <div className="flex flex-col gap-2 text-[0.9375rem] leading-relaxed">
+          <span className="font-semibold">Cómo presentarlo</span>
+          <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-foreground/85 marker:text-muted-foreground">
             {facts.steps.map((s) => (
               <li key={s}>{s}</li>
             ))}
