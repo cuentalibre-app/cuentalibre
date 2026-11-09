@@ -202,7 +202,7 @@ export function ThirdPartiesPage() {
             books={books}
             empty={
               <>
-                Según los datos introducidos no existe ninguna operación a declarar.
+                No hay operaciones que declarar este año.
                 <br />
                 No es necesario que presentes el modelo 347.
               </>
