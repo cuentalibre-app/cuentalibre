@@ -1,6 +1,6 @@
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ArrowRight, Calendar, ChevronDown, ChevronRight, Settings } from "lucide-react";
+import { Calendar, CalendarDays, ChevronDown, ChevronRight, Settings } from "lucide-react";
 import {
   cents,
   daysUntil,
@@ -16,6 +16,7 @@ import {
   sumBy,
   vatReturns,
   type Cents,
+  type Deadline,
   type Quarter,
 } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
@@ -67,6 +68,24 @@ function useYearReturns(year: number) {
   }, [books, year]);
 }
 
+/** Short name for a filing in the next-deadline list; the model number goes in its own chip. */
+function filingName(d: Deadline): string {
+  if (d.kind === "vat-303") return `IVA del ${d.quarter}.º trimestre`;
+  if (d.kind === "irpf-130") return `IRPF del ${d.quarter}.º trimestre`;
+  if (d.kind === "vat-390") return "Resumen anual de IVA";
+  return deadlineTitle(d);
+}
+
+const FORM_CODE: Partial<Record<Deadline["kind"], string>> = { "vat-303": "303", "irpf-130": "130", "vat-390": "390" };
+
+function FormCode({ code }: { code: string }) {
+  return (
+    <span className="inline-flex w-10 shrink-0 justify-center rounded-sm bg-primary-soft py-0.5 text-xs font-semibold text-primary tabular-nums">
+      {code}
+    </span>
+  );
+}
+
 function NextFiling({ today }: { today: Date }) {
   const books = useTaxBooks();
   const next = upcomingDeadlines(today, 10).filter((d) => d.kind !== "social-security");
@@ -84,40 +103,50 @@ function NextFiling({ today }: { today: Date }) {
     }
     return { d, amount: null, to: modelPath(VAT_PATH, { year: d.year, quarter: null }) };
   });
+  const total = sumBy(items, (i) => cents(Math.max(0, i.amount ?? 0)));
   const days = daysUntil(today, first.date);
 
   return (
     <section
-      aria-label="Próxima presentación"
-      className="flex animate-rise-in flex-col gap-4 rounded-xl border border-border bg-card p-5 lg:flex-row lg:items-center lg:justify-between"
+      aria-labelledby="next-filing-title"
+      className="animate-rise-in overflow-hidden rounded-xl border border-border bg-card"
     >
-      <div className="flex items-center gap-4">
-        <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-warning-soft py-1.5 text-warning">
-          <span className="text-xl font-semibold">{first.date.getDate()}</span>
-          <span className="text-2xs uppercase">{MONTHS_SHORT[first.date.getMonth()]}</span>
+      <div className="flex flex-wrap items-center justify-between gap-4 p-5">
+        <div className="flex items-center gap-4">
+          <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-warning-soft py-1.5 text-warning">
+            <span className="text-xl font-semibold">{first.date.getDate()}</span>
+            <span className="text-2xs">{MONTHS_SHORT[first.date.getMonth()]}</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <h2 id="next-filing-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+              Próxima presentación
+            </h2>
+            <span className="text-sm font-semibold text-warning">{daysLeftLabel(days)}</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm text-muted-foreground">Próxima presentación</span>
-          <span className="font-semibold">{sameDay.map(deadlineTitle).join(" y ")}</span>
-          <span className="text-xs font-semibold text-warning">{daysLeftLabel(days)}</span>
+        <div className="flex flex-col items-start sm:items-end">
+          <span className="text-sm text-muted-foreground">A ingresar</span>
+          <span className="amount text-2xl font-semibold tracking-tight">{formatEUR(total)}</span>
         </div>
       </div>
-      <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:flex-row lg:gap-3">
+      <ul className="m-0 list-none border-t border-border p-0">
         {items.map(({ d, amount, to }) => (
-          <li key={d.kind}>
+          <li key={d.kind} className="border-b border-divider last:border-b-0">
             <Link
               to={to}
-              className="flex items-center justify-between gap-4 rounded-lg border border-border px-3.5 py-2.5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.98] lg:min-w-56"
+              className="group flex items-center gap-3 px-5 py-3 text-foreground no-underline transition-colors duration-150 hover:bg-accent"
             >
-              <span className="flex flex-col">
-                <span className="text-xs text-muted-foreground">{deadlineTitle(d).split(" · ")[0]}</span>
-                {amount === null ? (
-                  <span className="text-sm text-muted-foreground">Informativo</span>
-                ) : (
-                  <VatAmount amount={amount} />
-                )}
-              </span>
-              <ArrowRight className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+              <FormCode code={FORM_CODE[d.kind] ?? ""} />
+              <span className="flex-1 font-medium">{filingName(d)}</span>
+              {amount === null ? (
+                <span className="text-sm text-muted-foreground">Informativo</span>
+              ) : (
+                <VatAmount amount={amount} />
+              )}
+              <ChevronRight
+                className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
             </Link>
           </li>
         ))}
@@ -140,64 +169,79 @@ function QuarterStatus({ year, quarter, today }: { year: number; quarter: Quarte
   );
 }
 
-function QuartersTable({ year, today }: { year: number; today: Date }) {
+function SectionTitle({ id, children }: { id: string; children: ReactNode }) {
+  return (
+    <h2 id={id} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+      {children}
+    </h2>
+  );
+}
+
+function QuartersTable({ year, today, yearSelect }: { year: number; today: Date; yearSelect: ReactNode }) {
   const { vat, income } = useYearReturns(year);
   const rows = QUARTERS.map((quarter) => {
     const v = vat[quarter - 1]!.result;
     const i = cents(Math.max(0, income.quarters[quarter - 1]!.result));
-    return { quarter, vat: v, irpf: i, total: cents(Math.max(0, v) + i), deadline: filingDeadline(year, quarter) };
+    const status = filingStatus(year, quarter, today);
+    return {
+      quarter,
+      vat: v,
+      irpf: i,
+      total: cents(Math.max(0, v) + i),
+      deadline: filingDeadline(year, quarter),
+      current: status === "open" || status === "inProgress",
+    };
   });
   const totals = {
     vat: sumBy(rows, (r) => cents(Math.max(0, r.vat))),
     irpf: sumBy(rows, (r) => r.irpf),
     total: sumBy(rows, (r) => r.total),
   };
-  const th = cn(table.th, "px-3");
-  const td = cn(table.td, "px-3");
+  const th = cn(table.th, "px-4");
+  const td = cn(table.td, "px-4");
   const linkClass = "inline-flex items-center gap-1 text-foreground no-underline hover:text-primary";
 
   return (
     <section
       aria-labelledby="quarters-title"
-      className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+      className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 1 } as CSSProperties}
     >
-      <div className="flex items-baseline justify-between lg:px-4 lg:pt-3">
-        <h2 id="quarters-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
-          Trimestres de {year}
-        </h2>
-        <span className="text-xs text-muted-foreground">Lo que sale a ingresar en cada presentación</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <SectionTitle id="quarters-title">Trimestres</SectionTitle>
+        {yearSelect}
       </div>
 
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[760px] border-collapse">
+      <div className="hidden overflow-x-auto rounded-xl border border-border lg:block">
+        <table className="w-full min-w-[720px] border-collapse">
           <thead>
             <tr className={table.headRow}>
               <th scope="col" className={th}>
                 Trimestre
               </th>
               <th scope="col" className={cn(th, "text-right")}>
-                IVA · 303
+                IVA (303)
               </th>
               <th scope="col" className={cn(th, "text-right")}>
-                IRPF · 130
+                IRPF (130)
               </th>
               <th scope="col" className={cn(th, "text-right")}>
-                Total a ingresar
+                A ingresar
               </th>
               <th scope="col" className={th}>
                 Plazo
-              </th>
-              <th scope="col" className={th}>
-                Estado
               </th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={r.quarter} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
+              <tr
+                key={r.quarter}
+                className={cn(table.row, "animate-row-in", r.current && "bg-primary-soft/40")}
+                style={{ "--i": i } as CSSProperties}
+              >
                 <td className={td}>
-                  <span className="font-medium">T{r.quarter}</span>{" "}
+                  <span className="font-semibold">T{r.quarter}</span>{" "}
                   <span className="text-sm text-muted-foreground">{periodRange({ year, quarter: r.quarter })}</span>
                 </td>
                 <td className={cn(td, "text-right")}>
@@ -214,11 +258,11 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
                   </Link>
                 </td>
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
-                <td className={cn(td, "whitespace-nowrap text-muted-foreground")}>
-                  {formatDate(toIsoDate(r.deadline))}
-                </td>
                 <td className={td}>
-                  <QuarterStatus year={year} quarter={r.quarter} today={today} />
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="whitespace-nowrap text-muted-foreground">{formatDate(toIsoDate(r.deadline))}</span>
+                    <QuarterStatus year={year} quarter={r.quarter} today={today} />
+                  </span>
                 </td>
               </tr>
             ))}
@@ -229,7 +273,7 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
               <td className={cn(td, "text-right amount")}>{formatEUR(totals.vat)}</td>
               <td className={cn(td, "text-right amount")}>{formatEUR(totals.irpf)}</td>
               <td className={cn(td, "text-right amount")}>{formatEUR(totals.total)}</td>
-              <td className={td} colSpan={2} />
+              <td className={td} />
             </tr>
           </tfoot>
         </table>
@@ -237,7 +281,13 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
 
       <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:hidden">
         {rows.map((r) => (
-          <li key={r.quarter} className="flex flex-col gap-3 rounded-xl border border-border p-4">
+          <li
+            key={r.quarter}
+            className={cn(
+              "flex flex-col gap-3 rounded-xl border border-border p-4",
+              r.current && "border-primary/40 bg-primary-soft/40",
+            )}
+          >
             <div className="flex items-center justify-between">
               <span>
                 <span className="font-semibold">T{r.quarter}</span>{" "}
@@ -250,19 +300,19 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
                 to={modelPath(VAT_PATH, { year, quarter: r.quarter })}
                 className="flex flex-col gap-0.5 rounded-lg bg-muted px-3 py-2 text-foreground no-underline active:scale-[0.98]"
               >
-                <span className="text-xs text-muted-foreground">IVA · 303</span>
+                <span className="text-xs text-muted-foreground">IVA (303)</span>
                 <VatAmount amount={r.vat} />
               </Link>
               <Link
                 to={modelPath(INCOME_TAX_PATH, { year, quarter: r.quarter })}
                 className="flex flex-col gap-0.5 rounded-lg bg-muted px-3 py-2 text-foreground no-underline active:scale-[0.98]"
               >
-                <span className="text-xs text-muted-foreground">IRPF · 130</span>
+                <span className="text-xs text-muted-foreground">IRPF (130)</span>
                 <span className="amount">{formatEUR(r.irpf)}</span>
               </Link>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Plazo hasta el {formatDate(toIsoDate(r.deadline))}</span>
+              <span className="text-muted-foreground">Hasta el {formatDate(toIsoDate(r.deadline))}</span>
               <span className="amount font-semibold">{formatEUR(r.total)}</span>
             </div>
           </li>
@@ -289,7 +339,7 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
       figure: formatEUR(vatPaid),
       caption: "ingresado en los 303 del año",
       when: (
-        <span className="flex items-center gap-2">
+        <span className="flex items-center justify-between gap-2">
           Hasta el {formatDate(toIsoDate(filingDeadline(year, null)))}
           <QuarterStatus year={year} quarter={null} today={today} />
         </span>
@@ -297,50 +347,54 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
     },
     {
       code: "100",
-      title: "Renta: actividad económica",
+      title: "Renta, actividad económica",
       to: modelPath(INCOME_TAX_PATH, { year, quarter: null }),
       figure: formatEUR(annual.netIncome),
-      caption: `de rendimiento neto · ${formatEUR(prepaid)} ya adelantados`,
-      when: <span>Campaña de abril a junio de {year + 1}</span>,
+      caption: `de rendimiento neto, con ${formatEUR(prepaid)} ya adelantados`,
+      when: <span>De abril a junio de {year + 1}</span>,
     },
   ];
 
   return (
     <section
-      aria-label="Modelos anuales"
-      className="grid animate-rise-in gap-3 lg:grid-cols-2"
+      aria-labelledby="annual-title"
+      className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 2 } as CSSProperties}
     >
-      {cards.map((c) => (
-        <Link
-          key={c.code}
-          to={c.to}
-          className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.99]"
-        >
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2.5">
-              <span className="rounded-sm bg-primary-soft px-1.5 py-0.5 text-xs font-semibold text-primary tabular-nums">
-                {c.code}
+      <SectionTitle id="annual-title">Declaraciones anuales</SectionTitle>
+      <div className="grid gap-3 lg:grid-cols-2">
+        {cards.map((c) => (
+          <Link
+            key={c.code}
+            to={c.to}
+            className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.99]"
+          >
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2.5">
+                <FormCode code={c.code} />
+                <span className="font-semibold">{c.title}</span>
               </span>
-              <span className="font-semibold">{c.title}</span>
-            </span>
-            <ChevronRight
-              className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <span className="amount text-xl font-semibold">{c.figure}</span>
-            <span className="text-xs text-muted-foreground">{c.caption}</span>
-          </div>
-          <div className="text-sm text-muted-foreground">{c.when}</div>
-        </Link>
-      ))}
+              <ChevronRight
+                className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="amount text-xl font-semibold">{c.figure}</span>
+              <span className="text-xs text-muted-foreground">{c.caption}</span>
+            </div>
+            <div className="border-t border-divider pt-3 text-sm text-muted-foreground">{c.when}</div>
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }
 
-/** Withholding and informative forms: what the books give for the year and where to check them. */
+/**
+ * Withholding and informative forms. The ones the year's documents require come first with
+ * their figure; the rest stay as quiet rows so they can still be opened.
+ */
 function OtherForms({ year }: { year: number }) {
   const inUse = useFormsInUse()(year);
   const books = usePartyBooks();
@@ -360,7 +414,7 @@ function OtherForms({ year }: { year: number }) {
       title: "Retenciones de facturas recibidas",
       path: WITHHOLDINGS_PATH,
       figure: formatEUR(figures.withholdings.withholding),
-      caption: `retenido en el año · ${count(figures.withholdings.perceptors.length, "perceptor", "perceptores")}`,
+      caption: `retenido a ${count(figures.withholdings.perceptors.length, "perceptor", "perceptores")}`,
       applies: inUse.withholdings,
     },
     {
@@ -368,7 +422,7 @@ function OtherForms({ year }: { year: number }) {
       title: "Retenciones de alquileres",
       path: RENTALS_PATH,
       figure: formatEUR(figures.rentals.withholding),
-      caption: `retenido en el año · ${count(figures.rentals.landlords.length, "arrendador", "arrendadores")}`,
+      caption: `retenido a ${count(figures.rentals.landlords.length, "arrendador", "arrendadores")}`,
       applies: inUse.rentals,
     },
     {
@@ -384,10 +438,10 @@ function OtherForms({ year }: { year: number }) {
       title: "Operaciones intracomunitarias",
       path: INTRA_EU_PATH,
       figure: formatEUR(figures.intra.total),
-      caption: `de base en el año · ${count(figures.intra.operators, "operador", "operadores")}`,
+      caption: `de base con ${count(figures.intra.operators, "operador", "operadores")}`,
       applies: inUse.intraEu,
     },
-  ];
+  ].sort((a, b) => Number(b.applies) - Number(a.applies));
 
   return (
     <section
@@ -395,20 +449,21 @@ function OtherForms({ year }: { year: number }) {
       className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 3 } as CSSProperties}
     >
-      <div className="flex items-baseline justify-between">
-        <h2 id="other-forms-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
-          Otros modelos
-        </h2>
-        <span className="text-xs text-muted-foreground">Retenciones y declaraciones informativas</span>
-      </div>
-      <ul className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-4">
+      <SectionTitle id="other-forms-title">Retenciones e informativas</SectionTitle>
+      <ul className="m-0 list-none overflow-hidden rounded-xl border border-border bg-card p-0">
         {forms.map((f) => {
           const [quarterly, yearly] = f.codes;
           return (
-            <li key={f.title} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">{f.title}</span>
-                {f.applies ? (
+            <li
+              key={f.title}
+              className="flex flex-col gap-3 border-b border-divider px-5 py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-6"
+            >
+              <div className="flex flex-1 flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                <span className={cn("font-medium", !f.applies && "text-muted-foreground")}>{f.title}</span>
+                {!f.applies && (
+                  <span className="w-full text-sm text-muted-foreground sm:hidden">No te afecta en {year}</span>
+                )}
+                {f.applies && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span tabIndex={0}>
@@ -417,31 +472,33 @@ function OtherForms({ year }: { year: number }) {
                     </TooltipTrigger>
                     <TooltipContent className="max-w-60">Tienes documentos de {year} que lo requieren.</TooltipContent>
                   </Tooltip>
-                ) : (
-                  <Badge>No te afecta</Badge>
                 )}
               </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="amount text-lg font-semibold">{f.figure}</span>
-                <span className="text-xs text-muted-foreground">{f.caption}</span>
+              <div className={cn("flex flex-col sm:w-52 sm:items-end", !f.applies && "hidden sm:flex")}>
+                {f.applies ? (
+                  <>
+                    <span className="amount font-semibold">{f.figure}</span>
+                    <span className="text-xs text-muted-foreground">{f.caption}</span>
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">No te afecta en {year}</span>
+                )}
               </div>
-              <div className="mt-auto flex flex-wrap gap-1.5">
-                {quarterly ? (
+              <div className="flex gap-1.5 sm:w-64 sm:justify-end">
+                {quarterly && (
                   <Link
                     to={modelPath(f.path, quarter)}
                     className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
                   >
-                    Trimestral · {quarterly}
+                    Trimestral ({quarterly})
                   </Link>
-                ) : (
-                  <span className="px-1 py-1 text-xs text-muted-foreground">Sin modelo trimestral</span>
                 )}
                 {yearly && (
                   <Link
                     to={modelPath(f.path, { year, quarter: null })}
                     className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
                   >
-                    Anual · {yearly}
+                    Anual ({yearly})
                   </Link>
                 )}
               </div>
@@ -458,55 +515,61 @@ export function TaxesSummaryPage() {
   const [period, setPeriod] = usePeriod(today);
   const year = period.year;
 
+  const yearSelect = (
+    <Select
+      value={String(year)}
+      onValueChange={(y) =>
+        setPeriod(period.quarter === null ? { year: Number(y), quarter: null } : quarterOf(Number(y), today))
+      }
+    >
+      <SelectTrigger aria-label={`Ejercicio ${year}`} className="min-w-36">
+        <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+        <span className="flex-1 text-center">
+          <SelectValue />
+        </span>
+        <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+      </SelectTrigger>
+      <SelectContent>
+        {availableYears.map((y) => (
+          <SelectItem key={y} value={String(y)}>
+            Ejercicio {y}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-col gap-6 px-5 pt-6 pb-8 lg:gap-8 lg:px-8 lg:pt-6">
+        <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Impuestos</h1>
             <p className="m-0 text-sm text-muted-foreground">
               Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link to={CALENDAR_PATH} className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
-              <Calendar strokeWidth={1.8} aria-hidden="true" />
+          <nav aria-label="Atajos de impuestos" className="-ml-3 flex flex-wrap gap-1 lg:ml-0">
+            <Link
+              to={CALENDAR_PATH}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground no-underline")}
+            >
+              <CalendarDays strokeWidth={1.8} aria-hidden="true" />
               Calendario fiscal
             </Link>
             <SettingsLink
               from="Impuestos"
               to={TAX_SETTINGS_PATH}
-              className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-muted-foreground no-underline")}
             >
               <Settings strokeWidth={1.8} aria-hidden="true" />
               Configurar impuestos
             </SettingsLink>
-            <Select
-              value={String(year)}
-              onValueChange={(y) =>
-                setPeriod(period.quarter === null ? { year: Number(y), quarter: null } : quarterOf(Number(y), today))
-              }
-            >
-              <SelectTrigger aria-label={`Ejercicio ${year}`} className="min-w-32">
-                <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-                <span className="flex-1 text-center">
-                  <SelectValue />
-                </span>
-                <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableYears.map((y) => (
-                  <SelectItem key={y} value={String(y)}>
-                    Ejercicio {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          </nav>
         </header>
 
         <NextFiling today={today} />
-        <QuartersTable year={year} today={today} />
+        <QuartersTable year={year} today={today} yearSelect={yearSelect} />
         <AnnualForms year={year} today={today} />
         <OtherForms year={year} />
       </div>
