@@ -5,18 +5,22 @@ import { cn } from "../lib/cn";
 /**
  * The one clickable control. Pick a variant for its weight and a size for where it sits:
  * - default (40px) next to inputs and selects, in page headers, toolbars and dialog footers;
- * - `sm` (32px) inside a card or a row, such as "Ver todas";
+ * - `sm` (32px) inside a card or a row;
  * - `xl` (52px) for the main action at the foot of a phone screen;
  * - `icon` / `icon-sm` for a button that is only an icon (give it an aria-label).
  * `chip` is a small pill that toggles (aria-pressed) or picks a preset; `link` is inline text.
+ * A card's "Ver todas" is a <SeeAllLink>, not a button.
  */
 const buttonVariants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap no-underline transition-[color,background-color,border-color,opacity,scale] duration-150 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-[18px] [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-primary font-semibold text-primary-foreground hover:bg-primary-hover",
-        secondary: "border border-input bg-secondary text-secondary-foreground hover:bg-muted",
+        // Lit from above so it has the same depth as the cards around it
+        primary:
+          "bg-primary bg-linear-to-b from-primary-top to-primary font-semibold text-primary-foreground shadow-primary hover:from-primary hover:to-primary-hover",
+        secondary:
+          "border border-border bg-secondary text-secondary-foreground shadow-control hover:border-input hover:bg-muted",
         ghost: "text-foreground hover:bg-accent",
         destructive: "bg-destructive font-semibold text-destructive-foreground hover:opacity-90",
         chip: "border border-input bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary",

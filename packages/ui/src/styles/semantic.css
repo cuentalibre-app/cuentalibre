@@ -22,6 +22,7 @@
   --primary: var(--blue-600);
   --primary-foreground: var(--neutral-0);
   --primary-hover: var(--blue-800);
+  --primary-top: color-mix(in oklab, var(--primary) 84%, white); /* lit top of the primary button */
   --primary-soft: var(--blue-50); /* highlighted period, info notes */
   --selection: var(--blue-200); /* selected text */
   /* Brand gradient: headline accents and calls to action on the site and the sign-in screens */
