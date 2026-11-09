@@ -9,9 +9,10 @@ import {
   provinceFromPostalCode,
 } from "@cuentalibre/core";
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Input } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
+import { Notice } from "@/components/page";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
 import { AddressMap } from "./address-map";
 import type { ContactDraft, DraftErrors } from "./contact-draft";
@@ -139,30 +140,23 @@ function DuplicateTaxIdNotice({
 }) {
   const noun = ROLES[role].noun.replace(/^el /, "");
   return (
-    <div
-      role="status"
-      className="flex flex-col gap-2.5 rounded-lg bg-warning-soft px-3.5 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-    >
-      <p className="m-0 flex min-w-0 items-start gap-2.5">
-        <UsersRound className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={2} aria-hidden="true" />
-        <span className="min-w-0">
+    <Notice role="status" tone="warning" icon={UsersRound}>
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <p className="m-0 min-w-0">
           Ya tienes un {noun} con este NIF:{" "}
           <strong className="font-semibold">{duplicate.name.replace(/\.$/, "")}</strong>.
-        </span>
-      </p>
-      {onUse ? (
-        <Button variant="secondary" size="sm" className="shrink-0 self-start sm:self-auto" onClick={onUse}>
-          Usar este {noun}
-        </Button>
-      ) : (
-        <Link
-          to={contactPath(role, duplicate.id)}
-          className="shrink-0 self-start pl-6.5 font-medium text-foreground underline underline-offset-4 sm:self-auto sm:pl-0"
-        >
-          Abrir su ficha
-        </Link>
-      )}
-    </div>
+        </p>
+        {onUse ? (
+          <Button variant="secondary" size="sm" className="self-start sm:self-auto" onClick={onUse}>
+            Usar este {noun}
+          </Button>
+        ) : (
+          <Link to={contactPath(role, duplicate.id)} className={buttonVariants({ variant: "link" })}>
+            Abrir su ficha
+          </Link>
+        )}
+      </div>
+    </Notice>
   );
 }
 

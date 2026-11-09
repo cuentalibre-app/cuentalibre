@@ -1,13 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { CircleAlert, Loader2, Paperclip } from "lucide-react";
+import { Loader2, Paperclip } from "lucide-react";
 import { Link } from "react-router";
 import type { EmailMessage, EmailSender, SalesDocument } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Checkbox, Input, Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Notice } from "@/components/page";
 import { ApiError } from "@/data/api";
 import { emailSender, emailsOf, sendEmail } from "@/data/email";
 import { VerifyEmailDialog } from "@/features/auth/email-code";
@@ -58,7 +66,7 @@ export function TagsDialog({ doc, title, onOpenChange }: DialogProps & { title: 
           Escribe una etiqueta y pulsa Intro. Las de Configuración › Etiquetas aparecen como sugerencias.
         </DialogDescription>
         <TagsField tags={tags} onChange={setTags} />
-        <div className="flex justify-end gap-2.5 pt-1">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cancelar</Button>
           </DialogClose>
@@ -70,7 +78,7 @@ export function TagsDialog({ doc, title, onOpenChange }: DialogProps & { title: 
           >
             Guardar
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -221,23 +229,19 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
             }}
           >
             {!verified && (
-              <div
-                role="status"
-                className="flex flex-col gap-3 rounded-lg bg-warning-soft px-3 py-2.5 text-sm text-foreground sm:flex-row sm:items-center"
-              >
-                <p className="m-0 flex flex-1 gap-2">
-                  <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" strokeWidth={1.8} aria-hidden="true" />
-                  <span>Verifica tu email para enviar documentos desde cuentalibre.</span>
-                </p>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="self-start sm:self-auto"
-                  onClick={() => setVerifying(true)}
-                >
-                  Verificar mi email
-                </Button>
-              </div>
+              <Notice role="status" tone="warning">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <p className="m-0 flex-1">Verifica tu email para enviar documentos desde cuentalibre.</p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="self-start sm:self-auto"
+                    onClick={() => setVerifying(true)}
+                  >
+                    Verificar mi email
+                  </Button>
+                </div>
+              </Notice>
             )}
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="text-sm font-medium text-muted-foreground">De</span>
@@ -335,11 +339,11 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
             )}
 
             {error && (
-              <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
+              <Notice role="alert" tone="danger">
                 {error}
-              </p>
+              </Notice>
             )}
-            <div className="flex flex-wrap justify-end gap-2.5 pt-1">
+            <DialogFooter>
               <DialogClose asChild>
                 <Button variant="secondary">Cancelar</Button>
               </DialogClose>
@@ -347,7 +351,7 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
                 {sending && <Loader2 className="animate-spin" aria-hidden="true" />}
                 Enviar
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </TooltipProvider>
         <VerifyEmailDialog

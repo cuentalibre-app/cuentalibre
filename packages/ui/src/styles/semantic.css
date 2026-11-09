@@ -10,6 +10,8 @@
   color-scheme: light;
 
   --background: var(--neutral-0);
+  /* Behind the cards on phones, so they stand out from the page */
+  --canvas: var(--neutral-50);
   --foreground: var(--neutral-950);
 
   --card: var(--neutral-0);
@@ -26,6 +28,18 @@
   --brand-violet: var(--violet-500);
   --brand-teal: var(--teal-600);
   --brand-gradient: linear-gradient(90deg, var(--primary) 0%, var(--brand-violet) 55%, var(--brand-teal) 100%);
+  /* Soft wash of the brand colors fixed behind the whole app, top to bottom */
+  --aurora-strength: 1;
+  --aurora:
+    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 20%), transparent), transparent 70%),
+    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--brand-violet) calc(var(--aurora-strength) * 18%), transparent), transparent 70%),
+    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--brand-teal) calc(var(--aurora-strength) * 13%), transparent), transparent 70%),
+    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 15%), transparent), transparent 70%);
+  /* Frosted surfaces floating over the page: the tab bar and its sheets */
+  --glass: color-mix(in oklab, var(--popover) 30%, transparent);
+  --glass-edge: color-mix(in oklab, var(--neutral-0) 70%, transparent);
+  /* Dialogs and bottom sheets: frosted like the tab bar but solid enough for forms */
+  --modal: color-mix(in oklab, var(--popover) 86%, transparent);
 
   --secondary: var(--neutral-0);
   --secondary-foreground: var(--neutral-950);
@@ -52,7 +66,7 @@
   --destructive-foreground: var(--neutral-0);
   --destructive-soft: var(--red-50);
 
-  --sidebar: var(--neutral-50);
+  --sidebar: color-mix(in oklab, var(--neutral-0) 50%, transparent); /* frosted over the page's wash */
   --sidebar-foreground: var(--neutral-950);
   --sidebar-accent: var(--neutral-150);
   --sidebar-accent-foreground: var(--neutral-950);
@@ -75,6 +89,7 @@
   color-scheme: dark;
 
   --background: #131416;
+  --canvas: #0d0e10;
   --foreground: #ededeb;
 
   --card: #18191c;
@@ -89,6 +104,10 @@
   --selection: #34407f;
   --brand-violet: #a08cf4;
   --brand-teal: #4fc0db;
+  --aurora-strength: 1.4;
+  --glass: color-mix(in oklab, #26272b 40%, transparent);
+  --glass-edge: color-mix(in oklab, #ffffff 12%, transparent);
+  --modal: color-mix(in oklab, #1e1f22 90%, transparent);
 
   --secondary: #18191c;
   --secondary-foreground: #ededeb;
@@ -115,7 +134,7 @@
   --destructive-foreground: #2a0d09;
   --destructive-soft: #2e1714;
 
-  --sidebar: #161719;
+  --sidebar: color-mix(in oklab, #18191c 55%, transparent);
   --sidebar-foreground: #ededeb;
   --sidebar-accent: #2b2d31;
   --sidebar-accent-foreground: #ededeb;

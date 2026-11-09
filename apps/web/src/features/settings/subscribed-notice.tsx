@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import { CircleCheck, X } from "lucide-react";
+import { Button } from "@cuentalibre/ui/components/button";
 import { refreshBilling } from "./billing-store";
 
 /**
@@ -26,14 +27,15 @@ export function SubscribedNotice() {
         <strong className="font-semibold text-success">Suscripción activada.</strong> No se cobra nada hasta que acaben
         tus 30 días gratis.
       </span>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-sm"
         aria-label="Cerrar el aviso"
         onClick={() => setShown(false)}
-        className="cursor-pointer border-0 bg-transparent p-0 text-muted-foreground"
+        className="-my-1.5"
       >
-        <X className="size-4" strokeWidth={1.8} aria-hidden="true" />
-      </button>
+        <X aria-hidden="true" />
+      </Button>
     </div>
   );
 }

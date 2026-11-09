@@ -5,6 +5,7 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { formatDate, formatShortDate } from "@/lib/format";
+import { ListGroup, listRowClass } from "@/components/page";
 import { CollectionSummary } from "./collection-summary";
 import type { HomeData, InvoiceStatus } from "./home-data";
 
@@ -20,9 +21,9 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
   return (
     <section
       aria-labelledby="recent-invoices-title"
-      className={cn("flex flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border lg:bg-card", className)}
+      className={cn("flex flex-col lg:overflow-hidden lg:surface", className)}
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1.5 lg:items-center lg:px-5 lg:pt-5 lg:pb-3">
+      <div className="flex items-center justify-between gap-3 pb-2.5 lg:px-5 lg:pt-5 lg:pb-3">
         <h2 id="recent-invoices-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           <span className="lg:hidden">Últimas facturas</span>
           <span className="hidden lg:inline">Últimas facturas emitidas</span>
@@ -68,12 +69,12 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       </div>
 
       {/* Mobile: list */}
-      <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+      <ListGroup className="lg:hidden">
         {data.invoices.slice(0, 3).map((inv) => (
           <li key={inv.id}>
             <Link
               to={`/ventas/facturas/${inv.id}`}
-              className="flex min-h-11 items-center gap-3 border-b border-divider py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60"
+              className={listRowClass}
             >
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate font-medium">{inv.client}</span>
@@ -88,10 +89,10 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
             </Link>
           </li>
         ))}
-      </ul>
+      </ListGroup>
 
       {/* Pinned to the bottom so the card can stretch to match the tax calendar beside it */}
-      <CollectionSummary data={data} className="mt-4 lg:mt-auto lg:border-t lg:border-divider lg:px-5 lg:py-4" />
+      <CollectionSummary data={data} className="hidden lg:mt-auto lg:flex lg:border-t lg:border-divider lg:px-5 lg:py-4" />
     </section>
   );
 }

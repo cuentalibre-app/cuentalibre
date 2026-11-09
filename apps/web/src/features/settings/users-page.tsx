@@ -4,7 +4,14 @@ import { newId } from "@cuentalibre/core";
 import type { CompanyUser, UserKind, UserRole } from "@cuentalibre/contracts";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Input } from "@cuentalibre/ui/components/input";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
@@ -19,6 +26,7 @@ import { formatDate } from "@/lib/format";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { useUserSettings } from "./user-store";
 import { isExpired, ROLES, roleLabel, toCompanyUser, useUsers, usersStore } from "./users-store";
+import { Page } from "@/components/page";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -196,12 +204,12 @@ function UserDialog({
               )}
             </Field>
           )}
-          <div className="flex justify-end gap-2.5 pt-1">
+          <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary">Cancelar</Button>
             </DialogClose>
             <Button type="submit">{user ? "Guardar" : "Enviar invitación"}</Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
@@ -235,7 +243,7 @@ function UsersTable({
       groups={actions(u)}
       trigger={
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" aria-label={`Más opciones de ${u.name}`} className={cn(size, "px-0")}>
+          <Button variant="ghost" size="icon-sm" aria-label={`Más opciones de ${u.name}`} className={size}>
             <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
@@ -255,12 +263,12 @@ function UsersTable({
       </div>
 
       {users.length === 0 ? (
-        <div className="rounded-xl border border-border">
+        <div className="surface">
           <EmptyState {...empty} />
         </div>
       ) : (
         <>
-          <div className="relative hidden overflow-x-auto rounded-xl border border-border lg:block">
+          <div className="relative hidden overflow-x-auto surface lg:block">
             <table className="w-full min-w-[56rem] table-fixed border-collapse">
               <thead>
                 <tr className={table.headRow}>
@@ -310,7 +318,7 @@ function UsersTable({
                         <td className={cn(table.td, "whitespace-nowrap")}>
                           <span className="flex justify-end gap-0.5">
                             <IconAction action={{ label: "Editar usuario", icon: Pencil, run: () => onEdit(u) }} />
-                            {menu(u, "size-8")}
+                            {menu(u, "")}
                           </span>
                         </td>
                       )}
@@ -325,7 +333,7 @@ function UsersTable({
             {users.map((u) => {
               const status = accessStatus(u);
               return (
-                <li key={u.id} className="flex items-start gap-3 rounded-xl border border-border p-4">
+                <li key={u.id} className="flex items-start gap-3 surface p-4">
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-semibold">{u.name}</span>
@@ -377,10 +385,10 @@ function MembersPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-6 px-5 pt-6 pb-8 lg:px-8">
+    <Page>
       <SettingsHeader title="Gestión de usuarios" description="Las personas que tienen acceso a tu empresa." />
       {error && (
-        <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-4 py-3 text-sm text-destructive">
+        <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
           No se han podido cargar los usuarios. Recarga la página para intentarlo de nuevo.
         </p>
       )}
@@ -396,7 +404,7 @@ function MembersPage() {
           empty={{ message: "No hay usuarios", hint: "Invita a quien trabaje contigo." }}
         />
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -428,7 +436,7 @@ function DemoUsersPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-6 px-5 pt-6 pb-8 lg:px-8">
+      <Page>
         <SettingsHeader title="Gestión de usuarios" description="Las personas que tienen acceso a tu empresa.">
           <Button onClick={() => setEditing({ user: null, kind: "member" })}>
             <Plus aria-hidden="true" />
@@ -437,11 +445,8 @@ function DemoUsersPage() {
         </SettingsHeader>
 
         {resent && (
-          <p
-            role="status"
-            className="m-0 flex items-center gap-2 rounded-lg bg-success-soft px-4 py-3 text-sm text-success"
-          >
-            <MailCheck className="size-4 shrink-0" aria-hidden="true" />
+          <p role="status" className="m-0 flex gap-2 rounded-xl bg-success-soft px-3.5 py-3 text-sm">
+            <MailCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
             Hemos reenviado la invitación a {resent}.
           </p>
         )}
@@ -467,7 +472,7 @@ function DemoUsersPage() {
             message: "Ningún gestor tiene acceso",
             hint: "Invita a tu gestoría para que trabaje sobre tus datos sin pedirte archivos.",
             action: (
-              <Button variant="secondary" size="md" onClick={() => setEditing({ user: null, kind: "advisor" })}>
+              <Button variant="secondary" onClick={() => setEditing({ user: null, kind: "advisor" })}>
                 <UserRound aria-hidden="true" />
                 Invitar a un gestor
               </Button>
@@ -497,7 +502,7 @@ function DemoUsersPage() {
             conservan.
           </p>
         </ConfirmDialog>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

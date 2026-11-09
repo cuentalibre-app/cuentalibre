@@ -1,0 +1,196 @@
+import type { ComponentProps, ReactNode } from "react";
+import { Link, type LinkProps } from "react-router";
+import { ArrowLeft, CircleAlert, CircleCheck, CircleHelp, Info, TriangleAlert, type LucideIcon } from "lucide-react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
+
+/*
+ * The frame every page shares: the same margins, the same header and the same toolbar,
+ * so pages differ only in what they show.
+ */
+
+/** A page's outer frame: side margins and the gap between its blocks. */
+export function Page({ className, ...props }: ComponentProps<"div">) {
+  return <div className={cn("flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8", className)} {...props} />;
+}
+
+/** The round-cornered square arrow at the start of a header that leads one level up. */
+export function BackLink({ label, className, ...props }: LinkProps & { label: string }) {
+  return (
+    <Link
+      aria-label={label}
+      title={label}
+      className={cn(buttonVariants({ variant: "secondary", size: "icon" }), className)}
+      {...props}
+    >
+      <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
+    </Link>
+  );
+}
+
+interface PageHeaderProps {
+  title: ReactNode;
+  /** One line under the title saying what the page is for. */
+  description?: ReactNode;
+  /** A back link before the title, usually a <BackLink>. */
+  back?: ReactNode;
+  /** A small line above the title, such as a breadcrumb. */
+  eyebrow?: ReactNode;
+  /** Controls right after the title, such as the period. */
+  inline?: ReactNode;
+  /** Actions at the end of the header. */
+  actions?: ReactNode;
+  className?: string;
+}
+
+/** Title, optional back link and description on the left; actions on the right. */
+export function PageHeader({ title, description, back, eyebrow, inline, actions, className }: PageHeaderProps) {
+  return (
+    <header className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {back}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {eyebrow}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3">
+            <h1 className="m-0 min-w-0 text-2xl font-semibold tracking-tight text-balance lg:text-3xl">{title}</h1>
+            {inline}
+          </div>
+          {description && <p className="m-0 max-w-[72ch] text-sm text-muted-foreground">{description}</p>}
+        </div>
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2.5">{actions}</div>}
+    </header>
+  );
+}
+
+/**
+ * The row of search, filters and exports above a list. On phones every control grows to fill
+ * its line, so rows never end in a ragged gap; the search takes a line of its own.
+ */
+export function Toolbar({ className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2.5 pb-3 *:max-lg:flex-auto lg:px-4 lg:py-3",
+        "[&>label:first-child]:max-lg:basis-full [&>label:first-child]:lg:max-w-80 [&>label:first-child]:lg:flex-[1_1_220px]",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/** The question mark next to a label that explains it on hover or tap. */
+export function HelpTip({
+  label = "Más información",
+  side,
+  contentClassName,
+  children,
+  className,
+}: {
+  label?: string;
+  side?: ComponentProps<typeof TooltipContent>["side"];
+  /** For long, structured content: a wider box with more padding. */
+  contentClassName?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          className={cn(
+            "inline-grid size-5 cursor-help place-items-center rounded-full border-0 bg-transparent p-0 text-muted-foreground transition-colors duration-150 hover:text-foreground",
+            className,
+          )}
+        >
+          <CircleHelp className="size-3.5" strokeWidth={2} aria-hidden="true" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side={side} className={cn("block max-w-72 leading-snug font-normal", contentClassName)}>
+        {children}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+interface SectionProps {
+  /** Id of the heading, for aria-labelledby. */
+  id: string;
+  title: ReactNode;
+  /** A short line under the title, such as a count or a warning. */
+  subtitle?: ReactNode;
+  /** One small button at the end of the title row, such as "Ver todas". */
+  action?: ReactNode;
+  className?: string;
+  /** Classes for the body; on phones it is the card. */
+  bodyClassName?: string;
+  children: ReactNode;
+}
+
+/**
+ * A titled block of a dashboard. On phones the title sits on the page and the content in a card
+ * under it; on desktop title and content share one card.
+ */
+export function Section({ id, title, subtitle, action, className, bodyClassName, children }: SectionProps) {
+  return (
+    <section aria-labelledby={id} className={cn("flex flex-col gap-2.5 lg:gap-4 lg:surface lg:p-5", className)}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 id={id} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+            {title}
+          </h2>
+          {subtitle}
+        </div>
+        {action}
+      </div>
+      <div className={cn("flex flex-col gap-4 surface p-4 lg:contents", bodyClassName)}>{children}</div>
+    </section>
+  );
+}
+
+/** Rows grouped in one card with rules between them, as phones list things. Children are <li>. */
+export function ListGroup({ className, ...props }: ComponentProps<"ul">) {
+  return (
+    <ul
+      className={cn(
+        "m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 [&>li+li>*]:border-t [&>li+li>*]:border-divider",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/** A tappable row of a ListGroup. */
+export const listRowClass =
+  "flex min-h-14 items-center gap-3 py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60";
+
+const NOTICE_TONES = {
+  muted: { box: "bg-muted", icon: "text-muted-foreground", Icon: Info },
+  info: { box: "bg-primary-soft", icon: "text-primary", Icon: Info },
+  warning: { box: "bg-warning-soft", icon: "text-warning", Icon: TriangleAlert },
+  danger: { box: "bg-destructive-soft", icon: "text-destructive", Icon: CircleAlert },
+  success: { box: "bg-success-soft", icon: "text-success", Icon: CircleCheck },
+} as const;
+
+/** A short message in a soft tinted box with its tone's icon: the one shape for inline notes and warnings. */
+export function Notice({
+  tone = "info",
+  icon,
+  className,
+  children,
+  ...props
+}: ComponentProps<"div"> & { tone?: keyof typeof NOTICE_TONES; icon?: LucideIcon }) {
+  const { box, icon: iconClass, Icon: DefaultIcon } = NOTICE_TONES[tone];
+  const Icon = icon ?? DefaultIcon;
+  return (
+    <div className={cn("flex gap-2 rounded-xl px-3.5 py-3 text-sm text-foreground", box, className)} {...props}>
+      <Icon className={cn("mt-0.5 size-4 shrink-0", iconClass)} strokeWidth={2} aria-hidden="true" />
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}

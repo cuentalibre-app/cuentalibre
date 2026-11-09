@@ -7,6 +7,7 @@ import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
 import { daysLeftLabel, deadlineTitle, MONTHS_SHORT } from "@/lib/format";
 import type { DeadlineItem, HomeData } from "./home-data";
+import { ListGroup, listRowClass } from "@/components/page";
 
 function DateBlock({ date, className }: { date: Date; className?: string }) {
   return (
@@ -35,7 +36,7 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
     <section
       aria-labelledby="tax-calendar-title"
       className={cn(
-        "flex flex-col gap-2 lg:gap-4 lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-5",
+        "flex flex-col gap-2.5 lg:gap-4 lg:surface lg:p-5",
         className,
       )}
     >
@@ -97,14 +98,11 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
         Continuar cierre de trimestre
       </Link>
 
-      {/* Mobile: next two, as cards */}
-      <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:hidden">
+      {/* Mobile: the next two, grouped */}
+      <ListGroup className="lg:hidden">
         {data.deadlines.slice(0, 2).map((item) => (
           <li key={`${item.deadline.kind}-${item.deadline.date.toISOString()}`}>
-            <Link
-              to="/impuestos"
-              className="flex items-center gap-3.5 rounded-xl border border-border p-3.5 text-foreground no-underline transition-[background-color,scale] duration-150 ease-out active:scale-[0.98] active:bg-muted"
-            >
+            <Link to="/impuestos" className={cn(listRowClass, "gap-3.5")}>
               <DateBlock date={item.deadline.date} className="w-10" />
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="font-medium">{deadlineTitle(item.deadline)}</span>
@@ -114,7 +112,7 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
             </Link>
           </li>
         ))}
-      </ul>
+      </ListGroup>
     </section>
   );
 }

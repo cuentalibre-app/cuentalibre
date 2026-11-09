@@ -80,9 +80,7 @@ export function ExportAdvancedPage() {
     <PageShell
       title="Exportación avanzada"
       back={{ to: EXPORT_PATH, label: "exportaciones" }}
-      actions={
-        <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-      }
+      actions={<PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />}
     >
       <Panel
         title="Selecciona la información a exportar"

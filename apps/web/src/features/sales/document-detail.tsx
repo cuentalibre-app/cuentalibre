@@ -6,7 +6,6 @@ import type { SalesDocument } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
-import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatDate, periodCode } from "@/lib/format";
 import {
   AttachmentsSection,
@@ -154,7 +153,7 @@ export function SalesDocumentDialog({
             <FileDown strokeWidth={1.8} aria-hidden="true" />
             Descargar PDF
           </Button>
-          <Link to={`${config.path}/${current.id}`} className={cn(buttonVariants(), "no-underline")}>
+          <Link to={`${config.path}/${current.id}`} className={buttonVariants()}>
             <Pencil strokeWidth={1.8} aria-hidden="true" />
             {isInvoice ? "Ver los datos de la factura" : `Editar ${config.singular.toLowerCase()}`}
           </Link>

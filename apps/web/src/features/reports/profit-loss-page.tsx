@@ -1,6 +1,5 @@
 import { useMemo, useState, type CSSProperties } from "react";
-import { Link } from "react-router";
-import { ArrowLeft, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import {
   PNL_EXPENSE_LINES,
   PNL_INCOME_LINES,
@@ -14,10 +13,11 @@ import {
   type PnlLine,
   type ProfitAndLoss,
 } from "@cuentalibre/core";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { BackLink, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { TopCounterparties } from "@/features/home/top-counterparties";
 import { businessName } from "@/features/settings/settings-model";
@@ -194,45 +194,32 @@ export function ProfitLossPage() {
     );
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link
-            to={REPORTS_PATH}
-            aria-label="Volver a informes"
-            className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-          >
-            <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-          </Link>
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">Pérdidas y ganancias</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              Desde principios de año hasta el periodo elegido, frente al año anterior.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <SegmentedControl
-            label="Versión del informe"
-            value={version}
-            onChange={setVersion}
-            options={[
-              { value: "summary", label: "Resumida" },
-              { value: "extended", label: "Extendida" },
-            ]}
-          />
-          <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-          <Button variant="secondary" onClick={exportPdf}>
-            <Download strokeWidth={1.8} aria-hidden="true" />
-            Exportar PDF
-          </Button>
-        </div>
-      </header>
+    <Page>
+      <PageHeader
+        back={<BackLink to={REPORTS_PATH} label="Volver a informes" />}
+        title="Pérdidas y ganancias"
+        description="Desde principios de año hasta el periodo elegido, frente al año anterior."
+        actions={
+          <>
+            <SegmentedControl
+              label="Versión del informe"
+              value={version}
+              onChange={setVersion}
+              options={[
+                { value: "summary", label: "Resumida" },
+                { value: "extended", label: "Extendida" },
+              ]}
+            />
+            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+            <Button variant="secondary" onClick={exportPdf}>
+              <Download strokeWidth={1.8} aria-hidden="true" />
+              Exportar PDF
+            </Button>
+          </>
+        }
+      />
 
-      <article
-        aria-labelledby="pnl-title"
-        className="flex animate-rise-in flex-col gap-5 rounded-xl border border-border bg-card p-4 sm:p-6 lg:p-8"
-      >
+      <article aria-labelledby="pnl-title" className="flex animate-rise-in flex-col gap-5 surface p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-2 border-b border-foreground pb-3">
           <h2 id="pnl-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
             Informe de pérdidas y ganancias
@@ -296,6 +283,6 @@ export function ProfitLossPage() {
           />
         </section>
       )}
-    </div>
+    </Page>
   );
 }

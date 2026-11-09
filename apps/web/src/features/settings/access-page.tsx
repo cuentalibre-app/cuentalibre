@@ -4,7 +4,14 @@ import { Check, KeyRound, ShieldCheck } from "lucide-react";
 import type { LinkedProvider } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import {
@@ -28,6 +35,7 @@ import { Field, Section } from "@/features/sales/form-fields";
 import { ACCESS_PATH } from "./settings-model";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { userStore, useUserSettings } from "./user-store";
+import { Page } from "@/components/page";
 
 const PROVIDERS: { value: LinkedProvider; label: string }[] = [
   { value: "google", label: "Cuenta de Google" },
@@ -47,7 +55,7 @@ export function AccessPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader title="Credenciales de acceso" description="Configura cómo accedes a cuentalibre." />
 
         {notice && (
@@ -82,11 +90,11 @@ export function AccessPage() {
                 label="Autenticación por código"
                 action={
                   access.twoFactor ? (
-                    <Button variant="secondary" size="md" onClick={() => setDisableOpen(true)}>
+                    <Button variant="secondary" onClick={() => setDisableOpen(true)}>
                       Desactivar
                     </Button>
                   ) : (
-                    <Button variant="secondary" size="md" onClick={() => setTwoFactorOpen(true)}>
+                    <Button variant="secondary" onClick={() => setTwoFactorOpen(true)}>
                       <ShieldCheck aria-hidden="true" />
                       Activar
                     </Button>
@@ -120,11 +128,11 @@ export function AccessPage() {
                     label={label}
                     action={
                       email ? (
-                        <Button variant="secondary" size="md" onClick={() => setUnlink(value)}>
+                        <Button variant="secondary" onClick={() => setUnlink(value)}>
                           Desvincular
                         </Button>
                       ) : (
-                        <Button variant="secondary" size="md" onClick={() => setLinking(value)}>
+                        <Button variant="secondary" onClick={() => setLinking(value)}>
                           Vincular
                         </Button>
                       )
@@ -144,7 +152,7 @@ export function AccessPage() {
             </dl>
           </Section>
         )}
-      </div>
+      </Page>
 
       <TwoFactorDialog
         open={twoFactorOpen}
@@ -230,7 +238,7 @@ function AccountEmailRow() {
         state &&
         !state.verified &&
         state.canSend && (
-          <Button variant="secondary" size="md" onClick={() => setVerifying(true)}>
+          <Button variant="secondary" onClick={() => setVerifying(true)}>
             Verificar email
           </Button>
         )
@@ -254,7 +262,7 @@ function AccountEmailRow() {
         </span>
       )}
       {error && (
-        <span role="alert" className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+        <span role="alert" className="rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
           {error}
         </span>
       )}
@@ -308,7 +316,7 @@ function AccountPasswordRow() {
       label="Contraseña"
       action={
         state && (
-          <Button variant="secondary" size="md" onClick={() => setCreating(true)}>
+          <Button variant="secondary" onClick={() => setCreating(true)}>
             <KeyRound aria-hidden="true" />
             Crear contraseña
           </Button>
@@ -322,7 +330,7 @@ function AccountPasswordRow() {
         </span>
       )}
       {error && (
-        <span role="alert" className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+        <span role="alert" className="rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
           {error}
         </span>
       )}
@@ -356,7 +364,7 @@ function PasswordRow({
     <Row
       label="Contraseña"
       action={
-        <Button variant="secondary" size="md" onClick={() => setOpen(true)}>
+        <Button variant="secondary" onClick={() => setOpen(true)}>
           <KeyRound aria-hidden="true" />
           Cambiar contraseña
         </Button>
@@ -447,7 +455,7 @@ function LinkedAccountsSection() {
         </p>
       )}
       {error && (
-        <p role="alert" className="m-0 max-w-3xl rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+        <p role="alert" className="m-0 max-w-3xl rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -457,11 +465,11 @@ function LinkedAccountsSection() {
             label="Cuenta de Google"
             action={
               google ? (
-                <Button variant="secondary" size="md" onClick={() => setUnlinkOpen(true)}>
+                <Button variant="secondary" onClick={() => setUnlinkOpen(true)}>
                   Desvincular
                 </Button>
               ) : (
-                <Button variant="secondary" size="md" disabled={pending} onClick={() => void link()}>
+                <Button variant="secondary" disabled={pending} onClick={() => void link()}>
                   {pending ? "Un momento…" : "Vincular"}
                 </Button>
               )
@@ -507,14 +515,14 @@ function Row({ label, action, children }: { label: string; action?: ReactNode; c
 
 function DialogActions({ submitLabel, disabled }: { submitLabel: string; disabled?: boolean }) {
   return (
-    <div className="flex justify-end gap-2.5 pt-1">
+    <DialogFooter>
       <DialogClose asChild>
         <Button variant="secondary">Cancelar</Button>
       </DialogClose>
       <Button type="submit" disabled={disabled}>
         {submitLabel}
       </Button>
-    </div>
+    </DialogFooter>
   );
 }
 
@@ -605,7 +613,7 @@ function PasswordDialog({
           {field("next", "Nueva contraseña", "new-password", newPasswordHint(form.next))}
           {field("repeat", "Repite la nueva contraseña", "new-password")}
           {error && (
-            <p role="alert" className="m-0 rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive">
+            <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
               {error}
             </p>
           )}
@@ -697,7 +705,7 @@ function LinkDialog({
           Se abrirá la ventana de {name} para que inicies sesión y autorices a cuentalibre. Después podrás entrar con un
           solo clic.
         </DialogDescription>
-        <div className="flex justify-end gap-2.5 pt-1">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cancelar</Button>
           </DialogClose>
@@ -709,7 +717,7 @@ function LinkDialog({
           >
             Continuar con {name}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -13,7 +13,6 @@ import {
   Pencil,
   Plus,
   ScanText,
-  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -22,7 +21,7 @@ import type { Contact, ExpenseType, PurchaseInvoice } from "@cuentalibre/contrac
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
-import { Input } from "@cuentalibre/ui/components/input";
+import { Input, SearchField } from "@cuentalibre/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -30,6 +29,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
+import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
@@ -232,30 +232,36 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{copy.title}</h1>
-          <div className="hidden gap-2.5 lg:flex">
-            {kind === "invoice" && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {/* aria-disabled keeps the tooltip reachable, unlike disabled */}
-                  <Button variant="secondary" aria-disabled className="cursor-not-allowed opacity-50">
-                    <ScanText strokeWidth={1.8} aria-hidden="true" />
-                    Leer factura con OCR
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-64">
-                  Disponible próximamente: leerá los datos del PDF por ti.
-                </TooltipContent>
-              </Tooltip>
-            )}
-            <Link to={copy.newPath} className={cn(buttonVariants(), "no-underline")}>
-              <Plus strokeWidth={2} aria-hidden="true" />
-              {copy.newLabel}
-            </Link>
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          title={copy.title}
+          actions={
+            <>
+              {kind === "invoice" && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {/* aria-disabled keeps the tooltip reachable, unlike disabled */}
+                    <Button
+                      variant="secondary"
+                      aria-disabled
+                      className="hidden cursor-not-allowed opacity-50 lg:inline-flex"
+                    >
+                      <ScanText strokeWidth={1.8} aria-hidden="true" />
+                      Leer factura con OCR
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-64">
+                    Disponible próximamente: leerá los datos del PDF por ti.
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <Link to={copy.newPath} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
+                <Plus strokeWidth={2} aria-hidden="true" />
+                {copy.newLabel}
+              </Link>
+            </>
+          }
+        />
 
         {kind === "asset" ? (
           <AssetSummary rows={periodRows} amortization={periodAmortization} />
@@ -265,23 +271,18 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
 
         <section
           aria-label={`Listado de ${copy.title.toLowerCase()}`}
-          className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+          className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
           style={{ "--i": 1 } as CSSProperties}
         >
-          <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-            <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-80">
-              <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(e) => set("query", e.target.value)}
-                placeholder="Buscar por número, proveedor, NIF o concepto"
-                aria-label="Buscar"
-                className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
+          <Toolbar>
+            <SearchField
+              value={filters.query}
+              onChange={(e) => set("query", e.target.value)}
+              placeholder="Buscar por número, proveedor, NIF o concepto"
+              aria-label="Buscar"
+            />
             <Select value={filters.status} onValueChange={(v) => set("status", v)}>
-              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44 font-medium">
+              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44">
                 <span className="flex-1 text-left">
                   <SelectValue />
                 </span>
@@ -308,7 +309,6 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
             />
             <Button
               variant="secondary"
-              size="md"
               aria-expanded={showFilters}
               aria-controls="purchase-filters"
               onClick={() => setShowFilters((s) => !s)}
@@ -321,18 +321,16 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
                 </span>
               )}
             </Button>
-            <div className="ml-auto flex gap-2">
-              <Button
-                variant="secondary"
-                size="md"
-                disabled={rows.length === 0}
-                onClick={() => exportCsv(rows, exportName, kind)}
-              >
-                <Download strokeWidth={1.8} aria-hidden="true" />
-                CSV
-              </Button>
-            </div>
-          </div>
+            <Button
+              variant="secondary"
+              className="lg:ml-auto"
+              disabled={rows.length === 0}
+              onClick={() => exportCsv(rows, exportName, kind)}
+            >
+              <Download strokeWidth={1.8} aria-hidden="true" />
+              CSV
+            </Button>
+          </Toolbar>
 
           {showFilters && (
             <FiltersPanel
@@ -353,7 +351,7 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
               }
               action={
                 !filtered && (
-                  <Link to={copy.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}>
+                  <Link to={copy.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
                     <Plus strokeWidth={2} aria-hidden="true" />
                     {copy.newLabel}
                   </Link>
@@ -375,7 +373,7 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
             </>
           )}
         </section>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }
@@ -420,7 +418,7 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
   return (
     <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 lg:p-5">
+        <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
           <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
             <AnimatedAmount value={s.value} />
@@ -461,7 +459,7 @@ function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: Cents
   return (
     <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 lg:p-5">
+        <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
           <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
             <AnimatedAmount value={s.value} />
@@ -565,7 +563,7 @@ function FiltersPanel({
           />
         </div>
       </fieldset>
-      <Button variant="secondary" size="md" onClick={onClear} className="justify-self-start">
+      <Button variant="secondary" onClick={onClear} className="justify-self-start">
         <X strokeWidth={1.8} aria-hidden="true" />
         Quitar filtros
       </Button>
@@ -834,7 +832,7 @@ function ImputableAmounts({ base, vat }: { base: Cents | null; vat: Cents }) {
 
 function PurchasesList({ rows }: { rows: Row[] }) {
   return (
-    <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+    <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
       {rows.map((r, i) => (
         <li
           key={r.doc.id}
@@ -965,7 +963,7 @@ function QuickActions({ row }: { row: Row }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 px-0" aria-label={`Más acciones de ${label}`}>
+                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${label}`}>
                   <ChevronDown strokeWidth={1.8} aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
@@ -988,7 +986,7 @@ function RowActions({ row }: { row: Row }) {
         groups={groups}
         trigger={
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${label}`}>
+            <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${label}`}>
               <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>

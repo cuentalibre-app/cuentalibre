@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CircleAlert, X } from "lucide-react";
+import { Button } from "@cuentalibre/ui/components/button";
 import { ApiError } from "@/data/api";
 import { onCommandError } from "@/data/backend";
 import { refreshBilling } from "@/features/settings/billing-store";
@@ -45,14 +46,15 @@ export function CommandErrorNotice() {
     >
       <CircleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
       <span>{message}</span>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-sm"
         aria-label="Cerrar el aviso"
         onClick={() => setMessage(null)}
-        className="cursor-pointer border-0 bg-transparent p-0 text-destructive"
+        className="-my-1.5"
       >
-        <X className="size-4" strokeWidth={1.8} aria-hidden="true" />
-      </button>
+        <X aria-hidden="true" />
+      </Button>
     </div>
   );
 }

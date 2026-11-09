@@ -137,14 +137,9 @@ export function EmailCode({ email, onVerified, sendFirst = false, onLater, large
       <p className="m-0 text-pretty">
         Te hemos enviado un código de {CODE_LENGTH} cifras a <strong className="break-all">{target}</strong>. Si no lo
         ves, mira en la carpeta de spam.{" "}
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => setChanging(true)}
-          className="cursor-pointer font-medium text-primary hover:text-primary-hover disabled:opacity-50"
-        >
+        <Button variant="link" disabled={pending} onClick={() => setChanging(true)}>
           ¿No es tu email? Cámbialo
-        </button>
+        </Button>
       </p>
       <Field label="Código" error={error ?? undefined}>
         {(p) => (

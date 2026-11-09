@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router";
 import { ArrowRight, X } from "lucide-react";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogDescription, DialogPanel, DialogPortal, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { sessionState } from "@/features/auth/session";
@@ -127,23 +127,24 @@ export function FirstRunTour() {
             <span className="text-xs font-medium text-muted-foreground">
               {`Paso ${step + 1} de ${TOUR_STEPS.length}`}
             </span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon-sm"
               aria-label="Cerrar el recorrido"
               onClick={() => finish("skipped")}
-              className="-my-1.5 -mr-1.5 grid size-8 cursor-pointer place-items-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
+              className="-my-1.5 -mr-1.5"
             >
-              <X className="size-4" strokeWidth={2} aria-hidden="true" />
-            </button>
+              <X strokeWidth={2} aria-hidden="true" />
+            </Button>
           </div>
           <div key={step} className="flex animate-fade-in flex-col gap-1.5">
-            <DialogTitle className="pr-0">{current.title}</DialogTitle>
-            <DialogDescription className="text-base leading-relaxed">{current.body}</DialogDescription>
+            <DialogTitle className="min-h-0 pr-0">{current.title}</DialogTitle>
+            <DialogDescription className="mt-0 text-base leading-relaxed">{current.body}</DialogDescription>
             {current.action && (
               <Link
                 to={current.action.to}
                 onClick={() => finish("finished")}
-                className="inline-flex items-center gap-1 self-start font-medium text-primary no-underline hover:underline"
+                className={cn(buttonVariants({ variant: "link" }), "gap-1 self-start")}
               >
                 {current.action.label}
                 <ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
@@ -163,16 +164,16 @@ export function FirstRunTour() {
           </div>
           <div className="flex items-center gap-2 pt-1">
             {step === 0 ? (
-              <Button variant="secondary" size="md" className="text-muted-foreground" onClick={() => finish("skipped")}>
+              <Button variant="secondary" className="text-muted-foreground" onClick={() => finish("skipped")}>
                 Saltar
               </Button>
             ) : (
-              <Button variant="secondary" size="md" className="-ml-2" onClick={() => goToStep(step - 1)}>
+              <Button variant="secondary" className="-ml-2" onClick={() => goToStep(step - 1)}>
                 Anterior
               </Button>
             )}
             <div className="flex-1" />
-            <Button ref={next} size="md" onClick={() => (last ? finish("finished") : goToStep(step + 1))}>
+            <Button ref={next} onClick={() => (last ? finish("finished") : goToStep(step + 1))}>
               {last ? "Terminar" : step === 0 ? "Empezar" : "Siguiente"}
             </Button>
           </div>

@@ -20,7 +20,8 @@ export function AppLayout() {
       <SubscribedNotice />
       <VerifyEmailBanner />
       <CommandErrorNotice />
-      <div className="flex min-h-dvh">
+      <div className="relative isolate flex min-h-dvh bg-canvas">
+        <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 bg-aurora" />
         <a
           href="#main"
           className="sr-only z-20 rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

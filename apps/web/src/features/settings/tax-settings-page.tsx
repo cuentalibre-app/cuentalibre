@@ -28,6 +28,7 @@ import {
   VAT_REGIMES,
 } from "./settings-model";
 import { settingsStore, useSettings } from "./settings-store";
+import { Page } from "@/components/page";
 
 function ActivityDialog({
   open,
@@ -90,8 +91,8 @@ function ActivitiesTable({
       </ul>
 
       {activities.length === 0 ? (
-        <p className="m-0 flex items-center gap-2 rounded-lg bg-warning-soft px-3 py-2.5 text-sm">
-          <TriangleAlert className="size-4 shrink-0 text-warning" aria-hidden="true" />
+        <p className="m-0 flex gap-2 rounded-xl bg-warning-soft px-3.5 py-3 text-sm">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
           Añade al menos tu actividad principal.
         </p>
       ) : (
@@ -154,7 +155,7 @@ function ActivitiesTable({
           </table>
         </div>
       )}
-      <Button variant="secondary" size="md" className="self-start" onClick={() => setAdding(true)}>
+      <Button variant="secondary" className="self-start" onClick={() => setAdding(true)}>
         <Plus aria-hidden="true" />
         Añadir actividad
       </Button>
@@ -190,7 +191,7 @@ function VariousClients({ value, onChange }: { value: string | null; onChange: (
 
   return (
     <>
-      <p className="m-0 flex max-w-3xl gap-2 rounded-lg bg-primary-soft px-3 py-2.5 text-sm text-foreground">
+      <p className="m-0 flex max-w-3xl gap-2 rounded-xl bg-primary-soft px-3.5 py-3 text-sm text-foreground">
         <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
         Las ventas a clientes sin identificar, o de los que no tienes el NIF, se agrupan en un cliente ficticio llamado
         «Clientes varios». Así sus importes no se declaran en el modelo 347.
@@ -251,7 +252,7 @@ export function TaxSettingsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader
           title="Impuestos"
           description="Tu régimen fiscal decide qué modelos presentas y cómo se calculan."
@@ -307,7 +308,7 @@ export function TaxSettingsPage() {
             </Field>
           </div>
           {notes.length > 0 && (
-            <div role="note" className="flex gap-2 rounded-lg bg-warning-soft px-3 py-2.5 text-sm">
+            <div role="note" className="flex gap-2 rounded-xl bg-warning-soft px-3.5 py-3 text-sm">
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
               <div className="flex flex-col gap-1">
                 <span className="font-medium">cuentalibre todavía no prepara los modelos de este régimen.</span>
@@ -386,7 +387,7 @@ export function TaxSettingsPage() {
         <Section title="Facturas a clientes sin identificar" index={4}>
           <VariousClients value={draft.variousClientsId} onChange={(id) => set("variousClientsId", id)} />
         </Section>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

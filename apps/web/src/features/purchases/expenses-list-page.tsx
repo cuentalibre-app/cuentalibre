@@ -11,7 +11,6 @@ import {
   Paperclip,
   Pencil,
   Plus,
-  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -20,7 +19,7 @@ import type { Expense, OtherPayee } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
-import { Input } from "@cuentalibre/ui/components/input";
+import { Input, SearchField } from "@cuentalibre/ui/components/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -28,6 +27,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
+import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
@@ -172,45 +172,42 @@ export function ExpensesListPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Gastos</h1>
-            <p className="m-0 text-sm text-muted-foreground">
+      <Page>
+        <PageHeader
+          title="Gastos"
+          description={
+            <>
               Lo que pagas sin factura: cuota de autónomos, tasas, comisiones, tickets… ¿Tienes factura?{" "}
-              <Link to={PURCHASES_PATH} className="font-medium text-primary no-underline hover:text-primary-hover">
+              <Link to={PURCHASES_PATH} className={buttonVariants({ variant: "link" })}>
                 Regístrala como factura recibida
               </Link>
               .
-            </p>
-          </div>
-          <Link to={NEW_EXPENSE_PATH} className={cn(buttonVariants(), "hidden no-underline lg:inline-flex")}>
-            <Plus strokeWidth={2} aria-hidden="true" />
-            Nuevo gasto
-          </Link>
-        </header>
+            </>
+          }
+          actions={
+            <Link to={NEW_EXPENSE_PATH} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
+              <Plus strokeWidth={2} aria-hidden="true" />
+              Nuevo gasto
+            </Link>
+          }
+        />
 
         <ExpenseSummary rows={periodRows} />
 
         <section
           aria-label="Listado de gastos"
-          className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+          className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
           style={{ "--i": 1 } as CSSProperties}
         >
-          <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-            <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-80">
-              <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(e) => set("query", e.target.value)}
-                placeholder="Buscar por concepto, proveedor, NIF o número"
-                aria-label="Buscar"
-                className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
+          <Toolbar>
+            <SearchField
+              value={filters.query}
+              onChange={(e) => set("query", e.target.value)}
+              placeholder="Buscar por concepto, proveedor, NIF o número"
+              aria-label="Buscar"
+            />
             <Select value={filters.status} onValueChange={(v) => set("status", v)}>
-              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44 font-medium">
+              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44">
                 <span className="flex-1 text-left">
                   <SelectValue />
                 </span>
@@ -237,7 +234,6 @@ export function ExpensesListPage() {
             />
             <Button
               variant="secondary"
-              size="md"
               aria-expanded={showFilters}
               aria-controls="expense-filters"
               onClick={() => setShowFilters((s) => !s)}
@@ -250,18 +246,16 @@ export function ExpensesListPage() {
                 </span>
               )}
             </Button>
-            <div className="ml-auto flex gap-2">
-              <Button
-                variant="secondary"
-                size="md"
-                disabled={rows.length === 0}
-                onClick={() => exportCsv(rows, exportName)}
-              >
-                <Download strokeWidth={1.8} aria-hidden="true" />
-                CSV
-              </Button>
-            </div>
-          </div>
+            <Button
+              variant="secondary"
+              className="lg:ml-auto"
+              disabled={rows.length === 0}
+              onClick={() => exportCsv(rows, exportName)}
+            >
+              <Download strokeWidth={1.8} aria-hidden="true" />
+              CSV
+            </Button>
+          </Toolbar>
 
           {showFilters && (
             <FiltersPanel
@@ -282,10 +276,7 @@ export function ExpensesListPage() {
               }
               action={
                 !filtered && (
-                  <Link
-                    to={NEW_EXPENSE_PATH}
-                    className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}
-                  >
+                  <Link to={NEW_EXPENSE_PATH} className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
                     <Plus strokeWidth={2} aria-hidden="true" />
                     Nuevo gasto
                   </Link>
@@ -306,7 +297,7 @@ export function ExpensesListPage() {
             </>
           )}
         </section>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }
@@ -340,7 +331,7 @@ function ExpenseSummary({ rows }: { rows: Row[] }) {
   return (
     <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 lg:p-5">
+        <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
           <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
             <AnimatedAmount value={s.value} />
@@ -444,7 +435,7 @@ function FiltersPanel({
           />
         </div>
       </fieldset>
-      <Button variant="secondary" size="md" onClick={onClear} className="justify-self-start">
+      <Button variant="secondary" onClick={onClear} className="justify-self-start">
         <X strokeWidth={1.8} aria-hidden="true" />
         Quitar filtros
       </Button>
@@ -639,7 +630,7 @@ function StatusBadge({ row }: { row: Row }) {
 
 function ExpensesList({ rows }: { rows: Row[] }) {
   return (
-    <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+    <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
       {rows.map((r, i) => (
         <li
           key={r.doc.id}
@@ -759,7 +750,7 @@ function QuickActions({ row }: { row: Row }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="size-8 px-0" aria-label={`Más acciones del ${label}`}>
+                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones del ${label}`}>
                   <ChevronDown strokeWidth={1.8} aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
@@ -782,7 +773,7 @@ function RowActions({ row }: { row: Row }) {
         groups={groups}
         trigger={
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones del ${label}`}>
+            <Button variant="ghost" size="icon-sm" aria-label={`Acciones del ${label}`}>
               <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>

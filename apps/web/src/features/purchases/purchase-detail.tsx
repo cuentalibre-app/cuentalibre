@@ -6,7 +6,6 @@ import type { PurchaseInvoice } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
-import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import {
@@ -137,7 +136,7 @@ export function PurchaseDialog({ doc, onOpenChange }: { doc: PurchaseInvoice; on
           <DialogClose asChild>
             <Button variant="secondary">Cerrar</Button>
           </DialogClose>
-          <Link to={purchasePath(current)} className={cn(buttonVariants(), "no-underline")}>
+          <Link to={purchasePath(current)} className={buttonVariants()}>
             <Pencil strokeWidth={1.8} aria-hidden="true" />
             {locked ? "Ver factura" : "Editar factura"}
           </Link>

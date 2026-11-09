@@ -8,7 +8,14 @@ import {
 } from "@cuentalibre/core";
 import type { InvoiceSeries, InvoiceSeriesDefinition } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Field, GroupedSelect } from "./form-fields";
 import { invoiceSettingsStore } from "./invoice-settings";
@@ -139,12 +146,12 @@ export function SeriesDialog({
               />
             )}
           </Field>
-          <div className="flex justify-end gap-2.5 pt-1">
+          <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary">Cancelar</Button>
             </DialogClose>
             <Button type="submit">{series ? "Guardar" : "Crear serie"}</Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

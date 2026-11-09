@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ExternalLink, MapPin, MoreHorizontal, Pencil } from "lucide-react";
+import { ExternalLink, MapPin, MoreHorizontal, Pencil } from "lucide-react";
 import {
   cents,
   checkTaxId,
@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuent
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { BackLink, HelpTip, Notice, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { ReceiptDrop } from "@/features/purchases/form-parts";
@@ -95,52 +96,41 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              to={config.path}
-              aria-label={`Volver a ${config.title.toLowerCase()}`}
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            <div className="flex min-w-0 flex-col">
-              <span className="text-sm text-muted-foreground">{config.singular}</span>
-              <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{contact.name}</h1>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <ActionsMenu
-              groups={groups}
-              trigger={
-                <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" size="lg" aria-label="Más acciones" className="w-10 px-0">
-                    <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-                  </Button>
-                </DropdownMenuTrigger>
-              }
-            />
-            <Button variant="secondary" onClick={newDocument.run}>
-              {newDocument.label}
-            </Button>
-            <Link to={editContactPath(role, contact.id)} className={cn(buttonVariants(), "no-underline")}>
-              <Pencil strokeWidth={1.8} aria-hidden="true" />
-              Editar
-            </Link>
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          eyebrow={<span className="text-sm text-muted-foreground">{config.singular}</span>}
+          title={<span className="block truncate">{contact.name}</span>}
+          back={<BackLink to={config.path} label={`Volver a ${config.title.toLowerCase()}`} />}
+          actions={
+            <>
+              <ActionsMenu
+                groups={groups}
+                trigger={
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="icon" aria-label="Más acciones">
+                      <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                }
+              />
+              <Button variant="secondary" onClick={newDocument.run}>
+                {newDocument.label}
+              </Button>
+              <Link to={editContactPath(role, contact.id)} className={buttonVariants()}>
+                <Pencil strokeWidth={1.8} aria-hidden="true" />
+                Editar
+              </Link>
+            </>
+          }
+        />
 
         {twin && (
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
+          <Notice>
             También es {ROLES[config.opposite].singular.toLowerCase()}.{" "}
-            <Link
-              to={contactPath(config.opposite, twin.id)}
-              className="font-medium text-primary underline-offset-2 hover:underline"
-            >
+            <Link to={contactPath(config.opposite, twin.id)} className={buttonVariants({ variant: "link" })}>
               Ver su ficha de {ROLES[config.opposite].singular.toLowerCase()}
             </Link>
-          </p>
+          </Notice>
         )}
 
         <div
@@ -187,7 +177,7 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
             />
           )}
         </div>
-      </div>
+      </Page>
       <TagsDialog role={role} contact={tagging} onClose={() => setTagging(null)} />
     </TooltipProvider>
   );
@@ -206,10 +196,7 @@ function InfoCard({
 }) {
   return (
     <section
-      className={cn(
-        "flex animate-rise-in flex-col gap-3 rounded-xl border border-border bg-card p-5 text-card-foreground",
-        className,
-      )}
+      className={cn("flex animate-rise-in flex-col gap-3 surface p-5 text-card-foreground", className)}
       style={{ "--i": index } as CSSProperties}
     >
       <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
@@ -294,12 +281,9 @@ function BasicInfo({ role, contact }: { role: ContactRole; contact: Contact }) {
             href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(address)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(
-              buttonVariants({ variant: "secondary", size: "sm" }),
-              "self-start no-underline [&_svg]:size-4",
-            )}
+            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "self-start")}
           >
-            <MapPin className="size-4" strokeWidth={1.8} aria-hidden="true" />
+            <MapPin strokeWidth={1.8} aria-hidden="true" />
             Ver en el mapa
           </a>
         )}
@@ -444,23 +428,19 @@ function Documents({ role, rows }: { role: ContactRole; rows: ActivityRow[] }) {
     );
 
   return (
-    <section className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:rounded-xl lg:border lg:border-border">
+    <section className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:surface">
       {kinds.length > 1 && (
         <div role="group" aria-label="Tipo de documento" className="flex flex-wrap gap-1.5 lg:px-4 lg:pt-3">
           {[ALL, ...kinds].map((k) => (
-            <button
+            <Button
               key={k}
-              type="button"
+              variant="chip"
               aria-pressed={kind === k}
               onClick={() => setKind(k as ActivityKind | typeof ALL)}
-              className={cn(
-                "h-8 cursor-pointer rounded-full border border-border bg-transparent px-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground",
-                kind === k && "border-primary bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary",
-              )}
             >
               {k === ALL ? "Todos" : ACTIVITY_KIND_LABELS[k as ActivityKind]} ·{" "}
               {k === ALL ? rows.length : rows.filter((r) => r.kind === k).length}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -569,14 +549,12 @@ function Ratio({ label, value, help, empty }: { label: string; value: number | n
   const percent = value === null ? null : Math.round(value * 100);
   return (
     <div className="grid items-center gap-x-4 gap-y-1 sm:grid-cols-[16rem_minmax(0,20rem)_auto]">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span tabIndex={0} className="cursor-help text-sm">
-            {label}: <span className="amount font-semibold">{percent === null ? empty : `${percent} %`}</span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-64">{help}</TooltipContent>
-      </Tooltip>
+      <span className="flex items-center gap-1 text-sm">
+        <span>
+          {label}: <span className="amount font-semibold">{percent === null ? empty : `${percent} %`}</span>
+        </span>
+        <HelpTip label={label}>{help}</HelpTip>
+      </span>
       <div
         role="meter"
         aria-label={label}

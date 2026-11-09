@@ -158,14 +158,7 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
                   <option key={t.id} value={t.name} />
                 ))}
             </datalist>
-            <Button
-              variant="secondary"
-              size="lg"
-              className="w-10 px-0"
-              aria-label="Añadir etiqueta"
-              title="Añadir etiqueta"
-              onClick={add}
-            >
+            <Button variant="secondary" size="icon" aria-label="Añadir etiqueta" title="Añadir etiqueta" onClick={add}>
               <Plus strokeWidth={1.8} aria-hidden="true" />
             </Button>
           </div>
@@ -300,7 +293,7 @@ export function LinesEditor({
         <span className={cn(head, "text-right")}>Cuota IVA</span>
         <span />
       </div>
-      <ul className="m-0 flex list-none flex-col gap-3 p-0">
+      <ul className="m-0 flex list-none flex-col gap-4 p-0 lg:gap-3">
         {lines.map((line, i) => {
           const value = parsed[i] ?? null;
           const n = i + 1;
@@ -309,7 +302,8 @@ export function LinesEditor({
             <li
               key={line.id}
               className={cn(
-                "flex animate-row-in flex-col gap-2.5 rounded-lg border border-border p-3 lg:rounded-none lg:border-0 lg:p-0",
+                // Phones stack the lines, a divider between each
+                "flex animate-row-in flex-col gap-2.5 not-first:max-lg:border-t not-first:max-lg:border-divider not-first:max-lg:pt-4",
                 advanced && "lg:border-b lg:border-divider lg:pb-3",
               )}
             >
@@ -389,8 +383,7 @@ export function LinesEditor({
                     <>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="size-9 px-0"
+                        size="icon-sm"
                         aria-label={`Subir concepto ${n}`}
                         disabled={i === 0}
                         onClick={() => onMove(i, i - 1)}
@@ -399,8 +392,7 @@ export function LinesEditor({
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="size-9 px-0"
+                        size="icon-sm"
                         aria-label={`Bajar concepto ${n}`}
                         disabled={i === lines.length - 1}
                         onClick={() => onMove(i, i + 1)}
@@ -412,17 +404,17 @@ export function LinesEditor({
                     <>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon-sm"
                         onClick={() => onRemove(line.id)}
                         aria-label={`Eliminar concepto ${n}`}
-                        className="size-9 px-0 text-muted-foreground hover:text-destructive"
+                        className="hover:text-destructive"
                       >
                         <Trash2 strokeWidth={1.8} aria-hidden="true" />
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           aria-label={`Más opciones del concepto ${n}`}
-                          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "size-9 px-0")}
+                          className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
                         >
                           <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
                         </DropdownMenuTrigger>
@@ -534,7 +526,7 @@ function ProductPicker({
         disabled={disabled}
         aria-label="Seleccionar producto del catálogo"
         title="Seleccionar producto del catálogo"
-        className={cn(buttonVariants({ variant: "secondary", size: "lg" }), "w-10 px-0")}
+        className={buttonVariants({ variant: "secondary", size: "icon" })}
       >
         <Package strokeWidth={1.8} aria-hidden="true" />
       </DropdownMenuTrigger>
@@ -689,45 +681,46 @@ export function Totals({
   onSuppliesChange?: (value: string) => void;
 }) {
   const rate = WITHHOLDING_RATES[withholding];
-  const card = "flex min-w-0 flex-col gap-1 rounded-xl border border-border bg-card p-4";
+  const item = "flex min-w-0 flex-col gap-1 lg:flex-1";
   const caption = "text-sm text-muted-foreground";
+  const amount = "m-0 amount text-lg font-semibold";
   const vatRates = totals.vatBreakdown.filter((v) => v.vat !== 0).map((v) => ratePercent(v.rate));
   return (
     <dl
       aria-label="Totales"
-      className="m-0 grid animate-rise-in grid-cols-2 gap-3 sm:grid-cols-3 lg:flex"
+      className="m-0 grid animate-rise-in grid-cols-2 gap-4 surface p-5 sm:grid-cols-3 lg:flex lg:gap-6"
       style={{ "--i": 3 } as CSSProperties}
     >
-      <div className={cn(card, "lg:flex-1")}>
+      <div className={item}>
         <dt className={caption}>Subtotal</dt>
-        <dd className="m-0 amount text-lg font-semibold">
+        <dd className={amount}>
           <AnimatedAmount value={totals.base} />
         </dd>
       </div>
-      <div className={cn(card, "lg:flex-1")}>
+      <div className={item}>
         <dt className={caption}>
           IVA {vatRates.length > 0 && <span className="text-xs">({vatRates.join(", ")})</span>}
         </dt>
-        <dd className="m-0 amount text-lg font-semibold">
+        <dd className={amount}>
           <AnimatedAmount value={totals.vat} />
         </dd>
       </div>
       {(advanced || totals.surcharge !== 0) && (
-        <div className={cn(card, "lg:flex-1")}>
+        <div className={item}>
           <dt className={caption}>Recargo de equivalencia</dt>
-          <dd className="m-0 amount text-lg font-semibold">
+          <dd className={amount}>
             <AnimatedAmount value={totals.surcharge} />
           </dd>
         </div>
       )}
-      <div className={cn(card, "lg:flex-1")}>
+      <div className={item}>
         <dt className={caption}>Retención{rate > 0 && ` ${ratePercent(rate)}`}</dt>
-        <dd className="m-0 amount text-lg font-semibold">
+        <dd className={amount}>
           <AnimatedAmount value={cents(-totals.withholding)} />
         </dd>
       </div>
       {advanced && supplies !== undefined && onSuppliesChange && (
-        <div className={cn(card, "lg:flex-1")}>
+        <div className={item}>
           <dt className={caption}>
             <label htmlFor="supplies">Suplidos</label>
           </dt>
@@ -739,7 +732,7 @@ export function Totals({
                 value={supplies}
                 onChange={(e) => onSuppliesChange(e.target.value)}
                 aria-invalid={parseDecimal(supplies || "0") === null ? true : undefined}
-                className="h-8 pr-7 text-right amount font-semibold"
+                className="pr-7 text-right amount font-semibold"
               />
               <span className="pointer-events-none absolute right-3 text-sm text-muted-foreground" aria-hidden="true">
                 €
@@ -748,7 +741,8 @@ export function Totals({
           </dd>
         </div>
       )}
-      <div className={cn(card, "col-span-full border-transparent bg-muted sm:col-span-1 lg:flex-[1.3]")}>
+      {/* The total closes the card: under a divider on phones, after one on desktop */}
+      <div className="col-span-full flex min-w-0 flex-col gap-1 border-t border-divider pt-4 lg:flex-[1.3] lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
         <dt className="text-sm font-semibold">Total</dt>
         <dd className="m-0 amount text-2xl font-semibold">
           <AnimatedAmount value={totals.total} />

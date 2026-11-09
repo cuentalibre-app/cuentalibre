@@ -3,7 +3,14 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { newId } from "@cuentalibre/core";
 import type { Tag } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -13,6 +20,7 @@ import { EmptyState, IconAction } from "@/features/sales/list-parts";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { TagChip } from "./tag-chip";
 import { TAG_SWATCHES, nextTagColor, tagsStore, textColorOn, useTags } from "./tags-store";
+import { Page } from "@/components/page";
 
 function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open: boolean) => void }) {
   const [name, setName] = useState(tag?.name ?? "");
@@ -97,12 +105,12 @@ function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open
               {name.trim() || "Etiqueta"}
             </span>
           </div>
-          <div className="flex justify-end gap-2.5 pt-1">
+          <DialogFooter>
             <DialogClose asChild>
-              <Button variant="secondary">Cerrar</Button>
+              <Button variant="secondary">Cancelar</Button>
             </DialogClose>
             <Button type="submit">Guardar</Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
@@ -134,7 +142,7 @@ export function TagsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
+      <Page>
         <SettingsHeader
           title="Gestión de etiquetas"
           description="Etiquetas para clasificar facturas, presupuestos, albaranes y gastos."
@@ -146,7 +154,7 @@ export function TagsPage() {
         </SettingsHeader>
 
         {sorted.length === 0 ? (
-          <div className="rounded-xl border border-border">
+          <div className="surface">
             <EmptyState
               message="Todavía no tienes etiquetas"
               hint="Crea una aquí o escríbela al etiquetar un documento."
@@ -154,7 +162,7 @@ export function TagsPage() {
           </div>
         ) : (
           <>
-            <div className="relative hidden overflow-x-auto rounded-xl border border-border md:block">
+            <div className="relative hidden overflow-x-auto surface md:block">
               <table className="w-full min-w-[40rem] border-collapse">
                 <thead>
                   <tr className={table.headRow}>
@@ -189,7 +197,7 @@ export function TagsPage() {
 
             <ul className="m-0 flex list-none flex-col gap-2 p-0 md:hidden">
               {sorted.map((t) => (
-                <li key={t.id} className="flex items-center gap-3 rounded-xl border border-border py-2 pr-2 pl-4">
+                <li key={t.id} className="flex items-center gap-3 surface py-2 pr-2 pl-4">
                   <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
                     <TagChip name={t.name} className="max-w-full truncate px-2.5 text-sm leading-7" />
                     {swatch(t)}
@@ -223,7 +231,7 @@ export function TagsPage() {
             Se eliminará «{removing?.name}» de la lista. Lo que ya esté etiquetado la conserva, sin su color.
           </p>
         </ConfirmDialog>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

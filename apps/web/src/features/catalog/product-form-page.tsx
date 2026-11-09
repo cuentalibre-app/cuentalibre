@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ChevronDown, FilePlus2, FolderTree, X } from "lucide-react";
+import { ChevronDown, FilePlus2, FolderTree, X } from "lucide-react";
 import { cents, isCatalogUnit, newId, priceBreakdown, stockOf, surchargeFitsVat, type Cents } from "@cuentalibre/core";
 import type { Product } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
@@ -14,6 +14,7 @@ import { Input, Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { BackLink, Notice, Page, PageHeader } from "@/components/page";
 import { PercentInput } from "@/features/purchases/form-parts";
 import { TagsField } from "@/features/sales/document-editor";
 import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
@@ -186,13 +187,12 @@ export function ProductFormPage() {
 
   if (id && !existing)
     return (
-      <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
-        <p className="m-0 text-muted-foreground">Este producto no existe o se ha eliminado.</p>
-        <Link to={PRODUCTS_PATH} className="font-medium text-primary no-underline hover:text-primary-hover">
+      <Page>
+        <PageHeader title="No encontrado" description="Este producto no existe o se ha eliminado." />
+        <Link to={PRODUCTS_PATH} className={cn(buttonVariants({ variant: "secondary" }), "self-start")}>
           Volver al catálogo
         </Link>
-      </div>
+      </Page>
     );
 
   const source = !existing ? catalogStore.get().products.find((p) => p.id === params.get("desde")) : undefined;
@@ -290,416 +290,415 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
   );
 
   const advancedToggle = (open: boolean, toggle: () => void) => (
-    <button
-      type="button"
-      onClick={toggle}
-      className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline [&_svg]:size-4")}
-    >
-      <ChevronDown
-        className={cn("size-4 transition-transform duration-200", open && "rotate-180")}
-        aria-hidden="true"
-      />
+    <Button variant="secondary" size="sm" aria-pressed={open} onClick={toggle}>
+      <ChevronDown className={cn("transition-transform duration-200", open && "rotate-180")} aria-hidden="true" />
       {open ? "Ocultar edición avanzada" : "Mostrar edición avanzada"}
-    </button>
+    </Button>
   );
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              to={PRODUCTS_PATH}
-              aria-label="Volver al catálogo"
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            <div className="flex min-w-0 flex-col">
-              <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">
+      <form noValidate onSubmit={submit}>
+        <Page>
+          <PageHeader
+            title={
+              <span className="block truncate">
                 {existing ? "Editar producto o servicio" : "Nuevo producto o servicio"}
-              </h1>
-              {existing && <span className="truncate text-sm text-muted-foreground">{existing.name}</span>}
-            </div>
-          </div>
-          {actions("hidden lg:flex")}
-        </header>
+              </span>
+            }
+            description={existing && <span className="block truncate">{existing.name}</span>}
+            back={<BackLink to={PRODUCTS_PATH} label="Volver al catálogo" />}
+            actions={actions("hidden lg:flex")}
+          />
 
-        {justSaved && !source && (
-          <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
-            Producto «{justSaved.name}» creado. Ya puedes añadir el siguiente.
-          </p>
-        )}
-        {source && (
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
-            Copiado de «{source.name}». Cambia el nombre y ponle su propio código antes de crearlo.
-          </p>
-        )}
+          {justSaved && !source && (
+            <Notice role="status" tone="success">
+              Producto «{justSaved.name}» creado. Ya puedes añadir el siguiente.
+            </Notice>
+          )}
+          {source && (
+            <Notice>Copiado de «{source.name}». Cambia el nombre y ponle su propio código antes de crearlo.</Notice>
+          )}
 
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-          <Section title="Información del producto" index={1}>
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-muted-foreground">Familia/Subfamilia</span>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                {family ? (
-                  <span className="flex items-center gap-1 rounded-full bg-accent py-1 pr-1 pl-3 text-sm font-medium">
-                    {family}
-                    <button
-                      type="button"
-                      aria-label="Quitar la familia"
-                      onClick={() => set("familyId", null)}
-                      className="flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted-strong hover:text-foreground"
-                    >
-                      <X className="size-3.5" aria-hidden="true" />
-                    </button>
-                  </span>
-                ) : (
-                  <span className="text-sm text-muted-foreground italic">
-                    No has seleccionado ninguna familia/subfamilia
-                  </span>
-                )}
-                <Button variant="secondary" size="sm" onClick={() => setChoosingFamily(true)}>
-                  <FolderTree strokeWidth={1.8} aria-hidden="true" />
-                  {family ? "Cambiar" : "Seleccionar una familia/subfamilia"}
-                </Button>
+          <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+            <Section title="Información del producto" index={1}>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-muted-foreground">Familia/Subfamilia</span>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                  {family ? (
+                    <span className="flex items-center gap-1 rounded-full bg-accent py-1 pr-1 pl-3 text-sm font-medium">
+                      {family}
+                      <button
+                        type="button"
+                        aria-label="Quitar la familia"
+                        onClick={() => set("familyId", null)}
+                        className="flex size-5 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted-strong hover:text-foreground"
+                      >
+                        <X className="size-3.5" aria-hidden="true" />
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground italic">
+                      No has seleccionado ninguna familia/subfamilia
+                    </span>
+                  )}
+                  <Button variant="secondary" size="sm" onClick={() => setChoosingFamily(true)}>
+                    <FolderTree strokeWidth={1.8} aria-hidden="true" />
+                    {family ? "Cambiar" : "Seleccionar una familia/subfamilia"}
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Nombre" required error={errors.name} hint="Ej.: ordenador, programación…">
-                {(p) => (
-                  <Input {...p} autoFocus={isNew} value={draft.name} onChange={(e) => set("name", e.target.value)} />
-                )}
-              </Field>
-              <Field label="Descripción">
-                {(p) => (
-                  <Textarea
-                    {...p}
-                    rows={2}
-                    value={draft.description}
-                    onChange={(e) => set("description", e.target.value)}
-                  />
-                )}
-              </Field>
-              <Field label="Notas privadas" help="Notas privadas sobre el producto que no se mostrarán en la factura.">
-                {(p) => (
-                  <Textarea
-                    {...p}
-                    rows={2}
-                    value={draft.privateNotes}
-                    onChange={(e) => set("privateNotes", e.target.value)}
-                  />
-                )}
-              </Field>
-              <Field label="Tipo de unidad">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={draft.unit}
-                    onChange={(v) => set("unit", v)}
-                    groups={[{ options: UNIT_OPTIONS }]}
-                  />
-                )}
-              </Field>
-              <TagsField tags={draft.tags} onChange={(tags) => set("tags", tags)} />
-            </div>
-            <CheckField
-              label="Producto visible (activo)"
-              hint="Los productos inactivos siguen en el catálogo, pero no se pueden elegir en las facturas."
-              checked={draft.active}
-              onChange={(v) => set("active", v)}
-            />
-          </Section>
-
-          <Section title="Referencias" index={2}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label="Código de producto (SKU)"
-                error={errors.sku}
-                help="Código para identificar el producto dentro de tu propia empresa. Si lo rellenas, debe ser único: no puede usarlo ningún otro producto."
-              >
-                {(p) => (
-                  <Input
-                    {...p}
-                    value={draft.sku}
-                    onChange={(e) => set("sku", e.target.value)}
-                    className="tabular-nums"
-                  />
-                )}
-              </Field>
-              <Field label="Referencia proveedor" help="Código de producto de tu proveedor.">
-                {(p) => (
-                  <Input
-                    {...p}
-                    value={draft.supplierRef}
-                    onChange={(e) => set("supplierRef", e.target.value)}
-                    className="tabular-nums"
-                  />
-                )}
-              </Field>
-            </div>
-          </Section>
-
-          <Section
-            title="Precio de venta"
-            index={3}
-            action={advancedToggle(advancedSale, () => {
-              if (advancedSale) set("surchargeRate", 0);
-              setAdvancedSale((a) => !a);
-            })}
-          >
-            <div className={cn("grid gap-4 sm:grid-cols-2", advancedSale ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
-              <Field label="Precio unitario (base imponible)" required error={errors.price} hint="Ej.: 198,50 €">
-                {(p) => <MoneyInput {...p} value={draft.price} onChange={(v) => set("price", v)} />}
-              </Field>
-              <Field
-                label="Porcentaje de descuento"
-                error={errors.discount}
-                help="Descuento que se propone al añadir el producto a una factura."
-              >
-                {(p) => (
-                  <PercentInput {...p} value={draft.discount} placeholder="0" onChange={(v) => set("discount", v)} />
-                )}
-              </Field>
-              <Field label="Porcentaje de IVA" required help={DEFAULT_HELP}>
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={String(draft.vatRate)}
-                    onChange={(v) => set("vatRate", Number(v))}
-                    groups={[{ options: VAT_RATE_OPTIONS }]}
-                  />
-                )}
-              </Field>
-              {advancedSale && (
-                <Field label="Porcentaje de RE" error={errors.surcharge} help={DEFAULT_HELP}>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <Field label="Nombre" required error={errors.name} hint="Ej.: ordenador, programación…">
                   {(p) => (
-                    <GroupedSelect
+                    <Input {...p} autoFocus={isNew} value={draft.name} onChange={(e) => set("name", e.target.value)} />
+                  )}
+                </Field>
+                <Field label="Descripción">
+                  {(p) => (
+                    <Textarea
                       {...p}
-                      value={String(draft.surchargeRate)}
-                      onChange={(v) => set("surchargeRate", Number(v))}
-                      groups={[{ options: SURCHARGE_OPTIONS }]}
+                      rows={2}
+                      value={draft.description}
+                      onChange={(e) => set("description", e.target.value)}
                     />
                   )}
                 </Field>
-              )}
-            </div>
-            <Breakdown
-              rows={[
-                ["Precio descontado", sale.base],
-                ["IVA", sale.vat],
-                ...(advancedSale ? [["RE", sale.surcharge] as [string, Cents]] : []),
-              ]}
-              total={["P.V.P.", sale.total]}
-            />
-          </Section>
-
-          <Section
-            title="Coste de adquisición"
-            index={4}
-            action={advancedToggle(advancedCost, () => {
-              if (advancedCost) set("costSurchargeRate", 0);
-              setAdvancedCost((a) => !a);
-            })}
-          >
-            <div className={cn("grid gap-4 sm:grid-cols-2", advancedCost ? "xl:grid-cols-3" : "xl:grid-cols-2")}>
-              <Field
-                label="Coste unitario (base imponible)"
-                error={errors.cost}
-                help="Lo que te cuesta adquirir el producto más lo necesario para tenerlo disponible (transporte, aduanas…). Indica la base imponible total de esos costes."
-              >
-                {(p) => <MoneyInput {...p} value={draft.cost} onChange={(v) => set("cost", v)} />}
-              </Field>
-              <Field label="Porcentaje de IVA" required help="Se propone al añadir el producto a una factura recibida.">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={String(draft.costVatRate)}
-                    onChange={(v) => set("costVatRate", Number(v))}
-                    groups={[{ options: VAT_RATE_OPTIONS }]}
-                  />
-                )}
-              </Field>
-              {advancedCost && (
-                <Field label="Porcentaje de RE" error={errors.costSurcharge}>
+                <Field
+                  label="Notas privadas"
+                  help="Notas privadas sobre el producto que no se mostrarán en la factura."
+                >
                   {(p) => (
-                    <GroupedSelect
+                    <Textarea
                       {...p}
-                      value={String(draft.costSurchargeRate)}
-                      onChange={(v) => set("costSurchargeRate", Number(v))}
-                      groups={[{ options: SURCHARGE_OPTIONS }]}
+                      rows={2}
+                      value={draft.privateNotes}
+                      onChange={(e) => set("privateNotes", e.target.value)}
                     />
                   )}
                 </Field>
-              )}
-            </div>
-            <Breakdown
-              rows={[["IVA", cost.vat], ...(advancedCost ? [["RE", cost.surcharge] as [string, Cents]] : [])]}
-              total={["Total", cost.total]}
-              extra={
-                draft.cost.trim() && sale.base > 0 ? (
-                  <>
-                    <dt className="text-muted-foreground">Margen</dt>
-                    <dd className="m-0 text-right amount">
-                      {formatEUR(cents(sale.base - cost.base))}
-                      <span className="ml-1.5 text-muted-foreground">
-                        ({Math.round(((sale.base - cost.base) / sale.base) * 100)} %)
-                      </span>
-                    </dd>
-                  </>
-                ) : null
-              }
-            />
-          </Section>
+                <Field label="Tipo de unidad">
+                  {(p) => (
+                    <GroupedSelect
+                      {...p}
+                      value={draft.unit}
+                      onChange={(v) => set("unit", v)}
+                      groups={[{ options: UNIT_OPTIONS }]}
+                    />
+                  )}
+                </Field>
+                <TagsField tags={draft.tags} onChange={(tags) => set("tags", tags)} />
+              </div>
+              <CheckField
+                label="Producto visible (activo)"
+                hint="Los productos inactivos siguen en el catálogo, pero no se pueden elegir en las facturas."
+                checked={draft.active}
+                onChange={(v) => set("active", v)}
+              />
+            </Section>
 
-          <Section title="Campos personalizados" index={5} defaultOpen={draft.custom.some(Boolean)}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {settings.customFieldNames.map((label, i) => (
-                <Field key={i} label={label}>
+            <Section title="Referencias" index={2}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Código de producto (SKU)"
+                  error={errors.sku}
+                  help="Código para identificar el producto dentro de tu propia empresa. Si lo rellenas, debe ser único: no puede usarlo ningún otro producto."
+                >
                   {(p) => (
                     <Input
                       {...p}
-                      value={draft.custom[i]}
-                      onChange={(e) => {
-                        const custom = [...draft.custom] as Draft["custom"];
-                        custom[i] = e.target.value;
-                        set("custom", custom);
-                      }}
+                      value={draft.sku}
+                      onChange={(e) => set("sku", e.target.value)}
+                      className="tabular-nums"
                     />
                   )}
                 </Field>
-              ))}
-            </div>
-            <p className="m-0 text-sm text-muted-foreground">
-              Cambia sus nombres en la{" "}
-              <SettingsLink
-                from="el producto"
-                to={CATALOG_SETTINGS_PATH}
-                className="font-medium text-primary no-underline hover:text-primary-hover"
-              >
-                configuración del catálogo
-              </SettingsLink>
-              .
-            </p>
-          </Section>
+                <Field label="Referencia proveedor" help="Código de producto de tu proveedor.">
+                  {(p) => (
+                    <Input
+                      {...p}
+                      value={draft.supplierRef}
+                      onChange={(e) => set("supplierRef", e.target.value)}
+                      className="tabular-nums"
+                    />
+                  )}
+                </Field>
+              </div>
+            </Section>
 
-          <Section title="Control de stock" index={6}>
-            <CheckField
-              label="Habilitar control de stock"
-              hint="Cuenta las unidades que tienes y las que salen con cada venta."
-              checked={draft.stockEnabled}
-              onChange={(v) => set("stockEnabled", v)}
-            />
-            {draft.stockEnabled && (
-              <div className="flex animate-fade-in flex-col gap-4 border-t border-divider pt-4">
-                {!rulesActive(settings.rules) && (
-                  <p className="m-0 rounded-lg bg-warning-soft px-4 py-3 text-sm text-warning">
-                    Todavía no has elegido en qué documentos se descuenta el stock, así que solo cambiará cuando lo
-                    regularices a mano. Configúralo en la{" "}
-                    <SettingsLink
-                      from="el producto"
-                      to={CATALOG_SETTINGS_PATH}
-                      className="font-medium text-warning underline underline-offset-2"
-                    >
-                      configuración del catálogo
-                    </SettingsLink>
-                    .
-                  </p>
-                )}
-                {asksInitialStock ? (
-                  <Field label="Stock inicial" error={errors.initialStock} className="max-w-xs">
+            <Section
+              title="Precio de venta"
+              index={3}
+              action={advancedToggle(advancedSale, () => {
+                if (advancedSale) set("surchargeRate", 0);
+                setAdvancedSale((a) => !a);
+              })}
+            >
+              <div className={cn("grid gap-4 sm:grid-cols-2", advancedSale ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
+                <Field label="Precio unitario (base imponible)" required error={errors.price} hint="Ej.: 198,50 €">
+                  {(p) => <MoneyInput {...p} value={draft.price} onChange={(v) => set("price", v)} />}
+                </Field>
+                <Field
+                  label="Porcentaje de descuento"
+                  error={errors.discount}
+                  help="Descuento que se propone al añadir el producto a una factura."
+                >
+                  {(p) => (
+                    <PercentInput {...p} value={draft.discount} placeholder="0" onChange={(v) => set("discount", v)} />
+                  )}
+                </Field>
+                <Field label="Porcentaje de IVA" required help={DEFAULT_HELP}>
+                  {(p) => (
+                    <GroupedSelect
+                      {...p}
+                      value={String(draft.vatRate)}
+                      onChange={(v) => set("vatRate", Number(v))}
+                      groups={[{ options: VAT_RATE_OPTIONS }]}
+                    />
+                  )}
+                </Field>
+                {advancedSale && (
+                  <Field label="Porcentaje de RE" error={errors.surcharge} help={DEFAULT_HELP}>
                     {(p) => (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          {...p}
-                          inputMode="decimal"
-                          value={draft.initialStock}
-                          placeholder="0"
-                          onChange={(e) => set("initialStock", e.target.value)}
-                          className="text-right amount"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {isCatalogUnit(draft.unit) ? draft.unit : "unidades"}
-                        </span>
-                      </div>
+                      <GroupedSelect
+                        {...p}
+                        value={String(draft.surchargeRate)}
+                        onChange={(v) => set("surchargeRate", Number(v))}
+                        groups={[{ options: SURCHARGE_OPTIONS }]}
+                      />
                     )}
                   </Field>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-sm font-medium text-muted-foreground">Stock actual</span>
-                    <span className="amount text-lg font-semibold">
-                      {formatQuantity(stockOf(movements, existing!.id))}
-                    </span>
-                    <Link
-                      to={`${STOCK_PATH}?producto=${existing!.id}`}
-                      className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
-                    >
-                      Regularizar stock
-                    </Link>
-                  </div>
                 )}
-                <CheckField
-                  label="Permitir vender sin stock"
-                  help="Si marcas esta opción, se podrá vender el producto aunque esté fuera de stock."
-                  checked={draft.allowWithoutStock}
-                  onChange={(v) => set("allowWithoutStock", v)}
-                />
-                <CheckField
-                  label="Activar alarma de stock"
-                  help="Te avisa cuando el stock baje de las unidades que indiques."
-                  checked={draft.alarmOn}
-                  onChange={(v) => set("alarmOn", v)}
-                />
-                {draft.alarmOn && (
-                  <div className="flex animate-fade-in flex-col gap-3 rounded-lg bg-muted p-4">
-                    <Field label="Avisar cuando queden menos de" required error={errors.minUnits} className="max-w-xs">
+              </div>
+              <Breakdown
+                rows={[
+                  ["Precio descontado", sale.base],
+                  ["IVA", sale.vat],
+                  ...(advancedSale ? [["RE", sale.surcharge] as [string, Cents]] : []),
+                ]}
+                total={["P.V.P.", sale.total]}
+              />
+            </Section>
+
+            <Section
+              title="Coste de adquisición"
+              index={4}
+              action={advancedToggle(advancedCost, () => {
+                if (advancedCost) set("costSurchargeRate", 0);
+                setAdvancedCost((a) => !a);
+              })}
+            >
+              <div className={cn("grid gap-4 sm:grid-cols-2", advancedCost ? "xl:grid-cols-3" : "xl:grid-cols-2")}>
+                <Field
+                  label="Coste unitario (base imponible)"
+                  error={errors.cost}
+                  help="Lo que te cuesta adquirir el producto más lo necesario para tenerlo disponible (transporte, aduanas…). Indica la base imponible total de esos costes."
+                >
+                  {(p) => <MoneyInput {...p} value={draft.cost} onChange={(v) => set("cost", v)} />}
+                </Field>
+                <Field
+                  label="Porcentaje de IVA"
+                  required
+                  help="Se propone al añadir el producto a una factura recibida."
+                >
+                  {(p) => (
+                    <GroupedSelect
+                      {...p}
+                      value={String(draft.costVatRate)}
+                      onChange={(v) => set("costVatRate", Number(v))}
+                      groups={[{ options: VAT_RATE_OPTIONS }]}
+                    />
+                  )}
+                </Field>
+                {advancedCost && (
+                  <Field label="Porcentaje de RE" error={errors.costSurcharge}>
+                    {(p) => (
+                      <GroupedSelect
+                        {...p}
+                        value={String(draft.costSurchargeRate)}
+                        onChange={(v) => set("costSurchargeRate", Number(v))}
+                        groups={[{ options: SURCHARGE_OPTIONS }]}
+                      />
+                    )}
+                  </Field>
+                )}
+              </div>
+              <Breakdown
+                rows={[["IVA", cost.vat], ...(advancedCost ? [["RE", cost.surcharge] as [string, Cents]] : [])]}
+                total={["Total", cost.total]}
+                extra={
+                  draft.cost.trim() && sale.base > 0 ? (
+                    <>
+                      <dt className="text-muted-foreground">Margen</dt>
+                      <dd className="m-0 text-right amount">
+                        {formatEUR(cents(sale.base - cost.base))}
+                        <span className="ml-1.5 text-muted-foreground">
+                          ({Math.round(((sale.base - cost.base) / sale.base) * 100)} %)
+                        </span>
+                      </dd>
+                    </>
+                  ) : null
+                }
+              />
+            </Section>
+
+            <Section title="Campos personalizados" index={5} defaultOpen={draft.custom.some(Boolean)}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {settings.customFieldNames.map((label, i) => (
+                  <Field key={i} label={label}>
+                    {(p) => (
+                      <Input
+                        {...p}
+                        value={draft.custom[i]}
+                        onChange={(e) => {
+                          const custom = [...draft.custom] as Draft["custom"];
+                          custom[i] = e.target.value;
+                          set("custom", custom);
+                        }}
+                      />
+                    )}
+                  </Field>
+                ))}
+              </div>
+              <p className="m-0 text-sm text-muted-foreground">
+                Cambia sus nombres en la{" "}
+                <SettingsLink
+                  from="el producto"
+                  to={CATALOG_SETTINGS_PATH}
+                  className="font-medium text-primary no-underline hover:text-primary-hover"
+                >
+                  configuración del catálogo
+                </SettingsLink>
+                .
+              </p>
+            </Section>
+
+            <Section title="Control de stock" index={6}>
+              <CheckField
+                label="Habilitar control de stock"
+                hint="Cuenta las unidades que tienes y las que salen con cada venta."
+                checked={draft.stockEnabled}
+                onChange={(v) => set("stockEnabled", v)}
+              />
+              {draft.stockEnabled && (
+                <div className="flex animate-fade-in flex-col gap-4 border-t border-divider pt-4">
+                  {!rulesActive(settings.rules) && (
+                    <Notice tone="warning">
+                      <p className="m-0">
+                        Todavía no has elegido en qué documentos se descuenta el stock, así que solo cambiará cuando lo
+                        regularices a mano. Configúralo en la{" "}
+                        <SettingsLink
+                          from="el producto"
+                          to={CATALOG_SETTINGS_PATH}
+                          className={buttonVariants({ variant: "link" })}
+                        >
+                          configuración del catálogo
+                        </SettingsLink>
+                        .
+                      </p>
+                    </Notice>
+                  )}
+                  {asksInitialStock ? (
+                    <Field label="Stock inicial" error={errors.initialStock} className="max-w-xs">
                       {(p) => (
                         <div className="flex items-center gap-2">
                           <Input
                             {...p}
                             inputMode="decimal"
-                            value={draft.minUnits}
-                            onChange={(e) => set("minUnits", e.target.value)}
+                            value={draft.initialStock}
+                            placeholder="0"
+                            onChange={(e) => set("initialStock", e.target.value)}
                             className="text-right amount"
                           />
-                          <span className="text-sm text-muted-foreground">unidades</span>
+                          <span className="text-sm text-muted-foreground">
+                            {isCatalogUnit(draft.unit) ? draft.unit : "unidades"}
+                          </span>
                         </div>
                       )}
                     </Field>
-                    <CheckField
-                      label="Avisar en el inicio"
-                      help="Los productos en alerta de stock aparecen en los avisos de la pantalla de inicio hasta que los marques como leídos."
-                      checked={draft.dashboard}
-                      onChange={(v) => set("dashboard", v)}
-                    />
-                    <CheckField
-                      label="Enviar notificaciones"
-                      help="Recibirás un aviso en el programa cuando el stock baje de esas unidades."
-                      checked={draft.notification}
-                      onChange={(v) => set("notification", v)}
-                    />
-                    <CheckField
-                      label="Enviar correo electrónico"
-                      hint={
-                        settings.alarmEmail
-                          ? `A ${settings.alarmEmail}.`
-                          : "Falta el email de avisos en la configuración del catálogo."
-                      }
-                      checked={draft.email}
-                      onChange={(v) => set("email", v)}
-                    />
-                    {errors.alarm && (
-                      <p role="alert" className="m-0 text-xs text-destructive">
-                        {errors.alarm}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </Section>
-        </div>
+                  ) : (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="text-sm font-medium text-muted-foreground">Stock actual</span>
+                      <span className="amount text-lg font-semibold">
+                        {formatQuantity(stockOf(movements, existing!.id))}
+                      </span>
+                      <Link
+                        to={`${STOCK_PATH}?producto=${existing!.id}`}
+                        className={buttonVariants({ variant: "secondary", size: "sm" })}
+                      >
+                        Regularizar stock
+                      </Link>
+                    </div>
+                  )}
+                  <CheckField
+                    label="Permitir vender sin stock"
+                    help="Si marcas esta opción, se podrá vender el producto aunque esté fuera de stock."
+                    checked={draft.allowWithoutStock}
+                    onChange={(v) => set("allowWithoutStock", v)}
+                  />
+                  <CheckField
+                    label="Activar alarma de stock"
+                    help="Te avisa cuando el stock baje de las unidades que indiques."
+                    checked={draft.alarmOn}
+                    onChange={(v) => set("alarmOn", v)}
+                  />
+                  {draft.alarmOn && (
+                    <div className="flex animate-fade-in flex-col gap-3 rounded-xl bg-muted p-4">
+                      <Field
+                        label="Avisar cuando queden menos de"
+                        required
+                        error={errors.minUnits}
+                        className="max-w-xs"
+                      >
+                        {(p) => (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              {...p}
+                              inputMode="decimal"
+                              value={draft.minUnits}
+                              onChange={(e) => set("minUnits", e.target.value)}
+                              className="text-right amount"
+                            />
+                            <span className="text-sm text-muted-foreground">unidades</span>
+                          </div>
+                        )}
+                      </Field>
+                      <CheckField
+                        label="Avisar en el inicio"
+                        help="Los productos en alerta de stock aparecen en los avisos de la pantalla de inicio hasta que los marques como leídos."
+                        checked={draft.dashboard}
+                        onChange={(v) => set("dashboard", v)}
+                      />
+                      <CheckField
+                        label="Enviar notificaciones"
+                        help="Recibirás un aviso en el programa cuando el stock baje de esas unidades."
+                        checked={draft.notification}
+                        onChange={(v) => set("notification", v)}
+                      />
+                      <CheckField
+                        label="Enviar correo electrónico"
+                        hint={
+                          settings.alarmEmail
+                            ? `A ${settings.alarmEmail}.`
+                            : "Falta el email de avisos en la configuración del catálogo."
+                        }
+                        checked={draft.email}
+                        onChange={(v) => set("email", v)}
+                      />
+                      {errors.alarm && (
+                        <p role="alert" className="m-0 text-xs text-destructive">
+                          {errors.alarm}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </Section>
+          </div>
 
-        {actions("lg:hidden")}
+          {actions("lg:hidden")}
+        </Page>
       </form>
 
       <FamilyDialog
