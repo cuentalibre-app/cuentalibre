@@ -14,7 +14,6 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
-  Search,
   Settings,
   Trash2,
   X,
@@ -24,11 +23,12 @@ import type { Product } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
-import { Input } from "@cuentalibre/ui/components/input";
+import { Input, SearchField } from "@cuentalibre/ui/components/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Page, PageHeader, Toolbar } from "@/components/page";
 import { GroupedSelect, Help } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, type Action } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
@@ -189,53 +189,45 @@ export function CatalogListPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Catálogo de productos y servicios</h1>
-            <p className="m-0 max-w-2xl text-sm text-muted-foreground">
-              Da de alta lo que facturas a menudo para crear facturas, presupuestos y albaranes más rápido.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <ActionsMenu
-              groups={options}
-              trigger={
-                <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" size="icon" aria-label="Opciones del catálogo">
-                    <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
-                  </Button>
-                </DropdownMenuTrigger>
-              }
-            />
-            <Link to={NEW_PRODUCT_PATH} className={cn(buttonVariants(), "no-underline")}>
-              <Plus strokeWidth={2} aria-hidden="true" />
-              <span className="hidden sm:inline">Nuevo producto o servicio</span>
-              <span className="sm:hidden">Nuevo</span>
-            </Link>
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          title="Catálogo de productos y servicios"
+          description="Da de alta lo que facturas a menudo para crear facturas, presupuestos y albaranes más rápido."
+          actions={
+            <>
+              <ActionsMenu
+                groups={options}
+                trigger={
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="icon" aria-label="Opciones del catálogo">
+                      <EllipsisVertical strokeWidth={1.8} aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                }
+              />
+              <Link to={NEW_PRODUCT_PATH} className={buttonVariants()}>
+                <Plus strokeWidth={2} aria-hidden="true" />
+                <span className="hidden sm:inline">Nuevo producto o servicio</span>
+                <span className="sm:hidden">Nuevo</span>
+              </Link>
+            </>
+          }
+        />
 
         <section
           aria-label="Listado de productos"
-          className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+          className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
           style={{ "--i": 1 } as CSSProperties}
         >
-          <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-            <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-96">
-              <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(e) => set("query", e.target.value)}
-                placeholder="Buscar por nombre, código, familia o descripción"
-                aria-label="Buscar"
-                className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
+          <Toolbar>
+            <SearchField
+              value={filters.query}
+              onChange={(e) => set("query", e.target.value)}
+              placeholder="Buscar por nombre, código, familia o descripción"
+              aria-label="Buscar"
+            />
             <Button
               variant="secondary"
-              size="md"
               aria-expanded={showFilters}
               aria-controls="catalog-filters"
               onClick={() => setShowFilters((s) => !s)}
@@ -248,14 +240,11 @@ export function CatalogListPage() {
                 </span>
               )}
             </Button>
-            <Link
-              to={CATALOG_EXPORT_PATH}
-              className={cn(buttonVariants({ variant: "secondary", size: "md" }), "ml-auto no-underline")}
-            >
+            <Link to={CATALOG_EXPORT_PATH} className={cn(buttonVariants({ variant: "secondary" }), "lg:ml-auto")}>
               <Download strokeWidth={1.8} aria-hidden="true" />
               Exportar
             </Link>
-          </div>
+          </Toolbar>
 
           {showFilters && (
             <div
@@ -347,7 +336,6 @@ export function CatalogListPage() {
               </FilterField>
               <Button
                 variant="secondary"
-                size="md"
                 onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
                 className="justify-self-start sm:col-span-2 lg:col-span-4"
               >
@@ -370,17 +358,11 @@ export function CatalogListPage() {
               action={
                 !filtered && (
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
-                    <Link
-                      to={NEW_PRODUCT_PATH}
-                      className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}
-                    >
+                    <Link to={NEW_PRODUCT_PATH} className={buttonVariants({ variant: "secondary" })}>
                       <Plus strokeWidth={2} aria-hidden="true" />
                       Nuevo producto o servicio
                     </Link>
-                    <Link
-                      to={CATALOG_IMPORT_PATH}
-                      className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}
-                    >
+                    <Link to={CATALOG_IMPORT_PATH} className={buttonVariants({ variant: "secondary" })}>
                       <FileUp strokeWidth={1.8} aria-hidden="true" />
                       Importar
                     </Link>
@@ -395,7 +377,7 @@ export function CatalogListPage() {
             </>
           )}
         </section>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }
@@ -600,7 +582,7 @@ function ProductsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSort
 
 function ProductsList({ rows }: { rows: Row[] }) {
   return (
-    <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+    <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
       {rows.map((r, i) => (
         <li
           key={r.product.id}
@@ -693,12 +675,7 @@ function QuickActions({ product }: { product: Product }) {
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-8 px-0"
-                  aria-label={`Más acciones de ${product.name}`}
-                >
+                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${product.name}`}>
                   <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
@@ -718,7 +695,7 @@ function RowActions({ product }: { product: Product }) {
       groups={groups}
       trigger={
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${product.name}`}>
+          <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${product.name}`}>
             <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>

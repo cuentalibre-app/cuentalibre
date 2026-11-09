@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Navigate, useLocation } from "react-router";
 import { AuthButton, AuthLayout } from "./auth-layout";
 import {
@@ -31,7 +31,7 @@ export function RequireSession({ children }: { children: ReactNode }) {
       return (
         <AuthLayout title="No se puede conectar" description="El servidor de cuentalibre no responde ahora mismo.">
           <AuthButton onClick={() => reloadAt(window.location.pathname)}>Reintentar</AuthButton>
-          <a href={DEMO_PATH} className="text-center font-medium text-primary hover:text-primary-hover">
+          <a href={DEMO_PATH} className={cn(buttonVariants({ variant: "link" }), "self-center")}>
             Probar la demo mientras tanto
           </a>
         </AuthLayout>
@@ -54,18 +54,14 @@ export function DemoBanner() {
       <span className="flex gap-2">
         {API_URL && (
           // A plain link: it loads the app outside /demo, on the API
-          <a href={SIGN_UP_PATH} onClick={leaveDemo} className={cn(buttonVariants({ size: "sm" }), "no-underline")}>
+          <a href={SIGN_UP_PATH} onClick={leaveDemo} className={buttonVariants({ size: "sm" })}>
             Crear cuenta
           </a>
         )}
         {canExitDemo() && (
-          <button
-            type="button"
-            onClick={exitDemo}
-            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
-          >
+          <Button variant="secondary" size="sm" onClick={exitDemo}>
             Salir de la demo
-          </button>
+          </Button>
         )}
       </span>
     </div>

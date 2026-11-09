@@ -18,7 +18,7 @@ import {
 type Lookup =
   { key: string; status: "loading" | "notFound" | "error" } | { key: string; status: "found"; place: Place };
 
-const link = cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline [&_svg]:size-4");
+const link = cn(buttonVariants({ variant: "secondary", size: "sm" }), "[&_svg]:size-4");
 
 /** A small map of the place: OpenStreetMap tiles with a pin in the middle, no map library. */
 function PlaceMap({ place }: { place: Place }) {

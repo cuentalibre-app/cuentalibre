@@ -116,11 +116,11 @@ export function IconAction({ action, badge }: { action: Action; badge?: number }
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size="icon-sm"
           aria-label={action.label}
           aria-disabled={!action.run}
           onClick={action.run}
-          className={cn("relative size-8 px-0", !action.run && "cursor-not-allowed opacity-40 hover:bg-transparent")}
+          className={cn("relative", !action.run && "cursor-not-allowed opacity-40 hover:bg-transparent")}
         >
           <action.icon strokeWidth={1.8} aria-hidden="true" />
           {!!badge && (

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { newId } from "@cuentalibre/core";
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
 import { fromDraft, hasErrors, toDraft, validateDraft, type ContactDraft, type DraftErrors } from "./contact-draft";
@@ -92,12 +92,12 @@ function QuickForm({
       <Field label="Email" error={errors.email}>
         {(p) => <Input {...p} type="email" value={draft.email} onChange={(e) => set("email", e.target.value)} />}
       </Field>
-      <div className="flex justify-end gap-2">
+      <DialogFooter>
         <Button variant="secondary" onClick={onCancel}>
           Cancelar
         </Button>
         <Button type="submit">Crear {config.singular.toLowerCase()}</Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

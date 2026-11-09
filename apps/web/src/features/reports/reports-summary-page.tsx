@@ -19,6 +19,7 @@ import { Badge } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { TopCounterparties } from "@/features/home/top-counterparties";
 import { PURCHASES_PATH } from "@/features/purchases/purchases-model";
@@ -69,10 +70,7 @@ function Kpi({
   children?: ReactNode;
 }) {
   return (
-    <div
-      className="flex animate-rise-in flex-col gap-2 rounded-xl border border-border bg-card p-4 lg:p-5"
-      style={{ "--i": index } as CSSProperties}
-    >
+    <div className="flex animate-rise-in flex-col gap-2 surface p-4 lg:p-5" style={{ "--i": index } as CSSProperties}>
       <span className="text-sm font-semibold lg:text-lg">{label}</span>
       <span className="amount text-xl font-semibold lg:text-2xl">{value}</span>
       {change !== undefined && <Change value={change} inverse={inverse} />}
@@ -208,7 +206,7 @@ function MonthsTable({ months }: { months: MonthResult[] }) {
       <h2 id="months-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
         Detalle por meses
       </h2>
-      <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="overflow-x-auto surface">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className={table.headRow}>
@@ -288,22 +286,20 @@ export function ReportsSummaryPage() {
   const inPeriod = periodMonths(period);
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Informes</h1>
-          <p className="m-0 text-sm text-muted-foreground">
-            Cómo va tu negocio {periodPhrase(period)}: ingresos sin IVA y gastos deducibles.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Link to={PNL_PATH} className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
-            <FileBarChart strokeWidth={1.8} aria-hidden="true" />
-            Pérdidas y ganancias
-          </Link>
-          <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-        </div>
-      </header>
+    <Page>
+      <PageHeader
+        title="Informes"
+        description={`Cómo va tu negocio ${periodPhrase(period)}: ingresos sin IVA y gastos deducibles.`}
+        actions={
+          <>
+            <Link to={PNL_PATH} className={buttonVariants({ variant: "secondary" })}>
+              <FileBarChart strokeWidth={1.8} aria-hidden="true" />
+              Pérdidas y ganancias
+            </Link>
+            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+          </>
+        }
+      />
 
       <section aria-label="Cifras del periodo" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Ingresos" value={formatEUR(data.pnl.income)} change={data.changes.income} index={0} />
@@ -357,6 +353,6 @@ export function ReportsSummaryPage() {
           empty="No hay gastos en este periodo."
         />
       </section>
-    </div>
+    </Page>
   );
 }

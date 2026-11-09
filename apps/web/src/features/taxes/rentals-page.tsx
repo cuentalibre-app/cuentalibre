@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { cents, file115, model115, model180, obligation, sumCents, type Quarter } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -251,37 +252,37 @@ export function RentalsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <ModuleBreadcrumb module="rentals" form={annual ? "180" : "115"} />
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">Retenciones de alquileres</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              {annual
-                ? "Modelo 180: resumen anual de las retenciones de alquileres, por arrendador e inmueble."
-                : "Modelo 115: la retención del alquiler de tu local u oficina, a ingresar en Hacienda."}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <FormSwitch
-              value={annual ? "180" : "115"}
-              onChange={(v) =>
-                setPeriod(v === "180" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
-              }
-              options={[
-                { value: "115", label: "115 · Trimestral" },
-                { value: "180", label: "180 · Anual" },
-              ]}
-            />
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-          </div>
-        </header>
+      <Page>
+        <PageHeader
+          eyebrow={<ModuleBreadcrumb module="rentals" form={annual ? "180" : "115"} />}
+          title="Retenciones de alquileres"
+          description={
+            annual
+              ? "Modelo 180: resumen anual de las retenciones de alquileres, por arrendador e inmueble."
+              : "Modelo 115: la retención del alquiler de tu local u oficina, a ingresar en Hacienda."
+          }
+          actions={
+            <>
+              <FormSwitch
+                value={annual ? "180" : "115"}
+                onChange={(v) =>
+                  setPeriod(v === "180" ? { year: period.year, quarter: null } : quarterOf(period.year, today))
+                }
+                options={[
+                  { value: "115", label: "115 · Trimestral" },
+                  { value: "180", label: "180 · Anual" },
+                ]}
+              />
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+            </>
+          }
+        />
         {period.quarter === null ? (
           <Form180 key={period.year} year={period.year} today={today} />
         ) : (
           <Form115 key={`${period.year}-${period.quarter}`} year={period.year} quarter={period.quarter} today={today} />
         )}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

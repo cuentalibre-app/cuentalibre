@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Button } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { Check } from "lucide-react";
 import { currentUser, requestPasswordReset, signInMethods } from "./auth-api";
 
@@ -41,21 +43,17 @@ export function ForgotPasswordLink() {
   };
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="link"
       disabled={state === "sending"}
       onClick={() => void send()}
-      className={
-        state === "failed"
-          ? "text-sm font-medium text-destructive hover:underline"
-          : "text-sm font-medium text-primary hover:text-primary-hover disabled:text-muted-foreground"
-      }
+      className={cn("text-sm", state === "failed" && "text-destructive hover:text-destructive")}
     >
       {state === "sending"
         ? "Enviando enlace…"
         : state === "failed"
           ? "No se pudo enviar. Reintentar"
           : "¿La has olvidado?"}
-    </button>
+    </Button>
   );
 }

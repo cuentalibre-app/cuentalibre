@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ChevronDown, FilePen, FilePlus2, Landmark, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, FilePen, FilePlus2, Landmark, Plus, Trash2 } from "lucide-react";
 import {
   ASSET_CATEGORIES,
   newId,
@@ -44,6 +44,7 @@ import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { LockedNotice } from "@/features/closing/locked-notice";
 import { AnimatedAmount } from "@/components/animated-amount";
+import { BackLink, Notice, Page, PageHeader } from "@/components/page";
 import {
   LinesEditor,
   TagsField,
@@ -247,13 +248,13 @@ export function PurchaseFormPage({ kind = "invoice" }: { kind?: PurchaseFormKind
 
   if (id && !existing) {
     return (
-      <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrada</h1>
+      <Page>
+        <PageHeader title="No encontrada" />
         <p className="m-0 text-muted-foreground">Esta factura no existe o se ha eliminado.</p>
-        <Link to={copy.listPath} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
+        <Link to={copy.listPath} className={cn(buttonVariants({ variant: "secondary" }), "self-start")}>
           {copy.back}
         </Link>
-      </div>
+      </Page>
     );
   }
 
@@ -549,44 +550,38 @@ function PurchaseForm({
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              to={copy.listPath}
-              aria-label={copy.back}
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-          </div>
-          <div className="flex items-center gap-2.5">
-            {!locked && (
-              <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingSupplier(true)}>
-                Nuevo proveedor
-              </Button>
-            )}
-            {!locked && actions("hidden lg:flex")}
-          </div>
-        </header>
+      <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+        <PageHeader
+          back={<BackLink to={copy.listPath} label={copy.back} />}
+          title={title}
+          actions={
+            !locked && (
+              <>
+                <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingSupplier(true)}>
+                  Nuevo proveedor
+                </Button>
+                {actions("hidden lg:flex")}
+              </>
+            )
+          }
+        />
 
         {locked && <LockedNotice period={locked} noun="Esta factura" />}
 
         {justSaved && !source && (
-          <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
+          <Notice role="status" tone="success">
             {isAssetForm ? "Bien de inversión" : "Factura"} {justSaved.number} de {supplierOf(justSaved).name}{" "}
             {isAssetForm ? "registrado" : "registrada"}. Ya puedes añadir{" "}
             {isAssetForm ? "el siguiente" : "la siguiente"}.
-          </p>
+          </Notice>
         )}
 
         {source && !existing && (
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
+          <Notice tone="info">
             {creditNote
               ? `Abono de la factura ${source.number}. Las cantidades se han puesto en negativo; añade el número del abono que te ha enviado el proveedor.`
               : `Copiado de la factura ${source.number}. Añade el número de la nueva factura y revisa los datos.`}
-          </p>
+          </Notice>
         )}
 
         <fieldset
@@ -604,16 +599,9 @@ function PurchaseForm({
                 required
                 error={errors.supplierId}
                 action={
-                  <button
-                    type="button"
-                    onClick={() => setCreatingSupplier(true)}
-                    className={cn(
-                      buttonVariants({ variant: "secondary", size: "sm" }),
-                      "h-6 px-2.5 text-xs no-underline",
-                    )}
-                  >
+                  <Button variant="link" onClick={() => setCreatingSupplier(true)}>
                     Nuevo proveedor
-                  </button>
+                  </Button>
                 }
               >
                 {(p) => (
@@ -728,18 +716,17 @@ function PurchaseForm({
                     />
                     <div role="group" aria-label="Plazos rápidos" className="flex flex-wrap gap-1.5">
                       {[...DUE_TERMS, null].map((term) => (
-                        <button
+                        <Button
                           key={term ?? "none"}
-                          type="button"
+                          variant="chip"
                           aria-pressed={dueTerm === term}
                           onClick={() => {
                             setDueTerm(term);
                             set("dueOn", term === null ? null : addDays(form.issuedOn, term));
                           }}
-                          className="h-7 cursor-pointer rounded-sm border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary"
                         >
                           {term === null ? "Sin fecha" : `${term} días`}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>
@@ -803,18 +790,13 @@ function PurchaseForm({
                   Terminar de reordenar
                 </Button>
               ) : (
-                <button
-                  type="button"
-                  aria-pressed={advanced}
-                  onClick={() => setAdvanced((a) => !a)}
-                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "[&_svg]:size-4")}
-                >
+                <Button variant="secondary" size="sm" aria-pressed={advanced} onClick={() => setAdvanced((a) => !a)}>
                   <ChevronDown
                     className={cn("size-4 transition-transform duration-200", advanced && "rotate-180")}
                     aria-hidden="true"
                   />
                   {advanced ? "Ocultar edición avanzada" : "Mostrar edición avanzada"}
-                </button>
+                </Button>
               )
             }
           >
@@ -858,7 +840,6 @@ function PurchaseForm({
             )}
             <Button
               variant="secondary"
-              size="md"
               className="self-start"
               onClick={() => set("lines", [...form.lines, emptyLine(carriesVat ? 0.21 : 0, lineDiscount)])}
             >
@@ -1148,7 +1129,7 @@ function SupplierSummary({ supplier }: { supplier: Contact }) {
   const province = supplier.province !== supplier.city ? supplier.province : undefined;
   const city = [[supplier.postalCode, supplier.city].filter(Boolean).join(" "), province].filter(Boolean).join(", ");
   return (
-    <div className="grid gap-4 rounded-lg bg-muted p-4 text-sm sm:grid-cols-2">
+    <div className="grid gap-4 rounded-xl bg-muted p-4 text-sm sm:grid-cols-2">
       <dl className="m-0 flex flex-col gap-1">
         {row("Proveedor", supplier.name)}
         {row("NIF", supplier.taxId)}
@@ -1255,10 +1236,10 @@ function Payments({
               </label>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 aria-label={`Quitar pago ${i + 1}`}
                 onClick={() => onChange((list) => list.filter((x) => x.id !== p.id))}
-                className="col-span-2 size-10 justify-self-end px-0 text-muted-foreground hover:text-destructive sm:col-span-1"
+                className="col-span-2 justify-self-end text-muted-foreground hover:text-destructive sm:col-span-1"
               >
                 <Trash2 strokeWidth={1.8} aria-hidden="true" />
               </Button>
@@ -1272,13 +1253,13 @@ function Payments({
         </p>
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="md" onClick={addPayment} disabled={status === "paid" || total === 0}>
+        <Button variant="secondary" onClick={addPayment} disabled={status === "paid" || total === 0}>
           <Plus strokeWidth={2} aria-hidden="true" />
           {payments.length === 0 ? "Marcar como pagada" : "Registrar otro pago"}
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="secondary" size="md" aria-disabled className="cursor-not-allowed opacity-50">
+            <Button variant="secondary" aria-disabled className="cursor-not-allowed opacity-50">
               <Landmark strokeWidth={1.8} aria-hidden="true" />
               Elegir movimiento bancario
             </Button>
@@ -1287,7 +1268,7 @@ function Payments({
             Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
           </TooltipContent>
         </Tooltip>
-        <Button type="button" variant="secondary" size="md" className="ml-auto" onClick={() => setCreatingMethod(true)}>
+        <Button type="button" variant="secondary" className="ml-auto" onClick={() => setCreatingMethod(true)}>
           <Plus aria-hidden="true" />
           Nuevo método
         </Button>

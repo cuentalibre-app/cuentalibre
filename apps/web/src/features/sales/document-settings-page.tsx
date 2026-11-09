@@ -2,9 +2,10 @@ import { Link } from "react-router";
 import { Plus } from "lucide-react";
 import type { DocumentKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { Notice, Page } from "@/components/page";
 import { SaveButton, SettingsHeader, UnsavedChangesGuard, useDraft } from "@/features/settings/settings-parts";
 import { INVOICE_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { DefaultMark, LookFields } from "./document-look";
@@ -57,7 +58,7 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader title={copy.title}>
           <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />
         </SettingsHeader>
@@ -101,7 +102,7 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
               </tbody>
             </table>
           </div>
-          <Button variant="secondary" size="md" className="self-start" disabled title="Próximamente">
+          <Button variant="secondary" className="self-start" disabled title="Próximamente">
             <Plus aria-hidden="true" />
             Nueva serie
           </Button>
@@ -149,13 +150,13 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
               </div>
             )}
           </div>
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
+          <Notice>
             El símbolo de la moneda depende del país y la región fiscal configurados en{" "}
-            <Link to="/impuestos" className="font-medium text-primary underline">
+            <Link to="/impuestos" className={buttonVariants({ variant: "link" })}>
               Impuestos
             </Link>
             . Elige otro país para cambiar la moneda.
-          </p>
+          </Notice>
         </Section>
 
         <Section title={`Logotipo de ${copy.plural}`} index={index++}>
@@ -200,7 +201,7 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
             </ul>
           </Section>
         )}
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

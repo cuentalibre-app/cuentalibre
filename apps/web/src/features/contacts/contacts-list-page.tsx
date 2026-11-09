@@ -13,7 +13,6 @@ import {
   Paperclip,
   Pencil,
   Plus,
-  Search,
   Tags,
   Trash2,
   X,
@@ -21,12 +20,14 @@ import {
 import { sumBy, type Cents } from "@cuentalibre/core";
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import { SearchField } from "@cuentalibre/ui/components/input";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
+import { Page, PageHeader, Toolbar } from "@/components/page";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { NEW_EXPENSE_PATH } from "@/features/purchases/expenses-model";
 import { NEW_PURCHASE_PATH } from "@/features/purchases/purchases-model";
@@ -140,44 +141,40 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{config.title}</h1>
-            <p className="m-0 text-sm text-muted-foreground">
+      <Page>
+        <PageHeader
+          title={config.title}
+          description={
+            <>
               {contacts.length === 1
                 ? `1 ${config.singular.toLowerCase()}`
                 : `${contacts.length} ${config.title.toLowerCase()}`}
               . Sus datos fiscales se usan en{" "}
               {role === "client" ? "las facturas que emites" : "las facturas recibidas y los gastos"}.
-            </p>
-          </div>
-          <Link to={config.newPath} className={cn(buttonVariants(), "hidden no-underline lg:inline-flex")}>
-            <Plus strokeWidth={2} aria-hidden="true" />
-            Nuevo {config.singular.toLowerCase()}
-          </Link>
-        </header>
+            </>
+          }
+          actions={
+            <Link to={config.newPath} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
+              <Plus strokeWidth={2} aria-hidden="true" />
+              Nuevo {config.singular.toLowerCase()}
+            </Link>
+          }
+        />
 
         <section
           aria-label={`Listado de ${config.title.toLowerCase()}`}
-          className="flex animate-rise-in flex-col lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
+          className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
           style={{ "--i": 1 } as CSSProperties}
         >
-          <div className="flex flex-wrap items-center gap-2.5 pb-3 lg:px-4 lg:py-3">
-            <div className="flex h-10 min-w-0 flex-[1_1_220px] items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring lg:max-w-96">
-              <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(e) => set("query", e.target.value)}
-                placeholder="Buscar por nombre, NIF, dirección, email, teléfono o notas"
-                aria-label="Buscar"
-                className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
+          <Toolbar>
+            <SearchField
+              value={filters.query}
+              onChange={(e) => set("query", e.target.value)}
+              placeholder="Buscar por nombre, NIF, dirección, email, teléfono o notas"
+              aria-label="Buscar"
+            />
             <Button
               variant="secondary"
-              size="md"
               aria-expanded={showFilters}
               aria-controls="contact-filters"
               onClick={() => setShowFilters((s) => !s)}
@@ -190,13 +187,16 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
                 </span>
               )}
             </Button>
-            <div className="ml-auto flex gap-2">
-              <Button variant="secondary" size="md" disabled={rows.length === 0} onClick={() => exportCsv(role, rows)}>
-                <Download strokeWidth={1.8} aria-hidden="true" />
-                CSV
-              </Button>
-            </div>
-          </div>
+            <Button
+              variant="secondary"
+              className="lg:ml-auto"
+              disabled={rows.length === 0}
+              onClick={() => exportCsv(role, rows)}
+            >
+              <Download strokeWidth={1.8} aria-hidden="true" />
+              CSV
+            </Button>
+          </Toolbar>
 
           {showFilters && (
             <div
@@ -225,7 +225,6 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
               ))}
               <Button
                 variant="secondary"
-                size="md"
                 onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
                 className="justify-self-start"
               >
@@ -249,10 +248,7 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
               }
               action={
                 !filtered && (
-                  <Link
-                    to={config.newPath}
-                    className={cn(buttonVariants({ variant: "secondary" }), "mt-3 no-underline")}
-                  >
+                  <Link to={config.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
                     <Plus strokeWidth={2} aria-hidden="true" />
                     Nuevo {config.singular.toLowerCase()}
                   </Link>
@@ -266,7 +262,7 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
             </>
           )}
         </section>
-      </div>
+      </Page>
 
       <TagsDialog role={role} contact={tagging} onClose={() => setTagging(null)} />
     </TooltipProvider>
@@ -430,7 +426,7 @@ function ContactsTable({
 
 function ContactsList({ role, rows, onTags }: { role: ContactRole; rows: Row[]; onTags: (contact: Contact) => void }) {
   return (
-    <ul className="m-0 flex list-none flex-col p-0 lg:hidden">
+    <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
       {rows.map((r, i) => (
         <li
           key={r.contact.id}
@@ -571,12 +567,7 @@ function QuickActions({ role, row, onTags }: { role: ContactRole; row: Row; onTa
           <Tooltip>
             <TooltipTrigger asChild>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="size-8 px-0"
-                  aria-label={`Más acciones de ${row.contact.name}`}
-                >
+                <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de ${row.contact.name}`}>
                   <ChevronDown strokeWidth={1.8} aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
@@ -596,7 +587,7 @@ function RowActions({ role, row, onTags }: { role: ContactRole; row: Row; onTags
       groups={groups}
       trigger={
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="size-9 px-0" aria-label={`Acciones de ${row.contact.name}`}>
+          <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${row.contact.name}`}>
             <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
@@ -638,23 +629,17 @@ function TagsEditor({ role, contact, onClose }: { role: ContactRole; contact: Co
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="mr-1 text-sm text-muted-foreground">Usadas:</span>
           {used.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTags([...tags, t])}
-              className="h-7 cursor-pointer rounded-full border border-border bg-transparent px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
-            >
+            <Button key={t} variant="chip" onClick={() => setTags([...tags, t])}>
               + {t}
-            </button>
+            </Button>
           ))}
         </div>
       )}
-      <div className="flex justify-end gap-2">
-        <Button variant="secondary" size="md" onClick={onClose}>
+      <DialogFooter>
+        <Button variant="secondary" onClick={onClose}>
           Cancelar
         </Button>
         <Button
-          size="md"
           onClick={() => {
             contactsStore.update(role, contact.id, { tags: tags.length ? tags : undefined });
             onClose();
@@ -662,7 +647,7 @@ function TagsEditor({ role, contact, onClose }: { role: ContactRole; contact: Co
         >
           Guardar
         </Button>
-      </div>
+      </DialogFooter>
     </>
   );
 }

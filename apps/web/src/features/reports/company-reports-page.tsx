@@ -1,12 +1,14 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router";
-import { ArrowLeft, Building2, ExternalLink, Info, Search, TriangleAlert } from "lucide-react";
+import { Building2, ExternalLink } from "lucide-react";
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { SearchField } from "@cuentalibre/ui/components/input";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { table } from "@cuentalibre/ui/lib/table";
+import { BackLink, Notice, Page, PageHeader } from "@/components/page";
 import { contactPath } from "@/features/contacts/contacts-model";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { formatDate } from "@/lib/format";
@@ -116,46 +118,28 @@ export function CompanyReportsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link
-            to={REPORTS_PATH}
-            aria-label="Volver a informes"
-            className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-          >
-            <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-          </Link>
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">Informes de empresas</h1>
-            <p className="m-0 text-sm text-muted-foreground">
-              Lo último que ha publicado el Registro Mercantil de un cliente o proveedor, gracias a un proveedor de informes.
-            </p>
-          </div>
-        </div>
-        <a
-          href={REPORTS_URL}
-          target="_blank"
-          rel="noreferrer"
-          className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}
-        >
-          Ir a un proveedor de informes
-          <ExternalLink strokeWidth={1.8} aria-hidden="true" />
-        </a>
-      </header>
+    <Page>
+      <PageHeader
+        back={<BackLink to={REPORTS_PATH} label="Volver a informes" />}
+        title="Informes de empresas"
+        description="Lo último que ha publicado el Registro Mercantil de un cliente o proveedor, gracias a un proveedor de informes."
+        actions={
+          <a href={REPORTS_URL} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "secondary" })}>
+            Ir a un proveedor de informes
+            <ExternalLink strokeWidth={1.8} aria-hidden="true" />
+          </a>
+        }
+      />
 
-      <p className="m-0 flex items-start gap-2.5 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
-        <Info className="mt-0.5 size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-        <span>
-          Consultar los últimos cambios registrales de una empresa es gratis. Antes de aceptar un pago aplazado de un
-          cliente nuevo, conviene revisar su solvencia: un proveedor de informes vende informes con más detalle.
-        </span>
-      </p>
+      <Notice tone="info">
+        Consultar los últimos cambios registrales de una empresa es gratis. Antes de aceptar un pago aplazado de un
+        cliente nuevo, conviene revisar su solvencia: un proveedor de informes vende informes con más detalle.
+      </Notice>
 
       <form
         noValidate
         role="search"
-        className="flex flex-wrap items-start gap-2.5 rounded-xl border border-border bg-card p-4"
+        className="flex flex-wrap items-start gap-2.5 surface p-4"
         onSubmit={(e) => {
           e.preventDefault();
           consult();
@@ -176,27 +160,22 @@ export function CompanyReportsPage() {
           className="h-10 items-center"
         />
         <div className="relative flex min-w-0 flex-[1_1_260px] flex-col gap-1.5">
-          <div className="flex h-10 items-center gap-2 rounded-lg border border-input px-3 text-muted-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring">
-            <Search className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-            <input
-              type="search"
-              role="combobox"
-              aria-expanded={focused && suggestions.length > 0}
-              aria-controls="company-suggestions"
-              aria-label={by === "name" ? "Nombre o razón social" : "NIF"}
-              aria-invalid={error ? true : undefined}
-              value={text}
-              onChange={(e) => {
-                setText(e.target.value);
-                setError(null);
-              }}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setTimeout(() => setFocused(false), 120)}
-              placeholder={by === "name" ? "Empieza a escribir, por ejemplo Lumen" : "B12345674"}
-              autoComplete="off"
-              className="min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
-            />
-          </div>
+          <SearchField
+            role="combobox"
+            aria-expanded={focused && suggestions.length > 0}
+            aria-controls="company-suggestions"
+            aria-label={by === "name" ? "Nombre o razón social" : "NIF"}
+            aria-invalid={error ? true : undefined}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              setError(null);
+            }}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setTimeout(() => setFocused(false), 120)}
+            placeholder={by === "name" ? "Empieza a escribir, por ejemplo Lumen" : "B12345674"}
+            autoComplete="off"
+          />
           {focused && suggestions.length > 0 && (
             <ul
               id="company-suggestions"
@@ -233,7 +212,7 @@ export function CompanyReportsPage() {
           Busca por nombre o por NIF y pulsa Consultar para ver los últimos cambios registrales.
         </p>
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -244,10 +223,7 @@ function CompanyResult({ company }: { company: Company }) {
 
   return (
     <div className="grid animate-rise-in gap-5 lg:grid-cols-[1fr_20rem]">
-      <section
-        aria-labelledby="registry-title"
-        className="flex min-w-0 flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:p-5"
-      >
+      <section aria-labelledby="registry-title" className="flex min-w-0 flex-col gap-4 surface p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <Building2 className="size-5" strokeWidth={1.8} aria-hidden="true" />
@@ -264,7 +240,7 @@ function CompanyResult({ company }: { company: Company }) {
                   {" · "}
                   <Link
                     to={contactPath(company.contact.role, company.contact.id)}
-                    className="text-primary no-underline hover:text-primary-hover"
+                    className={buttonVariants({ variant: "link" })}
                   >
                     Ver su ficha de {company.contact.role === "client" ? "cliente" : "proveedor"}
                   </Link>
@@ -275,10 +251,9 @@ function CompanyResult({ company }: { company: Company }) {
         </div>
 
         {warning && (
-          <p className="m-0 flex items-start gap-2 rounded-lg bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+          <Notice tone="danger">
             {warning.description.split(" (")[0]} el {formatDate(warning.date)}. Piénsalo antes de venderle a crédito.
-          </p>
+          </Notice>
         )}
 
         {changes.length === 0 ? (
@@ -286,7 +261,7 @@ function CompanyResult({ company }: { company: Company }) {
             No hay cambios registrales recientes de {known ? company.name : `la empresa con NIF ${company.taxId}`}.
           </p>
         ) : (
-          <div className="-mx-4 overflow-x-auto sm:mx-0 sm:rounded-lg sm:border sm:border-border">
+          <div className="-mx-4 overflow-x-auto sm:mx-0">
             <table className="w-full border-collapse">
               <thead>
                 <tr className={table.headRow}>
@@ -318,10 +293,7 @@ function CompanyResult({ company }: { company: Company }) {
         )}
       </section>
 
-      <aside
-        aria-labelledby="paid-title"
-        className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:p-5"
-      >
+      <aside aria-labelledby="paid-title" className="flex flex-col gap-3 surface p-4 sm:p-5">
         <h2 id="paid-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           Más información en un proveedor de informes
         </h2>
@@ -336,10 +308,10 @@ function CompanyResult({ company }: { company: Company }) {
                   href={REPORTS_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline [&_svg]:size-3.5")}
+                  className={buttonVariants({ variant: "secondary", size: "sm" })}
                 >
                   Comprar
-                  <ExternalLink className="size-3.5" strokeWidth={2} aria-hidden="true" />
+                  <ExternalLink strokeWidth={1.8} aria-hidden="true" />
                 </a>
                 {r.sample && (
                   <a

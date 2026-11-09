@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ChevronDown, FilePlus2, Plus, Star, Trash2 } from "lucide-react";
+import { ChevronDown, FilePlus2, Plus, Star, Trash2 } from "lucide-react";
 import { formatIban, isValidIban, newId, normalizeTaxId } from "@cuentalibre/core";
 import type { BankAccount, Contact, ContactRole } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
@@ -13,6 +13,7 @@ import {
 import { Checkbox, Input, Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
+import { BackLink, Notice, Page, PageHeader } from "@/components/page";
 import { PercentInput, ReceiptDrop } from "@/features/purchases/form-parts";
 import { TagsField } from "@/features/sales/document-editor";
 import { CLIENT_DEFAULT, Field, GroupedSelect, LocaleFields, Section } from "@/features/sales/form-fields";
@@ -64,13 +65,15 @@ export function ContactFormPage({ role }: { role: ContactRole }) {
 export function ContactNotFound({ role }: { role: ContactRole }) {
   const config = ROLES[role];
   return (
-    <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
-      <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
-      <p className="m-0 text-muted-foreground">Este {config.singular.toLowerCase()} no existe o se ha eliminado.</p>
-      <Link to={config.path} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
+    <Page>
+      <PageHeader
+        title="No encontrado"
+        description={`Este ${config.singular.toLowerCase()} no existe o se ha eliminado.`}
+      />
+      <Link to={config.path} className={cn(buttonVariants({ variant: "secondary" }), "self-start")}>
         Volver a {config.title.toLowerCase()}
       </Link>
-    </div>
+    </Page>
   );
 }
 
@@ -170,223 +173,228 @@ function ContactForm({
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              to={back}
-              aria-label={existing ? `Volver a la ficha de ${existing.name}` : `Volver a ${config.title.toLowerCase()}`}
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            <div className="flex min-w-0 flex-col">
-              <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-              {existing && <span className="truncate text-sm text-muted-foreground">{existing.name}</span>}
-            </div>
-          </div>
-          {actions("hidden lg:flex")}
-        </header>
+      <form noValidate onSubmit={submit}>
+        <Page>
+          <PageHeader
+            title={<span className="block truncate">{title}</span>}
+            description={existing && <span className="block truncate">{existing.name}</span>}
+            back={
+              <BackLink
+                to={back}
+                label={existing ? `Volver a la ficha de ${existing.name}` : `Volver a ${config.title.toLowerCase()}`}
+              />
+            }
+            actions={actions("hidden lg:flex")}
+          />
 
-        {justSaved && !source && (
-          <p role="status" className="m-0 rounded-lg bg-success-soft px-4 py-3 text-sm text-success">
-            {config.singular} «{justSaved.name}» creado. Ya puedes añadir el siguiente.
-          </p>
-        )}
-
-        {source && (
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
-            {sourceRole === role
-              ? `Copiado de «${source.name}». Cambia el NIF y el nombre antes de crearlo.`
-              : `Datos copiados del ${ROLES[sourceRole].singular.toLowerCase()} «${source.name}». Revísalos y crea el ${config.singular.toLowerCase()}.`}
-          </p>
-        )}
-
-        <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
-          <Section title="Datos de facturación" index={1}>
-            <IdentityFields
-              role={role}
-              contactId={existing?.id}
-              draft={draft}
-              errors={errors}
-              set={set}
-              autoFocus={!existing}
-            />
-          </Section>
-
-          <Section title="Dirección" index={2}>
-            <AddressFields draft={draft} set={set} />
-          </Section>
-
-          <Section title="Datos de contacto" index={3}>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Email" error={errors.email} hint={isClient ? "Al que se envían las facturas." : undefined}>
-                {(p) => (
-                  <Input
-                    {...p}
-                    type="email"
-                    autoComplete="email"
-                    value={draft.email}
-                    onChange={(e) => set("email", e.target.value)}
-                  />
-                )}
-              </Field>
-              <Field label="Teléfono">
-                {(p) => <Input {...p} type="tel" value={draft.phone} onChange={(e) => set("phone", e.target.value)} />}
-              </Field>
-              <Field label="Móvil">
-                {(p) => (
-                  <Input {...p} type="tel" value={draft.mobile} onChange={(e) => set("mobile", e.target.value)} />
-                )}
-              </Field>
-              <Field label="Fax">
-                {(p) => <Input {...p} type="tel" value={draft.fax} onChange={(e) => set("fax", e.target.value)} />}
-              </Field>
-              <Field label="Web">
-                {(p) => (
-                  <Input
-                    {...p}
-                    type="url"
-                    inputMode="url"
-                    placeholder="www.ejemplo.es"
-                    value={draft.website}
-                    onChange={(e) => set("website", e.target.value)}
-                  />
-                )}
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="Condiciones por defecto" index={4}>
-            <p className="m-0 text-sm text-muted-foreground">
-              Se proponen al elegir {config.noun} en{" "}
-              {isClient ? "una factura, presupuesto o albarán" : "una factura recibida o un gasto"}; puedes cambiarlas
-              en cada documento.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]">
-              <Field label="Descuento" error={errors.discount} help="Se aplica a cada concepto nuevo del documento.">
-                {(p) => (
-                  <PercentInput {...p} value={draft.discount} placeholder="0" onChange={(v) => set("discount", v)} />
-                )}
-              </Field>
-              <Field
-                label="Retención"
-                help={
-                  isClient
-                    ? "IRPF que te retiene este cliente. Las empresas y autónomos retienen a los profesionales; los particulares no."
-                    : "IRPF que retienes a este proveedor, por ejemplo a un profesional como tu gestor."
-                }
-              >
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={draft.withholding}
-                    onChange={(v) => set("withholding", v)}
-                    groups={[{ options: [{ value: NO_DEFAULT, label: "La del documento" }] }, ...WITHHOLDING_GROUPS]}
-                  />
-                )}
-              </Field>
-              <Field label={isClient ? "Método de cobro" : "Método de pago"}>
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={draft.paymentMethodId}
-                    onChange={(v) => set("paymentMethodId", v)}
-                    groups={[
-                      {
-                        options: [
-                          { value: NO_DEFAULT, label: "El del documento" },
-                          ...paymentMethodOptions(draft.paymentMethodId),
-                        ],
-                      },
-                    ]}
-                  />
-                )}
-              </Field>
-            </div>
-            {isClient && (
-              <div className="flex flex-col gap-3 border-t border-divider pt-4">
-                <h3 className="m-0 text-sm font-semibold">Idioma y formato numérico de sus documentos</h3>
-                <LocaleFields
-                  language={draft.language}
-                  numberFormat={draft.numberFormat}
-                  defaultLabels={{
-                    language: "Idioma por defecto del documento",
-                    format: "Formato por defecto del documento",
-                    note: "Se usa el idioma y formato de la configuración de facturas.",
-                  }}
-                  onLanguageChange={(v) => {
-                    const language = v === CLIENT_DEFAULT ? "" : v;
-                    setDraft((d) => ({ ...d, language, numberFormat: defaultNumberFormat(language) }));
-                  }}
-                  onNumberFormatChange={(v) => set("numberFormat", v === CLIENT_DEFAULT ? "" : v)}
-                />
-              </div>
-            )}
-          </Section>
-
-          <Section title="Datos bancarios" index={5} defaultOpen={draft.bankAccounts.length > 0}>
-            <BankAccounts accounts={draft.bankAccounts} onChange={(a) => set("bankAccounts", a)} />
-          </Section>
-
-          <Section title="Otros" index={6}>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={customLabels[0]}>
-                {(p) => <Input {...p} value={draft.custom1} onChange={(e) => set("custom1", e.target.value)} />}
-              </Field>
-              <Field label={customLabels[1]}>
-                {(p) => <Input {...p} value={draft.custom2} onChange={(e) => set("custom2", e.target.value)} />}
-              </Field>
-              <Field label="Notas" help="Solo las ves tú.">
-                {(p) => <Textarea {...p} rows={3} value={draft.notes} onChange={(e) => set("notes", e.target.value)} />}
-              </Field>
-              <TagsField tags={draft.tags} onChange={(tags) => set("tags", tags)} />
-            </div>
-          </Section>
-
-          {isClient && (
-            <Section title="Factura electrónica" index={7} defaultOpen={Object.values(draft.eInvoice).some(Boolean)}>
-              <p className="m-0 text-sm text-muted-foreground">
-                Solo para administraciones públicas: los códigos DIR3 que piden para recibir facturas por FACe.
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {(
-                  [
-                    ["accountingOffice", "Oficina contable"],
-                    ["managementBody", "Órgano gestor"],
-                    ["processingUnit", "Unidad tramitadora"],
-                    ["proposingBody", "Órgano proponente"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <Field key={key} label={label}>
-                    {(p) => (
-                      <Input
-                        {...p}
-                        value={draft.eInvoice[key]}
-                        placeholder="L01280796"
-                        onChange={(e) => set("eInvoice", { ...draft.eInvoice, [key]: e.target.value })}
-                        className="uppercase tabular-nums"
-                      />
-                    )}
-                  </Field>
-                ))}
-              </div>
-            </Section>
+          {justSaved && !source && (
+            <Notice role="status" tone="success">
+              {config.singular} «{justSaved.name}» creado. Ya puedes añadir el siguiente.
+            </Notice>
           )}
 
-          <Section title="Documentos adjuntos" index={8} defaultOpen={draft.attachments.length > 0}>
-            <ReceiptDrop
-              attachments={draft.attachments}
-              onChange={(a) => set("attachments", a)}
-              label="Documentos adjuntos"
-              prompt="Arrastra aquí contratos, mandatos SEPA u otros documentos"
-              note={filesAreStored() ? "Cualquier tipo de archivo." : "Se guardan solo en esta sesión."}
-              accept=""
-            />
-          </Section>
-        </div>
+          {source && (
+            <Notice>
+              {sourceRole === role
+                ? `Copiado de «${source.name}». Cambia el NIF y el nombre antes de crearlo.`
+                : `Datos copiados del ${ROLES[sourceRole].singular.toLowerCase()} «${source.name}». Revísalos y crea el ${config.singular.toLowerCase()}.`}
+            </Notice>
+          )}
 
-        {actions("lg:hidden")}
+          <div className="flex min-w-0 flex-col gap-5 lg:gap-6">
+            <Section title="Datos de facturación" index={1}>
+              <IdentityFields
+                role={role}
+                contactId={existing?.id}
+                draft={draft}
+                errors={errors}
+                set={set}
+                autoFocus={!existing}
+              />
+            </Section>
+
+            <Section title="Dirección" index={2}>
+              <AddressFields draft={draft} set={set} />
+            </Section>
+
+            <Section title="Datos de contacto" index={3}>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <Field
+                  label="Email"
+                  error={errors.email}
+                  hint={isClient ? "Al que se envían las facturas." : undefined}
+                >
+                  {(p) => (
+                    <Input
+                      {...p}
+                      type="email"
+                      autoComplete="email"
+                      value={draft.email}
+                      onChange={(e) => set("email", e.target.value)}
+                    />
+                  )}
+                </Field>
+                <Field label="Teléfono">
+                  {(p) => (
+                    <Input {...p} type="tel" value={draft.phone} onChange={(e) => set("phone", e.target.value)} />
+                  )}
+                </Field>
+                <Field label="Móvil">
+                  {(p) => (
+                    <Input {...p} type="tel" value={draft.mobile} onChange={(e) => set("mobile", e.target.value)} />
+                  )}
+                </Field>
+                <Field label="Fax">
+                  {(p) => <Input {...p} type="tel" value={draft.fax} onChange={(e) => set("fax", e.target.value)} />}
+                </Field>
+                <Field label="Web">
+                  {(p) => (
+                    <Input
+                      {...p}
+                      type="url"
+                      inputMode="url"
+                      placeholder="www.ejemplo.es"
+                      value={draft.website}
+                      onChange={(e) => set("website", e.target.value)}
+                    />
+                  )}
+                </Field>
+              </div>
+            </Section>
+
+            <Section title="Condiciones por defecto" index={4}>
+              <p className="m-0 text-sm text-muted-foreground">
+                Se proponen al elegir {config.noun} en{" "}
+                {isClient ? "una factura, presupuesto o albarán" : "una factura recibida o un gasto"}; puedes cambiarlas
+                en cada documento.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]">
+                <Field label="Descuento" error={errors.discount} help="Se aplica a cada concepto nuevo del documento.">
+                  {(p) => (
+                    <PercentInput {...p} value={draft.discount} placeholder="0" onChange={(v) => set("discount", v)} />
+                  )}
+                </Field>
+                <Field
+                  label="Retención"
+                  help={
+                    isClient
+                      ? "IRPF que te retiene este cliente. Las empresas y autónomos retienen a los profesionales; los particulares no."
+                      : "IRPF que retienes a este proveedor, por ejemplo a un profesional como tu gestor."
+                  }
+                >
+                  {(p) => (
+                    <GroupedSelect
+                      {...p}
+                      value={draft.withholding}
+                      onChange={(v) => set("withholding", v)}
+                      groups={[{ options: [{ value: NO_DEFAULT, label: "La del documento" }] }, ...WITHHOLDING_GROUPS]}
+                    />
+                  )}
+                </Field>
+                <Field label={isClient ? "Método de cobro" : "Método de pago"}>
+                  {(p) => (
+                    <GroupedSelect
+                      {...p}
+                      value={draft.paymentMethodId}
+                      onChange={(v) => set("paymentMethodId", v)}
+                      groups={[
+                        {
+                          options: [
+                            { value: NO_DEFAULT, label: "El del documento" },
+                            ...paymentMethodOptions(draft.paymentMethodId),
+                          ],
+                        },
+                      ]}
+                    />
+                  )}
+                </Field>
+              </div>
+              {isClient && (
+                <div className="flex flex-col gap-3 border-t border-divider pt-4">
+                  <h3 className="m-0 text-sm font-semibold">Idioma y formato numérico de sus documentos</h3>
+                  <LocaleFields
+                    language={draft.language}
+                    numberFormat={draft.numberFormat}
+                    defaultLabels={{
+                      language: "Idioma por defecto del documento",
+                      format: "Formato por defecto del documento",
+                      note: "Se usa el idioma y formato de la configuración de facturas.",
+                    }}
+                    onLanguageChange={(v) => {
+                      const language = v === CLIENT_DEFAULT ? "" : v;
+                      setDraft((d) => ({ ...d, language, numberFormat: defaultNumberFormat(language) }));
+                    }}
+                    onNumberFormatChange={(v) => set("numberFormat", v === CLIENT_DEFAULT ? "" : v)}
+                  />
+                </div>
+              )}
+            </Section>
+
+            <Section title="Datos bancarios" index={5} defaultOpen={draft.bankAccounts.length > 0}>
+              <BankAccounts accounts={draft.bankAccounts} onChange={(a) => set("bankAccounts", a)} />
+            </Section>
+
+            <Section title="Otros" index={6}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label={customLabels[0]}>
+                  {(p) => <Input {...p} value={draft.custom1} onChange={(e) => set("custom1", e.target.value)} />}
+                </Field>
+                <Field label={customLabels[1]}>
+                  {(p) => <Input {...p} value={draft.custom2} onChange={(e) => set("custom2", e.target.value)} />}
+                </Field>
+                <Field label="Notas" help="Solo las ves tú.">
+                  {(p) => (
+                    <Textarea {...p} rows={3} value={draft.notes} onChange={(e) => set("notes", e.target.value)} />
+                  )}
+                </Field>
+                <TagsField tags={draft.tags} onChange={(tags) => set("tags", tags)} />
+              </div>
+            </Section>
+
+            {isClient && (
+              <Section title="Factura electrónica" index={7} defaultOpen={Object.values(draft.eInvoice).some(Boolean)}>
+                <p className="m-0 text-sm text-muted-foreground">
+                  Solo para administraciones públicas: los códigos DIR3 que piden para recibir facturas por FACe.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {(
+                    [
+                      ["accountingOffice", "Oficina contable"],
+                      ["managementBody", "Órgano gestor"],
+                      ["processingUnit", "Unidad tramitadora"],
+                      ["proposingBody", "Órgano proponente"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <Field key={key} label={label}>
+                      {(p) => (
+                        <Input
+                          {...p}
+                          value={draft.eInvoice[key]}
+                          placeholder="L01280796"
+                          onChange={(e) => set("eInvoice", { ...draft.eInvoice, [key]: e.target.value })}
+                          className="uppercase tabular-nums"
+                        />
+                      )}
+                    </Field>
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            <Section title="Documentos adjuntos" index={8} defaultOpen={draft.attachments.length > 0}>
+              <ReceiptDrop
+                attachments={draft.attachments}
+                onChange={(a) => set("attachments", a)}
+                label="Documentos adjuntos"
+                prompt="Arrastra aquí contratos, mandatos SEPA u otros documentos"
+                note={filesAreStored() ? "Cualquier tipo de archivo." : "Se guardan solo en esta sesión."}
+                accept=""
+              />
+            </Section>
+          </div>
+
+          {actions("lg:hidden")}
+        </Page>
       </form>
     </TooltipProvider>
   );
@@ -433,10 +441,7 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
       {accounts.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {accounts.map((a) => (
-            <li
-              key={a.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border px-3 py-2"
-            >
+            <li key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg bg-muted px-3 py-2">
               <span className="tabular-nums">{formatIban(a.iban)}</span>
               {a.bic && <span className="text-xs text-muted-foreground tabular-nums">{a.bic}</span>}
               {a.notes && <span className="min-w-0 truncate text-sm text-muted-foreground">{a.notes}</span>}
@@ -451,10 +456,10 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
                 )}
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon-sm"
                   aria-label={`Quitar la cuenta ${formatIban(a.iban)}`}
                   onClick={() => remove(a.id)}
-                  className="size-8 px-0 text-muted-foreground hover:text-destructive"
+                  className="hover:text-destructive"
                 >
                   <Trash2 strokeWidth={1.8} aria-hidden="true" />
                 </Button>
@@ -518,17 +523,17 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
               </label>
             )}
             <span className="ml-auto flex gap-2">
-              <Button variant="secondary" size="md" onClick={() => setAdding(null)}>
+              <Button variant="secondary" onClick={() => setAdding(null)}>
                 Cancelar
               </Button>
-              <Button variant="secondary" size="md" onClick={add}>
+              <Button variant="secondary" onClick={add}>
                 Añadir cuenta
               </Button>
             </span>
           </div>
         </div>
       ) : (
-        <Button variant="secondary" size="md" className="self-start" onClick={() => setAdding(EMPTY_ACCOUNT)}>
+        <Button variant="secondary" className="self-start" onClick={() => setAdding(EMPTY_ACCOUNT)}>
           <Plus strokeWidth={2} aria-hidden="true" />
           Añadir cuenta bancaria
         </Button>

@@ -1,5 +1,4 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
-import { Search } from "lucide-react";
 import {
   MAX_ACCOUNT_DIGITS,
   MIN_ACCOUNT_DIGITS,
@@ -9,7 +8,7 @@ import {
   prefixError,
 } from "@cuentalibre/core";
 import type { ContactRole, LedgerAccountKey, LedgerAccountSettings, PaymentMethodType } from "@cuentalibre/contracts";
-import { Input } from "@cuentalibre/ui/components/input";
+import { Input, SearchField } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { table } from "@cuentalibre/ui/lib/table";
@@ -18,6 +17,7 @@ import { Field, GroupedSelect, Section } from "@/features/sales/form-fields";
 import { ledgerAccountsStore, useLedgerAccounts } from "./ledger-accounts-store";
 import { methodTypeLabel, usePaymentMethods } from "./settings-model";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
+import { Page } from "@/components/page";
 
 interface AccountRow {
   key: LedgerAccountKey;
@@ -124,7 +124,7 @@ export function LedgerAccountsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader
           title="Cuentas contables"
           description="Los números de cuenta con los que se exporta tu contabilidad."
@@ -138,7 +138,7 @@ export function LedgerAccountsPage() {
             Configura los números de cuenta contable que se usan al exportar la información de cuentalibre, para que tu
             gestoría pueda importarla en programas de contabilidad como otros programas o otros programas.
           </p>
-          <div className="flex max-w-3xl flex-col gap-3 rounded-lg bg-warning-soft px-4 py-3 text-sm">
+          <div className="flex max-w-3xl flex-col gap-3 rounded-xl bg-warning-soft px-3.5 py-3 text-sm">
             <p className="m-0">
               <strong className="font-semibold">Importante:</strong> para que otros programas y otros programas
               recojan bien todas las facturas para impuestos, configura estas cuentas como ingresos o gastos fiscalmente
@@ -241,7 +241,7 @@ export function LedgerAccountsPage() {
 
         <ContactCodes draft={draft} onChange={(contactCodes) => set("contactCodes", contactCodes)} />
         <MethodCodes draft={draft} onChange={(methodCodes) => set("methodCodes", methodCodes)} />
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }
@@ -347,20 +347,13 @@ function ContactCodes({
         Da un número de cuenta propio a los clientes o proveedores que quieras; no hace falta configurarlo para todos.
         Los que no tengan uno usan la cuenta por defecto de clientes o de proveedores.
       </p>
-      <div className="relative w-full sm:w-72">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <Input
-          type="search"
-          aria-label="Buscar por nombre o NIF"
-          placeholder="Buscar por nombre o NIF"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      <SearchField
+        className="w-full sm:w-72"
+        aria-label="Buscar por nombre o NIF"
+        placeholder="Buscar por nombre o NIF"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
       <CodesTable
         heads={["Nombre", "Tipo", "Código", "Cuenta"]}
         empty={q ? "Ningún contacto coincide con la búsqueda." : "Todavía no tienes clientes ni proveedores."}

@@ -1,36 +1,35 @@
 import { Link } from "react-router";
 import { ChevronRight } from "lucide-react";
-import { mainNav, secondaryNav } from "@/components/layout/nav";
+import { moreNav } from "@/components/layout/nav";
 import { LegalLinks } from "@/components/legal-links";
+import { Page, PageHeader } from "@/components/page";
 
-// Sections that don't fit in the mobile tab bar
-const groups = [
-  ...mainNav
-    .filter((item) => !["/", "/ventas", "/impuestos"].includes(item.to))
-    .map((item) => ({ title: item.label, links: item.children ?? [item] })),
-  { title: "Gestión", links: secondaryNav },
-];
+const row = "flex min-h-12 items-center justify-between border-b border-divider text-md text-foreground no-underline";
 
+/** The "Más" list as a page, for direct links; the tab bar opens the same list as a sheet. */
 export function MorePage() {
   return (
-    <div className="flex flex-col gap-6 px-5 pt-6">
-      <h1 className="m-0 text-2xl font-semibold tracking-tight">Más</h1>
-      {groups.map((group) => (
-        <section key={group.title} className="flex flex-col">
-          <h2 className="m-0 pb-1.5 text-xs font-medium text-muted-foreground">{group.title}</h2>
-          {group.links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="flex min-h-12 items-center justify-between border-b border-divider text-md text-foreground no-underline"
-            >
-              {link.label}
-              <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
-            </Link>
-          ))}
-        </section>
-      ))}
-      <LegalLinks className="pb-6" />
-    </div>
+    <Page>
+      <PageHeader title="Más" />
+      {moreNav.map((entry) =>
+        entry.kind === "link" ? (
+          <Link key={entry.item.to} to={entry.item.to} className={row}>
+            {entry.item.label}
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+          </Link>
+        ) : (
+          <section key={entry.title} className="flex flex-col">
+            <h2 className="m-0 pb-1.5 text-xs font-medium text-muted-foreground">{entry.title}</h2>
+            {entry.links.map((link) => (
+              <Link key={link.to} to={link.to} className={row}>
+                {link.label}
+                <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+              </Link>
+            ))}
+          </section>
+        ),
+      )}
+      <LegalLinks />
+    </Page>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ArrowLeft, ChevronDown, FilePen, Landmark, Mail, Pencil, Plus, Settings } from "lucide-react";
+import { ChevronDown, FilePen, Landmark, Mail, Pencil, Plus, Settings } from "lucide-react";
 import {
   DEFAULT_RECTIFICATION,
   newId,
@@ -34,7 +34,14 @@ import type {
   SalesLine,
 } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +53,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { BackLink, Notice, Page, PageHeader } from "@/components/page";
 import { stockShortageMessage } from "@/features/catalog/catalog-store";
 import { lockedMessage } from "@/features/closing/closing-model";
 import { useLockedQuarter } from "@/features/closing/closing-store";
@@ -259,13 +267,12 @@ export function SalesFormPage({ kind: routeKind }: { kind: SalesKind }) {
   if (id && !existing) {
     const config = KINDS[routeKind];
     return (
-      <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
-        <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
-        <p className="m-0 text-muted-foreground">Este documento no existe o se ha eliminado.</p>
-        <Link to={config.path} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
+      <Page>
+        <PageHeader title="No encontrado" description="Este documento no existe o se ha eliminado." />
+        <Link to={config.path} className={cn(buttonVariants({ variant: "secondary" }), "self-start")}>
           Volver a {config.title.toLowerCase()}
         </Link>
-      </div>
+      </Page>
     );
   }
 
@@ -703,603 +710,571 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <form noValidate onSubmit={submit} className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              to={config.path}
-              aria-label={`Volver a ${config.title.toLowerCase()}`}
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <ArrowLeft strokeWidth={1.8} aria-hidden="true" />
-            </Link>
-            <h1 className="m-0 truncate text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <SettingsLink
-              to={SETTINGS_PATH}
-              from={title[0]!.toLowerCase() + title.slice(1)}
-              aria-label={`Configurar ${config.singular.toLowerCase()}`}
-              title={`Configurar ${config.singular.toLowerCase()}`}
-              className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "size-10 no-underline")}
-            >
-              <Settings strokeWidth={1.8} aria-hidden="true" />
-            </SettingsLink>
-            {!readOnly && (
-              <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
-                Nuevo cliente
-              </Button>
-            )}
-            {!readOnly && actions("hidden lg:flex")}
-          </div>
-        </header>
-
-        {locked ? (
-          <LockedNotice period={locked} noun="Esta factura" />
-        ) : (
-          readOnly && <IssuedNotice invoice={existing} />
-        )}
-        {issuable && missingIssuer && <IssuerNotice missing={missingIssuer} onComplete={() => setAskingIssuer({})} />}
-        <IssuerDialog
-          open={askingIssuer !== null}
-          issues={askingIssuer?.issue !== undefined}
-          onOpenChange={(open) => !open && setAskingIssuer(null)}
-          onSaved={() => {
-            const issue = askingIssuer?.issue;
-            // The profile saved is complete, though this render's `missingIssuer` doesn't know yet
-            if (issue) save(issue.asKind, issue.after, true);
-          }}
-        />
-        {pastZero && (
-          <Dialog open onOpenChange={(open) => !open && setPastZero(null)}>
-            <DialogContent className="max-w-md">
-              <DialogTitle>La factura {pastZero.original.number} quedaría por debajo de cero</DialogTitle>
-              <DialogDescription>
-                {pastZero.left.length > 0
-                  ? `Queda por rectificar ${formatEUR(invoiceTotals(pastZero.left, WITHHOLDING_RATES[pastZero.original.withholding]).total)}: rectifica como mucho ese importe.`
-                  : "Ya está rectificada por completo: no queda nada por rectificar."}
-              </DialogDescription>
-              <div className="flex justify-end">
-                <DialogClose asChild>
-                  <Button>Revisar los conceptos</Button>
-                </DialogClose>
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-        {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
-
-        {source && !existing && (
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
-            {rectify
-              ? rectifyNotice(source, form.rectification)
-              : `Copiado de ${KINDS[source.kind].noun} ${source.number ?? "sin número"}. Revisa los datos antes de guardar.`}
-          </p>
-        )}
-
-        <fieldset
-          disabled={readOnly}
-          className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
-        >
-          <Section title={infoTitle(config.noun)} index={1}>
-            {summaryClient && <ClientSummary client={summaryClient} />}
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field
-                label="Cliente"
-                required={config.clientRequired}
-                error={errors.clientId}
-                action={
-                  <button
-                    type="button"
-                    onClick={() => setCreatingClient(true)}
-                    className={cn(
-                      buttonVariants({ variant: "secondary", size: "sm" }),
-                      "h-6 px-2.5 text-xs no-underline",
-                    )}
-                  >
+      <form noValidate onSubmit={submit}>
+        <Page>
+          <PageHeader
+            title={<span className="block truncate">{title}</span>}
+            back={<BackLink to={config.path} label={`Volver a ${config.title.toLowerCase()}`} />}
+            actions={
+              <>
+                <SettingsLink
+                  to={SETTINGS_PATH}
+                  from={title[0]!.toLowerCase() + title.slice(1)}
+                  aria-label={`Configurar ${config.singular.toLowerCase()}`}
+                  title={`Configurar ${config.singular.toLowerCase()}`}
+                  className={buttonVariants({ variant: "secondary", size: "icon" })}
+                >
+                  <Settings strokeWidth={1.8} aria-hidden="true" />
+                </SettingsLink>
+                {!readOnly && (
+                  <Button variant="secondary" className="hidden sm:inline-flex" onClick={() => setCreatingClient(true)}>
                     Nuevo cliente
-                  </button>
-                }
-              >
-                {(fieldProps) => (
-                  <Select
-                    value={form.clientId}
-                    // Radix fires "" when the options change (a client was just created); ignore it
-                    onValueChange={(v) => v && changeClient(v === NO_CLIENT ? "" : v)}
-                  >
-                    <SelectTrigger {...fieldProps} className="w-full font-normal aria-invalid:border-destructive">
-                      <span className="min-w-0 flex-1 truncate text-left">
-                        <SelectValue placeholder={config.clientPlaceholder} />
-                      </span>
-                      <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {!config.clientRequired && (
-                        <SelectItem value={NO_CLIENT} className="text-muted-foreground">
-                          {config.clientPlaceholder}
-                        </SelectItem>
-                      )}
-                      {[...clients]
-                        .sort((a, b) => a.name.localeCompare(b.name, "es"))
-                        .map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name} · <span className="tabular-nums">{c.taxId}</span>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  </Button>
                 )}
-              </Field>
+                {!readOnly && actions("hidden lg:flex")}
+              </>
+            }
+          />
 
-              {isInvoice ? (
+          {locked ? (
+            <LockedNotice period={locked} noun="Esta factura" />
+          ) : (
+            readOnly && <IssuedNotice invoice={existing} />
+          )}
+          {issuable && missingIssuer && <IssuerNotice missing={missingIssuer} onComplete={() => setAskingIssuer({})} />}
+          <IssuerDialog
+            open={askingIssuer !== null}
+            issues={askingIssuer?.issue !== undefined}
+            onOpenChange={(open) => !open && setAskingIssuer(null)}
+            onSaved={() => {
+              const issue = askingIssuer?.issue;
+              // The profile saved is complete, though this render's `missingIssuer` doesn't know yet
+              if (issue) save(issue.asKind, issue.after, true);
+            }}
+          />
+          {pastZero && (
+            <Dialog open onOpenChange={(open) => !open && setPastZero(null)}>
+              <DialogContent className="max-w-md">
+                <DialogTitle>La factura {pastZero.original.number} quedaría por debajo de cero</DialogTitle>
+                <DialogDescription>
+                  {pastZero.left.length > 0
+                    ? `Queda por rectificar ${formatEUR(invoiceTotals(pastZero.left, WITHHOLDING_RATES[pastZero.original.withholding]).total)}: rectifica como mucho ese importe.`
+                    : "Ya está rectificada por completo: no queda nada por rectificar."}
+                </DialogDescription>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button>Revisar los conceptos</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          {sending && <SendDialog doc={sending.doc} onOpenChange={(open) => !open && navigate(sending.next)} />}
+
+          {source && !existing && (
+            <Notice>
+              {rectify
+                ? rectifyNotice(source, form.rectification)
+                : `Copiado de ${KINDS[source.kind].noun} ${source.number ?? "sin número"}. Revisa los datos antes de guardar.`}
+            </Notice>
+          )}
+
+          <fieldset
+            disabled={readOnly}
+            className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
+          >
+            <Section title={infoTitle(config.noun)} index={1}>
+              {summaryClient && <ClientSummary client={summaryClient} />}
+
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <Field
-                  label="Número"
-                  help={
-                    issued
-                      ? "Número que recibió al emitirse."
-                      : "Se asigna al emitir la factura: el siguiente de la serie, en orden de fecha."
-                  }
-                >
-                  {(p) => <Input {...p} readOnly value={invoiceNumber(kind) ?? form.number} className="tabular-nums" />}
-                </Field>
-              ) : (
-                <Field
-                  label="Número"
-                  required
-                  error={errors.number}
-                  help="Número correlativo dentro de la serie. «Obtener número» propone el siguiente libre."
+                  label="Cliente"
+                  required={config.clientRequired}
+                  error={errors.clientId}
                   action={
-                    <button
-                      type="button"
-                      onClick={() => set("number", suggestedNumber(form))}
-                      className={cn(
-                        buttonVariants({ variant: "secondary", size: "sm" }),
-                        "h-6 px-2.5 text-xs no-underline",
-                      )}
-                    >
-                      Obtener número
-                    </button>
+                    <Button variant="link" onClick={() => setCreatingClient(true)}>
+                      Nuevo cliente
+                    </Button>
                   }
                 >
-                  {(p) => (
-                    <Input
-                      {...p}
-                      value={form.number}
-                      onChange={(e) => set("number", e.target.value)}
-                      className="tabular-nums"
-                    />
-                  )}
-                </Field>
-              )}
-
-              <Field label="Serie" required>
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={isInvoice ? (form.seriesId ?? form.series) : "normal"}
-                    onChange={changeSeries}
-                    disabled={issued}
-                    groups={
-                      isInvoice
-                        ? [
-                            ...seriesGroups(invoiceSeriesList(storedSeries), form.seriesId ?? form.series),
-                            { label: "Opciones", options: [{ value: NEW_SERIES, label: "Crear nueva serie" }] },
-                          ]
-                        : [{ options: [{ value: "normal", label: config.seriesLabel }] }]
-                    }
-                  />
-                )}
-              </Field>
-
-              {rectifying && (
-                <Field label="Rectifica la factura" required error={errors.rectifiesId}>
-                  {(p) => (
-                    <Select value={form.rectifiesId} onValueChange={changeRectified} disabled={issued}>
-                      <SelectTrigger {...p} className="w-full font-normal aria-invalid:border-destructive">
+                  {(fieldProps) => (
+                    <Select
+                      value={form.clientId}
+                      // Radix fires "" when the options change (a client was just created); ignore it
+                      onValueChange={(v) => v && changeClient(v === NO_CLIENT ? "" : v)}
+                    >
+                      <SelectTrigger {...fieldProps} className="w-full aria-invalid:border-destructive">
                         <span className="min-w-0 flex-1 truncate text-left">
-                          <SelectValue placeholder="No se ha seleccionado ninguna factura" />
+                          <SelectValue placeholder={config.clientPlaceholder} />
                         </span>
                         <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
                       </SelectTrigger>
                       <SelectContent>
-                        {rectifiable.map((d) => (
-                          <SelectItem key={d.id} value={d.id}>
-                            <span className="tabular-nums">{d.number}</span> · {clientOf(d).name}
+                        {!config.clientRequired && (
+                          <SelectItem value={NO_CLIENT} className="text-muted-foreground">
+                            {config.clientPlaceholder}
                           </SelectItem>
-                        ))}
+                        )}
+                        {[...clients]
+                          .sort((a, b) => a.name.localeCompare(b.name, "es"))
+                          .map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name} · <span className="tabular-nums">{c.taxId}</span>
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   )}
                 </Field>
-              )}
 
-              {rectifying && (
-                <>
-                  <Field label="Motivo" required>
+                {isInvoice ? (
+                  <Field
+                    label="Número"
+                    help={
+                      issued
+                        ? "Número que recibió al emitirse."
+                        : "Se asigna al emitir la factura: el siguiente de la serie, en orden de fecha."
+                    }
+                  >
                     {(p) => (
-                      <GroupedSelect
-                        {...p}
-                        value={form.rectification.reason}
-                        onChange={(v) => changeRectification({ reason: v as Rectification["reason"] })}
-                        groups={[{ options: RECTIFICATION_REASONS }]}
-                        disabled={issued}
-                      />
+                      <Input {...p} readOnly value={invoiceNumber(kind) ?? form.number} className="tabular-nums" />
                     )}
                   </Field>
-                  <Field label="Tipo de rectificación" required>
+                ) : (
+                  <Field
+                    label="Número"
+                    required
+                    error={errors.number}
+                    help="Número correlativo dentro de la serie. «Obtener número» propone el siguiente libre."
+                    action={
+                      <Button variant="link" onClick={() => set("number", suggestedNumber(form))}>
+                        Obtener número
+                      </Button>
+                    }
+                  >
                     {(p) => (
-                      <GroupedSelect
-                        {...p}
-                        value={form.rectification.method}
-                        onChange={(v) => changeRectification({ method: v as Rectification["method"] })}
-                        groups={[{ options: methods }]}
-                        disabled={issued}
-                      />
-                    )}
-                  </Field>
-                </>
-              )}
-
-              <Field label="Fecha" required error={errors.issuedOn}>
-                {(p) => (
-                  <Input {...p} type="date" value={form.issuedOn} onChange={(e) => changeIssuedOn(e.target.value)} />
-                )}
-              </Field>
-
-              {config.dueLabel && (
-                <Field
-                  label={config.dueLabel}
-                  hint={
-                    form.dueOn
-                      ? `${isInvoice ? "Vence" : "Válido hasta"} el ${formatDate(form.dueOn)}`
-                      : `Sin ${config.dueLabel.toLowerCase()}`
-                  }
-                >
-                  {(p) => (
-                    <div className="flex flex-col gap-2">
                       <Input
                         {...p}
-                        type="date"
-                        value={form.dueOn ?? ""}
-                        onChange={(e) => {
-                          set("dueOn", e.target.value || null);
-                          setDueTerm(e.target.value ? "custom" : null);
-                        }}
+                        value={form.number}
+                        onChange={(e) => set("number", e.target.value)}
+                        className="tabular-nums"
                       />
-                      <div role="group" aria-label="Plazos rápidos" className="flex flex-wrap gap-1.5">
-                        {[...DUE_TERMS, null].map((term) => (
-                          <button
-                            key={term ?? "none"}
-                            type="button"
-                            aria-pressed={dueTerm === term}
-                            onClick={() => {
-                              setDueTerm(term);
-                              set("dueOn", term === null ? null : addDays(form.issuedOn, term));
-                            }}
-                            className="h-7 cursor-pointer rounded-sm border border-border px-2.5 text-xs font-medium text-muted-foreground transition-colors duration-150 hover:bg-muted aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary"
-                          >
-                            {term === null ? "Sin fecha" : `${term} días`}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </Field>
-              )}
+                    )}
+                  </Field>
+                )}
 
-              {isInvoice && (
-                <Field
-                  label="Tipo de ingreso"
-                  help="Cuenta del Plan General Contable (grupo 7) en la que se registra el ingreso."
-                >
+                <Field label="Serie" required>
                   {(p) => (
                     <GroupedSelect
                       {...p}
-                      value={form.incomeType}
-                      onChange={(v) => set("incomeType", v as IncomeType)}
-                      groups={[{ label: "Grupo 7: Ventas e ingresos", options: [] }, ...INCOME_TYPE_GROUPS]}
+                      value={isInvoice ? (form.seriesId ?? form.series) : "normal"}
+                      onChange={changeSeries}
+                      disabled={issued}
+                      groups={
+                        isInvoice
+                          ? [
+                              ...seriesGroups(invoiceSeriesList(storedSeries), form.seriesId ?? form.series),
+                              { label: "Opciones", options: [{ value: NEW_SERIES, label: "Crear nueva serie" }] },
+                            ]
+                          : [{ options: [{ value: "normal", label: config.seriesLabel }] }]
+                      }
                     />
                   )}
                 </Field>
-              )}
 
-              <Field label="Retención" help="IRPF que el cliente te retiene e ingresa a Hacienda en tu nombre.">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={form.withholding}
-                    onChange={(v) => set("withholding", v as WithholdingKind)}
-                    groups={WITHHOLDING_GROUPS}
-                    disabled={Boolean(substitution)}
-                  />
+                {rectifying && (
+                  <Field label="Rectifica la factura" required error={errors.rectifiesId}>
+                    {(p) => (
+                      <Select value={form.rectifiesId} onValueChange={changeRectified} disabled={issued}>
+                        <SelectTrigger {...p} className="w-full aria-invalid:border-destructive">
+                          <span className="min-w-0 flex-1 truncate text-left">
+                            <SelectValue placeholder="No se ha seleccionado ninguna factura" />
+                          </span>
+                          <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {rectifiable.map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              <span className="tabular-nums">{d.number}</span> · {clientOf(d).name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </Field>
                 )}
-              </Field>
-            </div>
-          </Section>
 
-          <Section
-            title="Conceptos"
-            index={2}
-            action={
-              reordering ? (
-                <Button variant="secondary" size="sm" onClick={() => setReordering(false)}>
-                  Terminar de reordenar
-                </Button>
-              ) : (
-                <button
-                  type="button"
-                  aria-pressed={advanced}
-                  onClick={() => setAdvanced((a) => !a)}
-                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "[&_svg]:size-4")}
-                >
-                  <ChevronDown
-                    className={cn("size-4 transition-transform duration-200", advanced && "rotate-180")}
-                    aria-hidden="true"
-                  />
-                  {advanced ? "Ocultar edición avanzada" : "Mostrar edición avanzada"}
-                </button>
-              )
-            }
-          >
-            <LinesEditor
-              lines={form.lines}
-              parsed={parsedLines}
-              chargesVat={chargesVat}
-              advanced={advanced}
-              reordering={reordering}
-              invalid={Boolean(errors.lines)}
-              vatLabel={vatLabel}
-              onChange={setLine}
-              onRemove={(lineId) =>
-                setLines((lines) =>
-                  lines.length > 1
-                    ? lines.filter((l) => l.id !== lineId)
-                    : [emptyLine(settingsStore.get().tax.defaultVatRate, lineDiscount)],
-                )
-              }
-              onDuplicate={(lineId) =>
-                setLines((lines) => lines.flatMap((l) => (l.id === lineId ? [l, { ...l, id: newId() }] : [l])))
-              }
-              onMove={(from, to) =>
-                setLines((lines) => {
-                  const next = [...lines];
-                  next.splice(to, 0, next.splice(from, 1)[0]!);
-                  return next;
-                })
-              }
-              onReorder={() => setReordering(true)}
-            />
-            {errors.lines && (
-              <p role="alert" className="m-0 text-sm text-destructive">
-                {errors.lines}
-              </p>
-            )}
-            <Button
-              variant="secondary"
-              size="md"
-              className="self-start"
-              onClick={() =>
-                set("lines", [
-                  ...form.lines,
-                  emptyLine(chargesVat ? settingsStore.get().tax.defaultVatRate : 0, lineDiscount),
-                ])
-              }
-            >
-              <Plus strokeWidth={2} aria-hidden="true" />
-              Añadir otro concepto
-            </Button>
-          </Section>
-
-          <Totals
-            totals={totals}
-            withholding={form.withholding}
-            advanced={advanced}
-            supplies={form.supplies}
-            onSuppliesChange={(v) => set("supplies", v)}
-          />
-
-          <Section title="Notas" index={3}>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <InvoiceNotes
-                label={`Notas en ${config.noun}`}
-                value={form.publicNotes}
-                onChange={(v) => set("publicNotes", v)}
-              />
-              <Field label="Notas privadas" help="Solo las ves tú: no aparecen en el documento.">
-                {(p) => (
-                  <Textarea
-                    {...p}
-                    rows={2}
-                    value={form.privateNotes}
-                    onChange={(e) => set("privateNotes", e.target.value)}
-                  />
-                )}
-              </Field>
-              <TagsField tags={form.tags} onChange={(tags) => set("tags", tags)} />
-            </div>
-          </Section>
-
-          {isInvoice && (
-            <Section title="Opciones avanzadas" index={4}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Fecha de operación" hint="Solo si es distinta de la fecha del documento.">
-                  {(p) => (
-                    <Input
-                      {...p}
-                      type="date"
-                      value={form.operationOn}
-                      onChange={(e) => set("operationOn", e.target.value)}
-                    />
-                  )}
-                </Field>
-                <Field
-                  label="Tipo de operación"
-                  help="Decide cómo se trata el IVA y en qué casillas de los modelos 303, 349 y 390 aparece."
-                >
-                  {(p) => (
-                    <Select
-                      value={form.operationType}
-                      onValueChange={(v) => changeOperationType(v as OperationType)}
-                      disabled={Boolean(substitution)}
-                    >
-                      <SelectTrigger
-                        {...p}
-                        className="w-full font-normal disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <span className="min-w-0 flex-1 truncate text-left">
-                          <SelectValue>
-                            {OPERATION_TYPES.find((o) => o.value === form.operationType)?.label}
-                          </SelectValue>
-                        </span>
-                        <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-                      </SelectTrigger>
-                      <SelectContent className="max-w-[min(36rem,calc(100vw-2rem))]">
-                        {OPERATION_TYPES.map((o) => (
-                          <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
-                            {o.label}
-                            <span className="block text-sm font-normal text-muted-foreground">{o.hint}</span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </Field>
-              </div>
-              <div className="flex flex-col gap-4">
-                <CheckField
-                  label="Factura emitida en criterio de caja"
-                  help="El IVA se declara cuando cobras, no cuando emites. Solo si estás acogido al régimen especial de criterio de caja."
-                  checked={form.cashBasis}
-                  onChange={(v) => set("cashBasis", v)}
-                />
-                <CheckField
-                  label="Operación de arrendamiento de inmuebles"
-                  help="Alquiler de un local o vivienda. Se informa en los modelos 115, 180 y 347 con su situación y referencia catastral."
-                  checked={form.rental}
-                  onChange={(v) => set("rental", v)}
-                />
-                {form.rental && (
-                  <div className="grid gap-4 pl-7.5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-                    <Field label="Situación">
+                {rectifying && (
+                  <>
+                    <Field label="Motivo" required>
                       {(p) => (
-                        <Select
-                          value={form.rentalLocation}
-                          onValueChange={(v) => set("rentalLocation", v as RentalLocation)}
-                        >
-                          <SelectTrigger {...p} className="w-full font-normal">
-                            <span className="min-w-0 flex-1 truncate text-left">
-                              <SelectValue />
-                            </span>
-                            <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-                          </SelectTrigger>
-                          <SelectContent className="max-w-[min(40rem,calc(100vw-2rem))]">
-                            {RENTAL_LOCATIONS.map((o) => (
-                              <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
-                                {o.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </Field>
-                    <Field label="Referencia catastral">
-                      {(p) => (
-                        <Input
+                        <GroupedSelect
                           {...p}
-                          value={form.cadastralRef}
-                          onChange={(e) => set("cadastralRef", e.target.value)}
-                          disabled={form.rentalLocation === "noCadastralRef" || form.rentalLocation === "abroad"}
-                          className="tabular-nums"
+                          value={form.rectification.reason}
+                          onChange={(v) => changeRectification({ reason: v as Rectification["reason"] })}
+                          groups={[{ options: RECTIFICATION_REASONS }]}
+                          disabled={issued}
                         />
                       )}
                     </Field>
-                  </div>
-                )}
-                {/* An issued invoice's collections are managed from the list */}
-                {!issued && (
-                  <>
-                    <CheckField
-                      label="Marcar factura como cobrada"
-                      help="Registra el cobro con su fecha y el método por el que lo recibiste."
-                      checked={form.markPaid}
-                      onChange={(v) => set("markPaid", v)}
-                    />
-                    {form.markPaid && (
-                      <div className="flex flex-wrap items-end gap-3 pl-7.5">
-                        <Field label="Fecha de cobro" className="w-44">
-                          {(p) => (
-                            <Input
-                              {...p}
-                              type="date"
-                              value={form.paidOn}
-                              onChange={(e) => {
-                                set("paidOn", e.target.value);
-                                setPaidOnFollows(false);
-                              }}
-                            />
-                          )}
-                        </Field>
-                        <Field label="Método de cobro" required error={errors.paymentMethodId} className="w-56">
-                          {(p) => (
-                            <GroupedSelect
-                              {...p}
-                              value={form.paymentMethodId}
-                              onChange={(v) => set("paymentMethodId", v)}
-                              groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
-                            />
-                          )}
-                        </Field>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="lg"
-
-                          onClick={() => setCreatingMethod(true)}
-                        >
-                          <Plus aria-hidden="true" />
-                          Nuevo método
-                        </Button>
-                      </div>
-                    )}
+                    <Field label="Tipo de rectificación" required>
+                      {(p) => (
+                        <GroupedSelect
+                          {...p}
+                          value={form.rectification.method}
+                          onChange={(v) => changeRectification({ method: v as Rectification["method"] })}
+                          groups={[{ options: methods }]}
+                          disabled={issued}
+                        />
+                      )}
+                    </Field>
                   </>
                 )}
+
+                <Field label="Fecha" required error={errors.issuedOn}>
+                  {(p) => (
+                    <Input {...p} type="date" value={form.issuedOn} onChange={(e) => changeIssuedOn(e.target.value)} />
+                  )}
+                </Field>
+
+                {config.dueLabel && (
+                  <Field
+                    label={config.dueLabel}
+                    hint={
+                      form.dueOn
+                        ? `${isInvoice ? "Vence" : "Válido hasta"} el ${formatDate(form.dueOn)}`
+                        : `Sin ${config.dueLabel.toLowerCase()}`
+                    }
+                  >
+                    {(p) => (
+                      <div className="flex flex-col gap-2">
+                        <Input
+                          {...p}
+                          type="date"
+                          value={form.dueOn ?? ""}
+                          onChange={(e) => {
+                            set("dueOn", e.target.value || null);
+                            setDueTerm(e.target.value ? "custom" : null);
+                          }}
+                        />
+                        <div role="group" aria-label="Plazos rápidos" className="flex flex-wrap gap-1.5">
+                          {[...DUE_TERMS, null].map((term) => (
+                            <Button
+                              key={term ?? "none"}
+                              variant="chip"
+                              aria-pressed={dueTerm === term}
+                              onClick={() => {
+                                setDueTerm(term);
+                                set("dueOn", term === null ? null : addDays(form.issuedOn, term));
+                              }}
+                            >
+                              {term === null ? "Sin fecha" : `${term} días`}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </Field>
+                )}
+
+                {isInvoice && (
+                  <Field
+                    label="Tipo de ingreso"
+                    help="Cuenta del Plan General Contable (grupo 7) en la que se registra el ingreso."
+                  >
+                    {(p) => (
+                      <GroupedSelect
+                        {...p}
+                        value={form.incomeType}
+                        onChange={(v) => set("incomeType", v as IncomeType)}
+                        groups={[{ label: "Grupo 7: Ventas e ingresos", options: [] }, ...INCOME_TYPE_GROUPS]}
+                      />
+                    )}
+                  </Field>
+                )}
+
+                <Field label="Retención" help="IRPF que el cliente te retiene e ingresa a Hacienda en tu nombre.">
+                  {(p) => (
+                    <GroupedSelect
+                      {...p}
+                      value={form.withholding}
+                      onChange={(v) => set("withholding", v as WithholdingKind)}
+                      groups={WITHHOLDING_GROUPS}
+                      disabled={Boolean(substitution)}
+                    />
+                  )}
+                </Field>
               </div>
             </Section>
-          )}
 
-          <Section title="Otros" index={isInvoice ? 5 : 4}>
-            <LocaleFields
-              language={form.language}
-              numberFormat={form.numberFormat}
-              onLanguageChange={changeLanguage}
-              onNumberFormatChange={(v) => set("numberFormat", v === CLIENT_DEFAULT ? "" : v)}
+            <Section
+              title="Conceptos"
+              index={2}
+              action={
+                reordering ? (
+                  <Button variant="secondary" size="sm" onClick={() => setReordering(false)}>
+                    Terminar de reordenar
+                  </Button>
+                ) : (
+                  <Button variant="secondary" size="sm" aria-pressed={advanced} onClick={() => setAdvanced((a) => !a)}>
+                    <ChevronDown
+                      className={cn("transition-transform duration-200", advanced && "rotate-180")}
+                      aria-hidden="true"
+                    />
+                    {advanced ? "Ocultar edición avanzada" : "Mostrar edición avanzada"}
+                  </Button>
+                )
+              }
+            >
+              <LinesEditor
+                lines={form.lines}
+                parsed={parsedLines}
+                chargesVat={chargesVat}
+                advanced={advanced}
+                reordering={reordering}
+                invalid={Boolean(errors.lines)}
+                vatLabel={vatLabel}
+                onChange={setLine}
+                onRemove={(lineId) =>
+                  setLines((lines) =>
+                    lines.length > 1
+                      ? lines.filter((l) => l.id !== lineId)
+                      : [emptyLine(settingsStore.get().tax.defaultVatRate, lineDiscount)],
+                  )
+                }
+                onDuplicate={(lineId) =>
+                  setLines((lines) => lines.flatMap((l) => (l.id === lineId ? [l, { ...l, id: newId() }] : [l])))
+                }
+                onMove={(from, to) =>
+                  setLines((lines) => {
+                    const next = [...lines];
+                    next.splice(to, 0, next.splice(from, 1)[0]!);
+                    return next;
+                  })
+                }
+                onReorder={() => setReordering(true)}
+              />
+              {errors.lines && (
+                <p role="alert" className="m-0 text-sm text-destructive">
+                  {errors.lines}
+                </p>
+              )}
+              <Button
+                variant="secondary"
+                className="self-start"
+                onClick={() =>
+                  set("lines", [
+                    ...form.lines,
+                    emptyLine(chargesVat ? settingsStore.get().tax.defaultVatRate : 0, lineDiscount),
+                  ])
+                }
+              >
+                <Plus strokeWidth={2} aria-hidden="true" />
+                Añadir otro concepto
+              </Button>
+            </Section>
+
+            <Totals
+              totals={totals}
+              withholding={form.withholding}
+              advanced={advanced}
+              supplies={form.supplies}
+              onSuppliesChange={(v) => set("supplies", v)}
             />
-          </Section>
-        </fieldset>
 
-        {/* Mobile: actions at the end of the form */}
-        {!readOnly && actions("lg:hidden")}
-        <NewContactDialog
-          role="client"
-          open={creatingClient}
-          onOpenChange={setCreatingClient}
-          onCreated={(c) => {
-            setForm((f) => (existing ? { ...f, clientId: c.id } : withClientDefaults(f, c)));
-            clearError("clientId");
-          }}
-        />
-        {creatingSeries && (
-          <SeriesDialog open onOpenChange={setCreatingSeries} type={form.series} onCreated={pickSeries} />
-        )}
-        {creatingMethod && (
-          <MethodDialog
-            open
-            onOpenChange={setCreatingMethod}
-            method={null}
-            onCreated={(id) => set("paymentMethodId", id)}
+            <Section title="Notas" index={3}>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <InvoiceNotes
+                  label={`Notas en ${config.noun}`}
+                  value={form.publicNotes}
+                  onChange={(v) => set("publicNotes", v)}
+                />
+                <Field label="Notas privadas" help="Solo las ves tú: no aparecen en el documento.">
+                  {(p) => (
+                    <Textarea
+                      {...p}
+                      rows={2}
+                      value={form.privateNotes}
+                      onChange={(e) => set("privateNotes", e.target.value)}
+                    />
+                  )}
+                </Field>
+                <TagsField tags={form.tags} onChange={(tags) => set("tags", tags)} />
+              </div>
+            </Section>
+
+            {isInvoice && (
+              <Section title="Opciones avanzadas" index={4}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Fecha de operación" hint="Solo si es distinta de la fecha del documento.">
+                    {(p) => (
+                      <Input
+                        {...p}
+                        type="date"
+                        value={form.operationOn}
+                        onChange={(e) => set("operationOn", e.target.value)}
+                      />
+                    )}
+                  </Field>
+                  <Field
+                    label="Tipo de operación"
+                    help="Decide cómo se trata el IVA y en qué casillas de los modelos 303, 349 y 390 aparece."
+                  >
+                    {(p) => (
+                      <Select
+                        value={form.operationType}
+                        onValueChange={(v) => changeOperationType(v as OperationType)}
+                        disabled={Boolean(substitution)}
+                      >
+                        <SelectTrigger {...p} className="w-full disabled:cursor-not-allowed disabled:opacity-50">
+                          <span className="min-w-0 flex-1 truncate text-left">
+                            <SelectValue>
+                              {OPERATION_TYPES.find((o) => o.value === form.operationType)?.label}
+                            </SelectValue>
+                          </span>
+                          <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+                        </SelectTrigger>
+                        <SelectContent className="max-w-[min(36rem,calc(100vw-2rem))]">
+                          {OPERATION_TYPES.map((o) => (
+                            <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
+                              {o.label}
+                              <span className="block text-sm font-normal text-muted-foreground">{o.hint}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </Field>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <CheckField
+                    label="Factura emitida en criterio de caja"
+                    help="El IVA se declara cuando cobras, no cuando emites. Solo si estás acogido al régimen especial de criterio de caja."
+                    checked={form.cashBasis}
+                    onChange={(v) => set("cashBasis", v)}
+                  />
+                  <CheckField
+                    label="Operación de arrendamiento de inmuebles"
+                    help="Alquiler de un local o vivienda. Se informa en los modelos 115, 180 y 347 con su situación y referencia catastral."
+                    checked={form.rental}
+                    onChange={(v) => set("rental", v)}
+                  />
+                  {form.rental && (
+                    <div className="grid gap-4 pl-7.5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                      <Field label="Situación">
+                        {(p) => (
+                          <Select
+                            value={form.rentalLocation}
+                            onValueChange={(v) => set("rentalLocation", v as RentalLocation)}
+                          >
+                            <SelectTrigger {...p} className="w-full">
+                              <span className="min-w-0 flex-1 truncate text-left">
+                                <SelectValue />
+                              </span>
+                              <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+                            </SelectTrigger>
+                            <SelectContent className="max-w-[min(40rem,calc(100vw-2rem))]">
+                              {RENTAL_LOCATIONS.map((o) => (
+                                <SelectItem key={o.value} value={o.value} className="h-auto min-h-9 py-2">
+                                  {o.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </Field>
+                      <Field label="Referencia catastral">
+                        {(p) => (
+                          <Input
+                            {...p}
+                            value={form.cadastralRef}
+                            onChange={(e) => set("cadastralRef", e.target.value)}
+                            disabled={form.rentalLocation === "noCadastralRef" || form.rentalLocation === "abroad"}
+                            className="tabular-nums"
+                          />
+                        )}
+                      </Field>
+                    </div>
+                  )}
+                  {/* An issued invoice's collections are managed from the list */}
+                  {!issued && (
+                    <>
+                      <CheckField
+                        label="Marcar factura como cobrada"
+                        help="Registra el cobro con su fecha y el método por el que lo recibiste."
+                        checked={form.markPaid}
+                        onChange={(v) => set("markPaid", v)}
+                      />
+                      {form.markPaid && (
+                        <div className="flex flex-wrap items-end gap-3 pl-7.5">
+                          <Field label="Fecha de cobro" className="w-44">
+                            {(p) => (
+                              <Input
+                                {...p}
+                                type="date"
+                                value={form.paidOn}
+                                onChange={(e) => {
+                                  set("paidOn", e.target.value);
+                                  setPaidOnFollows(false);
+                                }}
+                              />
+                            )}
+                          </Field>
+                          <Field label="Método de cobro" required error={errors.paymentMethodId} className="w-56">
+                            {(p) => (
+                              <GroupedSelect
+                                {...p}
+                                value={form.paymentMethodId}
+                                onChange={(v) => set("paymentMethodId", v)}
+                                groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
+                              />
+                            )}
+                          </Field>
+                          <Button type="button" variant="secondary" onClick={() => setCreatingMethod(true)}>
+                            <Plus aria-hidden="true" />
+                            Nuevo método
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </Section>
+            )}
+
+            <Section title="Otros" index={isInvoice ? 5 : 4}>
+              <LocaleFields
+                language={form.language}
+                numberFormat={form.numberFormat}
+                onLanguageChange={changeLanguage}
+                onNumberFormatChange={(v) => set("numberFormat", v === CLIENT_DEFAULT ? "" : v)}
+              />
+            </Section>
+          </fieldset>
+
+          {/* Mobile: actions at the end of the form */}
+          {!readOnly && actions("lg:hidden")}
+          <NewContactDialog
+            role="client"
+            open={creatingClient}
+            onOpenChange={setCreatingClient}
+            onCreated={(c) => {
+              setForm((f) => (existing ? { ...f, clientId: c.id } : withClientDefaults(f, c)));
+              clearError("clientId");
+            }}
           />
-        )}
+          {creatingSeries && (
+            <SeriesDialog open onOpenChange={setCreatingSeries} type={form.series} onCreated={pickSeries} />
+          )}
+          {creatingMethod && (
+            <MethodDialog
+              open
+              onOpenChange={setCreatingMethod}
+              method={null}
+              onCreated={(id) => set("paymentMethodId", id)}
+            />
+          )}
+        </Page>
       </form>
     </TooltipProvider>
   );
@@ -1379,7 +1354,7 @@ function InvoiceNotes({ label, value, onChange }: { label: string; value: string
                 onChange(noteTemplates.find((t) => t.id === id)?.text ?? "");
               }}
             >
-              <SelectTrigger className="min-w-0 flex-1 font-normal" aria-label="Nota predefinida">
+              <SelectTrigger className="min-w-0 flex-1" aria-label="Nota predefinida">
                 <span className="min-w-0 flex-1 truncate text-left">
                   <SelectValue placeholder="Selecciona una nota" />
                 </span>
@@ -1398,8 +1373,7 @@ function InvoiceNotes({ label, value, onChange }: { label: string; value: string
             </Select>
             <Button
               variant="secondary"
-              size="lg"
-              className="w-10 px-0"
+              size="icon"
               aria-label="Gestionar información de la nota"
               title="Gestionar información de la nota"
               onClick={() =>
@@ -1410,7 +1384,7 @@ function InvoiceNotes({ label, value, onChange }: { label: string; value: string
             </Button>
           </div>
           {editing && (
-            <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+            <div className="flex flex-col gap-2 rounded-xl bg-muted p-4">
               <Input
                 placeholder="Título"
                 aria-label="Título de la nota"

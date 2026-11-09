@@ -8,6 +8,7 @@ import {
 } from "@/features/contacts/contact-settings-store";
 import { CheckField, Field, Section } from "@/features/sales/form-fields";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
+import { Page } from "@/components/page";
 
 /** Options for clients and suppliers: the names of the two free fields and the data autocomplete. */
 export function ContactSettingsPage() {
@@ -29,7 +30,7 @@ export function ContactSettingsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader title="Clientes y proveedores" description="Opciones de las fichas de clientes y proveedores.">
           <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />
         </SettingsHeader>
@@ -75,7 +76,7 @@ export function ContactSettingsPage() {
             onChange={(v) => set("autocomplete", v)}
           />
         </Section>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }

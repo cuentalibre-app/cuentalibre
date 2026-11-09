@@ -34,7 +34,7 @@ export function ExportBooksPage() {
             value={String(year)}
             onChange={(v) => setYear(Number(v))}
             groups={[{ options: availableYears.map((y) => ({ value: String(y), label: String(y) })) }]}
-            className="w-28 font-medium text-foreground"
+            className="w-28 text-foreground"
           />
         </label>
       }

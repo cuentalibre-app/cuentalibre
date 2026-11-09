@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type Rea
 import { Link } from "react-router";
 import { Check, ImageUp, Trash2 } from "lucide-react";
 import { LOGO_MAX_SIZE, type InvoiceSettings } from "@cuentalibre/contracts";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
+import { Notice, Page } from "@/components/page";
 import { SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
@@ -42,7 +43,7 @@ export function InvoiceSettingsPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8">
+      <Page>
         <SettingsHeader title="Configuración de facturas">
           {justSaved && !dirty && (
             <span role="status" className="flex items-center gap-1.5 text-sm text-success">
@@ -102,13 +103,13 @@ export function InvoiceSettingsPage() {
               />
             </div>
           </div>
-          <p className="m-0 rounded-lg bg-primary-soft px-4 py-3 text-sm text-primary">
+          <Notice>
             El símbolo de la moneda depende del país y la región fiscal configurados en{" "}
-            <Link to="/impuestos" className="font-medium text-primary underline">
+            <Link to="/impuestos" className={buttonVariants({ variant: "link" })}>
               Impuestos
             </Link>
             . Elige otro país para cambiar la moneda.
-          </p>
+          </Notice>
         </Section>
 
         <div id="logotipo" className="scroll-mt-6">
@@ -125,7 +126,7 @@ export function InvoiceSettingsPage() {
             {(p) => <Textarea {...p} rows={3} value={draft.footer} onChange={(e) => set("footer", e.target.value)} />}
           </Field>
         </Section>
-      </div>
+      </Page>
     </TooltipProvider>
   );
 }
@@ -194,7 +195,7 @@ function LogoField({ logo, onChange }: { logo: string | undefined; onChange: (lo
             e.target.value = "";
           }}
         />
-        <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
+        <div className="flex flex-col gap-3 rounded-xl bg-muted p-4">
           <span className="text-sm font-medium text-muted-foreground">Logo actual</span>
           {logo ? (
             <>

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { Link, useSearchParams } from "react-router";
 import { Input } from "@cuentalibre/ui/components/input";
 import { Field } from "@/features/sales/form-fields";
@@ -52,11 +54,11 @@ export function SignInPage() {
         <>
           <span>
             ¿No tienes cuenta?{" "}
-            <Link to={SIGN_UP_PATH} className="font-medium text-primary hover:text-primary-hover">
+            <Link to={SIGN_UP_PATH} className={buttonVariants({ variant: "link" })}>
               Crear cuenta
             </Link>
           </span>
-          <a href={DEMO_PATH} className="font-medium text-primary hover:text-primary-hover">
+          <a href={DEMO_PATH} className={buttonVariants({ variant: "link" })}>
             Probar la demo sin cuenta
           </a>
         </>
@@ -80,7 +82,7 @@ export function SignInPage() {
           label="Contraseña"
           action={
             canReset && (
-              <Link to={FORGOT_PASSWORD_PATH} className="text-sm font-medium text-primary hover:text-primary-hover">
+              <Link to={FORGOT_PASSWORD_PATH} className={cn(buttonVariants({ variant: "link" }), "text-sm")}>
                 ¿La has olvidado?
               </Link>
             )

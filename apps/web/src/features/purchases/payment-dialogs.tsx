@@ -4,9 +4,17 @@ import { toIsoDate } from "@cuentalibre/core";
 import type { Expense, PurchaseInvoice } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button } from "@cuentalibre/ui/components/button";
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@cuentalibre/ui/components/dialog";
 import { Input } from "@cuentalibre/ui/components/input";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
+import { Notice } from "@/components/page";
 import { focusPanel } from "@/features/sales/detail-parts";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { PaymentsDialog } from "@/features/sales/payments-dialog";
@@ -59,15 +67,18 @@ export function ExpensePaymentDialog({ doc, onOpenChange }: { doc: Expense; onOp
           Pago del gasto «{current.concept}», de {formatEUR(current.amount)}.
         </DialogDescription>
         {payment ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-success-soft px-3 py-2.5 text-sm text-success">
-            <span>
-              Pagado el {formatDate(payment.date)} · {paymentMethodName(payment.paymentMethodId) ?? "Método eliminado"}.
-            </span>
-            <Button variant="secondary" size="sm" onClick={() => expensesStore.update(current.id, { payment: null })}>
-              <Undo2 strokeWidth={1.8} aria-hidden="true" />
-              Quitar el pago
-            </Button>
-          </div>
+          <Notice tone="success">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>
+                Pagado el {formatDate(payment.date)} ·{" "}
+                {paymentMethodName(payment.paymentMethodId) ?? "Método eliminado"}.
+              </span>
+              <Button variant="secondary" size="sm" onClick={() => expensesStore.update(current.id, { payment: null })}>
+                <Undo2 strokeWidth={1.8} aria-hidden="true" />
+                Quitar el pago
+              </Button>
+            </div>
+          </Notice>
         ) : (
           <form
             className="flex flex-col gap-4"
@@ -90,7 +101,7 @@ export function ExpensePaymentDialog({ doc, onOpenChange }: { doc: Expense; onOp
               <div className="sm:col-span-2">
                 <Field label="Método de pago" required>
                   {(p) => (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2.5">
                       <div className="min-w-0 flex-1 [&>*]:w-full">
                         <GroupedSelect
                           {...p}
@@ -99,13 +110,7 @@ export function ExpensePaymentDialog({ doc, onOpenChange }: { doc: Expense; onOp
                           groups={[{ options: paymentMethodOptions(methodId) }]}
                         />
                       </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="md"
-                        className="shrink-0 px-2.5"
-                        onClick={() => setCreatingMethod(true)}
-                      >
+                      <Button type="button" variant="secondary" onClick={() => setCreatingMethod(true)}>
                         <Plus aria-hidden="true" />
                         Nuevo método
                       </Button>
@@ -121,11 +126,11 @@ export function ExpensePaymentDialog({ doc, onOpenChange }: { doc: Expense; onOp
             </div>
           </form>
         )}
-        <div className="flex justify-end">
+        <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cerrar</Button>
           </DialogClose>
-        </div>
+        </DialogFooter>
         {creatingMethod && <MethodDialog open onOpenChange={setCreatingMethod} method={null} onCreated={setMethodId} />}
       </DialogContent>
     </Dialog>

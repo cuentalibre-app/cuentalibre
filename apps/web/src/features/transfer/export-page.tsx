@@ -29,7 +29,7 @@ export function ExportPage() {
           <Link
             key={o.to}
             to={o.to}
-            className="group flex animate-rise-in items-start gap-4 rounded-xl border border-border bg-card p-5 text-card-foreground no-underline transition-[background-color,border-color,scale] duration-150 hover:border-muted-strong hover:bg-accent active:scale-[0.99]"
+            className="group flex animate-rise-in items-start gap-4 surface p-5 text-card-foreground no-underline transition-[background-color,border-color,scale] duration-150 hover:border-muted-strong hover:bg-accent active:scale-[0.99]"
             style={{ "--i": i } as CSSProperties}
           >
             <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { Calculator, ChevronRight } from "lucide-react";
 import type { Period } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { cn } from "@cuentalibre/ui/lib/cn";
+import { Page, PageHeader } from "@/components/page";
 import { usePeriod } from "@/lib/use-period";
 import { FACTS, FormFactsList } from "./form-info";
 import {
@@ -89,30 +89,26 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
   const { title, path, forms } = TAX_MODULES[module];
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-4 lg:px-8 lg:pt-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <Breadcrumb items={[{ label: "Impuestos", to: TAXES_PATH }]} />
-          <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">{title}</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          {forms.map((f) => (
-            <Link
-              key={f.code}
-              to={modelPath(path, formPeriod(period, f.annual, today))}
-              className={cn(buttonVariants({ variant: "primary" }), "no-underline")}
-            >
-              <Calculator strokeWidth={1.8} aria-hidden="true" />
-              Calcular datos modelo {f.code}
-            </Link>
-          ))}
-        </div>
-      </header>
+    <Page>
+      <PageHeader
+        title={title}
+        eyebrow={<Breadcrumb items={[{ label: "Impuestos", to: TAXES_PATH }]} />}
+        actions={forms.map((f) => (
+          <Link
+            key={f.code}
+            to={modelPath(path, formPeriod(period, f.annual, today))}
+            className={buttonVariants({ variant: "primary" })}
+          >
+            <Calculator strokeWidth={1.8} aria-hidden="true" />
+            Calcular datos modelo {f.code}
+          </Link>
+        ))}
+      />
       {forms.map((f, i) => (
         <section
           key={f.code}
           aria-labelledby={`modelo-${f.code}`}
-          className="flex animate-rise-in flex-col gap-4 rounded-xl border border-border bg-card p-5"
+          className="flex animate-rise-in flex-col gap-4 surface p-5"
           style={{ "--i": i } as CSSProperties}
         >
           <h2 id={`modelo-${f.code}`} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
@@ -121,7 +117,7 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
           <FormFactsList form={f.code} />
         </section>
       ))}
-    </div>
+    </Page>
   );
 }
 

@@ -1,5 +1,7 @@
 import { Link } from "react-router";
 import { Lock } from "lucide-react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { EXPORT_PATH } from "@/features/transfer/transfer-model";
 import { planState } from "./billing-model";
 import { useBilling } from "./billing-store";
@@ -20,10 +22,10 @@ export function ReadOnlyBanner() {
       <p className="m-0 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
         <span>{ended}</span>
         <span className="flex gap-3">
-          <Link to={BILLING_PATH} className="font-semibold text-primary hover:text-primary-hover">
+          <Link to={BILLING_PATH} className={cn(buttonVariants({ variant: "link" }), "font-semibold")}>
             Suscribirme
           </Link>
-          <Link to={EXPORT_PATH} className="font-medium text-primary hover:text-primary-hover">
+          <Link to={EXPORT_PATH} className={buttonVariants({ variant: "link" })}>
             Exportar
           </Link>
         </span>

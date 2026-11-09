@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
 import { newId } from "@cuentalibre/core";
 import type { EconomicActivity } from "@cuentalibre/contracts";
-import { Input } from "@cuentalibre/ui/components/input";
+import { SearchField } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import { ACTIVITY_TYPES } from "./settings-model";
@@ -63,21 +62,13 @@ export function ActivityPicker({
         </Field>
         <Field label="Buscar epígrafe">
           {(p) => (
-            <div className="relative">
-              <Search
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                {...p}
-                type="search"
-                value={query}
-                placeholder="Código o nombre"
-                onChange={(e) => setQuery(e.target.value)}
-                className="pl-9"
-                disabled={entries.length <= 1}
-              />
-            </div>
+            <SearchField
+              {...p}
+              value={query}
+              placeholder="Código o nombre"
+              onChange={(e) => setQuery(e.target.value)}
+              disabled={entries.length <= 1}
+            />
           )}
         </Field>
       </div>

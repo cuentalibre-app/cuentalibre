@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link } from "react-router";
 import { Check } from "lucide-react";
 import { Input } from "@cuentalibre/ui/components/input";
@@ -30,7 +31,7 @@ export function ForgotPasswordPage() {
       title="¿Has olvidado tu contraseña?"
       description="Escribe tu email y te enviaremos un enlace para elegir una nueva."
       footer={
-        <Link to={SIGN_IN_PATH} className="font-medium text-primary hover:text-primary-hover">
+        <Link to={SIGN_IN_PATH} className={buttonVariants({ variant: "link" })}>
           Volver a entrar
         </Link>
       }

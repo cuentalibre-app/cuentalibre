@@ -119,6 +119,28 @@ export const secondaryNav: NavItem[] = [
   { label: "Configuración", to: "/configuracion", icon: Settings },
 ];
 
+/** Paths with a tab of their own in the mobile tab bar. */
+export const tabPaths = ["/", "/ventas", "/impuestos"];
+
+export type MoreEntry =
+  | { kind: "link"; item: NavItem }
+  | { kind: "group"; title: string; icon: LucideIcon; links: NavLeaf[] };
+
+/**
+ * Sections that don't fit in the mobile tab bar, in sidebar order, listed under "Más": a section with
+ * pages of its own is a titled group, a single page is a plain row.
+ */
+export const moreNav: MoreEntry[] = [
+  ...mainNav
+    .filter((item) => !tabPaths.includes(item.to))
+    .map((item): MoreEntry =>
+      item.children
+        ? { kind: "group", title: item.label, icon: item.icon, links: item.children }
+        : { kind: "link", item },
+    ),
+  ...secondaryNav.map((item): MoreEntry => ({ kind: "link", item })),
+];
+
 /** Every leaf route, used to register placeholder pages. */
 export const allNavLeaves: NavLeaf[] = [
   ...new Map(
