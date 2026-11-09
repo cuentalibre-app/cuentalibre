@@ -211,7 +211,7 @@ function Form190({ year, today }: { year: number; today: Date }) {
           columns={PERCEPTOR_COLUMNS}
           rows={perceptorRows(books, r.perceptors)}
           books={books}
-          empty="No dispones de información sobre ningún perceptor este año."
+          empty="No hay perceptores con retención este año."
         />
       </section>
       <FormInfo form="190" />
