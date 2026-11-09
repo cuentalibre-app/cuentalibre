@@ -208,10 +208,10 @@ function entryLink(entry: CalendarEntry): string | undefined {
 
 const CELL_TONE = {
   open: "bg-warning-soft text-warning font-semibold",
-  inProgress: "border border-border bg-card text-foreground",
-  upcoming: "border border-border bg-card text-foreground",
-  waiting: "border border-border bg-card text-foreground",
-  closed: "text-muted-foreground",
+  inProgress: "bg-card text-foreground",
+  upcoming: "bg-card text-foreground",
+  waiting: "bg-card text-foreground",
+  closed: "bg-card text-muted-foreground",
 } as const;
 
 function GridCell({
@@ -231,8 +231,15 @@ function GridCell({
   const statusInfo = (entry.form === "reta" ? CHARGE_STATUS : CALENDAR_STATUS)[status];
   const to = entryLink(entry);
   const tag = entry.form === "reta" ? null : entry.quarter === null ? "Anual" : `T${entry.quarter}`;
+  /* The row and the column already say the form and the due date; the tooltip adds what they don't. */
+  const period =
+    entry.form === "reta"
+      ? MONTHS[entry.month!]
+      : entry.quarter === null
+        ? `Ejercicio ${entry.year}`
+        : `T${entry.quarter} ${entry.year}`;
   const className = cn(
-    "flex h-10 w-full flex-col items-center justify-center rounded-md text-sm leading-tight no-underline transition-[background-color,scale] duration-150",
+    "flex h-10 w-full flex-col items-center justify-center rounded-md border border-border text-sm leading-tight no-underline transition-[background-color,scale] duration-150",
     CELL_TONE[status],
     applies !== true && "border-dashed opacity-60",
     to && "hover:bg-accent active:scale-95",
@@ -257,16 +264,8 @@ function GridCell({
           </span>
         )}
       </TooltipTrigger>
-      <TooltipContent className="flex max-w-64 flex-col gap-0.5">
-        <span className="font-semibold">{entryTitle(entry, calendarYear)}</span>
-        <span>{windowLabel(entry)}</span>
-        <span>
-          {statusInfo.label}
-          {amount !== null && ` · ${formatEUR(amount)}`}
-        </span>
-        {!to && entry.form !== "reta" && (
-          <span className="text-muted-foreground">Por ahora, prepáralo en la sede de la AEAT.</span>
-        )}
+      <TooltipContent>
+        {period} · {amount === null ? statusInfo.label : formatEUR(amount)}
       </TooltipContent>
     </Tooltip>
   );
@@ -279,7 +278,7 @@ function RowLabel({ form, applies }: { form: CalendarForm; applies: boolean | nu
       {form !== "reta" && (
         <span
           className={cn(
-            "rounded-sm px-1.5 py-0.5 font-mono text-xs font-semibold",
+            "rounded-sm px-1.5 py-0.5 text-xs font-semibold tabular-nums",
             applies === true ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground",
           )}
         >
@@ -338,17 +337,18 @@ function CalendarGrid({
       .filter((row) => row.entries.length > 0 && (scope === "all" || row.applies === true)),
   })).filter((group) => group.rows.length > 0);
 
-  const monthCol = (month: number) => cn("px-1 py-1", month === currentMonth && "bg-primary-soft/40");
+  const monthCol = (month: number) =>
+    cn("border-l border-divider px-1 py-1", month === currentMonth && "bg-primary-soft/40");
 
   return (
     <div
       className="hidden animate-rise-in overflow-x-auto rounded-xl border border-border lg:block"
       style={{ "--i": 1 } as CSSProperties}
     >
-      <table className="w-full min-w-[920px] border-collapse">
+      <table className="w-full min-w-[920px] table-fixed border-collapse">
         <thead>
-          <tr className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
-            <th scope="col" className="sticky left-0 z-10 w-80 bg-muted px-4 py-2 text-left font-medium">
+          <tr className="text-xs text-muted-foreground">
+            <th scope="col" className="sticky left-0 z-10 w-96 bg-muted px-4 py-2 text-left font-medium">
               Modelo
             </th>
             {MONTHS_SHORT.map((label, month) => (
@@ -356,7 +356,7 @@ function CalendarGrid({
                 key={label}
                 scope="col"
                 className={cn(
-                  "px-1 py-2 text-center font-medium",
+                  "border-l border-divider px-1 py-2 text-center font-medium",
                   month === currentMonth && "bg-primary-soft text-primary",
                 )}
                 aria-current={month === currentMonth ? "date" : undefined}
@@ -368,14 +368,16 @@ function CalendarGrid({
         </thead>
         {groups.map((group) => (
           <tbody key={group.title}>
-            <tr>
+            <tr className="border-t border-border">
               <th
-                scope="colgroup"
-                colSpan={13}
-                className="border-t border-border bg-card px-4 pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                scope="rowgroup"
+                className="sticky left-0 z-10 bg-card px-4 pt-3 pb-1 text-left text-xs font-semibold text-muted-foreground"
               >
                 {group.title}
               </th>
+              {MONTHS_SHORT.map((label, month) => (
+                <td key={label} className={monthCol(month)} aria-hidden="true" />
+              ))}
             </tr>
             {group.rows.map((row, i) => (
               <tr key={row.form} className="animate-row-in" style={{ "--i": i } as CSSProperties}>
@@ -490,25 +492,37 @@ function CalendarList({
   const appliesTo = useApplies();
   const isCurrentYear = today.getFullYear() === calendarYear;
   const [showPast, setShowPast] = useState(false);
-  const firstMonth = isCurrentYear && !showPast ? today.getMonth() : 0;
+  const currentMonth = isCurrentYear ? today.getMonth() : 0;
+  const firstMonth = showPast ? 0 : currentMonth;
 
   const months = Array.from({ length: 12 }, (_, month) => month)
     .filter((month) => month >= firstMonth)
     .map((month) => ({ month, entries: entries.filter((e) => e.dueOn.getMonth() === month) }))
     .filter((m) => m.entries.length > 0);
-  const hiddenCount = entries.filter((e) => e.dueOn.getMonth() < firstMonth).length;
+  const pastCount = entries.filter((e) => e.dueOn.getMonth() < currentMonth).length;
 
   return (
     <div className={cn("flex animate-rise-in flex-col gap-4", className)} style={{ "--i": 1 } as CSSProperties}>
-      {hiddenCount > 0 && (
-        <Button variant="ghost" className="self-start" onClick={() => setShowPast(true)}>
-          <ChevronDown aria-hidden="true" />
-          Mostrar plazos anteriores ({hiddenCount})
+      {pastCount > 0 && (
+        <Button
+          variant="secondary"
+          className="self-start"
+          aria-expanded={showPast}
+          onClick={() => setShowPast((shown) => !shown)}
+        >
+          <ChevronDown
+            className={cn("transition-transform duration-150", showPast && "rotate-180")}
+            aria-hidden="true"
+          />
+          {showPast ? "Ocultar" : "Mostrar"} plazos anteriores ({pastCount})
         </Button>
       )}
       {months.map(({ month, entries: monthEntries }) => (
         <section key={month} aria-labelledby={`month-${month}`} className="flex flex-col gap-2">
-          <h2 id={`month-${month}`} className="m-0 flex items-center gap-2 text-md font-semibold">
+          <h2
+            id={`month-${month}`}
+            className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight lg:text-title"
+          >
             {MONTHS[month]} {calendarYear}
             {isCurrentYear && month === today.getMonth() && <Badge tone="primary">Este mes</Badge>}
           </h2>

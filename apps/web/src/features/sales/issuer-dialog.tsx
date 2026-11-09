@@ -97,7 +97,7 @@ function IssuerForm({ issues, onCancel, onSaved }: { issues: boolean; onCancel: 
                 spellCheck={false}
                 autoFocus
                 onChange={(e) => set("taxId", e.target.value)}
-                className="font-mono uppercase"
+                className="uppercase tabular-nums"
               />
             )}
           </Field>
@@ -151,7 +151,7 @@ function IssuerForm({ issues, onCancel, onSaved }: { issues: boolean; onCancel: 
       )}
 
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancelar
         </Button>
         <Button type="submit">{issues ? "Guardar y emitir" : "Guardar"}</Button>

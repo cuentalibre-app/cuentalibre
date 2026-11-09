@@ -18,7 +18,7 @@ import { expensesStore, useExpenses } from "./expenses-store";
 import { PURCHASE_STATUS, purchaseStatus, purchaseTotals } from "./purchases-model";
 import { purchasesStore, usePurchaseInvoices } from "./purchases-store";
 
-/** Payments of a received invoice, as the reference app's "Gestión de pagos". Changes apply at once. */
+/** Payments of a received invoice. Changes apply at once. */
 export function PurchasePaymentsDialog({
   doc,
   onOpenChange,
@@ -101,9 +101,9 @@ export function ExpensePaymentDialog({ doc, onOpenChange }: { doc: Expense; onOp
                       </div>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="md"
-                        className="shrink-0 px-2.5 text-primary"
+                        className="shrink-0 px-2.5"
                         onClick={() => setCreatingMethod(true)}
                       >
                         <Plus aria-hidden="true" />

@@ -3,8 +3,8 @@ import { periodMonths, type Period, type Quarter } from "./period";
 import type { TaxBooks } from "./tax-returns";
 
 /*
- * Profit and loss report of a self-employed worker, laid out as the reference app does: the
- * Spanish chart of accounts (PGC) groups 6 and 7 summed from the tax books. Income is the
+ * Profit and loss report of a self-employed worker, laid out on the
+ * Spanish chart of accounts (PGC): groups 6 and 7 summed from the tax books. Income is the
  * taxable base of the issued invoices; expenses count their deductible part, as forms 130
  * and 100 do, so the result matches the activity's net income before the hard-to-justify
  * allowance.
@@ -124,7 +124,7 @@ export function profitAndLoss(books: TaxBooks, from: string, to: string): Profit
   };
 }
 
-/** From January 1st to the end of the quarter: the range the reference app reports "up to" a quarter. */
+/** From January 1st to the end of the quarter: the range reported "up to" a quarter. */
 export function yearToQuarter(year: number, quarter: Quarter): { from: string; to: string } {
   const lastDay = ["03-31", "06-30", "09-30", "12-31"][quarter - 1]!;
   return { from: `${year}-01-01`, to: `${year}-${lastDay}` };

@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ArrowDownRight, ArrowUpRight, FileBarChart } from "lucide-react";
+import { FileBarChart } from "lucide-react";
 import {
   cents,
   monthlyResults,
@@ -15,6 +15,7 @@ import {
 } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { Badge } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
@@ -39,17 +40,15 @@ const isFuture = (year: number, month: number, today: Date) =>
 const yearBefore = (period: Period): Period => ({ ...period, year: period.year - 1 });
 
 function Change({ value, inverse }: { value: number | null; inverse?: boolean }) {
-  if (value === null) return <span className="text-xs text-muted-foreground">Sin datos del año anterior</span>;
+  if (value === null) return <span className="text-sm text-muted-foreground">Sin datos del año anterior</span>;
   const up = value >= 0;
   const good = inverse ? !up : up;
-  const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
-    <span
-      className={cn("inline-flex items-center gap-0.5 text-xs font-medium", good ? "text-success" : "text-destructive")}
-    >
-      <Icon className="size-3.5" strokeWidth={2.2} aria-hidden="true" />
-      {formatPercent(Math.abs(value) * 100)}
-      <span className="font-normal text-muted-foreground">&nbsp;vs. año anterior</span>
+    <span className="flex items-center gap-2 text-sm text-muted-foreground">
+      <Badge tone={good ? "success" : "danger"} className="h-6 text-xs">
+        {up ? "↑" : "↓"} {formatPercent(Math.abs(value) * 100)}
+      </Badge>
+      vs. año anterior
     </span>
   );
 }
@@ -71,10 +70,10 @@ function Kpi({
 }) {
   return (
     <div
-      className="flex animate-rise-in flex-col gap-1 rounded-xl border border-border bg-card p-4"
+      className="flex animate-rise-in flex-col gap-2 rounded-xl border border-border bg-card p-4 lg:p-5"
       style={{ "--i": index } as CSSProperties}
     >
-      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-semibold lg:text-lg">{label}</span>
       <span className="amount text-xl font-semibold lg:text-2xl">{value}</span>
       {change !== undefined && <Change value={change} inverse={inverse} />}
       {children}
@@ -83,7 +82,7 @@ function Kpi({
 }
 
 const barClass =
-  "origin-bottom animate-grow-up rounded-t-xs [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
+  "origin-bottom animate-grow-up rounded-t-sm [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
 
 /** Income and expenses per month of the year, with the selected period highlighted. */
 function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthResult[]; inPeriod: number[] }) {
@@ -112,7 +111,7 @@ function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthR
           ] as const
         ).map(([label, value, dot]) => (
           <span key={label} className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <span className={cn("size-2 rounded-xs", dot)} aria-hidden="true" />
+            <span className={cn("size-2 rounded-full", dot)} aria-hidden="true" />
             {label} <span className="amount text-foreground">{formatEUR(value)}</span>
           </span>
         ))}
@@ -120,7 +119,7 @@ function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthR
       <div className="flex gap-2.5">
         <div
           aria-hidden="true"
-          className="-mt-1.5 mb-6 flex h-[180px] min-w-10 flex-col justify-between text-right font-mono text-2xs text-muted-foreground"
+          className="-mt-1.5 mb-6 flex h-[180px] min-w-10 flex-col justify-between text-right text-2xs text-muted-foreground tabular-nums"
         >
           <span>{formatThousands(max)}</span>
           <span>{formatThousands(cents(max / 2))}</span>
@@ -178,11 +177,11 @@ function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthR
       </div>
       <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-xs bg-chart-income" aria-hidden="true" />
+          <span className="size-2.5 rounded-full bg-chart-income" aria-hidden="true" />
           Ingresos (base imponible)
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="size-2.5 rounded-xs bg-chart-expense" aria-hidden="true" />
+          <span className="size-2.5 rounded-full bg-chart-expense" aria-hidden="true" />
           Gastos deducibles
         </span>
       </div>
@@ -206,7 +205,7 @@ function MonthsTable({ months }: { months: MonthResult[] }) {
       className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 5 } as CSSProperties}
     >
-      <h2 id="months-title" className="m-0 text-md font-semibold">
+      <h2 id="months-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
         Detalle por meses
       </h2>
       <div className="overflow-x-auto rounded-xl border border-border">
@@ -311,7 +310,7 @@ export function ReportsSummaryPage() {
         <Kpi label="Gastos" value={formatEUR(data.pnl.expenses)} change={data.changes.expenses} inverse index={1} />
         <Kpi label="Resultado" value={formatEUR(data.pnl.operating)} change={data.changes.result} index={2} />
         <Kpi label="Margen" value={data.margin === null ? "—" : formatPercent(data.margin * 100)} index={3}>
-          <span className="text-xs text-muted-foreground">del resultado sobre los ingresos</span>
+          <span className="text-sm text-muted-foreground">del resultado sobre los ingresos</span>
         </Kpi>
       </section>
 

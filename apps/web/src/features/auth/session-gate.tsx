@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Navigate, useLocation } from "react-router";
 import { AuthButton, AuthLayout } from "./auth-layout";
 import {
@@ -49,10 +51,10 @@ export function DemoBanner() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-primary-soft px-4 py-2 text-center text-sm text-foreground">
       <span>Estás en la demo: los datos son de ejemplo y los cambios no se guardan.</span>
-      <span className="flex gap-3">
+      <span className="flex gap-2">
         {API_URL && (
           // A plain link: it loads the app outside /demo, on the API
-          <a href={SIGN_UP_PATH} onClick={leaveDemo} className="font-semibold text-primary hover:text-primary-hover">
+          <a href={SIGN_UP_PATH} onClick={leaveDemo} className={cn(buttonVariants({ size: "sm" }), "no-underline")}>
             Crear cuenta
           </a>
         )}
@@ -60,7 +62,7 @@ export function DemoBanner() {
           <button
             type="button"
             onClick={exitDemo}
-            className="cursor-pointer font-medium text-primary hover:text-primary-hover"
+            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
           >
             Salir de la demo
           </button>

@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Cents } from "@cuentalibre/core";
-import { ArrowDownLeft, ArrowUpRight, Landmark, TrendingUp, type LucideIcon } from "lucide-react";
+import { cents, type Cents } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -10,25 +9,20 @@ import type { HomeData } from "./home-data";
 
 interface Kpi {
   label: string;
-  icon: LucideIcon;
-  /** Icon chip colors, so each figure is recognisable at a glance. */
-  iconClass: string;
+  /** Marker color, matching the figure's color in the charts. */
+  dot: string;
   value: Cents;
   change: number | null;
   /** Whether going up is good news (true), bad news (false) or neither (null). */
   upIsGood: boolean | null;
-  /** Extra detail lines, shown on desktop. */
-  details: [string, string];
-  /** Replaces the change on mobile when there is none. */
-  mobileNote?: string;
+  /** Shown in place of the change when there is none. */
+  note?: string;
 }
 
 function tone(change: number, upIsGood: boolean | null) {
   if (upIsGood === null) return "neutral" as const;
   return change >= 0 === upIsGood ? ("success" as const) : ("danger" as const);
 }
-
-const toneText = { neutral: "text-muted-foreground", success: "text-success", danger: "text-destructive" };
 
 function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string; index: number }) {
   const change = kpi.change;
@@ -37,87 +31,84 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
 
   return (
     <div
-      className="flex animate-rise-in flex-col gap-1.5 rounded-xl border border-border p-3.5 lg:animate-none lg:gap-2 lg:rounded-none lg:border-0 lg:bg-card lg:p-4"
+      className="flex animate-rise-in flex-col gap-1.5 rounded-xl border border-border bg-card p-3.5 lg:gap-2.5 lg:p-5"
       style={{ "--i": index } as CSSProperties}
     >
-      <div className="flex items-center justify-between gap-2 lg:min-h-6">
-        <span className="flex min-w-0 items-center gap-2 text-sm font-semibold lg:text-base">
-          <span
-            className={cn("flex size-6 shrink-0 items-center justify-center rounded-sm lg:size-7", kpi.iconClass)}
-            aria-hidden="true"
-          >
-            <kpi.icon className="size-3.5 lg:size-4" strokeWidth={2.2} />
-          </span>
-          <span className="truncate">{kpi.label}</span>
-        </span>
-        {changeText && t && (
-          <Badge tone={t} className="hidden h-6 px-2.5 text-xs lg:inline-flex">
+      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold lg:text-lg">
+        <span className={cn("size-2.5 shrink-0 rounded-full", kpi.dot)} aria-hidden="true" />
+        <span className="truncate">{kpi.label}</span>
+      </span>
+      <AnimatedAmount value={kpi.value} className="amount text-xl font-semibold lg:text-2xl" />
+      {changeText && t ? (
+        <span className="flex items-center gap-2 text-xs text-muted-foreground lg:text-sm">
+          <Badge tone={t} className="h-6 text-xs">
             {changeText}
           </Badge>
-        )}
-      </div>
-      <AnimatedAmount value={kpi.value} className="amount text-xl font-medium lg:text-2xl" />
-      {changeText && t ? (
-        <span className={cn("text-xs font-semibold lg:hidden", toneText[t])}>
-          {changeText} vs. {compareLabel}
+          vs. {compareLabel}
         </span>
       ) : (
-        <span className="text-xs text-muted-foreground lg:hidden">{kpi.mobileNote ?? " "}</span>
+        <span className="text-xs text-muted-foreground lg:text-sm">{kpi.note ?? "\u00a0"}</span>
       )}
-      <div className="hidden flex-col gap-0.5 text-xs text-muted-foreground lg:flex">
-        <span>{kpi.details[0]}</span>
-        <span>{kpi.details[1]}</span>
-      </div>
     </div>
   );
 }
 
+/**
+ * What to set aside for the period: the VAT due (303), the period's share of the yearly income tax estimate and
+ * the self-employed fees not booked yet, the same figures as in "Neto después de impuestos". The 130 advances
+ * are paid out of this reserve.
+ */
+function taxReserve(data: HomeData) {
+  const { vat } = data.taxes;
+  const irpf = data.takeHome.incomeTax;
+  const fees = data.socialSecurityEstimate;
+  const due = [vat > 0 && `IVA ${formatEUR(vat)}`, `IRPF ${formatEUR(irpf)}`, fees > 0 && `cuota ${formatEUR(fees)}`]
+    .filter(Boolean)
+    .join(" + ");
+  return {
+    value: cents(Math.max(0, vat) + irpf + fees),
+    note: vat < 0 ? `${due} · IVA a compensar ${formatEUR(cents(-vat))}` : due,
+  };
+}
+
 export function KpiGrid({ data }: { data: HomeData }) {
   const compareLabel = periodShortLabel(data.previous, data.period.year);
-  const vs = data.hasPrevious ? ` · vs. ${compareLabel}` : "";
+  const reserve = taxReserve(data);
 
   const kpis: Kpi[] = [
     {
       label: "Ingresos",
-      icon: ArrowDownLeft,
-      iconClass: "bg-chart-highlight text-chart-income",
+      dot: "bg-chart-income",
       value: data.totals.income,
       change: data.changes.income,
       upIsGood: true,
-      details: [`IVA repercutido ${formatEUR(data.totals.outputVat)}`, `${data.counts.invoices} facturas${vs}`],
     },
     {
       label: "Gastos",
-      icon: ArrowUpRight,
-      iconClass: "bg-warning-soft text-chart-expense",
+      dot: "bg-chart-expense",
       value: data.totals.expenses,
       change: data.changes.expenses,
-      upIsGood: null,
-      details: [`IVA soportado ${formatEUR(data.totals.inputVat)}`, `${data.counts.receipts} justificantes`],
+      upIsGood: false,
     },
     {
       label: "Beneficio",
-      icon: TrendingUp,
-      iconClass: "bg-success-soft text-success",
+      dot: "bg-success",
       value: data.profit,
       change: data.changes.profit,
       upIsGood: true,
-      details: [`Margen ${formatPercent(data.margin)}`, "Antes de IRPF"],
     },
     {
-      label: "Impuestos est.",
-      icon: Landmark,
-      iconClass: "bg-muted text-foreground",
-      value: data.taxes.total,
+      label: "Reserva para impuestos",
+      dot: "bg-chart-tax",
+      value: reserve.value,
       change: null,
       upIsGood: null,
-      details: [`303 IVA ${formatEUR(data.taxes.vat)}`, `130 IRPF ${formatEUR(data.taxes.irpf)}`],
-      mobileNote: "303 + 130",
+      note: reserve.note,
     },
   ];
 
   return (
-    <section aria-label="Resumen del periodo" className="grid grid-cols-2 gap-2.5 lg:gap-px xl:grid-cols-4">
+    <section aria-label="Resumen del periodo" className="grid grid-cols-2 gap-2.5 lg:gap-5 xl:grid-cols-4">
       {kpis.map((kpi, i) => (
         <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />
       ))}

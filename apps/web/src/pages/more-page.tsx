@@ -17,9 +17,7 @@ export function MorePage() {
       <h1 className="m-0 text-2xl font-semibold tracking-tight">Más</h1>
       {groups.map((group) => (
         <section key={group.title} className="flex flex-col">
-          <h2 className="m-0 pb-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {group.title}
-          </h2>
+          <h2 className="m-0 pb-1.5 text-xs font-medium text-muted-foreground">{group.title}</h2>
           {group.links.map((link) => (
             <Link
               key={link.to}

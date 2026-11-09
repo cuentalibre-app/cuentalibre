@@ -1,4 +1,6 @@
 import { Link } from "react-router";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Lock } from "lucide-react";
 import type { Period } from "@cuentalibre/core";
 import { closingPath, quarterName } from "./closing-model";
@@ -11,7 +13,10 @@ export function LockedNotice({ period, noun }: { period: Period; noun: string })
       <span>
         {noun} es del {quarterName(period)}, que está cerrado: solo puedes consultarlo.
       </span>
-      <Link to={closingPath(period)} className="font-medium text-primary no-underline hover:text-primary-hover">
+      <Link
+        to={closingPath(period)}
+        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "ml-auto no-underline")}
+      >
         Ir al cierre del trimestre
       </Link>
     </p>

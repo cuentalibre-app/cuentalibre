@@ -61,8 +61,8 @@ import type { Cell } from "@/lib/xlsx";
 
 /*
  * Importing issued invoices, received invoices and expenses from a spreadsheet
- * with the reference app's columns, so a file exported there (or its sample filled in
- * by hand) comes in as-is. Invoices take one row per concept: consecutive rows
+ * with a fixed set of columns, so an exported file (or the sample filled in by
+ * hand) comes back in as-is. Invoices take one row per concept: consecutive rows
  * with the same number belong to the same invoice.
  */
 
@@ -250,7 +250,7 @@ type Getter = (row: string[], column: string) => string;
 
 function columnGetter(header: string[]): { get: Getter; has: (column: string) => boolean } {
   const index = new Map(header.map((h, i) => [norm(h), i] as const));
-  // the reference app's expense sample calls the phone column "Cliente - Teléfono"; accept either spelling
+  // Some expense files call the phone column "Cliente - Teléfono"; accept either spelling
   const aliases: Record<string, string[]> = {
     [norm("Cliente - Teléfono")]: [norm("Proveedor - Teléfono"), norm("Proveedor - Telf")],
   };

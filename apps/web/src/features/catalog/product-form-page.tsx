@@ -293,7 +293,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
     <button
       type="button"
       onClick={toggle}
-      className="flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium text-primary hover:text-primary-hover"
+      className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline [&_svg]:size-4")}
     >
       <ChevronDown
         className={cn("size-4 transition-transform duration-200", open && "rotate-180")}
@@ -358,7 +358,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                     No has seleccionado ninguna familia/subfamilia
                   </span>
                 )}
-                <Button variant="ghost" size="sm" onClick={() => setChoosingFamily(true)}>
+                <Button variant="secondary" size="sm" onClick={() => setChoosingFamily(true)}>
                   <FolderTree strokeWidth={1.8} aria-hidden="true" />
                   {family ? "Cambiar" : "Seleccionar una familia/subfamilia"}
                 </Button>
@@ -418,7 +418,12 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                 help="Código para identificar el producto dentro de tu propia empresa. Si lo rellenas, debe ser único: no puede usarlo ningún otro producto."
               >
                 {(p) => (
-                  <Input {...p} value={draft.sku} onChange={(e) => set("sku", e.target.value)} className="font-mono" />
+                  <Input
+                    {...p}
+                    value={draft.sku}
+                    onChange={(e) => set("sku", e.target.value)}
+                    className="tabular-nums"
+                  />
                 )}
               </Field>
               <Field label="Referencia proveedor" help="Código de producto de tu proveedor.">
@@ -427,7 +432,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                     {...p}
                     value={draft.supplierRef}
                     onChange={(e) => set("supplierRef", e.target.value)}
-                    className="font-mono"
+                    className="tabular-nums"
                   />
                 )}
               </Field>
@@ -626,7 +631,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                     </span>
                     <Link
                       to={`${STOCK_PATH}?producto=${existing!.id}`}
-                      className="text-sm font-medium text-primary no-underline hover:text-primary-hover"
+                      className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
                     >
                       Regularizar stock
                     </Link>

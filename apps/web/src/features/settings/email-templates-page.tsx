@@ -152,7 +152,7 @@ function TemplateDialog({
             action={
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-7 px-2">
+                  <Button variant="secondary" size="sm" className="h-7 px-2">
                     <Braces strokeWidth={1.8} aria-hidden="true" />
                     Insertar dato
                     <ChevronDown strokeWidth={1.8} aria-hidden="true" />

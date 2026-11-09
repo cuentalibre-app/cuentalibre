@@ -194,7 +194,7 @@ export function AttachmentList({
 }
 
 /**
- * The files kept with a record, as in the reference app: drop or pick them, then open or
+ * The files kept with a record: drop or pick them, then open or
  * remove the ones already attached. Each change is saved at once through `onChange`.
  */
 export function AttachmentsDialog({

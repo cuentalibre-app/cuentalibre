@@ -80,7 +80,7 @@ export function IdentityFields({
               autoComplete="off"
               spellCheck={false}
               onChange={(e) => changeTaxId(e.target.value)}
-              className="font-mono uppercase"
+              className="uppercase tabular-nums"
             />
           )}
         </Field>
@@ -215,7 +215,7 @@ export function AddressFields({
               autoComplete="postal-code"
               inputMode={draft.country === SPAIN ? "numeric" : undefined}
               onChange={(e) => changePostalCode(e.target.value)}
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>

@@ -42,13 +42,13 @@ export function Section({
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold">
+        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           <button
             type="button"
             aria-expanded={open}
             aria-controls={id}
             onClick={() => setOpen((o) => !o)}
-            className="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-lg font-semibold text-foreground"
+            className="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-lg font-semibold tracking-tight text-foreground lg:text-title"
           >
             {title}
             <ChevronDown
@@ -92,7 +92,8 @@ export function Field({ label, required, error, hint, help, action, className, c
   const message = error ?? hint;
   return (
     <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
-      <div className="flex items-center gap-1.5">
+      {/* Fixed height so a small action button doesn't push the input below the ones beside it */}
+      <div className="flex h-5 items-center gap-1.5">
         <label htmlFor={id} className="text-sm font-medium text-muted-foreground">
           {label}
           {required && (
@@ -103,7 +104,7 @@ export function Field({ label, required, error, hint, help, action, className, c
           )}
         </label>
         {help && <Help text={help} />}
-        {action && <span className="ml-auto">{action}</span>}
+        {action && <span className="ml-auto flex">{action}</span>}
       </div>
       {children({
         id,

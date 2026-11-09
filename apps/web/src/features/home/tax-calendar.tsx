@@ -34,19 +34,25 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
   return (
     <section
       aria-labelledby="tax-calendar-title"
-      className={cn("flex flex-col gap-2 lg:gap-4 lg:rounded-xl lg:border lg:border-border lg:p-5", className)}
+      className={cn(
+        "flex flex-col gap-2 lg:gap-4 lg:rounded-xl lg:border lg:border-border lg:bg-card lg:p-5",
+        className,
+      )}
     >
-      <div className="flex items-baseline justify-between lg:items-center">
-        <h2 id="tax-calendar-title" className="m-0 text-md font-semibold lg:text-lg">
-          <span className="lg:hidden">Próximos vencimientos</span>
-          <span className="hidden lg:inline">Calendario fiscal</span>
-        </h2>
-        <span className="flex items-baseline gap-3">
-          {daysLeft !== null && <span className="text-xs font-semibold text-warning">{daysLeftLabel(daysLeft)}</span>}
-          <Link to={CALENDAR_PATH} className="text-sm font-medium text-primary no-underline hover:underline">
-            Ver calendario
-          </Link>
-        </span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2
+            id="tax-calendar-title"
+            className="m-0 text-lg font-semibold tracking-tight whitespace-nowrap lg:text-title"
+          >
+            <span className="lg:hidden">Próximos vencimientos</span>
+            <span className="hidden lg:inline">Calendario fiscal</span>
+          </h2>
+          {daysLeft !== null && <span className="text-sm font-semibold text-warning">{daysLeftLabel(daysLeft)}</span>}
+        </div>
+        <Link to={CALENDAR_PATH} className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}>
+          Ver calendario
+        </Link>
       </div>
 
       {/* Desktop: full list */}
@@ -79,9 +85,9 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
           aria-valuemin={0}
           aria-valuemax={checks.length}
           aria-valuenow={reviewed}
-          className="h-1.5 rounded-xs bg-muted"
+          className="h-1.5 overflow-hidden rounded-full bg-muted"
         >
-          <div className="h-1.5 animate-reveal-x rounded-xs bg-primary" style={{ width: `${progress}%` }} />
+          <div className="h-1.5 animate-reveal-x rounded-full bg-primary" style={{ width: `${progress}%` }} />
         </div>
       </div>
       <Link

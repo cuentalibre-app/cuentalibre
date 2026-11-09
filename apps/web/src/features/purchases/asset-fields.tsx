@@ -175,7 +175,7 @@ export function AssetSection({
               {...p}
               value={draft.identifier}
               onChange={(e) => onChange({ ...draft, identifier: e.target.value })}
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>
@@ -248,7 +248,7 @@ function AmortizationPreview({ asset }: { asset: AmortizedAsset }) {
   );
 }
 
-/** The amortization table, as in the reference app: pick the state of use, then the kind of good. */
+/** The amortization table: pick the state of use, then the kind of good. */
 function CategoryDialog({
   open,
   onOpenChange,

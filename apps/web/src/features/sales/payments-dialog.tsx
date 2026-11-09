@@ -40,7 +40,7 @@ const WORDS: Record<
 };
 
 /**
- * The payments of an invoice, as in the reference app's "Gestión de cobros/pagos": register what
+ * The payments of an invoice: register what
  * was paid (all of it, or part), see the payments so far and remove a wrong one. Each change
  * is applied at once through `onChange`.
  */
@@ -152,9 +152,9 @@ export function PaymentsDialog({
                     </div>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="secondary"
                       size="md"
-                      className="shrink-0 px-2.5 text-primary"
+                      className="shrink-0 px-2.5"
                       onClick={() => setCreatingMethod(true)}
                     >
                       <Plus aria-hidden="true" />
@@ -185,12 +185,16 @@ export function PaymentsDialog({
             <p className="m-0 px-3 py-4 text-center text-sm text-muted-foreground">{words.none}</p>
           ) : (
             <table className="w-full border-collapse text-sm">
-              <thead className="bg-muted text-xs text-muted-foreground">
+              <thead className="bg-muted text-xs text-foreground">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium">Fecha</th>
-                  <th className="px-3 py-2 text-right font-medium">Cantidad</th>
-                  <th className="px-3 py-2 text-left font-medium">{words.method}</th>
-                  <th className="w-12 px-3 py-2">
+                  <th className="border-l border-border px-3 py-2 text-left font-semibold first:border-l-0">Fecha</th>
+                  <th className="border-l border-border px-3 py-2 text-right font-semibold first:border-l-0">
+                    Cantidad
+                  </th>
+                  <th className="border-l border-border px-3 py-2 text-left font-semibold first:border-l-0">
+                    {words.method}
+                  </th>
+                  <th className="w-12 border-l border-border px-3 py-2 first:border-l-0">
                     <span className="sr-only">Operaciones</span>
                   </th>
                 </tr>
@@ -198,9 +202,13 @@ export function PaymentsDialog({
               <tbody>
                 {payments.map((p) => (
                   <tr key={p.id} className="border-t border-border">
-                    <td className="px-3 py-1.5">{formatDate(p.date)}</td>
-                    <td className="px-3 py-1.5 text-right amount">{formatEUR(p.amount)}</td>
-                    <td className="px-3 py-1.5">{paymentMethodName(p.paymentMethodId) ?? "Sin método"}</td>
+                    <td className="border-l border-border px-3 py-1.5 first:border-l-0">{formatDate(p.date)}</td>
+                    <td className="border-l border-border px-3 py-1.5 text-right amount first:border-l-0">
+                      {formatEUR(p.amount)}
+                    </td>
+                    <td className="border-l border-border px-3 py-1.5 first:border-l-0">
+                      {paymentMethodName(p.paymentMethodId) ?? "Sin método"}
+                    </td>
                     <td className="px-1.5 py-1 text-right">
                       <Button
                         variant="ghost"

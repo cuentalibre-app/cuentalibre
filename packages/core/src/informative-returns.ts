@@ -10,7 +10,7 @@ import type { Boxes } from "./tax-returns";
  * Withholding returns (111, 190, 115, 180) and informative returns about
  * third parties (347, 349), from issued and received invoices and expenses.
  *
- * Scope, as in the reference app: withholdings come only from received invoices
+ * Scope: withholdings come only from received invoices
  * (no payroll, prizes or payments in kind), one return per period with no
  * supplementary ones, and operations are taken as invoiced.
  */
@@ -69,7 +69,7 @@ function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
 
 /* ─────────────────── Forms 111 and 190: professionals' withholdings ─────────────────── */
 
-/** Sporadic services (courses, talks, seminars) count as earned income, as the reference app assumes. */
+/** Sporadic services (courses, talks, seminars) are taken as earned income. */
 export const EARNED_INCOME_ACCOUNT = "6231";
 
 /** Received invoices with withholding, other than rentals. */
@@ -237,8 +237,8 @@ export interface Model180 {
 }
 
 /**
- * Form 180: one record per landlord and property. Unlike the reference app, which lumps all of a
- * landlord's invoices together, properties are told apart by their cadastral reference.
+ * Form 180: one record per landlord and property, told apart by their cadastral reference
+ * rather than lumping all of a landlord's invoices together.
  */
 export function model180(ops: PartyOperation[], year: number): Model180 {
   const yearRentals = rentals(ops).filter((o) => inYear(o.date, year));

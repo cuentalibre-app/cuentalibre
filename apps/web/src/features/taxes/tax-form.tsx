@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Check, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
 import {
   aeatBytes,
   aeatFileName,
@@ -72,7 +72,7 @@ export function useCopied(): [string | null, (key: string, text: string) => void
 }
 
 export function BoxCode({ box }: { box: string }) {
-  return <span className="font-mono text-2xs text-muted-foreground">[{box}]</span>;
+  return <span className="text-2xs text-muted-foreground tabular-nums">[{box}]</span>;
 }
 
 /** A box and its amount; clicking copies the amount to paste it in the AEAT form. */
@@ -291,10 +291,7 @@ export function FormSections({
             className="animate-rise-in overflow-hidden rounded-xl border border-border"
             style={{ "--i": s } as CSSProperties}
           >
-            <div
-              className="flex items-center gap-4 bg-muted px-4 py-2 text-xs tracking-wide text-muted-foreground uppercase lg:grid"
-              style={columns}
-            >
+            <div className="flex items-center gap-4 px-4 py-2 text-xs text-muted-foreground lg:grid" style={columns}>
               <h2 className="m-0 text-xs font-semibold text-foreground">{section.title}</h2>
               {section.columns?.map((c) => (
                 <span key={c} className="hidden text-right font-medium lg:block">
@@ -625,7 +622,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
       className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:rounded-xl lg:border lg:border-border"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 lg:px-4 lg:pt-3">
-        <h2 className="m-0 text-md font-semibold">{title}</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
         <SegmentedControl
           label="Tipo de documento"
           value={active}
@@ -668,7 +665,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
                     <td className={td}>
                       <Link
                         to={r.to}
-                        className="font-mono text-sm font-medium text-foreground no-underline hover:text-primary"
+                        className="text-sm font-medium text-foreground tabular-nums no-underline hover:text-primary"
                       >
                         {r.number || "Sin número"}
                       </Link>
@@ -710,7 +707,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
                   <div className="flex min-w-0 flex-col gap-0.5">
                     <span className="truncate font-medium">{r.contact}</span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(r.date)} · <span className="font-mono">{r.number || "Sin número"}</span>
+                      {formatDate(r.date)} · <span className="tabular-nums">{r.number || "Sin número"}</span>
                       {r.tag && ` · ${r.tag}`}
                     </span>
                   </div>
@@ -737,10 +734,7 @@ export function FormAnswers({ title, rows, note }: { title: string; rows: FormAn
   const columns = { gridTemplateColumns: "minmax(0,1fr) minmax(0,22rem)" };
   return (
     <section aria-label={title} className="animate-rise-in overflow-hidden rounded-xl border border-border">
-      <div
-        className="flex items-center gap-4 bg-muted px-4 py-2 text-xs tracking-wide text-muted-foreground uppercase lg:grid"
-        style={columns}
-      >
+      <div className="flex items-center gap-4 px-4 py-2 text-xs text-muted-foreground lg:grid" style={columns}>
         <h2 className="m-0 text-xs font-semibold text-foreground">{title}</h2>
         <span className="hidden text-right font-medium lg:block">Respuesta</span>
       </div>
@@ -775,15 +769,20 @@ export function FormAnswers({ title, rows, note }: { title: string; rows: FormAn
   );
 }
 
-/** What the calculation assumes, folded away by default. */
+/** What the calculation assumes; open by default, foldable. */
 export function Assumptions({ items }: { items: ReactNode[] }) {
   return (
-    <details className="group rounded-xl border border-border px-4 py-3 text-sm">
-      <summary className="flex cursor-pointer list-none items-center gap-2 font-medium [&::-webkit-details-marker]:hidden">
-        <Info className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+    <details open className="group rounded-xl border border-border bg-card px-5 py-4">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold [&::-webkit-details-marker]:hidden">
+        <Info className="size-4.5 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         Qué tiene en cuenta este cálculo
+        <ChevronDown
+          className="ml-auto size-4 text-muted-foreground transition-transform duration-150 group-open:rotate-180"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </summary>
-      <ul className="mt-2 mb-0 flex flex-col gap-1.5 pl-6 text-muted-foreground">
+      <ul className="mt-3 mb-0 flex list-disc flex-col gap-1.5 pl-5 text-[0.9375rem] leading-relaxed text-foreground/85 marker:text-muted-foreground">
         {items.map((item, i) => (
           <li key={i}>{item}</li>
         ))}
@@ -824,7 +823,7 @@ export function QuarterCards({
   return (
     <section
       aria-label={`Resultados de los ${form} del año`}
-      className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4"
+      className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4"
     >
       {values.map((v, i) => {
         const quarter = (i + 1) as Quarter;
@@ -833,7 +832,7 @@ export function QuarterCards({
           <Link
             key={i}
             to={to(quarter)}
-            className="flex flex-col gap-1 bg-card px-4 py-3 text-foreground no-underline transition-colors duration-150 hover:bg-accent"
+            className="flex flex-col gap-1 rounded-xl border border-border bg-card p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
           >
             <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
               {form} · T{quarter}

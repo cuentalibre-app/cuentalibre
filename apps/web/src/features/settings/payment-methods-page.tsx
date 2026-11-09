@@ -134,7 +134,7 @@ export function PaymentMethodsPage() {
                         <span>{methodTypeLabel(m.type)}</span>
                         {number && (
                           // A whole IBAN doesn't fit a phone: its last digits are enough to tell it apart
-                          <span className="min-w-0 truncate font-mono">
+                          <span className="min-w-0 truncate tabular-nums">
                             <span className="sm:hidden">{maskNumber(m.number)}</span>
                             <span className="hidden sm:inline">· {number}</span>
                           </span>

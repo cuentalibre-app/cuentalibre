@@ -173,11 +173,11 @@ export function EmailCode({ email, onVerified, sendFirst = false, onLater, large
         {pending ? "Un momento…" : "Verificar email"}
       </Submit>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <Button variant="ghost" size="sm" disabled={pending || wait > 0} onClick={() => void resend()}>
+        <Button variant="secondary" size="sm" disabled={pending || wait > 0} onClick={() => void resend()}>
           {wait > 0 ? `Reenviar código (${wait} s)` : "Reenviar código"}
         </Button>
         {onLater && (
-          <Button variant="ghost" size="sm" disabled={pending} onClick={onLater}>
+          <Button variant="secondary" size="sm" disabled={pending} onClick={onLater}>
             Lo haré más tarde
           </Button>
         )}
@@ -245,7 +245,7 @@ function ChangeEmail({
       <Submit type="submit" disabled={pending} className={cn(large && "mt-1")}>
         {pending ? "Enviando…" : "Enviar código"}
       </Submit>
-      <Button variant="ghost" size="sm" disabled={pending} onClick={onCancel} className="self-start">
+      <Button variant="secondary" size="sm" disabled={pending} onClick={onCancel} className="self-start">
         Cancelar
       </Button>
     </form>
