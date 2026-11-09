@@ -1,5 +1,5 @@
 import { Fragment, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronsUpDown, FilePlus2, Search, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, FilePlus2, MoreHorizontal, Search, type LucideIcon } from "lucide-react";
 import { centsToEuros, type Cents } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -107,6 +108,24 @@ function ChoiceOptions({ label, choice }: { label: string; choice: Choice }) {
         </DropdownMenuRadioItem>
       ))}
     </DropdownMenuRadioGroup>
+  );
+}
+
+/** The "more actions" button of a row: the same ellipsis on desktop and phone, with a tooltip next to icon actions. */
+export function MoreActionsTrigger({ label, tooltip = false }: { label: string; tooltip?: boolean }) {
+  const trigger = (
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" size="icon-sm" aria-label={label}>
+        <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+      </Button>
+    </DropdownMenuTrigger>
+  );
+  if (!tooltip) return trigger;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+      <TooltipContent>Más acciones</TooltipContent>
+    </Tooltip>
   );
 }
 

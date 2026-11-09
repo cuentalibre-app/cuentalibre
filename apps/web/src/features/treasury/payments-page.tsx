@@ -1,11 +1,10 @@
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link, useNavigate } from "react-router";
-import { ArrowUpRight, ChevronDown, Download, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { ArrowUpRight, Download, Plus, Trash2 } from "lucide-react";
 import { cents, isInPeriod, monthlyFlows, periodKey, sumBy } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import { SearchField } from "@cuentalibre/ui/components/input";
-import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
@@ -13,7 +12,7 @@ import { AnimatedAmount } from "@/components/animated-amount";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { GroupedSelect } from "@/features/sales/form-fields";
-import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
+import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatShortDate, periodCode } from "@/lib/format";
@@ -398,18 +397,7 @@ function QuickActions({ row, onRemove }: { row: Row; onRemove: () => void }) {
       <IconAction action={open} />
       <ActionsMenu
         groups={groups}
-        trigger={
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" aria-label="Más acciones">
-                  <ChevronDown strokeWidth={1.8} aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Más acciones</TooltipContent>
-          </Tooltip>
-        }
+        trigger={<MoreActionsTrigger label="Más acciones" tooltip />}
       />
     </div>
   );
@@ -420,13 +408,7 @@ function RowMenu({ row, onRemove }: { row: Row; onRemove: () => void }) {
   return (
     <ActionsMenu
       groups={groups}
-      trigger={
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label={`Acciones de ${row.payment.reference}`}>
-            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-      }
+      trigger={<MoreActionsTrigger label={`Acciones de ${row.payment.reference}`} />}
     />
   );
 }
