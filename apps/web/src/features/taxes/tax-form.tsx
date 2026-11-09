@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
-import { Check, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
 import {
   aeatBytes,
   aeatFileName,
@@ -769,15 +769,20 @@ export function FormAnswers({ title, rows, note }: { title: string; rows: FormAn
   );
 }
 
-/** What the calculation assumes, folded away by default. */
+/** What the calculation assumes; open by default, foldable. */
 export function Assumptions({ items }: { items: ReactNode[] }) {
   return (
-    <details className="group rounded-xl border border-border px-4 py-3 text-sm">
-      <summary className="flex cursor-pointer list-none items-center gap-2 font-medium [&::-webkit-details-marker]:hidden">
-        <Info className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+    <details open className="group rounded-xl border border-border bg-card px-5 py-4">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-base font-semibold [&::-webkit-details-marker]:hidden">
+        <Info className="size-4.5 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         Qué tiene en cuenta este cálculo
+        <ChevronDown
+          className="ml-auto size-4 text-muted-foreground transition-transform duration-150 group-open:rotate-180"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </summary>
-      <ul className="mt-2 mb-0 flex flex-col gap-1.5 pl-6 text-muted-foreground">
+      <ul className="mt-3 mb-0 flex list-disc flex-col gap-1.5 pl-5 text-[0.9375rem] leading-relaxed text-foreground/85 marker:text-muted-foreground">
         {items.map((item, i) => (
           <li key={i}>{item}</li>
         ))}
