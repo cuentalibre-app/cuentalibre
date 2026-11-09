@@ -175,7 +175,7 @@ export function AssetSection({
               {...p}
               value={draft.identifier}
               onChange={(e) => onChange({ ...draft, identifier: e.target.value })}
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>

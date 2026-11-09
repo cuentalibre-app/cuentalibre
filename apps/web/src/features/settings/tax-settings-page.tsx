@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from "react";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Link } from "react-router";
 import { ArrowDown, ArrowUp, Info, Plus, Star, Trash2, TriangleAlert, UserPlus } from "lucide-react";
 import { cents, newId } from "@cuentalibre/core";
@@ -127,10 +128,10 @@ function ActivitiesTable({
                     </span>
                   </td>
                   <td className={table.td}>
-                    <span className="font-mono text-muted-foreground">{a.type}</span> {typeLabel(a.type)}
+                    <span className="text-muted-foreground tabular-nums">{a.type}</span> {typeLabel(a.type)}
                   </td>
                   <td className={table.td}>
-                    {a.code && <span className="font-mono text-muted-foreground">{a.code}</span>} {a.name}
+                    {a.code && <span className="text-muted-foreground tabular-nums">{a.code}</span>} {a.name}
                   </td>
                   <td className={cn(table.td, "whitespace-nowrap")}>
                     <span className="flex justify-end gap-0.5">
@@ -225,7 +226,7 @@ function VariousClients({ value, onChange }: { value: string | null; onChange: (
       {value && (
         <Link
           to={`${ROLES.client.path}/${value}`}
-          className="self-start text-sm font-medium text-primary no-underline hover:text-primary-hover"
+          className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "self-start no-underline")}
         >
           Ver la ficha del cliente
         </Link>

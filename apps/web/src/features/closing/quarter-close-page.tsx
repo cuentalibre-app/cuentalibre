@@ -82,7 +82,10 @@ function Step({
       className="flex animate-rise-in flex-col gap-3 rounded-xl border border-border bg-card p-4 lg:p-5"
       style={style}
     >
-      <h2 id={`step-${index}`} className="m-0 flex items-center gap-2.5 text-md font-semibold">
+      <h2
+        id={`step-${index}`}
+        className="m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight lg:text-title"
+      >
         <span className="flex size-6 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           {index}
         </span>
@@ -108,7 +111,7 @@ function Checks({ checks }: { checks: QuarterCheck[] }) {
             {check.to && check.tone !== "ok" && (
               <Link
                 to={check.to}
-                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "shrink-0 no-underline")}
+                className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "shrink-0 no-underline")}
               >
                 <span className="sr-only sm:not-sr-only">Revisar</span>
                 <ArrowRight aria-hidden="true" />
@@ -459,7 +462,7 @@ function ClosedList({ closed, onSelect }: { closed: ClosedQuarter[]; onSelect: (
       className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 5 } as CSSProperties}
     >
-      <h2 id="closed-title" className="m-0 text-md font-semibold">
+      <h2 id="closed-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
         Trimestres cerrados
       </h2>
       {rows.length === 0 ? (

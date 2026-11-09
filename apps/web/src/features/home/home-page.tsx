@@ -5,7 +5,6 @@ import { periodKey } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { availableYears } from "@/mocks/data";
-import { periodRange } from "@/lib/format";
 import { CashFlowChart, ProfitChart } from "./charts";
 import { buildHomeData } from "./home-data";
 import { KpiGrid } from "./kpi-grid";
@@ -21,12 +20,10 @@ import { useExpenses } from "@/features/purchases/expenses-store";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 
-// On desktop the dashboard is a single sheet: panels share 1px rules instead of floating as
-// separate cards. The rules are the sheet's background showing through 1px gaps, so rows don't
-// fade in individually (that would flash the rule color); the page transition covers them.
-const sheet = "flex flex-col gap-5 lg:gap-px lg:overflow-hidden lg:rounded-xl lg:border lg:border-border lg:bg-border";
-const row = "flex animate-rise-in flex-col gap-5 lg:animate-none lg:flex-row lg:flex-wrap lg:items-stretch lg:gap-px";
-const panel = "lg:rounded-none lg:border-0 lg:bg-card";
+// Panels are separate cards with room between them; rows rise in one after another.
+const sheet = "flex flex-col gap-5 lg:gap-5";
+const row = "flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch";
+const panel = "lg:p-5";
 
 export function HomePage() {
   const today = useMemo(() => new Date(), []);
@@ -46,7 +43,7 @@ export function HomePage() {
   );
 
   return (
-    <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-4 lg:px-8 lg:pt-6 lg:pb-8">
+    <div className="flex flex-col gap-5 px-5 pt-6 lg:gap-6 lg:px-10 lg:pt-8 lg:pb-10">
       {/* Mobile header */}
       <header className="flex flex-col gap-5 lg:hidden">
         <div className="flex items-center justify-between">
@@ -64,7 +61,6 @@ export function HomePage() {
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="m-0 text-3xl font-semibold tracking-tight">Inicio</h1>
           {periodSelect()}
-          <span className="text-sm text-muted-foreground">{periodRange(period)}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <Link to="/compras/gastos/nuevo" className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}>
@@ -111,7 +107,7 @@ export function HomePage() {
         </div>
 
         <div className={row} style={{ "--i": 6 } as CSSProperties}>
-          <RecentInvoices data={data} className={cn(panel, "order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]")} />
+          <RecentInvoices data={data} className={cn("order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]")} />
           <TaxCalendar
             data={data}
             today={today}
@@ -123,7 +119,6 @@ export function HomePage() {
           <TopCounterparties
             id="top-clients"
             title="Principales clientes"
-            noun={data.clients.count === 1 ? "cliente" : "clientes"}
             ranking={data.clients}
             barClass="bg-chart-income"
             href="/contactos/clientes"
@@ -134,7 +129,6 @@ export function HomePage() {
           <TopCounterparties
             id="top-suppliers"
             title="Principales proveedores"
-            noun={data.suppliers.count === 1 ? "proveedor" : "proveedores"}
             ranking={data.suppliers}
             barClass="bg-chart-expense"
             href="/contactos/proveedores"

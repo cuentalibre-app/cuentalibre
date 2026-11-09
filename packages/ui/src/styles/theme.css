@@ -78,6 +78,8 @@
   --text-lg--line-height: 1.5rem;
   --text-xl: 1.125rem; /* 18px: mobile figures, calendar days */
   --text-xl--line-height: 1.5rem;
+  --text-title: 1.25rem; /* 20px: card and section titles */
+  --text-title--line-height: 1.75rem;
   --text-2xl: 1.625rem; /* 26px: KPI figures, mobile page title */
   --text-2xl--line-height: 2rem;
   --text-3xl: 1.75rem; /* 28px: page title */
@@ -90,12 +92,12 @@
 
   /* Radii */
   --radius-*: initial;
-  --radius-xs: 1px; /* chart bars, progress bars, legend swatches */
-  --radius-sm: 2px; /* badges, tabs inside a segmented control */
-  --radius-md: 3px; /* sub-navigation, logo */
-  --radius-lg: 4px; /* buttons, inputs, navigation */
-  --radius-xl: 4px; /* cards */
-  --radius-2xl: 4px; /* mobile floating action button */
+  --radius-xs: 2px; /* chart bars, progress bars, legend swatches */
+  --radius-sm: 6px; /* badges, tabs inside a segmented control */
+  --radius-md: 6px; /* sub-navigation, menu items, logo */
+  --radius-lg: 8px; /* buttons, inputs, navigation */
+  --radius-xl: 12px; /* cards */
+  --radius-2xl: 16px; /* mobile floating action button */
 
   --shadow-popover: none; /* flat UI: popovers rely on their border */
 }

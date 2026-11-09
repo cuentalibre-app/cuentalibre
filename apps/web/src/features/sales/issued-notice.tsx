@@ -1,4 +1,6 @@
 import { Link } from "react-router";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Lock } from "lucide-react";
 import type { SalesDocument } from "@cuentalibre/contracts";
 import { salesStore } from "./sales-store";
@@ -23,7 +25,7 @@ export function IssuedNotice({ invoice }: { invoice: SalesDocument }) {
         {rectifiable && (
           <Link
             to={`${KINDS.invoice.newPath}?desde=${invoice.id}&rectificar=1`}
-            className="font-medium text-primary no-underline hover:text-primary-hover"
+            className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
           >
             Generar factura rectificativa
           </Link>

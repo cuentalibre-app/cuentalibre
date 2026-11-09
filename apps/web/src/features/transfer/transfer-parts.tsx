@@ -60,7 +60,7 @@ export function Panel({
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex flex-col gap-1">
-        <h2 className="m-0 text-lg font-semibold">{title}</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
         {description && <div className="m-0 text-sm text-muted-foreground">{description}</div>}
       </div>
       {children}

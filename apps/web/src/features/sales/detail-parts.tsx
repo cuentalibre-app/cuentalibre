@@ -68,7 +68,7 @@ export function ContactDetails({ contact }: { contact: Contact }) {
     <DetailList
       items={[
         ["Nombre o razón social", contact.name],
-        ["NIF", contact.taxId && <span className="font-mono">{contact.taxId}</span>],
+        ["NIF", contact.taxId && <span className="tabular-nums">{contact.taxId}</span>],
         ["Dirección", contact.address],
         ["Código postal", contact.postalCode],
         ["Población", contact.city],

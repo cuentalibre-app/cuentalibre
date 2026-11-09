@@ -101,7 +101,7 @@ export function SalesDocumentDialog({
           <DetailList
             items={[
               ["Periodo", periodCode(quarterOfDate(current.issuedOn))],
-              ["Número", current.number && <span className="font-mono">{current.number}</span>],
+              ["Número", current.number && <span className="tabular-nums">{current.number}</span>],
               ["Fecha", formatDate(current.issuedOn)],
               ...(config.dueLabel
                 ? [[config.dueLabel, current.dueOn && formatDate(current.dueOn)] as [string, ReactNode]]
@@ -145,7 +145,7 @@ export function SalesDocumentDialog({
 
         <DetailFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cerrar</Button>
+            <Button variant="secondary">Cerrar</Button>
           </DialogClose>
           <Button
             variant="secondary"

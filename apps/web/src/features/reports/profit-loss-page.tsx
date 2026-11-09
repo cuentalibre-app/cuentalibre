@@ -90,7 +90,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
                   row.kind === "section" && "text-md font-medium",
                   row.kind === "line" && "pl-6",
                   row.kind === "account" && "pl-10 text-sm text-muted-foreground",
-                  row.kind === "result" && "font-semibold uppercase",
+                  row.kind === "result" && "font-semibold",
                 )}
               >
                 {row.label}
@@ -227,7 +227,7 @@ export function ProfitLossPage() {
         className="flex animate-rise-in flex-col gap-5 rounded-xl border border-border bg-card p-4 sm:p-6 lg:p-8"
       >
         <div className="flex flex-col gap-2 border-b border-foreground pb-3">
-          <h2 id="pnl-title" className="m-0 text-lg font-semibold lg:text-xl">
+          <h2 id="pnl-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
             Informe de pérdidas y ganancias
           </h2>
           <dl className="m-0 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
@@ -241,7 +241,7 @@ export function ProfitLossPage() {
             </div>
             <div className="flex gap-1.5">
               <dt className="text-muted-foreground">NIF:</dt>
-              <dd className="m-0 font-mono font-medium">{profile.taxId}</dd>
+              <dd className="m-0 font-medium tabular-nums">{profile.taxId}</dd>
             </div>
             <div className="flex gap-1.5 sm:justify-end">
               <dt className="text-muted-foreground">Periodo:</dt>
@@ -272,7 +272,7 @@ export function ProfitLossPage() {
           style={{ "--i": 2 } as CSSProperties}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="m-0 text-md font-semibold">Distribución en el ejercicio</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Distribución en el ejercicio</h2>
             <SegmentedControl
               label="Ejercicio"
               value={chartYear}

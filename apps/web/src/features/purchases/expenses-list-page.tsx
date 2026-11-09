@@ -338,11 +338,11 @@ function ExpenseSummary({ rows }: { rows: Row[] }) {
     },
   ];
   return (
-    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border lg:grid-cols-4">
+    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1 bg-card px-4 py-3.5 lg:px-4 lg:py-3">
+        <div key={s.label} className="flex flex-col gap-1.5 rounded-xl border border-border bg-card p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-          <dd className="m-0 amount text-xl font-semibold">
+          <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
             <AnimatedAmount value={s.value} />
           </dd>
           <dd className="m-0 text-sm text-muted-foreground">{s.detail}</dd>
@@ -444,7 +444,7 @@ function FiltersPanel({
           />
         </div>
       </fieldset>
-      <Button variant="ghost" size="md" onClick={onClear} className="justify-self-start">
+      <Button variant="secondary" size="md" onClick={onClear} className="justify-self-start">
         <X strokeWidth={1.8} aria-hidden="true" />
         Quitar filtros
       </Button>
@@ -540,7 +540,7 @@ function ExpensesTable({
                   >
                     {r.doc.concept}
                   </ExpenseLink>
-                  {r.doc.number && <span className="font-mono text-xs text-muted-foreground">{r.doc.number}</span>}
+                  {r.doc.number && <span className="text-xs text-muted-foreground tabular-nums">{r.doc.number}</span>}
                   <TagChips tags={r.doc.tags} className="mt-1 max-w-48" />
                 </div>
               </td>
@@ -552,7 +552,7 @@ function ExpensesTable({
                         {r.payee.name}
                       </span>
                       {r.payee.taxId && (
-                        <span className="font-mono text-xs text-muted-foreground">{r.payee.taxId}</span>
+                        <span className="text-xs text-muted-foreground tabular-nums">{r.payee.taxId}</span>
                       )}
                     </div>
                     <Tooltip>

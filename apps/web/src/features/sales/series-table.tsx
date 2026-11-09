@@ -72,7 +72,7 @@ export function SeriesTable() {
     <>
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
-          <thead className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
+          <thead className="text-xs text-muted-foreground">
             <tr>
               {HEADERS.map((h) => (
                 <th key={h} scope="col" className="px-3 py-2.5 font-medium">
@@ -96,7 +96,7 @@ export function SeriesTable() {
                   <td className={cn("px-3 py-2.5 font-medium", !active && "text-muted-foreground")}>{s.name}</td>
                   <td className="px-3 py-2.5">{s.type === "normal" && isDefault(s) && <DefaultMark />}</td>
                   <td className="px-3 py-2.5">{s.type === "rectifying" && isDefault(s) && <DefaultMark />}</td>
-                  <td className="px-3 py-2.5 font-mono">{s.mask}</td>
+                  <td className="px-3 py-2.5 tabular-nums">{s.mask}</td>
                   <td className="px-3 py-1.5">
                     <span className="flex justify-end gap-0.5">
                       <IconAction

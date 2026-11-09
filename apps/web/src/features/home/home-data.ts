@@ -191,7 +191,6 @@ export function buildHomeData(
   const returns = yearReturns(toTaxBooks(documents, purchases, otherExpenses));
   const quarters = (results: Cents[]) => (period.quarter ? [results[period.quarter - 1]!] : results);
   const vat = sumCents(quarters(returns(period.year).vat));
-  const irpf = sumBy(quarters(returns(period.year).irpf), (r) => cents(Math.max(0, r)));
 
   // The progressive scale needs the whole year: its rate is spread over the period
   const incomeTax = estimateIncomeTax(year, period.year, TAX_OPTIONS.simplified);
@@ -227,7 +226,7 @@ export function buildHomeData(
       expenses: change(totals.expenses, previousTotals.expenses),
       profit: change(profit, previousProfit),
     },
-    taxes: { vat, irpf, total: cents(Math.max(0, vat) + irpf) },
+    taxes: { vat },
     incomeTax,
     takeHome: takeHomeEstimate(totals, incomeTax.rate),
     months,

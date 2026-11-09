@@ -153,7 +153,7 @@ export function ExpenseFormPage() {
       <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
         <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
         <p className="m-0 text-muted-foreground">Este gasto no existe o se ha eliminado.</p>
-        <Link to={EXPENSES_PATH} className="font-medium text-primary no-underline hover:text-primary-hover">
+        <Link to={EXPENSES_PATH} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
           Volver a gastos
         </Link>
       </div>
@@ -509,7 +509,10 @@ function ExpenseForm({
                   <button
                     type="button"
                     onClick={() => setCreatingSupplier(true)}
-                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                    className={cn(
+                      buttonVariants({ variant: "secondary", size: "sm" }),
+                      "h-6 px-2.5 text-xs no-underline",
+                    )}
                   >
                     Nuevo proveedor
                   </button>
@@ -535,7 +538,7 @@ function ExpenseForm({
                         {...p}
                         value={form.otherTaxId}
                         onChange={(e) => set("otherTaxId", e.target.value)}
-                        className="font-mono"
+                        className="tabular-nums"
                       />
                     )}
                   </Field>
@@ -551,7 +554,7 @@ function ExpenseForm({
                     {...p}
                     value={form.number}
                     onChange={(e) => set("number", e.target.value)}
-                    className="font-mono"
+                    className="tabular-nums"
                   />
                 )}
               </Field>
@@ -604,7 +607,7 @@ function ExpenseForm({
             <div className="flex flex-wrap items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="md" aria-disabled className="cursor-not-allowed opacity-50">
+                  <Button variant="secondary" size="md" aria-disabled className="cursor-not-allowed opacity-50">
                     <Landmark strokeWidth={1.8} aria-hidden="true" />
                     Elegir movimiento bancario
                   </Button>
@@ -615,9 +618,9 @@ function ExpenseForm({
               </Tooltip>
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="md"
-                className="ml-auto text-primary"
+                className="ml-auto"
                 onClick={() => setCreatingMethod(true)}
               >
                 <Plus aria-hidden="true" />
@@ -668,7 +671,7 @@ function ExpenseForm({
                       value={form.cadastralRef}
                       onChange={(e) => set("cadastralRef", e.target.value)}
                       disabled={form.rentalLocation === "noCadastralRef" || form.rentalLocation === "abroad"}
-                      className="font-mono"
+                      className="tabular-nums"
                     />
                   )}
                 </Field>

@@ -1,7 +1,13 @@
 import { useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ExternalLink, Filter, Plus, Search, Trash2, X } from "lucide-react";
-import { familyWithDescendants, stockOf, withStockAfter, type StockMovement, type StockReason } from "@cuentalibre/core";
+import {
+  familyWithDescendants,
+  stockOf,
+  withStockAfter,
+  type StockMovement,
+  type StockReason,
+} from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
 import { Input, Textarea } from "@cuentalibre/ui/components/input";
@@ -194,7 +200,7 @@ export function StockPage() {
                     value={filters.sku}
                     onChange={(e) => set("sku", e.target.value)}
                     aria-label="Código de producto"
-                    className="min-w-0 flex-1 border-0 bg-transparent font-mono text-foreground outline-none"
+                    className="min-w-0 flex-1 border-0 bg-transparent text-foreground tabular-nums outline-none"
                   />
                 </div>
               </FilterBox>
@@ -245,7 +251,7 @@ export function StockPage() {
                 </div>
               </FilterBox>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="md"
                 onClick={() => setFilters(NO_FILTERS)}
                 className="self-end justify-self-start"
@@ -323,7 +329,9 @@ export function StockPage() {
                                 {p?.name ?? "Producto eliminado"} (eliminado)
                               </span>
                             )}
-                            {p?.sku && <span className="block font-mono text-xs text-muted-foreground">{p.sku}</span>}
+                            {p?.sku && (
+                              <span className="block text-xs text-muted-foreground tabular-nums">{p.sku}</span>
+                            )}
                           </td>
                           <td className={cn(table.td, "text-sm whitespace-nowrap")}>
                             <span className="text-muted-foreground">{type.group}/</span>
@@ -526,7 +534,7 @@ function RegularizationForm({ initialProduct, onDone }: { initialProduct: string
         {(p) => <Textarea {...p} rows={3} value={comments} onChange={(e) => setComments(e.target.value)} />}
       </Field>
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={onDone}>
+        <Button variant="secondary" onClick={onDone}>
           Cerrar
         </Button>
         <Button type="submit">Guardar</Button>

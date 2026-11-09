@@ -67,7 +67,7 @@ export function ContactNotFound({ role }: { role: ContactRole }) {
     <div className="flex flex-col gap-3 px-5 pt-6 lg:px-8 lg:pt-6">
       <h1 className="m-0 text-2xl font-semibold tracking-tight lg:text-3xl">No encontrado</h1>
       <p className="m-0 text-muted-foreground">Este {config.singular.toLowerCase()} no existe o se ha eliminado.</p>
-      <Link to={config.path} className="font-medium text-primary no-underline hover:text-primary-hover">
+      <Link to={config.path} className={cn(buttonVariants({ variant: "secondary" }), "self-start no-underline")}>
         Volver a {config.title.toLowerCase()}
       </Link>
     </div>
@@ -365,7 +365,7 @@ function ContactForm({
                         value={draft.eInvoice[key]}
                         placeholder="L01280796"
                         onChange={(e) => set("eInvoice", { ...draft.eInvoice, [key]: e.target.value })}
-                        className="font-mono uppercase"
+                        className="uppercase tabular-nums"
                       />
                     )}
                   </Field>
@@ -437,14 +437,14 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
               key={a.id}
               className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border px-3 py-2"
             >
-              <span className="font-mono text-sm">{formatIban(a.iban)}</span>
-              {a.bic && <span className="font-mono text-xs text-muted-foreground">{a.bic}</span>}
+              <span className="tabular-nums">{formatIban(a.iban)}</span>
+              {a.bic && <span className="text-xs text-muted-foreground tabular-nums">{a.bic}</span>}
               {a.notes && <span className="min-w-0 truncate text-sm text-muted-foreground">{a.notes}</span>}
               <span className="ml-auto flex items-center gap-1">
                 {a.isDefault ? (
                   <span className="text-xs font-semibold text-primary">Por defecto</span>
                 ) : (
-                  <Button variant="ghost" size="sm" onClick={() => makeDefault(a.id)}>
+                  <Button variant="secondary" size="sm" onClick={() => makeDefault(a.id)}>
                     <Star strokeWidth={1.8} aria-hidden="true" />
                     Usar por defecto
                   </Button>
@@ -485,7 +485,7 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
                   setAdding({ ...adding, iban: e.target.value });
                   setError((x) => ({ ...x, iban: undefined }));
                 }}
-                className="font-mono uppercase"
+                className="uppercase tabular-nums"
               />
             )}
           </Field>
@@ -498,7 +498,7 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
                   setAdding({ ...adding, bic: e.target.value });
                   setError((x) => ({ ...x, bic: undefined }));
                 }}
-                className="font-mono uppercase"
+                className="uppercase tabular-nums"
               />
             )}
           </Field>
@@ -518,7 +518,7 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
               </label>
             )}
             <span className="ml-auto flex gap-2">
-              <Button variant="ghost" size="md" onClick={() => setAdding(null)}>
+              <Button variant="secondary" size="md" onClick={() => setAdding(null)}>
                 Cancelar
               </Button>
               <Button variant="secondary" size="md" onClick={add}>

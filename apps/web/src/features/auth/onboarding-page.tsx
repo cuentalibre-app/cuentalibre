@@ -185,7 +185,7 @@ function IdentityStep({ profile, set, errors }: { profile: BusinessProfile; set:
             autoComplete="off"
             spellCheck={false}
             onChange={(e) => set("taxId", e.target.value)}
-            className="font-mono uppercase"
+            className="uppercase tabular-nums"
           />
         )}
       </Field>
@@ -255,7 +255,7 @@ function IdentityStep({ profile, set, errors }: { profile: BusinessProfile; set:
       </Field>
       {name && (
         <p className="m-0 flex flex-col gap-0.5 rounded-lg bg-muted px-4 py-3">
-          <span className="text-2xs tracking-wide text-muted-foreground uppercase">Así apareces en tus facturas</span>
+          <span className="text-2xs text-muted-foreground">Así apareces en tus facturas</span>
           <span className="font-semibold">{name}</span>
           {profile.taxId.trim() && (
             <span className="text-sm text-muted-foreground">
@@ -279,7 +279,7 @@ function ActivityStep({ tax, set }: { tax: TaxSetup; set: SetTax }) {
             Actividad principal
           </span>
           <span>
-            {main.code && <span className="font-mono text-muted-foreground">{main.code}</span>} {main.name}
+            {main.code && <span className="text-muted-foreground tabular-nums">{main.code}</span>} {main.name}
           </span>
           <span className="text-sm text-muted-foreground">Si tienes más, añádelas en Configuración › Impuestos.</span>
         </div>
@@ -341,7 +341,7 @@ function PlanStep({ trialEndsAt }: { trialEndsAt: string | null }) {
       </div>
 
       <section aria-labelledby="subscribe-now" className="flex flex-col gap-3 border-t border-border pt-6">
-        <h2 id="subscribe-now" className="m-0 text-md font-semibold">
+        <h2 id="subscribe-now" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           ¿Ya sabes que te quedas?
         </h2>
         <PeriodPicker rows value={period} onChange={setPeriod} />
@@ -512,7 +512,7 @@ export function OnboardingPage() {
             </AuthButton>
             <div className="flex items-center justify-between gap-3">
               {step > 0 ? (
-                <Button variant="ghost" size="sm" disabled={pending} onClick={() => goTo(step - 1)}>
+                <Button variant="secondary" size="sm" disabled={pending} onClick={() => goTo(step - 1)}>
                   <ChevronLeft aria-hidden="true" />
                   Atrás
                 </Button>
@@ -520,7 +520,7 @@ export function OnboardingPage() {
                 <span />
               )}
               {skippable && (
-                <Button variant="ghost" size="sm" disabled={pending} onClick={skip}>
+                <Button variant="secondary" size="sm" disabled={pending} onClick={skip}>
                   Lo haré más tarde
                 </Button>
               )}

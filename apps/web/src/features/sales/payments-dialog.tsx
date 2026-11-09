@@ -152,9 +152,9 @@ export function PaymentsDialog({
                     </div>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="secondary"
                       size="md"
-                      className="shrink-0 px-2.5 text-primary"
+                      className="shrink-0 px-2.5"
                       onClick={() => setCreatingMethod(true)}
                     >
                       <Plus aria-hidden="true" />

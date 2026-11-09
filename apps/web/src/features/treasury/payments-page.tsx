@@ -14,7 +14,7 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { ActionsMenu, EmptyState, IconAction, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
-import { formatDate, formatShortDate, periodCode, periodRange } from "@/lib/format";
+import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { FlowsChart } from "./flows-chart";
@@ -134,7 +134,6 @@ export function PaymentsPage() {
                 today={today}
                 className="h-12 w-full sm:h-10 sm:w-auto"
               />
-              <span className="hidden text-sm text-muted-foreground sm:inline">{periodRange(period)}</span>
             </div>
             <p className="m-0 text-sm text-muted-foreground">Lo que has cobrado y pagado, y por dónde ha pasado.</p>
           </div>
@@ -144,13 +143,16 @@ export function PaymentsPage() {
           </Button>
         </header>
 
-        <dl className="m-0 grid animate-rise-in grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
+        <dl className="m-0 grid animate-rise-in grid-cols-3 gap-3 lg:gap-4">
           {[
             { label: "Cobrado", value: <AnimatedAmount value={collected} /> },
             { label: "Pagado", value: <AnimatedAmount value={paid} /> },
             { label: "Neto", value: <AnimatedAmount value={cents(collected - paid)} /> },
           ].map((s) => (
-            <div key={s.label} className="flex min-w-0 flex-col gap-1 bg-card px-3 py-3 sm:px-4">
+            <div
+              key={s.label}
+              className="flex min-w-0 flex-col gap-1 rounded-xl border border-border bg-card p-3 sm:p-4"
+            >
               <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
               <dd className="m-0 amount text-base font-semibold sm:text-lg lg:text-xl">{s.value}</dd>
             </div>

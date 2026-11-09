@@ -41,7 +41,7 @@ export function RequireWritable({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={back}
-        className="mt-2 cursor-pointer border-0 bg-transparent text-sm font-medium text-primary hover:text-primary-hover"
+        className={cn(buttonVariants({ variant: "secondary" }), "mt-2 no-underline")}
       >
         Volver
       </button>

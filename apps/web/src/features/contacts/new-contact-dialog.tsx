@@ -93,7 +93,7 @@ function QuickForm({
         {(p) => <Input {...p} type="email" value={draft.email} onChange={(e) => set("email", e.target.value)} />}
       </Field>
       <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancelar
         </Button>
         <Button type="submit">Crear {config.singular.toLowerCase()}</Button>

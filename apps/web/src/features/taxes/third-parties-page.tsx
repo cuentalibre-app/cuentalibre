@@ -105,7 +105,7 @@ function Excluded({ books, excluded }: { books: PartyBooks; excluded: ReturnType
       <div className="mt-3 flex flex-col gap-3">
         {byReason.map(([reason, items]) => (
           <div key={reason} className="flex flex-col gap-1">
-            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <span className="text-sm font-semibold">
               {reason} · {items.length}
             </span>
             <ul className="m-0 flex list-none flex-wrap gap-x-3 gap-y-1 p-0">
@@ -114,7 +114,7 @@ function Excluded({ books, excluded }: { books: PartyBooks; excluded: ReturnType
                 if (!doc) return null;
                 return (
                   <li key={op.id}>
-                    <Link to={doc.to} className="font-mono text-xs text-foreground no-underline hover:text-primary">
+                    <Link to={doc.to} className="text-xs text-foreground tabular-nums no-underline hover:text-primary">
                       {doc.number || doc.payee || doc.date}
                     </Link>
                   </li>
@@ -190,7 +190,7 @@ export function ThirdPartiesPage() {
 
         <section aria-label="Declarados" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="m-0 text-md font-semibold">Declarados</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Declarados</h2>
             <span className="text-xs text-muted-foreground">
               Compras y ventas con la misma persona se declaran por separado
             </span>

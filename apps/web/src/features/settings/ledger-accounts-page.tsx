@@ -147,11 +147,11 @@ export function LedgerAccountsPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               {A3_ACCOUNTS.map((g) => (
                 <div key={g.title} className="flex flex-col gap-1">
-                  <span className="text-xs font-medium tracking-wide uppercase">{g.title}</span>
+                  <span className="text-sm font-semibold">{g.title}</span>
                   <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
                     {g.accounts.map(([n, label]) => (
                       <li key={n}>
-                        <span className="font-mono font-medium">{n}</span> {label}
+                        <span className="font-medium tabular-nums">{n}</span> {label}
                       </li>
                     ))}
                   </ul>
@@ -175,7 +175,7 @@ export function LedgerAccountsPage() {
                   maxLength={10}
                   spellCheck={false}
                   onChange={(e) => set("companyCode", e.target.value)}
-                  className="font-mono"
+                  className="tabular-nums"
                 />
               )}
             </Field>
@@ -218,7 +218,7 @@ export function LedgerAccountsPage() {
           <AccountGroups
             label={(row) => (
               <>
-                {row.account} <span className="font-mono text-muted-foreground">({draft.prefixes[row.key]})</span>
+                {row.account} <span className="text-muted-foreground tabular-nums">({draft.prefixes[row.key]})</span>
               </>
             )}
             render={(row) => {
@@ -257,9 +257,7 @@ function AccountGroups({
     <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2">
       {GROUPS.map((g) => (
         <fieldset key={g.title} className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 p-0 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {g.title}
-          </legend>
+          <legend className="mb-2 p-0 text-sm font-semibold">{g.title}</legend>
           {g.rows.map((row) => (
             <div
               key={row.key}
@@ -302,7 +300,7 @@ function CodeInput({
         maxLength={Math.max(maxLength, value.length)}
         spellCheck={false}
         onChange={(e) => onChange(e.target.value.replace(/\s+/g, ""))}
-        className="h-9 w-28 font-mono"
+        className="h-9 w-28 tabular-nums"
       />
       {error && <span className="max-w-40 text-xs text-destructive">{error}</span>}
     </span>
@@ -311,7 +309,7 @@ function CodeInput({
 
 function Resulting({ number }: { number: string | null }) {
   return (
-    <span className="w-28 font-mono text-sm tabular-nums" aria-label="Cuenta resultante">
+    <span className="w-28 text-sm tabular-nums" aria-label="Cuenta resultante">
       {number ?? <span className="text-muted-foreground">—</span>}
     </span>
   );
@@ -375,7 +373,7 @@ function ContactCodes({
             cells: [
               <span className="flex min-w-0 flex-col">
                 <span className="truncate font-medium">{contact.name}</span>
-                <span className="font-mono text-xs text-muted-foreground">{contact.taxId}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">{contact.taxId}</span>
               </span>,
               <span className="text-sm">{ROLE_LABEL[role]}</span>,
               <CodeInput

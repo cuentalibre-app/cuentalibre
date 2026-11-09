@@ -104,7 +104,7 @@ export function ActivityPicker({
                 onClick={() => onPick({ id: newId(), type, code, name })}
                 className="flex w-full cursor-pointer items-baseline gap-3 border-0 bg-transparent px-4 py-2.5 text-left text-foreground transition-colors duration-150 hover:bg-accent disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent"
               >
-                {code && <span className="w-12 shrink-0 font-mono text-sm text-muted-foreground">{code}</span>}
+                {code && <span className="w-12 shrink-0 text-sm text-muted-foreground tabular-nums">{code}</span>}
                 <span className="min-w-0 flex-1">{name}</span>
                 {added && <span className="text-xs text-muted-foreground">Añadida</span>}
               </button>

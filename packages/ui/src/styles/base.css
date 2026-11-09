@@ -55,8 +55,9 @@
   }
 }
 
+/* Figures in the body face with tabular digits: columns line up without a typewriter look */
 @utility amount {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   letter-spacing: var(--tracking-tight);
 }

@@ -35,11 +35,9 @@ function InvoicePreview({ profile }: { profile: BusinessProfile }) {
       aria-label="Vista previa en la factura"
       className="flex animate-rise-in flex-col gap-3 rounded-xl border border-border bg-card p-5 lg:sticky lg:top-6"
     >
-      <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-        Así apareces en tus facturas
-      </span>
+      <span className="text-sm font-semibold">Así apareces en tus facturas</span>
       <div className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3.5">
-        <span className="text-2xs tracking-wide text-muted-foreground uppercase">Emisor</span>
+        <span className="text-2xs text-muted-foreground">Emisor</span>
         <span className="font-semibold">{businessName(profile) || "Sin nombre"}</span>
         {lines.map((line) => (
           <span key={line} className="text-sm text-muted-foreground">
@@ -109,7 +107,7 @@ export function BusinessPage() {
                       autoComplete="off"
                       spellCheck={false}
                       onChange={(e) => set("taxId", e.target.value)}
-                      className="font-mono uppercase"
+                      className="uppercase tabular-nums"
                     />
                   )}
                 </Field>

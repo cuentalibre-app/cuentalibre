@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { formatSeriesNumber, newId, sameSeriesFormat, seriesMaskProblem, type SeriesMaskProblem } from "@cuentalibre/core";
+import {
+  formatSeriesNumber,
+  newId,
+  sameSeriesFormat,
+  seriesMaskProblem,
+  type SeriesMaskProblem,
+} from "@cuentalibre/core";
 import type { InvoiceSeries, InvoiceSeriesDefinition } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@cuentalibre/ui/components/dialog";
@@ -129,7 +135,7 @@ export function SeriesDialog({
                 spellCheck={false}
                 readOnly={uses > 0}
                 onChange={(e) => setMask(e.target.value)}
-                className="font-mono"
+                className="tabular-nums"
               />
             )}
           </Field>

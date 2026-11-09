@@ -279,7 +279,7 @@ function RowLabel({ form, applies }: { form: CalendarForm; applies: boolean | nu
       {form !== "reta" && (
         <span
           className={cn(
-            "rounded-sm px-1.5 py-0.5 font-mono text-xs font-semibold",
+            "rounded-sm px-1.5 py-0.5 text-xs font-semibold tabular-nums",
             applies === true ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground",
           )}
         >
@@ -347,7 +347,7 @@ function CalendarGrid({
     >
       <table className="w-full min-w-[920px] border-collapse">
         <thead>
-          <tr className="bg-muted text-xs tracking-wide text-muted-foreground uppercase">
+          <tr className="text-xs text-muted-foreground">
             <th scope="col" className="sticky left-0 z-10 w-80 bg-muted px-4 py-2 text-left font-medium">
               Modelo
             </th>
@@ -372,7 +372,7 @@ function CalendarGrid({
               <th
                 scope="colgroup"
                 colSpan={13}
-                className="border-t border-border bg-card px-4 pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+                className="border-t border-border bg-card px-4 pt-3 pb-1 text-left text-xs font-semibold text-muted-foreground"
               >
                 {group.title}
               </th>
@@ -501,14 +501,17 @@ function CalendarList({
   return (
     <div className={cn("flex animate-rise-in flex-col gap-4", className)} style={{ "--i": 1 } as CSSProperties}>
       {hiddenCount > 0 && (
-        <Button variant="ghost" className="self-start" onClick={() => setShowPast(true)}>
+        <Button variant="secondary" className="self-start" onClick={() => setShowPast(true)}>
           <ChevronDown aria-hidden="true" />
           Mostrar plazos anteriores ({hiddenCount})
         </Button>
       )}
       {months.map(({ month, entries: monthEntries }) => (
         <section key={month} aria-labelledby={`month-${month}`} className="flex flex-col gap-2">
-          <h2 id={`month-${month}`} className="m-0 flex items-center gap-2 text-md font-semibold">
+          <h2
+            id={`month-${month}`}
+            className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight lg:text-title"
+          >
             {MONTHS[month]} {calendarYear}
             {isCurrentYear && month === today.getMonth() && <Badge tone="primary">Este mes</Badge>}
           </h2>

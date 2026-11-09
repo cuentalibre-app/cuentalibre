@@ -163,7 +163,7 @@ function QuartersTable({ year, today }: { year: number; today: Date }) {
       style={{ "--i": 1 } as CSSProperties}
     >
       <div className="flex items-baseline justify-between lg:px-4 lg:pt-3">
-        <h2 id="quarters-title" className="m-0 text-md font-semibold">
+        <h2 id="quarters-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           Trimestres de {year}
         </h2>
         <span className="text-xs text-muted-foreground">Lo que sale a ingresar en cada presentación</span>
@@ -319,7 +319,7 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
         >
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2.5">
-              <span className="rounded-sm bg-primary-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-primary">
+              <span className="rounded-sm bg-primary-soft px-1.5 py-0.5 text-xs font-semibold text-primary tabular-nums">
                 {c.code}
               </span>
               <span className="font-semibold">{c.title}</span>
@@ -396,7 +396,7 @@ function OtherForms({ year }: { year: number }) {
       style={{ "--i": 3 } as CSSProperties}
     >
       <div className="flex items-baseline justify-between">
-        <h2 id="other-forms-title" className="m-0 text-md font-semibold">
+        <h2 id="other-forms-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
           Otros modelos
         </h2>
         <span className="text-xs text-muted-foreground">Retenciones y declaraciones informativas</span>
@@ -476,7 +476,7 @@ export function TaxesSummaryPage() {
             <SettingsLink
               from="Impuestos"
               to={TAX_SETTINGS_PATH}
-              className={cn(buttonVariants({ variant: "ghost" }), "no-underline")}
+              className={cn(buttonVariants({ variant: "secondary" }), "no-underline")}
             >
               <Settings strokeWidth={1.8} aria-hidden="true" />
               Configurar impuestos
