@@ -45,7 +45,7 @@ export function ProfilePage() {
   );
 }
 
-/* Each section saves on its own, like in the reference app, so a change to the notifications doesn't wait on the profile. */
+/* Each section saves on its own, so a change to the notifications doesn't wait on the profile. */
 
 function PersonalSection() {
   const saved = useUserSettings().profile;

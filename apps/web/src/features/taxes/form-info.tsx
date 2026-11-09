@@ -3,7 +3,7 @@ import { BookOpen, Globe } from "lucide-react";
 import { table } from "@cuentalibre/ui/lib/table";
 import { AEAT_LINKS, type FormCode } from "./taxes-model";
 
-/* What each form is for, who files it and when, as the reference app explains it before computing it. */
+/* What each form is for, who files it and when, shown before computing it. */
 
 export const TAXPAYER_CALENDAR =
   "https://sede.agenciatributaria.gob.es/Sede/Bibl_virtual/folletos/calendario_contribuyente.shtml";

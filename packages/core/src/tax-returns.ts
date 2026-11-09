@@ -10,7 +10,7 @@ import { GENERAL_VAT_RATE, IRPF_INSTALLMENT_RATE } from "./taxes";
  * simplified direct estimation, box by box, from the issued and received
  * invoices and the expenses without an invoice.
  *
- * Scope, as in the reference app: one activity, accrual basis, no proration, no
+ * Scope: one activity, accrual basis, no proration, no
  * equivalence surcharge detail, no supplementary returns. Boxes the books
  * can't fill (territorial splits…) are left at zero or taken as an input.
  * Returns already filed are taken as filed: later quarters start from their

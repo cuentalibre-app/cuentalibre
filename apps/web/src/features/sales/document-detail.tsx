@@ -61,7 +61,7 @@ export function SalesDocumentLink({
   );
 }
 
-/** Basic information of an invoice, draft, quote or delivery note, as the reference app's "Detalle de la factura". */
+/** Basic information of an invoice, draft, quote or delivery note. */
 export function SalesDocumentDialog({
   doc,
   onOpenChange,

@@ -25,7 +25,7 @@ const PAID_REPORTS = [
   {
     title: "Resumen ejecutivo",
     description: "Datos registrales, actividad, administradores y principales cifras de sus cuentas.",
-    sample: `${REPORTS_URL}/servlet/app/portal/CONTA/prod/INFORME_REFERENCE/nif/A00000000/PRINT/1/MODE/E/`,
+    sample: null,
   },
   {
     title: "Informe de solvencia",

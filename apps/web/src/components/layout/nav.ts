@@ -34,7 +34,7 @@ export interface NavItem extends NavLeaf {
   children?: NavLeaf[];
 }
 
-/** Export and import cover sales and purchases alike, so both groups list them, as in the reference app. */
+/** Export and import cover sales and purchases alike, so both groups list them. */
 const transferLeaves: NavLeaf[] = [
   { label: "Exportar", to: "/exportar", separator: true },
   { label: "Importar", to: "/importar" },

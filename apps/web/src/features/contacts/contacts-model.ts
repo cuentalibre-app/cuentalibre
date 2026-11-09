@@ -157,7 +157,7 @@ export function formatAddress(contact: Contact): string {
 /** Intra-EU when it is in another member state and registered in VIES. */
 export const isIntraEu = (contact: Contact) => isOtherEuCountry(countryOf(contact)) && !!contact.vies;
 
-/** vCard 3.0 for the address book, as the reference app's "Descargar vCard". */
+/** vCard 3.0 for the address book ("Descargar vCard"). */
 export function toVCard(contact: Contact): string {
   const esc = (value: string) => value.replace(/[\\;,]/g, (c) => `\\${c}`).replace(/\n/g, "\\n");
   const lines = [
