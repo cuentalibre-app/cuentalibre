@@ -12,11 +12,13 @@ import {
   model347,
   model349,
   toIsoDate,
-  upcomingDeadlines,
+  fiscalCalendar,
+  model111,
+  model115,
   sumBy,
   vatReturns,
   type Cents,
-  type Deadline,
+  type CalendarForm,
   type Quarter,
 } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
@@ -28,10 +30,10 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
-import { daysLeftLabel, deadlineTitle, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
+import { daysLeftLabel, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
-import { useFormsInUse } from "./forms-in-use";
+import { useFormsInUse, type FormsInUse } from "./forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
 import { usePartyBooks } from "./party-operations";
 import {
@@ -69,15 +71,24 @@ function useYearReturns(year: number) {
   }, [books, year]);
 }
 
-/** Short name for a filing in the next-deadline list; the model number goes in its own chip. */
-function filingName(d: Deadline): string {
-  if (d.kind === "vat-303") return `IVA del ${d.quarter}.º trimestre`;
-  if (d.kind === "irpf-130") return `IRPF del ${d.quarter}.º trimestre`;
-  if (d.kind === "vat-390") return "Resumen anual de IVA";
-  return deadlineTitle(d);
-}
+/** What each form is called in the next-deadline list, and when it applies. */
+const NEXT_FORMS: Partial<
+  Record<CalendarForm, { name: (q: Quarter | null) => string; path: string; applies: true | keyof FormsInUse }>
+> = {
+  "303": { name: (q) => `IVA del ${q}.º trimestre`, path: VAT_PATH, applies: true },
+  "130": { name: (q) => `IRPF del ${q}.º trimestre`, path: INCOME_TAX_PATH, applies: true },
+  "390": { name: () => "Resumen anual de IVA", path: VAT_PATH, applies: true },
+  "100": { name: () => "Renta, actividad económica", path: INCOME_TAX_PATH, applies: true },
+  "111": { name: (q) => `Retenciones del ${q}.º trimestre`, path: WITHHOLDINGS_PATH, applies: "withholdings" },
+  "190": { name: () => "Resumen anual de retenciones", path: WITHHOLDINGS_PATH, applies: "withholdings" },
+  "115": { name: (q) => `Alquileres del ${q}.º trimestre`, path: RENTALS_PATH, applies: "rentals" },
+  "180": { name: () => "Resumen anual de alquileres", path: RENTALS_PATH, applies: "rentals" },
+  "347": { name: () => "Operaciones con terceras personas", path: THIRD_PARTIES_PATH, applies: "thirdParties" },
+  "349": { name: (q) => `Intracomunitarias del ${q}.º trimestre`, path: INTRA_EU_PATH, applies: "intraEu" },
+};
 
-const FORM_CODE: Partial<Record<Deadline["kind"], string>> = { "vat-303": "303", "irpf-130": "130", "vat-390": "390" };
+/** Forms that only inform: they carry nothing to pay. */
+const INFORMATIVE: CalendarForm[] = ["390", "190", "180", "347", "349"];
 
 function FormCode({ code }: { code: string }) {
   return (
@@ -89,31 +100,49 @@ function FormCode({ code }: { code: string }) {
 
 function NextFiling({ today }: { today: Date }) {
   const books = useTaxBooks();
-  const next = upcomingDeadlines(today, 10).filter((d) => d.kind !== "social-security");
-  const first = next[0];
-  const sameDay = first ? next.filter((d) => d.date.getTime() === first.date.getTime()) : [];
-  if (!first) return null;
-  const items = sameDay.map((d) => {
-    const quarter = d.quarter;
-    if (d.kind === "vat-303" && quarter) {
-      return { d, amount: vatReturns(books, d.year)[quarter - 1]!.result, to: modelPath(VAT_PATH, d) };
-    }
-    if (d.kind === "irpf-130" && quarter) {
-      const result = incomeTaxYear(books, d.year, TAX_OPTIONS).quarters[quarter - 1]!.result;
-      return { d, amount: cents(Math.max(0, result)), to: modelPath(INCOME_TAX_PATH, d) };
-    }
-    return { d, amount: null, to: modelPath(VAT_PATH, { year: d.year, quarter: null }) };
+  const party = usePartyBooks();
+  const inUse = useFormsInUse();
+  const from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  // The forms that apply to the books, due from today on: the soonest day's ones are next
+  const upcoming = [...fiscalCalendar(today.getFullYear()), ...fiscalCalendar(today.getFullYear() + 1)].filter((e) => {
+    const form = NEXT_FORMS[e.form];
+    return form && e.dueOn >= from && (form.applies === true || inUse(e.year)[form.applies]);
   });
+  const first = upcoming[0];
+  if (!first) return null;
+  const items = upcoming
+    .filter((e) => e.dueOn.getTime() === first.dueOn.getTime())
+    .map((e) => {
+      const { year, quarter } = e;
+      const form = NEXT_FORMS[e.form]!;
+      const to = modelPath(form.path, { year, quarter });
+      let amount: Cents | null = null;
+      if (e.form === "303" && quarter) amount = vatReturns(books, year)[quarter - 1]!.result;
+      if (e.form === "130" && quarter)
+        amount = cents(Math.max(0, incomeTaxYear(books, year, TAX_OPTIONS).quarters[quarter - 1]!.result));
+      if (e.form === "111" && quarter) amount = cents(model111(party.ops, year, quarter).boxes["30"]!);
+      if (e.form === "115" && quarter) amount = cents(model115(party.ops, year, quarter).boxes["05"]!);
+      return {
+        key: `${e.form}-${year}-${quarter}`,
+        code: e.form,
+        name: form.name(quarter),
+        amount,
+        to,
+        informative: INFORMATIVE.includes(e.form),
+      };
+    })
+    // What has to be paid first; the informative returns close the list
+    .sort((a, b) => Number(a.informative) - Number(b.informative));
   const total = sumBy(items, (i) => cents(Math.max(0, i.amount ?? 0)));
-  const days = daysUntil(today, first.date);
+  const days = daysUntil(today, first.dueOn);
 
   return (
     <section aria-labelledby="next-filing-title" className="animate-rise-in overflow-hidden surface">
       <div className="flex flex-wrap items-center justify-between gap-4 p-5">
         <div className="flex items-center gap-4">
           <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-warning-soft py-1.5 text-warning">
-            <span className="text-xl font-semibold">{first.date.getDate()}</span>
-            <span className="text-2xs">{MONTHS_SHORT[first.date.getMonth()]}</span>
+            <span className="text-xl font-semibold">{first.dueOn.getDate()}</span>
+            <span className="text-2xs">{MONTHS_SHORT[first.dueOn.getMonth()]}</span>
           </div>
           <div className="flex flex-col gap-0.5">
             <h2 id="next-filing-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
@@ -128,18 +157,18 @@ function NextFiling({ today }: { today: Date }) {
         </div>
       </div>
       <ul className="m-0 list-none border-t border-border p-0">
-        {items.map(({ d, amount, to }) => (
-          <li key={d.kind} className="border-b border-divider last:border-b-0">
+        {items.map(({ key, code, name, amount, to, informative }) => (
+          <li key={key} className="border-b border-divider last:border-b-0">
             <Link
               to={to}
               className="group flex items-center gap-3 px-5 py-3 text-foreground no-underline transition-colors duration-150 hover:bg-accent"
             >
-              <FormCode code={FORM_CODE[d.kind] ?? ""} />
-              <span className="flex-1 font-medium">{filingName(d)}</span>
-              {amount === null ? (
-                <span className="text-sm text-muted-foreground">Informativo</span>
-              ) : (
+              <FormCode code={code} />
+              <span className="flex-1 font-medium">{name}</span>
+              {amount !== null ? (
                 <VatAmount amount={amount} />
+              ) : (
+                informative && <span className="text-sm text-muted-foreground">Informativo</span>
               )}
               <ChevronRight
                 className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5"
@@ -187,7 +216,6 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
       irpf: i,
       total: cents(Math.max(0, v) + i),
       deadline: filingDeadline(year, quarter),
-      current: status === "open" || status === "inProgress",
       closed: status === "closed",
     };
   });
@@ -294,11 +322,7 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
               </tr>
             )}
             {shown.map((r, i) => (
-              <tr
-                key={r.quarter}
-                className={cn(table.row, "animate-row-in", r.current && "bg-primary-soft/40")}
-                style={{ "--i": i } as CSSProperties}
-              >
+              <tr key={r.quarter} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
                 <td className={td}>
                   <span className="font-semibold">T{r.quarter}</span>{" "}
                   <span className="text-sm text-muted-foreground">{periodRange({ year, quarter: r.quarter })}</span>
@@ -354,18 +378,12 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
                 </span>
                 {chevron}
               </span>
-              <span className="flex w-full justify-between text-sm">
-                <span className="text-muted-foreground">{closedLabel}</span>
-                <span className="amount font-semibold">{formatEUR(closedSum.total)}</span>
-              </span>
+              <span className="text-sm text-muted-foreground">{closedLabel}</span>
             </button>
           </li>
         )}
         {shown.map((r) => (
-          <li
-            key={r.quarter}
-            className={cn("flex flex-col gap-3 surface p-4", r.current && "border-primary/40 bg-primary-soft/40")}
-          >
+          <li key={r.quarter} className="flex flex-col gap-3 surface p-4">
             <div className="flex items-center justify-between">
               <span>
                 <span className="font-semibold">T{r.quarter}</span>{" "}
@@ -408,10 +426,6 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
             </div>
           </li>
         ))}
-        <li className="flex justify-between px-1 pt-1 font-semibold">
-          <span>Total del año</span>
-          <span className="amount">{formatEUR(totals.total)}</span>
-        </li>
       </ul>
     </section>
   );
