@@ -61,7 +61,6 @@ export function HomePage() {
           onPeriodChange={setPeriod}
           years={availableYears}
           today={today}
-          reserve={reserve}
           actions={
             <>
               <Notifications className="size-11 rounded-full border-glass-edge bg-glass backdrop-blur-xl hover:bg-glass" />
@@ -103,7 +102,8 @@ export function HomePage() {
             data={data}
             className="hidden min-w-0 lg:flex lg:flex-[2_1_560px]"
           />
-          <TakeHomeCard data={data} className="min-w-0 lg:flex-[1_1_320px]" />
+          {/* On phones it sits right under the chart, in the overview */}
+          <TakeHomeCard data={data} className="min-w-0 max-lg:hidden lg:flex-[1_1_320px]" />
         </div>
 
         <div className={row} style={{ "--i": 6 } as CSSProperties}>
