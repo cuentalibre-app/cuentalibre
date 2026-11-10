@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@cuentalibre/ui/components/dropdown-menu";
 import { useDragToDismiss } from "@cuentalibre/ui/lib/drag-to-dismiss";
-import { createActions } from "./nav";
+import { createActions, type CreateAction } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
 
 interface CreateMenuProps {
@@ -22,18 +22,18 @@ interface CreateMenuProps {
   /** Controls the menu from outside, e.g. the tab bar opening it when a drag ends on its tab. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Lists only the essential actions as larger, finger-sized rows, for the phone tab bar. */
-  essentialOnly?: boolean;
+  /** Lists these entries instead, as larger, finger-sized rows, for the phone tab bar. */
+  actions?: CreateAction[];
 }
 
-/** Quick "create anything" menu, shared by the sidebar and the mobile tab bar. */
+/** Quick "create anything" menu, shared by the sidebar and the mobile tab bar (which lists shortcuts instead). */
 export function CreateMenu({
   children,
   side = "bottom",
   align = "start",
   contentClassName,
   openOnHover = false,
-  essentialOnly = false,
+  actions,
   ...controlled
 }: CreateMenuProps) {
   const navigate = useNavigate();
@@ -42,8 +42,9 @@ export function CreateMenu({
   const open = controlled.open ?? hover.open;
   const onOpenChange = controlled.onOpenChange ?? hover.onOpenChange;
   // The tab bar's menu rises from the bottom of a phone, so a finger can drag it back down
-  const dragRef = useDragToDismiss<HTMLDivElement>(() => essentialOnly);
-  const groups = essentialOnly ? [createActions.flat().filter((action) => action.essential)] : createActions;
+  const phone = actions !== undefined;
+  const dragRef = useDragToDismiss<HTMLDivElement>(() => phone);
+  const groups = actions ? [actions] : createActions;
 
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={openOnHover ? false : undefined}>
@@ -58,7 +59,7 @@ export function CreateMenu({
               <DropdownMenuItem
                 key={to}
                 onSelect={() => navigate(to)}
-                className={essentialOnly ? "h-12 gap-3.5 pr-5 text-base [&_svg]:size-5" : undefined}
+                className={phone ? "h-12 gap-3.5 pr-5 text-base [&_svg]:size-5" : undefined}
               >
                 <Icon strokeWidth={1.8} aria-hidden="true" />
                 {label}

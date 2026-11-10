@@ -1,10 +1,10 @@
 import { useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { LayoutGrid, Menu, Percent, Plus, ReceiptText, type LucideIcon } from "lucide-react";
+import { Layers, LayoutGrid, Menu, Percent, ReceiptText, type LucideIcon } from "lucide-react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { CreateMenu } from "./create-menu";
 import { MoreSheet } from "./more-sheet";
-import { tabPaths } from "./nav";
+import { phoneShortcuts, tabPaths } from "./nav";
 
 type Slot =
   | { kind: "link"; label: string; to: string; icon: LucideIcon; tour: string }
@@ -15,7 +15,7 @@ type Slot =
 const slots: Slot[] = [
   { kind: "link", label: "Inicio", to: "/", icon: LayoutGrid, tour: "/" },
   { kind: "link", label: "Ventas", to: "/ventas", icon: ReceiptText, tour: "/ventas" },
-  { kind: "create", label: "Crear", icon: Plus, tour: "crear" },
+  { kind: "create", label: "Accesos rápidos", icon: Layers, tour: "/compras" },
   { kind: "link", label: "Impuestos", to: "/impuestos", icon: Percent, tour: "/impuestos" },
   { kind: "more", label: "Más", icon: Menu, tour: "/mas" },
 ];
@@ -45,7 +45,7 @@ interface Drag {
 }
 
 /**
- * Floating tab bar for phones: four sections and "Crear" on a frosted pill. A lens marks the
+ * Floating tab bar for phones: four sections and a menu of everyday lists on a frosted pill. A lens marks the
  * current section; dragging a finger along the bar carries the lens with it and lifting the
  * finger opens whatever is under it.
  */
@@ -212,18 +212,18 @@ export function BottomNav({ className }: { className?: string }) {
                 contentClassName="mb-2"
                 open={createOpen}
                 onOpenChange={setCreateOpen}
-                essentialOnly
+                actions={phoneShortcuts}
               >
                 <button
                   type="button"
                   aria-label={slot.label}
                   data-tour={slot.tour}
-                  className={cn(tabClass, "[&[data-state=open]]:text-foreground [&[data-state=open]>svg]:rotate-45")}
+                  className={cn(tabClass, "[&[data-state=open]]:text-foreground")}
                   // Radix opens the menu on press; a press here may be the start of a drag, so open on tap instead
                   onPointerDown={(e) => e.pointerType !== "mouse" && e.preventDefault()}
                   onClick={(e) => e.detail > 0 && !createOpen && setCreateOpen(true)}
                 >
-                  <Icon {...iconProps} className="size-6 transition-transform duration-250 ease-out" strokeWidth={2} />
+                  <Icon {...iconProps} />
                 </button>
               </CreateMenu>
             );
