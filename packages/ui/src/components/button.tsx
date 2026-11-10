@@ -11,7 +11,7 @@ import { cn } from "../lib/cn";
  * `chip` is a small pill that toggles (aria-pressed) or picks a preset; `link` is inline text.
  * A card's "Ver todas" is a <SeeAllLink>, not a button.
  */
-const buttonVariants = cva(
+const variants = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap no-underline transition-[color,background-color,border-color,opacity,scale] duration-150 ease-out active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-[18px] [&_svg]:shrink-0",
   {
     variants: {
@@ -47,10 +47,16 @@ const buttonVariants = cva(
   },
 );
 
-export type ButtonProps = ComponentProps<"button"> & VariantProps<typeof buttonVariants>;
+/**
+ * The classes merged, so a variant's or size's override (the link's `inline px-0`) replaces the base
+ * class it contradicts instead of losing to it in the stylesheet, also on a <Link> styled as a button.
+ */
+const buttonVariants = (props?: Parameters<typeof variants>[0]) => cn(variants(props));
+
+export type ButtonProps = ComponentProps<"button"> & VariantProps<typeof variants>;
 
 export function Button({ className, variant, size, type = "button", ...props }: ButtonProps) {
-  return <button type={type} className={cn(buttonVariants({ variant, size }), className)} {...props} />;
+  return <button type={type} className={cn(variants({ variant, size }), className)} {...props} />;
 }
 
 export { buttonVariants };
