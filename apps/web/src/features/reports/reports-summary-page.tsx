@@ -40,8 +40,8 @@ const isFuture = (year: number, month: number, today: Date) =>
 /** The same period a year earlier, which is what a freelancer compares with (seasonality). */
 const yearBefore = (period: Period): Period => ({ ...period, year: period.year - 1 });
 
-function Change({ value, inverse }: { value: number | null; inverse?: boolean }) {
-  if (value === null) return <span className="text-sm text-muted-foreground">Sin datos del año anterior</span>;
+function Change({ value, inverse, year }: { value: number | null; inverse?: boolean; year: number }) {
+  if (value === null) return <span className="text-sm text-muted-foreground">Sin datos de {year - 1}</span>;
   const up = value >= 0;
   const good = inverse ? !up : up;
   return (
@@ -49,7 +49,9 @@ function Change({ value, inverse }: { value: number | null; inverse?: boolean })
       <Badge tone={good ? "success" : "danger"} className="h-6 text-xs">
         {up ? "↑" : "↓"} {formatPercent(Math.abs(value) * 100)}
       </Badge>
-      vs. año anterior
+      {/* Phones: the year itself, so the line fits beside the badge in a half-width card */}
+      <span className="lg:hidden">vs. {year - 1}</span>
+      <span className="max-lg:hidden">vs. año anterior</span>
     </span>
   );
 }
@@ -59,12 +61,14 @@ function Kpi({
   value,
   change,
   inverse,
+  year,
   index,
   children,
 }: {
   label: string;
   value: string;
   change?: number | null;
+  year: number;
   inverse?: boolean;
   index: number;
   children?: ReactNode;
@@ -73,7 +77,7 @@ function Kpi({
     <div className="flex animate-rise-in flex-col gap-2 surface p-4 lg:p-5" style={{ "--i": index } as CSSProperties}>
       <span className="text-sm font-semibold lg:text-lg">{label}</span>
       <span className="amount text-xl font-semibold lg:text-2xl">{value}</span>
-      {change !== undefined && <Change value={change} inverse={inverse} />}
+      {change !== undefined && <Change value={change} inverse={inverse} year={year} />}
       {children}
     </div>
   );
@@ -167,7 +171,9 @@ function MonthlyChart({ year, months, inPeriod }: { year: number; months: MonthR
                   inPeriod.includes(i) ? "font-semibold text-foreground" : "text-muted-foreground",
                 )}
               >
-                {label}
+                {/* Phones: the initial, as twelve short names don't fit side by side */}
+                <span className="sm:hidden">{label[0]}</span>
+                <span className="max-sm:hidden">{label}</span>
               </span>
             ))}
           </div>
@@ -290,22 +296,49 @@ export function ReportsSummaryPage() {
       <PageHeader
         title="Informes"
         description={`Cómo va tu negocio ${periodPhrase(period)}: ingresos sin IVA y gastos deducibles.`}
+        descriptionClassName="max-lg:hidden"
+        // Phones: the report link and the period share one line under the title
+        actionsClassName="max-lg:w-full max-lg:flex-nowrap max-lg:[&>a]:flex-1"
         actions={
           <>
             <Link to={PNL_PATH} className={buttonVariants({ variant: "secondary" })}>
               <FileBarChart strokeWidth={1.8} aria-hidden="true" />
               Pérdidas y ganancias
             </Link>
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} compact />
           </>
         }
       />
 
       <section aria-label="Cifras del periodo" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Ingresos" value={formatEUR(data.pnl.income)} change={data.changes.income} index={0} />
-        <Kpi label="Gastos" value={formatEUR(data.pnl.expenses)} change={data.changes.expenses} inverse index={1} />
-        <Kpi label="Resultado" value={formatEUR(data.pnl.operating)} change={data.changes.result} index={2} />
-        <Kpi label="Margen" value={data.margin === null ? "—" : formatPercent(data.margin * 100)} index={3}>
+        <Kpi
+          label="Ingresos"
+          value={formatEUR(data.pnl.income)}
+          change={data.changes.income}
+          year={period.year}
+          index={0}
+        />
+        <Kpi
+          label="Gastos"
+          value={formatEUR(data.pnl.expenses)}
+          change={data.changes.expenses}
+          inverse
+          year={period.year}
+          index={1}
+        />
+        <Kpi
+          label="Resultado"
+          value={formatEUR(data.pnl.operating)}
+          change={data.changes.result}
+          year={period.year}
+          index={2}
+        />
+        <Kpi
+          label="Margen"
+          value={data.margin === null ? "—" : formatPercent(data.margin * 100)}
+          year={period.year}
+          index={3}
+        >
           <span className="text-sm text-muted-foreground">del resultado sobre los ingresos</span>
         </Kpi>
       </section>
@@ -322,7 +355,7 @@ export function ReportsSummaryPage() {
 
       <section
         aria-label="Desglose"
-        className="grid animate-rise-in gap-4 lg:grid-cols-3"
+        className="grid animate-rise-in grid-cols-1 gap-4 lg:grid-cols-3"
         style={{ "--i": 6 } as CSSProperties}
       >
         <TopCounterparties
