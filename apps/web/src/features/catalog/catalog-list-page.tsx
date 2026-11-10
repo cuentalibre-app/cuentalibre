@@ -6,7 +6,6 @@ import {
   Download,
   FileDown,
   FileUp,
-  Filter,
   History,
   MoreHorizontal,
   Pencil,
@@ -28,7 +27,16 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { GroupedSelect, Help } from "@/features/sales/form-fields";
-import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, type Action } from "@/features/sales/list-parts";
+import {
+  FiltersButton,
+  FiltersSheet,
+  ActionsMenu,
+  EmptyState,
+  IconAction,
+  MoreActionsTrigger,
+  SortHeader,
+  type Action,
+} from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
 import { TagChips } from "@/features/settings/tag-chip";
 import { parseDecimal } from "@/lib/format";
@@ -224,124 +232,116 @@ export function CatalogListPage() {
               placeholder="Buscar por nombre, código, familia o descripción"
               aria-label="Buscar"
             />
-            <Button
-              variant="secondary"
-              aria-expanded={showFilters}
-              aria-controls="catalog-filters"
-              onClick={() => setShowFilters((s) => !s)}
-            >
-              <Filter strokeWidth={1.8} aria-hidden="true" />
-              Filtros
-              {extraFilters > 0 && (
-                <span className="flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
-                  {extraFilters}
-                </span>
-              )}
-            </Button>
+            <FiltersButton
+              open={showFilters}
+              controls="catalog-filters"
+              count={extraFilters}
+              onToggle={() => setShowFilters((s) => !s)}
+            />
             <Link to={CATALOG_EXPORT_PATH} className={cn(buttonVariants({ variant: "secondary" }), "lg:ml-auto")}>
               <Download strokeWidth={1.8} aria-hidden="true" />
               Exportar
             </Link>
           </Toolbar>
 
-          {showFilters && (
-            <div
-              id="catalog-filters"
-              className="grid animate-fade-in gap-3 border-y border-border bg-muted/50 py-3 sm:grid-cols-2 lg:grid-cols-4 lg:px-4"
+          <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
+          <div
+            id="catalog-filters"
+            className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:grid-cols-4 lg:px-4"
+          >
+            <FilterField label="Por estado">
+              <GroupedSelect
+                id="filter-status"
+                value={filters.status}
+                onChange={(v) => set("status", v as Filters["status"])}
+                groups={[
+                  {
+                    options: [
+                      { value: ALL, label: "Todos" },
+                      { value: "active", label: "Activo" },
+                      { value: "inactive", label: "Inactivo" },
+                    ],
+                  },
+                ]}
+              />
+            </FilterField>
+            <FilterField label="Por familia">
+              <GroupedSelect
+                id="filter-family"
+                value={filters.family}
+                onChange={(v) => set("family", v)}
+                disabled={families.length === 0}
+                groups={[{ options: [{ value: ALL, label: "Todas" }, ...familyOptions] }]}
+              />
+            </FilterField>
+            <FilterField label="Por IVA">
+              <GroupedSelect
+                id="filter-vat"
+                value={filters.vat}
+                onChange={(v) => set("vat", v)}
+                groups={[{ options: [{ value: ALL, label: "Todos" }, ...VAT_RATE_OPTIONS] }]}
+              />
+            </FilterField>
+            <FilterField label="Por etiqueta">
+              <GroupedSelect
+                id="filter-tag"
+                value={filters.tag}
+                onChange={(v) => set("tag", v)}
+                disabled={tags.length === 0}
+                groups={[
+                  {
+                    options: [
+                      { value: ALL, label: tags.length ? "Todas" : "Sin etiquetas" },
+                      ...tags.map((t) => ({ value: t, label: t })),
+                    ],
+                  },
+                ]}
+              />
+            </FilterField>
+            <RangeField
+              label="Por precio"
+              from={filters.priceFrom}
+              to={filters.priceTo}
+              onFrom={(v) => set("priceFrom", v)}
+              onTo={(v) => set("priceTo", v)}
+            />
+            <RangeField
+              label="Por rango de stock"
+              help="Solo productos con control de stock, con un stock entre estas unidades."
+              from={filters.stockFrom}
+              to={filters.stockTo}
+              onFrom={(v) => set("stockFrom", v)}
+              onTo={(v) => set("stockTo", v)}
+            />
+            <FilterField label="Por nivel de stock" help="Muestra los productos según su stock actual.">
+              <GroupedSelect
+                id="filter-level"
+                value={filters.level}
+                onChange={(v) => set("level", v as Filters["level"])}
+                groups={[{ options: LEVEL_OPTIONS }]}
+              />
+            </FilterField>
+            <FilterField
+              label="Por alarma de stock"
+              help="Muestra los productos con alarma según su stock comparado con las unidades mínimas de la alarma."
             >
-              <FilterField label="Por estado">
-                <GroupedSelect
-                  id="filter-status"
-                  value={filters.status}
-                  onChange={(v) => set("status", v as Filters["status"])}
-                  groups={[
-                    {
-                      options: [
-                        { value: ALL, label: "Todos" },
-                        { value: "active", label: "Activo" },
-                        { value: "inactive", label: "Inactivo" },
-                      ],
-                    },
-                  ]}
-                />
-              </FilterField>
-              <FilterField label="Por familia">
-                <GroupedSelect
-                  id="filter-family"
-                  value={filters.family}
-                  onChange={(v) => set("family", v)}
-                  disabled={families.length === 0}
-                  groups={[{ options: [{ value: ALL, label: "Todas" }, ...familyOptions] }]}
-                />
-              </FilterField>
-              <FilterField label="Por IVA">
-                <GroupedSelect
-                  id="filter-vat"
-                  value={filters.vat}
-                  onChange={(v) => set("vat", v)}
-                  groups={[{ options: [{ value: ALL, label: "Todos" }, ...VAT_RATE_OPTIONS] }]}
-                />
-              </FilterField>
-              <FilterField label="Por etiqueta">
-                <GroupedSelect
-                  id="filter-tag"
-                  value={filters.tag}
-                  onChange={(v) => set("tag", v)}
-                  disabled={tags.length === 0}
-                  groups={[
-                    {
-                      options: [
-                        { value: ALL, label: tags.length ? "Todas" : "Sin etiquetas" },
-                        ...tags.map((t) => ({ value: t, label: t })),
-                      ],
-                    },
-                  ]}
-                />
-              </FilterField>
-              <RangeField
-                label="Por precio"
-                from={filters.priceFrom}
-                to={filters.priceTo}
-                onFrom={(v) => set("priceFrom", v)}
-                onTo={(v) => set("priceTo", v)}
+              <GroupedSelect
+                id="filter-alarm"
+                value={filters.alarm}
+                onChange={(v) => set("alarm", v as Filters["alarm"])}
+                groups={[{ options: ALARM_OPTIONS }]}
               />
-              <RangeField
-                label="Por rango de stock"
-                help="Solo productos con control de stock, con un stock entre estas unidades."
-                from={filters.stockFrom}
-                to={filters.stockTo}
-                onFrom={(v) => set("stockFrom", v)}
-                onTo={(v) => set("stockTo", v)}
-              />
-              <FilterField label="Por nivel de stock" help="Muestra los productos según su stock actual.">
-                <GroupedSelect
-                  id="filter-level"
-                  value={filters.level}
-                  onChange={(v) => set("level", v as Filters["level"])}
-                  groups={[{ options: LEVEL_OPTIONS }]}
-                />
-              </FilterField>
-              <FilterField
-                label="Por alarma de stock"
-                help="Muestra los productos con alarma según su stock comparado con las unidades mínimas de la alarma."
-              >
-                <GroupedSelect
-                  id="filter-alarm"
-                  value={filters.alarm}
-                  onChange={(v) => set("alarm", v as Filters["alarm"])}
-                  groups={[{ options: ALARM_OPTIONS }]}
-                />
-              </FilterField>
-              <Button
-                variant="secondary"
-                onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
-                className="justify-self-start sm:col-span-2 lg:col-span-4"
-              >
-                <X strokeWidth={1.8} aria-hidden="true" />
-                Quitar filtros
-              </Button>
-            </div>
-          )}
+            </FilterField>
+            <Button
+              variant="secondary"
+              onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
+              className="justify-self-start sm:col-span-2 lg:col-span-4"
+            >
+              <X strokeWidth={1.8} aria-hidden="true" />
+              Quitar filtros
+            </Button>
+          </div>
+          </FiltersSheet>
 
           {rows.length === 0 ? (
             <EmptyState
@@ -667,20 +667,12 @@ function QuickActions({ product }: { product: Product }) {
     <div className="flex items-center justify-center gap-0.5">
       <IconAction action={edit} />
       <IconAction action={regularize} />
-      <ActionsMenu
-        groups={groups}
-        trigger={<MoreActionsTrigger label={`Más acciones de ${product.name}`} tooltip />}
-      />
+      <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Más acciones de ${product.name}`} tooltip />} />
     </div>
   );
 }
 
 function RowActions({ product }: { product: Product }) {
   const { groups } = useProductActions(product);
-  return (
-    <ActionsMenu
-      groups={groups}
-      trigger={<MoreActionsTrigger label={`Acciones de ${product.name}`} />}
-    />
-  );
+  return <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Acciones de ${product.name}`} />} />;
 }

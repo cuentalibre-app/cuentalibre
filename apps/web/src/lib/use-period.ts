@@ -58,7 +58,8 @@ export function usePeriod(today: Date): [Period, (period: Period) => void] {
         updated.set(PARAM, key);
         return updated;
       },
-      { replace: true },
+      // Picking a period re-filters the page in place: keep the reader where they are
+      { replace: true, preventScrollReset: true },
     );
   };
 

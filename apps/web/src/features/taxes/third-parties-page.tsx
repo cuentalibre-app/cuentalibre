@@ -15,7 +15,7 @@ import { usePartyBooks, type PartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
 import { Assumptions, ResultPanel, type ResultSummary } from "./tax-form";
 import { ONLY_RECORDED } from "./taxes-model";
-import { ModuleBreadcrumb } from "./tax-intro";
+import { ModuleBreadcrumb, TaxesBackLink } from "./tax-intro";
 import { SettingsLink } from "@/features/settings/settings-parts";
 
 const COLUMNS: RecordColumn[] = [
@@ -155,7 +155,9 @@ export function ThirdPartiesPage() {
       <Page>
         <PageHeader
           eyebrow={<ModuleBreadcrumb module="thirdParties" form="347" />}
+          back={<TaxesBackLink />}
           title="Operaciones con terceras personas"
+          descriptionClassName="max-lg:hidden"
           description={
             <>
               Modelo 347: clientes y proveedores con los que has superado {formatEUR(THRESHOLD_347)} en el año, IVA

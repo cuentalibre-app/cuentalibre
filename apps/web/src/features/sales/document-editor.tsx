@@ -319,6 +319,7 @@ export function LinesEditor({
                       onPick={(p) => onChange(line.id, fromProduct(p))}
                     />
                     <Textarea
+                      autoGrow
                       rows={1}
                       value={line.concept}
                       onChange={(e) => onChange(line.id, { concept: e.target.value })}
@@ -443,6 +444,7 @@ export function LinesEditor({
                   <label className="col-span-full flex flex-col gap-1 lg:col-span-1">
                     <span className="text-xs font-medium text-muted-foreground">Descripción detallada</span>
                     <Textarea
+                      autoGrow
                       rows={1}
                       value={line.detail}
                       onChange={(e) => onChange(line.id, { detail: e.target.value })}

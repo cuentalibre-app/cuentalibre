@@ -29,7 +29,17 @@ import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
-import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
+import {
+  ActionsMenu,
+  EmptyState,
+  FiltersButton,
+  FiltersSheet,
+  IconAction,
+  MoreActionsTrigger,
+  SortHeader,
+  downloadCsv,
+  type Action,
+} from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { TagChips } from "@/features/settings/tag-chip";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
@@ -228,6 +238,26 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
     setShowFilters(true);
   };
 
+  // On phones the status sits in the filter panel, so the toolbar fits on one line
+  const statusFilter = (
+    <Select value={filters.status} onValueChange={(v) => set("status", v)}>
+      <SelectTrigger aria-label="Filtrar por estado" className="min-w-44">
+        <span className="flex-1 text-left">
+          <SelectValue />
+        </span>
+        <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={ALL}>Todos los estados</SelectItem>
+        {PURCHASE_STATUS_ORDER.map((s) => (
+          <SelectItem key={s} value={s}>
+            {PURCHASE_STATUS[s].label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
@@ -253,9 +283,9 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
                   </TooltipContent>
                 </Tooltip>
               )}
-              <Link to={copy.newPath} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
+              <Link to={copy.newPath} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
                 <Plus strokeWidth={2} aria-hidden="true" />
-                {copy.newLabel}
+                <span className="max-lg:sr-only">{copy.newLabel}</span>
               </Link>
             </>
           }
@@ -279,23 +309,9 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
               placeholder="Buscar por número, proveedor, NIF o concepto"
               aria-label="Buscar"
             />
-            <Select value={filters.status} onValueChange={(v) => set("status", v)}>
-              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44">
-                <span className="flex-1 text-left">
-                  <SelectValue />
-                </span>
-                <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Todos los estados</SelectItem>
-                {PURCHASE_STATUS_ORDER.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {PURCHASE_STATUS[s].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="max-lg:hidden">{statusFilter}</div>
             <PeriodSelect
+              compact
               value={period}
               onChange={(p) => {
                 setPeriod(p);
@@ -305,23 +321,16 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
               years={availableYears}
               today={today}
             />
+            <FiltersButton
+              open={showFilters}
+              controls="purchase-filters"
+              count={extraFilters}
+              phoneCount={extraFilters + (filters.status !== ALL ? 1 : 0)}
+              onToggle={() => setShowFilters((s) => !s)}
+            />
             <Button
               variant="secondary"
-              aria-expanded={showFilters}
-              aria-controls="purchase-filters"
-              onClick={() => setShowFilters((s) => !s)}
-            >
-              <Filter strokeWidth={1.8} aria-hidden="true" />
-              Filtros
-              {extraFilters > 0 && (
-                <span className="flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
-                  {extraFilters}
-                </span>
-              )}
-            </Button>
-            <Button
-              variant="secondary"
-              className="lg:ml-auto"
+              className="max-lg:hidden lg:ml-auto"
               disabled={rows.length === 0}
               onClick={() => exportCsv(rows, exportName, kind)}
             >
@@ -330,16 +339,22 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
             </Button>
           </Toolbar>
 
-          {showFilters && (
-            <FiltersPanel
-              filters={filters}
-              period={period}
-              suppliers={periodSuppliers}
-              tags={tags}
-              onChange={set}
-              onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: f.status }))}
-            />
-          )}
+          <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
+          <FiltersPanel
+            lead={
+              <div className="flex min-w-0 flex-col gap-1 lg:hidden">
+                <span className="text-xs font-medium text-muted-foreground">Estado</span>
+                {statusFilter}
+              </div>
+            }
+            filters={filters}
+            period={period}
+            suppliers={periodSuppliers}
+            tags={tags}
+            onChange={set}
+            onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: f.status }))}
+          />
+          </FiltersSheet>
 
           {rows.length === 0 ? (
             <EmptyState
@@ -413,8 +428,9 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
         ),
     },
   ];
+  // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+    <dl className="m-0 hidden animate-rise-in gap-4 lg:grid lg:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
@@ -454,8 +470,9 @@ function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: Cents
       detail: `${goods(unpaid.length)} sin pagar del todo`,
     },
   ];
+  // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+    <dl className="m-0 hidden animate-rise-in gap-4 lg:grid lg:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
@@ -470,6 +487,7 @@ function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: Cents
 }
 
 function FiltersPanel({
+  lead,
   filters,
   period,
   suppliers,
@@ -477,6 +495,8 @@ function FiltersPanel({
   onChange,
   onClear,
 }: {
+  /** Phones: the filters the toolbar has no room for, before the rest. */
+  lead?: ReactNode;
   filters: Filters;
   period: Period;
   suppliers: Contact[];
@@ -489,8 +509,9 @@ function FiltersPanel({
   return (
     <div
       id="purchase-filters"
-      className="grid animate-fade-in gap-3 border-y border-border bg-muted/50 py-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:px-4"
+      className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:px-4"
     >
+      {lead}
       <label className="flex min-w-0 flex-col gap-1">
         <span className={label}>Proveedor</span>
         <GroupedSelect
@@ -944,7 +965,10 @@ function usePurchaseActions(row: Row) {
     ],
   ];
 
-  return { attach, primary, groups, dialogs, attachments: attachments.length, label: `la factura ${doc.number}` };
+  // Phones open on the everyday few; the rest stays behind "Más acciones"
+  const essentials: Action[] = [primary, view, attach];
+
+  return { attach, primary, groups, essentials, dialogs, attachments: attachments.length, label: `la factura ${doc.number}` };
 }
 
 /** Desktop: the usual operations one click away, the rest behind the ellipsis. */
@@ -955,24 +979,18 @@ function QuickActions({ row }: { row: Row }) {
       {dialogs}
       <IconAction action={attach} badge={attachments} />
       <IconAction action={primary} />
-      <ActionsMenu
-        groups={groups}
-        trigger={<MoreActionsTrigger label={`Más acciones de ${label}`} tooltip />}
-      />
+      <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Más acciones de ${label}`} tooltip />} />
     </div>
   );
 }
 
-/** Mobile: everything in one menu. */
+/** Mobile: the everyday actions first, everything else one tap further. */
 function RowActions({ row }: { row: Row }) {
-  const { groups, dialogs, label } = usePurchaseActions(row);
+  const { groups, essentials, dialogs, label } = usePurchaseActions(row);
   return (
     <>
       {dialogs}
-      <ActionsMenu
-        groups={groups}
-        trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />}
-      />
+      <ActionsMenu groups={groups} essentials={essentials} trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />} />
     </>
   );
 }

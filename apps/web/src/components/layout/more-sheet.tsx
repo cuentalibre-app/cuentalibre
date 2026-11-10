@@ -6,7 +6,8 @@ import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@cuentalibre/ui/c
 import { PROFILE_PATH, accountName, initials } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { LegalLinks } from "@/components/legal-links";
-import { moreNav } from "./nav";
+import { moreNav, type MoreEntry } from "./nav";
+import { useNavGroupOpen } from "./use-nav-group-open";
 
 const row =
   "flex min-h-13 items-center gap-3.5 text-md font-medium text-foreground no-underline transition-opacity duration-150 active:opacity-60";
@@ -48,29 +49,64 @@ export function MoreSheet({ children, open, onOpenChange }: MoreSheetProps) {
                 </Link>
               </SheetClose>
             ) : (
-              <section key={entry.title} aria-label={entry.title} className="flex flex-col border-b border-divider py-2">
-                <h2 className="m-0 flex min-h-11 items-center gap-3.5 text-md font-medium text-foreground">
-                  <entry.icon className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                  {entry.title}
-                </h2>
-                <ul className="m-0 flex list-none flex-col p-0 pl-9">
-                  {entry.links.map((link) => (
-                    <li key={link.to}>
-                      <SheetClose asChild>
-                        <Link to={link.to} className={cn(row, "min-h-11 font-normal")}>
-                          <span className="flex-1">{link.label}</span>
-                          <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
-                        </Link>
-                      </SheetClose>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              <MoreGroup key={entry.to} group={entry} />
             ),
           )}
           <LegalLinks className="pt-6" />
         </nav>
       </SheetContent>
     </Sheet>
+  );
+}
+
+/** A section folded by default, like the sidebar's groups; remembered per browser once toggled. */
+function MoreGroup({ group }: { group: Extract<MoreEntry, { kind: "group" }> }) {
+  const [open, toggle] = useNavGroupOpen(`more:${group.to}`, false);
+  const id = `more-group-${group.to.slice(1)}`;
+
+  return (
+    <section aria-label={group.title} className="flex flex-col border-b border-divider">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={toggle}
+        className={cn(row, "w-full cursor-pointer text-left")}
+      >
+        <group.icon className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+        <span className="flex-1">{group.title}</span>
+        <ChevronRight
+          className={cn(
+            "size-4.5 text-muted-foreground transition-transform duration-200 ease-out",
+            open && "rotate-90",
+          )}
+          aria-hidden="true"
+        />
+      </button>
+      {/* Animates its height by transitioning the grid row between 0fr and 1fr */}
+      <div
+        id={id}
+        inert={!open}
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-250 ease-out",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <ul className="m-0 flex list-none flex-col p-0 pb-2 pl-9">
+            {group.links.map((link) => (
+              <li key={link.to}>
+                <SheetClose asChild>
+                  <Link to={link.to} className={cn(row, "min-h-11 font-normal")}>
+                    <span className="flex-1">{link.label}</span>
+                    <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+                  </Link>
+                </SheetClose>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 }

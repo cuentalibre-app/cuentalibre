@@ -49,6 +49,21 @@
     outline-offset: 2px;
   }
 
+  /* iOS Safari sizes date fields to their native control, wider than the column; flatten them
+     back into a plain field that honours its width, with the value aligned like any text */
+  @supports (-webkit-touch-callout: none) {
+    input[type="date"] {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      min-width: 0;
+    }
+    input[type="date"]::-webkit-date-and-time-value {
+      margin: 0;
+      text-align: start;
+    }
+  }
+
   ::selection {
     background-color: var(--color-selection);
     color: var(--color-foreground);

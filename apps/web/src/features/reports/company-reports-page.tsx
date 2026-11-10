@@ -100,7 +100,7 @@ export function CompanyReportsPage() {
     setText(by === "name" ? company.name : company.taxId);
     setError(null);
     setFocused(false);
-    setParams({ nif: company.taxId }, { replace: true });
+    setParams({ nif: company.taxId }, { replace: true, preventScrollReset: true });
   };
 
   const consult = () => {

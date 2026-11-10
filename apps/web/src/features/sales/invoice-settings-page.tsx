@@ -182,7 +182,10 @@ function LogoField({ logo, onChange }: { logo: string | undefined; onChange: (lo
           )}
         >
           <ImageUp className="size-6" strokeWidth={1.6} aria-hidden="true" />
-          <span className="font-medium text-foreground">Arrastra aquí el logo o haz clic para buscarlo</span>
+          <span className="font-medium text-foreground max-lg:hidden">
+            Arrastra aquí el logo o haz clic para buscarlo
+          </span>
+          <span className="font-medium text-foreground lg:hidden">Elige el logo</span>
           <span className="text-xs">Tamaño máximo: 1,5 MB</span>
         </button>
         <input

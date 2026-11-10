@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, ScrollRestoration } from "react-router";
 import type { ContactRole, SalesKind } from "@cuentalibre/contracts";
 import { AppLayout } from "@/components/layout/app-layout";
 import { allNavLeaves, createActions } from "@/components/layout/nav";
@@ -292,64 +292,82 @@ const placeholders = [
   ...createActions.flat().map((action) => ({ label: `Crear ${action.label.toLowerCase()}`, to: action.to })),
 ].filter((p) => !builtPaths.has(p.to));
 
+/**
+ * Above every route: a new page opens at the top, and back/forward return to where the reader
+ * was. Updates that only change the query (period, tab) pass `preventScrollReset` to stay put.
+ */
+function Root() {
+  return (
+    <>
+      <ScrollRestoration />
+      <Outlet />
+    </>
+  );
+}
+
 export const router = createBrowserRouter(
   [
     {
-      element: (
-        <RequireSession>
-          <AppLayout />
-        </RequireSession>
-      ),
+      element: <Root />,
       children: [
-        { index: true, element: <HomePage /> },
-        { path: "ventas", element: <Navigate to="/ventas/facturas" replace /> },
-        { path: "compras", element: <Navigate to="/compras/facturas" replace /> },
-        { path: "contactos", element: <Navigate to="/contactos/clientes" replace /> },
-        { path: "catalogo", element: <Navigate to={PRODUCTS_PATH} replace /> },
-        { path: "mas", element: <MorePage /> },
-        ...salesRoutes,
-        ...purchaseRoutes,
-        ...contactRoutes,
-        ...catalogRoutes,
-        ...taxRoutes,
-        ...treasuryRoutes,
-        closingRoute,
-        ...reportRoutes,
-        ...settingsRoutes,
-        ...transferRoutes,
-        ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
-        { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
+        {
+          element: (
+            <RequireSession>
+              <AppLayout />
+            </RequireSession>
+          ),
+          children: [
+            { index: true, element: <HomePage /> },
+            { path: "ventas", element: <Navigate to="/ventas/facturas" replace /> },
+            { path: "compras", element: <Navigate to="/compras/facturas" replace /> },
+            { path: "contactos", element: <Navigate to="/contactos/clientes" replace /> },
+            { path: "catalogo", element: <Navigate to={PRODUCTS_PATH} replace /> },
+            { path: "mas", element: <MorePage /> },
+            ...salesRoutes,
+            ...purchaseRoutes,
+            ...contactRoutes,
+            ...catalogRoutes,
+            ...taxRoutes,
+            ...treasuryRoutes,
+            closingRoute,
+            ...reportRoutes,
+            ...settingsRoutes,
+            ...transferRoutes,
+            ...placeholders.map((p) => ({ path: p.to.slice(1), element: <PlaceholderPage title={p.label} /> })),
+            { path: "*", element: <PlaceholderPage title="Página no encontrada" /> },
+          ],
+        },
+        {
+          path: SIGN_IN_PATH.slice(1),
+          element: (
+            <GuestOnly>
+              <SignInPage />
+            </GuestOnly>
+          ),
+        },
+        {
+          path: SIGN_UP_PATH.slice(1),
+          element: (
+            <GuestOnly>
+              <SignUpPage />
+            </GuestOnly>
+          ),
+        },
+        {
+          path: FORGOT_PASSWORD_PATH.slice(1),
+          element: (
+            <GuestOnly>
+              <ForgotPasswordPage />
+            </GuestOnly>
+          ),
+        },
+        // Not guest-only: the emailed link works in a tab that is still signed in
+        { path: RESET_PASSWORD_PATH.slice(1), element: <ResetPasswordPage /> },
+        { path: ONBOARDING_PATH.slice(1), element: <OnboardingPage /> },
+        // Design system reference, outside the app shell
+        { path: "sistema-visual", element: <DesignSystemPage /> },
       ],
     },
-    {
-      path: SIGN_IN_PATH.slice(1),
-      element: (
-        <GuestOnly>
-          <SignInPage />
-        </GuestOnly>
-      ),
-    },
-    {
-      path: SIGN_UP_PATH.slice(1),
-      element: (
-        <GuestOnly>
-          <SignUpPage />
-        </GuestOnly>
-      ),
-    },
-    {
-      path: FORGOT_PASSWORD_PATH.slice(1),
-      element: (
-        <GuestOnly>
-          <ForgotPasswordPage />
-        </GuestOnly>
-      ),
-    },
-    // Not guest-only: the emailed link works in a tab that is still signed in
-    { path: RESET_PASSWORD_PATH.slice(1), element: <ResetPasswordPage /> },
-    { path: ONBOARDING_PATH.slice(1), element: <OnboardingPage /> },
-    // Design system reference, outside the app shell
-    { path: "sistema-visual", element: <DesignSystemPage /> },
   ],
   { basename: routerBasename() },
 );

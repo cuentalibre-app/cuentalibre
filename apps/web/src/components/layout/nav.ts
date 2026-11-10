@@ -26,6 +26,8 @@ export interface NavLeaf {
   badge?: BadgeKey;
   /** Draws a divider above the leaf, splitting a group's records from its tools. */
   separator?: boolean;
+  /** Spreadsheet tools that need a computer; left out of the phone's "Más" sheet. */
+  desktopOnly?: boolean;
 }
 
 export interface NavItem extends NavLeaf {
@@ -36,8 +38,8 @@ export interface NavItem extends NavLeaf {
 
 /** Export and import cover sales and purchases alike, so both groups list them. */
 const transferLeaves: NavLeaf[] = [
-  { label: "Exportar", to: "/exportar", separator: true },
-  { label: "Importar", to: "/importar" },
+  { label: "Exportar", to: "/exportar", separator: true, desktopOnly: true },
+  { label: "Importar", to: "/importar", desktopOnly: true },
 ];
 
 export const mainNav: NavItem[] = [
@@ -98,8 +100,8 @@ export const mainNav: NavItem[] = [
     children: [
       { label: "Productos", to: "/catalogo/productos" },
       { label: "Regularizar stock", to: "/catalogo/regularizar-stock" },
-      { label: "Importar", to: "/catalogo/importar", separator: true },
-      { label: "Exportar", to: "/catalogo/exportar" },
+      { label: "Importar", to: "/catalogo/importar", separator: true, desktopOnly: true },
+      { label: "Exportar", to: "/catalogo/exportar", desktopOnly: true },
     ],
   },
   {
@@ -123,8 +125,7 @@ export const secondaryNav: NavItem[] = [
 export const tabPaths = ["/", "/ventas", "/impuestos"];
 
 export type MoreEntry =
-  | { kind: "link"; item: NavItem }
-  | { kind: "group"; title: string; icon: LucideIcon; links: NavLeaf[] };
+  { kind: "link"; item: NavItem } | { kind: "group"; to: string; title: string; icon: LucideIcon; links: NavLeaf[] };
 
 /**
  * Sections that don't fit in the mobile tab bar, in sidebar order, listed under "Más": a section with
@@ -135,7 +136,13 @@ export const moreNav: MoreEntry[] = [
     .filter((item) => !tabPaths.includes(item.to))
     .map((item): MoreEntry =>
       item.children
-        ? { kind: "group", title: item.label, icon: item.icon, links: item.children }
+        ? {
+            kind: "group",
+            to: item.to,
+            title: item.label,
+            icon: item.icon,
+            links: item.children.filter((leaf) => !leaf.desktopOnly),
+          }
         : { kind: "link", item },
     ),
   ...secondaryNav.map((item): MoreEntry => ({ kind: "link", item })),
@@ -169,4 +176,15 @@ export const createActions: CreateAction[][] = [
     { label: "Proveedor", to: "/contactos/proveedores/nuevo", icon: Building },
     { label: "Producto", to: "/catalogo/productos/nuevo", icon: Package },
   ],
+];
+
+/**
+ * The phone tab bar's middle menu: the everyday lists, one tap away. Each list has its own
+ * "Nuevo" button, so the menu opens records rather than creating them.
+ */
+export const phoneShortcuts: CreateAction[] = [
+  { label: "Facturas emitidas", to: "/ventas/facturas", icon: ReceiptText },
+  { label: "Facturas recibidas", to: "/compras/facturas", icon: Receipt },
+  { label: "Gastos", to: "/compras/gastos", icon: Camera },
+  { label: "Clientes", to: "/contactos/clientes", icon: UserRound },
 ];
