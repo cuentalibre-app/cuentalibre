@@ -14,6 +14,7 @@ import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { DropdownMenuTrigger } from "@cuentalibre/ui/components/dropdown-menu";
+import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -78,11 +79,12 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
     .all(config.opposite)
     .find((c) => c.taxId.replace(/^ES/, "") === contact.taxId.replace(/^ES/, ""));
 
-  const tabs: { value: Tab; label: string; count?: number }[] = [
-    { value: "ficha", label: "Información básica" },
-    { value: "documentos", label: "Documentos", count: activity.length },
-    { value: "facturacion", label: "Informes de facturación" },
-    { value: "adjuntos", label: "Documentos adjuntos", count: contact.attachments?.length ?? 0 },
+  // Phones get a segmented control with the short labels, so all four sections fit on one line
+  const tabs: { value: Tab; label: string; short: string; count?: number }[] = [
+    { value: "ficha", label: "Información básica", short: "Datos" },
+    { value: "documentos", label: "Documentos", short: "Documentos", count: activity.length },
+    { value: "facturacion", label: "Informes de facturación", short: "Informes" },
+    { value: "adjuntos", label: "Documentos adjuntos", short: "Adjuntos", count: contact.attachments?.length ?? 0 },
   ];
   const selectTab = (value: Tab) =>
     setParams(
@@ -101,6 +103,7 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
           eyebrow={<span className="text-sm text-muted-foreground">{config.singular}</span>}
           title={<span className="block truncate">{contact.name}</span>}
           back={<BackLink to={config.path} label={`Volver a ${config.title.toLowerCase()}`} />}
+          actionsClassName="max-sm:w-full max-sm:flex-nowrap max-sm:*:not-first:flex-1"
           actions={
             <>
               <ActionsMenu
@@ -136,7 +139,7 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
         <div
           role="tablist"
           aria-label="Secciones de la ficha"
-          className="flex gap-1 overflow-x-auto border-b border-border"
+          className="flex gap-1 overflow-x-auto border-b border-border max-sm:hidden"
         >
           {tabs.map((t) => (
             <button
@@ -161,6 +164,14 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
             </button>
           ))}
         </div>
+
+        <SegmentedControl
+          label="Secciones de la ficha"
+          value={tab}
+          onChange={selectTab}
+          options={tabs.map((t) => ({ value: t.value, label: t.short }))}
+          className="sm:hidden [&>button]:flex-1 [&>button]:px-2"
+        />
 
         <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="flex flex-col gap-4">
           {tab === "ficha" && <BasicInfo role={role} contact={contact} />}
@@ -445,7 +456,32 @@ function Documents({ role, rows }: { role: ContactRole; rows: ActivityRow[] }) {
           ))}
         </div>
       )}
-      <div className="overflow-x-auto">
+      <ul className="m-0 flex list-none flex-col overflow-hidden surface px-4 py-0 lg:hidden">
+        {shown.map((r, i) => (
+          <li
+            key={`${r.kind}-${r.id}`}
+            className="animate-row-in border-b border-divider last:border-b-0"
+            style={{ "--i": i } as CSSProperties}
+          >
+            <Link
+              to={r.path}
+              className="flex min-h-11 items-center gap-3 py-3 text-foreground no-underline transition-opacity duration-150 active:opacity-60"
+            >
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate font-medium tabular-nums">{r.number}</span>
+                <span className="text-sm text-muted-foreground">
+                  {ACTIVITY_KIND_LABELS[r.kind]} · {formatDate(r.date)}
+                </span>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className="amount text-base">{formatEUR(r.total)}</span>
+                <Badge tone={r.status.tone}>{r.status.label}</Badge>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <div className="overflow-x-auto max-lg:hidden">
         <table className="w-full min-w-[640px] border-collapse">
           <thead>
             <tr className={table.headRow}>
