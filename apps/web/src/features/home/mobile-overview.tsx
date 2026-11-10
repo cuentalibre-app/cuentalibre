@@ -387,7 +387,7 @@ function TakeHomeSummary({ data }: { data: HomeData }) {
   ];
 
   const lines: Line[] = [
-    { label: "Facturado", to: "/ventas/facturas", value: income, dot: "" },
+    { label: "Facturado", to: "/ventas/facturas", value: income, dot: "bg-chart-income" },
     { label: "Gastos", to: "/compras/facturas", value: expenses, dot: "bg-chart-expense" },
     { label: "Impuestos estimados", to: "/impuestos", value: taxes, dot: "bg-chart-tax" },
     ...(data.taxes.vat > 0
