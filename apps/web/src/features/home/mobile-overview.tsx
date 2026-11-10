@@ -6,10 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@cuentalibre/u
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { ListGroup, listRowClass } from "@/components/page";
-import { MONTHS, MONTHS_SHORT, formatPercent, periodLabel, periodShortLabel } from "@/lib/format";
+import { listRowClass } from "@/components/page";
+import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
+import { MONTHS, MONTHS_SHORT, formatCompactEUR, formatPercent, periodLabel, periodShortLabel } from "@/lib/format";
+import { useDismiss } from "@/lib/use-dismiss";
 import type { HomeData } from "./home-data";
-import type { TaxReserve } from "./kpi-grid";
 
 const W = 1200;
 const H = 200;
@@ -89,7 +90,7 @@ function ViewToggle({ view, onChange }: { view: ChartView; onChange: (v: ChartVi
 
 /** Bars grow from the baseline on mount, left to right; later changes in height ease. */
 const barClass =
-  "w-[30%] max-w-6 origin-bottom animate-grow-up rounded-t-[3px] [animation-delay:calc(var(--i)*40ms)] transition-[height] duration-500 ease-out";
+  "flex w-[46%] max-w-16 origin-bottom animate-grow-up flex-col gap-[2px] overflow-hidden rounded-[10px] [animation-delay:calc(var(--i)*50ms)] transition-[height] duration-500 ease-out";
 
 interface ChartProps {
   data: HomeData;
@@ -101,11 +102,13 @@ interface ChartProps {
 
 /**
  * The period's months side by side: income and expenses as bars, or the profit adding up month by month
- * as a line that ends on the period's figure. Touching a month selects it; touching it again clears it.
+ * as a line that ends on the period's figure. Touching a month selects it; touching it again, or anywhere
+ * else on the screen, clears it.
  */
 function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
   const ref = useRef<HTMLDivElement>(null);
   const toggling = useRef(false);
+  useDismiss(ref, selected !== null, () => onSelect(null));
   const { monthly, months } = data;
   const n = months.length;
   const slots = months.map((m) => monthly[m] ?? null);
@@ -156,7 +159,7 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={() => (toggling.current = false)}
-        className="relative h-[180px] touch-pan-y select-none"
+        className="relative h-[160px] touch-pan-y select-none"
       >
         {/* Selected month */}
         {selected !== null && (
@@ -197,21 +200,46 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
   );
 }
 
+/**
+ * One bar per month as tall as what was invoiced: the expenses at the bottom and the profit on top, so each bar
+ * shows how much of every euro stays. A month with a loss is as tall as its expenses. The profit sits above it.
+ */
 function BarsView({ slots, selected }: { slots: (HomeData["monthly"][number] | null)[]; selected: number | null }) {
   const max = Math.max(1, ...slots.flatMap((s) => (s ? [s.income, s.expenses] : [])));
-  const pct = (v: number) => `${(Math.max(0, v) / max) * 92}%`;
+  // Leave room above the tallest bar for its label
+  const pct = (v: number) => `${(Math.max(0, v) / max) * 80}%`;
+  const narrow = slots.length > 6;
   return (
-    <div aria-hidden="true" className="absolute inset-0 flex items-end border-b border-chart-axis px-1">
+    <div aria-hidden="true" className="absolute inset-0 flex items-end px-1">
       {slots.map((s, i) => (
         <div
           key={i}
           className={cn(
-            "flex h-full min-w-0 flex-1 items-end justify-center gap-[3px] pb-px transition-opacity duration-150",
+            "flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5 transition-opacity duration-150",
             selected !== null && i !== selected && "opacity-45",
           )}
         >
-          <span className={cn(barClass, "bg-chart-income")} style={{ height: pct(s?.income ?? 0), "--i": i } as CSSProperties} />
-          <span className={cn(barClass, "bg-chart-expense")} style={{ height: pct(s?.expenses ?? 0), "--i": i } as CSSProperties} />
+          {s && (s.income > 0 || Math.abs(s.profit) >= 50) && (
+            <span
+              className={cn(
+                "amount font-semibold whitespace-nowrap",
+                narrow ? "text-[10px]" : "text-xs",
+                s.profit < 0 ? "text-destructive" : "text-foreground",
+              )}
+            >
+              {/* Twelve months leave no room for the currency */}
+              {narrow ? formatCompactEUR(s.profit).replace(" €", "") : formatCompactEUR(s.profit)}
+            </span>
+          )}
+          <div
+            className={barClass}
+            style={{ height: pct(s ? Math.max(s.income, s.expenses) : 0), "--i": i } as CSSProperties}
+          >
+            {s && s.profit > 0 && <span className="min-h-0 bg-chart-income" style={{ flexGrow: s.profit }} />}
+            {s && s.expenses > 0 && (
+              <span className="min-h-1 bg-chart-expense" style={{ flexGrow: s.expenses }} />
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -339,30 +367,88 @@ interface Line {
   label: string;
   to: string;
   value: Cents;
-  detail: string;
-  /** Tone of the detail: good news, bad news or plain. */
-  tone?: "success" | "danger";
+  /** Colour of its share in the bar; "outline" for what stays out of it. */
+  dot: string;
 }
 
-function SummaryRow({ line, index }: { line: Line; index: number }) {
+/**
+ * Where the period's income goes: what stays after expenses and the estimated taxes, as one bar split in three,
+ * then each part as a row leading to its page. VAT is charged on top of the invoices, so it stays out of the bar.
+ */
+function TakeHomeSummary({ data }: { data: HomeData }) {
+  const { income, expenses } = data.totals;
+  const { takeHome, incomeTax } = data.takeHome;
+  const taxes = cents(incomeTax + data.socialSecurityEstimate);
+  const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
+
+  const parts = [
+    { label: "Te queda", value: takeHome, color: "bg-chart-income" },
+    { label: "Impuestos estimados", value: taxes, color: "bg-chart-tax" },
+    { label: "Gastos", value: expenses, color: "bg-chart-expense" },
+  ];
+
+  const lines: Line[] = [
+    { label: "Facturado", to: "/ventas/facturas", value: income, dot: "" },
+    { label: "Gastos", to: "/compras/facturas", value: expenses, dot: "bg-chart-expense" },
+    { label: "Impuestos estimados", to: "/impuestos", value: taxes, dot: "bg-chart-tax" },
+    ...(data.taxes.vat > 0
+      ? [{ label: "IVA a pagar", to: "/impuestos", value: data.taxes.vat, dot: "outline" }]
+      : []),
+  ];
+
   return (
-    <li className="animate-rise-in" style={{ "--i": index } as CSSProperties}>
-      <Link to={line.to} className={cn(listRowClass, "min-h-[72px]")}>
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="font-semibold">{line.label}</span>
-          <span
-            className={cn(
-              "truncate text-sm",
-              line.tone === "success" ? "text-success" : line.tone === "danger" ? "text-destructive" : "text-muted-foreground",
-            )}
+    <section aria-labelledby="mobile-take-home-title" className="flex flex-col gap-2.5 pt-2">
+      <h2 id="mobile-take-home-title" className="m-0 text-lg font-semibold tracking-tight">
+        Lo que te queda
+      </h2>
+      <div className="surface flex flex-col overflow-hidden">
+        <div className="flex flex-col gap-3.5 px-4 pt-4 pb-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <AnimatedAmount value={takeHome} className="amount text-3xl font-semibold" />
+            <span className="text-sm font-medium text-success">{formatPercent(share(takeHome))} de lo facturado</span>
+          </div>
+          <div
+            role="img"
+            aria-label={parts.map((p) => `${p.label}: ${formatEUR(p.value)}`).join(", ")}
+            className="flex h-3 animate-reveal-x gap-[3px] overflow-hidden rounded-full bg-muted"
           >
-            {line.detail}
-          </span>
-        </span>
-        <span className="amount text-lg font-semibold">{formatEUR(line.value)}</span>
-        <ChevronRight className="size-4.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-      </Link>
-    </li>
+            {parts.map((p) => (
+              <div
+                key={p.label}
+                className={cn("transition-[width] duration-500 ease-out", p.color)}
+                style={{ width: `${share(p.value)}%` }}
+              />
+            ))}
+          </div>
+        </div>
+        <ul className="m-0 flex list-none flex-col px-4 py-0 [&>li>*]:border-t [&>li>*]:border-divider">
+          {lines.map((line) => (
+            <li key={line.label}>
+              <Link to={line.to} className={cn(listRowClass, "min-h-13 gap-2.5")}>
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "size-2.5 shrink-0 rounded-full",
+                    line.dot === "outline" ? "border-2 border-muted-foreground" : line.dot,
+                  )}
+                />
+                <span className="min-w-0 flex-1 truncate">{line.label}</span>
+                <span className="amount font-semibold">{formatEUR(line.value)}</span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+        {data.socialSecurityFeeMissing && (
+          <p className="m-0 border-t border-divider px-4 py-3 text-xs text-muted-foreground">
+            No incluye tu cuota de autónomos.{" "}
+            <Link to={TAX_SETTINGS_PATH} className="font-medium text-foreground">
+              Indícala en Configuración
+            </Link>
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -372,14 +458,12 @@ interface MobileOverviewProps {
   onPeriodChange: (p: Period) => void;
   years: number[];
   today: Date;
-  /** What to set aside for taxes, worked out with the desktop KPIs. */
-  reserve: TaxReserve;
   /** Round shortcuts on the right of the header. */
   actions: ReactNode;
 }
 
 /** The phone's home: the period's profit large, a chart of its months, and the figures behind it. */
-export function MobileOverview({ data, period, onPeriodChange, years, today, reserve, actions }: MobileOverviewProps) {
+export function MobileOverview({ data, period, onPeriodChange, years, today, actions }: MobileOverviewProps) {
   const [view, setView] = useState(readView);
   // The selection belongs to one period and view; changing either clears it
   const key = `${periodKey(period)}:${view}`;
@@ -401,33 +485,7 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, res
     storeView(next);
   };
 
-  const tone = (value: number | null, upIsGood: boolean) =>
-    value === null ? undefined : value >= 0 === upIsGood ? ("success" as const) : ("danger" as const);
-  const vs = (value: number | null) => (value === null ? "Sin periodo anterior" : `${signed(value)} vs. ${compare}`);
-
-  const lines: Line[] = [
-    {
-      label: "Ingresos",
-      to: "/ventas/facturas",
-      value: data.totals.income,
-      detail: vs(data.changes.income),
-      tone: tone(data.changes.income, true),
-    },
-    {
-      label: "Gastos",
-      to: "/compras/facturas",
-      value: data.totals.expenses,
-      detail: vs(data.changes.expenses),
-      tone: tone(data.changes.expenses, false),
-    },
-    {
-      label: "Reserva para impuestos",
-      to: "/impuestos",
-      value: reserve.value,
-      detail: vs(reserve.change),
-      tone: tone(reserve.change, false),
-    },
-  ];
+  const tone = (value: number, upIsGood: boolean) => (value >= 0 === upIsGood ? "success" : "danger");
 
   return (
     <div className="flex flex-col gap-5">
@@ -454,12 +512,12 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, res
             <span className="flex items-center gap-4 text-sm text-muted-foreground">
               {(
                 [
-                  ["Ingresos", point.income, "bg-chart-income"],
+                  ["Ingresos", point.income, view === "line" ? "bg-chart-income" : null],
                   ["Gastos", point.expenses, "bg-chart-expense"],
                 ] as const
               ).map(([label, value, dot]) => (
                 <span key={label} className="inline-flex items-center gap-1.5">
-                  <span className={cn("size-2 rounded-full", dot)} aria-hidden="true" />
+                  {dot && <span className={cn("size-2 rounded-full", dot)} aria-hidden="true" />}
                   {label} <span className="amount text-foreground">{formatEUR(value)}</span>
                 </span>
               ))}
@@ -490,16 +548,7 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, res
         <PeriodChips period={period} onChange={onPeriodChange} years={years} today={today} />
       </section>
 
-      <section aria-labelledby="summary-title" className="flex flex-col gap-2.5 pt-2">
-        <h2 id="summary-title" className="m-0 text-lg font-semibold tracking-tight">
-          Resumen
-        </h2>
-        <ListGroup>
-          {lines.map((line, i) => (
-            <SummaryRow key={line.label} line={line} index={i} />
-          ))}
-        </ListGroup>
-      </section>
+      <TakeHomeSummary data={data} />
     </div>
   );
 }
