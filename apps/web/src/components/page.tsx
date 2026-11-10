@@ -42,6 +42,8 @@ interface PageHeaderProps {
   title: ReactNode;
   /** One line under the title saying what the page is for. */
   description?: ReactNode;
+  /** Classes for the description, such as hiding it on phones where the screen is short. */
+  descriptionClassName?: string;
   /** A back link before the title, usually a <BackLink>. */
   back?: ReactNode;
   /** A small line above the title, such as a breadcrumb. */
@@ -59,6 +61,7 @@ interface PageHeaderProps {
 export function PageHeader({
   title,
   description,
+  descriptionClassName,
   back,
   eyebrow,
   inline,
@@ -77,7 +80,9 @@ export function PageHeader({
             <h1 className="m-0 min-w-0 text-2xl font-semibold tracking-tight text-balance lg:text-3xl">{title}</h1>
             {inline}
           </div>
-          {description && <p className="m-0 max-w-[72ch] text-sm text-muted-foreground">{description}</p>}
+          {description && (
+            <p className={cn("m-0 max-w-[72ch] text-sm text-muted-foreground", descriptionClassName)}>{description}</p>
+          )}
         </div>
       </div>
       {actions && <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>{actions}</div>}

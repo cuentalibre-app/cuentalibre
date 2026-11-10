@@ -26,7 +26,7 @@ import {
 } from "./tax-form";
 import { COUNT_BOXES_115, LAYOUT_115, modelPath, ONLY_RECORDED, quarterOf, RENTALS_PATH } from "./taxes-model";
 import { MissingProvinces } from "./withholdings-page";
-import { ModuleBreadcrumb } from "./tax-intro";
+import { ModuleBreadcrumb, TaxesBackLink } from "./tax-intro";
 
 const SITUATION_LABEL: Record<string, string> = {
   "1": "1 · España con ref. catastral",
@@ -255,7 +255,9 @@ export function RentalsPage() {
       <Page>
         <PageHeader
           eyebrow={<ModuleBreadcrumb module="rentals" form={annual ? "180" : "115"} />}
+          back={<TaxesBackLink />}
           title="Retenciones de alquileres"
+          descriptionClassName="max-lg:hidden"
           description={
             annual
               ? "Modelo 180: resumen anual de las retenciones de alquileres, por arrendador e inmueble."
