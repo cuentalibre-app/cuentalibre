@@ -20,8 +20,8 @@ export interface PeriodOption {
 /** The Cloud prices, the same as Stripe's and the landing's. */
 export const PERIODS: PeriodOption[] = [
   { value: "monthly", label: "Mensual", price: cents(499), months: 1, every: "al mes" },
-  { value: "quarterly", label: "Trimestral", price: cents(1399), months: 3, every: "cada trimestre" },
-  { value: "yearly", label: "Anual", price: cents(4900), months: 12, every: "al año" },
+  { value: "quarterly", label: "Trimestral", price: cents(1347), months: 3, every: "cada trimestre" },
+  { value: "yearly", label: "Anual", price: cents(4788), months: 12, every: "al año" },
 ];
 
 export const periodOf = (value: BillingPeriod) => PERIODS.find((period) => period.value === value)!;
