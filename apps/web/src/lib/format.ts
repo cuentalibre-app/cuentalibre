@@ -79,6 +79,17 @@ export function formatThousands(amount: Cents): string {
   return `${String(centsToEuros(amount) / 1000).replace(".", ",")}k €`;
 }
 
+/** 462300 cents → "4,6k €"; under a thousand, whole euros: "380 €". For labels over chart bars. */
+export function formatCompactEUR(amount: Cents): string {
+  const euros = centsToEuros(amount);
+  const abs = Math.abs(euros);
+  // A few cents round to nothing: no sign on a zero
+  const sign = euros < 0 && Math.round(abs) > 0 ? "−" : "";
+  if (abs < 1000) return `${sign}${Math.round(abs)} €`;
+  const k = Math.round(abs / 100) / 10;
+  return `${sign}${String(k).replace(".", ",")}k €`;
+}
+
 export function formatPercent(value: number): string {
   return `${Math.round(value)} %`;
 }
