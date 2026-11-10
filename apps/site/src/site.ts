@@ -35,8 +35,8 @@ export const cloudPrice = "4,99 €";
  */
 export const cloudBilling = [
   { id: "monthly", label: "Mensual", perMonth: "4,99", charged: "4,99 € al mes", saving: "" },
-  { id: "quarterly", label: "Trimestral", perMonth: "4,66", charged: "13,99 € cada trimestre", saving: "7 %" },
-  { id: "yearly", label: "Anual", perMonth: "4,08", charged: "49 € al año", saving: "18 %" },
+  { id: "quarterly", label: "Trimestral", perMonth: "4,49", charged: "13,47 € cada trimestre", saving: "10 %" },
+  { id: "yearly", label: "Anual", perMonth: "3,99", charged: "47,88 € al año", saving: "20 %" },
 ] as const;
 
 /** The legal pages, in the order the footers list them. */
@@ -48,7 +48,7 @@ export const legalPages = [
 ] as const;
 
 /** Date of the last change to the legal pages. */
-export const legalUpdated = "3 de noviembre de 2026";
+export const legalUpdated = "10 de noviembre de 2026";
 
 /** The groups of the documentation's index, in the order it shows them. */
 export const docSections = [
