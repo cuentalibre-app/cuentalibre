@@ -206,9 +206,10 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
  */
 function BarsView({ slots, selected }: { slots: (HomeData["monthly"][number] | null)[]; selected: number | null }) {
   const max = Math.max(1, ...slots.flatMap((s) => (s ? [s.income, s.expenses] : [])));
+  // Twelve months leave no room for a figure over each bar: the year shows only bars
+  const labelled = slots.length <= 6;
   // Leave room above the tallest bar for its label
-  const pct = (v: number) => `${(Math.max(0, v) / max) * 80}%`;
-  const narrow = slots.length > 6;
+  const pct = (v: number) => `${(Math.max(0, v) / max) * (labelled ? 80 : 94)}%`;
   return (
     <div aria-hidden="true" className="absolute inset-0 flex items-end px-1">
       {slots.map((s, i) => (
@@ -219,16 +220,14 @@ function BarsView({ slots, selected }: { slots: (HomeData["monthly"][number] | n
             selected !== null && i !== selected && "opacity-45",
           )}
         >
-          {s && (s.income > 0 || Math.abs(s.profit) >= 50) && (
+          {labelled && s && (s.income > 0 || Math.abs(s.profit) >= 50) && (
             <span
               className={cn(
-                "amount font-semibold whitespace-nowrap",
-                narrow ? "text-[10px]" : "text-xs",
+                "amount text-xs font-semibold whitespace-nowrap",
                 s.profit < 0 ? "text-destructive" : "text-foreground",
               )}
             >
-              {/* Twelve months leave no room for the currency */}
-              {narrow ? formatCompactEUR(s.profit).replace(" €", "") : formatCompactEUR(s.profit)}
+              {formatCompactEUR(s.profit)}
             </span>
           )}
           <div
