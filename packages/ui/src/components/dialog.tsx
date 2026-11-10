@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import { Dialog as Primitive } from "radix-ui";
 import { cn } from "../lib/cn";
+import { useDragToDismiss, useMergedRefs } from "../lib/drag-to-dismiss";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -41,12 +42,20 @@ export function ModalCloseButton({ className }: { className?: string }) {
   );
 }
 
-/** Centered panel on larger screens; on phones it rises from the bottom like a sheet and scrolls. */
-export function DialogContent({ className, children, ...props }: ComponentProps<typeof Primitive.Content>) {
+/** Below `sm` a dialog is a sheet from the bottom, and slides away like one; above, it stays centered. */
+const isSheetLayout = () => window.matchMedia("(width < 40rem)").matches;
+
+/**
+ * Centered panel on larger screens; on phones it rises from the bottom like a sheet, scrolls,
+ * and a finger dragging it down closes it.
+ */
+export function DialogContent({ className, children, ref, ...props }: ComponentProps<typeof Primitive.Content>) {
+  const panelRef = useMergedRefs(ref, useDragToDismiss<HTMLDivElement>(isSheetLayout));
   return (
     <Primitive.Portal>
       <Primitive.Overlay className={modalOverlayClass} />
       <Primitive.Content
+        ref={panelRef}
         className={cn(
           modalPanelClass,
           "fixed inset-x-2 bottom-[max(8px,env(safe-area-inset-bottom))] mx-auto max-h-[85dvh] max-w-xl gap-4 overflow-y-auto overscroll-contain px-6 pt-8 pb-6 data-[state=closed]:animate-sheet-out data-[state=open]:animate-sheet-in",

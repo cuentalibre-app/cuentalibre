@@ -1,6 +1,7 @@
 import type { ComponentProps } from "react";
 import { Dialog as Primitive } from "radix-ui";
 import { cn } from "../lib/cn";
+import { useDragToDismiss, useMergedRefs } from "../lib/drag-to-dismiss";
 import { ModalCloseButton, ModalHandle, modalOverlayClass, modalPanelClass, modalTitleClass } from "./dialog";
 
 export const Sheet = Primitive.Root;
@@ -9,18 +10,22 @@ export const SheetClose = Primitive.Close;
 
 /**
  * Panel that slides up from the bottom of a phone screen, with the same look as a dialog:
- * grab handle, title and round close button. Scrolls on its own when its content is taller than the screen.
+ * grab handle, title and round close button. Scrolls on its own when its content is taller than the screen,
+ * and a finger dragging it down closes it.
  */
 export function SheetContent({
   title,
   className,
   children,
+  ref,
   ...props
 }: ComponentProps<typeof Primitive.Content> & { title: string }) {
+  const panelRef = useMergedRefs(ref, useDragToDismiss<HTMLDivElement>());
   return (
     <Primitive.Portal>
       <Primitive.Overlay className={modalOverlayClass} />
       <Primitive.Content
+        ref={panelRef}
         aria-describedby={undefined}
         className={cn(
           modalPanelClass,
