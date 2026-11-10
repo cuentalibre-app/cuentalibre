@@ -13,5 +13,8 @@
   }
   var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
   if (dark) document.documentElement.classList.add("dark");
+  // The browser chrome takes the colour of the canvas behind the app (--canvas in semantic.css)
+  var themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.setAttribute("content", dark ? "#0d0e10" : "#f3f3f1");
   document.documentElement.dataset.backdrop = backdrop;
 })();

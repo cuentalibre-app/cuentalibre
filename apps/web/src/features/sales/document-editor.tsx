@@ -635,7 +635,7 @@ function QuantityCell({
       </label>
       <div
         className={cn(
-          "flex h-10 items-center rounded-lg border border-input bg-background px-0.5 focus-within:border-ring",
+          "flex h-10 items-center rounded-lg border border-input bg-background px-0.5 focus-within:border-ring focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring",
           invalid && "border-destructive",
         )}
       >
