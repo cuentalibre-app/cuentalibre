@@ -7,7 +7,6 @@ import {
   Download,
   Eye,
   FilePlus2,
-  Filter,
   Paperclip,
   Pencil,
   Plus,
@@ -32,6 +31,7 @@ import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { TagsField } from "@/features/sales/document-editor";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import {
+  FiltersButton,
   ActionsMenu,
   MoreActionsTrigger,
   EmptyState,
@@ -171,20 +171,12 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
               placeholder="Buscar por nombre, NIF, dirección, email, teléfono o notas"
               aria-label="Buscar"
             />
-            <Button
-              variant="secondary"
-              aria-expanded={showFilters}
-              aria-controls="contact-filters"
-              onClick={() => setShowFilters((s) => !s)}
-            >
-              <Filter strokeWidth={1.8} aria-hidden="true" />
-              Filtros
-              {extraFilters > 0 && (
-                <span className="flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
-                  {extraFilters}
-                </span>
-              )}
-            </Button>
+            <FiltersButton
+              open={showFilters}
+              controls="contact-filters"
+              count={extraFilters}
+              onToggle={() => setShowFilters((s) => !s)}
+            />
             <Button
               variant="secondary"
               className="lg:ml-auto"
@@ -569,12 +561,7 @@ function QuickActions({ role, row, onTags }: { role: ContactRole; row: Row; onTa
 
 function RowActions({ role, row, onTags }: { role: ContactRole; row: Row; onTags: (c: Contact) => void }) {
   const { groups } = useContactActions(role, row.contact, row.activity.length, onTags);
-  return (
-    <ActionsMenu
-      groups={groups}
-      trigger={<MoreActionsTrigger label={`Acciones de ${row.contact.name}`} />}
-    />
-  );
+  return <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Acciones de ${row.contact.name}`} />} />;
 }
 
 /** "Gestionar etiquetas" without leaving the list. */

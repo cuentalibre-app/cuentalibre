@@ -64,6 +64,7 @@ export function ReceiptDrop({
   onChange,
   prompt = "Arrastra aquí la factura del proveedor",
   label = "Justificante",
+  pickLabel = "Adjuntar justificante",
   note,
   accept = "application/pdf,image/*",
 }: {
@@ -71,6 +72,8 @@ export function ReceiptDrop({
   onChange: (a: Attachment[]) => void;
   prompt?: string;
   label?: string;
+  /** Phones have nothing to drag from: they get a button with this text instead of the drop area. */
+  pickLabel?: string;
   note?: string;
   accept?: string;
 }) {
@@ -87,6 +90,10 @@ export function ReceiptDrop({
   };
   return (
     <section aria-label={label} className="flex animate-rise-in flex-col gap-3" style={{ "--i": 0 } as CSSProperties}>
+      <Button variant="secondary" className="self-start lg:hidden" onClick={() => inputRef.current?.click()}>
+        <Paperclip strokeWidth={1.8} aria-hidden="true" />
+        {pickLabel}
+      </Button>
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -95,7 +102,7 @@ export function ReceiptDrop({
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
         className={cn(
-          "flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-5 py-6 text-center transition-colors duration-150",
+          "flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-5 py-6 text-center transition-colors duration-150 max-lg:hidden",
           over && "border-primary bg-primary-soft",
         )}
       >
@@ -224,6 +231,7 @@ export function AttachmentsDialog({
           attachments={attachments}
           onChange={(next) => onChange(next.length ? next : undefined)}
           label="Documentos adjuntos"
+          pickLabel="Adjuntar documentos"
           prompt="Arrastra aquí los archivos"
           accept=""
           note={filesAreStored() ? examples : `${examples} Se guardan solo en esta sesión.`}

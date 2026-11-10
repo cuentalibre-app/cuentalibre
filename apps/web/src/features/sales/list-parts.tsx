@@ -1,5 +1,14 @@
 import { Fragment, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, ChevronsUpDown, FilePlus2, MoreHorizontal, Search, type LucideIcon } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronsUpDown,
+  FilePlus2,
+  Filter,
+  MoreHorizontal,
+  Search,
+  type LucideIcon,
+} from "lucide-react";
 import { centsToEuros, type Cents } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import {
@@ -126,6 +135,62 @@ export function MoreActionsTrigger({ label, tooltip = false }: { label: string; 
       <TooltipTrigger asChild>{trigger}</TooltipTrigger>
       <TooltipContent>Más acciones</TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * Opens a list's filter panel. Phones show just the funnel, and the panel there also holds the
+ * filters the toolbar has no room for (such as the status), so they count them too.
+ */
+export function FiltersButton({
+  open,
+  controls,
+  count,
+  phoneCount = count,
+  onToggle,
+}: {
+  open: boolean;
+  /** The id of the panel it shows. */
+  controls: string;
+  /** Filters set in the panel. */
+  count: number;
+  phoneCount?: number;
+  onToggle: () => void;
+}) {
+  const badge =
+    "flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground";
+  return (
+    <Button
+      variant="secondary"
+      aria-expanded={open}
+      aria-controls={controls}
+      onClick={onToggle}
+      className="max-lg:px-3"
+    >
+      <Filter strokeWidth={1.8} aria-hidden="true" />
+      <span className="max-lg:sr-only">Filtros</span>
+      {phoneCount > 0 && <span className={cn(badge, "lg:hidden")}>{phoneCount}</span>}
+      {count > 0 && <span className={cn(badge, "max-lg:hidden")}>{count}</span>}
+    </Button>
+  );
+}
+
+/**
+ * Phones: a list's downloads (CSV, PDF…) behind one button in the page header, so the toolbar
+ * keeps to a single line. Desktop shows them as buttons in the toolbar instead.
+ */
+export function ExportMenu({ actions }: { actions: Action[] }) {
+  return (
+    <ActionsMenu
+      groups={[actions]}
+      trigger={
+        <DropdownMenuTrigger asChild>
+          <Button variant="secondary" size="icon" aria-label="Más acciones" className="lg:hidden">
+            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+      }
+    />
   );
 }
 

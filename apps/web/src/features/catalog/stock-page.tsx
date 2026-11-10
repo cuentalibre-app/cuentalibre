@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
-import { ExternalLink, Filter, Plus, Trash2, X } from "lucide-react";
+import { ExternalLink, Plus, Trash2, X } from "lucide-react";
 import {
   familyWithDescendants,
   stockOf,
@@ -16,7 +16,7 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { table } from "@cuentalibre/ui/lib/table";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
-import { EmptyState, SortHeader } from "@/features/sales/list-parts";
+import { FiltersButton, EmptyState, SortHeader } from "@/features/sales/list-parts";
 import { KINDS } from "@/features/sales/sales-model";
 import { parseDecimal } from "@/lib/format";
 import {
@@ -106,7 +106,7 @@ export function StockPage() {
     setCreating(open);
     if (!open && params.has("nueva")) {
       params.delete("nueva");
-      setParams(params, { replace: true });
+      setParams(params, { replace: true, preventScrollReset: true });
     }
   };
 
@@ -150,20 +150,12 @@ export function StockPage() {
                 },
               ]}
             />
-            <Button
-              variant="secondary"
-              aria-expanded={showFilters}
-              aria-controls="stock-filters"
-              onClick={() => setShowFilters((s) => !s)}
-            >
-              <Filter strokeWidth={1.8} aria-hidden="true" />
-              Filtros
-              {active > 0 && (
-                <span className="flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
-                  {active}
-                </span>
-              )}
-            </Button>
+            <FiltersButton
+              open={showFilters}
+              controls="stock-filters"
+              count={active}
+              onToggle={() => setShowFilters((s) => !s)}
+            />
           </Toolbar>
 
           {showFilters && (
