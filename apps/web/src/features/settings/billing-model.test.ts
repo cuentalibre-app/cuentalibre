@@ -15,14 +15,14 @@ import {
 
 describe("billing model", () => {
   it("matches the landing's per-month prices and savings", () => {
-    expect(["monthly", "quarterly", "yearly"].map((p) => perMonth(periodOf(p as "monthly")))).toEqual([499, 466, 408]);
-    expect(["monthly", "quarterly", "yearly"].map((p) => savingOf(periodOf(p as "monthly")))).toEqual([0, 7, 18]);
+    expect(["monthly", "quarterly", "yearly"].map((p) => perMonth(periodOf(p as "monthly")))).toEqual([499, 449, 399]);
+    expect(["monthly", "quarterly", "yearly"].map((p) => savingOf(periodOf(p as "monthly")))).toEqual([0, 10, 20]);
   });
 
   it("adds 21 % VAT as Stripe charges it", () => {
     expect(withVat(cents(499))).toBe(604);
-    expect(withVat(cents(1399))).toBe(1693);
-    expect(withVat(cents(4900))).toBe(5929);
+    expect(withVat(cents(1347))).toBe(1630);
+    expect(withVat(cents(4788))).toBe(5793);
   });
 
   it("counts the trial's days left, today included", () => {
