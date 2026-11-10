@@ -79,7 +79,7 @@ export function Section({
             aria-expanded={open}
             aria-controls={id}
             onClick={() => setOpen((o) => !o)}
-            className="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-lg font-semibold tracking-tight text-foreground lg:text-title"
+            className="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left text-lg font-semibold tracking-tight text-foreground lg:text-title"
           >
             {title}
             <ChevronDown

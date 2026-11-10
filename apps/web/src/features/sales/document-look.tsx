@@ -19,7 +19,11 @@ export function LookFields({
 }) {
   return (
     <>
-      <div role="radiogroup" aria-label="Plantilla" className="flex gap-3 overflow-x-auto pb-1">
+      <div
+        role="radiogroup"
+        aria-label="Plantilla"
+        className="-mx-5 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-1 lg:mx-0 lg:px-0"
+      >
         {TEMPLATES.map((t) => (
           <TemplateCard
             key={t.value}
@@ -126,7 +130,7 @@ function TemplateCard({
       aria-checked={selected}
       onClick={onSelect}
       className={cn(
-        "flex w-28 shrink-0 cursor-pointer flex-col items-center gap-2 rounded-lg border-2 bg-transparent p-2 transition-colors duration-150",
+        "flex w-28 shrink-0 cursor-pointer snap-start flex-col items-center gap-2 rounded-lg border-2 bg-transparent p-2 transition-colors duration-150",
         selected ? "border-primary" : "border-transparent hover:border-border",
       )}
     >
