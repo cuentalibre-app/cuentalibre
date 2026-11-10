@@ -163,20 +163,35 @@ export interface GroupedSelectProps extends FieldControlProps {
   groups: OptionGroup[];
   disabled?: boolean;
   className?: string;
+  /** Shown in the closed select while no option is chosen. */
+  placeholder?: string;
+  /** Shown in the open list when there are no options at all. */
+  empty?: string;
 }
 
 /** Select whose options may sit under headings; a group without options is a plain heading. */
-export function GroupedSelect({ value, onChange, groups, disabled, className, ...aria }: GroupedSelectProps) {
+export function GroupedSelect({
+  value,
+  onChange,
+  groups,
+  disabled,
+  className,
+  placeholder,
+  empty = "No hay opciones",
+  ...aria
+}: GroupedSelectProps) {
+  const hasOptions = groups.some((g) => g.options.length > 0);
   return (
     // Radix fires "" when the options change under a form (native select sync); ignore it
     <Select value={value} onValueChange={(v) => v && onChange(v)} disabled={disabled}>
       <SelectTrigger {...aria} className={cn("w-full disabled:cursor-not-allowed disabled:opacity-50", className)}>
         <span className="min-w-0 flex-1 truncate text-left">
-          <SelectValue />
+          <SelectValue placeholder={<span className="text-muted-foreground">{placeholder}</span>} />
         </span>
         <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
       </SelectTrigger>
       <SelectContent className="max-w-[min(40rem,calc(100vw-2rem))]">
+        {!hasOptions && <p className="m-0 px-3 py-2 text-sm text-muted-foreground">{empty}</p>}
         {groups.map((group, i) => (
           <SelectGroup key={group.label ?? i}>
             {i > 0 && group.label && <SelectSeparator />}
