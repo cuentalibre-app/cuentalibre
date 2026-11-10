@@ -7,6 +7,33 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* Controls show their own pressed state; the grey tap flash on top of it looks broken */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* A mouse or trackpad has no pull-to-refresh: keep the page from rubber-banding past its ends */
+  @media (pointer: fine) {
+    html {
+      overscroll-behavior: none;
+    }
+  }
+
+  /* Taps act at once: no wait for a possible double-tap zoom */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 
   body {

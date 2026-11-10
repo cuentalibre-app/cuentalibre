@@ -85,6 +85,7 @@ import {
   MoreActionsTrigger,
   SortHeader,
   downloadCsv,
+  useIsDesktop,
   type Action,
 } from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
@@ -165,6 +166,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   const [status, setStatus] = useState<string>(defaults?.status === "open" ? OPEN : ALL);
   const [thisMonth, setThisMonth] = useState(defaults?.date === "month");
   const [filters, setFilters] = useState(NO_FILTERS);
+  const desktop = useIsDesktop();
   const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState(DEFAULT_SORT);
   const documents = useSalesDocuments();
@@ -362,7 +364,11 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           tags={tags}
           incomeTypes={kind === "invoice" || kind === "draft"}
           onChange={set}
-          onClear={() => setFilters(NO_FILTERS)}
+          onClear={() => {
+            setFilters(NO_FILTERS);
+            // On phones the status is one of the panel's filters, so it goes too
+            if (!desktop) setStatus(ALL);
+          }}
         />
         </FiltersSheet>
 
