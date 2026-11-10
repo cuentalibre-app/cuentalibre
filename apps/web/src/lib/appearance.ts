@@ -3,8 +3,8 @@ import { useSyncExternalStore } from "react";
 /*
  * How the app looks on this device: light, dark or following the system, and the wash behind
  * the pages. A per-device preference, so it lives in localStorage rather than the account.
- * `public/appearance.js` applies the same stored value before the first paint; keep the key and
- * the shape in step with it.
+ * `public/appearance.js` applies the same stored value before the first paint; keep the key, the
+ * shape and the theme colours in step with it.
  */
 
 export type Theme = "light" | "dark" | "system";
@@ -53,11 +53,16 @@ const darkQuery = typeof matchMedia === "function" ? matchMedia("(prefers-color-
 let current: Appearance = readStorage();
 const listeners = new Set<() => void>();
 
+/** The canvas behind the app (--canvas in semantic.css), which the browser chrome takes on. */
+const THEME_COLORS = { light: "#f3f3f1", dark: "#0d0e10" };
+
 function apply() {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.classList.toggle("dark", isDark(current.theme, darkQuery?.matches ?? false));
+  const dark = isDark(current.theme, darkQuery?.matches ?? false);
+  root.classList.toggle("dark", dark);
   root.dataset.backdrop = current.backdrop;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLORS[dark ? "dark" : "light"]);
 }
 
 // Follow the system when it switches while the app is open

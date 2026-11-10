@@ -170,7 +170,7 @@ function AvatarField({
       <span className="text-sm font-medium text-muted-foreground">Imagen de perfil</span>
       <div className="flex flex-wrap items-center gap-4">
         {url ? (
-          <img src={url} alt="Imagen de perfil" className="size-16 rounded-full object-cover" />
+          <img src={url} alt="Imagen de perfil" width={64} height={64} className="size-16 rounded-full object-cover" />
         ) : (
           <span
             aria-hidden="true"

@@ -36,6 +36,7 @@ import {
   MoreActionsTrigger,
   SortHeader,
   downloadCsv,
+  useIsDesktop,
   type Action,
 } from "@/features/sales/list-parts";
 import { GroupedSelect } from "@/features/sales/form-fields";
@@ -130,6 +131,7 @@ export function ExpensesListPage() {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [filters, setFilters] = useState(NO_FILTERS);
+  const desktop = useIsDesktop();
   const [showFilters, setShowFilters] = useState(false);
   const [sort, setSort] = useState(DEFAULT_SORT);
   const expenses = useExpenses();
@@ -279,7 +281,8 @@ export function ExpensesListPage() {
             payees={payees}
             tags={tags}
             onChange={set}
-            onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: f.status }))}
+            // On phones the status is one of the panel's filters, so it goes too
+            onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: desktop ? f.status : ALL }))}
           />
           </FiltersSheet>
 

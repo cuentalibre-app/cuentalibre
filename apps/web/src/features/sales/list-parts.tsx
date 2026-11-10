@@ -218,7 +218,7 @@ const subscribeToDesktop = (onChange: () => void) => {
 };
 
 /** Whether the screen is as wide as the `lg` breakpoint, kept up to date as it resizes. */
-function useIsDesktop() {
+export function useIsDesktop() {
   return useSyncExternalStore(
     subscribeToDesktop,
     () => window.matchMedia(desktopQuery).matches,
