@@ -16,7 +16,7 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { table } from "@cuentalibre/ui/lib/table";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
-import { FiltersButton, EmptyState, SortHeader } from "@/features/sales/list-parts";
+import { FiltersButton, FiltersSheet, EmptyState, SortHeader } from "@/features/sales/list-parts";
 import { KINDS } from "@/features/sales/sales-model";
 import { parseDecimal } from "@/lib/format";
 import {
@@ -158,93 +158,93 @@ export function StockPage() {
             />
           </Toolbar>
 
-          {showFilters && (
-            <div
-              id="stock-filters"
-              className="grid animate-fade-in gap-3 border-y border-border bg-muted/50 py-3 sm:grid-cols-2 lg:grid-cols-4 lg:px-4"
+          <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
+          <div
+            id="stock-filters"
+            className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:grid-cols-4 lg:px-4"
+          >
+            <FilterBox label="Por familia de producto">
+              <GroupedSelect
+                id="stock-family"
+                value={filters.family}
+                onChange={(v) => set("family", v)}
+                disabled={families.length === 0}
+                groups={[
+                  {
+                    options: [
+                      { value: ALL, label: "Todas" },
+                      ...families
+                        .map((f) => ({ value: f.id, label: familyLabel(families, f.id) }))
+                        .sort((a, b) => a.label.localeCompare(b.label, "es")),
+                    ],
+                  },
+                ]}
+              />
+            </FilterBox>
+            <FilterBox label="Por código (SKU)">
+              <SearchField
+                value={filters.sku}
+                onChange={(e) => set("sku", e.target.value)}
+                aria-label="Código de producto"
+                className="tabular-nums"
+              />
+            </FilterBox>
+            <FilterBox label="Por tipo/razón">
+              <GroupedSelect
+                id="stock-type"
+                value={filters.type}
+                onChange={(v) => set("type", v)}
+                groups={[{ options: MOVEMENT_FILTERS.map(({ value, label }) => ({ value, label })) }]}
+              />
+            </FilterBox>
+            <FilterBox label="Por cantidad">
+              <div className="flex items-center gap-2">
+                <Input
+                  inputMode="decimal"
+                  placeholder="Desde"
+                  aria-label="Cantidad desde"
+                  value={filters.qtyFrom}
+                  onChange={(e) => set("qtyFrom", e.target.value)}
+                  className="text-right amount"
+                />
+                <span className="text-muted-foreground">–</span>
+                <Input
+                  inputMode="decimal"
+                  placeholder="Hasta"
+                  aria-label="Cantidad hasta"
+                  value={filters.qtyTo}
+                  onChange={(e) => set("qtyTo", e.target.value)}
+                  className="text-right amount"
+                />
+              </div>
+            </FilterBox>
+            <FilterBox label="Por fecha">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  aria-label="Fecha desde"
+                  value={filters.dateFrom}
+                  onChange={(e) => set("dateFrom", e.target.value)}
+                />
+                <span className="text-muted-foreground">–</span>
+                <Input
+                  type="date"
+                  aria-label="Fecha hasta"
+                  value={filters.dateTo}
+                  onChange={(e) => set("dateTo", e.target.value)}
+                />
+              </div>
+            </FilterBox>
+            <Button
+              variant="secondary"
+              onClick={() => setFilters(NO_FILTERS)}
+              className="self-end justify-self-start"
             >
-              <FilterBox label="Por familia de producto">
-                <GroupedSelect
-                  id="stock-family"
-                  value={filters.family}
-                  onChange={(v) => set("family", v)}
-                  disabled={families.length === 0}
-                  groups={[
-                    {
-                      options: [
-                        { value: ALL, label: "Todas" },
-                        ...families
-                          .map((f) => ({ value: f.id, label: familyLabel(families, f.id) }))
-                          .sort((a, b) => a.label.localeCompare(b.label, "es")),
-                      ],
-                    },
-                  ]}
-                />
-              </FilterBox>
-              <FilterBox label="Por código (SKU)">
-                <SearchField
-                  value={filters.sku}
-                  onChange={(e) => set("sku", e.target.value)}
-                  aria-label="Código de producto"
-                  className="tabular-nums"
-                />
-              </FilterBox>
-              <FilterBox label="Por tipo/razón">
-                <GroupedSelect
-                  id="stock-type"
-                  value={filters.type}
-                  onChange={(v) => set("type", v)}
-                  groups={[{ options: MOVEMENT_FILTERS.map(({ value, label }) => ({ value, label })) }]}
-                />
-              </FilterBox>
-              <FilterBox label="Por cantidad">
-                <div className="flex items-center gap-2">
-                  <Input
-                    inputMode="decimal"
-                    placeholder="Desde"
-                    aria-label="Cantidad desde"
-                    value={filters.qtyFrom}
-                    onChange={(e) => set("qtyFrom", e.target.value)}
-                    className="text-right amount"
-                  />
-                  <span className="text-muted-foreground">–</span>
-                  <Input
-                    inputMode="decimal"
-                    placeholder="Hasta"
-                    aria-label="Cantidad hasta"
-                    value={filters.qtyTo}
-                    onChange={(e) => set("qtyTo", e.target.value)}
-                    className="text-right amount"
-                  />
-                </div>
-              </FilterBox>
-              <FilterBox label="Por fecha">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="date"
-                    aria-label="Fecha desde"
-                    value={filters.dateFrom}
-                    onChange={(e) => set("dateFrom", e.target.value)}
-                  />
-                  <span className="text-muted-foreground">–</span>
-                  <Input
-                    type="date"
-                    aria-label="Fecha hasta"
-                    value={filters.dateTo}
-                    onChange={(e) => set("dateTo", e.target.value)}
-                  />
-                </div>
-              </FilterBox>
-              <Button
-                variant="secondary"
-                onClick={() => setFilters(NO_FILTERS)}
-                className="self-end justify-self-start"
-              >
-                <X strokeWidth={1.8} aria-hidden="true" />
-                Quitar filtros
-              </Button>
-            </div>
-          )}
+              <X strokeWidth={1.8} aria-hidden="true" />
+              Quitar filtros
+            </Button>
+          </div>
+          </FiltersSheet>
 
           {rows.length === 0 ? (
             <EmptyState

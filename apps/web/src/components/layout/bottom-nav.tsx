@@ -212,6 +212,7 @@ export function BottomNav({ className }: { className?: string }) {
                 contentClassName="mb-2"
                 open={createOpen}
                 onOpenChange={setCreateOpen}
+                essentialOnly
               >
                 <button
                   type="button"

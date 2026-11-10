@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { centsToEuros, type Cents } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
+import { Sheet, SheetClose, SheetContent } from "@cuentalibre/ui/components/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,21 +55,29 @@ export interface Choice {
 /**
  * The actions of a record. A choice opens a submenu, or with `inlineChoices`
  * (phones, where a submenu has no room beside the menu) lists its options in place.
+ * With `essentials` (phones) the menu opens on those few, in finger-sized rows, and "Más acciones"
+ * swaps them for every group in place.
  */
 export function ActionsMenu({
   groups,
   trigger,
   inlineChoices = false,
+  essentials,
 }: {
   groups: Action[][];
   trigger: ReactNode;
   inlineChoices?: boolean;
+  essentials?: Action[];
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const phone = essentials !== undefined;
+  const shown = phone && !expanded ? [essentials] : groups;
+  const rowClass = phone && !expanded ? "h-12 gap-3.5 pr-5 text-base [&_svg]:size-5" : undefined;
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => !open && setExpanded(false)}>
       {trigger}
       <DropdownMenuContent align="end">
-        {groups.map((group, i) => (
+        {shown.map((group, i) => (
           <Fragment key={i}>
             {i > 0 && <DropdownMenuSeparator />}
             {group.map((a) => {
@@ -78,7 +87,7 @@ export function ActionsMenu({
                     key={a.label}
                     disabled={!a.run}
                     onSelect={a.run}
-                    className={cn(a.danger && "text-destructive [&_svg]:text-destructive")}
+                    className={cn(rowClass, a.danger && "text-destructive [&_svg]:text-destructive")}
                   >
                     <a.icon aria-hidden="true" />
                     {a.label}
@@ -102,6 +111,21 @@ export function ActionsMenu({
             })}
           </Fragment>
         ))}
+        {phone && !expanded && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className={rowClass}
+              onSelect={(e) => {
+                e.preventDefault();
+                setExpanded(true);
+              }}
+            >
+              <MoreHorizontal aria-hidden="true" />
+              Más acciones
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -120,12 +144,23 @@ function ChoiceOptions({ label, choice }: { label: string; choice: Choice }) {
   );
 }
 
-/** The "more actions" button of a row: the same ellipsis on desktop and phone, with a tooltip next to icon actions. */
+/**
+ * The "more actions" button of a row: a tooltip next to the desktop's icon actions, and on phones
+ * a larger round button that reads as one.
+ */
 export function MoreActionsTrigger({ label, tooltip = false }: { label: string; tooltip?: boolean }) {
   const trigger = (
     <DropdownMenuTrigger asChild>
-      <Button variant="ghost" size="icon-sm" aria-label={label}>
-        <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+      <Button
+        variant="ghost"
+        size={tooltip ? "icon-sm" : "icon"}
+        aria-label={label}
+        className={cn(
+          !tooltip &&
+            "shrink-0 rounded-full bg-muted text-foreground [&_svg]:size-5 data-[state=open]:bg-muted-strong",
+        )}
+      >
+        <MoreHorizontal strokeWidth={2} aria-hidden="true" />
       </Button>
     </DropdownMenuTrigger>
   );
@@ -175,22 +210,51 @@ export function FiltersButton({
   );
 }
 
+const desktopQuery = "(width >= 64rem)";
+const subscribeToDesktop = (onChange: () => void) => {
+  const query = window.matchMedia(desktopQuery);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+
+/** Whether the screen is as wide as the `lg` breakpoint, kept up to date as it resizes. */
+function useIsDesktop() {
+  return useSyncExternalStore(
+    subscribeToDesktop,
+    () => window.matchMedia(desktopQuery).matches,
+    () => true,
+  );
+}
+
 /**
- * Phones: a list's downloads (CSV, PDF…) behind one button in the page header, so the toolbar
- * keeps to a single line. Desktop shows them as buttons in the toolbar instead.
+ * Where a list's filter panel opens: under the toolbar on desktop, and on phones in a sheet from
+ * the bottom, so it covers the list for a moment instead of pushing it down the screen.
  */
-export function ExportMenu({ actions }: { actions: Action[] }) {
+export function FiltersSheet({
+  open,
+  onOpenChange,
+  results,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Rows the filters leave, for the button that closes the sheet. */
+  results: number;
+  children: ReactNode;
+}) {
+  const desktop = useIsDesktop();
+  if (desktop) return open ? children : null;
   return (
-    <ActionsMenu
-      groups={[actions]}
-      trigger={
-        <DropdownMenuTrigger asChild>
-          <Button variant="secondary" size="icon" aria-label="Más acciones" className="lg:hidden">
-            <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent title="Filtros">
+        {children}
+        <SheetClose asChild>
+          <Button size="xl" className="mt-4 w-full">
+            {results === 1 ? "Ver 1 resultado" : `Ver ${results} resultados`}
           </Button>
-        </DropdownMenuTrigger>
-      }
-    />
+        </SheetClose>
+      </SheetContent>
+    </Sheet>
   );
 }
 

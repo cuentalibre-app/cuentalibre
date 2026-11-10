@@ -32,6 +32,7 @@ import { TagsField } from "@/features/sales/document-editor";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import {
   FiltersButton,
+  FiltersSheet,
   ActionsMenu,
   MoreActionsTrigger,
   EmptyState,
@@ -188,41 +189,41 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
             </Button>
           </Toolbar>
 
-          {showFilters && (
-            <div
-              id="contact-filters"
-              className="grid animate-fade-in gap-3 border-y border-border bg-muted/50 py-3 sm:grid-cols-3 lg:grid-cols-[repeat(3,minmax(0,16rem))_auto] lg:items-end lg:px-4"
+          <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
+          <div
+            id="contact-filters"
+            className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-3 lg:grid-cols-[repeat(3,minmax(0,16rem))_auto] lg:items-end lg:px-4"
+          >
+            {(
+              [
+                ["country", "País", countries, "Todos"],
+                ["province", "Provincia", provinces, "Todas"],
+                ["tag", "Etiqueta", tags, tags.length ? "Todas" : "Sin etiquetas"],
+              ] as const
+            ).map(([key, label, values, allLabel]) => (
+              <label key={key} className="flex min-w-0 flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                <GroupedSelect
+                  id={`filter-${key}`}
+                  value={filters[key]}
+                  onChange={(v) => set(key, v)}
+                  disabled={values.length === 0}
+                  groups={[
+                    { options: [{ value: ALL, label: allLabel }, ...values.map((v) => ({ value: v, label: v }))] },
+                  ]}
+                />
+              </label>
+            ))}
+            <Button
+              variant="secondary"
+              onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
+              className="justify-self-start"
             >
-              {(
-                [
-                  ["country", "País", countries, "Todos"],
-                  ["province", "Provincia", provinces, "Todas"],
-                  ["tag", "Etiqueta", tags, tags.length ? "Todas" : "Sin etiquetas"],
-                ] as const
-              ).map(([key, label, values, allLabel]) => (
-                <label key={key} className="flex min-w-0 flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground">{label}</span>
-                  <GroupedSelect
-                    id={`filter-${key}`}
-                    value={filters[key]}
-                    onChange={(v) => set(key, v)}
-                    disabled={values.length === 0}
-                    groups={[
-                      { options: [{ value: ALL, label: allLabel }, ...values.map((v) => ({ value: v, label: v }))] },
-                    ]}
-                  />
-                </label>
-              ))}
-              <Button
-                variant="secondary"
-                onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
-                className="justify-self-start"
-              >
-                <X strokeWidth={1.8} aria-hidden="true" />
-                Quitar filtros
-              </Button>
-            </div>
-          )}
+              <X strokeWidth={1.8} aria-hidden="true" />
+              Quitar filtros
+            </Button>
+          </div>
+          </FiltersSheet>
 
           {rows.length === 0 ? (
             <EmptyState
