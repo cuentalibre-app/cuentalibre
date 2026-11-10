@@ -75,8 +75,9 @@ export function ManualPaymentDialog({ open, onOpenChange }: { open: boolean; onO
             save();
           }}
         >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Cantidad cobrada o pagada" required error={show("amount")}>
+          {/* Side by side on phones too, so the sheet fits without scrolling */}
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Cantidad" required error={show("amount")}>
               {(p) => (
                 <Input
                   {...p}
