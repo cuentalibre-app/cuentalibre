@@ -107,6 +107,13 @@ export function PaymentsDialog({
     save([...payments, { id: newId(), date, amount: parsed, paymentMethodId: methodId }]);
   };
 
+  const statusLine = (
+    <span className="flex min-h-10 flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      {status}
+      {pending !== 0 && pending !== total && <span>Quedan {formatEUR(pending)}</span>}
+    </span>
+  );
+
   return (
     <Dialog open onOpenChange={onOpenChange}>
       {/* Paid in full, the first focusable would be a remove button: focus the panel instead */}
@@ -124,7 +131,8 @@ export function PaymentsDialog({
               register();
             }}
           >
-            <div className="grid gap-4 sm:grid-cols-2">
+            {/* Phones pair the amount with the date and the status with the button, so the sheet fits without scrolling */}
+            <div className="grid grid-cols-2 gap-4">
               <Field label={words.amount} required error={submitted ? error : undefined}>
                 {(p) => (
                   <span className="relative flex items-center">
@@ -147,7 +155,7 @@ export function PaymentsDialog({
               <Field label="Fecha" required>
                 {(p) => <Input {...p} type="date" required value={date} onChange={(e) => setDate(e.target.value)} />}
               </Field>
-              <Field label={words.method} required>
+              <Field label={words.method} required className="max-sm:col-span-2">
                 {(p) => (
                   <div className="flex items-center gap-1">
                     <div className="min-w-0 flex-1 [&>*]:w-full">
@@ -170,15 +178,13 @@ export function PaymentsDialog({
                   </div>
                 )}
               </Field>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 max-sm:hidden">
                 <span className="text-sm font-medium">Estado de la factura</span>
-                <span className="flex min-h-10 flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  {status}
-                  {pending !== 0 && pending !== total && <span>Quedan {formatEUR(pending)}</span>}
-                </span>
+                {statusLine}
               </div>
             </div>
-            <div className="flex justify-center">
+            <div className="flex items-center justify-between gap-3 sm:justify-center">
+              <div className="sm:hidden">{statusLine}</div>
               <Button type="submit">Registrar</Button>
             </div>
           </form>

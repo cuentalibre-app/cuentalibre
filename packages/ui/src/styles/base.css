@@ -50,12 +50,14 @@
   }
 
   /* iOS Safari sizes date fields to their native control, wider than the column; flatten them
-     back into a plain field that honours its width, with the value aligned like any text */
+     back into a plain field that honours its width, with the value aligned like any text.
+     Safari centres the value vertically with flex: a block display would pin it to the top */
   @supports (-webkit-touch-callout: none) {
     input[type="date"] {
       -webkit-appearance: none;
       appearance: none;
-      display: block;
+      display: flex;
+      align-items: center;
       min-width: 0;
     }
     input[type="date"]::-webkit-date-and-time-value {
