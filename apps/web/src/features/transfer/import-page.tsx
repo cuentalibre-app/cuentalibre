@@ -130,7 +130,7 @@ export function ImportPage() {
             </Field>
             <Button variant="secondary" onClick={downloadSample}>
               <FileSpreadsheet strokeWidth={1.8} aria-hidden="true" />
-              Descargar Excel de ejemplo para {config.label.toLowerCase()}
+              Descargar Excel de ejemplo
             </Button>
           </div>
 

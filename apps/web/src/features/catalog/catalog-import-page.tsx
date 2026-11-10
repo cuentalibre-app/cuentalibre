@@ -69,7 +69,6 @@ export function CatalogImportPage() {
     setFile(null);
   };
 
-  const label = IMPORT_KIND_OPTIONS.find((o) => o.value === kind)!.label;
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
@@ -134,7 +133,7 @@ export function CatalogImportPage() {
               }
             >
               <FileSpreadsheet strokeWidth={1.8} aria-hidden="true" />
-              Descargar Excel de ejemplo para {label.toLowerCase()}
+              Descargar Excel de ejemplo
             </Button>
           </div>
 
