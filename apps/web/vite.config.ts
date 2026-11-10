@@ -71,6 +71,25 @@ function revisionMeta(revision: string | undefined): Plugin {
   };
 }
 
+/**
+ * Link previews need the image's full URL, and the app doesn't know its own origin when it's
+ * built, so it points at the site's preview image; without a site there's no image.
+ */
+function previewImage(siteUrl: string | undefined): Plugin {
+  const image = siteUrl && URL.canParse(siteUrl) ? new URL("/og.png", siteUrl).href : undefined;
+  return {
+    name: "preview-image",
+    transformIndexHtml: () =>
+      image
+        ? [
+            { tag: "meta", attrs: { property: "og:image", content: image } },
+            { tag: "meta", attrs: { property: "og:image:width", content: "1200" } },
+            { tag: "meta", attrs: { property: "og:image:height", content: "630" } },
+          ]
+        : [],
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
   return {
@@ -80,6 +99,7 @@ export default defineConfig(({ mode }) => {
       zodWithoutEval,
       securityHeaders(env.VITE_API_URL, env.VITE_NOINDEX === "true"),
       revisionMeta(env.VITE_REVISION),
+      previewImage(env.VITE_SITE_URL),
     ],
     resolve: {
       alias: {
