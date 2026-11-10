@@ -68,7 +68,8 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+      {/* The title keeps a minimum width, so actions that don't fit beside it wrap below instead of squeezing it away */}
+      <div className="flex min-w-0 flex-[1_1_10rem] items-center gap-3">
         {back}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {eyebrow}
