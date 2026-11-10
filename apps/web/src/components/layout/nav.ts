@@ -180,10 +180,10 @@ export const createActions: CreateAction[][] = [
 
 /**
  * The phone tab bar's middle menu: the everyday lists, one tap away. Each list has its own
- * "Nuevo" button, so the menu opens records rather than creating them.
+ * "Nuevo" button, so the menu opens records rather than creating them. The issued invoices
+ * already have their own tab, Ventas.
  */
 export const phoneShortcuts: CreateAction[] = [
-  { label: "Facturas emitidas", to: "/ventas/facturas", icon: ReceiptText },
   { label: "Facturas recibidas", to: "/compras/facturas", icon: Receipt },
   { label: "Gastos", to: "/compras/gastos", icon: Camera },
   { label: "Clientes", to: "/contactos/clientes", icon: UserRound },
