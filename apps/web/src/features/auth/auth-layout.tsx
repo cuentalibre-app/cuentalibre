@@ -19,28 +19,32 @@ interface AuthLayoutProps {
 }
 
 /**
- * The screens around the app (sign-in, sign-up, onboarding) speak like the
- * public site: serif headline, brand gradient, and a panel that shows the app.
+ * The screens around the app (sign-in, sign-up, onboarding). On wide screens they speak like the public
+ * site: serif headline and a brand panel that shows the app. On phones they look like the app itself:
+ * the brand wash behind, a sans headline and the form on a card.
  */
 export function AuthLayout({ title, description, children, footer, eyebrow, wide = false }: AuthLayoutProps) {
   return (
-    <div className="grid min-h-dvh bg-background lg:grid-cols-2">
-      <main className="flex flex-col px-4 py-5 sm:px-10 sm:py-8">
+    <div className="relative isolate grid min-h-dvh bg-canvas lg:grid-cols-2 lg:bg-background">
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 bg-aurora lg:hidden" />
+      <main className="flex flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-10 sm:py-8">
         <Brand />
-        <div className="flex flex-1 items-center justify-center py-10">
-          <div className={cn("flex w-full animate-rise-in flex-col gap-7", wide ? "max-w-[480px]" : "max-w-[400px]")}>
+        <div className="flex flex-1 justify-center pt-6 pb-2 lg:items-center lg:py-10">
+          <div className={cn("flex w-full animate-rise-in flex-col gap-5 lg:gap-7", wide ? "max-w-[480px]" : "max-w-[400px]")}>
             <div className="flex flex-col gap-2">
               {eyebrow}
-              <h1 className="m-0 font-display text-[clamp(32px,5vw,40px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance">
+              <h1 className="m-0 text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-balance lg:font-display lg:text-[clamp(32px,5vw,40px)] lg:leading-[1.08] lg:tracking-[-0.025em]">
                 {title}
               </h1>
               {description && <p className="m-0 text-md text-pretty text-muted-foreground">{description}</p>}
             </div>
-            {children}
+            {/* A card on phones, like the app's panels; on wide screens the form sits on the page */}
+            <div className="surface flex flex-col gap-5 p-5 lg:contents">{children}</div>
             {footer && <div className="flex flex-col items-center gap-2 text-base text-muted-foreground">{footer}</div>}
           </div>
         </div>
-        <LegalLinks className="justify-center lg:justify-start" />
+        {/* Phones reach these from the consent line and from the app's menu */}
+        <LegalLinks className="hidden lg:flex" />
       </main>
       <BrandPanel />
     </div>
@@ -53,7 +57,7 @@ function Brand() {
     <a
       href={SITE_URL ?? "/"}
       aria-label="cuentalibre, página de inicio"
-      className="flex items-baseline gap-2.5 self-center rounded-lg text-foreground lg:self-start"
+      className="flex items-baseline gap-2.5 self-start rounded-lg text-foreground"
     >
       <LogoMark className="h-6" />
       <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
