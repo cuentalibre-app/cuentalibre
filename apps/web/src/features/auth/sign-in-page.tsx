@@ -45,11 +45,7 @@ export function SignInPage() {
   return (
     <AuthLayout
       title={expired ? "Tu sesión ha caducado" : "Hola de nuevo"}
-      description={
-        expired
-          ? "Han pasado 8 horas sin actividad. Vuelve a entrar para seguir donde lo dejaste."
-          : "Entra para seguir con tus facturas e impuestos."
-      }
+      description={expired ? "Han pasado 8 horas sin actividad. Vuelve a entrar para seguir donde lo dejaste." : undefined}
       footer={
         <>
           <span>

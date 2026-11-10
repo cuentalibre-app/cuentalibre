@@ -54,7 +54,7 @@ export function GoogleSignIn({ intent, returnPath, onError }: GoogleSignInProps)
       </Button>
       {intent === "sign-in" && (
         <div className="-mt-2 text-center">
-          <LegalConsent lead="Si aún no tienes cuenta, se crea al continuar con Google y aceptas los" />
+          <LegalConsent lead="Si no tienes cuenta, se crea y aceptas los" />
         </div>
       )}
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
