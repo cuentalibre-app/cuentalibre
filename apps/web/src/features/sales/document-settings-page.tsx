@@ -69,7 +69,14 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
             Las series de numeración definen los formatos de numeración de {copy.plural} y permiten proponer el
             siguiente número disponible de cada serie al crear {kind === "draft" ? "una" : "un"} {copy.one}.
           </p>
-          <div className="overflow-x-auto rounded-lg border border-border">
+          <div className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2.5 md:hidden">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="font-medium">{config.seriesLabel}</span>
+              <Badge tone="primary">Por defecto</Badge>
+            </span>
+            <span className="text-sm text-muted-foreground tabular-nums">{config.numberPrefix}AAAA-####</span>
+          </div>
+          <div className="relative overflow-x-auto rounded-lg border border-border max-md:hidden">
             <table className="w-full min-w-[32rem] border-collapse text-left text-sm">
               <thead className="text-xs text-foreground">
                 <tr>

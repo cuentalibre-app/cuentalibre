@@ -68,9 +68,45 @@ export function SeriesTable() {
     ];
   };
 
+  const seriesActions = (series: InvoiceSeriesDefinition) => (
+    <span className="flex shrink-0 justify-end gap-0.5">
+      <IconAction action={{ label: `Editar serie ${series.name}`, icon: Pencil, run: () => setEditing(series) }} />
+      <ActionsMenu
+        groups={actions(series)}
+        trigger={
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de la serie ${series.name}`}>
+              <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+        }
+      />
+    </span>
+  );
+
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border border-border">
+      <ul className="m-0 flex list-none flex-col rounded-lg border border-border px-3 py-0 md:hidden">
+        {all.map((s) => {
+          const active = s.active !== false;
+          return (
+            <li key={s.id} className="flex items-center gap-2 border-t border-divider py-2.5 first:border-t-0">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className={cn("font-medium", !active && "text-muted-foreground")}>{s.name}</span>
+                  {!active && <Badge>Inactiva</Badge>}
+                  {isDefault(s) && <Badge tone="primary">Por defecto</Badge>}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {SERIES_TYPES.find((t) => t.value === s.type)!.label} · <span className="tabular-nums">{s.mask}</span>
+                </span>
+              </div>
+              {seriesActions(s)}
+            </li>
+          );
+        })}
+      </ul>
+      <div className="relative overflow-x-auto rounded-lg border border-border max-md:hidden">
         <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
           <thead className="text-xs text-foreground">
             <tr>
@@ -110,23 +146,7 @@ export function SeriesTable() {
                     {s.type === "rectifying" && isDefault(s) && <DefaultMark />}
                   </td>
                   <td className="border-l border-border px-3 py-2.5 tabular-nums first:border-l-0">{s.mask}</td>
-                  <td className="border-l border-border px-3 py-1.5 first:border-l-0">
-                    <span className="flex justify-end gap-0.5">
-                      <IconAction
-                        action={{ label: `Editar serie ${s.name}`, icon: Pencil, run: () => setEditing(s) }}
-                      />
-                      <ActionsMenu
-                        groups={actions(s)}
-                        trigger={
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm" aria-label={`Más acciones de la serie ${s.name}`}>
-                              <MoreHorizontal strokeWidth={1.8} aria-hidden="true" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                        }
-                      />
-                    </span>
-                  </td>
+                  <td className="border-l border-border px-3 py-1.5 first:border-l-0">{seriesActions(s)}</td>
                 </tr>
               );
             })}
