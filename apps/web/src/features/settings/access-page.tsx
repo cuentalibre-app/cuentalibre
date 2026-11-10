@@ -403,7 +403,7 @@ function LinkedAccountsSection() {
   const [error, setError] = useState(() => oauthErrorMessage(searchParams.get("error")));
 
   useEffect(() => {
-    if (searchParams.size) setSearchParams({}, { replace: true });
+    if (searchParams.size) setSearchParams({}, { replace: true, preventScrollReset: true });
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {

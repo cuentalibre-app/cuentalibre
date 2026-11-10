@@ -1,6 +1,15 @@
 import type { ComponentProps, ReactNode } from "react";
 import { Link, type LinkProps } from "react-router";
-import { ArrowLeft, ChevronRight, CircleAlert, CircleCheck, CircleHelp, Info, TriangleAlert, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  CircleAlert,
+  CircleCheck,
+  CircleHelp,
+  Info,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -33,6 +42,8 @@ interface PageHeaderProps {
   title: ReactNode;
   /** One line under the title saying what the page is for. */
   description?: ReactNode;
+  /** Classes for the description, such as hiding it on phones where the screen is short. */
+  descriptionClassName?: string;
   /** A back link before the title, usually a <BackLink>. */
   back?: ReactNode;
   /** A small line above the title, such as a breadcrumb. */
@@ -47,10 +58,21 @@ interface PageHeaderProps {
 }
 
 /** Title, optional back link and description on the left; actions on the right. */
-export function PageHeader({ title, description, back, eyebrow, inline, actions, actionsClassName, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  descriptionClassName,
+  back,
+  eyebrow,
+  inline,
+  actions,
+  actionsClassName,
+  className,
+}: PageHeaderProps) {
   return (
     <header className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
-      <div className="flex min-w-0 flex-1 items-center gap-3">
+      {/* The title keeps a minimum width, so actions that don't fit beside it wrap below instead of squeezing it away */}
+      <div className="flex min-w-0 flex-[1_1_10rem] items-center gap-3">
         {back}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {eyebrow}
@@ -58,7 +80,9 @@ export function PageHeader({ title, description, back, eyebrow, inline, actions,
             <h1 className="m-0 min-w-0 text-2xl font-semibold tracking-tight text-balance lg:text-3xl">{title}</h1>
             {inline}
           </div>
-          {description && <p className="m-0 max-w-[72ch] text-sm text-muted-foreground">{description}</p>}
+          {description && (
+            <p className={cn("m-0 max-w-[72ch] text-sm text-muted-foreground", descriptionClassName)}>{description}</p>
+          )}
         </div>
       </div>
       {actions && <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>{actions}</div>}
@@ -67,15 +91,16 @@ export function PageHeader({ title, description, back, eyebrow, inline, actions,
 }
 
 /**
- * The row of search, filters and exports above a list. On phones every control grows to fill
- * its line, so rows never end in a ragged gap; the search takes a line of its own.
+ * The row of search, filters and exports above a list. On phones it is a single line: the search
+ * takes what the controls beside it leave, and anything that doesn't fit wraps below.
  */
 export function Toolbar({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-2.5 pb-3 *:max-lg:flex-auto lg:px-4 lg:py-3",
-        "[&>label:first-child]:max-lg:basis-full [&>label:first-child]:lg:max-w-80 [&>label:first-child]:lg:flex-[1_1_220px]",
+        "flex flex-wrap items-center gap-2 pb-3 *:not-first:max-lg:flex-none lg:gap-2.5 lg:px-4 lg:py-3",
+        "*:first:max-lg:min-w-0 *:first:max-lg:flex-[1_1_8rem]",
+        "[&>label:first-child]:lg:max-w-80 [&>label:first-child]:lg:flex-[1_1_220px]",
         className,
       )}
       {...props}

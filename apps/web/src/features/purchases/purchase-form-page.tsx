@@ -59,7 +59,7 @@ import {
 import { isIntraEu } from "@/features/contacts/contacts-model";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
-import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
+import { CheckField, Field, GroupedSelect, Section, SectionsAtAGlance } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, WITHHOLDING_GROUPS, periodKeyOf } from "@/features/sales/sales-model";
 import { formatDate, formatDecimalInput, formatEurosInput, parseEuros, periodLabel } from "@/lib/format";
 import { MethodDialog } from "@/features/settings/method-dialog";
@@ -262,16 +262,18 @@ export function PurchaseFormPage({ kind = "invoice" }: { kind?: PurchaseFormKind
   const creditNote = params.get("abono") === "1";
   const justSaved = !existing ? purchasesStore.get(params.get("registrada") ?? "") : undefined;
   return (
-    <PurchaseForm
-      // A new ?desde= or ?registrada= starts over
-      key={`${kind}-${existing?.id ?? params.toString()}`}
-      kind={kind}
-      existing={existing}
-      source={source}
-      creditNote={creditNote}
-      justSaved={justSaved}
-      presetSupplierId={!existing && !source ? params.get("proveedor") : null}
-    />
+    <SectionsAtAGlance when={Boolean(existing)}>
+      <PurchaseForm
+        // A new ?desde= or ?registrada= starts over
+        key={`${kind}-${existing?.id ?? params.toString()}`}
+        kind={kind}
+        existing={existing}
+        source={source}
+        creditNote={creditNote}
+        justSaved={justSaved}
+        presetSupplierId={!existing && !source ? params.get("proveedor") : null}
+      />
+    </SectionsAtAGlance>
   );
 }
 

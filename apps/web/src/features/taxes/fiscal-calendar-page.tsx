@@ -27,6 +27,7 @@ import { useSettings } from "@/features/settings/settings-store";
 import { availableYears } from "@/mocks/data";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
 import { usePartyBooks } from "./party-operations";
+import { TaxesBackLink } from "./tax-intro";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
 import {
   CALENDAR_STATUS,
@@ -562,6 +563,8 @@ export function FiscalCalendarPage() {
       <Page>
         <PageHeader
           title="Calendario fiscal"
+          back={<TaxesBackLink />}
+          descriptionClassName="max-lg:hidden"
           description={`Plazos de cada modelo en ${year}. Si un plazo acaba en fin de semana, pasa al lunes; los festivos aún no se tienen en cuenta.`}
           actions={
             <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}>

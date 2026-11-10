@@ -31,7 +31,7 @@ import { BackLink, Notice, Page, PageHeader } from "@/components/page";
 import { contactsStore, useContacts } from "@/features/contacts/contacts-store";
 import { NewContactDialog } from "@/features/contacts/new-contact-dialog";
 import { TagsField } from "@/features/sales/document-editor";
-import { CheckField, Field, GroupedSelect, Section } from "@/features/sales/form-fields";
+import { CheckField, Field, GroupedSelect, Section, SectionsAtAGlance } from "@/features/sales/form-fields";
 import { RENTAL_LOCATIONS, periodKeyOf } from "@/features/sales/sales-model";
 import { MONTHS, formatEurosInput, parseEuros } from "@/lib/format";
 import { settingsStore } from "@/features/settings/settings-store";
@@ -164,14 +164,16 @@ export function ExpenseFormPage() {
   const source = !existing ? expensesStore.get(params.get("desde") ?? "") : undefined;
   const justSaved = !existing ? expensesStore.get(params.get("registrado") ?? "") : undefined;
   return (
-    <ExpenseForm
-      // A new ?desde= or ?registrado= starts over
-      key={existing?.id ?? params.toString()}
-      existing={existing}
-      source={source}
-      justSaved={justSaved}
-      presetSupplierId={!existing && !source ? params.get("proveedor") : null}
-    />
+    <SectionsAtAGlance when={Boolean(existing)}>
+      <ExpenseForm
+        // A new ?desde= or ?registrado= starts over
+        key={existing?.id ?? params.toString()}
+        existing={existing}
+        source={source}
+        justSaved={justSaved}
+        presetSupplierId={!existing && !source ? params.get("proveedor") : null}
+      />
+    </SectionsAtAGlance>
   );
 }
 
@@ -402,6 +404,7 @@ function ExpenseForm({
             attachments={form.attachments}
             onChange={(a) => set("attachments", a)}
             prompt="Arrastra aquí el ticket o el recibo"
+            pickLabel="Adjuntar ticket o recibo"
           />
 
           <Section title="Datos del gasto" index={1}>

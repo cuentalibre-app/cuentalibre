@@ -53,7 +53,7 @@ export function BillingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (searchParams.size) setSearchParams({}, { replace: true });
+    if (searchParams.size) setSearchParams({}, { replace: true, preventScrollReset: true });
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {

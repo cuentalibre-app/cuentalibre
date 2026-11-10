@@ -110,6 +110,10 @@
   --shadow-popover: none; /* flat UI: popovers rely on their border */
   /* The one exception: the mobile tab bar floats over the page as it scrolls */
   --shadow-floating: 0 10px 30px -10px rgb(0 0 0 / 0.25), 0 2px 8px -2px rgb(0 0 0 / 0.08);
+  /* The tab bar's lens while a finger drags it: a lit rim over a soft drop, like a drop of glass */
+  --shadow-lens:
+    inset 0 1px 1px rgb(255 255 255 / 0.7), inset 0 -1px 1px rgb(255 255 255 / 0.25),
+    0 6px 18px -6px rgb(0 0 0 / 0.28);
   /* Mobile cards lift a little off the page; desktop stays flat */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 10px 28px -14px rgb(0 0 0 / 0.16);
   /* Buttons sit on the page with the same relief as the cards */

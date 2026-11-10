@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { useLayoutEffect, useRef, type ComponentProps } from "react";
 import { MAX_DATE, MIN_DATE } from "@cuentalibre/core";
 import { cn } from "../lib/cn";
 
@@ -23,7 +23,14 @@ export function SearchField({ className, ...props }: Omit<ComponentProps<"input"
         className,
       )}
     >
-      <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        className="size-4 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        aria-hidden="true"
+      >
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.5-3.5" strokeLinecap="round" />
       </svg>
@@ -36,8 +43,41 @@ export function SearchField({ className, ...props }: Omit<ComponentProps<"input"
   );
 }
 
-export function Textarea({ className, rows = 3, ...props }: ComponentProps<"textarea">) {
-  return <textarea rows={rows} className={cn(fieldClass, "resize-y py-2.5", className)} {...props} />;
+interface TextareaProps extends ComponentProps<"textarea"> {
+  /** Grows with its text instead of scrolling, from `rows` lines up. */
+  autoGrow?: boolean;
+}
+
+export function Textarea({ className, rows = 3, autoGrow = false, ref, ...props }: TextareaProps) {
+  const own = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    const el = own.current;
+    if (!autoGrow || !el) return;
+    const fit = () => {
+      el.style.height = "auto";
+      // scrollHeight leaves out the border, which a border-box height includes
+      el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+    };
+    fit();
+    // The same text wraps onto more lines when the field narrows (rotating the phone, opening the sidebar)
+    const observer = new ResizeObserver(fit);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [autoGrow, props.value]);
+
+  return (
+    <textarea
+      ref={(el) => {
+        own.current = el;
+        if (typeof ref === "function") ref(el);
+        else if (ref) ref.current = el;
+      }}
+      rows={rows}
+      className={cn(fieldClass, autoGrow ? "resize-none overflow-hidden" : "resize-y", "py-2.5", className)}
+      {...props}
+    />
+  );
 }
 
 export function Checkbox({ className, ...props }: Omit<ComponentProps<"input">, "type">) {
