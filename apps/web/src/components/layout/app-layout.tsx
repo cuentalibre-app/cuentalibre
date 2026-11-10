@@ -29,7 +29,7 @@ export function AppLayout() {
           Saltar al contenido
         </a>
         <Sidebar className="hidden lg:flex" collapsed={collapsed} onToggle={toggleSidebar} />
-        <main id="main" className="min-w-0 flex-1 pb-24 lg:pb-0">
+        <main id="main" className="min-w-0 flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-0">
           {/* Keyed by path so each page plays its entrance; query changes (e.g. ?periodo) don't */}
           <div key={pathname} className="animate-page-in">
             <Outlet />

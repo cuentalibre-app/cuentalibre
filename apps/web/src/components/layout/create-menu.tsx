@@ -18,6 +18,9 @@ interface CreateMenuProps {
   contentClassName?: string;
   /** Also open after a short hover, as in the collapsed sidebar rail. */
   openOnHover?: boolean;
+  /** Controls the menu from outside, e.g. the tab bar opening it when a drag ends on its tab. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /** Quick "create anything" menu, shared by the sidebar and the mobile tab bar. */
@@ -27,9 +30,13 @@ export function CreateMenu({
   align = "start",
   contentClassName,
   openOnHover = false,
+  ...controlled
 }: CreateMenuProps) {
   const navigate = useNavigate();
-  const { open, onOpenChange, triggerProps, contentProps } = useHoverMenu();
+  const hover = useHoverMenu();
+  const { triggerProps, contentProps } = hover;
+  const open = controlled.open ?? hover.open;
+  const onOpenChange = controlled.onOpenChange ?? hover.onOpenChange;
 
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={openOnHover ? false : undefined}>
