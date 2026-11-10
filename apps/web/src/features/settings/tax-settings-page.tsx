@@ -82,6 +82,22 @@ function ActivitiesTable({
       .find((o) => o.value === code)
       ?.label.replace(/^\S+ - /, "") ?? code;
 
+  const rowActions = (a: EconomicActivity, i: number) => (
+    <span className="flex shrink-0 justify-end gap-0.5">
+      <IconAction action={{ label: "Subir", icon: ArrowUp, run: i > 0 ? () => move(i, -1) : undefined }} />
+      <IconAction
+        action={{ label: "Bajar", icon: ArrowDown, run: i < activities.length - 1 ? () => move(i, 1) : undefined }}
+      />
+      <IconAction action={{ label: "Eliminar", icon: Trash2, run: () => setRemoving(a) }} />
+    </span>
+  );
+  const principal = (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+      <Star className="size-3.5 fill-current" aria-hidden="true" />
+      Principal
+    </span>
+  );
+
   return (
     <>
       <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm text-muted-foreground">
@@ -96,64 +112,66 @@ function ActivitiesTable({
           Añade al menos tu actividad principal.
         </p>
       ) : (
-        <div className="relative overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[40rem] border-collapse text-sm">
-            <thead>
-              <tr className={table.headRow}>
-                <th scope="col" className={table.th}>
-                  Orden
-                </th>
-                <th scope="col" className={table.th}>
-                  Tipo
-                </th>
-                <th scope="col" className={table.th}>
-                  Epígrafe
-                </th>
-                <th scope="col" className={cn(table.th, "w-0 text-right")}>
-                  <span className="sr-only">Operaciones</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {activities.map((a, i) => (
-                <tr key={a.id} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
-                  <td className={cn(table.td, "whitespace-nowrap")}>
-                    <span className="inline-flex items-center gap-2">
-                      <span className="amount">{i + 1}</span>
-                      {i === 0 && (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                          <Star className="size-3.5 fill-current" aria-hidden="true" />
-                          Principal
-                        </span>
-                      )}
+        <>
+          <ol className="m-0 flex list-none flex-col rounded-lg border border-border px-3 py-0 md:hidden">
+            {activities.map((a, i) => (
+              <li key={a.id} className="flex items-center gap-2 border-t border-divider py-2.5 first:border-t-0">
+                <span className="w-5 shrink-0 amount text-muted-foreground">{i + 1}</span>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm">
+                  {i === 0 && principal}
+                  {(a.code || a.name) && (
+                    <span>
+                      {a.code && <span className="text-muted-foreground tabular-nums">{a.code}</span>} {a.name}
                     </span>
-                  </td>
-                  <td className={table.td}>
-                    <span className="text-muted-foreground tabular-nums">{a.type}</span> {typeLabel(a.type)}
-                  </td>
-                  <td className={table.td}>
-                    {a.code && <span className="text-muted-foreground tabular-nums">{a.code}</span>} {a.name}
-                  </td>
-                  <td className={cn(table.td, "whitespace-nowrap")}>
-                    <span className="flex justify-end gap-0.5">
-                      <IconAction
-                        action={{ label: "Subir", icon: ArrowUp, run: i > 0 ? () => move(i, -1) : undefined }}
-                      />
-                      <IconAction
-                        action={{
-                          label: "Bajar",
-                          icon: ArrowDown,
-                          run: i < activities.length - 1 ? () => move(i, 1) : undefined,
-                        }}
-                      />
-                      <IconAction action={{ label: "Eliminar", icon: Trash2, run: () => setRemoving(a) }} />
-                    </span>
-                  </td>
+                  )}
+                  <span className="text-muted-foreground">
+                    <span className="tabular-nums">{a.type}</span> {typeLabel(a.type)}
+                  </span>
+                </div>
+                {rowActions(a, i)}
+              </li>
+            ))}
+          </ol>
+          <div className="relative overflow-x-auto rounded-lg border border-border max-md:hidden">
+            <table className="w-full min-w-[40rem] border-collapse text-sm">
+              <thead>
+                <tr className={table.headRow}>
+                  <th scope="col" className={table.th}>
+                    Orden
+                  </th>
+                  <th scope="col" className={table.th}>
+                    Tipo
+                  </th>
+                  <th scope="col" className={table.th}>
+                    Epígrafe
+                  </th>
+                  <th scope="col" className={cn(table.th, "w-0 text-right")}>
+                    <span className="sr-only">Operaciones</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {activities.map((a, i) => (
+                  <tr key={a.id} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
+                    <td className={cn(table.td, "whitespace-nowrap")}>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="amount">{i + 1}</span>
+                        {i === 0 && principal}
+                      </span>
+                    </td>
+                    <td className={table.td}>
+                      <span className="text-muted-foreground tabular-nums">{a.type}</span> {typeLabel(a.type)}
+                    </td>
+                    <td className={table.td}>
+                      {a.code && <span className="text-muted-foreground tabular-nums">{a.code}</span>} {a.name}
+                    </td>
+                    <td className={cn(table.td, "whitespace-nowrap")}>{rowActions(a, i)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
       <Button variant="secondary" className="self-start" onClick={() => setAdding(true)}>
         <Plus aria-hidden="true" />

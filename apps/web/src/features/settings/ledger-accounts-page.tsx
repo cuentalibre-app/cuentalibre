@@ -207,6 +207,7 @@ export function LedgerAccountsPage() {
               />
             )}
             label={(row) => row.prefix}
+            inline
           />
         </Section>
 
@@ -249,9 +250,12 @@ export function LedgerAccountsPage() {
 function AccountGroups({
   label,
   render,
+  inline = false,
 }: {
   label: (row: AccountRow) => ReactNode;
   render: (row: AccountRow) => ReactNode;
+  /** Label and field on one row on phones too, for narrow fields. */
+  inline?: boolean;
 }) {
   return (
     <div className="grid gap-x-8 gap-y-5 lg:grid-cols-2">
@@ -261,7 +265,10 @@ function AccountGroups({
           {g.rows.map((row) => (
             <div
               key={row.key}
-              className="flex flex-col gap-1.5 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+              className={cn(
+                "sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4",
+                inline ? "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3" : "flex flex-col gap-1.5",
+              )}
             >
               <span className="text-sm">{label(row)}</span>
               {render(row)}
@@ -449,33 +456,50 @@ function CodesTable({
 }) {
   if (rows.length === 0) return <p className="m-0 text-sm text-muted-foreground">{empty}</p>;
   return (
-    <div className="max-h-[28rem] overflow-auto rounded-lg border border-border">
-      <table className="w-full min-w-[34rem] border-collapse">
-        <thead className="sticky top-0 z-10">
-          <tr className={table.headRow}>
-            {heads.map((h) => (
-              <th key={h} scope="col" className={table.th}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr
-              key={r.id}
-              className={cn(table.row, "animate-row-in")}
-              style={{ "--i": Math.min(i, 12) } as CSSProperties}
-            >
-              {r.cells.map((cell, j) => (
-                <td key={j} className={cn(table.td, "align-middle")}>
-                  {cell}
-                </td>
+    <>
+      {/* Phones: name and type above, code and resulting account below */}
+      <ul className="m-0 flex max-h-[28rem] list-none flex-col overflow-y-auto rounded-lg border border-border px-3 py-0 md:hidden">
+        {rows.map((r) => (
+          <li key={r.id} className="flex flex-col gap-2 border-t border-divider py-2.5 first:border-t-0">
+            <span className="flex min-w-0 items-baseline justify-between gap-3">
+              <span className="min-w-0">{r.cells[0]}</span>
+              <span className="shrink-0 text-muted-foreground">{r.cells[1]}</span>
+            </span>
+            <span className="flex items-center gap-3">
+              {r.cells[2]}
+              {r.cells[3]}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="relative max-h-[28rem] overflow-auto rounded-lg border border-border max-md:hidden">
+        <table className="w-full min-w-[34rem] border-collapse">
+          <thead className="sticky top-0 z-10">
+            <tr className={table.headRow}>
+              {heads.map((h) => (
+                <th key={h} scope="col" className={table.th}>
+                  {h}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr
+                key={r.id}
+                className={cn(table.row, "animate-row-in")}
+                style={{ "--i": Math.min(i, 12) } as CSSProperties}
+              >
+                {r.cells.map((cell, j) => (
+                  <td key={j} className={cn(table.td, "align-middle")}>
+                    {cell}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
