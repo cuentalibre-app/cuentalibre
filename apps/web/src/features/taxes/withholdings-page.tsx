@@ -32,7 +32,7 @@ import {
   type ResultSummary,
 } from "./tax-form";
 import { COUNT_BOXES_111, LAYOUT_111, modelPath, ONLY_RECORDED, quarterOf, WITHHOLDINGS_PATH } from "./taxes-model";
-import { ModuleBreadcrumb } from "./tax-intro";
+import { ModuleBreadcrumb, TaxesBackLink } from "./tax-intro";
 
 const KEY_LABEL = { F: "Rendimientos del trabajo (cursos, conferencias)", G: "Actividades profesionales" };
 
@@ -240,7 +240,9 @@ export function WithholdingsPage() {
       <Page>
         <PageHeader
           eyebrow={<ModuleBreadcrumb module="withholdings" form={annual ? "190" : "111"} />}
+          back={<TaxesBackLink />}
           title="Retenciones"
+          descriptionClassName="max-lg:hidden"
           description={
             annual
               ? "Modelo 190: resumen anual de las retenciones practicadas, perceptor por perceptor."

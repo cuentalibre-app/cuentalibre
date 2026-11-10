@@ -3,7 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { Calculator, ChevronRight } from "lucide-react";
 import type { Period } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { Page, PageHeader } from "@/components/page";
+import { BackLink, Page, PageHeader } from "@/components/page";
 import { usePeriod } from "@/lib/use-period";
 import { FACTS, FormFactsList } from "./form-info";
 import {
@@ -93,6 +93,7 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
       <PageHeader
         title={title}
         eyebrow={<Breadcrumb items={[{ label: "Impuestos", to: TAXES_PATH }]} />}
+        back={<TaxesBackLink />}
         actions={forms.map((f) => (
           <Link
             key={f.code}
@@ -123,7 +124,7 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
 
 function Breadcrumb({ items }: { items: { label: string; to?: string }[] }) {
   return (
-    <nav aria-label="Migas de pan">
+    <nav aria-label="Migas de pan" className="max-lg:hidden">
       <ol className="m-0 flex list-none flex-wrap items-center gap-1 p-0 text-sm text-muted-foreground">
         {items.map((item, i) => (
           <li key={item.label} className="flex items-center gap-1">
@@ -142,7 +143,12 @@ function Breadcrumb({ items }: { items: { label: string; to?: string }[] }) {
   );
 }
 
-/** Above a calculation's title: back to the module's intro. */
+/** On phones, where the breadcrumb is hidden: one arrow back to the taxes overview. */
+export function TaxesBackLink() {
+  return <BackLink to={TAXES_PATH} label="Volver a impuestos" className="shrink-0 lg:hidden" />;
+}
+
+/** Above a calculation's title on desktop: back to the module's intro. */
 export function ModuleBreadcrumb({ module, form }: { module: TaxModuleKey; form: FormCode }) {
   const { title, path } = TAX_MODULES[module];
   return (

@@ -41,7 +41,7 @@ import {
 import { recordBooksFile } from "./record-books";
 import { ACTIVITY_SCOPE, answers100, LAYOUT_130, layout100, ONLY_RECORDED, quarterOf } from "./taxes-model";
 import { FormInfo } from "./form-info";
-import { ModuleBreadcrumb } from "./tax-intro";
+import { ModuleBreadcrumb, TaxesBackLink } from "./tax-intro";
 
 /** Documents from January to the end of `lastMonth` (0-based) of a year. */
 function useIncomeDocuments(year: number, lastMonth: number): DocumentGroup[] {
@@ -300,7 +300,9 @@ export function IncomeTaxPage() {
       <Page>
         <PageHeader
           eyebrow={<ModuleBreadcrumb module="incomeTax" form={annual ? "100" : "130"} />}
+          back={<TaxesBackLink />}
           title="IRPF"
+          descriptionClassName="max-lg:hidden"
           description={
             annual
               ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."

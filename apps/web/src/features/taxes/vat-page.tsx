@@ -60,7 +60,7 @@ import {
   VAT_PATH,
 } from "./taxes-model";
 import { FormInfo } from "./form-info";
-import { ModuleBreadcrumb } from "./tax-intro";
+import { ModuleBreadcrumb, TaxesBackLink } from "./tax-intro";
 
 const SALES_OPERATION = new Map(OPERATION_TYPES.map((o) => [o.value, o.label]));
 const PURCHASE_OPERATION = new Map(PURCHASE_OPERATION_TYPES.map((o) => [o.value, o.label]));
@@ -405,7 +405,9 @@ export function VatPage() {
       <Page>
         <PageHeader
           eyebrow={<ModuleBreadcrumb module="vat" form={annual ? "390" : "303"} />}
+          back={<TaxesBackLink />}
           title="IVA"
+          descriptionClassName="max-lg:hidden"
           description={
             annual
               ? "Modelo 390: resumen anual del IVA repercutido y soportado. Es informativo."

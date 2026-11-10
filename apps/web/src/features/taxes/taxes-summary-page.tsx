@@ -1,4 +1,4 @@
-import { useMemo, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router";
 import { Calendar, CalendarDays, ChevronDown, ChevronRight, Settings } from "lucide-react";
 import {
@@ -188,8 +188,35 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
       total: cents(Math.max(0, v) + i),
       deadline: filingDeadline(year, quarter),
       current: status === "open" || status === "inProgress",
+      closed: status === "closed",
     };
   });
+  // Quarters past their deadline start folded away, unless the whole year is past and nothing else would show
+  const closedCount = rows.filter((r) => r.closed).length;
+  const canFold = closedCount > 0 && closedCount < rows.length;
+  const [showClosed, setShowClosed] = useState(false);
+  const shown = canFold && !showClosed ? rows.filter((r) => !r.closed) : rows;
+  const closedRows = rows.filter((r) => r.closed);
+  const closedSum = {
+    vat: sumBy(closedRows, (r) => cents(Math.max(0, r.vat))),
+    irpf: sumBy(closedRows, (r) => r.irpf),
+    total: sumBy(closedRows, (r) => r.total),
+  };
+  const closedLabel = closedCount === 1 ? "1 trimestre cerrado" : `${closedCount} trimestres cerrados`;
+  const firstClosed = closedRows[0]?.quarter ?? 1;
+  const lastClosed = closedRows.at(-1)?.quarter ?? 1;
+  const closedRange = `${periodRange({ year, quarter: firstClosed }).split(" – ")[0]} – ${periodRange({ year, quarter: lastClosed }).split(" – ")[1]}`;
+  const closedName = firstClosed === lastClosed ? `T${firstClosed}` : `T${firstClosed} – T${lastClosed}`;
+  const toggleClosed = () => setShowClosed((v) => !v);
+  const chevron = (
+    <ChevronDown
+      className={cn(
+        "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+        showClosed && "rotate-180",
+      )}
+      aria-hidden="true"
+    />
+  );
   const totals = {
     vat: sumBy(rows, (r) => cents(Math.max(0, r.vat))),
     irpf: sumBy(rows, (r) => r.irpf),
@@ -232,7 +259,41 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
+            {canFold && (
+              <tr
+                onClick={toggleClosed}
+                className={cn(table.row, "cursor-pointer text-muted-foreground hover:bg-accent")}
+              >
+                <td className={td}>
+                  <button
+                    type="button"
+                    aria-expanded={showClosed}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleClosed();
+                    }}
+                    className="cursor-pointer border-0 bg-transparent p-0 text-left text-foreground"
+                  >
+                    <span>
+                      <span className="font-semibold">{closedName}</span>{" "}
+                      <span className="text-sm text-muted-foreground">{closedRange}</span>
+                    </span>
+                  </button>
+                </td>
+                <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.vat)}</td>
+                <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.irpf)}</td>
+                <td className={cn(td, "text-right amount font-semibold text-foreground")}>
+                  {formatEUR(closedSum.total)}
+                </td>
+                <td className={td}>
+                  <span className="flex items-center justify-between gap-3">
+                    {closedLabel}
+                    {chevron}
+                  </span>
+                </td>
+              </tr>
+            )}
+            {shown.map((r, i) => (
               <tr
                 key={r.quarter}
                 className={cn(table.row, "animate-row-in", r.current && "bg-primary-soft/40")}
@@ -278,7 +339,29 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
       </div>
 
       <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:hidden">
-        {rows.map((r) => (
+        {canFold && (
+          <li>
+            <button
+              type="button"
+              aria-expanded={showClosed}
+              onClick={toggleClosed}
+              className="flex w-full cursor-pointer flex-col gap-1 surface p-4 text-left text-foreground transition-[background-color,scale] duration-150 active:scale-[0.99] pointer-fine:hover:bg-accent"
+            >
+              <span className="flex w-full items-center justify-between gap-3">
+                <span>
+                  <span className="font-semibold">{closedName}</span>{" "}
+                  <span className="text-sm text-muted-foreground">{closedRange}</span>
+                </span>
+                {chevron}
+              </span>
+              <span className="flex w-full justify-between text-sm">
+                <span className="text-muted-foreground">{closedLabel}</span>
+                <span className="amount font-semibold">{formatEUR(closedSum.total)}</span>
+              </span>
+            </button>
+          </li>
+        )}
+        {shown.map((r) => (
           <li
             key={r.quarter}
             className={cn("flex flex-col gap-3 surface p-4", r.current && "border-primary/40 bg-primary-soft/40")}
@@ -290,21 +373,34 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
               </span>
               <QuarterStatus year={year} quarter={r.quarter} today={today} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                to={modelPath(VAT_PATH, { year, quarter: r.quarter })}
-                className="flex flex-col gap-0.5 rounded-lg bg-muted px-3 py-2 text-foreground no-underline active:scale-[0.98]"
-              >
-                <span className="text-xs text-muted-foreground">IVA (303)</span>
-                <VatAmount amount={r.vat} />
-              </Link>
-              <Link
-                to={modelPath(INCOME_TAX_PATH, { year, quarter: r.quarter })}
-                className="flex flex-col gap-0.5 rounded-lg bg-muted px-3 py-2 text-foreground no-underline active:scale-[0.98]"
-              >
-                <span className="text-xs text-muted-foreground">IRPF (130)</span>
-                <span className="amount">{formatEUR(r.irpf)}</span>
-              </Link>
+            <div className="-mx-4 border-y border-divider">
+              {[
+                {
+                  code: "303",
+                  name: "IVA",
+                  to: modelPath(VAT_PATH, { year, quarter: r.quarter }),
+                  amount: <VatAmount amount={r.vat} />,
+                },
+                {
+                  code: "130",
+                  name: "IRPF",
+                  to: modelPath(INCOME_TAX_PATH, { year, quarter: r.quarter }),
+                  amount: (
+                    <span className={cn("amount", r.irpf === 0 && "text-muted-foreground")}>{formatEUR(r.irpf)}</span>
+                  ),
+                },
+              ].map((m) => (
+                <Link
+                  key={m.code}
+                  to={m.to}
+                  className="flex min-h-12 items-center gap-3 border-divider px-4 py-2 text-foreground no-underline transition-opacity duration-150 not-first:border-t active:opacity-60"
+                >
+                  <FormCode code={m.code} />
+                  <span className="flex-1 font-medium">{m.name}</span>
+                  {m.amount}
+                  <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+                </Link>
+              ))}
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Hasta el {formatDate(toIsoDate(r.deadline))}</span>
@@ -437,6 +533,9 @@ function OtherForms({ year }: { year: number }) {
       applies: inUse.intraEu,
     },
   ].sort((a, b) => Number(b.applies) - Number(a.applies));
+  const unused = forms.filter((f) => !f.applies).length;
+  const [showUnused, setShowUnused] = useState(false);
+  const shownForms = showUnused ? forms : forms.filter((f) => f.applies);
 
   return (
     <section
@@ -446,7 +545,7 @@ function OtherForms({ year }: { year: number }) {
     >
       <SectionTitle id="other-forms-title">Retenciones e informativas</SectionTitle>
       <ul className="m-0 list-none overflow-hidden surface p-0">
-        {forms.map((f) => {
+        {shownForms.map((f) => {
           const [quarterly, yearly] = f.codes;
           return (
             <li
@@ -500,6 +599,26 @@ function OtherForms({ year }: { year: number }) {
             </li>
           );
         })}
+        {unused > 0 && (
+          <li className="border-b border-divider last:border-b-0">
+            <button
+              type="button"
+              aria-expanded={showUnused}
+              onClick={() => setShowUnused((v) => !v)}
+              className="flex w-full cursor-pointer items-center justify-between gap-3 border-0 bg-transparent px-5 py-3.5 text-left text-muted-foreground transition-colors duration-150 pointer-fine:hover:bg-accent pointer-fine:hover:text-foreground"
+            >
+              {showUnused
+                ? "Ocultar los que no te afectan"
+                : unused === 1
+                  ? `1 modelo no te afecta en ${year}`
+                  : `${unused} modelos no te afectan en ${year}`}
+              <ChevronDown
+                className={cn("size-4 shrink-0 transition-transform duration-200", showUnused && "rotate-180")}
+                aria-hidden="true"
+              />
+            </button>
+          </li>
+        )}
       </ul>
     </section>
   );
@@ -539,24 +658,25 @@ export function TaxesSummaryPage() {
       <Page>
         <PageHeader
           title="Impuestos"
+          descriptionClassName="max-lg:hidden"
           description="Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT."
           actionsClassName="max-lg:w-full"
           actions={
             <nav aria-label="Atajos de impuestos" className="flex flex-1 gap-2.5 *:max-lg:flex-1">
-              <Link
-                to={CALENDAR_PATH}
-                className={buttonVariants({ variant: "secondary" })}
-              >
+              <Link to={CALENDAR_PATH} className={buttonVariants({ variant: "secondary" })}>
                 <CalendarDays strokeWidth={1.8} aria-hidden="true" />
                 Calendario fiscal
               </Link>
               <SettingsLink
                 from="Impuestos"
                 to={TAX_SETTINGS_PATH}
+                aria-label="Configurar impuestos"
                 className={buttonVariants({ variant: "secondary" })}
               >
                 <Settings strokeWidth={1.8} aria-hidden="true" />
-                Configurar impuestos
+                <span>
+                  Configurar<span className="max-sm:hidden"> impuestos</span>
+                </span>
               </SettingsLink>
             </nav>
           }
