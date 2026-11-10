@@ -386,6 +386,7 @@ function ContactForm({
                 attachments={draft.attachments}
                 onChange={(a) => set("attachments", a)}
                 label="Documentos adjuntos"
+                pickLabel="Adjuntar documentos"
                 prompt="Arrastra aquí contratos, mandatos SEPA u otros documentos"
                 note={filesAreStored() ? "Cualquier tipo de archivo." : "Se guardan solo en esta sesión."}
                 accept=""

@@ -91,7 +91,7 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
         else p.set("pestana", value);
         return p;
       },
-      { replace: true },
+      { replace: true, preventScrollReset: true },
     );
 
   return (
@@ -171,6 +171,7 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
               attachments={contact.attachments ?? []}
               onChange={(a) => contactsStore.update(role, contact.id, { attachments: a.length ? a : undefined })}
               label="Documentos adjuntos"
+              pickLabel="Adjuntar documentos"
               prompt="Arrastra aquí contratos, mandatos SEPA u otros documentos"
               note={filesAreStored() ? "Cualquier tipo de archivo." : "Se guardan solo en esta sesión."}
               accept=""

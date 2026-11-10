@@ -34,7 +34,7 @@ export function ImportPage() {
   const [imported, setImported] = useState<{ kind: ImportKind; count: number; contacts: number } | null>(null);
 
   const setKind = (next: ImportKind) => {
-    setParams({ tipo: IMPORT_KINDS[next].param }, { replace: true });
+    setParams({ tipo: IMPORT_KINDS[next].param }, { replace: true, preventScrollReset: true });
     setPreview(null);
     setError(null);
   };
@@ -88,9 +88,8 @@ export function ImportPage() {
           <Info className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.8} aria-hidden="true" />
           <p className="m-0">
             Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, descarga la
-            plantilla si no la tienes, arrastra el archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que
-            se va a importar antes de confirmarlo. Las facturas con varios conceptos ocupan una fila por concepto con el
-            mismo número.
+            plantilla si no la tienes, sube el archivo y pulsa <strong>Continuar</strong>: verás lo que se va a importar
+            antes de confirmarlo. Las facturas con varios conceptos ocupan una fila por concepto con el mismo número.
           </p>
         </div>
 
@@ -201,12 +200,14 @@ export function DropZone({ file, onPick }: { file: File | null; onPick: (file: F
       ) : (
         <>
           <Upload className="size-6 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+          {/* Phones have nothing to drag from: just the button to pick the file */}
           <p className="m-0">
-            Arrastra aquí el archivo a importar o{" "}
+            <span className="max-lg:hidden">Arrastra aquí el archivo a importar o </span>
             <Button variant="link" onClick={() => input.current?.click()}>
-              haz clic para buscarlo
+              <span className="max-lg:hidden">haz clic para buscarlo</span>
+              <span className="lg:hidden">Elige el archivo a importar</span>
             </Button>
-            .
+            <span className="max-lg:hidden">.</span>
           </p>
           <p className="m-0 text-xs text-muted-foreground">
             Excel (.xlsx) o CSV. Los .xls antiguos hay que guardarlos antes como .xlsx.

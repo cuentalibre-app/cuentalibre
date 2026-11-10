@@ -77,7 +77,15 @@ import {
   toLines,
   type LineDraft,
 } from "./document-editor";
-import { CLIENT_DEFAULT, CheckField, Field, GroupedSelect, LocaleFields, Section } from "./form-fields";
+import {
+  CLIENT_DEFAULT,
+  CheckField,
+  Field,
+  GroupedSelect,
+  LocaleFields,
+  Section,
+  SectionsAtAGlance,
+} from "./form-fields";
 import { defaultNumberFormat } from "./invoice-locale";
 import { documentSettingsStore, invoiceSettingsStore, useInvoiceSettings } from "./invoice-settings";
 import {
@@ -278,15 +286,17 @@ export function SalesFormPage({ kind: routeKind }: { kind: SalesKind }) {
 
   const source = !existing ? salesStore.get(params.get("desde") ?? "") : undefined;
   return (
-    <SalesForm
-      // A new ?desde= starts over
-      key={existing?.id ?? source?.id ?? "new"}
-      kind={existing?.kind ?? routeKind}
-      existing={existing}
-      source={source}
-      rectify={params.get("rectificar") === "1"}
-      presetClient={!existing && !source ? contactsStore.get("client", params.get("cliente") ?? "") : undefined}
-    />
+    <SectionsAtAGlance when={Boolean(existing)}>
+      <SalesForm
+        // A new ?desde= starts over
+        key={existing?.id ?? source?.id ?? "new"}
+        kind={existing?.kind ?? routeKind}
+        existing={existing}
+        source={source}
+        rectify={params.get("rectificar") === "1"}
+        presetClient={!existing && !source ? contactsStore.get("client", params.get("cliente") ?? "") : undefined}
+      />
+    </SectionsAtAGlance>
   );
 }
 

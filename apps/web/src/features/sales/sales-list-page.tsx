@@ -11,7 +11,6 @@ import {
   FileCode2,
   FileDown,
   FileX2,
-  Filter,
   Mail,
   Paperclip,
   Pencil,
@@ -77,7 +76,17 @@ import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./doc
 import { IssuerDialog } from "./issuer-dialog";
 import { AttachmentsDialog } from "@/features/purchases/form-parts";
 import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
-import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, downloadCsv, type Action } from "./list-parts";
+import {
+  ActionsMenu,
+  EmptyState,
+  ExportMenu,
+  FiltersButton,
+  IconAction,
+  MoreActionsTrigger,
+  SortHeader,
+  downloadCsv,
+  type Action,
+} from "./list-parts";
 import { salesStore, useSalesDocuments } from "./sales-store";
 
 const ALL = "all";
@@ -201,6 +210,40 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   );
   const exportName = `${config.title} ${periodCode(period)}`.toLowerCase().replaceAll(" ", "-");
   const [exporting, setExporting] = useState(false);
+  const downloadCsvFile = () => exportCsv(rows, exportName);
+  const downloadPdfs = async () => {
+    setExporting(true);
+    try {
+      const { downloadPdfZip } = await import("./sales-pdf");
+      downloadPdfZip(
+        rows.map((r) => r.doc),
+        exportName,
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
+  const canExport = rows.length > 0;
+  // On phones the status sits in the filter panel, so the toolbar fits on one line
+  const statusFilter = config.statuses.length > 0 && (
+    <Select value={status} onValueChange={setStatus}>
+      <SelectTrigger aria-label="Filtrar por estado" className="min-w-44">
+        <span className="flex-1 text-left">
+          <SelectValue />
+        </span>
+        <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={ALL}>Todos los estados</SelectItem>
+        {defaults && <SelectItem value={OPEN}>Pendientes</SelectItem>}
+        {config.statuses.map((s) => (
+          <SelectItem key={s} value={s}>
+            {STATUS[s].label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
   return (
     <Page>
@@ -208,6 +251,16 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         title={config.title}
         actions={
           <>
+            <ExportMenu
+              actions={[
+                { label: "Descargar CSV", icon: Download, run: canExport ? downloadCsvFile : undefined },
+                {
+                  label: `Descargar ${rows.length} PDF (.zip)`,
+                  icon: FileArchive,
+                  run: canExport && !exporting ? downloadPdfs : undefined,
+                },
+              ]}
+            />
             <SettingsLink
               to={SETTINGS_PATHS[kind]}
               from={config.title.toLowerCase()}
@@ -239,26 +292,9 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             placeholder="Buscar por número, cliente o NIF"
             aria-label="Buscar"
           />
-          {config.statuses.length > 0 && (
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger aria-label="Filtrar por estado" className="min-w-44">
-                <span className="flex-1 text-left">
-                  <SelectValue />
-                </span>
-                <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Todos los estados</SelectItem>
-                {defaults && <SelectItem value={OPEN}>Pendientes</SelectItem>}
-                {config.statuses.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {STATUS[s].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          {statusFilter && <div className="max-lg:hidden">{statusFilter}</div>}
           <PeriodSelect
+            compact
             value={period}
             onChange={(p) => {
               setPeriod(p);
@@ -290,46 +326,29 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
             </SettingsLink>
           )}
+          <FiltersButton
+            open={showFilters}
+            controls="sales-filters"
+            count={extraFilters}
+            phoneCount={extraFilters + (statusFilter && status !== ALL ? 1 : 0)}
+            onToggle={() => setShowFilters((s) => !s)}
+          />
           <Button
             variant="secondary"
-            aria-expanded={showFilters}
-            aria-controls="sales-filters"
-            onClick={() => setShowFilters((s) => !s)}
-          >
-            <Filter strokeWidth={1.8} aria-hidden="true" />
-            Filtros
-            {extraFilters > 0 && (
-              <span className="flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
-                {extraFilters}
-              </span>
-            )}
-          </Button>
-          <Button
-            variant="secondary"
-            className="lg:ml-auto"
-            disabled={rows.length === 0}
-            onClick={() => exportCsv(rows, exportName)}
+            className="max-lg:hidden lg:ml-auto"
+            disabled={!canExport}
+            onClick={downloadCsvFile}
           >
             <Download strokeWidth={1.8} aria-hidden="true" />
             CSV
           </Button>
           <Button
             variant="secondary"
-            disabled={rows.length === 0 || exporting}
+            className="max-lg:hidden"
+            disabled={!canExport || exporting}
             aria-label={`Descargar ${rows.length} PDF en un .zip`}
             title="Un PDF por documento, en un .zip"
-            onClick={async () => {
-              setExporting(true);
-              try {
-                const { downloadPdfZip } = await import("./sales-pdf");
-                downloadPdfZip(
-                  rows.map((r) => r.doc),
-                  exportName,
-                );
-              } finally {
-                setExporting(false);
-              }
-            }}
+            onClick={downloadPdfs}
           >
             <FileArchive strokeWidth={1.8} aria-hidden="true" />
             PDF (.zip)
@@ -338,6 +357,14 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
 
         {showFilters && (
           <FiltersPanel
+            lead={
+              statusFilter && (
+                <div className="flex min-w-0 flex-col gap-1 lg:hidden">
+                  <span className="text-xs font-medium text-muted-foreground">Estado</span>
+                  {statusFilter}
+                </div>
+              )
+            }
             filters={filters}
             // Within the current month only that month can be picked
             months={thisMonth ? [today.getMonth()] : periodMonths(period)}
@@ -377,6 +404,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
 }
 
 function FiltersPanel({
+  lead,
   filters,
   months,
   clients,
@@ -385,6 +413,8 @@ function FiltersPanel({
   onChange,
   onClear,
 }: {
+  /** Phones: the filters the toolbar has no room for, before the rest. */
+  lead?: ReactNode;
   filters: Filters;
   months: number[];
   /** Clients of the period's documents, as [key, name]. */
@@ -405,6 +435,7 @@ function FiltersPanel({
         incomeTypes ? "lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]" : "lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]",
       )}
     >
+      {lead}
       <label className="flex min-w-0 flex-col gap-1">
         <span className={label}>Cliente</span>
         <GroupedSelect
@@ -518,8 +549,9 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
         ),
     },
   ];
+  // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 grid animate-rise-in grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+    <dl className="m-0 hidden animate-rise-in gap-4 lg:grid lg:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
           <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
@@ -921,10 +953,7 @@ function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }
       <IconAction action={attach} badge={attachments} />
       <IconAction action={pdf} />
       {primary ? <IconAction action={primary} /> : <span className="size-8" aria-hidden="true" />}
-      <ActionsMenu
-        groups={groups}
-        trigger={<MoreActionsTrigger label={`Más acciones de ${label}`} tooltip />}
-      />
+      <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Más acciones de ${label}`} tooltip />} />
     </div>
   );
 }
@@ -935,11 +964,7 @@ function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) 
   return (
     <>
       {dialogs}
-      <ActionsMenu
-        groups={groups}
-        inlineChoices
-        trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />}
-      />
+      <ActionsMenu groups={groups} inlineChoices trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />} />
     </>
   );
 }

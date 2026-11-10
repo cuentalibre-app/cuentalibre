@@ -15,7 +15,7 @@ export function SubscribedNotice() {
 
   useEffect(() => {
     if (!shown || !searchParams.has("suscripcion")) return;
-    setSearchParams({}, { replace: true });
+    setSearchParams({}, { replace: true, preventScrollReset: true });
     void refreshBilling();
   }, [shown, searchParams, setSearchParams]);
 

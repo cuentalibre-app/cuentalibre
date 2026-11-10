@@ -6,7 +6,6 @@ import {
   Download,
   FileDown,
   FileUp,
-  Filter,
   History,
   MoreHorizontal,
   Pencil,
@@ -28,7 +27,15 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { Page, PageHeader, Toolbar } from "@/components/page";
 import { GroupedSelect, Help } from "@/features/sales/form-fields";
-import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, type Action } from "@/features/sales/list-parts";
+import {
+  FiltersButton,
+  ActionsMenu,
+  EmptyState,
+  IconAction,
+  MoreActionsTrigger,
+  SortHeader,
+  type Action,
+} from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
 import { TagChips } from "@/features/settings/tag-chip";
 import { parseDecimal } from "@/lib/format";
@@ -224,20 +231,12 @@ export function CatalogListPage() {
               placeholder="Buscar por nombre, código, familia o descripción"
               aria-label="Buscar"
             />
-            <Button
-              variant="secondary"
-              aria-expanded={showFilters}
-              aria-controls="catalog-filters"
-              onClick={() => setShowFilters((s) => !s)}
-            >
-              <Filter strokeWidth={1.8} aria-hidden="true" />
-              Filtros
-              {extraFilters > 0 && (
-                <span className="flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground">
-                  {extraFilters}
-                </span>
-              )}
-            </Button>
+            <FiltersButton
+              open={showFilters}
+              controls="catalog-filters"
+              count={extraFilters}
+              onToggle={() => setShowFilters((s) => !s)}
+            />
             <Link to={CATALOG_EXPORT_PATH} className={cn(buttonVariants({ variant: "secondary" }), "lg:ml-auto")}>
               <Download strokeWidth={1.8} aria-hidden="true" />
               Exportar
@@ -667,20 +666,12 @@ function QuickActions({ product }: { product: Product }) {
     <div className="flex items-center justify-center gap-0.5">
       <IconAction action={edit} />
       <IconAction action={regularize} />
-      <ActionsMenu
-        groups={groups}
-        trigger={<MoreActionsTrigger label={`Más acciones de ${product.name}`} tooltip />}
-      />
+      <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Más acciones de ${product.name}`} tooltip />} />
     </div>
   );
 }
 
 function RowActions({ product }: { product: Product }) {
   const { groups } = useProductActions(product);
-  return (
-    <ActionsMenu
-      groups={groups}
-      trigger={<MoreActionsTrigger label={`Acciones de ${product.name}`} />}
-    />
-  );
+  return <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Acciones de ${product.name}`} />} />;
 }

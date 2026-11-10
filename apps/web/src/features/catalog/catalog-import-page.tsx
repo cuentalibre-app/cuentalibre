@@ -33,7 +33,7 @@ export function CatalogImportPage() {
   const [done, setDone] = useState<{ created: number; updated: number } | null>(null);
 
   const setKind = (next: CatalogImportKind) => {
-    setParams(next === "productsStock" ? { tipo: "stock" } : {}, { replace: true });
+    setParams(next === "productsStock" ? { tipo: "stock" } : {}, { replace: true, preventScrollReset: true });
     setPreview(null);
     setError(null);
   };
@@ -85,9 +85,9 @@ export function CatalogImportPage() {
       >
         <Notice role="note" className="animate-rise-in">
           <p className="m-0">
-            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, arrastra el
-            archivo al recuadro y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de confirmarlo.
-            Si el código de producto de una fila ya existe en tu catálogo, se actualiza ese producto.
+            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, sube el archivo
+            y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de confirmarlo. Si el código de
+            producto de una fila ya existe en tu catálogo, se actualiza ese producto.
           </p>
         </Notice>
 

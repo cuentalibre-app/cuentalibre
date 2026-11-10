@@ -10,6 +10,8 @@ interface PeriodSelectProps {
   years: number[];
   today: Date;
   className?: string;
+  /** Phones: just the code (2026-4T) and the chevron, to share a line with the search. */
+  compact?: boolean;
 }
 
 /** Newest first: each year followed by its quarters (Q4 → Q1). Future quarters are left out. */
@@ -21,7 +23,7 @@ function periodOptions(years: number[], today: Date): Period[] {
   });
 }
 
-export function PeriodSelect({ value, onChange, years, today, className }: PeriodSelectProps) {
+export function PeriodSelect({ value, onChange, years, today, className, compact = false }: PeriodSelectProps) {
   return (
     <Select
       value={periodKey(value)}
@@ -30,8 +32,15 @@ export function PeriodSelect({ value, onChange, years, today, className }: Perio
         if (next) onChange(next);
       }}
     >
-      <SelectTrigger aria-label={`Periodo: ${periodLabel(value)}`} className={cn("min-w-40", className)}>
-        <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+      <SelectTrigger
+        aria-label={`Periodo: ${periodLabel(value)}`}
+        className={cn("min-w-40", compact && "max-lg:min-w-0", className)}
+      >
+        <Calendar
+          className={cn("size-4 text-muted-foreground", compact && "max-lg:hidden")}
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
         <span className="flex-1 text-center">
           <SelectValue />
         </span>

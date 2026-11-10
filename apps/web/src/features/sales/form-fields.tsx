@@ -1,4 +1,13 @@
-import { useId, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { ChevronDown } from "lucide-react";
 import { Checkbox } from "@cuentalibre/ui/components/input";
 import {
@@ -21,6 +30,22 @@ import type { OptionGroup } from "./sales-model";
 /** Radix Select can't hold an empty value: this stands for "the client's default". */
 export const CLIENT_DEFAULT = "client";
 
+/** Whether the sections below start folded; see `SectionsAtAGlance`. */
+const FoldedContext = createContext(false);
+
+/**
+ * Opening a saved record on a phone: every section starts folded to its title, so the document
+ * reads at a glance (the totals stay outside the sections) and each part opens on a tap.
+ * New records and desktop keep the sections open, since they are there to be filled in.
+ */
+export function SectionsAtAGlance({ when, children }: { when: boolean; children: ReactNode }) {
+  // Read once, at mount: rotating the phone mid-edit shouldn't fold what the user opened
+  const [folded] = useState(
+    () => when && typeof window !== "undefined" && window.matchMedia("(width < 64rem)").matches,
+  );
+  return <FoldedContext.Provider value={folded}>{children}</FoldedContext.Provider>;
+}
+
 export function Section({
   title,
   index,
@@ -34,8 +59,14 @@ export function Section({
   defaultOpen?: boolean;
   children: ReactNode;
 }) {
-  const [open, setOpen] = useState(defaultOpen);
+  const folded = useContext(FoldedContext);
+  const [open, setOpen] = useState(defaultOpen && !folded);
   const id = useId();
+  const body = useRef<HTMLDivElement>(null);
+  // A failed save marks fields invalid: a folded section holding one opens so the error shows
+  useLayoutEffect(() => {
+    if (!open && body.current?.querySelector('[aria-invalid="true"]')) setOpen(true);
+  });
   return (
     <section
       className="flex animate-rise-in flex-col gap-4 surface p-5 text-card-foreground"
@@ -59,7 +90,7 @@ export function Section({
         </h2>
         {open && action}
       </div>
-      <div id={id} className={cn(open ? "flex" : "hidden", "flex-col gap-4")}>
+      <div ref={body} id={id} className={cn(open ? "flex" : "hidden", "flex-col gap-4")}>
         {children}
       </div>
     </section>
