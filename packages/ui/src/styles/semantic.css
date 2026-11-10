@@ -29,13 +29,7 @@
   --brand-violet: var(--violet-500);
   --brand-teal: var(--teal-600);
   --brand-gradient: linear-gradient(90deg, var(--primary) 0%, var(--brand-violet) 55%, var(--brand-teal) 100%);
-  /* Soft wash of the brand colors fixed behind the whole app, top to bottom */
   --aurora-strength: 1;
-  --aurora:
-    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 20%), transparent), transparent 70%),
-    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--brand-violet) calc(var(--aurora-strength) * 18%), transparent), transparent 70%),
-    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--brand-teal) calc(var(--aurora-strength) * 13%), transparent), transparent 70%),
-    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 15%), transparent), transparent 70%);
   /* Frosted surfaces floating over the page: the tab bar and its sheets */
   --glass: color-mix(in oklab, var(--popover) 30%, transparent);
   --glass-edge: color-mix(in oklab, var(--neutral-0) 70%, transparent);
@@ -147,4 +141,38 @@
   --chart-grid: #2a2c30;
   --chart-axis: #3a3d42;
   --chart-highlight: #1f2440;
+}
+
+/*
+ * The wash fixed behind the app, picked by the user (data-backdrop on <html>). A swatch carrying
+ * the same attribute previews its own wash with bg-aurora.
+ */
+:root,
+[data-backdrop="aurora"] {
+  /* Soft wash of the brand colors, top to bottom */
+  --aurora:
+    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 20%), transparent), transparent 70%),
+    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--brand-violet) calc(var(--aurora-strength) * 18%), transparent), transparent 70%),
+    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--brand-teal) calc(var(--aurora-strength) * 13%), transparent), transparent 70%),
+    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 15%), transparent), transparent 70%);
+}
+
+[data-backdrop="sunset"] {
+  --aurora:
+    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--amber-400) calc(var(--aurora-strength) * 22%), transparent), transparent 70%),
+    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--rose-500) calc(var(--aurora-strength) * 16%), transparent), transparent 70%),
+    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--orange-500) calc(var(--aurora-strength) * 14%), transparent), transparent 70%),
+    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--violet-500) calc(var(--aurora-strength) * 13%), transparent), transparent 70%);
+}
+
+[data-backdrop="forest"] {
+  --aurora:
+    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--green-500) calc(var(--aurora-strength) * 18%), transparent), transparent 70%),
+    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--teal-600) calc(var(--aurora-strength) * 16%), transparent), transparent 70%),
+    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--amber-400) calc(var(--aurora-strength) * 12%), transparent), transparent 70%),
+    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--green-500) calc(var(--aurora-strength) * 14%), transparent), transparent 70%);
+}
+
+[data-backdrop="plain"] {
+  --aurora: none;
 }
