@@ -88,7 +88,7 @@ export function ExpensePaymentDialog({ doc, onOpenChange }: { doc: Expense; onOp
               if (date && methodId) expensesStore.update(current.id, { payment: { date, paymentMethodId: methodId } });
             }}
           >
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-4">
               <Field label="Fecha" required>
                 {(p) => <Input {...p} type="date" required value={date} onChange={(e) => setDate(e.target.value)} />}
               </Field>
@@ -98,7 +98,7 @@ export function ExpensePaymentDialog({ doc, onOpenChange }: { doc: Expense; onOp
                   <Badge tone={status.tone}>{status.label}</Badge>
                 </span>
               </div>
-              <div className="sm:col-span-2">
+              <div className="col-span-2">
                 <Field label="Método de pago" required>
                   {(p) => (
                     <div className="flex items-center gap-2.5">
