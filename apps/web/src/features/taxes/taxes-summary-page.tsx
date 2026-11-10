@@ -22,7 +22,7 @@ import {
   type Quarter,
 } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -365,21 +365,13 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
       <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:hidden">
         {canFold && (
           <li>
-            <button
-              type="button"
-              aria-expanded={showClosed}
-              onClick={toggleClosed}
-              className="flex w-full cursor-pointer flex-col gap-1 surface p-4 text-left text-foreground transition-[background-color,scale] duration-150 active:scale-[0.99] pointer-fine:hover:bg-accent"
-            >
-              <span className="flex w-full items-center justify-between gap-3">
-                <span>
-                  <span className="font-semibold">{closedName}</span>{" "}
-                  <span className="text-sm text-muted-foreground">{closedRange}</span>
-                </span>
-                {chevron}
-              </span>
-              <span className="text-sm text-muted-foreground">{closedLabel}</span>
-            </button>
+            <Button variant="secondary" aria-expanded={showClosed} onClick={toggleClosed}>
+              <ChevronDown
+                className={cn("transition-transform duration-150", showClosed && "rotate-180")}
+                aria-hidden="true"
+              />
+              {showClosed ? "Ocultar" : "Mostrar"} trimestres cerrados ({closedCount})
+            </Button>
           </li>
         )}
         {shown.map((r) => (
@@ -558,82 +550,80 @@ function OtherForms({ year }: { year: number }) {
       style={{ "--i": 3 } as CSSProperties}
     >
       <SectionTitle id="other-forms-title">Retenciones e informativas</SectionTitle>
-      <ul className="m-0 list-none overflow-hidden surface p-0">
-        {shownForms.map((f) => {
-          const [quarterly, yearly] = f.codes;
-          return (
-            <li
-              key={f.title}
-              className="flex flex-col gap-3 border-b border-divider px-5 py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-6"
-            >
-              <div className="flex flex-1 flex-wrap items-center gap-x-2.5 gap-y-0.5">
-                <span className={cn("font-medium", !f.applies && "text-muted-foreground")}>{f.title}</span>
-                {!f.applies && (
-                  <span className="w-full text-sm text-muted-foreground sm:hidden">No te afecta en {year}</span>
-                )}
-                {f.applies && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span tabIndex={0}>
-                        <Badge tone="warning">Te afecta</Badge>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-60">Tienes documentos de {year} que lo requieren.</TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-              <div className={cn("flex flex-col sm:w-52 sm:items-end", !f.applies && "hidden sm:flex")}>
-                {f.applies ? (
-                  <>
-                    <span className="amount font-semibold">{f.figure}</span>
-                    <span className="text-xs text-muted-foreground">{f.caption}</span>
-                  </>
-                ) : (
-                  <span className="text-sm text-muted-foreground">No te afecta en {year}</span>
-                )}
-              </div>
-              <div className="flex gap-1.5 sm:w-64 sm:justify-end">
-                {quarterly && (
-                  <Link
-                    to={modelPath(f.path, quarter)}
-                    className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
-                  >
-                    Trimestral ({quarterly})
-                  </Link>
-                )}
-                {yearly && (
-                  <Link
-                    to={modelPath(f.path, { year, quarter: null })}
-                    className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
-                  >
-                    Anual ({yearly})
-                  </Link>
-                )}
-              </div>
-            </li>
-          );
-        })}
-        {unused > 0 && (
-          <li className="border-b border-divider last:border-b-0">
-            <button
-              type="button"
-              aria-expanded={showUnused}
-              onClick={() => setShowUnused((v) => !v)}
-              className="flex w-full cursor-pointer items-center justify-between gap-3 border-0 bg-transparent px-5 py-3.5 text-left text-muted-foreground transition-colors duration-150 pointer-fine:hover:bg-accent pointer-fine:hover:text-foreground"
-            >
-              {showUnused
-                ? "Ocultar los que no te afectan"
-                : unused === 1
-                  ? `1 modelo no te afecta en ${year}`
-                  : `${unused} modelos no te afectan en ${year}`}
-              <ChevronDown
-                className={cn("size-4 shrink-0 transition-transform duration-200", showUnused && "rotate-180")}
-                aria-hidden="true"
-              />
-            </button>
-          </li>
-        )}
-      </ul>
+      {shownForms.length > 0 && (
+        <ul className="m-0 list-none overflow-hidden surface p-0">
+          {shownForms.map((f) => {
+            const [quarterly, yearly] = f.codes;
+            return (
+              <li
+                key={f.title}
+                className="flex flex-col gap-3 border-b border-divider px-5 py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-6"
+              >
+                <div className="flex flex-1 flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                  <span className={cn("font-medium", !f.applies && "text-muted-foreground")}>{f.title}</span>
+                  {!f.applies && (
+                    <span className="w-full text-sm text-muted-foreground sm:hidden">No te afecta en {year}</span>
+                  )}
+                  {f.applies && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span tabIndex={0}>
+                          <Badge tone="warning">Te afecta</Badge>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-60">
+                        Tienes documentos de {year} que lo requieren.
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+                <div className={cn("flex flex-col sm:w-52 sm:items-end", !f.applies && "hidden sm:flex")}>
+                  {f.applies ? (
+                    <>
+                      <span className="amount font-semibold">{f.figure}</span>
+                      <span className="text-xs text-muted-foreground">{f.caption}</span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">No te afecta en {year}</span>
+                  )}
+                </div>
+                <div className="flex gap-1.5 sm:w-64 sm:justify-end">
+                  {quarterly && (
+                    <Link
+                      to={modelPath(f.path, quarter)}
+                      className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
+                    >
+                      Trimestral ({quarterly})
+                    </Link>
+                  )}
+                  {yearly && (
+                    <Link
+                      to={modelPath(f.path, { year, quarter: null })}
+                      className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "no-underline")}
+                    >
+                      Anual ({yearly})
+                    </Link>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {unused > 0 && (
+        <Button
+          variant="secondary"
+          className="self-start"
+          aria-expanded={showUnused}
+          onClick={() => setShowUnused((v) => !v)}
+        >
+          <ChevronDown
+            className={cn("transition-transform duration-150", showUnused && "rotate-180")}
+            aria-hidden="true"
+          />
+          {showUnused ? "Ocultar" : "Mostrar"} modelos que no te afectan ({unused})
+        </Button>
+      )}
     </section>
   );
 }
