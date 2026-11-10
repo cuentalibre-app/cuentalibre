@@ -152,23 +152,32 @@ export interface CreateAction {
   label: string;
   to: string;
   icon: LucideIcon;
-  /** Kept in the phone tab bar's menu, which lists only the everyday few. */
-  essential?: boolean;
 }
 
 /** Shortcuts in the "Crear" menu, split into documents and records. */
 export const createActions: CreateAction[][] = [
   [
-    { label: "Factura emitida", to: "/ventas/facturas/nueva", icon: ReceiptText, essential: true },
-    { label: "Factura recibida", to: "/compras/facturas/nueva", icon: Receipt, essential: true },
-    { label: "Gasto", to: "/compras/gastos/nuevo", icon: Camera, essential: true },
+    { label: "Factura emitida", to: "/ventas/facturas/nueva", icon: ReceiptText },
+    { label: "Factura recibida", to: "/compras/facturas/nueva", icon: Receipt },
+    { label: "Gasto", to: "/compras/gastos/nuevo", icon: Camera },
     { label: "Bien de inversión", to: "/compras/bienes-de-inversion/nuevo", icon: Armchair },
     { label: "Albarán", to: "/ventas/albaranes/nuevo", icon: ClipboardList },
     { label: "Presupuesto", to: "/ventas/presupuestos/nuevo", icon: FileText },
   ],
   [
-    { label: "Cliente", to: "/contactos/clientes/nuevo", icon: UserRound, essential: true },
+    { label: "Cliente", to: "/contactos/clientes/nuevo", icon: UserRound },
     { label: "Proveedor", to: "/contactos/proveedores/nuevo", icon: Building },
     { label: "Producto", to: "/catalogo/productos/nuevo", icon: Package },
   ],
+];
+
+/**
+ * The phone tab bar's middle menu: the everyday lists, one tap away. Each list has its own
+ * "Nuevo" button, so the menu opens records rather than creating them.
+ */
+export const phoneShortcuts: CreateAction[] = [
+  { label: "Facturas emitidas", to: "/ventas/facturas", icon: ReceiptText },
+  { label: "Facturas recibidas", to: "/compras/facturas", icon: Receipt },
+  { label: "Gastos", to: "/compras/gastos", icon: Camera },
+  { label: "Clientes", to: "/contactos/clientes", icon: UserRound },
 ];
