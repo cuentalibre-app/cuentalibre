@@ -35,7 +35,14 @@ export function ModalCloseButton({ className }: { className?: string }) {
         className,
       )}
     >
-      <svg viewBox="0 0 24 24" className="size-4.5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        className="size-4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        aria-hidden="true"
+      >
         <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
       </svg>
     </Primitive.Close>
@@ -47,7 +54,8 @@ const isSheetLayout = () => window.matchMedia("(width < 40rem)").matches;
 
 /**
  * Centered panel on larger screens; on phones it rises from the bottom like a sheet, scrolls,
- * and a finger dragging it down closes it.
+ * and a finger dragging it down closes it. Its children keep their height: the panel scrolls
+ * instead of squashing one that clips its overflow, such as a bordered table.
  */
 export function DialogContent({ className, children, ref, ...props }: ComponentProps<typeof Primitive.Content>) {
   const panelRef = useMergedRefs(ref, useDragToDismiss<HTMLDivElement>(isSheetLayout));
@@ -58,8 +66,8 @@ export function DialogContent({ className, children, ref, ...props }: ComponentP
         ref={panelRef}
         className={cn(
           modalPanelClass,
-          "fixed inset-x-2 bottom-[max(8px,env(safe-area-inset-bottom))] mx-auto max-h-[85dvh] max-w-xl gap-4 overflow-y-auto overscroll-contain px-6 pt-8 pb-6 data-[state=closed]:animate-sheet-out data-[state=open]:animate-sheet-in",
-          "sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:max-h-[calc(100dvh-2rem)] sm:m-0 sm:w-[calc(100vw-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:pt-6 sm:data-[state=closed]:animate-fade-out sm:data-[state=open]:animate-fade-in",
+          "fixed inset-x-2 bottom-[max(8px,env(safe-area-inset-bottom))] mx-auto max-h-[85dvh] max-w-xl gap-4 overflow-y-auto overscroll-contain px-6 pt-8 pb-6 *:shrink-0 data-[state=closed]:animate-sheet-out data-[state=open]:animate-sheet-in",
+          "sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:m-0 sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:pt-6 sm:data-[state=closed]:animate-fade-out sm:data-[state=open]:animate-fade-in",
           className,
         )}
         {...props}
