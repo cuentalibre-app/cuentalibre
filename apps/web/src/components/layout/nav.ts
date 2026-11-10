@@ -152,20 +152,22 @@ export interface CreateAction {
   label: string;
   to: string;
   icon: LucideIcon;
+  /** Kept in the phone tab bar's menu, which lists only the everyday few. */
+  essential?: boolean;
 }
 
 /** Shortcuts in the "Crear" menu, split into documents and records. */
 export const createActions: CreateAction[][] = [
   [
-    { label: "Factura emitida", to: "/ventas/facturas/nueva", icon: ReceiptText },
-    { label: "Factura recibida", to: "/compras/facturas/nueva", icon: Receipt },
-    { label: "Gasto", to: "/compras/gastos/nuevo", icon: Camera },
+    { label: "Factura emitida", to: "/ventas/facturas/nueva", icon: ReceiptText, essential: true },
+    { label: "Factura recibida", to: "/compras/facturas/nueva", icon: Receipt, essential: true },
+    { label: "Gasto", to: "/compras/gastos/nuevo", icon: Camera, essential: true },
     { label: "Bien de inversión", to: "/compras/bienes-de-inversion/nuevo", icon: Armchair },
     { label: "Albarán", to: "/ventas/albaranes/nuevo", icon: ClipboardList },
     { label: "Presupuesto", to: "/ventas/presupuestos/nuevo", icon: FileText },
   ],
   [
-    { label: "Cliente", to: "/contactos/clientes/nuevo", icon: UserRound },
+    { label: "Cliente", to: "/contactos/clientes/nuevo", icon: UserRound, essential: true },
     { label: "Proveedor", to: "/contactos/proveedores/nuevo", icon: Building },
     { label: "Producto", to: "/catalogo/productos/nuevo", icon: Package },
   ],

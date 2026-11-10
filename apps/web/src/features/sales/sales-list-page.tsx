@@ -79,8 +79,8 @@ import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
 import {
   ActionsMenu,
   EmptyState,
-  ExportMenu,
   FiltersButton,
+  FiltersSheet,
   IconAction,
   MoreActionsTrigger,
   SortHeader,
@@ -251,16 +251,6 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
         title={config.title}
         actions={
           <>
-            <ExportMenu
-              actions={[
-                { label: "Descargar CSV", icon: Download, run: canExport ? downloadCsvFile : undefined },
-                {
-                  label: `Descargar ${rows.length} PDF (.zip)`,
-                  icon: FileArchive,
-                  run: canExport && !exporting ? downloadPdfs : undefined,
-                },
-              ]}
-            />
             <SettingsLink
               to={SETTINGS_PATHS[kind]}
               from={config.title.toLowerCase()}
@@ -270,9 +260,9 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             >
               <Settings strokeWidth={1.8} aria-hidden="true" />
             </SettingsLink>
-            <Link to={config.newPath} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
+            <Link to={config.newPath} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
               <Plus strokeWidth={2} aria-hidden="true" />
-              {config.newLabel}
+              <span className="max-lg:sr-only">{config.newLabel}</span>
             </Link>
           </>
         }
@@ -355,26 +345,26 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
           </Button>
         </Toolbar>
 
-        {showFilters && (
-          <FiltersPanel
-            lead={
-              statusFilter && (
-                <div className="flex min-w-0 flex-col gap-1 lg:hidden">
-                  <span className="text-xs font-medium text-muted-foreground">Estado</span>
-                  {statusFilter}
-                </div>
-              )
-            }
-            filters={filters}
-            // Within the current month only that month can be picked
-            months={thisMonth ? [today.getMonth()] : periodMonths(period)}
-            clients={periodClients}
-            tags={tags}
-            incomeTypes={kind === "invoice" || kind === "draft"}
-            onChange={set}
-            onClear={() => setFilters(NO_FILTERS)}
-          />
-        )}
+        <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
+        <FiltersPanel
+          lead={
+            statusFilter && (
+              <div className="flex min-w-0 flex-col gap-1 lg:hidden">
+                <span className="text-xs font-medium text-muted-foreground">Estado</span>
+                {statusFilter}
+              </div>
+            )
+          }
+          filters={filters}
+          // Within the current month only that month can be picked
+          months={thisMonth ? [today.getMonth()] : periodMonths(period)}
+          clients={periodClients}
+          tags={tags}
+          incomeTypes={kind === "invoice" || kind === "draft"}
+          onChange={set}
+          onClear={() => setFilters(NO_FILTERS)}
+        />
+        </FiltersSheet>
 
         {rows.length === 0 ? (
           <EmptyState
@@ -431,7 +421,7 @@ function FiltersPanel({
     <div
       id="sales-filters"
       className={cn(
-        "grid animate-fade-in gap-3 border-y border-border bg-muted/50 py-3 sm:grid-cols-2 lg:items-end lg:px-4",
+        "grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:items-end lg:px-4",
         incomeTypes ? "lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]" : "lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]",
       )}
     >
@@ -933,11 +923,15 @@ function useDocumentActions(doc: SalesDocument, status: StatusKey) {
       <IssuerDialog open issues onOpenChange={close} onSaved={issueDraft} />
     ) : null;
 
+  // Phones open on the everyday few; the rest stays behind "Más acciones"
+  const essentials: Action[] = [...(primary ? [primary] : []), pdf, extras.send];
+
   return {
     attach,
     pdf,
     primary,
     groups,
+    essentials,
     dialogs,
     attachments: attachments.length,
     label: `${config.noun} ${label}`,
@@ -958,13 +952,18 @@ function QuickActions({ doc, status }: { doc: SalesDocument; status: StatusKey }
   );
 }
 
-/** Mobile: everything in one menu. */
+/** Mobile: the everyday actions first, everything else one tap further. */
 function RowActions({ doc, status }: { doc: SalesDocument; status: StatusKey }) {
-  const { groups, dialogs, label } = useDocumentActions(doc, status);
+  const { groups, essentials, dialogs, label } = useDocumentActions(doc, status);
   return (
     <>
       {dialogs}
-      <ActionsMenu groups={groups} inlineChoices trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />} />
+      <ActionsMenu
+        groups={groups}
+        essentials={essentials}
+        inlineChoices
+        trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />}
+      />
     </>
   );
 }

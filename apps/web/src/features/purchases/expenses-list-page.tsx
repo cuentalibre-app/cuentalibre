@@ -30,8 +30,8 @@ import { PeriodSelect } from "@/components/period-select";
 import {
   ActionsMenu,
   EmptyState,
-  ExportMenu,
   FiltersButton,
+  FiltersSheet,
   IconAction,
   MoreActionsTrigger,
   SortHeader,
@@ -214,18 +214,9 @@ export function ExpensesListPage() {
           }
           actions={
             <>
-              <ExportMenu
-                actions={[
-                  {
-                    label: "Descargar CSV",
-                    icon: Download,
-                    run: rows.length > 0 ? () => exportCsv(rows, exportName) : undefined,
-                  },
-                ]}
-              />
-              <Link to={NEW_EXPENSE_PATH} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
+              <Link to={NEW_EXPENSE_PATH} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
                 <Plus strokeWidth={2} aria-hidden="true" />
-                Nuevo gasto
+                <span className="max-lg:sr-only">Nuevo gasto</span>
               </Link>
             </>
           }
@@ -275,22 +266,22 @@ export function ExpensesListPage() {
             </Button>
           </Toolbar>
 
-          {showFilters && (
-            <FiltersPanel
-              lead={
-                <div className="flex min-w-0 flex-col gap-1 lg:hidden">
-                  <span className="text-xs font-medium text-muted-foreground">Estado</span>
-                  {statusFilter}
-                </div>
-              }
-              filters={filters}
-              period={period}
-              payees={payees}
-              tags={tags}
-              onChange={set}
-              onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: f.status }))}
-            />
-          )}
+          <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
+          <FiltersPanel
+            lead={
+              <div className="flex min-w-0 flex-col gap-1 lg:hidden">
+                <span className="text-xs font-medium text-muted-foreground">Estado</span>
+                {statusFilter}
+              </div>
+            }
+            filters={filters}
+            period={period}
+            payees={payees}
+            tags={tags}
+            onChange={set}
+            onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: f.status }))}
+          />
+          </FiltersSheet>
 
           {rows.length === 0 ? (
             <EmptyState
@@ -391,7 +382,7 @@ function FiltersPanel({
   return (
     <div
       id="expense-filters"
-      className="grid animate-fade-in gap-3 border-y border-border bg-muted/50 py-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:px-4"
+      className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:px-4"
     >
       {lead}
       <label className="flex min-w-0 flex-col gap-1">
@@ -762,7 +753,10 @@ function useExpenseActions(row: Row) {
     ],
   ];
 
-  return { attach, primary, groups, dialogs, attachments: attachments.length, label: `gasto ${doc.concept}` };
+  // Phones open on the everyday few; the rest stays behind "Más acciones"
+  const essentials: Action[] = [primary, view, attach];
+
+  return { attach, primary, groups, essentials, dialogs, attachments: attachments.length, label: `gasto ${doc.concept}` };
 }
 
 /** Desktop: the usual operations one click away, the rest behind the ellipsis. */
@@ -778,13 +772,13 @@ function QuickActions({ row }: { row: Row }) {
   );
 }
 
-/** Mobile: everything in one menu. */
+/** Mobile: the everyday actions first, everything else one tap further. */
 function RowActions({ row }: { row: Row }) {
-  const { groups, dialogs, label } = useExpenseActions(row);
+  const { groups, essentials, dialogs, label } = useExpenseActions(row);
   return (
     <>
       {dialogs}
-      <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Acciones del ${label}`} />} />
+      <ActionsMenu groups={groups} essentials={essentials} trigger={<MoreActionsTrigger label={`Acciones del ${label}`} />} />
     </>
   );
 }
