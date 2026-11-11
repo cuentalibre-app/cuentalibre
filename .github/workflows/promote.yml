@@ -1,6 +1,7 @@
 name: Promote to production
 
 # Sends what runs on staging to production, and tags the commit `prod-<app>-<date>`.
+# When both apps run a commit whose package.json version isn't out yet, publishes it for self-hosters.
 # Run from `main` to promote; run from an older `prod-*` tag to roll back to it.
 on:
   workflow_dispatch:
@@ -179,3 +180,18 @@ jobs:
         run: npx --yes wrangler@4.145.0 deploy
       - name: Tag what runs in production
         run: .github/scripts/tag-release.sh web "$GITHUB_SHA"
+
+  # Self-hosters get a version once production runs it in both apps: see deploy/README.md
+  publish-version:
+    needs: [export-api, promote-api, promote-web]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && !contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - name: Publish the version if it's new
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-version.sh $GITHUB_SHA ${{ needs.export-api.outputs.revision }}
