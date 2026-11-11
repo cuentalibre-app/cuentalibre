@@ -57,11 +57,11 @@ Every push to `main` that passes CI deploys to **staging**, never to production 
 
 ### Promoting
 
-Production changes only through the _Promote to production_ workflow (`promote.yml`), run by hand from `main` with a checkbox per app:
+Production changes only through the _Promote to production_ workflow (`promote.yml`), run by hand from `main`. It always promotes both apps, so the app never runs against an API from another commit, and every promotion is a version for self-hosters (see [Versions](#versions)):
 
 - API: the image staging runs, as it is (no rebuild). Each environment only holds the SSH key of its own server, so one job takes the image from staging and hands it as an artifact to another, which loads it on production with that commit's `compose.yml` and `Caddyfile`, writes the server's settings with it as `API_IMAGE`, and restarts the stack.
 - Web app: built again from `main` with `VITE_API_URL=https://api.cuentalibre.es`, since the address is baked in; it refuses to run until CI has passed on `main`'s last commit, so staging shows the same code.
-- Each one pushes a plain tag on the commit it promoted, `prod-api-2026.10.27` or `prod-web-2026.10.27`, with `.2`, `.3`… for later ones the same day: `git tag -l 'prod-*'` lists what ran in production and when.
+- Then it publishes the commit as the next version, `v0.4.2`: `git tag -l 'v*'` lists what ran in production, and the releases page says when. Older promotions left `prod-api-*` and `prod-web-*` tags instead.
 
 Each environment says which commit it runs: the API as `revision` in `/v1/health`, the app in its `<meta name="revision">`. Comparing them shows how far staging is ahead:
 
@@ -73,17 +73,16 @@ git log --oneline <production's revision>..<staging's revision>
 
 ### Rolling back
 
-Run the same workflow from a `prod-*` tag instead of `main` (_Use workflow from_ › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It leaves a new `prod-*` tag on that commit. The `production` environment only accepts runs from `main` and from `prod-*` tags. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.
+Run the same workflow from a `v*` tag instead of `main` (_Use workflow from_ › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It publishes no version, and self-hosters stay on theirs: fix forward with a new one. The `production` environment only accepts runs from `main` and from `v*` and `prod-*` tags. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.
 
-### Releases for self-hosters
+### Versions
 
-`prod-*` tags are internal deployment markers. Self-hosters get SemVer releases instead (`v0.1.0`, `v0.2.0`…), and [the install guide](../apps/site/src/content/docs/instalar.md) checks out the latest `v*` tag rather than `main`.
+Every promotion is a SemVer version for self-hosters, so they run exactly what production runs, and [the install guide](../apps/site/src/content/docs/instalar.md) checks out the latest `v*` tag rather than `main`. The tag is the only place the version lives.
 
-The version lives in the root `package.json`, and what changes in each one in `CHANGELOG.md`, in Spanish and written for the people who run it.
-
-- To release, a PR bumps `version` and adds its `## <version>` section to `CHANGELOG.md`: what's new, and anything to do before or after updating. CI fails when the version in `package.json` has no section.
-- While on `0.x`, a breaking change for self-hosters bumps the middle number, and anything else the last one.
-- Promoting to production publishes it: once both apps run a commit whose version has no `v<version>` tag yet, `publish-version.sh` creates the tag and a GitHub Release with that section as notes. Self-hosters only get what production runs, and staging is where it settles first. The self-hosted image bundles both apps, so promoting only one of them doesn't publish.
+- The workflow asks for the kind of version: `patch` (the default) for fixes, `minor` for something new, `major` for a change that breaks something for self-hosters. While on `0.x`, a breaking change bumps the middle number instead.
+- `CHANGELOG.md` says what each version changes, in Spanish and for the people who run cuentalibre. A PR with a change people will notice adds a line under `## Próxima versión`; internal changes add nothing.
+- `publish-version.sh` tags the promoted commit, creates a GitHub Release with what that commit's changelog lists under `Próxima versión` ("Correcciones y mejoras internas." when it's empty), and commits to `main` the changelog with those lines under `## <version> (<date>)`. Lines merged after the promoted commit stay for the next version. That commit runs no CI (pushes with the workflow token start no workflows) and changes no app, so the next promotion's CI check looks past it.
+- Promoting a commit with nothing new since the last version, apart from the changelog, publishes nothing.
 
 ### Settings
 

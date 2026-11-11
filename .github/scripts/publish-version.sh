@@ -1,24 +1,50 @@
 #!/usr/bin/env bash
-# Publishes the version in package.json as a release for self-hosters, tagged `v<version>`
-# with its CHANGELOG.md section as notes. Only on a commit that both the API and the web app
-# run in production, since the self-hosted image bundles both, and only once per version.
+# Publishes the commit production now runs as the next version for self-hosters: tags it
+# `v<version>`, creates a GitHub Release with what CHANGELOG.md lists under "Próxima versión"
+# at that commit, and commits the changelog with that section under the version to main.
 #
-#   .github/scripts/publish-version.sh <commit>...
+#   .github/scripts/publish-version.sh <patch|minor|major> <commit>
 set -euo pipefail
 
+bump=${1:?usage: publish-version.sh <patch|minor|major> <commit>}
+commit=${2:?usage: publish-version.sh <patch|minor|major> <commit>}
+scripts=$(cd "$(dirname "$0")" && pwd)
+tmp=$(mktemp -d)
+
 git fetch --quiet --tags origin
-for commit in "$@"; do
-  if ! git tag --points-at "$commit" -l 'prod-api-*' | grep -q . ||
-    ! git tag --points-at "$commit" -l 'prod-web-*' | grep -q .; then
-    echo "Production doesn't run $commit in both apps yet"
-    continue
-  fi
-  version=$(git show "$commit:package.json" | jq -r .version)
-  if git rev-parse --quiet --verify "refs/tags/v$version" >/dev/null; then
-    echo "v$version is already out"
-    exit 0
-  fi
-  .github/scripts/version-notes.sh "$commit" > "$RUNNER_TEMP/notes.md"
-  gh release create "v$version" --target "$commit" --title "v$version" --notes-file "$RUNNER_TEMP/notes.md"
+last=$(git tag -l 'v*' --sort=-v:refname | head -n1)
+IFS=. read -r major minor patch <<<"${last#v}"
+case $bump in
+  major) version="$((major + 1)).0.0" ;;
+  minor) version="$major.$((minor + 1)).0" ;;
+  patch) version="$major.$minor.$((patch + 1))" ;;
+  *) echo "Unknown bump: $bump" >&2; exit 1 ;;
+esac
+
+# Promoting again what's already out, e.g. after a failed run, publishes nothing
+if git diff --quiet "$last" "$commit" -- . ':(exclude)CHANGELOG.md'; then
+  echo "$commit has nothing new since $last"
   exit 0
+fi
+
+git show "$commit:CHANGELOG.md" > "$tmp/CHANGELOG.md"
+node "$scripts/changelog.mjs" notes "$tmp/CHANGELOG.md" > "$tmp/shipped.md"
+if [ -s "$tmp/shipped.md" ]; then cp "$tmp/shipped.md" "$tmp/notes.md"; else echo "Correcciones y mejoras internas." > "$tmp/notes.md"; fi
+
+gh release create "v$version" --target "$commit" --title "v$version" --notes-file "$tmp/notes.md"
+echo "Published v$version (was $last)"
+
+# On main's latest commit: lines merged after the promoted commit stay under Próxima versión
+git config user.name "github-actions[bot]"
+git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+date=$(TZ=Europe/Madrid date +%Y-%m-%d)
+for attempt in 1 2 3; do
+  git fetch --quiet origin main
+  git checkout --quiet -B release-changelog origin/main
+  node "$scripts/changelog.mjs" release CHANGELOG.md "$version" "$date" "$tmp/shipped.md"
+  git commit --quiet -am "Release v$version"
+  git push --quiet origin HEAD:main && exit 0
+  echo "main moved while releasing, trying again ($attempt)" >&2
 done
+echo "Couldn't commit CHANGELOG.md for v$version to main" >&2
+exit 1
