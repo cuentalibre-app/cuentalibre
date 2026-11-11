@@ -202,17 +202,6 @@ export function AddressSearchInput({
             );
           })}
         </ul>
-        <p className="m-0 px-3 pt-1.5 pb-0.5 text-right text-2xs text-muted-foreground">
-          <a
-            href="https://www.cartociudad.es"
-            target="_blank"
-            rel="noopener noreferrer"
-            tabIndex={-1}
-            className="text-muted-foreground no-underline hover:text-foreground"
-          >
-            © CartoCiudad, IGN
-          </a>
-        </p>
       </PopoverContent>
     </Popover>
   );
