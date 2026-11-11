@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
+import Browser from "../components/Browser.astro";
 import Logo from "../components/Logo.astro";
 import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
@@ -256,17 +257,13 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
           <div role="tabpanel" id={`panel-${screen.id}`} aria-labelledby={`pantalla-${screen.id}`} hidden={i !== 0}>
             <p class="mx-auto mt-4 mb-0 min-h-6 text-center text-[15px] text-muted-foreground">{screen.caption}</p>
             <div class="relative mt-5 md:pb-12">
-              <div class="hidden rounded-2xl border border-border bg-sidebar p-2 shadow-frame md:block">
-                <Image
-                  src={screen.desktop}
-                  alt={screen.alt}
-                  widths={[800, 1200, 1600, 2400]}
-                  sizes="(min-width: 1240px) 1176px, calc(100vw - 48px)"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  fetchpriority={i === 0 ? "high" : "auto"}
-                  class="block aspect-[1440/900] h-auto w-full rounded-lg border border-accent bg-background object-cover object-top-left"
-                />
-              </div>
+              <Browser
+                src={screen.desktop}
+                alt={screen.alt}
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchpriority={i === 0 ? "high" : "auto"}
+                class="hidden md:block"
+              />
               <Phone
                 src={screen.mobile}
                 alt="cuentalibre en el móvil"

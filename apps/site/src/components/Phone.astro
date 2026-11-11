@@ -2,7 +2,7 @@
 import { Image } from "astro:assets";
 
 /**
- * An iPhone 17 around a phone screenshot of the app: titanium edge, side buttons,
+ * An iPhone 17 around a phone screenshot of the app: space black edge, side buttons,
  * Dynamic Island, status bar and home indicator. Everything is sized in container
  * units of the phone's width, so it scales with whatever width the parent gives it.
  * Screenshots are captured at 402×874 with the status bar and home indicator areas
@@ -17,7 +17,7 @@ interface Props {
 
 const { src, alt, loading = "lazy", class: className } = Astro.props;
 /** Side buttons: action button and volume on the left, power on the right; offsets as a share of the height. */
-const button = "absolute w-[1.1cqw] bg-phone-edge";
+const button = "absolute w-[1.1cqw] bg-device-edge";
 ---
 
 <div class:list={["@container relative", className]}>
@@ -25,8 +25,8 @@ const button = "absolute w-[1.1cqw] bg-phone-edge";
   <span aria-hidden="true" class:list={[button, "top-[25%] -left-[0.7cqw] h-[13cqw] rounded-l-[1cqw]"]}></span>
   <span aria-hidden="true" class:list={[button, "top-[34%] -left-[0.7cqw] h-[13cqw] rounded-l-[1cqw]"]}></span>
   <span aria-hidden="true" class:list={[button, "top-[28%] -right-[0.7cqw] h-[20cqw] rounded-r-[1cqw]"]}></span>
-  <div class="relative rounded-[17.5cqw] bg-phone-edge p-[1cqw] shadow-phone">
-    <div class="rounded-[16.5cqw] bg-phone-bezel p-[3.2cqw]">
+  <div class="relative rounded-[17.5cqw] bg-device-edge p-[1cqw] shadow-phone">
+    <div class="rounded-[16.5cqw] bg-device-bezel p-[3.2cqw]">
       <div class="relative overflow-hidden rounded-[13.5cqw] bg-background">
         <Image
           src={src}
@@ -41,7 +41,7 @@ const button = "absolute w-[1.1cqw] bg-phone-edge";
           class="absolute inset-x-0 top-0 flex h-[14.5cqw] items-center justify-between px-[9cqw] pt-[1cqw] text-foreground"
         >
           <span class="w-[17cqw] text-center text-[4.2cqw] leading-none font-semibold tracking-[-0.01em]">9:41</span>
-          <span class="absolute top-[2.8cqw] left-1/2 h-[9cqw] w-[30cqw] -translate-x-1/2 rounded-full bg-phone-bezel"></span>
+          <span class="absolute top-[2.8cqw] left-1/2 h-[9cqw] w-[30cqw] -translate-x-1/2 rounded-full bg-device-bezel"></span>
           <span class="flex items-center gap-[1.4cqw]">
             <svg viewBox="0 0 18 12" class="h-[3cqw] fill-current"
               ><rect x="0" y="8" width="3" height="4" rx="0.8"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="0.8"
