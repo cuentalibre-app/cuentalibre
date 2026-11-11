@@ -1,2 +1,16 @@
 @import "tailwindcss";
 @import "@cuentalibre/ui/styles.css";
+
+/*
+ * A chip in the colour the user picked for a tag (--tag, set inline). In light it is that colour
+ * with black or white text (--tag-text); in dark a pale pastel would glare, so the chip takes a
+ * deep tint of the same hue with light text of that hue.
+ */
+@utility tag-color {
+  background-color: var(--tag);
+  color: var(--tag-text);
+  &:where(.dark *) {
+    background-color: oklch(from var(--tag) 0.33 min(calc(c * 1.8), 0.09) h);
+    color: oklch(from var(--tag) 0.9 min(calc(c * 1.6), 0.08) h);
+  }
+}

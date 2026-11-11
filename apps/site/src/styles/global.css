@@ -2,13 +2,19 @@
 @import "@cuentalibre/ui/styles.css";
 @import "@fontsource-variable/source-serif-4/wght-italic.css";
 
-/* The site speaks louder than the app: serif headlines, monospaced text, softer shapes */
+/*
+ * The site speaks louder than the app but in the same voice: the app's sans for
+ * text, the serif for headlines and the wordmark's monospace for section labels.
+ */
 @theme {
-  --font-body: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
-
   --shadow-tab: 0 1px 3px rgb(17 18 20 / 0.12);
-  --shadow-frame: 0 1px 2px rgb(17 18 20 / 0.04), 0 40px 80px -40px rgb(17 18 20 / 0.28);
-  --shadow-phone: 0 30px 60px -16px rgb(17 18 20 / 0.45);
+  --shadow-window: 0 1px 2px rgb(17 18 20 / 0.05), 0 40px 80px -40px rgb(17 18 20 / 0.3);
+  /* macOS window controls */
+  --color-window-close: #ff5f57;
+  --color-window-minimize: #febc2e;
+  --color-window-zoom: #28c840;
+  --shadow-phone:
+    inset 0 0 0 1px rgb(255 255 255 / 0.18), inset 0 1px 2px rgb(255 255 255 / 0.35), 0 30px 60px -16px rgb(17 18 20 / 0.45);
   /* App screenshot peeking out of a feature card: lifted toward its open top-left corner */
   --shadow-screen: 0 -1px 3px rgb(17 18 20 / 0.06), -10px -10px 36px -14px rgb(17 18 20 / 0.28);
   --shadow-shot: 0 20px 40px -24px rgb(17 18 20 / 0.25);
@@ -16,9 +22,18 @@
 
 }
 
+/*
+ * The phone frame around the app's phone screenshots: a space black edge around a black bezel.
+ * Fixed values, so the frame stays black when the site switches to the dark theme.
+ */
+@theme {
+  --color-device-bezel: var(--neutral-950);
+  --color-device-edge: color-mix(in oklab, var(--neutral-950) 78%, var(--neutral-600));
+}
+
 @layer base {
   body {
-    font-family: var(--font-body);
+    font-family: var(--font-sans);
     font-size: 0.9375rem;
     line-height: 1.6;
     @variant sm {

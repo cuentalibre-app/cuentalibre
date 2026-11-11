@@ -45,7 +45,7 @@ export function GoogleSignIn({ intent, returnPath, onError }: GoogleSignInProps)
       <Button
         variant="secondary"
         size="xl"
-        className="w-full rounded-full bg-background"
+        className="w-full bg-background"
         disabled={pending}
         onClick={() => void start()}
       >

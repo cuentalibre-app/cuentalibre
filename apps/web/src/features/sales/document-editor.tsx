@@ -27,8 +27,8 @@ import { AnimatedAmount } from "@/components/animated-amount";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
 import { conceptFor } from "@/features/catalog/catalog-model";
 import { useCatalog } from "@/features/catalog/catalog-store";
-import { TagChip } from "@/features/settings/tag-chip";
-import { TAG_SWATCHES, nextTagColor, tagsStore, textColorOn, useTags } from "@/features/settings/tags-store";
+import { TagChip, tagStyle } from "@/features/settings/tag-chip";
+import { TAG_SWATCHES, nextTagColor, tagsStore, useTags } from "@/features/settings/tags-store";
 import { Field, GroupedSelect } from "./form-fields";
 import { SURCHARGE_OPTIONS, VAT_RATE_OPTIONS, ratePercent } from "./sales-model";
 
@@ -171,8 +171,8 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
               <span className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
                 Etiqueta nueva
                 <span
-                  className="min-w-0 truncate rounded-full px-2.5 leading-6 font-medium"
-                  style={{ backgroundColor: newColor, color: textColorOn(newColor) }}
+                  className="tag-color min-w-0 truncate rounded-full px-2.5 leading-6 font-medium"
+                  style={tagStyle(newColor)}
                 >
                   {draft.trim()}
                 </span>

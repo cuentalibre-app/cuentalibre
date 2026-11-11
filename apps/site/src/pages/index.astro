@@ -1,30 +1,50 @@
 ---
 import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
+import Browser from "../components/Browser.astro";
 import Logo from "../components/Logo.astro";
+import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
-import { appLinks, cloudBilling, demoLinkAttrs, sourceUrl } from "../site";
+import { appLinks, cloudBilling, demoLinkAttrs, externalLinkAttrs, sourceUrl } from "../site";
 
+import bancosMovilOscuro from "../assets/screens/bancos-movil-oscuro.jpg";
+import bancosMovil from "../assets/screens/bancos-movil.jpg";
+import bancosOscuro from "../assets/screens/bancos-oscuro.jpg";
 import bancos from "../assets/screens/bancos.jpg";
+import calendarioMovilOscuro from "../assets/screens/calendario-movil-oscuro.jpg";
+import calendarioMovil from "../assets/screens/calendario-movil.jpg";
+import calendarioOscuro from "../assets/screens/calendario-oscuro.jpg";
 import calendario from "../assets/screens/calendario.jpg";
+import cierreOscuro from "../assets/screens/cierre-oscuro.jpg";
 import cierre from "../assets/screens/cierre.jpg";
+import facturaEditorOscuro from "../assets/screens/factura-editor-oscuro.jpg";
 import facturaEditor from "../assets/screens/factura-editor.jpg";
+import facturasMovilOscuro from "../assets/screens/facturas-movil-oscuro.jpg";
 import facturasMovil from "../assets/screens/facturas-movil.jpg";
+import facturasOscuro from "../assets/screens/facturas-oscuro.jpg";
 import facturas from "../assets/screens/facturas.jpg";
+import gastosMovilOscuro from "../assets/screens/gastos-movil-oscuro.jpg";
 import gastosMovil from "../assets/screens/gastos-movil.jpg";
+import gastosOscuro from "../assets/screens/gastos-oscuro.jpg";
 import gastos from "../assets/screens/gastos.jpg";
+import impuestosMovilOscuro from "../assets/screens/impuestos-movil-oscuro.jpg";
 import impuestosMovil from "../assets/screens/impuestos-movil.jpg";
+import impuestosOscuro from "../assets/screens/impuestos-oscuro.jpg";
 import impuestos from "../assets/screens/impuestos.jpg";
+import inicioMovilOscuro from "../assets/screens/inicio-movil-oscuro.jpg";
 import inicioMovil from "../assets/screens/inicio-movil.jpg";
+import inicioOscuro from "../assets/screens/inicio-oscuro.jpg";
 import inicio from "../assets/screens/inicio.jpg";
+import modelo303Oscuro from "../assets/screens/modelo-303-oscuro.jpg";
 import modelo303 from "../assets/screens/modelo-303.jpg";
+import perdidasGananciasOscuro from "../assets/screens/perdidas-ganancias-oscuro.jpg";
 import perdidasGanancias from "../assets/screens/perdidas-ganancias.jpg";
 
 const title = "cuentalibre: impuestos al día, 100 % código abierto";
 const description =
   "La app de gestión para autónomos privada, gratis y de código abierto: facturas y gastos ilimitados, IVA e IRPF calculados y calendario fiscal.";
 
-/** Screens of the app the hero switches between; captured from the demo. */
+/** Screens of the app the hero switches between, in light and dark; captured from the demo. */
 const screens: {
   id: string;
   label: string;
@@ -32,6 +52,8 @@ const screens: {
   caption: string;
   desktop: ImageMetadata;
   mobile: ImageMetadata;
+  desktopDark: ImageMetadata;
+  mobileDark: ImageMetadata;
   alt: string;
 }[] = [
   {
@@ -41,6 +63,8 @@ const screens: {
     caption: "Ingresos, gastos, beneficio y lo que te queda después de impuestos.",
     desktop: inicio,
     mobile: inicioMovil,
+    desktopDark: inicioOscuro,
+    mobileDark: inicioMovilOscuro,
     alt: "Inicio: resumen del año con ingresos, gastos, beneficio e impuestos estimados",
   },
   {
@@ -50,6 +74,8 @@ const screens: {
     caption: "Facturas con su estado de cobro, IVA y retención.",
     desktop: facturas,
     mobile: facturasMovil,
+    desktopDark: facturasOscuro,
+    mobileDark: facturasMovilOscuro,
     alt: "Lista de facturas emitidas del año",
   },
   {
@@ -59,6 +85,8 @@ const screens: {
     caption: "Lo que sale a pagar en cada trimestre y el próximo plazo.",
     desktop: impuestos,
     mobile: impuestosMovil,
+    desktopDark: impuestosOscuro,
+    mobileDark: impuestosMovilOscuro,
     alt: "Resumen de impuestos por trimestre",
   },
   {
@@ -68,6 +96,8 @@ const screens: {
     caption: "Cuota de autónomos, tickets y gastos deducibles con su justificante.",
     desktop: gastos,
     mobile: gastosMovil,
+    desktopDark: gastosOscuro,
+    mobileDark: gastosMovilOscuro,
     alt: "Lista de gastos con su parte deducible",
   },
   {
@@ -76,7 +106,9 @@ const screens: {
     icon: "calendar-check",
     caption: "Solo los modelos que te afectan, con su fecha.",
     desktop: calendario,
-    mobile: impuestosMovil,
+    mobile: calendarioMovil,
+    desktopDark: calendarioOscuro,
+    mobileDark: calendarioMovilOscuro,
     alt: "Calendario fiscal del año por modelo",
   },
   {
@@ -85,17 +117,21 @@ const screens: {
     icon: "landmark",
     caption: "Lo que cobras y pagas cada mes, y por qué cuenta pasa.",
     desktop: bancos,
-    mobile: inicioMovil,
+    mobile: bancosMovil,
+    desktopDark: bancosOscuro,
+    mobileDark: bancosMovilOscuro,
     alt: "Resumen de bancos con los cobros y pagos del año",
   },
 ];
 
+/** What the app does, each with its screen in the light and the dark theme. */
 const features = [
   {
     tag: "Ventas",
     title: "Facturas ilimitadas en un minuto",
     text: "Facturas, presupuestos y albaranes con numeración correlativa y PDF. Sin tope al mes.",
     image: facturaEditor,
+    imageDark: facturaEditorOscuro,
     alt: "Editor de facturas",
   },
   {
@@ -103,6 +139,7 @@ const features = [
     title: "Gastos deducibles",
     text: "Cuota de autónomos, tickets y facturas recibidas, con su justificante.",
     image: gastos,
+    imageDark: gastosOscuro,
     alt: "Lista de gastos",
   },
   {
@@ -110,6 +147,7 @@ const features = [
     title: "IVA casilla a casilla",
     text: "El 303 y el 390 calculados con tus documentos, listos para la AEAT.",
     image: modelo303,
+    imageDark: modelo303Oscuro,
     alt: "Modelo 303 calculado",
   },
   {
@@ -117,6 +155,7 @@ const features = [
     title: "Calendario fiscal",
     text: "Cada plazo que te afecta, con el importe antes de que llegue.",
     image: calendario,
+    imageDark: calendarioOscuro,
     alt: "Calendario fiscal",
   },
   {
@@ -124,6 +163,7 @@ const features = [
     title: "Cobros y pagos",
     text: "Cada cobro y pago de tus facturas y gastos, con la cuenta por la que pasó.",
     image: bancos,
+    imageDark: bancosOscuro,
     alt: "Cobros y pagos",
   },
   {
@@ -131,6 +171,7 @@ const features = [
     title: "Cierre de trimestre",
     text: "Una lista de lo pendiente antes de presentar tus impuestos.",
     image: cierre,
+    imageDark: cierreOscuro,
     alt: "Cierre de trimestre",
   },
   {
@@ -138,6 +179,7 @@ const features = [
     title: "Pérdidas y ganancias",
     text: "Tu año frente al anterior, exportable a PDF.",
     image: perdidasGanancias,
+    imageDark: perdidasGananciasOscuro,
     alt: "Informe de pérdidas y ganancias",
   },
 ];
@@ -191,17 +233,19 @@ const defaultBilling = "yearly";
 /** In the big prices a monospaced space reads as a gap, so the euro sign gets a narrow margin instead */
 const euroSign = "ml-[0.28em]";
 
-/** White pill that slides under the chosen tab; the script places it and marks the group ready */
+/** White tab that slides under the chosen tab; the script places it and marks the group ready */
 const indicator =
-  "pointer-events-none absolute top-0 left-0 rounded-[10px] bg-background opacity-0 shadow-tab transition-[transform,width,height] duration-300 ease-out in-data-ready:opacity-100";
-const eyebrow = "text-[14px] font-semibold text-primary";
+  "pointer-events-none absolute top-0 left-0 rounded-lg bg-background opacity-0 shadow-tab transition-[transform,width,height] duration-300 ease-out in-data-ready:opacity-100";
+const phoneShot =
+  "mx-auto w-[min(260px,72vw)] md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]";
+const eyebrow = "font-brand text-[14px] font-semibold text-primary";
 const sectionTitle =
   "font-display text-[clamp(32px,4vw,44px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance";
-/** Call-to-action pair: compact pills, stacked and centered on phones, side by side from sm */
+/** Call-to-action pair: compact buttons with the app's corners, stacked and centered on phones, side by side from sm */
 const buttonRow = "flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center";
-const pill = "inline-flex min-w-[216px] items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[15px] no-underline sm:min-w-0";
-const primaryButton = `${pill} font-semibold button-brand`;
-const secondaryButton = `${pill} border border-input font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-muted active:scale-[0.98]`;
+const ctaButton = "inline-flex min-w-[216px] items-center justify-center gap-2 rounded-[10px] px-5 py-2.5 text-[15px] no-underline sm:min-w-0";
+const primaryButton = `${ctaButton} font-semibold button-brand`;
+const secondaryButton = `${ctaButton} border border-input font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-muted active:scale-[0.98]`;
 ---
 
 <Base title={title} description={description}>
@@ -228,7 +272,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
         role="tablist"
         aria-label="Pantallas de la app"
         data-indicator-group
-        class="scrollbar-none relative mx-auto flex w-fit max-w-full gap-1 overflow-x-auto rounded-[14px] bg-muted p-1 md:flex-wrap md:justify-center"
+        class="scrollbar-none relative mx-auto flex w-full max-w-full gap-1 overflow-x-auto rounded-[12px] bg-muted p-1 sm:w-fit md:flex-wrap md:justify-center"
       >
         <span data-indicator aria-hidden="true" class={indicator}></span>
         {
@@ -240,10 +284,12 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
               aria-controls={`panel-${screen.id}`}
               aria-selected={i === 0 ? "true" : "false"}
               tabindex={i === 0 ? 0 : -1}
-              class="inline-flex shrink-0 items-center gap-[7px] rounded-[10px] border-0 bg-transparent px-3.5 py-2 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
+              aria-label={screen.label}
+              class="group inline-flex shrink-0 items-center justify-center gap-[7px] rounded-lg border-0 bg-transparent px-2.5 py-2 max-sm:flex-1 max-sm:aria-selected:flex-auto sm:px-3.5 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
             >
               <Icon name={screen.icon} class="size-[17px]" />
-              {screen.label}
+              {/* Phones show only the icons, and the label of the chosen screen */}
+              <span class="max-sm:hidden max-sm:group-aria-selected:inline">{screen.label}</span>
             </button>
           ))
         }
@@ -252,28 +298,20 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
         screens.map((screen, i) => (
           <div role="tabpanel" id={`panel-${screen.id}`} aria-labelledby={`pantalla-${screen.id}`} hidden={i !== 0}>
             <p class="mx-auto mt-4 mb-0 min-h-6 text-center text-[15px] text-muted-foreground">{screen.caption}</p>
-            <div class="relative mt-5 md:pb-12">
-              <div class="hidden rounded-[20px] border border-border bg-sidebar p-2 shadow-frame md:block">
-                <Image
-                  src={screen.desktop}
-                  alt={screen.alt}
-                  widths={[800, 1200, 1600, 2400]}
-                  sizes="(min-width: 1240px) 1176px, calc(100vw - 48px)"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  fetchpriority={i === 0 ? "high" : "auto"}
-                  class="block aspect-[1440/900] h-auto w-full rounded-[13px] border border-accent bg-background object-cover object-top-left"
-                />
-              </div>
-              <div class="mx-auto w-[min(260px,72vw)] rounded-[40px] bg-foreground p-[9px] shadow-phone md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]">
-                <Image
-                  src={screen.mobile}
-                  alt="cuentalibre en el móvil"
-                  widths={[260, 520]}
-                  sizes="260px"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  class="block aspect-[390/820] h-auto w-full rounded-[32px] bg-background object-cover object-top"
-                />
-              </div>
+            <div data-shot="light" class="relative mt-5 md:pb-12 dark:hidden">
+              <Browser
+                src={screen.desktop}
+                alt={screen.alt}
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchpriority={i === 0 ? "high" : "auto"}
+                class="hidden md:block"
+              />
+              <Phone src={screen.mobile} alt="cuentalibre en el móvil" loading={i === 0 ? "eager" : "lazy"} class={phoneShot} />
+            </div>
+            {/* The same screens in the app's dark theme, shown while the site is dark */}
+            <div data-shot="dark" class="relative mt-5 hidden md:pb-12 dark:block">
+              <Browser src={screen.desktopDark} alt={`${screen.alt}, en modo oscuro`} class="hidden md:block" />
+              <Phone src={screen.mobileDark} alt="cuentalibre en el móvil, en modo oscuro" class={phoneShot} />
             </div>
           </div>
         ))
@@ -325,20 +363,28 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
       >
         {
           features.map((feature) => (
-            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] border border-divider bg-sidebar/60 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
+            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-divider bg-sidebar/60 dark:border-border dark:bg-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
               <div class="px-6 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-7">
-                <div class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{feature.tag}</div>
+                <div class="font-brand text-[13px] font-medium text-muted-foreground">{feature.tag}</div>
                 <h3 class="mt-2 mb-0 text-[20px] leading-tight sm:text-[22px] font-semibold tracking-[-0.015em]">{feature.title}</h3>
                 <p class="mt-2 mb-0 max-w-[420px] text-muted-foreground">{feature.text}</p>
               </div>
-              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] rounded-tl-[14px] border-t border-l border-input bg-background shadow-screen sm:ml-8">
+              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] rounded-tl-xl border-t border-l border-input bg-background shadow-screen sm:ml-8">
                 <Image
                   src={feature.image}
                   alt={feature.alt}
                   widths={[800, 1200]}
                   sizes="min(810px, 126vw)"
                   loading="lazy"
-                  class="block h-auto min-h-full w-[150%] max-w-none object-cover object-top-left"
+                  class="block h-auto min-h-full w-[150%] max-w-none object-cover object-top-left dark:hidden"
+                />
+                <Image
+                  src={feature.imageDark}
+                  alt={feature.alt}
+                  widths={[800, 1200]}
+                  sizes="min(810px, 126vw)"
+                  loading="lazy"
+                  class="hidden h-auto min-h-full w-[150%] max-w-none object-cover object-top-left dark:block"
                 />
               </div>
             </li>
@@ -396,14 +442,14 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           </ul>
         </div>
 
-        <div data-reveal style={{ "--i": 2 }} class="mx-auto mt-12 max-w-[760px] overflow-hidden rounded-[24px] border border-accent sm:mt-16 lg:mt-0 lg:max-w-none">
+        <div data-reveal style={{ "--i": 2 }} class="mx-auto mt-12 max-w-[760px] overflow-hidden rounded-2xl border border-accent sm:mt-16 lg:mt-0 lg:max-w-none">
           <div class="px-5 py-6 sm:px-10 sm:py-8 lg:px-7">
             <table class="w-full border-separate border-spacing-0 text-[14px] sm:text-[15px]">
               <thead>
                 <tr>
                   <th scope="col" class="py-2.5"><span class="sr-only">Función</span></th>
                   <th scope="col" class="w-[76px] pb-3 align-bottom text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otros</th>
-                  <th scope="col" class="w-[96px] rounded-t-[16px] bg-primary-soft pt-4 pb-3 align-bottom text-xs font-semibold text-primary sm:w-28 sm:text-sm">
+                  <th scope="col" class="w-[96px] rounded-t-xl bg-primary-soft pt-4 pb-3 align-bottom text-xs font-semibold text-primary sm:w-28 sm:text-sm">
                     <span class="flex flex-col items-center gap-1.5">
                       <Logo class="h-[22px] w-5 text-foreground" />
                       cuentalibre
@@ -435,7 +481,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
                       <td
                         class:list={[
                           "border-t border-primary/15 bg-primary-soft py-4 text-center text-sm font-semibold text-primary",
-                          i === comparison.length - 1 && "rounded-b-[16px]",
+                          i === comparison.length - 1 && "rounded-b-xl",
                         ]}
                       >
                         {typeof row.ours === "string" ? (
@@ -476,7 +522,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
                 type="button"
                 data-billing-option={option.id}
                 aria-pressed={option.id === defaultBilling ? "true" : "false"}
-                class="inline-flex items-center justify-center gap-2 rounded-[9px] border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
+                class="inline-flex items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
               >
                 {option.label}
                 {option.saving && (
@@ -491,7 +537,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
       </div>
 
       <div class="mx-auto mt-12 grid max-w-[960px] grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-4">
-        <div data-reveal class="flex flex-col rounded-[24px] border border-accent bg-background p-6 sm:p-8">
+        <div data-reveal class="flex flex-col rounded-2xl border border-accent bg-background p-6 sm:p-8">
           <div class="flex items-center gap-3">
             <div class="flex size-10 items-center justify-center rounded-[10px] bg-muted text-foreground">
               <Icon name="server" />
@@ -522,13 +568,14 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           </ul>
           <a
             href={sourceUrl}
-            class="mt-8 flex items-center justify-center gap-2 rounded-full border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+            {...externalLinkAttrs}
+            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
           >
             <Icon name="code" class="size-[18px]" />Instalar desde GitHub
           </a>
         </div>
 
-        <div data-reveal style={{ "--i": 1 }} class="border-gradient-brand flex flex-col rounded-[24px] p-6 text-foreground shadow-plan sm:p-8">
+        <div data-reveal style={{ "--i": 1 }} class="border-gradient-brand flex flex-col rounded-2xl p-6 text-foreground shadow-plan sm:p-8">
           <div class="flex items-center gap-3">
             <div class="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
               <Icon name="cloud" />
@@ -579,7 +626,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           </ul>
           <a
             href={appLinks.signUp}
-            class="mt-8 flex items-center justify-center gap-2 rounded-full p-3 font-semibold no-underline button-brand"
+            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand"
           >
             Probar 30 días gratis
           </a>
@@ -646,6 +693,19 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
       tab.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
       placeIndicators();
     };
+    // Swiping the screenshot sideways moves to the next or previous screen
+    let touchStart: Touch | undefined;
+    root.addEventListener("touchstart", (event) => (touchStart = event.touches[0]), { passive: true });
+    root.addEventListener("touchend", (event) => {
+      const end = event.changedTouches[0];
+      if (!touchStart || !end || (event.target as Element).closest('[role="tablist"]')) return;
+      const dx = end.clientX - touchStart.clientX;
+      const dy = end.clientY - touchStart.clientY;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      const i = tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true");
+      const target = tabs[dx < 0 ? Math.min(i + 1, tabs.length - 1) : Math.max(i - 1, 0)];
+      if (target && target !== tabs[i]) select(target);
+    });
     for (const tab of tabs) {
       tab.addEventListener("click", () => select(tab));
       tab.addEventListener("keydown", (event) => {
@@ -701,8 +761,11 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
   }
 
   // Fetch the other screenshots once the page is idle, so switching tabs never shows a blank frame
-  const preload = () => {
-    for (const img of document.querySelectorAll<HTMLImageElement>('[role="tabpanel"][hidden] img')) img.loading = "eager";
+  const shotTheme = () => (document.documentElement.classList.contains("dark") ? "dark" : "light");
+  const preload = (theme = shotTheme()) => {
+    for (const img of document.querySelectorAll<HTMLImageElement>(`[data-shot="${theme}"] img`)) img.loading = "eager";
   };
-  addEventListener("load", () => ("requestIdleCallback" in window ? requestIdleCallback(preload) : setTimeout(preload, 1500)));
+  // Switching the site's theme fetches that theme's screenshots straight away
+  addEventListener("site-theme-change", () => preload());
+  addEventListener("load", () => ("requestIdleCallback" in window ? requestIdleCallback(() => preload()) : setTimeout(preload, 1500)));
 </script>
