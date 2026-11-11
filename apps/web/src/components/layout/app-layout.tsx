@@ -14,13 +14,14 @@ export function AppLayout() {
   const [collapsed, toggleSidebar] = useSidebarCollapsed();
 
   return (
-    <>
+    // viewport-fit=cover lets the page run under the phone's status bar: keep the top banners clear of it
+    <div className="pt-[env(safe-area-inset-top)]">
       <DemoBanner />
       <ReadOnlyBanner />
       <SubscribedNotice />
       <VerifyEmailBanner />
       <CommandErrorNotice />
-      <div className="relative isolate flex min-h-dvh bg-canvas">
+      <div className="relative isolate flex min-h-[calc(100dvh-env(safe-area-inset-top))] bg-canvas">
         <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 bg-aurora" />
         <a
           href="#main"
@@ -38,6 +39,6 @@ export function AppLayout() {
         <BottomNav className="lg:hidden" />
       </div>
       <FirstRunTour />
-    </>
+    </div>
   );
 }
