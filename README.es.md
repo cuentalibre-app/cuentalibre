@@ -83,9 +83,9 @@
   &nbsp;
   <img src=".github/assets/screens/facturas-movil.webp" alt="Facturas en el móvil" width="22%">
   &nbsp;
-  <img src=".github/assets/screens/gastos-movil.webp" alt="Un gasto nuevo en el móvil" width="22%">
+  <img src=".github/assets/screens/gastos-movil.webp" alt="Gastos en el móvil" width="22%">
   &nbsp;
-  <img src=".github/assets/screens/impuestos-movil.webp" alt="Calendario fiscal en el móvil" width="22%">
+  <img src=".github/assets/screens/impuestos-movil.webp" alt="Impuestos en el móvil" width="22%">
   <br />
   <em>Y todo, también en el móvil.</em>
 </p>
