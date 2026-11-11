@@ -111,7 +111,6 @@ export const mainNav: NavItem[] = [
     children: [
       { label: "Resumen", to: "/informes" },
       { label: "Pérdidas y ganancias", to: "/informes/perdidas-y-ganancias" },
-      { label: "Informes de empresas", to: "/informes/empresas" },
     ],
   },
 ];
