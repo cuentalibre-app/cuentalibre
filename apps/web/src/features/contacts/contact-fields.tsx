@@ -15,6 +15,8 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { Notice } from "@/components/page";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
 import { AddressMap } from "./address-map";
+import { AddressSearchInput } from "./address-search";
+import type { AddressSuggestion } from "./address-search-model";
 import type { ContactDraft, DraftErrors } from "./contact-draft";
 import { COUNTRIES, ROLES, contactPath, taxIdWarning } from "./contacts-model";
 import { useContacts } from "./contacts-store";
@@ -183,6 +185,14 @@ export function AddressFields({
     if (province && (!draft.province.trim() || draft.province === provinceFromPostalCode(draft.postalCode)))
       set("province", province);
   };
+  const pickSuggestion = (s: AddressSuggestion) => {
+    set("address", s.address);
+    // A street across several postal codes leaves it to the number; a stale one from another town goes
+    if (s.postalCode) set("postalCode", s.postalCode);
+    else if (s.city && s.city !== draft.city) set("postalCode", "");
+    if (s.city) set("city", s.city);
+    if (s.province) set("province", s.province);
+  };
   return (
     <div className="flex flex-col gap-4">
       <div
@@ -192,14 +202,24 @@ export function AddressFields({
         )}
       >
         <Field label="Dirección" required={required} className={cn("sm:col-span-2", !compact && "xl:col-span-1")}>
-          {(p) => (
-            <Input
-              {...p}
-              value={draft.address}
-              autoComplete="street-address"
-              onChange={(e) => set("address", e.target.value)}
-            />
-          )}
+          {(p) =>
+            draft.country === SPAIN ? (
+              <AddressSearchInput
+                {...p}
+                value={draft.address}
+                postalCode={draft.postalCode}
+                onChange={(address) => set("address", address)}
+                onPick={pickSuggestion}
+              />
+            ) : (
+              <Input
+                {...p}
+                value={draft.address}
+                autoComplete="street-address"
+                onChange={(e) => set("address", e.target.value)}
+              />
+            )
+          }
         </Field>
         <Field label="Código postal" required={required}>
           {(p) => (
