@@ -7,6 +7,10 @@ Qué cambia en cada versión de cuentalibre para quien lo instala en su servidor
 
 ## Próxima versión
 
+## 0.1.1 (2026-11-11)
+
+Correcciones y mejoras internas.
+
 ## 0.1.0 (2026-11-11)
 
 Primera versión publicada de cuentalibre para instalar en tu propio servidor. Es el mismo código que funciona en cuentalibre Cloud desde el 9 de noviembre de 2026.
