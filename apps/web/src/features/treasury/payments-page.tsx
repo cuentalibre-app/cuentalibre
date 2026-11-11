@@ -127,15 +127,25 @@ export function PaymentsPage() {
         <PageHeader
           title="Bancos y caja"
           inline={
-            <PeriodSelect
-              value={period}
-              onChange={setPeriod}
-              years={availableYears}
-              today={today}
-              className="h-12 w-full sm:h-10 sm:w-auto"
-            />
+            // Below lg the new-payment action is an icon beside the period, so both share one row
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              <PeriodSelect
+                value={period}
+                onChange={setPeriod}
+                years={availableYears}
+                today={today}
+                className="h-12 min-w-0 flex-1 sm:h-10 sm:w-auto sm:flex-none"
+              />
+              <Button
+                aria-label="Nuevo cobro / pago manual"
+                onClick={() => setCreating(true)}
+                className="size-12 shrink-0 px-0 sm:size-10 lg:hidden"
+              >
+                <Plus strokeWidth={2} aria-hidden="true" />
+              </Button>
+            </div>
           }
-          description="Lo que has cobrado y pagado, y por dónde ha pasado."
+          actionsClassName="max-lg:hidden"
           actions={
             <Button onClick={() => setCreating(true)}>
               <Plus strokeWidth={2} aria-hidden="true" />
