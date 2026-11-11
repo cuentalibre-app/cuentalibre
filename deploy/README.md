@@ -75,6 +75,19 @@ git log --oneline <production's revision>..<staging's revision>
 
 Run the same workflow from a `prod-*` tag instead of `main` (_Use workflow from_ › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It leaves a new `prod-*` tag on that commit. The `production` environment only accepts runs from `main` and from `prod-*` tags. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.
 
+### Releases for self-hosters
+
+`prod-*` tags are internal deployment markers. Self-hosters get SemVer releases instead (`v0.1.0`, `v0.2.0`…), and [the install guide](../apps/site/src/content/docs/instalar.md) checks out the latest `v*` tag rather than `main`.
+
+- Cut a release from a commit that both the API and the web app have run in production for a while: one with a `prod-api-*` and a `prod-web-*` tag, since the self-hosted image bundles both.
+- While on `0.x`, a breaking change for self-hosters bumps the middle number, and anything else the last one.
+- Publish it as a GitHub Release with notes generated from the merged PRs. When a release needs an action before or after updating, write it at the top by hand.
+
+```sh
+git tag -a v0.2.0 -m v0.2.0 <commit> && git push origin v0.2.0
+gh release create v0.2.0 --verify-tag --generate-notes
+```
+
 ### Settings
 
 The `staging` and `production` environments each hold `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `DEPLOY_HOST`, each for its own server. `DEPLOY_HOST` is a secret so the logs mask the server's address, which Cloudflare otherwise keeps hidden.
