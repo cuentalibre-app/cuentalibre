@@ -4,7 +4,8 @@ import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { SPAIN } from "@cuentalibre/core";
-import { candidatesUrl, portalPlace, type Candidate } from "./address-search-model";
+import { candidatesUrl, portalPlace } from "./address-search-model";
+import { fetchCandidates } from "./cartociudad";
 import {
   MAP_ZOOM,
   TILE_SIZE,
@@ -22,16 +23,26 @@ type Lookup =
 
 /**
  * A Spanish street number on CartoCiudad, which knows far more of them than
- * OpenStreetMap. Any failure falls back to OpenStreetMap's search.
+ * OpenStreetMap. Null when it isn't found or the service fails.
  */
 async function findPortal(a: MapAddress): Promise<Place | null> {
   if (a.country !== SPAIN || !a.address.trim()) return null;
   try {
-    const response = await fetch(candidatesUrl(a.address, a.postalCode), { signal: AbortSignal.timeout(4000) });
-    return response.ok ? portalPlace((await response.json()) as Candidate[], a.address) : null;
+    return portalPlace(await fetchCandidates(candidatesUrl(a.address, a.postalCode)), a.address);
   } catch {
     return null;
   }
+}
+
+/** The address on OpenStreetMap: the street number when it knows it, else the street or the town. */
+async function findOnOsm(a: MapAddress): Promise<Place | null> {
+  for (const url of searchUrls(a)) {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const [hit] = (await response.json()) as { lat: string; lon: string; display_name: string }[];
+    if (hit) return { lat: Number(hit.lat), lon: Number(hit.lon), label: hit.display_name };
+  }
+  return null;
 }
 
 const link = cn(buttonVariants({ variant: "secondary", size: "sm" }), "[&_svg]:size-4");
@@ -83,21 +94,12 @@ export function AddressMap({ address }: { address: MapAddress }) {
 
   const locate = async () => {
     setLookup({ key, status: "loading" });
+    // Both at once, so a slow CartoCiudad doesn't delay the fallback
+    const osm = findOnOsm(address);
+    osm.catch(() => {});
     try {
-      const portal = await findPortal(address);
-      if (portal) return setLookup({ key, status: "found", place: portal });
-      let hit: { lat: string; lon: string; display_name: string } | undefined;
-      for (const url of searchUrls(address)) {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        [hit] = (await response.json()) as (typeof hit & object)[];
-        if (hit) break;
-      }
-      setLookup(
-        hit
-          ? { key, status: "found", place: { lat: Number(hit.lat), lon: Number(hit.lon), label: hit.display_name } }
-          : { key, status: "notFound" },
-      );
+      const place = (await findPortal(address)) ?? (await osm);
+      setLookup(place ? { key, status: "found", place } : { key, status: "notFound" });
     } catch {
       setLookup({ key, status: "error" });
     }
