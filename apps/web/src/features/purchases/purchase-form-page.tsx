@@ -1234,6 +1234,8 @@ function Payments({
                   value={p.paymentMethodId}
                   onChange={(v) => update(p.id, { paymentMethodId: v })}
                   groups={[{ options: paymentMethodOptions(p.paymentMethodId) }]}
+                  placeholder="Elige un método"
+                  empty="Aún no tienes métodos de pago"
                 />
               </label>
               <Button

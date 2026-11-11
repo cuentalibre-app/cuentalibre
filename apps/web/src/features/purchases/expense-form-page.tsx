@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { ChevronDown, FilePen, FilePlus2, Landmark, Plus } from "lucide-react";
+import { ChevronDown, FilePen, FilePlus2, Landmark } from "lucide-react";
 import {
   cents,
   deductibleExpense,
@@ -562,49 +562,58 @@ function ExpenseForm({
               onChange={(v) => set("paid", v)}
             />
             {form.paid && (
-              <div className="grid gap-4 pl-7.5 sm:grid-cols-[10rem_minmax(0,16rem)]">
-                <Field label="Fecha de pago" required error={errors.paidOn}>
-                  {(p) => (
-                    <Input
-                      {...p}
-                      type="date"
-                      value={form.paidOn}
-                      onChange={(e) => {
-                        setPaidOnFollows(e.target.value === form.date);
-                        set("paidOn", e.target.value);
-                      }}
-                    />
-                  )}
-                </Field>
-                <Field label="Método de pago" required error={errors.paymentMethodId}>
-                  {(p) => (
-                    <GroupedSelect
-                      {...p}
-                      value={form.paymentMethodId}
-                      onChange={(v) => set("paymentMethodId", v)}
-                      groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
-                    />
-                  )}
-                </Field>
-              </div>
+              <>
+                <div className="grid gap-4 pl-7.5 sm:grid-cols-[10rem_minmax(0,16rem)]">
+                  <Field label="Fecha de pago" required error={errors.paidOn}>
+                    {(p) => (
+                      <Input
+                        {...p}
+                        type="date"
+                        value={form.paidOn}
+                        onChange={(e) => {
+                          setPaidOnFollows(e.target.value === form.date);
+                          set("paidOn", e.target.value);
+                        }}
+                      />
+                    )}
+                  </Field>
+                  <Field
+                    label="Método de pago"
+                    required
+                    error={errors.paymentMethodId}
+                    action={
+                      <Button variant="link" onClick={() => setCreatingMethod(true)}>
+                        Nuevo método
+                      </Button>
+                    }
+                  >
+                    {(p) => (
+                      <GroupedSelect
+                        {...p}
+                        value={form.paymentMethodId}
+                        onChange={(v) => set("paymentMethodId", v)}
+                        groups={[{ options: paymentMethodOptions(form.paymentMethodId) }]}
+                        placeholder="Elige un método"
+                        empty="Aún no tienes métodos de pago"
+                      />
+                    )}
+                  </Field>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 pl-7.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="secondary" aria-disabled className="cursor-not-allowed opacity-50">
+                        <Landmark strokeWidth={1.8} aria-hidden="true" />
+                        Elegir movimiento bancario
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-64">
+                      Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </>
             )}
-            <div className="flex flex-wrap items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="secondary" aria-disabled className="cursor-not-allowed opacity-50">
-                    <Landmark strokeWidth={1.8} aria-hidden="true" />
-                    Elegir movimiento bancario
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-64">
-                  Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
-                </TooltipContent>
-              </Tooltip>
-              <Button type="button" variant="secondary" className="ml-auto" onClick={() => setCreatingMethod(true)}>
-                <Plus aria-hidden="true" />
-                Nuevo método
-              </Button>
-            </div>
           </Section>
 
           <Section title="Notas" index={5}>
