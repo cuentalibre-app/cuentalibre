@@ -9,12 +9,19 @@
 @theme {
   --shadow-tab: 0 1px 3px rgb(17 18 20 / 0.12);
   --shadow-frame: 0 1px 2px rgb(17 18 20 / 0.04), 0 40px 80px -40px rgb(17 18 20 / 0.28);
-  --shadow-phone: 0 30px 60px -16px rgb(17 18 20 / 0.45);
+  --shadow-phone:
+    inset 0 0 0 1px rgb(255 255 255 / 0.18), inset 0 1px 2px rgb(255 255 255 / 0.35), 0 30px 60px -16px rgb(17 18 20 / 0.45);
   /* App screenshot peeking out of a feature card: lifted toward its open top-left corner */
   --shadow-screen: 0 -1px 3px rgb(17 18 20 / 0.06), -10px -10px 36px -14px rgb(17 18 20 / 0.28);
   --shadow-shot: 0 20px 40px -24px rgb(17 18 20 / 0.25);
   --shadow-plan: 0 30px 60px -36px rgb(47 69 201 / 0.45);
 
+}
+
+/* The phone frame around the app's phone screenshots: a titanium edge around a black bezel */
+@theme inline {
+  --color-phone-bezel: var(--color-foreground);
+  --color-phone-edge: color-mix(in oklab, var(--color-foreground) 55%, var(--color-muted-foreground));
 }
 
 @layer base {
