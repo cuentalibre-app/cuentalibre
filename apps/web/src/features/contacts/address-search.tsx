@@ -4,23 +4,11 @@ import { Input } from "@cuentalibre/ui/components/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@cuentalibre/ui/components/popover";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import type { FieldControlProps } from "@/features/sales/form-fields";
-import {
-  MIN_QUERY,
-  candidatesUrl,
-  pickedAddress,
-  toSuggestions,
-  type AddressSuggestion,
-  type Candidate,
-} from "./address-search-model";
+import { MIN_QUERY, candidatesUrl, pickedAddress, toSuggestions, type AddressSuggestion } from "./address-search-model";
+import { fetchCandidates } from "./cartociudad";
 
 /** Waits for a pause in typing, so a search isn't sent for every key. */
 const DEBOUNCE_MS = 250;
-
-/**
- * The geocoder now and then leaves a request hanging, and the browser queues
- * the same URL behind it: give up so the next key searches again.
- */
-const TIMEOUT_MS = 4000;
 
 /** Answers already fetched, by URL: going back over a word doesn't ask again. */
 const cache = new Map<string, AddressSuggestion[]>();
@@ -34,9 +22,7 @@ async function search(query: string, postalCode: string, signal: AbortSignal) {
     let hit = cache.get(url);
     if (!hit) {
       try {
-        const response = await fetch(url, { signal: AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)]) });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        hit = toSuggestions((await response.json()) as Candidate[]);
+        hit = toSuggestions(await fetchCandidates(url, signal));
         cache.set(url, hit);
       } catch (error) {
         if (signal.aborted) throw error;
