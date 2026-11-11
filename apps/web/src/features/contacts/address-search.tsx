@@ -7,6 +7,7 @@ import type { FieldControlProps } from "@/features/sales/form-fields";
 import {
   MIN_QUERY,
   candidatesUrl,
+  pickedAddress,
   toSuggestions,
   type AddressSuggestion,
   type Candidate,
@@ -35,7 +36,7 @@ async function search(query: string, postalCode: string, signal: AbortSignal) {
       try {
         const response = await fetch(url, { signal: AbortSignal.any([signal, AbortSignal.timeout(TIMEOUT_MS)]) });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        hit = toSuggestions((await response.json()) as Candidate[], query);
+        hit = toSuggestions((await response.json()) as Candidate[]);
         cache.set(url, hit);
       } catch (error) {
         if (signal.aborted) throw error;
@@ -101,7 +102,7 @@ export function AddressSearchInput({
   }, [query]);
 
   const pick = (s: AddressSuggestion) => {
-    onPick(s);
+    onPick({ ...s, address: pickedAddress(s, value) });
     setOpen(false);
     setSuggestions([]);
     if (s.street) {
@@ -194,8 +195,8 @@ export function AddressSearchInput({
               >
                 <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="flex min-w-0 flex-col">
-                  <span className="truncate font-medium">{s.address}</span>
-                  {place && <span className="truncate text-sm text-muted-foreground">{place}</span>}
+                  <span className="font-medium text-pretty">{s.address}</span>
+                  {place && <span className="text-sm text-muted-foreground">{place}</span>}
                 </span>
               </li>
             );
