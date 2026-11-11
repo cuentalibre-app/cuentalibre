@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addressTail,
+  pickedAddress,
   searchText,
   candidatesUrl,
   streetLine,
@@ -82,9 +83,17 @@ describe("searchText", () => {
   });
 });
 
+describe("pickedAddress", () => {
+  const [number] = toSuggestions([candidate({})]);
+  it("keeps the floor typed after the number", () => {
+    expect(pickedAddress(number!, "saturnino montojo 39, 3B")).toBe("Calle Saturnino Montojo 39, 3B");
+    expect(pickedAddress(number!, "saturnino montojo 39")).toBe("Calle Saturnino Montojo 39");
+  });
+});
+
 describe("toSuggestions", () => {
   it("fills postal code, town and province", () => {
-    expect(toSuggestions([candidate({})], "saturnino montojo 39")).toEqual([
+    expect(toSuggestions([candidate({})])).toEqual([
       {
         id: "1",
         address: "Calle Saturnino Montojo 39",
@@ -96,43 +105,38 @@ describe("toSuggestions", () => {
     ]);
   });
 
-  it("keeps the floor the user typed", () => {
-    expect(toSuggestions([candidate({})], "saturnino montojo 39, 2º B")[0]?.address).toBe(
-      "Calle Saturnino Montojo 39, 2º B",
-    );
+  it("suggests the street and number alone, without the floor typed", () => {
+    expect(toSuggestions([candidate({})])[0]?.address).toBe("Calle Saturnino Montojo 39");
   });
 
   it("leaves the postal code empty when a street spans several", () => {
-    const [s] = toSuggestions(
-      [
-        candidate({
-          type: "callejero",
-          address: "AVENIDA DIAGONAL, Barcelona",
-          tip_via: "AVENIDA",
-          postalCode: "08005 08006",
-          muni: "Barcelona",
-          province: "Barcelona",
-          portalNumber: null,
-        }),
-      ],
-      "diagonal",
-    );
+    const [s] = toSuggestions([
+      candidate({
+        type: "callejero",
+        address: "AVENIDA DIAGONAL, Barcelona",
+        tip_via: "AVENIDA",
+        postalCode: "08005 08006",
+        muni: "Barcelona",
+        province: "Barcelona",
+        portalNumber: null,
+      }),
+    ]);
     expect(s).toMatchObject({ address: "Avenida Diagonal", postalCode: "", province: "Barcelona", street: true });
   });
 
   it("uses the Spanish half of a bilingual province without a postal code", () => {
-    const [s] = toSuggestions(
-      [candidate({ type: "callejero", postalCode: null, province: "València/Valencia", portalNumber: null })],
-      "x",
-    );
+    const [s] = toSuggestions([
+      candidate({ type: "callejero", postalCode: null, province: "València/Valencia", portalNumber: null }),
+    ]);
     expect(s?.province).toBe("Valencia");
   });
 
   it("skips repeats and places that aren't streets", () => {
-    const list = toSuggestions(
-      [candidate({ id: "1" }), candidate({ id: "2" }), candidate({ id: "3", type: "Municipio" })],
-      "x",
-    );
+    const list = toSuggestions([
+      candidate({ id: "1" }),
+      candidate({ id: "2" }),
+      candidate({ id: "3", type: "Municipio" }),
+    ]);
     expect(list.map((s) => s.id)).toEqual(["1"]);
   });
 });

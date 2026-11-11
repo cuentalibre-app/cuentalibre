@@ -107,9 +107,14 @@ export function searchText(query: string) {
   return tail ? text.slice(0, text.length - tail.length).replace(/\s*,\s*$/, "") : text;
 }
 
+/** The address a pick leaves in the field: a street number keeps the floor the user typed after it. */
+export const pickedAddress = (s: AddressSuggestion, typed: string) => {
+  const tail = s.street ? "" : addressTail(typed);
+  return tail ? `${s.address}, ${tail}` : s.address;
+};
+
 /** The candidates worth suggesting, as what each fills in, without repeats. */
-export function toSuggestions(candidates: Candidate[], query: string): AddressSuggestion[] {
-  const tail = addressTail(query);
+export function toSuggestions(candidates: Candidate[]): AddressSuggestion[] {
   const seen = new Set<string>();
   const suggestions: AddressSuggestion[] = [];
   for (const c of candidates) {
@@ -119,7 +124,7 @@ export function toSuggestions(candidates: Candidate[], query: string): AddressSu
     const street = streetLine(c);
     const suggestion = {
       id: c.id,
-      address: tail && c.portalNumber != null ? `${street}, ${tail}` : street,
+      address: street,
       postalCode,
       city: c.muni?.trim() || c.poblacion?.trim() || "",
       // Our own names, so the province reads the same as the one the postal code fills in
