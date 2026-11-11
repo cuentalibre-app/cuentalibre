@@ -32,8 +32,12 @@ No hace falta abrir puertos en el router ni instalar Node.js.
 
 ```sh
 git clone https://github.com/cuentalibre-app/cuentalibre.git
-cd cuentalibre/selfhost
+cd cuentalibre
+git checkout "$(git tag -l 'v*' --sort=-v:refname | head -n1)"
+cd selfhost
 ```
+
+El `git checkout` te deja en la última [versión publicada](https://github.com/cuentalibre-app/cuentalibre/releases), que ya ha funcionado en cuentalibre Cloud. La rama `main` puede llevar cambios que aún no han llegado allí.
 
 ## 2. Configúralo
 
@@ -115,12 +119,16 @@ El nombre del volumen lleva delante el de la carpeta (`selfhost_files` si no la 
 
 ## Actualizar
 
-Cuando salga una versión nueva, descarga el código y vuelve a construir la imagen:
+Las versiones nuevas salen en la [página de versiones](https://github.com/cuentalibre-app/cuentalibre/releases), con lo que cambia en cada una. Lee las notas de todas las que te saltes: si alguna pide hacer algo antes o después de actualizar, lo dice ahí.
+
+Haz una copia de seguridad, pasa a la última versión y vuelve a construir la imagen:
 
 ```sh
-cd cuentalibre/selfhost
-git pull
+cd cuentalibre
+git fetch --tags
+git checkout "$(git tag -l 'v*' --sort=-v:refname | head -n1)"
+cd selfhost
 docker compose up -d --build
 ```
 
-cuentalibre aplica solo los cambios de la base de datos al arrancar. Haz una copia de seguridad antes de actualizar.
+cuentalibre aplica solo los cambios de la base de datos al arrancar. No vuelvas a una versión anterior sin restaurar antes la copia: los cambios de la base de datos no se deshacen.
