@@ -114,7 +114,8 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
   const slots = months.map((m) => monthly[m] ?? null);
   const filled = slots.flatMap((s, i) => (s ? [i] : []));
   const lastFilled = filled.at(-1) ?? -1;
-  const center = (i: number) => (i + 0.5) / n;
+  // On the line, a month's point sits where the month ends: the profit added up to that day
+  const monthEnd = (i: number) => (i + 1) / n;
 
   // Profit adding up from the start of the period
   let running = 0;
@@ -149,9 +150,9 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
           .filter(Boolean)
           .join("; ");
 
-  // The line runs edge to edge; bars keep the page margins
+  // A little wider than the page's text, with a small margin on both sides of the screen
   return (
-    <div className={cn("-mx-5 flex flex-col gap-2", view === "bars" && "px-4")}>
+    <div className="-mx-5 flex flex-col gap-2 px-4">
       <div
         ref={ref}
         role="img"
@@ -172,7 +173,7 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
             style={
               view === "bars"
                 ? { left: `calc(${(selected / n) * 100}% + 4px)`, width: `calc(${100 / n}% - 8px)` }
-                : { left: `${center(selected) * 100}%` }
+                : { left: `${monthEnd(selected) * 100}%` }
             }
           />
         )}
@@ -250,10 +251,11 @@ function LineView({ totals, n, selected }: { totals: (number | null)[]; n: numbe
   const top = Math.max(1, ...values);
   const bottom = Math.min(0, ...values);
   const y = (v: number) => PAD + (1 - (v - bottom) / (top - bottom)) * (H - 2 * PAD);
-  // Starts at nothing on the period's left edge, then one point per month
+  // Starts at nothing on the period's left edge, then one point at the end of each month, so a
+  // finished period reaches the right edge
   const points: [number, number][] = [
     [0, y(0)],
-    ...totals.flatMap((t, i): [number, number][] => (t === null ? [] : [[((i + 0.5) / n) * W, y(t)]])),
+    ...totals.flatMap((t, i): [number, number][] => (t === null ? [] : [[((i + 1) / n) * W, y(t)]])),
   ];
   const line = smoothPath(points);
   const last = points.at(-1)!;
@@ -286,7 +288,7 @@ function LineView({ totals, n, selected }: { totals: (number | null)[]; n: numbe
         <div
           aria-hidden="true"
           className="absolute size-3 -translate-1/2 rounded-full bg-chart-income ring-4 ring-background"
-          style={{ left: `${((selected! + 0.5) / n) * 100}%`, top: `${(y(shown) / H) * 100}%` }}
+          style={{ left: `${((selected! + 1) / n) * 100}%`, top: `${(y(shown) / H) * 100}%` }}
         />
       )}
     </>

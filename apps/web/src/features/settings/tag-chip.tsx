@@ -1,6 +1,11 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { textColorOn, useTags } from "./tags-store";
+
+/** Inline variables for the tag-color utility, which adapts the colour to the theme. */
+export function tagStyle(color: string) {
+  return { "--tag": color, "--tag-text": textColorOn(color) } as CSSProperties;
+}
 
 /**
  * A tag name in the color set under Configuración › Etiquetas. Tags not in the list use the
@@ -22,9 +27,9 @@ export function TagChip({
   const tag = useTags().find((t) => t.name.trim().toLocaleLowerCase("es") === key);
   return (
     <Tag
-      className={cn("rounded-full font-medium", !tag && "bg-accent", className)}
+      className={cn("rounded-full font-medium", tag ? "tag-color" : "bg-accent", className)}
       // The color is the user's choice, so it can't be a design token
-      style={tag ? { backgroundColor: tag.color, color: textColorOn(tag.color) } : undefined}
+      style={tag ? tagStyle(tag.color) : undefined}
     >
       {name}
       {children}

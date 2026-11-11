@@ -1,7 +1,8 @@
 /*
  * The brand's louder voice, shared by the public site and the screens around
  * the app (sign-in, sign-up): gradient text, gradient borders and the main
- * call to action. Inside the app the UI stays flat.
+ * call to action. Inside the app the UI stays flat but for the home screen's
+ * main action, so the gradient follows the user in from the site.
  */
 @utility text-gradient-brand {
   background: var(--brand-gradient);

@@ -9,10 +9,16 @@ export const appLinks = {
   profile: `${appUrl}/configuracion/datos-personales`,
 };
 
-/** The demo opens in its own tab, so leaving it brings people back to the page they were reading. */
-export const demoLinkAttrs = { target: "_blank", rel: "noopener" } as const;
+/**
+ * The demo opens in its own tab, so leaving it brings people back to the page they were reading.
+ * The layout's script adds the theme the visitor picked here to these links, so the demo opens in it.
+ */
+export const demoLinkAttrs = { target: "_blank", rel: "noopener", "data-demo-link": "" } as const;
 
-export const sourceUrl = "https://github.com/jesuspb2/cuentalibre";
+/** Links that leave the site open in a new tab, so the page stays where it was. */
+export const externalLinkAttrs = { target: "_blank", rel: "noopener noreferrer" } as const;
+
+export const sourceUrl = "https://github.com/cuentalibre-app/cuentalibre";
 
 /**
  * Who runs this instance: the details the LSSI and the GDPR require the legal

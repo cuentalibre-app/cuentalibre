@@ -81,7 +81,7 @@ export function HomePage() {
               <Camera strokeWidth={1.8} aria-hidden="true" />
               Subir gasto
             </Link>
-            <Link to="/ventas/facturas/nueva" className={buttonVariants()}>
+            <Link to="/ventas/facturas/nueva" className={buttonVariants({ variant: "brand" })}>
               <Plus strokeWidth={2} aria-hidden="true" />
               Nueva factura
             </Link>

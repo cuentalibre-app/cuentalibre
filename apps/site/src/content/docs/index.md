@@ -6,7 +6,7 @@ section: start
 order: 1
 ---
 
-cuentalibre es una aplicación de contabilidad e impuestos para autónomos en España: facturas, gastos, IVA, IRPF y el calendario fiscal. Es software libre, con licencia AGPL-3.0, y el código está [en GitHub](https://github.com/jesuspb2/cuentalibre).
+cuentalibre es una aplicación de contabilidad e impuestos para autónomos en España: facturas, gastos, IVA, IRPF y el calendario fiscal. Es software libre, con licencia AGPL-3.0, y el código está [en GitHub](https://github.com/cuentalibre-app/cuentalibre).
 
 **¿Primera vez?** Prueba la [demo](https://app.cuentalibre.es/demo): un negocio de ejemplo, sin crear cuenta.
 

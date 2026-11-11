@@ -137,9 +137,9 @@ export function AuthForm({ onSubmit, submitLabel, pending, error, children }: Au
   );
 }
 
-/** The main action of an auth screen: a full-width pill in the brand gradient, like the site's. */
+/** The main action of an auth screen: full width, in the brand gradient like the site's. */
 export function AuthButton({ className, ...props }: ComponentProps<typeof Button>) {
-  return <Button size="xl" className={cn("w-full button-brand rounded-full", className)} {...props} />;
+  return <Button variant="brand" size="xl" className={cn("w-full", className)} {...props} />;
 }
 
 /** Runs a form action, keeping track of whether it's pending and the error to show. */

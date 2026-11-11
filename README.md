@@ -127,7 +127,7 @@ The UI is in Spanish, like the taxes it deals with.
 ### 1. Install
 
 ```sh
-git clone https://github.com/jesuspb2/cuentalibre.git
+git clone https://github.com/cuentalibre-app/cuentalibre.git
 cd cuentalibre
 pnpm install
 ```

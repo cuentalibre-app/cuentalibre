@@ -1,8 +1,9 @@
 ---
 import "../styles/global.css";
 import GitHubIcon from "../components/GitHubIcon.astro";
+import Icon from "../components/Icon.astro";
 import Logo from "../components/Logo.astro";
-import { appLinks, demoLinkAttrs, legalPages, sourceUrl } from "../site";
+import { appLinks, demoLinkAttrs, externalLinkAttrs, legalPages, sourceUrl } from "../site";
 
 interface Props {
   title: string;
@@ -63,9 +64,24 @@ const year = new Date().getFullYear();
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <!-- Lets CSS hide what the page script will animate in; without scripts everything shows -->
+    <!--
+      Lets CSS hide what the page script will animate in; without scripts everything shows.
+      Applies the theme the visitor picked, or the system's, before the first paint.
+    -->
     <script is:inline>
-      document.documentElement.classList.add("js");
+      (function () {
+        var root = document.documentElement;
+        root.classList.add("js");
+        var theme = null;
+        try {
+          theme = localStorage.getItem("cuentalibre:site-theme");
+        } catch (e) {}
+        var dark = theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        if (dark) {
+          root.classList.add("dark");
+          document.querySelector('meta[name="theme-color"]').setAttribute("content", "#131416");
+        }
+      })();
     </script>
   </head>
   <body>
@@ -76,7 +92,7 @@ const year = new Date().getFullYear();
     <header class="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
       <a
         href="/"
-        class="flex shrink-0 items-baseline gap-2 text-[17px] font-semibold tracking-[-0.01em] text-foreground no-underline sm:gap-2.5 sm:text-[19px]"
+        class="flex shrink-0 items-baseline gap-2 font-brand text-[17px] font-semibold tracking-[-0.01em] text-foreground no-underline sm:gap-2.5 sm:text-[19px]"
       >
         <Logo />
         cuentalibre
@@ -95,24 +111,28 @@ const year = new Date().getFullYear();
         }
       </nav>
       <div class="flex items-center gap-1 sm:gap-2">
+        <button
+          type="button"
+          data-theme-toggle
+          aria-label="Modo oscuro"
+          aria-pressed="false"
+          class="flex size-9 items-center justify-center rounded-lg border-0 bg-transparent text-foreground hover:bg-muted sm:size-10"
+        >
+          <Icon name="moon" class="size-[19px] dark:hidden" />
+          <Icon name="sun" class="hidden size-[19px] dark:block" />
+        </button>
         <a
           href={sourceUrl}
-          class="hidden items-center gap-1.5 rounded-[10px] px-3 py-2 text-[15px] font-medium text-foreground no-underline hover:bg-muted lg:flex"
+          {...externalLinkAttrs}
+          class="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-[15px] font-medium text-foreground no-underline hover:bg-muted lg:flex"
         >
           <GitHubIcon class="size-[18px]" />GitHub
         </a>
         <a
           href={appLinks.signIn}
-          class="rounded-[10px] px-2.5 py-2 text-[14px] font-medium text-foreground no-underline hover:bg-muted sm:px-3.5 sm:text-[15px]"
+          class="rounded-lg px-2.5 py-2 text-[14px] font-medium text-foreground no-underline hover:bg-muted sm:px-3.5 sm:text-[15px]"
         >
           Entrar
-        </a>
-        <a
-          href={appLinks.demo}
-          {...demoLinkAttrs}
-          class="rounded-full bg-foreground px-3.5 py-2 text-[14px] font-semibold whitespace-nowrap text-background no-underline hover:bg-primary-hover sm:px-4 sm:text-[15px]"
-        >
-          <span class="sm:hidden">Demo</span><span class="hidden sm:inline">Probar la demo</span>
         </a>
       </div>
     </header>
@@ -123,7 +143,7 @@ const year = new Date().getFullYear();
     <footer class="mx-auto mt-20 max-w-[1200px] border-t border-divider px-4 pt-12 pb-10 sm:px-6 md:mt-30 md:pt-16">
       <div class="grid gap-12 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] md:gap-8">
         <div>
-          <a href="/" class="flex w-fit items-baseline gap-2.5 text-[19px] font-semibold text-foreground no-underline">
+          <a href="/" class="flex w-fit items-baseline gap-2.5 font-brand text-[19px] font-semibold text-foreground no-underline">
             <Logo />
             cuentalibre
           </a>
@@ -132,6 +152,7 @@ const year = new Date().getFullYear();
           </p>
           <a
             href={sourceUrl}
+            {...externalLinkAttrs}
             aria-label="cuentalibre en GitHub"
             class="mt-6 flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
           >
@@ -147,7 +168,7 @@ const year = new Date().getFullYear();
                   <li>
                     <a
                       href={link.href}
-                      {...(link.href === appLinks.demo ? demoLinkAttrs : {})}
+                      {...(link.href === appLinks.demo ? demoLinkAttrs : link.href.startsWith(sourceUrl) ? externalLinkAttrs : {})}
                       class="inline-block py-1.5 text-[15px] text-muted-foreground no-underline hover:text-foreground"
                     >
                       {link.label}
@@ -164,6 +185,51 @@ const year = new Date().getFullYear();
       </p>
     </footer>
     <script>
+      // Light or dark: the header button flips the whole site and remembers the choice on this device
+      const themeKey = "cuentalibre:site-theme";
+      const root = document.documentElement;
+      const toggle = document.querySelector<HTMLButtonElement>("[data-theme-toggle]")!;
+      const demoLinks = document.querySelectorAll<HTMLAnchorElement>("[data-demo-link]");
+      const storedTheme = () => {
+        try {
+          return localStorage.getItem(themeKey);
+        } catch {
+          return null;
+        }
+      };
+      const syncTheme = () => {
+        const dark = root.classList.contains("dark");
+        toggle.setAttribute("aria-pressed", String(dark));
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#131416" : "#ffffff");
+        // A theme picked here travels to the demo, which lives on another domain and can't read it
+        const picked = storedTheme();
+        for (const link of demoLinks) {
+          const url = new URL(link.href);
+          if (picked) url.searchParams.set("tema", picked === "dark" ? "oscuro" : "claro");
+          else url.searchParams.delete("tema");
+          link.href = url.href;
+        }
+      };
+      toggle.addEventListener("click", () => {
+        const dark = !root.classList.contains("dark");
+        root.classList.toggle("dark", dark);
+        try {
+          localStorage.setItem(themeKey, dark ? "dark" : "light");
+        } catch {
+          // Storage unavailable (private mode): the choice lasts until reload
+        }
+        syncTheme();
+        dispatchEvent(new Event("site-theme-change"));
+      });
+      // Until the visitor picks one, the site follows the system as it changes
+      matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        if (storedTheme()) return;
+        root.classList.toggle("dark", event.matches);
+        syncTheme();
+        dispatchEvent(new Event("site-theme-change"));
+      });
+      syncTheme();
+
       // The sticky header shows its bottom border once the page has scrolled under it
       const header = document.querySelector<HTMLElement>("[data-site-header]")!;
       const sync = () => header.toggleAttribute("data-scrolled", window.scrollY > 8);
