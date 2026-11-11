@@ -11,7 +11,6 @@ import { amortizationExpenses, toTaxBooks } from "@/features/taxes/tax-books";
 
 export const REPORTS_PATH = "/informes";
 export const PNL_PATH = "/informes/perdidas-y-ganancias";
-export const COMPANY_REPORTS_PATH = "/informes/empresas";
 
 const INCOME_LABELS = new Map(INCOME_TYPE_GROUPS.flatMap((g) => g.options.map((o) => [o.value as string, o.label])));
 
