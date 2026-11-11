@@ -18,8 +18,8 @@ import { table } from "@cuentalibre/ui/lib/table";
 import { Field } from "@/features/sales/form-fields";
 import { EmptyState, IconAction } from "@/features/sales/list-parts";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
-import { TagChip } from "./tag-chip";
-import { TAG_SWATCHES, nextTagColor, tagsStore, textColorOn, useTags } from "./tags-store";
+import { TagChip, tagStyle } from "./tag-chip";
+import { TAG_SWATCHES, nextTagColor, tagsStore, useTags } from "./tags-store";
 import { Page } from "@/components/page";
 
 function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open: boolean) => void }) {
@@ -99,8 +99,8 @@ function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             Vista previa:
             <span
-              className="rounded-full px-2.5 text-sm leading-7 font-medium"
-              style={{ backgroundColor: color, color: textColorOn(color) }}
+              className="tag-color rounded-full px-2.5 text-sm leading-7 font-medium"
+              style={tagStyle(color)}
             >
               {name.trim() || "Etiqueta"}
             </span>

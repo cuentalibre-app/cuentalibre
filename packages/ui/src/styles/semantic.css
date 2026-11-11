@@ -78,7 +78,8 @@
 
 /*
  * Dark mode: PROVISIONAL. Structure is in place, values still need tuning.
- * Enabled by the .dark class on <html>.
+ * Enabled by the .dark class on <html>. Surfaces step up in lightness as they rise
+ * (page, card, popover), so cards stand apart from the page and badges from cards.
  */
 .dark {
   color-scheme: dark;
@@ -87,9 +88,9 @@
   --canvas: #0d0e10;
   --foreground: #ededeb;
 
-  --card: #18191c;
+  --card: #1c1d21;
   --card-foreground: #ededeb;
-  --popover: #1e1f22;
+  --popover: #232429;
   --popover-foreground: #ededeb;
 
   --primary: #7f8ff2;
@@ -102,21 +103,21 @@
   --aurora-strength: 1.4;
   --glass: color-mix(in oklab, #26272b 40%, transparent);
   --glass-edge: color-mix(in oklab, #ffffff 12%, transparent);
-  --modal: color-mix(in oklab, #1e1f22 90%, transparent);
+  --modal: color-mix(in oklab, #232429 90%, transparent);
 
-  --secondary: #18191c;
+  --secondary: #1c1d21;
   --secondary-foreground: #ededeb;
 
-  --muted: #1f2023;
-  --muted-strong: #34363a;
-  --muted-foreground: #a8acb2;
+  --muted: #26282d;
+  --muted-strong: #3a3d42;
+  --muted-foreground: #aeb2b8;
 
-  --accent: #2b2d31;
+  --accent: #2f3136;
   --accent-foreground: #ededeb;
 
-  --border: #35373c;
+  --border: #3a3c42;
   --input: #46494f;
-  --divider: #2b2d31;
+  --divider: #2d2f34;
   --ring: #7f8ff2;
 
   --success: #5bc08a;
@@ -131,13 +132,13 @@
 
   --sidebar: color-mix(in oklab, #18191c 55%, transparent);
   --sidebar-foreground: #ededeb;
-  --sidebar-accent: #2b2d31;
+  --sidebar-accent: #2f3136;
   --sidebar-accent-foreground: #ededeb;
-  --sidebar-border: #35373c;
+  --sidebar-border: #3a3c42;
 
   --chart-income: #7f8ff2;
   --chart-expense: #e8a34a;
-  --chart-tax: #4a5296;
+  --chart-tax: #5d69bd;
   --chart-grid: #2a2c30;
   --chart-axis: #3a3d42;
   --chart-highlight: #1f2440;
