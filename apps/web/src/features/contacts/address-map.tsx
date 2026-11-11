@@ -4,7 +4,7 @@ import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { SPAIN } from "@cuentalibre/core";
-import { candidatesUrl, portalPlace } from "./address-search-model";
+import { candidatesUrls, portalPlace } from "./address-search-model";
 import { fetchCandidates } from "./cartociudad";
 import {
   MAP_ZOOM,
@@ -23,15 +23,23 @@ type Lookup =
 
 /**
  * A Spanish street number on CartoCiudad, which knows far more of them than
- * OpenStreetMap. Null when it isn't found or the service fails.
+ * OpenStreetMap, searched within the postal code or town of the address.
+ * Null when it isn't found there or the service fails.
  */
 async function findPortal(a: MapAddress): Promise<Place | null> {
   if (a.country !== SPAIN || !a.address.trim()) return null;
+  const area = { postalCode: a.postalCode, city: a.city };
+  // The last search is anywhere in Spain, which can't be trusted to be this address
+  const urls = candidatesUrls(a.address, area).slice(0, -1);
   try {
-    return portalPlace(await fetchCandidates(candidatesUrl(a.address, a.postalCode)), a.address);
+    for (const url of urls) {
+      const place = portalPlace(await fetchCandidates(url), a.address, area);
+      if (place) return place;
+    }
   } catch {
-    return null;
+    // CartoCiudad is down: OpenStreetMap answers instead
   }
+  return null;
 }
 
 /** The address on OpenStreetMap: the street number when it knows it, else the street or the town. */

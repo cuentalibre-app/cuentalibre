@@ -4,7 +4,14 @@ import { Input } from "@cuentalibre/ui/components/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@cuentalibre/ui/components/popover";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import type { FieldControlProps } from "@/features/sales/form-fields";
-import { MIN_QUERY, candidatesUrl, pickedAddress, toSuggestions, type AddressSuggestion } from "./address-search-model";
+import {
+  MIN_QUERY,
+  candidatesUrls,
+  pickedAddress,
+  toSuggestions,
+  type AddressSuggestion,
+  type SearchArea,
+} from "./address-search-model";
 import { fetchCandidates } from "./cartociudad";
 
 /** Waits for a pause in typing, so a search isn't sent for every key. */
@@ -13,12 +20,9 @@ const DEBOUNCE_MS = 250;
 /** Answers already fetched, by URL: going back over a word doesn't ask again. */
 const cache = new Map<string, AddressSuggestion[]>();
 
-async function search(query: string, postalCode: string, signal: AbortSignal) {
-  const urls = [candidatesUrl(query, postalCode)];
-  // A wrong or stale postal code shouldn't hide the street: retry without it
-  if (urls[0] !== candidatesUrl(query)) urls.push(candidatesUrl(query));
+async function search(query: string, area: SearchArea, signal: AbortSignal) {
   let failure: unknown = null;
-  for (const url of urls) {
+  for (const url of candidatesUrls(query, area)) {
     let hit = cache.get(url);
     if (!hit) {
       try {
@@ -44,13 +48,15 @@ async function search(query: string, postalCode: string, signal: AbortSignal) {
 export function AddressSearchInput({
   value,
   postalCode,
+  city,
   onChange,
   onPick,
   ...field
 }: FieldControlProps & {
   value: string;
-  /** Narrows the search when it's already filled in. */
+  /** Narrow the search when they're already filled in. */
   postalCode: string;
+  city: string;
   onChange: (address: string) => void;
   onPick: (suggestion: AddressSuggestion) => void;
 }) {
@@ -70,7 +76,7 @@ export function AddressSearchInput({
     }
     const controller = new AbortController();
     const timer = setTimeout(() => {
-      search(query, postalCode, controller.signal).then(
+      search(query, { postalCode, city }, controller.signal).then(
         (found) => {
           setSuggestions(found);
           setActive(-1);
@@ -84,7 +90,7 @@ export function AddressSearchInput({
       clearTimeout(timer);
       controller.abort();
     };
-    // The postal code only narrows a search the typing starts
+    // The postal code and town only narrow a search the typing starts
   }, [query]);
 
   const pick = (s: AddressSuggestion) => {
