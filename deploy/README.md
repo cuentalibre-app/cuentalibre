@@ -79,14 +79,11 @@ Run the same workflow from a `prod-*` tag instead of `main` (_Use workflow from_
 
 `prod-*` tags are internal deployment markers. Self-hosters get SemVer releases instead (`v0.1.0`, `v0.2.0`…), and [the install guide](../apps/site/src/content/docs/instalar.md) checks out the latest `v*` tag rather than `main`.
 
-- Cut a release from a commit that both the API and the web app have run in production for a while: one with a `prod-api-*` and a `prod-web-*` tag, since the self-hosted image bundles both.
-- While on `0.x`, a breaking change for self-hosters bumps the middle number, and anything else the last one.
-- Publish it as a GitHub Release with notes generated from the merged PRs. When a release needs an action before or after updating, write it at the top by hand.
+The version lives in the root `package.json`, and what changes in each one in `CHANGELOG.md`, in Spanish and written for the people who run it.
 
-```sh
-git tag -a v0.2.0 -m v0.2.0 <commit> && git push origin v0.2.0
-gh release create v0.2.0 --verify-tag --generate-notes
-```
+- To release, a PR bumps `version` and adds its `## <version>` section to `CHANGELOG.md`: what's new, and anything to do before or after updating. CI fails when the version in `package.json` has no section.
+- While on `0.x`, a breaking change for self-hosters bumps the middle number, and anything else the last one.
+- Promoting to production publishes it: once both apps run a commit whose version has no `v<version>` tag yet, `publish-version.sh` creates the tag and a GitHub Release with that section as notes. Self-hosters only get what production runs, and staging is where it settles first. The self-hosted image bundles both apps, so promoting only one of them doesn't publish.
 
 ### Settings
 
