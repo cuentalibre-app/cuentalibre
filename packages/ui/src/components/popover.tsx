@@ -5,6 +5,8 @@ import { cn } from "../lib/cn";
 export const Popover = Primitive.Root;
 export const PopoverTrigger = Primitive.Trigger;
 export const PopoverClose = Primitive.Close;
+/** Positions the popover against an element other than its trigger, such as a text field. */
+export const PopoverAnchor = Primitive.Anchor;
 
 export function PopoverContent({ className, sideOffset = 6, ...props }: ComponentProps<typeof Primitive.Content>) {
   return (
