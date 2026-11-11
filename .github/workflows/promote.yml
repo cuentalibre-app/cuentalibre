@@ -1,28 +1,30 @@
 name: Promote to production
 
-# Sends what runs on staging to production, and tags the commit `prod-<app>-<date>`.
-# Run from `main` to promote; run from an older `prod-*` tag to roll back to it.
+# Sends what runs on staging to production, API and web app together, and publishes that commit
+# as the next version for self-hosters (`v<version>`, see deploy/README.md).
+# Run from `main` to promote; run from an older `v*` tag to roll back to it, which publishes nothing.
 on:
   workflow_dispatch:
     inputs:
-      api:
-        description: API
-        type: boolean
-        default: true
-      web:
-        description: Web app
-        type: boolean
-        default: true
+      version:
+        description: Next version (ignored when rolling back)
+        type: choice
+        options: [patch, minor, major]
+        default: patch
 
 permissions:
-  contents: write # the tags
+  contents: write # the version's tag, release and changelog commit
   actions: read # whether CI passed
+
+# Two promotions at once would publish the same version
+concurrency:
+  group: promote
+  cancel-in-progress: false
 
 jobs:
   # Staging and production are separate servers, and each environment can only reach its own:
   # this job takes the image from staging, the next one sends it to production.
   export-api:
-    if: inputs.api
     runs-on: ubuntu-latest
     environment: staging
     outputs:
@@ -132,14 +134,10 @@ jobs:
           done
           ssh "deploy@$DEPLOY_HOST" 'cd /opt/cuentalibre && docker compose logs --tail 50 api'
           exit 1
-      - name: Tag what runs in production
-        run: .github/scripts/tag-release.sh api "$REVISION"
 
   # After the API, so the app never calls endpoints that aren't live yet
   promote-web:
-    needs: [export-api, promote-api]
-    # A failed export skips promote-api rather than failing it, so both count
-    if: ${{ !cancelled() && inputs.web && !contains(needs.*.result, 'failure') }}
+    needs: promote-api
     runs-on: ubuntu-latest
     environment: production
     concurrency:
@@ -151,14 +149,16 @@ jobs:
           fetch-depth: 0
           filter: blob:none
       # Every merge deploys the app to staging, so main's last commit is what staging shows,
-      # as long as its CI run got that far.
+      # as long as its CI run got that far. A release's changelog commit doesn't run CI (pushes
+      # with the workflow token start no workflows) and changes no app, so it looks past those.
       - name: Check staging runs this commit
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          conclusion=$(gh run list --workflow ci.yml --commit "$GITHUB_SHA" --event push --json conclusion --jq '.[0].conclusion')
-          [ "$conclusion" = success ] || { echo "CI on $GITHUB_SHA is '${conclusion:-not run}', so staging may not show it yet" >&2; exit 1; }
+          commit=$(git log -1 --first-parent --format=%H "$GITHUB_SHA" -- . ':(exclude)CHANGELOG.md')
+          conclusion=$(gh run list --workflow ci.yml --commit "$commit" --event push --json conclusion --jq '.[0].conclusion')
+          [ "$conclusion" = success ] || { echo "CI on $commit is '${conclusion:-not run}', so staging may not show it yet" >&2; exit 1; }
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -177,5 +177,18 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx --yes wrangler@4.145.0 deploy
-      - name: Tag what runs in production
-        run: .github/scripts/tag-release.sh web "$GITHUB_SHA"
+
+  # Self-hosters get what production now runs; rolling back publishes nothing
+  publish-version:
+    needs: promote-web
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - name: Publish the version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-version.sh "${{ inputs.version }}" "$GITHUB_SHA"
