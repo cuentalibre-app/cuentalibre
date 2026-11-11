@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addressTail,
   pickedAddress,
+  portalPlace,
   searchText,
   candidatesUrl,
   streetLine,
@@ -138,5 +139,25 @@ describe("toSuggestions", () => {
       candidate({ id: "3", type: "Municipio" }),
     ]);
     expect(list.map((s) => s.id)).toEqual(["1"]);
+  });
+});
+
+describe("portalPlace", () => {
+  const portal = candidate({ lat: 36.465, lng: -6.2 });
+
+  it("finds the street number typed", () => {
+    expect(
+      portalPlace([candidate({ portalNumber: 38, lat: 1, lng: 1 }), portal], "Calle Saturnino Montojo 39"),
+    ).toEqual({
+      lat: 36.465,
+      lon: -6.2,
+      label: "Calle Saturnino Montojo 39, 11100 San Fernando, Cádiz",
+    });
+    expect(portalPlace([portal], "Calle Saturnino Montojo 39, 2º B")?.lat).toBe(36.465);
+  });
+
+  it("gives up without a number or when it isn't among the candidates", () => {
+    expect(portalPlace([portal], "Calle Saturnino Montojo")).toBeNull();
+    expect(portalPlace([portal], "Calle Saturnino Montojo 41")).toBeNull();
   });
 });

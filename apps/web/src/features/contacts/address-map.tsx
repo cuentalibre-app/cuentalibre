@@ -3,6 +3,8 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { ExternalLink, MapPin } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
+import { SPAIN } from "@cuentalibre/core";
+import { candidatesUrl, portalPlace, type Candidate } from "./address-search-model";
 import {
   MAP_ZOOM,
   TILE_SIZE,
@@ -17,6 +19,20 @@ import {
 
 type Lookup =
   { key: string; status: "loading" | "notFound" | "error" } | { key: string; status: "found"; place: Place };
+
+/**
+ * A Spanish street number on CartoCiudad, which knows far more of them than
+ * OpenStreetMap. Any failure falls back to OpenStreetMap's search.
+ */
+async function findPortal(a: MapAddress): Promise<Place | null> {
+  if (a.country !== SPAIN || !a.address.trim()) return null;
+  try {
+    const response = await fetch(candidatesUrl(a.address, a.postalCode), { signal: AbortSignal.timeout(4000) });
+    return response.ok ? portalPlace((await response.json()) as Candidate[], a.address) : null;
+  } catch {
+    return null;
+  }
+}
 
 const link = cn(buttonVariants({ variant: "secondary", size: "sm" }), "[&_svg]:size-4");
 
@@ -56,9 +72,9 @@ function PlaceMap({ place }: { place: Place }) {
 }
 
 /**
- * Looks the address up on OpenStreetMap when asked, and shows where it falls.
- * Nothing leaves the browser until the user presses the button; changing the
- * address hides the map until it's looked up again.
+ * Looks the address up when asked (CartoCiudad for a Spanish street number,
+ * OpenStreetMap otherwise) and shows where it falls. Changing the address
+ * hides the map until it's looked up again.
  */
 export function AddressMap({ address }: { address: MapAddress }) {
   const [lookup, setLookup] = useState<Lookup | null>(null);
@@ -68,6 +84,8 @@ export function AddressMap({ address }: { address: MapAddress }) {
   const locate = async () => {
     setLookup({ key, status: "loading" });
     try {
+      const portal = await findPortal(address);
+      if (portal) return setLookup({ key, status: "found", place: portal });
       let hit: { lat: string; lon: string; display_name: string } | undefined;
       for (const url of searchUrls(address)) {
         const response = await fetch(url);

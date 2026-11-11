@@ -1,4 +1,5 @@
 import { provinceFromPostalCode } from "@cuentalibre/core";
+import type { Place } from "./address-map-model";
 
 /**
  * Street suggestions for Spanish addresses from CartoCiudad, the geocoder of
@@ -18,6 +19,8 @@ export interface Candidate {
   province: string | null;
   portalNumber: number | null;
   extension?: string | null;
+  lat?: number;
+  lng?: number;
 }
 
 /** A street or street number the user can pick, with what it fills in. */
@@ -137,4 +140,19 @@ export function toSuggestions(candidates: Candidate[]): AddressSuggestion[] {
     suggestions.push(suggestion);
   }
   return suggestions;
+}
+
+/**
+ * Where the street number of an address is, from CartoCiudad's answer. It
+ * knows portals OpenStreetMap often lacks, which only finds the street then.
+ * Null without a number, or when the number isn't one of the candidates.
+ */
+export function portalPlace(candidates: Candidate[], address: string): Place | null {
+  const number = /\b(\d+)\s*[a-z]?\s*(?:,|$)/i.exec(searchText(address))?.[1];
+  if (!number) return null;
+  const c = candidates.find((c) => c.type === "portal" && String(c.portalNumber) === number && c.lat && c.lng);
+  if (!c) return null;
+  const [s] = toSuggestions([c]);
+  const place = [[s?.postalCode, s?.city].filter(Boolean).join(" "), s?.province].filter(Boolean).join(", ");
+  return { lat: c.lat!, lon: c.lng!, label: [s?.address, place].filter(Boolean).join(", ") };
 }
