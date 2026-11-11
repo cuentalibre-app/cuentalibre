@@ -342,7 +342,7 @@ function PlanStep({ trialEndsAt }: { trialEndsAt: string | null }) {
 
       <section aria-labelledby="subscribe-now" className="flex flex-col gap-3 border-t border-border pt-6">
         <h2 id="subscribe-now" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
-          ¿Ya sabes que te quedas?
+          O suscríbete ahora
         </h2>
         <PeriodPicker rows value={period} onChange={setPeriod} />
         <p className="m-0 text-sm text-muted-foreground">
@@ -356,7 +356,7 @@ function PlanStep({ trialEndsAt }: { trialEndsAt: string | null }) {
         )}
         <Button variant="secondary" size="lg" onClick={() => void subscribe()} disabled={pending !== null}>
           {pending === "subscribe" && <Loader2 className="animate-spin" aria-hidden="true" />}
-          Suscribirme ya
+          Suscribirme
         </Button>
       </section>
     </div>

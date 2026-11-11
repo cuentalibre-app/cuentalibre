@@ -1,10 +1,20 @@
 import type { ComponentProps, FormEvent, ReactNode } from "react";
-import { Code, HandCoins, LockKeyhole, type LucideIcon } from "lucide-react";
+import {
+  Code,
+  DatabaseBackup,
+  HandCoins,
+  Lock,
+  LockKeyhole,
+  MonitorSmartphone,
+  RefreshCw,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { LegalLinks, SITE_URL } from "@/components/legal-links";
 import { LogoMark } from "@/components/logo";
 import appScreen from "./assets/inicio.webp";
+import appScreenDark from "./assets/inicio-oscuro.webp";
 
 interface AuthLayoutProps {
   title: string;
@@ -65,26 +75,50 @@ function Brand() {
   );
 }
 
-const reasons: { icon: LucideIcon; title: string; text: string }[] = [
-  { icon: Code, title: "Código abierto", text: "Cada cálculo de IVA e IRPF, a la vista." },
-  { icon: LockKeyhole, title: "Privado por defecto", text: "Tus datos fiscales no son nuestro negocio." },
-  { icon: HandCoins, title: "Gratis de verdad", text: "Facturas y gastos ilimitados." },
-];
+interface Pitch {
+  headline: string;
+  accent: string;
+  reasons: { icon: LucideIcon; title: string; text: string }[];
+}
 
-/** The site's promise beside the form, over a glimpse of the app. Only on wide screens. */
+/**
+ * Beside the form. cuentalibre online (the instance with a public site) is a hosted, paid
+ * service: it speaks of what its customers get. A self-hosted instance keeps the project's promise.
+ */
+const pitch: Pitch = SITE_URL
+  ? {
+      headline: "Impuestos al día.",
+      accent: "Sin instalar nada.",
+      reasons: [
+        { icon: MonitorSmartphone, title: "Desde cualquier navegador", text: "En el ordenador o en el móvil, con los mismos datos." },
+        { icon: RefreshCw, title: "Siempre actualizada", text: "Las mejoras llegan solas, sin que hagas nada." },
+        { icon: DatabaseBackup, title: "Copia de seguridad diaria", text: "Y exportas tus datos cuando quieras." },
+      ],
+    }
+  : {
+      headline: "Impuestos al día.",
+      accent: "100\u00a0% código abierto.",
+      reasons: [
+        { icon: Code, title: "Código abierto", text: "Cada cálculo de IVA e IRPF, a la vista." },
+        { icon: LockKeyhole, title: "Privado por defecto", text: "Tus datos fiscales no salen de tu servidor." },
+        { icon: HandCoins, title: "Gratis de verdad", text: "Facturas y gastos ilimitados." },
+      ],
+    };
+
+/** The promise beside the form, over the app's home screen in a browser window. Only on wide screens. */
 function BrandPanel() {
   return (
-    <aside className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-brand-glow lg:flex lg:flex-col">
+    <aside className="relative m-3 hidden overflow-hidden rounded-[20px] border border-border bg-brand-glow lg:flex lg:flex-col">
       <div className="relative z-10 flex flex-col gap-8 p-12 xl:p-16">
         <p className="m-0 font-display text-[clamp(36px,3.6vw,52px)] leading-[1.04] font-semibold tracking-[-0.025em] text-balance">
-          Impuestos al día.
+          {pitch.headline}
           <br />
-          <span className="text-gradient-brand">100&nbsp;% código abierto.</span>
+          <span className="text-gradient-brand">{pitch.accent}</span>
         </p>
         <ul className="m-0 flex list-none flex-col gap-4 p-0">
-          {reasons.map(({ icon: Icon, title, text }) => (
+          {pitch.reasons.map(({ icon: Icon, title, text }) => (
             <li key={title} className="flex items-center gap-3.5">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-primary">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-border bg-background text-primary">
                 <Icon className="size-[18px]" aria-hidden />
               </span>
               <span className="flex flex-col">
@@ -95,17 +129,39 @@ function BrandPanel() {
           ))}
         </ul>
       </div>
-      {/* Decorative: the app's home screen, peeking in from the bottom-right corner */}
-      <img
-        src={appScreen}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        width={1400}
-        height={875}
-        className="pointer-events-none absolute top-[min(60%,420px)] left-12 w-[1100px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
-      />
+      <AppWindow />
     </aside>
+  );
+}
+
+/**
+ * Decorative: the app's home screen in a Safari window, as on the site, peeking in from the
+ * panel's bottom-right corner. Sized in container units of the window's width, like the site's.
+ */
+function AppWindow() {
+  const light = "size-[1cqw] rounded-full";
+  const shot = "block aspect-[1440/900] h-auto w-full bg-background select-none";
+  return (
+    <div
+      aria-hidden="true"
+      className="@container pointer-events-none absolute top-[min(60%,420px)] left-12 w-[1100px] xl:left-16"
+    >
+      <div className="overflow-hidden rounded-[1cqw] border border-border bg-background shadow-window">
+        <div className="flex h-[3.6cqw] items-center gap-[1.6cqw] border-b border-border bg-sidebar px-[1.4cqw]">
+          <span className="flex gap-[0.65cqw]">
+            <span className={cn(light, "bg-window-close")} />
+            <span className={cn(light, "bg-window-minimize")} />
+            <span className={cn(light, "bg-window-zoom")} />
+          </span>
+          <span className="ml-[16%] flex h-[2.3cqw] w-[38%] items-center justify-center gap-[0.5cqw] rounded-[0.7cqw] bg-muted text-[1cqw] font-medium tracking-[-0.01em] text-foreground">
+            <Lock className="size-[0.9cqw] text-muted-foreground" strokeWidth={2.4} />
+            {window.location.host}
+          </span>
+        </div>
+        <img src={appScreen} alt="" loading="lazy" decoding="async" width={2000} height={1250} className={cn(shot, "dark:hidden")} />
+        <img src={appScreenDark} alt="" loading="lazy" decoding="async" width={2000} height={1250} className={cn(shot, "hidden dark:block")} />
+      </div>
+    </div>
   );
 }
 
@@ -137,9 +193,12 @@ export function AuthForm({ onSubmit, submitLabel, pending, error, children }: Au
   );
 }
 
+/** Full-width actions are tall for thumbs on phones; on wide screens they match the site's buttons. */
+export const AUTH_ACTION = "w-full lg:h-11 lg:rounded-[10px]";
+
 /** The main action of an auth screen: full width, in the brand gradient like the site's. */
 export function AuthButton({ className, ...props }: ComponentProps<typeof Button>) {
-  return <Button variant="brand" size="xl" className={cn("w-full", className)} {...props} />;
+  return <Button variant="brand" size="xl" className={cn(AUTH_ACTION, className)} {...props} />;
 }
 
 /** Runs a form action, keeping track of whether it's pending and the error to show. */

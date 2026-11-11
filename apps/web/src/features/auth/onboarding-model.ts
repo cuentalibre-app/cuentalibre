@@ -69,7 +69,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     key: "plan",
     label: "Plan",
     title: "Tienes 30 días gratis",
-    description: "Usa cuentalibre entero, sin tarjeta. Si ya sabes que te quedas, puedes suscribirte ahora.",
+    description: "Con todas las funciones de cuentalibre.",
     optional: false,
   },
 ];
