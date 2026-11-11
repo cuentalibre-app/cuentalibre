@@ -22,10 +22,13 @@
 
 }
 
-/* The phone frame around the app's phone screenshots: a space black edge around a black bezel */
-@theme inline {
-  --color-device-bezel: var(--color-foreground);
-  --color-device-edge: color-mix(in oklab, var(--color-foreground) 78%, var(--color-muted-foreground));
+/*
+ * The phone frame around the app's phone screenshots: a space black edge around a black bezel.
+ * Fixed values, so the frame stays black when the site switches to the dark theme.
+ */
+@theme {
+  --color-device-bezel: var(--neutral-950);
+  --color-device-edge: color-mix(in oklab, var(--neutral-950) 78%, var(--neutral-600));
 }
 
 @layer base {
