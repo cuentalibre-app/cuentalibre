@@ -5,7 +5,9 @@ import Logo from "../components/Logo.astro";
 import Base from "../layouts/Base.astro";
 import { appLinks, cloudBilling, demoLinkAttrs, sourceUrl } from "../site";
 
+import bancosMovil from "../assets/screens/bancos-movil.jpg";
 import bancos from "../assets/screens/bancos.jpg";
+import calendarioMovil from "../assets/screens/calendario-movil.jpg";
 import calendario from "../assets/screens/calendario.jpg";
 import cierre from "../assets/screens/cierre.jpg";
 import facturaEditor from "../assets/screens/factura-editor.jpg";
@@ -76,7 +78,7 @@ const screens: {
     icon: "calendar-check",
     caption: "Solo los modelos que te afectan, con su fecha.",
     desktop: calendario,
-    mobile: impuestosMovil,
+    mobile: calendarioMovil,
     alt: "Calendario fiscal del año por modelo",
   },
   {
@@ -85,7 +87,7 @@ const screens: {
     icon: "landmark",
     caption: "Lo que cobras y pagas cada mes, y por qué cuenta pasa.",
     desktop: bancos,
-    mobile: inicioMovil,
+    mobile: bancosMovil,
     alt: "Resumen de bancos con los cobros y pagos del año",
   },
 ];
