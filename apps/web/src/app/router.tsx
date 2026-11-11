@@ -44,9 +44,8 @@ import { EXPENSES_PATH, NEW_EXPENSE_PATH } from "@/features/purchases/expenses-m
 import { PurchaseFormPage } from "@/features/purchases/purchase-form-page";
 import { PurchasesListPage } from "@/features/purchases/purchases-list-page";
 import { ASSETS_PATH, NEW_ASSET_PATH, NEW_PURCHASE_PATH, PURCHASES_PATH } from "@/features/purchases/purchases-model";
-import { CompanyReportsPage } from "@/features/reports/company-reports-page";
 import { ProfitLossPage } from "@/features/reports/profit-loss-page";
-import { COMPANY_REPORTS_PATH, PNL_PATH, REPORTS_PATH } from "@/features/reports/reports-model";
+import { PNL_PATH, REPORTS_PATH } from "@/features/reports/reports-model";
 import { ReportsSummaryPage } from "@/features/reports/reports-summary-page";
 import { InvoiceSettingsPage } from "@/features/sales/invoice-settings-page";
 import { SalesFormPage } from "@/features/sales/sales-form-page";
@@ -231,7 +230,6 @@ const closingRoute = { path: CLOSING_PATH.slice(1), element: <QuarterClosePage /
 const reportRoutes = [
   { path: REPORTS_PATH.slice(1), element: <ReportsSummaryPage /> },
   { path: PNL_PATH.slice(1), element: <ProfitLossPage /> },
-  { path: COMPANY_REPORTS_PATH.slice(1), element: <CompanyReportsPage /> },
 ];
 
 const settingsRoutes = [
