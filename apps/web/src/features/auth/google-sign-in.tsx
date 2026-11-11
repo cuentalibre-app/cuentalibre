@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@cuentalibre/ui/components/button";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { AUTH_ACTION } from "./auth-layout";
 import { authErrorMessage, signInMethods, signInWithGoogle } from "./auth-api";
 import { LegalConsent } from "./legal-consent";
 import { leaveDemo } from "./session";
@@ -45,7 +47,7 @@ export function GoogleSignIn({ intent, returnPath, onError }: GoogleSignInProps)
       <Button
         variant="secondary"
         size="xl"
-        className="w-full bg-background"
+        className={cn(AUTH_ACTION, "bg-background")}
         disabled={pending}
         onClick={() => void start()}
       >
