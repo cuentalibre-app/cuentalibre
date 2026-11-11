@@ -2,7 +2,12 @@
 
 Qué cambia en cada versión de cuentalibre para quien lo instala en su servidor. Cómo actualizar: [Instalar en tu servidor › Actualizar](https://cuentalibre.es/docs/instalar#actualizar).
 
-## 0.1.0
+<!-- A PR with a change people will notice adds a line under "Próxima versión", in Spanish.
+     Promoting to production publishes it as the next version and moves it under its number. -->
+
+## Próxima versión
+
+## 0.1.0 (2026-11-11)
 
 Primera versión publicada de cuentalibre para instalar en tu propio servidor. Es el mismo código que funciona en cuentalibre Cloud desde el 9 de noviembre de 2026.
 
