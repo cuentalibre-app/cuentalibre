@@ -1,6 +1,6 @@
 ---
 import Legal from "../layouts/Legal.astro";
-import { appLinks, cloudBilling, cloudPrice, legalUpdated, owner, sourceUrl } from "../site";
+import { appLinks, cloudBilling, cloudPrice, legalUpdated, owner, sourceUrl, externalLinkAttrs } from "../site";
 
 const mail = `mailto:${owner.email}`;
 ---
@@ -152,7 +152,7 @@ const mail = `mailto:${owner.email}`;
 
   <h2>11. Software libre y marca</h2>
   <p>
-    El código de cuentalibre se publica bajo la licencia AGPL-3.0 en <a href={sourceUrl}>GitHub</a>, y puedes usarlo en
+    El código de cuentalibre se publica bajo la licencia AGPL-3.0 en <a href={sourceUrl} {...externalLinkAttrs}>GitHub</a>, y puedes usarlo en
     los términos de esa licencia. Estos términos regulan solo el servicio alojado por nosotros. El nombre y el logotipo
     de cuentalibre no forman parte de la licencia.
   </p>

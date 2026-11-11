@@ -5,7 +5,7 @@ import Browser from "../components/Browser.astro";
 import Logo from "../components/Logo.astro";
 import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
-import { appLinks, cloudBilling, demoLinkAttrs, sourceUrl } from "../site";
+import { appLinks, cloudBilling, demoLinkAttrs, externalLinkAttrs, sourceUrl } from "../site";
 
 import bancosMovil from "../assets/screens/bancos-movil.jpg";
 import bancos from "../assets/screens/bancos.jpg";
@@ -232,7 +232,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
         role="tablist"
         aria-label="Pantallas de la app"
         data-indicator-group
-        class="scrollbar-none relative mx-auto flex w-fit max-w-full gap-1 overflow-x-auto rounded-[12px] bg-muted p-1 md:flex-wrap md:justify-center"
+        class="scrollbar-none relative mx-auto flex w-full max-w-full gap-1 overflow-x-auto rounded-[12px] bg-muted p-1 sm:w-fit md:flex-wrap md:justify-center"
       >
         <span data-indicator aria-hidden="true" class={indicator}></span>
         {
@@ -244,10 +244,12 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
               aria-controls={`panel-${screen.id}`}
               aria-selected={i === 0 ? "true" : "false"}
               tabindex={i === 0 ? 0 : -1}
-              class="inline-flex shrink-0 items-center gap-[7px] rounded-lg border-0 bg-transparent px-3.5 py-2 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
+              aria-label={screen.label}
+              class="group inline-flex shrink-0 items-center justify-center gap-[7px] rounded-lg border-0 bg-transparent px-2.5 py-2 max-sm:flex-1 max-sm:aria-selected:flex-auto sm:px-3.5 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
             >
               <Icon name={screen.icon} class="size-[17px]" />
-              {screen.label}
+              {/* Phones show only the icons, and the label of the chosen screen */}
+              <span class="max-sm:hidden max-sm:group-aria-selected:inline">{screen.label}</span>
             </button>
           ))
         }
@@ -518,6 +520,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
           </ul>
           <a
             href={sourceUrl}
+            {...externalLinkAttrs}
             class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
           >
             <Icon name="code" class="size-[18px]" />Instalar desde GitHub
@@ -642,6 +645,19 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
       tab.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
       placeIndicators();
     };
+    // Swiping the screenshot sideways moves to the next or previous screen
+    let touchStart: Touch | undefined;
+    root.addEventListener("touchstart", (event) => (touchStart = event.touches[0]), { passive: true });
+    root.addEventListener("touchend", (event) => {
+      const end = event.changedTouches[0];
+      if (!touchStart || !end || (event.target as Element).closest('[role="tablist"]')) return;
+      const dx = end.clientX - touchStart.clientX;
+      const dy = end.clientY - touchStart.clientY;
+      if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      const i = tabs.findIndex((tab) => tab.getAttribute("aria-selected") === "true");
+      const target = tabs[dx < 0 ? Math.min(i + 1, tabs.length - 1) : Math.max(i - 1, 0)];
+      if (target && target !== tabs[i]) select(target);
+    });
     for (const tab of tabs) {
       tab.addEventListener("click", () => select(tab));
       tab.addEventListener("keydown", (event) => {
