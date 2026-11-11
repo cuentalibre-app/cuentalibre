@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
 import Logo from "../components/Logo.astro";
+import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
 import { appLinks, cloudBilling, demoLinkAttrs, sourceUrl } from "../site";
 
@@ -266,16 +267,12 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
                   class="block aspect-[1440/900] h-auto w-full rounded-lg border border-accent bg-background object-cover object-top-left"
                 />
               </div>
-              <div class="mx-auto w-[min(260px,72vw)] rounded-[40px] bg-foreground p-[9px] shadow-phone md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]">
-                <Image
-                  src={screen.mobile}
-                  alt="cuentalibre en el móvil"
-                  widths={[260, 520]}
-                  sizes="260px"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  class="block aspect-[390/820] h-auto w-full rounded-[32px] bg-background object-cover object-top"
-                />
-              </div>
+              <Phone
+                src={screen.mobile}
+                alt="cuentalibre en el móvil"
+                loading={i === 0 ? "eager" : "lazy"}
+                class="mx-auto w-[min(260px,72vw)] md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]"
+              />
             </div>
           </div>
         ))
