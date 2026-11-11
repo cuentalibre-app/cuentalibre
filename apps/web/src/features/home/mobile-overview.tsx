@@ -150,9 +150,9 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
           .filter(Boolean)
           .join("; ");
 
-  // The line runs edge to edge; bars keep the page margins
+  // A little wider than the page's text, with a small margin on both sides of the screen
   return (
-    <div className={cn("-mx-5 flex flex-col gap-2", view === "bars" && "px-4")}>
+    <div className="-mx-5 flex flex-col gap-2 px-4">
       <div
         ref={ref}
         role="img"
@@ -173,7 +173,7 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
             style={
               view === "bars"
                 ? { left: `calc(${(selected / n) * 100}% + 4px)`, width: `calc(${100 / n}% - 8px)` }
-                : { left: `min(${monthEnd(selected) * 100}%, 100% - 10px)` }
+                : { left: `${monthEnd(selected) * 100}%` }
             }
           />
         )}
@@ -288,11 +288,7 @@ function LineView({ totals, n, selected }: { totals: (number | null)[]; n: numbe
         <div
           aria-hidden="true"
           className="absolute size-3 -translate-1/2 rounded-full bg-chart-income ring-4 ring-background"
-          // The last month ends on the screen edge: keep its dot whole
-          style={{
-            left: `min(${((selected! + 1) / n) * 100}%, 100% - 10px)`,
-            top: `${(y(shown) / H) * 100}%`,
-          }}
+          style={{ left: `${((selected! + 1) / n) * 100}%`, top: `${(y(shown) / H) * 100}%` }}
         />
       )}
     </>
