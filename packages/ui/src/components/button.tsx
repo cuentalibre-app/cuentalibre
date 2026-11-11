@@ -8,6 +8,7 @@ import { cn } from "../lib/cn";
  * - `sm` (32px) inside a card or a row;
  * - `xl` (52px) for the main action at the foot of a phone screen;
  * - `icon` / `icon-sm` for a button that is only an icon (give it an aria-label).
+ * `brand` is the gradient call to action, one per screen at most.
  * `chip` is a small pill that toggles (aria-pressed) or picks a preset; `link` is inline text.
  * A card's "Ver todas" is a <SeeAllLink>, not a button.
  */
@@ -19,6 +20,8 @@ const variants = cva(
         // Lit from above so it has the same depth as the cards around it
         primary:
           "bg-primary bg-linear-to-b from-primary-top to-primary font-semibold text-primary-foreground shadow-primary hover:from-primary hover:to-primary-hover",
+        // The brand gradient, for the one main action a screen leads with (as on the site)
+        brand: "button-brand font-semibold",
         secondary:
           "border border-border bg-secondary text-secondary-foreground shadow-control hover:border-input hover:bg-muted",
         ghost: "text-foreground hover:bg-accent",

@@ -191,17 +191,17 @@ const defaultBilling = "yearly";
 /** In the big prices a monospaced space reads as a gap, so the euro sign gets a narrow margin instead */
 const euroSign = "ml-[0.28em]";
 
-/** White pill that slides under the chosen tab; the script places it and marks the group ready */
+/** White tab that slides under the chosen tab; the script places it and marks the group ready */
 const indicator =
-  "pointer-events-none absolute top-0 left-0 rounded-[10px] bg-background opacity-0 shadow-tab transition-[transform,width,height] duration-300 ease-out in-data-ready:opacity-100";
-const eyebrow = "text-[14px] font-semibold text-primary";
+  "pointer-events-none absolute top-0 left-0 rounded-lg bg-background opacity-0 shadow-tab transition-[transform,width,height] duration-300 ease-out in-data-ready:opacity-100";
+const eyebrow = "font-brand text-[14px] font-semibold text-primary";
 const sectionTitle =
   "font-display text-[clamp(32px,4vw,44px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance";
-/** Call-to-action pair: compact pills, stacked and centered on phones, side by side from sm */
+/** Call-to-action pair: compact buttons with the app's corners, stacked and centered on phones, side by side from sm */
 const buttonRow = "flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center";
-const pill = "inline-flex min-w-[216px] items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[15px] no-underline sm:min-w-0";
-const primaryButton = `${pill} font-semibold button-brand`;
-const secondaryButton = `${pill} border border-input font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-muted active:scale-[0.98]`;
+const ctaButton = "inline-flex min-w-[216px] items-center justify-center gap-2 rounded-[10px] px-5 py-2.5 text-[15px] no-underline sm:min-w-0";
+const primaryButton = `${ctaButton} font-semibold button-brand`;
+const secondaryButton = `${ctaButton} border border-input font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-muted active:scale-[0.98]`;
 ---
 
 <Base title={title} description={description}>
@@ -228,7 +228,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
         role="tablist"
         aria-label="Pantallas de la app"
         data-indicator-group
-        class="scrollbar-none relative mx-auto flex w-fit max-w-full gap-1 overflow-x-auto rounded-[14px] bg-muted p-1 md:flex-wrap md:justify-center"
+        class="scrollbar-none relative mx-auto flex w-fit max-w-full gap-1 overflow-x-auto rounded-[12px] bg-muted p-1 md:flex-wrap md:justify-center"
       >
         <span data-indicator aria-hidden="true" class={indicator}></span>
         {
@@ -240,7 +240,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
               aria-controls={`panel-${screen.id}`}
               aria-selected={i === 0 ? "true" : "false"}
               tabindex={i === 0 ? 0 : -1}
-              class="inline-flex shrink-0 items-center gap-[7px] rounded-[10px] border-0 bg-transparent px-3.5 py-2 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
+              class="inline-flex shrink-0 items-center gap-[7px] rounded-lg border-0 bg-transparent px-3.5 py-2 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
             >
               <Icon name={screen.icon} class="size-[17px]" />
               {screen.label}
@@ -253,7 +253,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           <div role="tabpanel" id={`panel-${screen.id}`} aria-labelledby={`pantalla-${screen.id}`} hidden={i !== 0}>
             <p class="mx-auto mt-4 mb-0 min-h-6 text-center text-[15px] text-muted-foreground">{screen.caption}</p>
             <div class="relative mt-5 md:pb-12">
-              <div class="hidden rounded-[20px] border border-border bg-sidebar p-2 shadow-frame md:block">
+              <div class="hidden rounded-2xl border border-border bg-sidebar p-2 shadow-frame md:block">
                 <Image
                   src={screen.desktop}
                   alt={screen.alt}
@@ -261,7 +261,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
                   sizes="(min-width: 1240px) 1176px, calc(100vw - 48px)"
                   loading={i === 0 ? "eager" : "lazy"}
                   fetchpriority={i === 0 ? "high" : "auto"}
-                  class="block aspect-[1440/900] h-auto w-full rounded-[13px] border border-accent bg-background object-cover object-top-left"
+                  class="block aspect-[1440/900] h-auto w-full rounded-lg border border-accent bg-background object-cover object-top-left"
                 />
               </div>
               <div class="mx-auto w-[min(260px,72vw)] rounded-[40px] bg-foreground p-[9px] shadow-phone md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]">
@@ -325,13 +325,13 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
       >
         {
           features.map((feature) => (
-            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-[24px] border border-divider bg-sidebar/60 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
+            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-divider bg-sidebar/60 transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
               <div class="px-6 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-7">
-                <div class="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{feature.tag}</div>
+                <div class="font-brand text-[13px] font-medium text-muted-foreground">{feature.tag}</div>
                 <h3 class="mt-2 mb-0 text-[20px] leading-tight sm:text-[22px] font-semibold tracking-[-0.015em]">{feature.title}</h3>
                 <p class="mt-2 mb-0 max-w-[420px] text-muted-foreground">{feature.text}</p>
               </div>
-              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] rounded-tl-[14px] border-t border-l border-input bg-background shadow-screen sm:ml-8">
+              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] rounded-tl-xl border-t border-l border-input bg-background shadow-screen sm:ml-8">
                 <Image
                   src={feature.image}
                   alt={feature.alt}
@@ -396,14 +396,14 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           </ul>
         </div>
 
-        <div data-reveal style={{ "--i": 2 }} class="mx-auto mt-12 max-w-[760px] overflow-hidden rounded-[24px] border border-accent sm:mt-16 lg:mt-0 lg:max-w-none">
+        <div data-reveal style={{ "--i": 2 }} class="mx-auto mt-12 max-w-[760px] overflow-hidden rounded-2xl border border-accent sm:mt-16 lg:mt-0 lg:max-w-none">
           <div class="px-5 py-6 sm:px-10 sm:py-8 lg:px-7">
             <table class="w-full border-separate border-spacing-0 text-[14px] sm:text-[15px]">
               <thead>
                 <tr>
                   <th scope="col" class="py-2.5"><span class="sr-only">Función</span></th>
                   <th scope="col" class="w-[76px] pb-3 align-bottom text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otros</th>
-                  <th scope="col" class="w-[96px] rounded-t-[16px] bg-primary-soft pt-4 pb-3 align-bottom text-xs font-semibold text-primary sm:w-28 sm:text-sm">
+                  <th scope="col" class="w-[96px] rounded-t-xl bg-primary-soft pt-4 pb-3 align-bottom text-xs font-semibold text-primary sm:w-28 sm:text-sm">
                     <span class="flex flex-col items-center gap-1.5">
                       <Logo class="h-[22px] w-5 text-foreground" />
                       cuentalibre
@@ -435,7 +435,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
                       <td
                         class:list={[
                           "border-t border-primary/15 bg-primary-soft py-4 text-center text-sm font-semibold text-primary",
-                          i === comparison.length - 1 && "rounded-b-[16px]",
+                          i === comparison.length - 1 && "rounded-b-xl",
                         ]}
                       >
                         {typeof row.ours === "string" ? (
@@ -476,7 +476,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
                 type="button"
                 data-billing-option={option.id}
                 aria-pressed={option.id === defaultBilling ? "true" : "false"}
-                class="inline-flex items-center justify-center gap-2 rounded-[9px] border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
+                class="inline-flex items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
               >
                 {option.label}
                 {option.saving && (
@@ -491,7 +491,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
       </div>
 
       <div class="mx-auto mt-12 grid max-w-[960px] grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-4">
-        <div data-reveal class="flex flex-col rounded-[24px] border border-accent bg-background p-6 sm:p-8">
+        <div data-reveal class="flex flex-col rounded-2xl border border-accent bg-background p-6 sm:p-8">
           <div class="flex items-center gap-3">
             <div class="flex size-10 items-center justify-center rounded-[10px] bg-muted text-foreground">
               <Icon name="server" />
@@ -522,13 +522,13 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           </ul>
           <a
             href={sourceUrl}
-            class="mt-8 flex items-center justify-center gap-2 rounded-full border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
           >
             <Icon name="code" class="size-[18px]" />Instalar desde GitHub
           </a>
         </div>
 
-        <div data-reveal style={{ "--i": 1 }} class="border-gradient-brand flex flex-col rounded-[24px] p-6 text-foreground shadow-plan sm:p-8">
+        <div data-reveal style={{ "--i": 1 }} class="border-gradient-brand flex flex-col rounded-2xl p-6 text-foreground shadow-plan sm:p-8">
           <div class="flex items-center gap-3">
             <div class="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
               <Icon name="cloud" />
@@ -579,7 +579,7 @@ const secondaryButton = `${pill} border border-input font-medium text-foreground
           </ul>
           <a
             href={appLinks.signUp}
-            class="mt-8 flex items-center justify-center gap-2 rounded-full p-3 font-semibold no-underline button-brand"
+            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand"
           >
             Probar 30 días gratis
           </a>

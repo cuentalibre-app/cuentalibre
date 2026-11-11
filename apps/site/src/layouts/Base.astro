@@ -76,7 +76,7 @@ const year = new Date().getFullYear();
     <header class="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
       <a
         href="/"
-        class="flex shrink-0 items-baseline gap-2 text-[17px] font-semibold tracking-[-0.01em] text-foreground no-underline sm:gap-2.5 sm:text-[19px]"
+        class="flex shrink-0 items-baseline gap-2 font-brand text-[17px] font-semibold tracking-[-0.01em] text-foreground no-underline sm:gap-2.5 sm:text-[19px]"
       >
         <Logo />
         cuentalibre
@@ -97,20 +97,20 @@ const year = new Date().getFullYear();
       <div class="flex items-center gap-1 sm:gap-2">
         <a
           href={sourceUrl}
-          class="hidden items-center gap-1.5 rounded-[10px] px-3 py-2 text-[15px] font-medium text-foreground no-underline hover:bg-muted lg:flex"
+          class="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-[15px] font-medium text-foreground no-underline hover:bg-muted lg:flex"
         >
           <GitHubIcon class="size-[18px]" />GitHub
         </a>
         <a
           href={appLinks.signIn}
-          class="rounded-[10px] px-2.5 py-2 text-[14px] font-medium text-foreground no-underline hover:bg-muted sm:px-3.5 sm:text-[15px]"
+          class="rounded-lg px-2.5 py-2 text-[14px] font-medium text-foreground no-underline hover:bg-muted sm:px-3.5 sm:text-[15px]"
         >
           Entrar
         </a>
         <a
           href={appLinks.demo}
           {...demoLinkAttrs}
-          class="rounded-full bg-foreground px-3.5 py-2 text-[14px] font-semibold whitespace-nowrap text-background no-underline hover:bg-primary-hover sm:px-4 sm:text-[15px]"
+          class="rounded-lg bg-foreground px-3.5 py-2 text-[14px] font-semibold whitespace-nowrap text-background no-underline hover:bg-primary-hover sm:px-4 sm:text-[15px]"
         >
           <span class="sm:hidden">Demo</span><span class="hidden sm:inline">Probar la demo</span>
         </a>
@@ -123,7 +123,7 @@ const year = new Date().getFullYear();
     <footer class="mx-auto mt-20 max-w-[1200px] border-t border-divider px-4 pt-12 pb-10 sm:px-6 md:mt-30 md:pt-16">
       <div class="grid gap-12 md:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))] md:gap-8">
         <div>
-          <a href="/" class="flex w-fit items-baseline gap-2.5 text-[19px] font-semibold text-foreground no-underline">
+          <a href="/" class="flex w-fit items-baseline gap-2.5 font-brand text-[19px] font-semibold text-foreground no-underline">
             <Logo />
             cuentalibre
           </a>
