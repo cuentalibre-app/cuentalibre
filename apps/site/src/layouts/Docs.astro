@@ -3,7 +3,7 @@ import type { MarkdownHeading } from "astro";
 import GitHubIcon from "../components/GitHubIcon.astro";
 import Icon from "../components/Icon.astro";
 import { docHref, docPages, type DocEntry } from "../docs";
-import { docSections, sourceUrl } from "../site";
+import { docSections, externalLinkAttrs, sourceUrl } from "../site";
 import Base from "./Base.astro";
 
 interface Props {
@@ -107,11 +107,12 @@ const editUrl = `${sourceUrl}/edit/main/apps/site/${entry.filePath}`;
         <div
           class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-divider pt-5 text-sm text-muted-foreground"
         >
-          <a href={editUrl} class="inline-flex items-center gap-2 text-muted-foreground no-underline hover:text-foreground">
+          <a href={editUrl} {...externalLinkAttrs} class="inline-flex items-center gap-2 text-muted-foreground no-underline hover:text-foreground">
             <GitHubIcon class="size-4" />Ver en GitHub
           </a>
           <a
             href={`${sourceUrl}/issues`}
+            {...externalLinkAttrs}
             class="inline-flex items-center gap-2 text-muted-foreground no-underline hover:text-foreground"
           >
             <Icon name="message-circle" class="size-4" />¿Algo no está claro? Cuéntanoslo

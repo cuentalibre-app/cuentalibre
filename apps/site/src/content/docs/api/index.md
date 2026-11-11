@@ -128,4 +128,4 @@ Cerrar y reabrir trimestres se explica en [Ajustes y trimestres](/docs/api/ajust
 - Generar el PDF de una factura.
 - Un servidor MCP. Mientras tanto, los agentes pueden usar la API directamente o importar el documento OpenAPI.
 
-¿Echas algo en falta o has encontrado un error? [Cuéntanoslo en GitHub](https://github.com/jesuspb2/cuentalibre/issues).
+¿Echas algo en falta o has encontrado un error? [Cuéntanoslo en GitHub](https://github.com/cuentalibre-app/cuentalibre/issues).

@@ -8,11 +8,11 @@ order: 2
 
 cuentalibre es software libre (AGPL-3.0): puedes instalarlo en un servidor tuyo y usarlo gratis, sin límites. A cambio, la instalación, las copias de seguridad y las actualizaciones corren de tu cuenta. Si prefieres no ocuparte de nada de eso, usa [cuentalibre Cloud](/docs#dos-formas-de-usar-cuentalibre).
 
-Esta guía es para quien sabe manejar un servidor Linux por SSH. El código y su documentación técnica están en el [repositorio de GitHub](https://github.com/jesuspb2/cuentalibre); los enlaces de cada paso llevan al archivo exacto.
+Esta guía es para quien sabe manejar un servidor Linux por SSH. El código y su documentación técnica están en el [repositorio de GitHub](https://github.com/cuentalibre-app/cuentalibre); los enlaces de cada paso llevan al archivo exacto.
 
 ## Qué vas a instalar
 
-Dos contenedores, definidos en [`selfhost/compose.yml`](https://github.com/jesuspb2/cuentalibre/blob/main/selfhost/compose.yml):
+Dos contenedores, definidos en [`selfhost/compose.yml`](https://github.com/cuentalibre-app/cuentalibre/blob/main/selfhost/compose.yml):
 
 | Contenedor    | Qué es                                                                                                                                                         |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -31,7 +31,7 @@ No hace falta abrir puertos en el router ni instalar Node.js.
 ## 1. Descarga el código
 
 ```sh
-git clone https://github.com/jesuspb2/cuentalibre.git
+git clone https://github.com/cuentalibre-app/cuentalibre.git
 cd cuentalibre/selfhost
 ```
 
@@ -59,7 +59,7 @@ BETTER_AUTH_SECRET=otra-clave-larga
 docker compose up -d --build
 ```
 
-La primera vez tarda unos minutos, porque construye la imagen ([`apps/api/Dockerfile`](https://github.com/jesuspb2/cuentalibre/blob/main/apps/api/Dockerfile)) con la aplicación dentro. Cada vez que arranca aplica las migraciones de la base de datos.
+La primera vez tarda unos minutos, porque construye la imagen ([`apps/api/Dockerfile`](https://github.com/cuentalibre-app/cuentalibre/blob/main/apps/api/Dockerfile)) con la aplicación dentro. Cada vez que arranca aplica las migraciones de la base de datos.
 
 Cuando acabe, `http://IP-del-servidor:3000/v1/health` debería responder `{"status":"ok"}`. Abre tu `PUBLIC_URL`, crea tu cuenta y tu empresa, y listo.
 
@@ -86,7 +86,7 @@ Sin HTTPS, por la IP en tu red, cuentalibre funciona igual, pero los datos viaja
 
 ## Opciones
 
-Todo se configura con variables en el `.env`. Están explicadas en [`apps/api/.env.example`](https://github.com/jesuspb2/cuentalibre/blob/main/apps/api/.env.example) y en el [README de la API](https://github.com/jesuspb2/cuentalibre/blob/main/apps/api/README.md):
+Todo se configura con variables en el `.env`. Están explicadas en [`apps/api/.env.example`](https://github.com/cuentalibre-app/cuentalibre/blob/main/apps/api/.env.example) y en el [README de la API](https://github.com/cuentalibre-app/cuentalibre/blob/main/apps/api/README.md):
 
 - **Correo** (`SMTP_URL`, `EMAIL_FROM`): para enviar las facturas desde cuentalibre, verificar el correo al registrarse y recuperar la contraseña. Sin él, las facturas se envían con tu programa de correo y no hay recuperación de contraseña.
 - **Entrar con Google** (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`), con `<PUBLIC_URL>/v1/auth/callback/google` como URI de redirección.
@@ -111,7 +111,7 @@ Para restaurar la base de datos:
 docker compose exec -T postgres pg_restore -U cuentalibre -d cuentalibre --clean --if-exists < cuentalibre.dump
 ```
 
-El nombre del volumen lleva delante el de la carpeta (`selfhost_files` si no la has cambiado); compruébalo con `docker volume ls`. Como ejemplo de copia automática a un bucket, mira el script que usa cuentalibre Cloud, [`deploy/backup.sh`](https://github.com/jesuspb2/cuentalibre/blob/main/deploy/backup.sh).
+El nombre del volumen lleva delante el de la carpeta (`selfhost_files` si no la has cambiado); compruébalo con `docker volume ls`. Como ejemplo de copia automática a un bucket, mira el script que usa cuentalibre Cloud, [`deploy/backup.sh`](https://github.com/cuentalibre-app/cuentalibre/blob/main/deploy/backup.sh).
 
 ## Actualizar
 
