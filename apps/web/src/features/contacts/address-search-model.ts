@@ -42,14 +42,31 @@ const LIMIT = 6;
 /** Below this, a search matches too many streets to help. */
 export const MIN_QUERY = 3;
 
-/**
- * The search for what the user typed. A postal code already filled in narrows
- * it to that area, which is what makes "gran via 12" find Madrid's.
- */
-export function candidatesUrl(query: string, postalCode = "") {
+/** Where the address is already known to be, to narrow the search to it. */
+export interface SearchArea {
+  postalCode?: string;
+  city?: string;
+}
+
+/** The search for what the user typed, within a postal code or a town when given. */
+export function candidatesUrl(query: string, area: SearchArea = {}) {
   const params = new URLSearchParams({ q: searchText(query), limit: String(LIMIT), no_process: NOT_STREETS });
-  if (/^\d{5}$/.test(postalCode.trim())) params.set("cod_postal_filter", postalCode.trim());
+  const postalCode = area.postalCode?.trim() ?? "";
+  const city = area.city?.trim() ?? "";
+  if (/^\d{5}$/.test(postalCode)) params.set("cod_postal_filter", postalCode);
+  else if (city) params.set("municipio_filter", city);
   return `${CANDIDATES}?${params}`;
+}
+
+/**
+ * The searches to try in turn: within the postal code already filled in, then
+ * within the town, then anywhere. A filled-in area is what makes "gran via 12"
+ * find Madrid's; a wrong, stale or differently spelt one ("Cadiz" for "Cádiz")
+ * finds nothing, so the next search drops it.
+ */
+export function candidatesUrls(query: string, area: SearchArea = {}) {
+  const urls = [candidatesUrl(query, area), candidatesUrl(query, { city: area.city }), candidatesUrl(query)];
+  return [...new Set(urls)];
 }
 
 /** Words written in lower case inside a street name, unless they open it. */
@@ -142,15 +159,34 @@ export function toSuggestions(candidates: Candidate[]): AddressSuggestion[] {
   return suggestions;
 }
 
+/** "Cádiz" and "cadiz" are the same town. */
+const sameName = (a: string, b: string) => a.localeCompare(b, "es", { sensitivity: "base" }) === 0;
+
+/**
+ * Whether a candidate lies in the area: its postal code when that's known
+ * (a long street lists several, separated by spaces), else its town.
+ * Without either it could be any of Spain's streets with that name.
+ */
+export function inArea(c: Candidate, area: SearchArea) {
+  const postalCode = area.postalCode?.trim() ?? "";
+  const city = area.city?.trim() ?? "";
+  if (/^\d{5}$/.test(postalCode)) return (c.postalCode ?? "").split(/\s+/).includes(postalCode);
+  if (city) return [c.muni, c.poblacion].some((name) => name && sameName(name.trim(), city));
+  return false;
+}
+
 /**
  * Where the street number of an address is, from CartoCiudad's answer. It
  * knows portals OpenStreetMap often lacks, which only finds the street then.
- * Null without a number, or when the number isn't one of the candidates.
+ * Null without a number, or when the number isn't among the candidates in
+ * the address's postal code or town.
  */
-export function portalPlace(candidates: Candidate[], address: string): Place | null {
+export function portalPlace(candidates: Candidate[], address: string, area: SearchArea): Place | null {
   const number = /\b(\d+)\s*[a-z]?\s*(?:,|$)/i.exec(searchText(address))?.[1];
   if (!number) return null;
-  const c = candidates.find((c) => c.type === "portal" && String(c.portalNumber) === number && c.lat && c.lng);
+  const c = candidates.find(
+    (c) => c.type === "portal" && String(c.portalNumber) === number && c.lat && c.lng && inArea(c, area),
+  );
   if (!c) return null;
   const [s] = toSuggestions([c]);
   const place = [[s?.postalCode, s?.city].filter(Boolean).join(" "), s?.province].filter(Boolean).join(", ");

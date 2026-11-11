@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   addressTail,
   pickedAddress,
-  portalPlace,
   searchText,
   candidatesUrl,
+  candidatesUrls,
+  inArea,
+  portalPlace,
   streetLine,
   titleCase,
   toSuggestions,
@@ -34,8 +36,38 @@ describe("candidatesUrl", () => {
   });
 
   it("narrows to a postal code already filled in", () => {
-    expect(new URL(candidatesUrl("gran via 12", "28013")).searchParams.get("cod_postal_filter")).toBe("28013");
-    expect(new URL(candidatesUrl("gran via 12", "280")).searchParams.has("cod_postal_filter")).toBe(false);
+    const url = new URL(candidatesUrl("gran via 12", { postalCode: "28013", city: "Madrid" }));
+    expect(url.searchParams.get("cod_postal_filter")).toBe("28013");
+    expect(url.searchParams.has("municipio_filter")).toBe(false);
+    expect(new URL(candidatesUrl("gran via 12", { postalCode: "280" })).searchParams.has("cod_postal_filter")).toBe(
+      false,
+    );
+  });
+
+  it("narrows to the town without a postal code", () => {
+    const url = new URL(candidatesUrl("gran via 12", { postalCode: "", city: " Madrid " }));
+    expect(url.searchParams.get("municipio_filter")).toBe("Madrid");
+  });
+});
+
+describe("candidatesUrls", () => {
+  const filters = (urls: string[]) =>
+    urls.map((u) => {
+      const p = new URL(u).searchParams;
+      return p.get("cod_postal_filter") ?? p.get("municipio_filter") ?? "";
+    });
+
+  it("tries the postal code, then the town, then anywhere", () => {
+    expect(filters(candidatesUrls("gran via 12", { postalCode: "28013", city: "Madrid" }))).toEqual([
+      "28013",
+      "Madrid",
+      "",
+    ]);
+  });
+
+  it("skips the searches it has nothing for", () => {
+    expect(filters(candidatesUrls("gran via 12", { city: "Madrid" }))).toEqual(["Madrid", ""]);
+    expect(filters(candidatesUrls("gran via 12"))).toEqual([""]);
   });
 });
 
@@ -142,22 +174,46 @@ describe("toSuggestions", () => {
   });
 });
 
+describe("inArea", () => {
+  it("matches the postal code, among the several of a long street", () => {
+    expect(inArea(candidate({}), { postalCode: "11100", city: "Cádiz" })).toBe(true);
+    expect(inArea(candidate({ postalCode: "33010 33199" }), { postalCode: "33199" })).toBe(true);
+    expect(inArea(candidate({}), { postalCode: "28013", city: "San Fernando" })).toBe(false);
+  });
+
+  it("matches the town without a postal code, ignoring case and accents", () => {
+    expect(inArea(candidate({}), { city: "san fernando" })).toBe(true);
+    expect(inArea(candidate({ muni: "Cádiz", poblacion: "Cádiz" }), { city: "Cadiz" })).toBe(true);
+    expect(inArea(candidate({}), { city: "Zaragoza" })).toBe(false);
+  });
+
+  it("trusts nothing without an area", () => {
+    expect(inArea(candidate({}), {})).toBe(false);
+  });
+});
+
 describe("portalPlace", () => {
   const portal = candidate({ lat: 36.465, lng: -6.2 });
+  const area = { postalCode: "11100", city: "San Fernando" };
 
   it("finds the street number typed", () => {
     expect(
-      portalPlace([candidate({ portalNumber: 38, lat: 1, lng: 1 }), portal], "Calle Saturnino Montojo 39"),
+      portalPlace([candidate({ portalNumber: 38, lat: 1, lng: 1 }), portal], "Calle Saturnino Montojo 39", area),
     ).toEqual({
       lat: 36.465,
       lon: -6.2,
       label: "Calle Saturnino Montojo 39, 11100 San Fernando, Cádiz",
     });
-    expect(portalPlace([portal], "Calle Saturnino Montojo 39, 2º B")?.lat).toBe(36.465);
+    expect(portalPlace([portal], "Calle Saturnino Montojo 39, 2º B", area)?.lat).toBe(36.465);
   });
 
   it("gives up without a number or when it isn't among the candidates", () => {
-    expect(portalPlace([portal], "Calle Saturnino Montojo")).toBeNull();
-    expect(portalPlace([portal], "Calle Saturnino Montojo 41")).toBeNull();
+    expect(portalPlace([portal], "Calle Saturnino Montojo", area)).toBeNull();
+    expect(portalPlace([portal], "Calle Saturnino Montojo 41", area)).toBeNull();
+  });
+
+  it("ignores the same street number in another town", () => {
+    expect(portalPlace([portal], "Calle Saturnino Montojo 39", { city: "Zaragoza" })).toBeNull();
+    expect(portalPlace([portal], "Calle Saturnino Montojo 39", {})).toBeNull();
   });
 });

@@ -208,6 +208,7 @@ export function AddressFields({
                 {...p}
                 value={draft.address}
                 postalCode={draft.postalCode}
+                city={draft.city}
                 onChange={(address) => set("address", address)}
                 onPick={pickSuggestion}
               />
