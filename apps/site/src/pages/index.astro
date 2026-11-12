@@ -47,7 +47,6 @@ const screens: {
   id: string;
   label: string;
   icon: IconName;
-  caption: string;
   desktop: ImageMetadata;
   mobile: ImageMetadata;
   desktopDark: ImageMetadata;
@@ -58,7 +57,6 @@ const screens: {
     id: "inicio",
     label: "Inicio",
     icon: "layout-dashboard",
-    caption: "Ingresos, gastos, beneficio y lo que te queda después de impuestos.",
     desktop: inicio,
     mobile: inicioMovil,
     desktopDark: inicioOscuro,
@@ -69,7 +67,6 @@ const screens: {
     id: "facturas",
     label: "Facturas",
     icon: "receipt",
-    caption: "Facturas con su estado de cobro, IVA y retención.",
     desktop: facturas,
     mobile: facturasMovil,
     desktopDark: facturasOscuro,
@@ -80,7 +77,6 @@ const screens: {
     id: "impuestos",
     label: "Impuestos",
     icon: "percent",
-    caption: "Lo que sale a pagar en cada trimestre y el próximo plazo.",
     desktop: impuestos,
     mobile: impuestosMovil,
     desktopDark: impuestosOscuro,
@@ -91,7 +87,6 @@ const screens: {
     id: "gastos",
     label: "Gastos",
     icon: "shopping-bag",
-    caption: "Cuota de autónomos, tickets y gastos deducibles con su justificante.",
     desktop: gastos,
     mobile: gastosMovil,
     desktopDark: gastosOscuro,
@@ -259,14 +254,17 @@ const phoneShot =
 
 <Base title={title} description={description}>
   <main>
-    <section class="mx-auto max-w-[1200px] px-4 pt-8 text-center sm:px-6 sm:pt-14 md:pt-22">
+    <section class="relative isolate mx-auto max-w-[1200px] px-4 pt-6 text-center sm:px-6 sm:pt-8 md:pt-10">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] bg-hero-glow"></div>
       <h1
-        class="mx-auto mt-4 mb-0 max-w-[880px] animate-rise-in font-display text-[clamp(40px,6.6vw,80px)] sm:mt-7 leading-[1.02] font-semibold tracking-[-0.025em] text-balance"
+        class="mx-auto mt-0 mb-0 animate-rise-in font-display text-[clamp(36px,6vw,74px)] leading-[1.02] font-medium tracking-[-0.03em] text-balance"
       >
-        Impuestos al día.<br /><span class="text-gradient-brand">Tus cuentas son tuyas.</span>
+        Tus impuestos, bajo control.
       </h1>
-      <p class="mx-auto mt-5 mb-0 max-w-[560px] animate-rise-in text-[17px] [--i:2] leading-normal sm:mt-6 sm:text-[19px] text-pretty text-muted-foreground">
-        Facturas, gastos, IVA e IRPF para autónomos. De código abierto y gratis en tu propio servidor.
+      <p class="mx-auto mt-5 mb-0 max-w-[600px] animate-rise-in text-[17px] [--i:2] leading-normal sm:mt-6 sm:text-[19px] text-pretty text-muted-foreground">
+        Facturas, gastos, IVA e IRPF para autónomos.{" "}<br class="max-sm:hidden" />De{" "}
+        <strong class="font-medium text-foreground">código abierto</strong> y{" "}
+        <strong class="font-medium text-foreground">gratis</strong> en tu propio servidor.
       </p>
       <div class:list={[buttonRow, "mt-8 animate-rise-in [--i:4] sm:mt-9"]}>
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
@@ -274,17 +272,14 @@ const phoneShot =
         </a>
         <a href={installUrl} class={secondaryButton}>Instalar gratis</a>
       </div>
-      <p class="mt-4 mb-0 animate-rise-in text-[14px] [--i:5] text-balance text-muted-foreground">
-        Demo sin registro. Código abierto con licencia AGPL-3.0.
-      </p>
     </section>
 
-    <section class="mx-auto mt-12 max-w-[1240px] animate-rise-in px-4 [--i:6] sm:mt-16 sm:px-6" data-screens>
+    <section class="mx-auto mt-8 max-w-[1240px] animate-rise-in px-4 [--i:6] sm:mt-10 sm:px-6" data-screens>
       <div
         role="tablist"
         aria-label="Pantallas de la app"
         data-indicator-group
-        class="scrollbar-none relative mx-auto flex w-full max-w-full gap-1 overflow-x-auto rounded-[12px] bg-muted p-1 sm:w-fit md:flex-wrap md:justify-center"
+        class="scrollbar-none relative mx-auto flex w-full max-w-full gap-1 overflow-x-auto rounded-full bg-muted p-1 sm:w-fit md:flex-wrap md:justify-center"
       >
         <span data-indicator aria-hidden="true" class={indicator}></span>
         {
@@ -297,7 +292,7 @@ const phoneShot =
               aria-selected={i === 0 ? "true" : "false"}
               tabindex={i === 0 ? 0 : -1}
               aria-label={screen.label}
-              class="group inline-flex shrink-0 items-center justify-center gap-[7px] rounded-lg border-0 bg-transparent px-2.5 py-2 max-sm:flex-1 max-sm:aria-selected:flex-auto sm:px-3.5 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
+              class="group inline-flex shrink-0 items-center justify-center gap-[7px] rounded-full border-0 bg-transparent px-2.5 py-2 max-sm:flex-1 max-sm:aria-selected:flex-auto sm:px-3.5 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
             >
               <Icon name={screen.icon} class="size-[17px]" />
               {/* Phones show only the icons, and the label of the chosen screen */}
@@ -309,8 +304,7 @@ const phoneShot =
       {
         screens.map((screen, i) => (
           <div role="tabpanel" id={`panel-${screen.id}`} aria-labelledby={`pantalla-${screen.id}`} hidden={i !== 0}>
-            <p class="mx-auto mt-4 mb-0 min-h-6 text-center text-[15px] text-muted-foreground">{screen.caption}</p>
-            <div data-shot="light" class="relative mt-5 md:pb-12 dark:hidden">
+            <div data-shot="light" class="relative mt-6 md:pb-12 dark:hidden">
               <Browser
                 src={screen.desktop}
                 alt={screen.alt}
@@ -321,7 +315,7 @@ const phoneShot =
               <Phone src={screen.mobile} alt="cuentalibre en el móvil" loading={i === 0 ? "eager" : "lazy"} class={phoneShot} />
             </div>
             {/* The same screens in the app's dark theme, shown while the site is dark */}
-            <div data-shot="dark" class="relative mt-5 hidden md:pb-12 dark:block">
+            <div data-shot="dark" class="relative mt-6 hidden md:pb-12 dark:block">
               <Browser src={screen.desktopDark} alt={`${screen.alt}, en modo oscuro`} class="hidden md:block" />
               <Phone src={screen.mobileDark} alt="cuentalibre en el móvil, en modo oscuro" class={phoneShot} />
             </div>
@@ -609,7 +603,7 @@ const phoneShot =
           role="group"
           aria-label="Forma de pago"
           data-indicator-group
-          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-[12px] bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
+          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-full bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
         >
           <span data-indicator aria-hidden="true" class={indicator}></span>
           {
@@ -618,7 +612,7 @@ const phoneShot =
                 type="button"
                 data-billing-option={option.id}
                 aria-pressed={option.id === defaultBilling ? "true" : "false"}
-                class="inline-flex items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
+                class="inline-flex items-center justify-center gap-2 rounded-full border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
               >
                 {option.label}
                 {option.saving && (
@@ -664,7 +658,7 @@ const phoneShot =
           </ul>
           <a
             href={installUrl}
-            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+            class="mt-8 flex items-center justify-center gap-2 rounded-full border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
           >
             Instalar gratis
           </a>
@@ -728,7 +722,7 @@ const phoneShot =
           </ul>
           <a
             href={appLinks.signUp}
-            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand"
+            class="mt-8 flex items-center justify-center gap-2 rounded-full p-3 font-semibold no-underline button-brand"
           >
             Probar 30 días gratis
           </a>
