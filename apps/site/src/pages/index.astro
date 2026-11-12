@@ -1,22 +1,22 @@
 ---
-import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
 import Browser from "../components/Browser.astro";
 import Logo from "../components/Logo.astro";
 import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
 import Faq from "../components/Faq.astro";
+import AgentChat from "../components/AgentChat.astro";
 import { buttonRow, euroSign, eyebrow, indicator, primaryButton, secondaryButton, sectionTitle } from "../classes";
 import { appLinks, cloudBilling, demoLinkAttrs, externalLinkAttrs, sourceUrl } from "../site";
 
 import bancosOscuro from "../assets/screens/bancos-oscuro.jpg";
 import bancos from "../assets/screens/bancos.jpg";
+import bancosMovilOscuro from "../assets/screens/bancos-movil-oscuro.jpg";
+import bancosMovil from "../assets/screens/bancos-movil.jpg";
+import calendarioMovilOscuro from "../assets/screens/calendario-movil-oscuro.jpg";
+import calendarioMovil from "../assets/screens/calendario-movil.jpg";
 import calendarioOscuro from "../assets/screens/calendario-oscuro.jpg";
 import calendario from "../assets/screens/calendario.jpg";
-import cierreOscuro from "../assets/screens/cierre-oscuro.jpg";
-import cierre from "../assets/screens/cierre.jpg";
-import facturaEditorOscuro from "../assets/screens/factura-editor-oscuro.jpg";
-import facturaEditor from "../assets/screens/factura-editor.jpg";
 import facturasMovilOscuro from "../assets/screens/facturas-movil-oscuro.jpg";
 import facturasMovil from "../assets/screens/facturas-movil.jpg";
 import facturasOscuro from "../assets/screens/facturas-oscuro.jpg";
@@ -33,10 +33,6 @@ import inicioMovilOscuro from "../assets/screens/inicio-movil-oscuro.jpg";
 import inicioMovil from "../assets/screens/inicio-movil.jpg";
 import inicioOscuro from "../assets/screens/inicio-oscuro.jpg";
 import inicio from "../assets/screens/inicio.jpg";
-import modelo303Oscuro from "../assets/screens/modelo-303-oscuro.jpg";
-import modelo303 from "../assets/screens/modelo-303.jpg";
-import perdidasGananciasOscuro from "../assets/screens/perdidas-ganancias-oscuro.jpg";
-import perdidasGanancias from "../assets/screens/perdidas-ganancias.jpg";
 
 const title = "cuentalibre: facturas e impuestos para autónomos, de código abierto";
 const description =
@@ -46,6 +42,7 @@ const description =
 const screens: {
   id: string;
   label: string;
+  text: string;
   icon: IconName;
   desktop: ImageMetadata;
   mobile: ImageMetadata;
@@ -56,6 +53,7 @@ const screens: {
   {
     id: "inicio",
     label: "Inicio",
+    text: "Ingresos, gastos, beneficio e impuestos del año, de un vistazo.",
     icon: "layout-dashboard",
     desktop: inicio,
     mobile: inicioMovil,
@@ -66,6 +64,7 @@ const screens: {
   {
     id: "facturas",
     label: "Facturas",
+    text: "Facturas, presupuestos y albaranes ilimitados, con numeración correlativa y PDF.",
     icon: "receipt",
     desktop: facturas,
     mobile: facturasMovil,
@@ -76,6 +75,7 @@ const screens: {
   {
     id: "impuestos",
     label: "Impuestos",
+    text: "El IVA y el IRPF de cada trimestre, casilla a casilla, listos para presentar.",
     icon: "percent",
     desktop: impuestos,
     mobile: impuestosMovil,
@@ -86,6 +86,7 @@ const screens: {
   {
     id: "gastos",
     label: "Gastos",
+    text: "Cada gasto con su parte deducible, sin tope al mes.",
     icon: "shopping-bag",
     desktop: gastos,
     mobile: gastosMovil,
@@ -93,58 +94,35 @@ const screens: {
     mobileDark: gastosMovilOscuro,
     alt: "Lista de gastos con su parte deducible",
   },
+  {
+    id: "calendario",
+    label: "Calendario",
+    text: "Cada plazo fiscal que te afecta, con el importe antes de que llegue.",
+    icon: "calendar-check",
+    desktop: calendario,
+    mobile: calendarioMovil,
+    desktopDark: calendarioOscuro,
+    mobileDark: calendarioMovilOscuro,
+    alt: "Calendario fiscal con los plazos y sus importes",
+  },
+  {
+    id: "bancos",
+    label: "Bancos",
+    text: "Cada cobro y pago de tus facturas y gastos, con la cuenta por la que pasó.",
+    icon: "landmark",
+    desktop: bancos,
+    mobile: bancosMovil,
+    desktopDark: bancosOscuro,
+    mobileDark: bancosMovilOscuro,
+    alt: "Cobros y pagos por cuenta bancaria",
+  },
 ];
 
-/** What the app does, each with its screen in the light and the dark theme. */
-const features = [
-  {
-    tag: "Ventas",
-    title: "Facturas ilimitadas en un minuto",
-    text: "Facturas, presupuestos y albaranes con numeración correlativa y PDF. Sin tope al mes.",
-    image: facturaEditor,
-    imageDark: facturaEditorOscuro,
-    alt: "Editor de facturas",
-  },
-  {
-    tag: "Impuestos",
-    title: "IVA casilla a casilla",
-    text: "El 303 y el 390 calculados con tus documentos, listos para la AEAT.",
-    image: modelo303,
-    imageDark: modelo303Oscuro,
-    alt: "Modelo 303 calculado",
-  },
-  {
-    tag: "Impuestos",
-    title: "Calendario fiscal",
-    text: "Cada plazo que te afecta, con el importe antes de que llegue.",
-    image: calendario,
-    imageDark: calendarioOscuro,
-    alt: "Calendario fiscal",
-  },
-  {
-    tag: "Bancos",
-    title: "Cobros y pagos",
-    text: "Cada cobro y pago de tus facturas y gastos, con la cuenta por la que pasó.",
-    image: bancos,
-    imageDark: bancosOscuro,
-    alt: "Cobros y pagos",
-  },
-  {
-    tag: "Cierre",
-    title: "Cierre de trimestre",
-    text: "Una lista de lo pendiente antes de presentar tus impuestos.",
-    image: cierre,
-    imageDark: cierreOscuro,
-    alt: "Cierre de trimestre",
-  },
-  {
-    tag: "Informes",
-    title: "Pérdidas y ganancias",
-    text: "Tu año frente al anterior, exportable a PDF.",
-    image: perdidasGanancias,
-    imageDark: perdidasGananciasOscuro,
-    alt: "Informe de pérdidas y ganancias",
-  },
+/** Ways a document reaches the expense scanner; listed beside its clip on wide screens. */
+const scannerWays: { icon: IconName; title: string; text: string }[] = [
+  { icon: "smartphone", title: "Desde el móvil", text: "Haz una foto al ticket nada más pagar." },
+  { icon: "monitor", title: "Desde el ordenador", text: "Arrastra el PDF de la factura que te llega por correo." },
+  { icon: "scan-text", title: "Tú solo revisas", text: "Proveedor, fecha, base e IVA salen leídos del documento." },
 ];
 
 const reasons: { icon: IconName; title: string; text: string }[] = [
@@ -189,20 +167,6 @@ const onlinePlan = [
   "Actualizaciones automáticas",
   "Copia de seguridad diaria",
   "Exporta tus datos cuando quieras",
-];
-
-/** The self-hosting commands, as the install guide runs them. */
-const installSteps = [
-  { command: "git clone https://github.com/cuentalibre-app/cuentalibre.git" },
-  { command: "cd cuentalibre/selfhost" },
-  { command: "cp .env.example .env", note: "tu dirección y dos claves" },
-  { command: "docker compose up -d --build" },
-];
-
-const installNeeds = [
-  "Un servidor Linux con Docker. Una Raspberry Pi 4 o 5 también vale",
-  "Unos 2 GB de memoria libres la primera vez",
-  "Sin abrir puertos en el router",
 ];
 
 const faq = [
@@ -271,11 +235,11 @@ const phoneShot =
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Probar la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href={installUrl} class={secondaryButton}>Instalar gratis</a>
+        <a href="#precio" class={secondaryButton}>Instalar gratis</a>
       </div>
     </section>
 
-    <section class="mx-auto mt-8 max-w-[1240px] animate-rise-in px-4 [--i:6] sm:mt-10 sm:px-6" data-screens>
+    <section id="funciones" class="mx-auto mt-8 max-w-[1240px] scroll-mt-24 animate-rise-in px-4 [--i:6] sm:mt-10 sm:px-6" data-screens>
       <div
         role="tablist"
         aria-label="Pantallas de la app"
@@ -305,7 +269,8 @@ const phoneShot =
       {
         screens.map((screen, i) => (
           <div role="tabpanel" id={`panel-${screen.id}`} aria-labelledby={`pantalla-${screen.id}`} hidden={i !== 0}>
-            <div data-shot="light" class="relative mt-6 md:pb-12 dark:hidden">
+            <p class="mx-auto mt-4 mb-0 max-w-[560px] px-2 text-center text-[15px] text-pretty text-muted-foreground sm:text-base">{screen.text}</p>
+            <div data-shot="light" class="relative mt-5 md:pb-12 dark:hidden">
               <Browser
                 src={screen.desktop}
                 alt={screen.alt}
@@ -316,7 +281,7 @@ const phoneShot =
               <Phone src={screen.mobile} alt="cuentalibre en el móvil" loading={i === 0 ? "eager" : "lazy"} class={phoneShot} />
             </div>
             {/* The same screens in the app's dark theme, shown while the site is dark */}
-            <div data-shot="dark" class="relative mt-6 hidden md:pb-12 dark:block">
+            <div data-shot="dark" class="relative mt-5 hidden md:pb-12 dark:block">
               <Browser src={screen.desktopDark} alt={`${screen.alt}, en modo oscuro`} class="hidden md:block" />
               <Phone src={screen.mobileDark} alt="cuentalibre en el móvil, en modo oscuro" class={phoneShot} />
             </div>
@@ -325,103 +290,9 @@ const phoneShot =
       }
     </section>
 
-    <section id="funciones" class="mt-14 sm:mt-20 md:mt-30" data-carousel>
-      <div data-reveal class="mx-auto flex max-w-[1200px] flex-wrap items-end justify-between gap-6 px-4 sm:px-6">
-        <div>
-          <div class={eyebrow}>Funciones</div>
-          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Todo tu trimestre, en una app</h2>
-          <p class="mt-2.5 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
-            Sin límite de facturas ni de gastos, y sin funciones reservadas a un plan caro.
-          </p>
-        </div>
-        <div class="hidden items-center gap-4 sm:flex">
-          <a
-            href={appLinks.demo}
-            {...demoLinkAttrs}
-            class="hidden items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover md:inline-flex"
-          >
-            Verlo todo en la demo<Icon name="arrow-right" class="size-[17px]" />
-          </a>
-          {/* From md up the cards sit in a grid, so there is nothing to page through */}
-          <div class="flex gap-2 md:hidden">
-            <button
-              type="button"
-              aria-label="Función anterior"
-              data-carousel-prev
-              disabled
-              class="flex size-10 items-center justify-center rounded-full sm:size-12 border border-border bg-background p-0 text-foreground hover:bg-muted disabled:cursor-default disabled:opacity-35"
-            >
-              <Icon name="chevron-left" />
-            </button>
-            <button
-              type="button"
-              aria-label="Función siguiente"
-              data-carousel-next
-              class="flex size-10 items-center justify-center rounded-full sm:size-12 border-0 bg-foreground p-0 text-background hover:bg-primary-hover disabled:cursor-default disabled:opacity-35"
-            >
-              <Icon name="chevron-right" />
-            </button>
-          </div>
-        </div>
-      </div>
-      <div data-reveal class="relative mt-6 sm:mt-10">
-      <ul
-        data-carousel-track
-        class="scrollbar-none m-0 flex list-none snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-[max(16px,calc((100%-1152px)/2))] pt-1 pb-6 scroll-pl-[max(16px,calc((100%-1152px)/2))] sm:px-[max(24px,calc((100%-1152px)/2))] sm:scroll-pl-[max(24px,calc((100%-1152px)/2))] md:mx-auto md:grid md:max-w-[1200px] md:snap-none md:grid-cols-2 md:overflow-visible md:px-6 md:pb-0 lg:grid-cols-3"
-      >
-        {
-          features.map((feature) => (
-            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col md:w-auto overflow-hidden rounded-2xl border border-divider bg-sidebar/60 dark:border-border dark:bg-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
-              <div class="px-6 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-7">
-                <div class="font-brand text-[13px] font-medium text-muted-foreground">{feature.tag}</div>
-                <h3 class="mt-2 mb-0 text-[20px] leading-tight sm:text-[22px] font-semibold tracking-[-0.015em]">{feature.title}</h3>
-                <p class="mt-2 mb-0 max-w-[420px] text-muted-foreground">{feature.text}</p>
-              </div>
-              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] lg:h-[250px] rounded-tl-xl border-t border-l border-input bg-background shadow-screen sm:ml-8">
-                <Image
-                  src={feature.image}
-                  alt={feature.alt}
-                  widths={[800, 1200]}
-                  sizes="min(810px, 126vw)"
-                  loading="lazy"
-                  class="block h-auto min-h-full w-[150%] max-w-none object-cover object-top-left dark:hidden"
-                />
-                <Image
-                  src={feature.imageDark}
-                  alt={feature.alt}
-                  widths={[800, 1200]}
-                  sizes="min(810px, 126vw)"
-                  loading="lazy"
-                  class="hidden h-auto min-h-full w-[150%] max-w-none object-cover object-top-left dark:block"
-                />
-              </div>
-            </li>
-          ))
-        }
-      </ul>
-      <button
-        type="button"
-        aria-label="Función anterior"
-        data-carousel-prev
-        disabled
-        class="absolute top-1/2 left-2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 p-0 text-foreground shadow-shot backdrop-blur transition-opacity disabled:pointer-events-none disabled:opacity-0 sm:hidden"
-      >
-        <Icon name="chevron-left" />
-      </button>
-      <button
-        type="button"
-        aria-label="Función siguiente"
-        data-carousel-next
-        class="absolute top-1/2 right-2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 p-0 text-foreground shadow-shot backdrop-blur transition-opacity disabled:pointer-events-none disabled:opacity-0 sm:hidden"
-      >
-        <Icon name="chevron-right" />
-      </button>
-      </div>
-    </section>
-
-    <section id="escaner" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
-      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,620px)] lg:items-center lg:gap-14">
-        <div data-reveal class="text-left">
+    <section id="escaner" class="mx-auto mt-14 max-w-[1200px] px-4 sm:mt-20 sm:px-6 md:mt-16">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,620px)] lg:items-start lg:gap-14">
+        <div data-reveal class="text-left lg:pt-6">
           <div class="flex items-center gap-2.5">
             <span class={eyebrow}>Escáner de gastos</span>
             <span class="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary-hover">Próximamente</span>
@@ -430,6 +301,17 @@ const phoneShot =
           <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
             Haz una foto al ticket o sube la factura, y cuentalibre la apunta sola en su trimestre.
           </p>
+          <ul class="m-0 mt-10 hidden list-none flex-col gap-7 p-0 lg:flex">
+            {
+              scannerWays.map((way) => (
+                <li class="grid grid-cols-[24px_1fr] items-start gap-x-4">
+                  <Icon name={way.icon} class="mt-1 size-[22px] text-primary" />
+                  <h3 class="m-0 font-display text-[24px] leading-tight font-semibold tracking-[-0.015em]">{way.title}</h3>
+                  <p class="col-start-2 mt-1.5 mb-0 text-muted-foreground">{way.text}</p>
+                </li>
+              ))
+            }
+          </ul>
         </div>
         <div data-reveal style={{ "--i": 1 }} class="mx-auto mt-8 max-w-[620px] lg:mt-0 lg:max-w-none">
           <video
@@ -445,7 +327,28 @@ const phoneShot =
       </div>
     </section>
 
-    <section id="codigo-abierto" class="mx-auto mt-10 sm:mt-20 md:mt-30 max-w-[1200px] px-4 sm:px-6">
+    <section id="agentes" class="mx-auto mt-10 max-w-[1200px] px-4 sm:mt-20 sm:px-6 md:mt-30">
+      <div class="lg:grid lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-center lg:gap-16">
+        <div data-reveal class="text-left lg:order-2">
+          <div class={eyebrow}>Agentes de IA</div>
+          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Pídeselo a tu agente.</h2>
+          <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
+            Conecta Claude o ChatGPT a tu cuenta. Responden con tus datos reales y hacen el trabajo por ti.
+          </p>
+        </div>
+        <div data-reveal style={{ "--i": 1 }} class="mt-10 lg:order-1 lg:mt-0">
+          <AgentChat />
+          <div class="mt-6 flex flex-col items-start gap-x-6 gap-y-3 sm:flex-row sm:items-center">
+            <a href="/docs/agentes" class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
+              Cómo conectar un agente<Icon name="arrow-right" class="size-[17px]" />
+            </a>
+            <a href="/docs/api" class="font-medium text-muted-foreground no-underline hover:text-foreground">Referencia de la API</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="codigo-abierto" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
       <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:items-center lg:gap-16">
         <div>
           <div data-reveal class="text-left">
@@ -531,88 +434,6 @@ const phoneShot =
                 }
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="instalar" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
-      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,580px)] lg:items-center lg:gap-16">
-        <div data-reveal class="text-left">
-          <div class={eyebrow}>En tu servidor</div>
-          <p class="mt-2 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
-            Un contenedor con la app y la API, y otro con la base de datos. Lo pones detrás de tu Cloudflare Tunnel, Tailscale o
-            proxy, y tus datos no salen de casa.
-          </p>
-          <ul class="mt-7 mb-0 flex max-w-[520px] list-none flex-col gap-3 p-0">
-            {
-              installNeeds.map((need) => (
-                <li class="flex items-start gap-2.5">
-                  <Icon name="check" class="mt-[3px] size-[18px] shrink-0 text-primary [stroke-width:2.25]" />
-                  {need}
-                </li>
-              ))
-            }
-          </ul>
-          <div class="mt-8 flex flex-col items-start gap-x-6 gap-y-3 sm:flex-row sm:items-center">
-            <a href={installUrl} class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
-              Leer la guía de instalación<Icon name="arrow-right" class="size-[17px]" />
-            </a>
-            <a
-              href={`${sourceUrl}/releases`}
-              {...externalLinkAttrs}
-              class="font-medium text-muted-foreground no-underline hover:text-foreground"
-            >
-              Versiones publicadas
-            </a>
-          </div>
-        </div>
-        <div data-reveal style={{ "--i": 1 }} class="mt-10 overflow-hidden rounded-2xl border border-border bg-sidebar lg:mt-0">
-          <div class="flex items-center gap-2 border-b border-divider px-4 py-3">
-            <span class="size-3 rounded-full bg-window-close"></span>
-            <span class="size-3 rounded-full bg-window-minimize"></span>
-            <span class="size-3 rounded-full bg-window-zoom"></span>
-            <span class="ml-2 font-mono text-[13px] text-muted-foreground">tu-servidor</span>
-          </div>
-          <pre class="m-0 overflow-x-auto px-5 py-5 font-mono text-[13px] leading-[1.9] sm:text-[14px]"><code>{
-            installSteps.map((step) => (
-              <span class="block whitespace-pre"><span class="text-muted-foreground select-none">$ </span>{step.command}{step.note && <span class="hidden text-muted-foreground sm:inline">  # {step.note}</span>}</span>
-            ))
-          }</code></pre>
-        </div>
-      </div>
-    </section>
-
-    <section id="agentes" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
-      <div class="lg:grid lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-center lg:gap-16">
-        <div data-reveal class="text-left lg:order-2">
-          <div class={eyebrow}>Agentes de IA</div>
-          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Pídeselo a tu agente.</h2>
-          <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
-            Claude Code, Codex, n8n o Zapier pueden registrar un ticket, preparar las facturas del mes o decirte cuánto IVA
-            llevas. Usan la misma API que la app, con una clave para cada agente que puedes revocar cuando quieras.
-          </p>
-          <div class="mt-8 flex flex-col items-start gap-x-6 gap-y-3 sm:flex-row sm:items-center">
-            <a href="/docs/agentes" class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
-              Cómo conectar un agente<Icon name="arrow-right" class="size-[17px]" />
-            </a>
-            <a href="/docs/api" class="font-medium text-muted-foreground no-underline hover:text-foreground">Referencia de la API</a>
-          </div>
-        </div>
-        <div data-reveal style={{ "--i": 1 }} class="mt-10 flex flex-col gap-4 rounded-2xl border border-divider bg-sidebar/60 p-5 sm:p-7 lg:order-1 lg:mt-0 dark:border-border dark:bg-card">
-          <div class="max-w-[85%] self-end rounded-2xl rounded-br-md bg-primary px-4 py-3 text-[15px] text-primary-foreground">
-            ¿Cuánto IVA llevo este trimestre?
-          </div>
-          <div class="max-w-[90%] self-start rounded-2xl rounded-bl-md border border-divider bg-background px-4 py-3 text-[15px]">
-            En el cuarto trimestre llevas <span class="amount font-semibold">2.140,50 €</span> de IVA repercutido y{" "}
-            <span class="amount font-semibold">610,20 €</span> de soportado. En el 303 saldrían a pagar{" "}
-            <span class="amount font-semibold">1.530,30 €</span>.
-          </div>
-          <div class="max-w-[85%] self-end rounded-2xl rounded-br-md bg-primary px-4 py-3 text-[15px] text-primary-foreground">
-            Prepárame la factura de noviembre para Estudio Norte, como la de octubre.
-          </div>
-          <div class="max-w-[90%] self-start rounded-2xl rounded-bl-md border border-divider bg-background px-4 py-3 text-[15px]">
-            Tengo el borrador: <span class="amount font-semibold">1.800,00 €</span> + IVA, con retención del 15&nbsp;%. ¿La emito?
           </div>
         </div>
       </div>
@@ -843,27 +664,6 @@ const phoneShot =
         placeIndicators();
       });
     }
-  }
-
-  // Features: page through the cards and disable the arrow at each end
-  for (const root of document.querySelectorAll<HTMLElement>("[data-carousel]")) {
-    const track = root.querySelector<HTMLElement>("[data-carousel-track]")!;
-    // Each direction has a button in the header (wide screens) and one over the cards (phones)
-    const prev = root.querySelectorAll<HTMLButtonElement>("[data-carousel-prev]");
-    const next = root.querySelectorAll<HTMLButtonElement>("[data-carousel-next]");
-    const step = () => {
-      const card = track.firstElementChild;
-      return card ? card.getBoundingClientRect().width + 20 : track.clientWidth * 0.8;
-    };
-    const syncEnds = () => {
-      for (const button of prev) button.disabled = track.scrollLeft <= 4;
-      for (const button of next) button.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
-    };
-    for (const button of prev) button.addEventListener("click", () => track.scrollBy({ left: -step() }));
-    for (const button of next) button.addEventListener("click", () => track.scrollBy({ left: step() }));
-    track.addEventListener("scroll", syncEnds, { passive: true });
-    window.addEventListener("resize", syncEnds);
-    syncEnds();
   }
 
   // Scanner: play the clip in the site's theme while it is on screen; reduced motion shows its still frame
