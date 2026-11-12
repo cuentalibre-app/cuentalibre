@@ -13,6 +13,8 @@
   --color-window-close: #ff5f57;
   --color-window-minimize: #febc2e;
   --color-window-zoom: #28c840;
+  /* Claude's mark in the agents chat */
+  --color-logo-claude: #d97757;
   --shadow-phone:
     inset 0 0 0 1px rgb(255 255 255 / 0.18), inset 0 1px 2px rgb(255 255 255 / 0.35), 0 30px 60px -16px rgb(17 18 20 / 0.45);
   /* App screenshot peeking out of a feature card: lifted toward its open top-left corner */
@@ -20,6 +22,18 @@
   --shadow-shot: 0 20px 40px -24px rgb(17 18 20 / 0.25);
   --shadow-plan: 0 30px 60px -36px rgb(47 69 201 / 0.45);
 
+}
+
+/*
+ * A soft wash of the brand colors behind the hero headline. It fades in from the
+ * top so it never meets the sticky header's edge, and out before the screenshots.
+ */
+@utility bg-hero-glow {
+  background:
+    radial-gradient(45% 55% at 50% 40%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 70%),
+    radial-gradient(30% 40% at 70% 30%, color-mix(in oklab, var(--brand-violet) 14%, transparent), transparent 70%),
+    radial-gradient(30% 40% at 30% 50%, color-mix(in oklab, var(--brand-teal) 12%, transparent), transparent 70%);
+  mask-image: linear-gradient(to bottom, transparent, black 30%, black 60%, transparent);
 }
 
 /*

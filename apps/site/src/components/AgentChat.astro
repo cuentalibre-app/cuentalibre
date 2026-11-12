@@ -1,0 +1,639 @@
+---
+import Icon from "./Icon.astro";
+
+/**
+ * A chat with Claude or ChatGPT connected to cuentalibre. Visitors pick a question and
+ * watch it being asked and answered, with the record the agent reads or changes
+ * as a card under the answer. It plays on its own while on screen until someone
+ * picks a question; reduced motion shows each answer at once.
+ */
+
+/**
+ * Each conversation is a list of turns. An agent turn can say what it is doing
+ * while it works, attach a card (a <template data-card> below) or update the
+ * card already shown (handled by `updates` in the script).
+ */
+type Turn =
+  | { from: "user"; text: string }
+  | { from: "agent"; working?: string; text: string; card?: string; update?: "issue" };
+
+const conversations: { id: string; agent: "Claude" | "ChatGPT"; question: string; turns: Turn[] }[] = [
+  {
+    id: "iva",
+    agent: "Claude",
+    question: "¿Cuánto IVA llevo este trimestre?",
+    turns: [
+      { from: "user", text: "¿Cuánto IVA llevo este trimestre?" },
+      {
+        from: "agent",
+        working: "Repasando el trimestre",
+        text: "En el cuarto trimestre has cobrado 2.140,50 € de IVA y has pagado 610,20 €. Si cerraras hoy, el 303 saldría a pagar 1.530,30 €.",
+        card: "iva",
+      },
+    ],
+  },
+  {
+    id: "pendientes",
+    agent: "ChatGPT",
+    question: "¿Qué facturas tengo sin cobrar?",
+    turns: [
+      { from: "user", text: "¿Qué facturas tengo sin cobrar?" },
+      {
+        from: "agent",
+        working: "Buscando facturas pendientes",
+        text: "Tienes 3 facturas pendientes, 4.235,00 € en total. La de Estudio Norte venció hace 12 días. ¿Les mando un recordatorio?",
+        card: "pendientes",
+      },
+    ],
+  },
+  {
+    id: "factura",
+    agent: "Claude",
+    question: "Prepara la factura de noviembre",
+    turns: [
+      { from: "user", text: "Prepárame la factura de noviembre para Estudio Norte, como la de octubre." },
+      {
+        from: "agent",
+        working: "Copiando la factura de octubre",
+        text: "Hecho, la tienes en borrador con las mismas líneas. ¿La emito?",
+        card: "factura",
+      },
+      { from: "user", text: "Sí, emítela." },
+      { from: "agent", working: "Emitiendo la factura", text: "Emitida como 2026-041. Ya cuenta en el trimestre.", update: "issue" },
+    ],
+  },
+  {
+    id: "gasto",
+    agent: "ChatGPT",
+    question: "Apunta el coworking de noviembre",
+    turns: [
+      { from: "user", text: "Apunta el coworking de noviembre: 150 € más IVA." },
+      {
+        from: "agent",
+        working: "Apuntando el gasto",
+        text: "Apuntado en los gastos del cuarto trimestre, con 31,50 € de IVA que te puedes deducir.",
+        card: "gasto",
+      },
+    ],
+  },
+  {
+    id: "ano",
+    agent: "Claude",
+    question: "¿Cómo voy este año?",
+    turns: [
+      { from: "user", text: "¿Cómo voy este año comparado con el pasado?" },
+      {
+        from: "agent",
+        working: "Sumando el año",
+        text: "Llevas 35.620 € facturados, un 18 % más que a estas alturas de 2025. Octubre fue tu mejor mes.",
+        card: "ano",
+      },
+    ],
+  },
+];
+
+const months = [
+  { label: "E", value: 3100 },
+  { label: "F", value: 3250 },
+  { label: "M", value: 3600 },
+  { label: "A", value: 3300 },
+  { label: "M", value: 3850 },
+  { label: "J", value: 3500 },
+  { label: "J", value: 2700 },
+  { label: "A", value: 2200 },
+  { label: "S", value: 3900 },
+  { label: "O", value: 4980 },
+  { label: "N", value: 1240 },
+];
+const best = Math.max(...months.map((month) => month.value));
+
+const pending = [
+  { initials: "EN", name: "Estudio Norte", due: "Vencida hace 12 días", late: true, amount: "1.452,00 €" },
+  { initials: "LH", name: "La Huerta Café", due: "Vence en 5 días", late: false, amount: "1.815,00 €" },
+  { initials: "PM", name: "Pilar Marín", due: "Vence en 18 días", late: false, amount: "968,00 €" },
+];
+
+const card = "w-full max-w-[400px] rounded-xl border border-divider bg-background p-4 text-[14px] shadow-shot";
+const row = "flex items-baseline justify-between gap-4";
+---
+
+<div
+  data-agent-chat
+  class="agent-chat relative isolate flex flex-col overflow-hidden rounded-2xl border border-divider bg-sidebar/60 dark:border-border dark:bg-card"
+>
+  <div class="flex items-center justify-between gap-3 px-5 pt-4 text-[13px] sm:px-7 sm:pt-5">
+    <span class="inline-flex items-center gap-2 font-medium">
+      <span data-agent-logo="Claude" class="flex"><svg viewBox="0 0 24 24" class="size-5 fill-logo-claude" aria-hidden="true"
+        ><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"></path></svg
+      ></span>
+      <span data-agent-logo="ChatGPT" class="flex" hidden><svg viewBox="0 0 24 24" class="size-5 fill-foreground" aria-hidden="true"
+        ><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"></path></svg
+      ></span>
+      <span data-agent-name>{conversations[0]!.agent}</span>
+    </span>
+    <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+      <span class="size-1.5 rounded-full bg-success"></span>
+      Conectado a cuentalibre
+    </span>
+  </div>
+
+  <div
+    data-log
+    role="log"
+    aria-live="polite"
+    aria-label="Conversación de ejemplo con un asistente de IA"
+    class="agent-log scrollbar-none relative flex h-120 flex-col gap-3 overflow-hidden px-5 pt-6 pb-4 sm:h-115 sm:px-7"
+  >
+    <div class="mt-auto"></div>
+  </div>
+
+  <div class="border-t border-divider px-5 pt-4 pb-5 sm:px-7 sm:pb-6 dark:border-border">
+    <p class="m-0 text-[13px] text-muted-foreground">Prueba a preguntar</p>
+    <div data-questions class="agent-questions mt-2.5 flex flex-wrap gap-2">
+      {
+        conversations.map((conversation, i) => (
+          <button
+            type="button"
+            data-question={conversation.id}
+            aria-pressed={i === 0 ? "true" : "false"}
+            class="cursor-pointer rounded-full border border-input bg-background px-3.5 py-1.5 text-left text-[13px] font-medium text-foreground transition-[background-color,border-color,color] duration-200 hover:border-primary/40 aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary-hover"
+          >
+            {conversation.question}
+          </button>
+        ))
+      }
+    </div>
+    <button
+      type="button"
+      data-questions-toggle
+      aria-expanded="false"
+      class="group mt-2.5 inline-flex cursor-pointer items-center gap-1 rounded-full border border-input px-3 py-1 text-[12px] font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground sm:hidden"
+    >
+      <span data-toggle-label>Ver preguntas</span>
+      <Icon name="chevron-down" class="size-3.5 transition-transform duration-200 group-aria-expanded:rotate-180" />
+    </button>
+  </div>
+
+  <script type="application/json" data-conversations set:html={JSON.stringify(conversations)} />
+
+  <template data-card="iva">
+    <div class={card}>
+      <div class={row}>
+        <span class="font-semibold">Modelo 303</span>
+        <span class="text-muted-foreground">4.º trimestre de 2026</span>
+      </div>
+      <div class="mt-3 flex flex-col gap-2 border-t border-divider pt-3">
+        <div data-item class={row}>
+          <span class="text-muted-foreground">IVA cobrado en tus facturas</span>
+          <span class="amount whitespace-nowrap">2.140,50 €</span>
+        </div>
+        <div data-item class={row}>
+          <span class="text-muted-foreground">IVA pagado en tus gastos</span>
+          <span class="amount whitespace-nowrap">−610,20 €</span>
+        </div>
+        <div data-item class:list={[row, "mt-1 border-t border-divider pt-2.5"]}>
+          <span class="font-semibold">A pagar</span>
+          <span class="amount whitespace-nowrap text-[17px] font-semibold">1.530,30 €</span>
+        </div>
+      </div>
+      <p data-item class="mt-3 mb-0 rounded-lg bg-muted px-3 py-2 text-[13px] text-muted-foreground">
+        Se presenta hasta el 30 de enero.
+      </p>
+    </div>
+  </template>
+
+  <template data-card="pendientes">
+    <div class={card}>
+      <div class="flex items-baseline gap-2">
+        <span class="amount whitespace-nowrap text-[20px] font-semibold">4.235,00 €</span>
+        <span class="text-muted-foreground">en 3 facturas</span>
+      </div>
+      <ul class="m-0 mt-3 flex list-none flex-col gap-2.5 border-t border-divider p-0 pt-3">
+        {
+          pending.map((invoice) => (
+            <li data-item class="flex items-center gap-3">
+              <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
+                {invoice.initials}
+              </span>
+              <span class="flex min-w-0 flex-1 flex-col leading-tight">
+                <span class="truncate font-medium">{invoice.name}</span>
+                <span class:list={["text-[12px]", invoice.late ? "text-destructive" : "text-muted-foreground"]}>
+                  {invoice.due}
+                </span>
+              </span>
+              <span class="amount whitespace-nowrap font-medium">{invoice.amount}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </template>
+
+  <template data-card="factura">
+    <div class={card} data-invoice>
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex flex-col leading-tight">
+          <span class="font-semibold">Estudio Norte</span>
+          <span data-invoice-number class="text-[13px] text-muted-foreground">Sin número todavía</span>
+        </div>
+        <span
+          data-invoice-status
+          class="rounded-full bg-warning-soft px-2.5 py-0.5 text-[12px] font-semibold text-warning transition-colors duration-300"
+        >
+          Borrador
+        </span>
+      </div>
+      <div class="mt-3 flex flex-col gap-2 border-t border-divider pt-3">
+        <div data-item class={row}>
+          <span>Mantenimiento web, noviembre</span>
+          <span class="amount whitespace-nowrap">1.800,00 €</span>
+        </div>
+        <div data-item class={row}>
+          <span class="text-muted-foreground">IVA 21 %</span>
+          <span class="amount whitespace-nowrap">378,00 €</span>
+        </div>
+        <div data-item class={row}>
+          <span class="text-muted-foreground">Retención IRPF 15 %</span>
+          <span class="amount whitespace-nowrap">−270,00 €</span>
+        </div>
+        <div data-item class:list={[row, "mt-1 border-t border-divider pt-2.5"]}>
+          <span class="font-semibold">Total</span>
+          <span class="amount whitespace-nowrap text-[17px] font-semibold">1.908,00 €</span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template data-card="gasto">
+    <div class={card}>
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex flex-col leading-tight">
+          <span class="font-semibold">Espacio Taller</span>
+          <span class="text-[13px] text-muted-foreground">Alquiler del coworking, 1 de noviembre</span>
+        </div>
+        <span class="rounded-full bg-success-soft px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap text-success">
+          Apuntado
+        </span>
+      </div>
+      <div class="mt-3 flex flex-col gap-2 border-t border-divider pt-3">
+        <div data-item class={row}>
+          <span class="text-muted-foreground">Base</span>
+          <span class="amount whitespace-nowrap">150,00 €</span>
+        </div>
+        <div data-item class={row}>
+          <span class="text-muted-foreground">IVA 21 %, deducible</span>
+          <span class="amount whitespace-nowrap">31,50 €</span>
+        </div>
+        <div data-item class:list={[row, "mt-1 border-t border-divider pt-2.5"]}>
+          <span class="font-semibold">Total</span>
+          <span class="amount whitespace-nowrap text-[17px] font-semibold">181,50 €</span>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template data-card="ano">
+    <div class={card}>
+      <div class="flex items-baseline justify-between gap-3">
+        <span class="amount whitespace-nowrap text-[20px] font-semibold">35.620 €</span>
+        <span class="rounded-full bg-success-soft px-2.5 py-0.5 text-[12px] font-semibold text-success">+18 % que en 2025</span>
+      </div>
+      <div class="mt-4 grid h-24 grid-cols-11 items-end gap-1.5" aria-hidden="true">
+        {
+          months.map((month) => (
+            <span
+              data-bar
+              class:list={["block rounded-t-[4px]", month.value === best ? "bg-primary" : "bg-primary-soft"]}
+              style={{ height: `${Math.round((month.value / best) * 100)}%` }}
+            />
+          ))
+        }
+      </div>
+      <div class="mt-1.5 grid grid-cols-11 gap-1.5 text-center text-[11px] text-muted-foreground" aria-hidden="true">
+        {months.map((month) => <span>{month.label}</span>)}
+      </div>
+    </div>
+  </template>
+</div>
+
+<style is:global>
+  /* A soft wash of the brand colors behind the chat, so it reads as its own space */
+  .agent-chat::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(60% 50% at 15% 10%, color-mix(in oklab, var(--primary) 12%, transparent), transparent 70%),
+      radial-gradient(50% 45% at 90% 35%, color-mix(in oklab, var(--brand-violet) 11%, transparent), transparent 70%),
+      radial-gradient(55% 40% at 40% 95%, color-mix(in oklab, var(--brand-teal) 9%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+  /* On phones only the question playing shows until the list is opened */
+  @media (width < 40rem) {
+    .agent-questions:not(.is-open) [data-question][aria-pressed="false"] {
+      display: none;
+    }
+  }
+  /* Older messages fade out under the top edge instead of being cut */
+  .agent-log {
+    mask-image: linear-gradient(to bottom, transparent, black 40px);
+  }
+  .agent-log .is-new {
+    animation: agent-rise 420ms var(--ease-out) both;
+  }
+  .agent-log [data-item],
+  .agent-log [data-bar] {
+    animation: agent-rise 380ms var(--ease-out) both;
+    animation-delay: calc(var(--n, 0) * 70ms + 120ms);
+  }
+  .agent-log [data-bar] {
+    transform-origin: bottom;
+    animation-name: agent-grow;
+    animation-duration: 600ms;
+  }
+  .agent-log .word {
+    opacity: 0;
+    transition: opacity 220ms ease-out;
+  }
+  .agent-log .word.is-shown {
+    opacity: 1;
+  }
+  .agent-log .typing span {
+    animation: agent-dot 1s ease-in-out infinite;
+  }
+  .agent-log .typing span:nth-child(2) {
+    animation-delay: 150ms;
+  }
+  .agent-log .typing span:nth-child(3) {
+    animation-delay: 300ms;
+  }
+  .agent-log .caret::after {
+    content: "";
+    display: inline-block;
+    width: 1.5px;
+    height: 1em;
+    margin-left: 1px;
+    vertical-align: -0.15em;
+    background: currentColor;
+    animation: agent-blink 900ms steps(1) infinite;
+  }
+  .agent-log .spinner {
+    animation: agent-spin 800ms linear infinite;
+  }
+  .agent-log .is-updated {
+    animation: agent-pop 500ms var(--ease-out);
+  }
+
+  @keyframes agent-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+  @keyframes agent-grow {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  @keyframes agent-dot {
+    0%,
+    80%,
+    100% {
+      opacity: 0.3;
+      transform: none;
+    }
+    40% {
+      opacity: 1;
+      transform: translateY(-2px);
+    }
+  }
+  @keyframes agent-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes agent-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes agent-pop {
+    40% {
+      transform: scale(1.08);
+    }
+  }
+</style>
+
+<script>
+  type Turn =
+    | { from: "user"; text: string }
+    | { from: "agent"; working?: string; text: string; card?: string; update?: "issue" };
+  type Conversation = { id: string; agent: string; question: string; turns: Turn[] };
+
+  /** Changes an agent turn makes to the card already in the chat */
+  const updates: Record<string, (log: HTMLElement) => void> = {
+    issue(log) {
+      const invoice = [...log.querySelectorAll<HTMLElement>("[data-invoice]")].at(-1);
+      const status = invoice?.querySelector<HTMLElement>("[data-invoice-status]");
+      const number = invoice?.querySelector<HTMLElement>("[data-invoice-number]");
+      if (!status || !number) return;
+      status.textContent = "Emitida";
+      status.classList.replace("bg-warning-soft", "bg-success-soft");
+      status.classList.replace("text-warning", "text-success");
+      number.textContent = "Factura 2026-041";
+      // Bring the card's header back into view so the change is seen, also on short screens
+      const top = invoice!.offsetTop - 44;
+      if (top < log.scrollTop) log.scrollTo({ top, behavior: "smooth" });
+      for (const el of [status, number]) {
+        el.classList.remove("is-updated");
+        void el.offsetWidth;
+        el.classList.add("is-updated");
+      }
+    },
+  };
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-agent-chat]")) {
+    const conversations: Conversation[] = JSON.parse(root.querySelector("[data-conversations]")!.textContent!);
+    const log = root.querySelector<HTMLElement>("[data-log]")!;
+    const agentName = root.querySelector<HTMLElement>("[data-agent-name]")!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-question]")];
+    const still = matchMedia("(prefers-reduced-motion: reduce)");
+
+    let run = 0; // bumps on every new conversation, so a stale one stops at its next pause
+    let autoplay = true;
+    let onScreen = false;
+    let wakeUp: (() => void) | undefined;
+
+    /** Waits `ms` while the chat is on screen; resolves false once a newer conversation started */
+    const pause = async (id: number, ms: number) => {
+      if (still.matches) return id === run;
+      let left = ms;
+      while (left > 0 && id === run) {
+        if (!onScreen) await new Promise<void>((resolve) => (wakeUp = resolve));
+        const step = Math.min(left, 100);
+        await new Promise((resolve) => setTimeout(resolve, step));
+        left -= step;
+      }
+      return id === run;
+    };
+
+    const add = (el: HTMLElement) => {
+      el.classList.add("is-new");
+      log.append(el);
+      log.scrollTo({ top: log.scrollHeight, behavior: still.matches ? "auto" : "smooth" });
+      return el;
+    };
+    const follow = () => log.scrollTo({ top: log.scrollHeight });
+
+    const bubble = (from: Turn["from"]) => {
+      const el = document.createElement("div");
+      el.className =
+        from === "user"
+          ? "max-w-[85%] self-end rounded-2xl rounded-br-md border border-primary/20 bg-primary/18 px-4 py-2.5 text-[15px] text-foreground"
+          : "max-w-[92%] self-start rounded-2xl rounded-bl-md border border-divider bg-background px-4 py-2.5 text-[15px]";
+      return el;
+    };
+
+    const userTurn = async (id: number, text: string) => {
+      const el = bubble("user");
+      if (still.matches) {
+        el.textContent = text;
+        add(el);
+        return true;
+      }
+      // Type the question in, as if someone were writing it
+      el.setAttribute("aria-label", text);
+      const typed = document.createElement("span");
+      typed.className = "caret";
+      typed.setAttribute("aria-hidden", "true");
+      el.append(typed);
+      add(el);
+      for (let i = 1; i <= text.length; i++) {
+        typed.textContent = text.slice(0, i);
+        if (i % 6 === 0) follow();
+        if (!(await pause(id, 22))) return false;
+      }
+      typed.classList.remove("caret");
+      return pause(id, 350);
+    };
+
+    const agentTurn = async (id: number, turn: Extract<Turn, { from: "agent" }>) => {
+      if (!still.matches) {
+        const typing = document.createElement("div");
+        typing.className = "typing flex gap-1 self-start rounded-2xl rounded-bl-md border border-divider bg-background px-4 py-3.5";
+        typing.setAttribute("aria-hidden", "true");
+        typing.innerHTML = '<span class="size-1.5 rounded-full bg-muted-foreground"></span>'.repeat(3);
+        add(typing);
+        if (!(await pause(id, 700))) return false;
+        typing.remove();
+      }
+
+      if (turn.working) {
+        const status = document.createElement("div");
+        status.className = "flex items-center gap-2 self-start text-[13px] text-muted-foreground";
+        const mark = document.createElement("span");
+        mark.className = still.matches
+          ? "flex size-4 items-center justify-center rounded-full bg-success text-success-foreground"
+          : "spinner size-3.5 rounded-full border-2 border-divider border-t-primary";
+        const label = document.createElement("span");
+        label.textContent = `${turn.working}…`;
+        status.append(mark, label);
+        add(status);
+        if (!(await pause(id, 1100))) return false;
+        mark.className = "flex size-4 items-center justify-center rounded-full bg-success text-success-foreground";
+        mark.innerHTML =
+          '<svg viewBox="0 0 24 24" class="size-2.5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+        label.textContent = turn.working;
+      }
+
+      // The answer appears word by word; the whole text is in the DOM from the start for screen readers
+      const el = bubble("agent");
+      const words = turn.text.split(" ").map((word, i) => {
+        const span = document.createElement("span");
+        span.className = still.matches ? "" : "word";
+        span.textContent = (i ? " " : "") + word;
+        return span;
+      });
+      el.append(...words);
+      add(el);
+      if (!still.matches) {
+        for (const [i, word] of words.entries()) {
+          word.classList.add("is-shown");
+          if (i % 5 === 0) follow();
+          if (!(await pause(id, 45))) return false;
+        }
+      }
+
+      if (turn.card) {
+        if (!(await pause(id, 250))) return false;
+        const template = root.querySelector<HTMLTemplateElement>(`template[data-card="${turn.card}"]`)!;
+        const card = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+        card.classList.add("self-start");
+        card.querySelectorAll<HTMLElement>("[data-item], [data-bar]").forEach((item, n) => item.style.setProperty("--n", String(n)));
+        add(card);
+        setTimeout(follow, 400);
+      }
+      if (turn.update) {
+        if (!(await pause(id, 200))) return false;
+        updates[turn.update]?.(log);
+      }
+      return pause(id, 900);
+    };
+
+    const play = async (conversation: Conversation) => {
+      const id = ++run;
+      for (const button of buttons) button.setAttribute("aria-pressed", String(button.dataset.question === conversation.id));
+      agentName.textContent = conversation.agent;
+      for (const logo of root.querySelectorAll<HTMLElement>("[data-agent-logo]")) {
+        logo.toggleAttribute("hidden", logo.dataset.agentLogo !== conversation.agent);
+      }
+      log.replaceChildren(Object.assign(document.createElement("div"), { className: "mt-auto" }));
+      if (!(await pause(id, 250))) return;
+      for (const turn of conversation.turns) {
+        const done = turn.from === "user" ? await userTurn(id, turn.text) : await agentTurn(id, turn);
+        if (!done) return;
+      }
+      // On its own, move on to the next question after a while
+      if (!autoplay || still.matches) return;
+      if (!(await pause(id, 5000)) || !autoplay) return;
+      const next = conversations[(conversations.indexOf(conversation) + 1) % conversations.length]!;
+      play(next);
+    };
+
+    const list = root.querySelector<HTMLElement>("[data-questions]")!;
+    const toggle = root.querySelector<HTMLButtonElement>("[data-questions-toggle]")!;
+    const toggleLabel = toggle.querySelector<HTMLElement>("[data-toggle-label]")!;
+    const setOpen = (open: boolean) => {
+      list.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+      toggleLabel.textContent = open ? "Ocultar preguntas" : "Ver preguntas";
+    };
+    toggle.addEventListener("click", () => setOpen(!list.classList.contains("is-open")));
+
+    for (const button of buttons) {
+      button.addEventListener("click", () => {
+        setOpen(false);
+        autoplay = false;
+        const conversation = conversations.find((c) => c.id === button.dataset.question);
+        if (conversation) play(conversation);
+      });
+    }
+
+    let started = false;
+    new IntersectionObserver(
+      ([entry]) => {
+        onScreen = !!entry?.isIntersecting;
+        if (onScreen) {
+          wakeUp?.();
+          wakeUp = undefined;
+          if (!started) {
+            started = true;
+            play(conversations[0]!);
+          }
+        }
+      },
+      { threshold: 0.35 },
+    ).observe(root);
+  }
+</script>
