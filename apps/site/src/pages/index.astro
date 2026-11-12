@@ -143,6 +143,25 @@ const reasons: { icon: IconName; title: string; text: string }[] = [
   },
 ];
 
+/** What an agent can do, beside the chat on wide screens */
+const agentPoints: { icon: IconName; title: string; text: string }[] = [
+  {
+    icon: "message-circle",
+    title: "Pregunta como hablarías",
+    text: "Cuánto IVA llevas, quién te debe o cómo va el año, con los datos de tu cuenta.",
+  },
+  {
+    icon: "receipt",
+    title: "Hace el trabajo",
+    text: "Apunta gastos a partir de un ticket y te prepara las facturas del mes como borradores.",
+  },
+  {
+    icon: "lock-keyhole",
+    title: "Tú tienes el control",
+    text: "Cada agente usa su propia clave, que revocas cuando quieras. Un trimestre cerrado no se toca.",
+  },
+];
+
 /** Comparison rows: a string is shown as text, a boolean as a check or a cross. */
 const comparison: { label: string; badge?: string; others: string | boolean; ours: string | boolean }[] = [
   { label: "Facturas y gastos ilimitados", others: "De pago", ours: "Gratis" },
@@ -328,13 +347,26 @@ const phoneShot =
     </section>
 
     <section id="agentes" class="mx-auto mt-10 max-w-[1200px] px-4 sm:mt-20 sm:px-6 md:mt-30">
-      <div class="lg:grid lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-center lg:gap-16">
-        <div data-reveal class="text-left lg:order-2">
-          <div class={eyebrow}>Agentes de IA</div>
-          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Pídeselo a tu agente.</h2>
-          <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
-            Conecta Claude o ChatGPT a tu cuenta. Responden con tus datos reales y hacen el trabajo por ti.
-          </p>
+      <div class="lg:grid lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-start lg:gap-16">
+        <div class="text-left lg:order-2 lg:pt-6">
+          <div data-reveal>
+            <div class={eyebrow}>Agentes de IA</div>
+            <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Pídeselo a tu agente.</h2>
+            <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
+              Conecta Claude o ChatGPT a tu cuenta. Responden con tus datos reales y hacen el trabajo por ti.
+            </p>
+          </div>
+          <ul class="m-0 mt-10 hidden list-none flex-col gap-7 p-0 lg:flex">
+            {
+              agentPoints.map((point, i) => (
+                <li data-reveal style={{ "--i": i + 1 }} class="grid grid-cols-[24px_1fr] items-start gap-x-4">
+                  <Icon name={point.icon} class="mt-1 size-[22px] text-primary" />
+                  <h3 class="m-0 font-display text-[24px] leading-tight font-semibold tracking-[-0.015em]">{point.title}</h3>
+                  <p class="col-start-2 mt-1.5 mb-0 max-w-[460px] text-muted-foreground">{point.text}</p>
+                </li>
+              ))
+            }
+          </ul>
         </div>
         <div data-reveal style={{ "--i": 1 }} class="mt-10 lg:order-1 lg:mt-0">
           <AgentChat />
