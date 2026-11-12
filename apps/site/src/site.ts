@@ -10,11 +10,12 @@ export const appLinks = {
 };
 
 /**
- * The demo opens in the same tab: Chrome on iPhone lays a tab opened with target="_blank" out under its
- * top toolbar, hiding the demo banner. Leaving the demo brings people back to the page they came from.
- * The layout's script adds the theme the visitor picked here to these links, so the demo opens in it.
+ * On a computer the demo opens in its own tab, so leaving it brings people back to the page they were reading.
+ * The layout's script opens it in the same tab on touch screens (Chrome on iPhone lays a tab opened with
+ * target="_blank" out under its top toolbar, hiding the demo banner) and adds the theme the visitor picked
+ * here to these links, so the demo opens in it.
  */
-export const demoLinkAttrs = { "data-demo-link": "" } as const;
+export const demoLinkAttrs = { target: "_blank", rel: "noopener", "data-demo-link": "" } as const;
 
 /** Links that leave the site open in a new tab, so the page stays where it was. */
 export const externalLinkAttrs = { target: "_blank", rel: "noopener noreferrer" } as const;
