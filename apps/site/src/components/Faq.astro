@@ -1,0 +1,67 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  /** Each answer is trusted HTML written in the page, so it can carry links. */
+  items: { question: string; answer: string }[];
+  class?: string;
+}
+
+const { items, class: className } = Astro.props;
+---
+
+<div data-faq class:list={["mx-auto max-w-[760px] border-t border-divider", className]}>
+  {
+    items.map((item) => (
+      <details class="group overflow-hidden border-b border-divider">
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[17px] font-semibold tracking-[-0.01em] [&::-webkit-details-marker]:hidden">
+          {item.question}
+          <Icon
+            name="chevron-down"
+            class="size-5 shrink-0 text-muted-foreground transition-transform duration-300 ease-out group-open:rotate-180 group-data-closing:rotate-0 motion-reduce:transition-none"
+          />
+        </summary>
+        <p
+          data-answer
+          class="mt-0 mb-0 max-w-[640px] pb-5 text-muted-foreground [&_a]:text-primary [&_a]:underline-offset-2 hover:[&_a]:underline"
+          set:html={item.answer}
+        />
+      </details>
+    ))
+  }
+</div>
+
+<script>
+  // Opens and closes each answer smoothly; without JS or with reduced motion it just toggles
+  const still = matchMedia("(prefers-reduced-motion: reduce)");
+  const easing = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+  for (const details of document.querySelectorAll<HTMLDetailsElement>("[data-faq] details")) {
+    const summary = details.querySelector("summary")!;
+    const answer = details.querySelector<HTMLElement>("[data-answer]")!;
+    let animation: Animation | undefined;
+    let expanded = details.open;
+
+    summary.addEventListener("click", (event) => {
+      if (still.matches) return;
+      event.preventDefault();
+      expanded = !expanded;
+
+      const from = details.offsetHeight;
+      animation?.cancel();
+      details.toggleAttribute("data-closing", !expanded);
+      details.open = true;
+      const to = expanded ? details.offsetHeight : summary.offsetHeight + (details.offsetHeight - details.clientHeight);
+
+      animation = details.animate({ height: [`${from}px`, `${to}px`] }, { duration: expanded ? 340 : 260, easing });
+      if (expanded) {
+        answer.animate({ opacity: [0, 1], transform: ["translateY(-6px)", "none"] }, { duration: 340, delay: 60, easing, fill: "backwards" });
+      }
+      animation.onfinish = () => {
+        animation = undefined;
+        details.open = expanded;
+        details.removeAttribute("data-closing");
+      };
+    });
+  }
+</script>

@@ -1,24 +1,22 @@
 ---
-import { Image } from "astro:assets";
 import Icon, { type IconName } from "../components/Icon.astro";
 import Browser from "../components/Browser.astro";
 import Logo from "../components/Logo.astro";
 import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
+import Faq from "../components/Faq.astro";
+import AgentChat from "../components/AgentChat.astro";
+import { buttonRow, euroSign, eyebrow, indicator, primaryButton, secondaryButton, sectionTitle } from "../classes";
 import { appLinks, cloudBilling, demoLinkAttrs, externalLinkAttrs, sourceUrl } from "../site";
 
-import bancosMovilOscuro from "../assets/screens/bancos-movil-oscuro.jpg";
-import bancosMovil from "../assets/screens/bancos-movil.jpg";
 import bancosOscuro from "../assets/screens/bancos-oscuro.jpg";
 import bancos from "../assets/screens/bancos.jpg";
+import bancosMovilOscuro from "../assets/screens/bancos-movil-oscuro.jpg";
+import bancosMovil from "../assets/screens/bancos-movil.jpg";
 import calendarioMovilOscuro from "../assets/screens/calendario-movil-oscuro.jpg";
 import calendarioMovil from "../assets/screens/calendario-movil.jpg";
 import calendarioOscuro from "../assets/screens/calendario-oscuro.jpg";
 import calendario from "../assets/screens/calendario.jpg";
-import cierreOscuro from "../assets/screens/cierre-oscuro.jpg";
-import cierre from "../assets/screens/cierre.jpg";
-import facturaEditorOscuro from "../assets/screens/factura-editor-oscuro.jpg";
-import facturaEditor from "../assets/screens/factura-editor.jpg";
 import facturasMovilOscuro from "../assets/screens/facturas-movil-oscuro.jpg";
 import facturasMovil from "../assets/screens/facturas-movil.jpg";
 import facturasOscuro from "../assets/screens/facturas-oscuro.jpg";
@@ -35,21 +33,17 @@ import inicioMovilOscuro from "../assets/screens/inicio-movil-oscuro.jpg";
 import inicioMovil from "../assets/screens/inicio-movil.jpg";
 import inicioOscuro from "../assets/screens/inicio-oscuro.jpg";
 import inicio from "../assets/screens/inicio.jpg";
-import modelo303Oscuro from "../assets/screens/modelo-303-oscuro.jpg";
-import modelo303 from "../assets/screens/modelo-303.jpg";
-import perdidasGananciasOscuro from "../assets/screens/perdidas-ganancias-oscuro.jpg";
-import perdidasGanancias from "../assets/screens/perdidas-ganancias.jpg";
 
-const title = "cuentalibre: impuestos al día, 100 % código abierto";
+const title = "cuentalibre: facturas e impuestos para autónomos, de código abierto";
 const description =
-  "La app de gestión para autónomos privada, gratis y de código abierto: facturas y gastos ilimitados, IVA e IRPF calculados y calendario fiscal.";
+  "Facturas, gastos, IVA e IRPF para autónomos en una app de código abierto. Gratis en tu propio servidor, o alojada por nosotros desde 3,99 € al mes.";
 
 /** Screens of the app the hero switches between, in light and dark; captured from the demo. */
 const screens: {
   id: string;
   label: string;
+  text: string;
   icon: IconName;
-  caption: string;
   desktop: ImageMetadata;
   mobile: ImageMetadata;
   desktopDark: ImageMetadata;
@@ -59,8 +53,8 @@ const screens: {
   {
     id: "inicio",
     label: "Inicio",
+    text: "Ingresos, gastos, beneficio e impuestos del año, de un vistazo.",
     icon: "layout-dashboard",
-    caption: "Ingresos, gastos, beneficio y lo que te queda después de impuestos.",
     desktop: inicio,
     mobile: inicioMovil,
     desktopDark: inicioOscuro,
@@ -70,8 +64,8 @@ const screens: {
   {
     id: "facturas",
     label: "Facturas",
+    text: "Facturas, presupuestos y albaranes ilimitados, con numeración correlativa y PDF.",
     icon: "receipt",
-    caption: "Facturas con su estado de cobro, IVA y retención.",
     desktop: facturas,
     mobile: facturasMovil,
     desktopDark: facturasOscuro,
@@ -81,8 +75,8 @@ const screens: {
   {
     id: "impuestos",
     label: "Impuestos",
+    text: "El IVA y el IRPF de cada trimestre, casilla a casilla, listos para presentar.",
     icon: "percent",
-    caption: "Lo que sale a pagar en cada trimestre y el próximo plazo.",
     desktop: impuestos,
     mobile: impuestosMovil,
     desktopDark: impuestosOscuro,
@@ -92,8 +86,8 @@ const screens: {
   {
     id: "gastos",
     label: "Gastos",
+    text: "Cada gasto con su parte deducible, sin tope al mes.",
     icon: "shopping-bag",
-    caption: "Cuota de autónomos, tickets y gastos deducibles con su justificante.",
     desktop: gastos,
     mobile: gastosMovil,
     desktopDark: gastosOscuro,
@@ -103,85 +97,32 @@ const screens: {
   {
     id: "calendario",
     label: "Calendario",
+    text: "Cada plazo fiscal que te afecta, con el importe antes de que llegue.",
     icon: "calendar-check",
-    caption: "Solo los modelos que te afectan, con su fecha.",
     desktop: calendario,
     mobile: calendarioMovil,
     desktopDark: calendarioOscuro,
     mobileDark: calendarioMovilOscuro,
-    alt: "Calendario fiscal del año por modelo",
+    alt: "Calendario fiscal con los plazos y sus importes",
   },
   {
     id: "bancos",
     label: "Bancos",
+    text: "Cada cobro y pago de tus facturas y gastos, con la cuenta por la que pasó.",
     icon: "landmark",
-    caption: "Lo que cobras y pagas cada mes, y por qué cuenta pasa.",
     desktop: bancos,
     mobile: bancosMovil,
     desktopDark: bancosOscuro,
     mobileDark: bancosMovilOscuro,
-    alt: "Resumen de bancos con los cobros y pagos del año",
+    alt: "Cobros y pagos por cuenta bancaria",
   },
 ];
 
-/** What the app does, each with its screen in the light and the dark theme. */
-const features = [
-  {
-    tag: "Ventas",
-    title: "Facturas ilimitadas en un minuto",
-    text: "Facturas, presupuestos y albaranes con numeración correlativa y PDF. Sin tope al mes.",
-    image: facturaEditor,
-    imageDark: facturaEditorOscuro,
-    alt: "Editor de facturas",
-  },
-  {
-    tag: "Compras",
-    title: "Gastos deducibles",
-    text: "Cuota de autónomos, tickets y facturas recibidas, con su justificante.",
-    image: gastos,
-    imageDark: gastosOscuro,
-    alt: "Lista de gastos",
-  },
-  {
-    tag: "Impuestos",
-    title: "IVA casilla a casilla",
-    text: "El 303 y el 390 calculados con tus documentos, listos para la AEAT.",
-    image: modelo303,
-    imageDark: modelo303Oscuro,
-    alt: "Modelo 303 calculado",
-  },
-  {
-    tag: "Impuestos",
-    title: "Calendario fiscal",
-    text: "Cada plazo que te afecta, con el importe antes de que llegue.",
-    image: calendario,
-    imageDark: calendarioOscuro,
-    alt: "Calendario fiscal",
-  },
-  {
-    tag: "Bancos",
-    title: "Cobros y pagos",
-    text: "Cada cobro y pago de tus facturas y gastos, con la cuenta por la que pasó.",
-    image: bancos,
-    imageDark: bancosOscuro,
-    alt: "Cobros y pagos",
-  },
-  {
-    tag: "Cierre",
-    title: "Cierre de trimestre",
-    text: "Una lista de lo pendiente antes de presentar tus impuestos.",
-    image: cierre,
-    imageDark: cierreOscuro,
-    alt: "Cierre de trimestre",
-  },
-  {
-    tag: "Informes",
-    title: "Pérdidas y ganancias",
-    text: "Tu año frente al anterior, exportable a PDF.",
-    image: perdidasGanancias,
-    imageDark: perdidasGananciasOscuro,
-    alt: "Informe de pérdidas y ganancias",
-  },
+/** Ways a document reaches the expense scanner; listed beside its clip on wide screens. */
+const scannerWays: { icon: IconName; title: string; text: string }[] = [
+  { icon: "smartphone", title: "Desde el móvil", text: "Haz una foto al ticket nada más pagar." },
+  { icon: "monitor", title: "Desde el ordenador", text: "Arrastra el PDF de la factura que te llega por correo." },
+  { icon: "scan-text", title: "Tú solo revisas", text: "Proveedor, fecha, base e IVA salen leídos del documento." },
 ];
 
 const reasons: { icon: IconName; title: string; text: string }[] = [
@@ -199,6 +140,25 @@ const reasons: { icon: IconName; title: string; text: string }[] = [
     icon: "hand-coins",
     title: "Gratis de verdad",
     text: "Facturas y gastos ilimitados, impuestos incluidos. Sin plan recortado.",
+  },
+];
+
+/** What an agent can do, beside the chat on wide screens */
+const agentPoints: { icon: IconName; title: string; text: string }[] = [
+  {
+    icon: "message-circle",
+    title: "Pregunta como hablarías",
+    text: "Cuánto IVA llevas, quién te debe o cómo va el año, con los datos de tu cuenta.",
+  },
+  {
+    icon: "receipt",
+    title: "Hace el trabajo",
+    text: "Apunta gastos a partir de un ticket y te prepara las facturas del mes como borradores.",
+  },
+  {
+    icon: "lock-keyhole",
+    title: "Tú tienes el control",
+    text: "Cada agente usa su propia clave, que revocas cuando quieras. Un trimestre cerrado no se toca.",
   },
 ];
 
@@ -228,51 +188,82 @@ const onlinePlan = [
   "Exporta tus datos cuando quieras",
 ];
 
+const faq = [
+  {
+    question: "¿Por qué es gratis?",
+    answer:
+      "Porque el código es libre (licencia AGPL-3.0) y cualquiera puede instalarlo. El desarrollo lo paga cuentalibre Cloud, la versión que alojamos nosotros para quien no quiere ocuparse de un servidor. La versión gratuita tiene todas las funciones.",
+  },
+  {
+    question: "¿Puedo fiarme de los cálculos de IVA e IRPF?",
+    answer:
+      "Las reglas fiscales están en el código, a la vista y con pruebas automáticas. Puedes revisar de dónde sale cada casilla del 303 o del 130. Aun así, repasa siempre lo que presentas: cuentalibre prepara los modelos, pero no los presenta por ti.",
+  },
+  {
+    question: "¿Necesito saber de servidores?",
+    answer:
+      'Para instalarlo tú, sí: hace falta manejar un servidor Linux con Docker. Si no es tu caso, <a href="#precio">cuentalibre Cloud</a> funciona desde el navegador, con las mismas funciones.',
+  },
+  {
+    question: "¿Necesito tarjeta para probar cuentalibre Cloud?",
+    answer:
+      "No. Tienes 30 días con todas las funciones y la tarjeta solo te la pedimos si decides suscribirte. Si no lo haces, tu cuenta queda en modo lectura: puedes ver y exportar todo.",
+  },
+  {
+    question: "¿Envía mis facturas a Hacienda con VERI*FACTU?",
+    answer:
+      "Todavía no: VERI*FACTU llegará próximamente. Mientras tanto, emites tus facturas con cuentalibre sin enviarlas a la AEAT.",
+  },
+  {
+    question: "¿Sirve para cualquier negocio?",
+    answer:
+      "Está pensada para autónomos en estimación directa. No cubre módulos (estimación objetiva), la contabilidad de sociedades ni las nóminas.",
+  },
+  {
+    question: "¿Mis datos son míos?",
+    answer:
+      "Sí. Puedes exportarlos todos cuando quieras. En tu servidor no salen de él; en cuentalibre Cloud se guardan en servidores de la Unión Europea.",
+  },
+];
+
+/** Where the free edition starts: the self-hosting guide. */
+const installUrl = "/docs/instalar";
+
 const defaultBilling = "yearly";
 
-/** In the big prices a monospaced space reads as a gap, so the euro sign gets a narrow margin instead */
-const euroSign = "ml-[0.28em]";
 
-/** White tab that slides under the chosen tab; the script places it and marks the group ready */
-const indicator =
-  "pointer-events-none absolute top-0 left-0 rounded-lg bg-background opacity-0 shadow-tab transition-[transform,width,height] duration-300 ease-out in-data-ready:opacity-100";
 const phoneShot =
   "mx-auto w-[min(260px,72vw)] md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]";
-const eyebrow = "font-brand text-[14px] font-semibold text-primary";
-const sectionTitle =
-  "font-display text-[clamp(32px,4vw,44px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance";
-/** Call-to-action pair: compact buttons with the app's corners, stacked and centered on phones, side by side from sm */
-const buttonRow = "flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center";
-const ctaButton = "inline-flex min-w-[216px] items-center justify-center gap-2 rounded-[10px] px-5 py-2.5 text-[15px] no-underline sm:min-w-0";
-const primaryButton = `${ctaButton} font-semibold button-brand`;
-const secondaryButton = `${ctaButton} border border-input font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-muted active:scale-[0.98]`;
 ---
 
 <Base title={title} description={description}>
   <main>
-    <section class="mx-auto max-w-[1200px] px-4 pt-8 text-center sm:px-6 sm:pt-14 md:pt-22">
+    <section class="relative isolate mx-auto max-w-[1200px] px-4 pt-6 text-center sm:px-6 sm:pt-8 md:pt-10">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] bg-hero-glow"></div>
       <h1
-        class="mx-auto mt-4 mb-0 max-w-[880px] animate-rise-in font-display text-[clamp(40px,6.6vw,80px)] sm:mt-7 leading-[1.02] font-semibold tracking-[-0.025em] text-balance"
+        class="mx-auto mt-2 mb-0 animate-rise-in font-display text-[clamp(36px,5.2vw,64px)] sm:mt-4 leading-[1.02] font-semibold tracking-[-0.03em] text-balance"
       >
-        Impuestos al día.<br /><span class="text-gradient-brand">100&nbsp;% código abierto.</span>
+        Tus impuestos, bajo control.
       </h1>
-      <p class="mx-auto mt-5 mb-0 max-w-[560px] animate-rise-in text-[17px] [--i:2] leading-normal sm:mt-6 sm:text-[19px] text-pretty text-muted-foreground">
-        La primera app de gestión para autónomos 100&nbsp;% privada, gratis y de código abierto.
+      <p class="mx-auto mt-5 mb-0 max-w-[600px] animate-rise-in text-[17px] [--i:2] leading-normal sm:mt-6 sm:text-[19px] text-pretty text-muted-foreground">
+        Facturas, gastos, IVA e IRPF para autónomos.{" "}<br class="max-sm:hidden" />De{" "}
+        <strong class="font-medium text-foreground">código abierto</strong> y{" "}
+        <strong class="font-medium text-foreground">gratis</strong> en tu propio servidor.
       </p>
       <div class:list={[buttonRow, "mt-8 animate-rise-in [--i:4] sm:mt-9"]}>
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Probar la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href="#precio" class={secondaryButton}>Empezar gratis</a>
+        <a href="#precio" class={secondaryButton}>Instalar gratis</a>
       </div>
     </section>
 
-    <section class="mx-auto mt-12 max-w-[1240px] animate-rise-in px-4 [--i:6] sm:mt-16 sm:px-6" data-screens>
+    <section id="funciones" class="mx-auto mt-8 max-w-[1240px] scroll-mt-24 animate-rise-in px-4 [--i:6] sm:mt-10 sm:px-6" data-screens>
       <div
         role="tablist"
         aria-label="Pantallas de la app"
         data-indicator-group
-        class="scrollbar-none relative mx-auto flex w-full max-w-full gap-1 overflow-x-auto rounded-[12px] bg-muted p-1 sm:w-fit md:flex-wrap md:justify-center"
+        class="scrollbar-none relative mx-auto flex w-full max-w-full gap-1 overflow-x-auto rounded-full bg-muted p-1 sm:w-fit md:flex-wrap md:justify-center"
       >
         <span data-indicator aria-hidden="true" class={indicator}></span>
         {
@@ -285,7 +276,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
               aria-selected={i === 0 ? "true" : "false"}
               tabindex={i === 0 ? 0 : -1}
               aria-label={screen.label}
-              class="group inline-flex shrink-0 items-center justify-center gap-[7px] rounded-lg border-0 bg-transparent px-2.5 py-2 max-sm:flex-1 max-sm:aria-selected:flex-auto sm:px-3.5 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
+              class="group inline-flex shrink-0 items-center justify-center gap-[7px] rounded-full border-0 bg-transparent px-2.5 py-2 max-sm:flex-1 max-sm:aria-selected:flex-auto sm:px-3.5 whitespace-nowrap font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-selected:bg-background aria-selected:text-foreground aria-selected:shadow-tab relative z-10 in-data-ready:aria-selected:bg-transparent in-data-ready:aria-selected:shadow-none"
             >
               <Icon name={screen.icon} class="size-[17px]" />
               {/* Phones show only the icons, and the label of the chosen screen */}
@@ -297,7 +288,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
       {
         screens.map((screen, i) => (
           <div role="tabpanel" id={`panel-${screen.id}`} aria-labelledby={`pantalla-${screen.id}`} hidden={i !== 0}>
-            <p class="mx-auto mt-4 mb-0 min-h-6 text-center text-[15px] text-muted-foreground">{screen.caption}</p>
+            <p class="mx-auto mt-4 mb-0 max-w-[560px] px-2 text-center text-[15px] text-pretty text-muted-foreground sm:text-base">{screen.text}</p>
             <div data-shot="light" class="relative mt-5 md:pb-12 dark:hidden">
               <Browser
                 src={screen.desktop}
@@ -318,105 +309,83 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
       }
     </section>
 
-    <section id="funciones" class="mt-14 sm:mt-20 md:mt-30" data-carousel>
-      <div data-reveal class="mx-auto flex max-w-[1200px] flex-wrap items-end justify-between gap-6 px-4 sm:px-6">
-        <div>
-          <div class={eyebrow}>Funciones</div>
-          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Todo tu trimestre, en una app</h2>
-          <p class="mt-2.5 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
-            Sin límite de facturas ni de gastos, y sin funciones reservadas a un plan caro.
-          </p>
-        </div>
-        <div class="hidden items-center gap-4 sm:flex">
-          <a
-            href={appLinks.demo}
-            {...demoLinkAttrs}
-            class="hidden items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover md:inline-flex"
-          >
-            Verlo todo en la demo<Icon name="arrow-right" class="size-[17px]" />
-          </a>
-          <div class="flex gap-2">
-            <button
-              type="button"
-              aria-label="Función anterior"
-              data-carousel-prev
-              disabled
-              class="flex size-10 items-center justify-center rounded-full sm:size-12 border border-border bg-background p-0 text-foreground hover:bg-muted disabled:cursor-default disabled:opacity-35"
-            >
-              <Icon name="chevron-left" />
-            </button>
-            <button
-              type="button"
-              aria-label="Función siguiente"
-              data-carousel-next
-              class="flex size-10 items-center justify-center rounded-full sm:size-12 border-0 bg-foreground p-0 text-background hover:bg-primary-hover disabled:cursor-default disabled:opacity-35"
-            >
-              <Icon name="chevron-right" />
-            </button>
+    <section id="escaner" class="mx-auto mt-14 max-w-[1200px] px-4 sm:mt-20 sm:px-6 md:mt-16">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,620px)] lg:items-start lg:gap-14">
+        <div data-reveal class="text-left lg:pt-6">
+          <div class="flex items-center gap-2.5">
+            <span class={eyebrow}>Escáner de gastos</span>
+            <span class="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary-hover">Próximamente</span>
           </div>
+          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Del ticket al trimestre, sin teclear.</h2>
+          <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
+            Haz una foto al ticket o sube la factura, y cuentalibre la apunta sola en su trimestre.
+          </p>
+          <ul class="m-0 mt-10 hidden list-none flex-col gap-7 p-0 lg:flex">
+            {
+              scannerWays.map((way) => (
+                <li class="grid grid-cols-[24px_1fr] items-start gap-x-4">
+                  <Icon name={way.icon} class="mt-1 size-[22px] text-primary" />
+                  <h3 class="m-0 font-display text-[24px] leading-tight font-semibold tracking-[-0.015em]">{way.title}</h3>
+                  <p class="col-start-2 mt-1.5 mb-0 text-muted-foreground">{way.text}</p>
+                </li>
+              ))
+            }
+          </ul>
         </div>
-      </div>
-      <div data-reveal class="relative mt-6 sm:mt-10">
-      <ul
-        data-carousel-track
-        class="scrollbar-none m-0 flex list-none snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-[max(16px,calc((100%-1152px)/2))] pt-1 pb-6 scroll-pl-[max(16px,calc((100%-1152px)/2))] sm:px-[max(24px,calc((100%-1152px)/2))] sm:scroll-pl-[max(24px,calc((100%-1152px)/2))]"
-      >
-        {
-          features.map((feature) => (
-            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-divider bg-sidebar/60 dark:border-border dark:bg-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
-              <div class="px-6 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-7">
-                <div class="font-brand text-[13px] font-medium text-muted-foreground">{feature.tag}</div>
-                <h3 class="mt-2 mb-0 text-[20px] leading-tight sm:text-[22px] font-semibold tracking-[-0.015em]">{feature.title}</h3>
-                <p class="mt-2 mb-0 max-w-[420px] text-muted-foreground">{feature.text}</p>
-              </div>
-              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] rounded-tl-xl border-t border-l border-input bg-background shadow-screen sm:ml-8">
-                <Image
-                  src={feature.image}
-                  alt={feature.alt}
-                  widths={[800, 1200]}
-                  sizes="min(810px, 126vw)"
-                  loading="lazy"
-                  class="block h-auto min-h-full w-[150%] max-w-none object-cover object-top-left dark:hidden"
-                />
-                <Image
-                  src={feature.imageDark}
-                  alt={feature.alt}
-                  widths={[800, 1200]}
-                  sizes="min(810px, 126vw)"
-                  loading="lazy"
-                  class="hidden h-auto min-h-full w-[150%] max-w-none object-cover object-top-left dark:block"
-                />
-              </div>
-            </li>
-          ))
-        }
-      </ul>
-      <button
-        type="button"
-        aria-label="Función anterior"
-        data-carousel-prev
-        disabled
-        class="absolute top-1/2 left-2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 p-0 text-foreground shadow-shot backdrop-blur transition-opacity disabled:pointer-events-none disabled:opacity-0 sm:hidden"
-      >
-        <Icon name="chevron-left" />
-      </button>
-      <button
-        type="button"
-        aria-label="Función siguiente"
-        data-carousel-next
-        class="absolute top-1/2 right-2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 p-0 text-foreground shadow-shot backdrop-blur transition-opacity disabled:pointer-events-none disabled:opacity-0 sm:hidden"
-      >
-        <Icon name="chevron-right" />
-      </button>
+        <div data-reveal style={{ "--i": 1 }} class="mx-auto mt-8 max-w-[620px] lg:mt-0 lg:max-w-none">
+          <video
+            data-scanner
+            class="block aspect-[4/3] w-full [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent),linear-gradient(to_bottom,transparent,black_5%,black_92%,transparent)] [mask-composite:intersect]"
+            muted
+            loop
+            playsinline
+            preload="none"
+            aria-label="Un ticket desde la app y una factura en PDF desde el ordenador se escanean y quedan registrados como gastos del trimestre."
+          ></video>
+        </div>
       </div>
     </section>
 
-    <section id="privacidad" class="mx-auto mt-10 sm:mt-20 md:mt-30 max-w-[1200px] px-4 sm:px-6">
+    <section id="agentes" class="mx-auto mt-10 max-w-[1200px] px-4 sm:mt-20 sm:px-6 md:mt-30">
+      <div class="lg:grid lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-start lg:gap-16">
+        <div class="text-left lg:order-2 lg:pt-6">
+          <div data-reveal>
+            <div class={eyebrow}>Agentes de IA</div>
+            <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Pídeselo a tu agente.</h2>
+            <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
+              Conecta Claude o ChatGPT a tu cuenta. Responden con tus datos reales y hacen el trabajo por ti.
+            </p>
+          </div>
+          <ul class="m-0 mt-10 hidden list-none flex-col gap-7 p-0 lg:flex">
+            {
+              agentPoints.map((point, i) => (
+                <li data-reveal style={{ "--i": i + 1 }} class="grid grid-cols-[24px_1fr] items-start gap-x-4">
+                  <Icon name={point.icon} class="mt-1 size-[22px] text-primary" />
+                  <h3 class="m-0 font-display text-[24px] leading-tight font-semibold tracking-[-0.015em]">{point.title}</h3>
+                  <p class="col-start-2 mt-1.5 mb-0 max-w-[460px] text-muted-foreground">{point.text}</p>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div data-reveal style={{ "--i": 1 }} class="mt-10 lg:order-1 lg:mt-0">
+          <AgentChat />
+          <div class="mt-6 flex flex-col items-start gap-x-6 gap-y-3 sm:flex-row sm:items-center">
+            <a href="/docs/agentes" class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
+              Cómo conectar un agente<Icon name="arrow-right" class="size-[17px]" />
+            </a>
+            <a href="/docs/api" class="font-medium text-muted-foreground no-underline hover:text-foreground">Referencia de la API</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="codigo-abierto" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
       <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:items-center lg:gap-16">
         <div>
-          <div data-reveal class="text-center lg:text-left">
+          <div data-reveal class="text-left">
             <div class={eyebrow}>Por qué cuentalibre</div>
-            <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Tus cuentas son <em>tuyas</em>.</h2>
+            <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Tus cuentas son <em>tuyas</em>.</h2>
             <p class="mt-4 mb-0 hidden max-w-[520px] text-[17px] text-muted-foreground lg:block">
               Tus datos fiscales, con un software que puedes revisar, auditar y ejecutar en tu propio servidor.
             </p>
@@ -505,7 +474,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
     <section id="precio" class="mx-auto mt-16 sm:mt-24 md:mt-34 max-w-[1200px] px-4 sm:px-6" data-billing={defaultBilling}>
       <div data-reveal class="text-center">
         <div class={eyebrow}>Precio</div>
-        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Gratis. Y online si lo prefieres.</h2>
+        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Gratis en tu servidor. En Cloud si prefieres no instalar nada.</h2>
         <p class="mx-auto mt-3.5 mb-0 max-w-[540px] text-[17px] text-muted-foreground">
           Las dos opciones tienen todas las funciones. Solo cambia quién se encarga del servidor.
         </p>
@@ -513,7 +482,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
           role="group"
           aria-label="Forma de pago"
           data-indicator-group
-          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-[12px] bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
+          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-full bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
         >
           <span data-indicator aria-hidden="true" class={indicator}></span>
           {
@@ -522,7 +491,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
                 type="button"
                 data-billing-option={option.id}
                 aria-pressed={option.id === defaultBilling ? "true" : "false"}
-                class="inline-flex items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
+                class="inline-flex items-center justify-center gap-2 rounded-full border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
               >
                 {option.label}
                 {option.saving && (
@@ -567,11 +536,17 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
             </li>
           </ul>
           <a
+            href={installUrl}
+            class="mt-8 flex items-center justify-center gap-2 rounded-full border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+          >
+            Instalar gratis
+          </a>
+          <a
             href={sourceUrl}
             {...externalLinkAttrs}
-            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+            class="mt-3 flex items-center justify-center gap-2 text-[14px] font-medium text-muted-foreground no-underline hover:text-foreground"
           >
-            <Icon name="code" class="size-[18px]" />Instalar desde GitHub
+            <Icon name="code" class="size-4" />Ver el código en GitHub
           </a>
         </div>
 
@@ -626,13 +601,19 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
           </ul>
           <a
             href={appLinks.signUp}
-            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand"
+            class="mt-8 flex items-center justify-center gap-2 rounded-full p-3 font-semibold no-underline button-brand"
           >
             Probar 30 días gratis
           </a>
+          <div class="mt-3 text-center text-[14px] text-muted-foreground">Sin tarjeta durante la prueba</div>
         </div>
       </div>
       <p class="mx-auto mt-5 mb-0 max-w-[620px] text-center text-[14px] text-muted-foreground">Precios sin IVA.</p>
+    </section>
+
+    <section id="preguntas" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
+      <h2 data-reveal class:list={[sectionTitle, "mx-auto mt-0 mb-8 text-center sm:mb-10"]}>Preguntas frecuentes</h2>
+      <Faq items={faq} />
     </section>
 
     <section data-reveal class="mx-auto mt-16 max-w-[1200px] px-4 text-center sm:mt-24 sm:px-6 md:mt-34">
@@ -648,36 +629,14 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Abrir la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href="#precio" class={secondaryButton}>Empezar gratis</a>
+        <a href="#precio" class={secondaryButton}>Ver precios</a>
       </div>
     </section>
   </main>
 </Base>
 
 <script>
-  // Segmented controls: slide the white pill under the chosen option
-  const placeIndicators = () => {
-    for (const group of document.querySelectorAll<HTMLElement>("[data-indicator-group]")) {
-      const indicator = group.querySelector<HTMLElement>("[data-indicator]")!;
-      const active = group.querySelector<HTMLElement>('[aria-selected="true"], [aria-pressed="true"]');
-      if (!active) continue;
-      const first = !group.hasAttribute("data-ready");
-      // The first placement jumps into position instead of sliding from the corner
-      if (first) indicator.style.transition = "none";
-      indicator.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
-      indicator.style.width = `${active.offsetWidth}px`;
-      indicator.style.height = `${active.offsetHeight}px`;
-      indicator.style.borderRadius = getComputedStyle(active).borderRadius;
-      if (first) {
-        indicator.getBoundingClientRect();
-        indicator.style.transition = "";
-        group.setAttribute("data-ready", "");
-      }
-    }
-  };
-  placeIndicators();
-  document.fonts.ready.then(placeIndicators);
-  window.addEventListener("resize", placeIndicators);
+  import { placeIndicators } from "../scripts/indicators";
 
   // Hero: switch the screenshot with the tabs, and move between tabs with the arrow keys
   for (const root of document.querySelectorAll<HTMLElement>("[data-screens]")) {
@@ -724,27 +683,6 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
     }
   }
 
-  // Features: page through the cards and disable the arrow at each end
-  for (const root of document.querySelectorAll<HTMLElement>("[data-carousel]")) {
-    const track = root.querySelector<HTMLElement>("[data-carousel-track]")!;
-    // Each direction has a button in the header (wide screens) and one over the cards (phones)
-    const prev = root.querySelectorAll<HTMLButtonElement>("[data-carousel-prev]");
-    const next = root.querySelectorAll<HTMLButtonElement>("[data-carousel-next]");
-    const step = () => {
-      const card = track.firstElementChild;
-      return card ? card.getBoundingClientRect().width + 20 : track.clientWidth * 0.8;
-    };
-    const syncEnds = () => {
-      for (const button of prev) button.disabled = track.scrollLeft <= 4;
-      for (const button of next) button.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 4;
-    };
-    for (const button of prev) button.addEventListener("click", () => track.scrollBy({ left: -step() }));
-    for (const button of next) button.addEventListener("click", () => track.scrollBy({ left: step() }));
-    track.addEventListener("scroll", syncEnds, { passive: true });
-    window.addEventListener("resize", syncEnds);
-    syncEnds();
-  }
-
   // Price: show the hosted plan's price for the chosen billing period
   for (const root of document.querySelectorAll<HTMLElement>("[data-billing]")) {
     const options = root.querySelectorAll<HTMLButtonElement>("[data-billing-option]");
@@ -758,6 +696,32 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
         placeIndicators();
       });
     }
+  }
+
+  // Scanner: play the clip in the site's theme while it is on screen; reduced motion shows its still frame
+  for (const video of document.querySelectorAll<HTMLVideoElement>("[data-scanner]")) {
+    const still = matchMedia("(prefers-reduced-motion: reduce)");
+    let onScreen = false;
+    const sync = () => {
+      const name = document.documentElement.classList.contains("dark") ? "escaner-oscuro" : "escaner-claro";
+      if (video.dataset.clip !== name) {
+        video.dataset.clip = name;
+        video.poster = `/videos/${name}-poster.jpg`;
+        video.src = `/videos/${name}.mp4`;
+        if (video.preload !== "none") video.load();
+      }
+      if (onScreen && !still.matches) {
+        video.preload = "auto";
+        video.play().catch(() => {});
+      } else video.pause();
+    };
+    new IntersectionObserver(([entry]) => {
+      onScreen = !!entry?.isIntersecting;
+      sync();
+    }, { rootMargin: "200px 0px" }).observe(video);
+    addEventListener("site-theme-change", sync);
+    still.addEventListener("change", sync);
+    sync();
   }
 
   // Fetch the other screenshots once the page is idle, so switching tabs never shows a blank frame

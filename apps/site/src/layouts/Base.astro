@@ -17,7 +17,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
 const sections = [
   { href: "/#funciones", label: "Funciones" },
-  { href: "/#privacidad", label: "Privacidad" },
+  { href: "/#agentes", label: "Agentes" },
+  { href: "/#codigo-abierto", label: "Código abierto" },
   { href: "/#precio", label: "Precio" },
 ];
 
@@ -148,7 +149,7 @@ const year = new Date().getFullYear();
             cuentalibre
           </a>
           <p class="mt-4 mb-0 max-w-[340px] text-[15px] text-muted-foreground">
-            Contabilidad e impuestos para autónomos. Privada, gratis y de código abierto.
+            Facturación e impuestos para autónomos. De código abierto y gratis en tu propio servidor.
           </p>
           <a
             href={sourceUrl}
