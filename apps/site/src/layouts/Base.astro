@@ -191,6 +191,8 @@ const year = new Date().getFullYear();
       const root = document.documentElement;
       const toggle = document.querySelector<HTMLButtonElement>("[data-theme-toggle]")!;
       const demoLinks = document.querySelectorAll<HTMLAnchorElement>("[data-demo-link]");
+      // Phones open the demo in the same tab: Chrome on iPhone hides the top of a tab opened with target="_blank"
+      if (matchMedia("(pointer: coarse)").matches) for (const link of demoLinks) link.removeAttribute("target");
       const storedTheme = () => {
         try {
           return localStorage.getItem(themeKey);
