@@ -1,0 +1,248 @@
+---
+import Browser from "../components/Browser.astro";
+import Faq from "../components/Faq.astro";
+import Icon from "../components/Icon.astro";
+import Phone from "../components/Phone.astro";
+import Base from "../layouts/Base.astro";
+import { buttonRow, euroSign, eyebrow, indicator, primaryButton, secondaryButton, sectionTitle } from "../classes";
+import { appLinks, cloudBilling, demoLinkAttrs } from "../site";
+import inicioMovilOscuro from "../assets/screens/inicio-movil-oscuro.jpg";
+import inicioMovil from "../assets/screens/inicio-movil.jpg";
+import inicioOscuro from "../assets/screens/inicio-oscuro.jpg";
+import inicio from "../assets/screens/inicio.jpg";
+
+const title = "cuentalibre Cloud: tu contabilidad de autónomo, sin instalar nada";
+const description =
+  "Facturas, gastos, IVA e IRPF para autónomos desde el navegador. Prueba 30 días gratis, sin tarjeta, desde 3,99 € al mes.";
+
+/** The period the price card opens on: the cheapest monthly equivalent. */
+const defaultBilling = "yearly";
+
+const included = [
+  "Facturas, presupuestos y gastos ilimitados",
+  "IVA e IRPF de cada trimestre, ya calculados",
+  "Calendario fiscal y cierre de trimestre",
+  "Cobros, pagos e informes",
+  "API para tus agentes de IA",
+];
+
+const weHandle = [
+  "Sin instalar nada, desde cualquier navegador",
+  "Actualizaciones automáticas",
+  "Copia de seguridad diaria",
+  "Exporta tus datos cuando quieras",
+];
+
+const faq = [
+  {
+    question: "¿Necesito tarjeta para probarlo?",
+    answer: "No. Tienes 30 días con todas las funciones, y la tarjeta solo te la pedimos si decides suscribirte.",
+  },
+  {
+    question: "¿Qué pasa cuando acaban los 30 días?",
+    answer:
+      "Si te suscribes, sigues igual. Si no, tu cuenta pasa a modo lectura: puedes ver y exportar todo, pero no crear ni cambiar nada hasta que te suscribas.",
+  },
+  {
+    question: "¿Puedo cancelar cuando quiera?",
+    answer:
+      "Sí. El plan mensual no tiene permanencia. El trimestral y el anual se pagan por adelantado: si cancelas, no se renuevan y sigues hasta el final del periodo.",
+  },
+  {
+    question: "¿Me dais factura?",
+    answer: "Sí, de cada pago. Las tienes en la app, en Configuración › Plan y facturación.",
+  },
+  {
+    question: "¿Dónde se guardan mis datos?",
+    answer:
+      'En servidores de la Unión Europea, y solo los tratamos para darte el servicio. Lo detallamos en la <a href="/privacidad">política de privacidad</a>.',
+  },
+  {
+    question: "¿Y si luego prefiero instalarlo yo?",
+    answer:
+      'Puedes exportar todos tus datos cuando quieras. cuentalibre es de código abierto y la versión que alojamos es la misma que puedes <a href="/docs/instalar">instalar en tu servidor</a>.',
+  },
+];
+
+const phoneShot =
+  "mx-auto w-[min(260px,72vw)] md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]";
+---
+
+<Base title={title} description={description}>
+  <main>
+    <section class="mx-auto max-w-[1200px] px-4 pt-8 text-center sm:px-6 sm:pt-14 md:pt-22">
+      <div class:list={[eyebrow, "animate-rise-in"]}>cuentalibre Cloud</div>
+      <h1
+        class="mx-auto mt-3 mb-0 max-w-[880px] animate-rise-in font-display text-[clamp(40px,6.6vw,76px)] leading-[1.02] font-semibold tracking-[-0.025em] text-balance"
+      >
+        Tus impuestos al día, sin instalar nada.
+      </h1>
+      <p class="mx-auto mt-5 mb-0 max-w-[580px] animate-rise-in text-[17px] [--i:2] leading-normal text-pretty text-muted-foreground sm:mt-6 sm:text-[19px]">
+        Facturas, gastos, IVA e IRPF para autónomos, desde el navegador. Nosotros nos ocupamos del servidor, las copias y
+        las actualizaciones.
+      </p>
+      <div class:list={[buttonRow, "mt-8 animate-rise-in [--i:4] sm:mt-9"]}>
+        <a href={appLinks.signUp} class={primaryButton}>
+          Probar 30 días gratis<Icon name="arrow-right" class="size-[18px]" />
+        </a>
+        <a href={appLinks.demo} {...demoLinkAttrs} class={secondaryButton}>Ver la demo</a>
+      </div>
+      <p class="mt-4 mb-0 animate-rise-in text-[14px] [--i:5] text-muted-foreground">Sin tarjeta durante la prueba.</p>
+    </section>
+
+    <section class="mx-auto mt-12 max-w-[1240px] animate-rise-in px-4 [--i:6] sm:mt-16 sm:px-6">
+      <div class="relative md:pb-12 dark:hidden">
+        <Browser
+          src={inicio}
+          alt="Inicio: resumen del año con ingresos, gastos, beneficio e impuestos estimados"
+          loading="eager"
+          fetchpriority="high"
+          class="hidden md:block"
+        />
+        <Phone src={inicioMovil} alt="cuentalibre en el móvil" loading="eager" class={phoneShot} />
+      </div>
+      <div class="relative hidden md:pb-12 dark:block">
+        <Browser src={inicioOscuro} alt="Inicio en modo oscuro" class="hidden md:block" />
+        <Phone src={inicioMovilOscuro} alt="cuentalibre en el móvil, en modo oscuro" class={phoneShot} />
+      </div>
+    </section>
+
+    <section id="precio" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34" data-billing={defaultBilling}>
+      <div data-reveal class="text-center">
+        <div class={eyebrow}>Precio</div>
+        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Un plan, con todo.</h2>
+        <p class="mx-auto mt-3.5 mb-0 max-w-[540px] text-[17px] text-muted-foreground">
+          Sin límites de facturas ni funciones reservadas. Solo eliges cada cuánto pagas.
+        </p>
+        <div
+          role="group"
+          aria-label="Forma de pago"
+          data-indicator-group
+          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-[12px] bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
+        >
+          <span data-indicator aria-hidden="true" class={indicator}></span>
+          {
+            cloudBilling.map((option) => (
+              <button
+                type="button"
+                data-billing-option={option.id}
+                aria-pressed={option.id === defaultBilling ? "true" : "false"}
+                class="relative z-10 inline-flex items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-2 py-2 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab sm:px-4 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
+              >
+                {option.label}
+                {option.saving && (
+                  <span class="hidden rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold whitespace-nowrap text-success sm:inline">
+                    −{option.saving}
+                  </span>
+                )}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+
+      <div data-reveal class="border-gradient-brand mx-auto mt-10 flex max-w-[560px] flex-col rounded-2xl p-6 text-foreground shadow-plan sm:p-8">
+        <div class="flex items-center gap-3">
+          <div class="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+            <Icon name="cloud" />
+          </div>
+          <div>
+            <h3 class="m-0 text-[18px] font-semibold">cuentalibre Cloud</h3>
+            <div class="text-[14px] text-muted-foreground">Nosotros lo alojamos por ti</div>
+          </div>
+        </div>
+        {
+          cloudBilling.map((option) => (
+            <div data-billing-show={option.id} hidden={option.id !== defaultBilling}>
+              <div class="mt-7 flex flex-wrap items-baseline gap-2">
+                <span class="amount text-[48px] leading-none font-semibold tracking-[-0.05em] sm:text-[56px]">
+                  {option.perMonth}
+                  <span class={euroSign}>€</span>
+                </span>
+                <span class="text-muted-foreground">al mes + IVA</span>
+              </div>
+              <div class="mt-2 flex min-h-[21px] flex-wrap items-center gap-2 text-[14px] text-muted-foreground">
+                {option.id === "monthly" ? "Sin permanencia" : `Pagas ${option.charged}`}
+                {option.saving && (
+                  <span class="rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold text-success sm:hidden">
+                    Ahorras un {option.saving}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
+        }
+        <ul class="m-0 mt-7 flex list-none flex-col gap-3 border-t border-primary-soft p-0 pt-6">
+          {
+            included.map((item) => (
+              <li class="flex items-start gap-2.5">
+                <Icon name="check" class="mt-[3px] size-[18px] shrink-0 text-primary [stroke-width:2.25]" />
+                {item}
+              </li>
+            ))
+          }
+          {
+            weHandle.map((item) => (
+              <li class="flex items-start gap-2.5">
+                <Icon name="plus" class="mt-[3px] size-[18px] shrink-0 text-primary" />
+                {item}
+              </li>
+            ))
+          }
+          <li class="flex flex-wrap items-start gap-2.5">
+            <Icon name="plus" class="mt-[3px] size-[18px] shrink-0 text-primary" />
+            Apps para iOS y Android
+            <span class="rounded-full bg-warning-soft px-2 py-0.5 text-xs font-semibold text-warning">Pronto</span>
+          </li>
+        </ul>
+        <a href={appLinks.signUp} class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand">
+          Probar 30 días gratis
+        </a>
+      </div>
+      <p class="mx-auto mt-5 mb-0 max-w-[620px] text-center text-[14px] text-muted-foreground">
+        Precios sin IVA. ¿Prefieres alojarlo tú? <a href="/docs/instalar" class="text-primary">Es gratis</a>.
+      </p>
+    </section>
+
+    <section class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
+      <h2 data-reveal class:list={[sectionTitle, "mx-auto mt-0 mb-8 text-center sm:mb-10"]}>Preguntas frecuentes</h2>
+      <Faq items={faq} />
+    </section>
+
+    <section data-reveal class="mx-auto mt-16 max-w-[1200px] px-4 text-center sm:mt-24 sm:px-6 md:mt-34">
+      <h2
+        class="mx-auto my-0 max-w-[720px] font-display text-[clamp(34px,5vw,56px)] leading-[1.04] font-semibold tracking-[-0.025em] text-balance"
+      >
+        Empieza tu prueba de 30 días
+      </h2>
+      <p class="mx-auto mt-4 mb-0 max-w-[480px] text-[17px] text-muted-foreground">
+        Sin tarjeta. Si no te convence, te llevas tus datos.
+      </p>
+      <div class:list={[buttonRow, "mt-8"]}>
+        <a href={appLinks.signUp} class={primaryButton}>
+          Probar 30 días gratis<Icon name="arrow-right" class="size-[18px]" />
+        </a>
+        <a href={appLinks.demo} {...demoLinkAttrs} class={secondaryButton}>Ver la demo</a>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<script>
+  import { placeIndicators } from "../scripts/indicators";
+
+  // Price: show the plan's price for the chosen billing period
+  for (const root of document.querySelectorAll<HTMLElement>("[data-billing]")) {
+    const options = root.querySelectorAll<HTMLButtonElement>("[data-billing-option]");
+    for (const option of options) {
+      option.addEventListener("click", () => {
+        const billing = option.dataset.billingOption;
+        for (const other of options) other.setAttribute("aria-pressed", String(other === option));
+        for (const price of root.querySelectorAll<HTMLElement>("[data-billing-show]")) {
+          price.hidden = price.dataset.billingShow !== billing;
+        }
+        placeIndicators();
+      });
+    }
+  }
+</script>

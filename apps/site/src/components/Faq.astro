@@ -1,0 +1,31 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  /** Each answer is trusted HTML written in the page, so it can carry links. */
+  items: { question: string; answer: string }[];
+  class?: string;
+}
+
+const { items, class: className } = Astro.props;
+---
+
+<div class:list={["mx-auto max-w-[760px] border-t border-divider", className]}>
+  {
+    items.map((item) => (
+      <details class="group border-b border-divider">
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[17px] font-semibold tracking-[-0.01em] [&::-webkit-details-marker]:hidden">
+          {item.question}
+          <Icon
+            name="chevron-down"
+            class="size-5 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+          />
+        </summary>
+        <p
+          class="mt-0 mb-0 max-w-[640px] pb-5 text-muted-foreground [&_a]:text-primary [&_a]:underline-offset-2 hover:[&_a]:underline"
+          set:html={item.answer}
+        />
+      </details>
+    ))
+  }
+</div>
