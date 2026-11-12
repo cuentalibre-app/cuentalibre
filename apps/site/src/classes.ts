@@ -1,4 +1,4 @@
-/** Class lists the marketing pages share, so the home page and /online look like one site. */
+/** Class lists the marketing pages share, so the home page and /cloud look like one site. */
 
 /** White tab that slides under the chosen tab; the script places it and marks the group ready */
 export const indicator =
