@@ -13,6 +13,8 @@
   --color-window-close: #ff5f57;
   --color-window-minimize: #febc2e;
   --color-window-zoom: #28c840;
+  /* Claude's mark in the agents chat */
+  --color-logo-claude: #d97757;
   --shadow-phone:
     inset 0 0 0 1px rgb(255 255 255 / 0.18), inset 0 1px 2px rgb(255 255 255 / 0.35), 0 30px 60px -16px rgb(17 18 20 / 0.45);
   /* App screenshot peeking out of a feature card: lifted toward its open top-left corner */
