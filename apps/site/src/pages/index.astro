@@ -9,12 +9,8 @@ import Faq from "../components/Faq.astro";
 import { buttonRow, euroSign, eyebrow, indicator, primaryButton, secondaryButton, sectionTitle } from "../classes";
 import { appLinks, cloudBilling, demoLinkAttrs, externalLinkAttrs, sourceUrl } from "../site";
 
-import bancosMovilOscuro from "../assets/screens/bancos-movil-oscuro.jpg";
-import bancosMovil from "../assets/screens/bancos-movil.jpg";
 import bancosOscuro from "../assets/screens/bancos-oscuro.jpg";
 import bancos from "../assets/screens/bancos.jpg";
-import calendarioMovilOscuro from "../assets/screens/calendario-movil-oscuro.jpg";
-import calendarioMovil from "../assets/screens/calendario-movil.jpg";
 import calendarioOscuro from "../assets/screens/calendario-oscuro.jpg";
 import calendario from "../assets/screens/calendario.jpg";
 import cierreOscuro from "../assets/screens/cierre-oscuro.jpg";
@@ -42,9 +38,9 @@ import modelo303 from "../assets/screens/modelo-303.jpg";
 import perdidasGananciasOscuro from "../assets/screens/perdidas-ganancias-oscuro.jpg";
 import perdidasGanancias from "../assets/screens/perdidas-ganancias.jpg";
 
-const title = "cuentalibre: impuestos al día, 100 % código abierto";
+const title = "cuentalibre: facturas e impuestos para autónomos, de código abierto";
 const description =
-  "La app de gestión para autónomos privada, gratis y de código abierto: facturas y gastos ilimitados, IVA e IRPF calculados y calendario fiscal.";
+  "Facturas, gastos, IVA e IRPF para autónomos en una app de código abierto. Gratis en tu propio servidor, o alojada por nosotros desde 3,99 € al mes.";
 
 /** Screens of the app the hero switches between, in light and dark; captured from the demo. */
 const screens: {
@@ -102,28 +98,6 @@ const screens: {
     mobileDark: gastosMovilOscuro,
     alt: "Lista de gastos con su parte deducible",
   },
-  {
-    id: "calendario",
-    label: "Calendario",
-    icon: "calendar-check",
-    caption: "Solo los modelos que te afectan, con su fecha.",
-    desktop: calendario,
-    mobile: calendarioMovil,
-    desktopDark: calendarioOscuro,
-    mobileDark: calendarioMovilOscuro,
-    alt: "Calendario fiscal del año por modelo",
-  },
-  {
-    id: "bancos",
-    label: "Bancos",
-    icon: "landmark",
-    caption: "Lo que cobras y pagas cada mes, y por qué cuenta pasa.",
-    desktop: bancos,
-    mobile: bancosMovil,
-    desktopDark: bancosOscuro,
-    mobileDark: bancosMovilOscuro,
-    alt: "Resumen de bancos con los cobros y pagos del año",
-  },
 ];
 
 /** What the app does, each with its screen in the light and the dark theme. */
@@ -135,14 +109,6 @@ const features = [
     image: facturaEditor,
     imageDark: facturaEditorOscuro,
     alt: "Editor de facturas",
-  },
-  {
-    tag: "Compras",
-    title: "Gastos deducibles",
-    text: "Cuota de autónomos, tickets y facturas recibidas, con su justificante.",
-    image: gastos,
-    imageDark: gastosOscuro,
-    alt: "Lista de gastos",
   },
   {
     tag: "Impuestos",
@@ -200,15 +166,15 @@ const reasons: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "hand-coins",
     title: "Gratis de verdad",
-    text: "Facturas y gastos ilimitados, impuestos incluidos. Sin plan recortado.",
+    text: "En tu servidor no pagas nada y tienes todas las funciones. En Cloud pagas el alojamiento, nunca una función.",
   },
 ];
 
 /** Comparison rows: a string is shown as text, a boolean as a check or a cross. */
 const comparison: { label: string; badge?: string; others: string | boolean; ours: string | boolean }[] = [
-  { label: "Facturas y gastos ilimitados", others: "De pago", ours: "Gratis" },
-  { label: "IVA, IRPF y calendario fiscal", others: "De pago", ours: "Gratis" },
-  { label: "Conéctalo a tus agentes de IA", badge: "API incluida", others: "De pago", ours: "Gratis" },
+  { label: "Facturas y gastos ilimitados", others: "Según el plan", ours: "Incluido" },
+  { label: "IVA, IRPF y calendario fiscal", others: "Según el plan", ours: "Incluido" },
+  { label: "Conéctalo a tus agentes de IA", badge: "API", others: "Según el plan", ours: "Incluido" },
   { label: "Código abierto y auditable", others: false, ours: true },
   { label: "Tus datos en tu propio servidor", others: false, ours: true },
 ];
@@ -257,7 +223,22 @@ const faq = [
   {
     question: "¿Necesito saber de servidores?",
     answer:
-      'Para instalarlo tú, sí: hace falta manejar un servidor Linux con Docker. Si no es tu caso, <a href="/online">cuentalibre Cloud</a> funciona desde el navegador, con las mismas funciones.',
+      'Para instalarlo tú, sí: hace falta manejar un servidor Linux con Docker. Si no es tu caso, <a href="#precio">cuentalibre Cloud</a> funciona desde el navegador, con las mismas funciones.',
+  },
+  {
+    question: "¿Necesito tarjeta para probar cuentalibre Cloud?",
+    answer:
+      "No. Tienes 30 días con todas las funciones y la tarjeta solo te la pedimos si decides suscribirte. Si no lo haces, tu cuenta queda en modo lectura: puedes ver y exportar todo.",
+  },
+  {
+    question: "¿Envía mis facturas a Hacienda con VERI*FACTU?",
+    answer:
+      "Todavía no: VERI*FACTU llegará próximamente. Mientras tanto, emites tus facturas con cuentalibre sin enviarlas a la AEAT.",
+  },
+  {
+    question: "¿Sirve para cualquier negocio?",
+    answer:
+      "Está pensada para autónomos en estimación directa. No cubre módulos (estimación objetiva), la contabilidad de sociedades ni las nóminas.",
   },
   {
     question: "¿Mis datos son míos?",
@@ -269,9 +250,8 @@ const faq = [
 /** Where the free edition starts: the self-hosting guide. */
 const installUrl = "/docs/instalar";
 
-/** The hosted plan leads with its cheapest monthly equivalent and names what is actually charged. */
-const cloudYearly = cloudBilling.find((option) => option.id === "yearly")!;
-const cloudMonthly = cloudBilling.find((option) => option.id === "monthly")!;
+const defaultBilling = "yearly";
+
 
 const phoneShot =
   "mx-auto w-[min(260px,72vw)] md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]";
@@ -283,7 +263,7 @@ const phoneShot =
       <h1
         class="mx-auto mt-4 mb-0 max-w-[880px] animate-rise-in font-display text-[clamp(40px,6.6vw,80px)] sm:mt-7 leading-[1.02] font-semibold tracking-[-0.025em] text-balance"
       >
-        Impuestos al día.<br /><span class="text-gradient-brand">100&nbsp;% código abierto.</span>
+        Impuestos al día.<br /><span class="text-gradient-brand">Tus cuentas son tuyas.</span>
       </h1>
       <p class="mx-auto mt-5 mb-0 max-w-[560px] animate-rise-in text-[17px] [--i:2] leading-normal sm:mt-6 sm:text-[19px] text-pretty text-muted-foreground">
         Facturas, gastos, IVA e IRPF para autónomos. De código abierto y gratis en tu propio servidor.
@@ -294,6 +274,9 @@ const phoneShot =
         </a>
         <a href={installUrl} class={secondaryButton}>Instalar gratis</a>
       </div>
+      <p class="mt-4 mb-0 animate-rise-in text-[14px] [--i:5] text-balance text-muted-foreground">
+        Demo sin registro. Código abierto con licencia AGPL-3.0.
+      </p>
     </section>
 
     <section class="mx-auto mt-12 max-w-[1240px] animate-rise-in px-4 [--i:6] sm:mt-16 sm:px-6" data-screens>
@@ -364,7 +347,8 @@ const phoneShot =
           >
             Verlo todo en la demo<Icon name="arrow-right" class="size-[17px]" />
           </a>
-          <div class="flex gap-2">
+          {/* From md up the cards sit in a grid, so there is nothing to page through */}
+          <div class="flex gap-2 md:hidden">
             <button
               type="button"
               aria-label="Función anterior"
@@ -388,17 +372,17 @@ const phoneShot =
       <div data-reveal class="relative mt-6 sm:mt-10">
       <ul
         data-carousel-track
-        class="scrollbar-none m-0 flex list-none snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-[max(16px,calc((100%-1152px)/2))] pt-1 pb-6 scroll-pl-[max(16px,calc((100%-1152px)/2))] sm:px-[max(24px,calc((100%-1152px)/2))] sm:scroll-pl-[max(24px,calc((100%-1152px)/2))]"
+        class="scrollbar-none m-0 flex list-none snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-[max(16px,calc((100%-1152px)/2))] pt-1 pb-6 scroll-pl-[max(16px,calc((100%-1152px)/2))] sm:px-[max(24px,calc((100%-1152px)/2))] sm:scroll-pl-[max(24px,calc((100%-1152px)/2))] md:mx-auto md:grid md:max-w-[1200px] md:snap-none md:grid-cols-2 md:overflow-visible md:px-6 md:pb-0 lg:grid-cols-3"
       >
         {
           features.map((feature) => (
-            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-divider bg-sidebar/60 dark:border-border dark:bg-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
+            <li class="flex w-[min(540px,84vw)] shrink-0 snap-start flex-col md:w-auto overflow-hidden rounded-2xl border border-divider bg-sidebar/60 dark:border-border dark:bg-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-shot">
               <div class="px-6 pt-6 pb-6 sm:px-8 sm:pt-7 sm:pb-7">
                 <div class="font-brand text-[13px] font-medium text-muted-foreground">{feature.tag}</div>
                 <h3 class="mt-2 mb-0 text-[20px] leading-tight sm:text-[22px] font-semibold tracking-[-0.015em]">{feature.title}</h3>
                 <p class="mt-2 mb-0 max-w-[420px] text-muted-foreground">{feature.text}</p>
               </div>
-              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] rounded-tl-xl border-t border-l border-input bg-background shadow-screen sm:ml-8">
+              <div class="mt-auto ml-6 h-[240px] shrink-0 overflow-hidden sm:h-[340px] lg:h-[250px] rounded-tl-xl border-t border-l border-input bg-background shadow-screen sm:ml-8">
                 <Image
                   src={feature.image}
                   alt={feature.alt}
@@ -440,12 +424,12 @@ const phoneShot =
       </div>
     </section>
 
-    <section id="privacidad" class="mx-auto mt-10 sm:mt-20 md:mt-30 max-w-[1200px] px-4 sm:px-6">
+    <section id="codigo-abierto" class="mx-auto mt-10 sm:mt-20 md:mt-30 max-w-[1200px] px-4 sm:px-6">
       <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:items-center lg:gap-16">
         <div>
           <div data-reveal class="text-center lg:text-left">
             <div class={eyebrow}>Por qué cuentalibre</div>
-            <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Tus cuentas son <em>tuyas</em>.</h2>
+            <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Código que puedes leer. Datos que te puedes llevar.</h2>
             <p class="mt-4 mb-0 hidden max-w-[520px] text-[17px] text-muted-foreground lg:block">
               Tus datos fiscales, con un software que puedes revisar, auditar y ejecutar en tu propio servidor.
             </p>
@@ -614,19 +598,44 @@ const phoneShot =
       </div>
     </section>
 
-    <section id="precio" class="mx-auto mt-16 sm:mt-24 md:mt-34 max-w-[1200px] px-4 sm:px-6">
+    <section id="precio" class="mx-auto mt-16 sm:mt-24 md:mt-34 max-w-[1200px] px-4 sm:px-6" data-billing={defaultBilling}>
       <div data-reveal class="text-center">
         <div class={eyebrow}>Precio</div>
-        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 max-w-[720px]"]}>Gratis en tu servidor. Online si no quieres ocuparte.</h2>
+        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Gratis en tu servidor. En Cloud si prefieres no instalar nada.</h2>
         <p class="mx-auto mt-3.5 mb-0 max-w-[540px] text-[17px] text-muted-foreground">
           Las dos opciones tienen todas las funciones. Solo cambia quién se encarga del servidor.
         </p>
+        <div
+          role="group"
+          aria-label="Forma de pago"
+          data-indicator-group
+          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-[12px] bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
+        >
+          <span data-indicator aria-hidden="true" class={indicator}></span>
+          {
+            cloudBilling.map((option) => (
+              <button
+                type="button"
+                data-billing-option={option.id}
+                aria-pressed={option.id === defaultBilling ? "true" : "false"}
+                class="inline-flex items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
+              >
+                {option.label}
+                {option.saving && (
+                  <span class="hidden rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold whitespace-nowrap text-success sm:inline">
+                    −{option.saving}
+                  </span>
+                )}
+              </button>
+            ))
+          }
+        </div>
       </div>
 
       <div class="mx-auto mt-12 grid max-w-[960px] grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-4">
-        <div data-reveal class="border-gradient-brand flex flex-col rounded-2xl p-6 text-foreground shadow-plan sm:p-8">
+        <div data-reveal class="flex flex-col rounded-2xl border border-accent bg-background p-6 sm:p-8">
           <div class="flex items-center gap-3">
-            <div class="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+            <div class="flex size-10 items-center justify-center rounded-[10px] bg-muted text-foreground">
               <Icon name="server" />
             </div>
             <div>
@@ -639,7 +648,7 @@ const phoneShot =
             <span class="text-muted-foreground">para siempre</span>
           </div>
           <div class="mt-2 min-h-[21px] text-[14px] text-muted-foreground">Sin límites y sin letra pequeña</div>
-          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-primary-soft p-0 pt-6">
+          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-divider p-0 pt-6">
             {
               freePlan.map((item) => (
                 <li class="flex items-start gap-2.5">
@@ -653,7 +662,10 @@ const phoneShot =
               Instalación, copias y actualizaciones a tu cargo
             </li>
           </ul>
-          <a href={installUrl} class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand">
+          <a
+            href={installUrl}
+            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+          >
             Instalar gratis
           </a>
           <a
@@ -665,27 +677,37 @@ const phoneShot =
           </a>
         </div>
 
-        <div data-reveal style={{ "--i": 1 }} class="flex flex-col rounded-2xl border border-accent bg-background p-6 sm:p-8">
+        <div data-reveal style={{ "--i": 1 }} class="border-gradient-brand flex flex-col rounded-2xl p-6 text-foreground shadow-plan sm:p-8">
           <div class="flex items-center gap-3">
-            <div class="flex size-10 items-center justify-center rounded-[10px] bg-muted text-foreground">
+            <div class="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
               <Icon name="cloud" />
             </div>
             <div>
               <h3 class="m-0 text-[18px] font-semibold">cuentalibre Cloud</h3>
-              <div class="text-[14px] text-muted-foreground">Opcional. Lo alojamos por ti</div>
+              <div class="text-[14px] text-muted-foreground">Nosotros lo alojamos por ti</div>
             </div>
           </div>
-          <div class="mt-7 flex flex-wrap items-baseline gap-2">
-            <span class="text-muted-foreground">desde</span>
-            <span class="amount text-[36px] leading-none sm:text-[40px] font-semibold tracking-[-0.04em]">
-              {cloudYearly.perMonth}<span class={euroSign}>€</span>
-            </span>
-            <span class="text-muted-foreground">al mes + IVA</span>
-          </div>
-          <div class="mt-2 min-h-[21px] text-[14px] text-muted-foreground">
-            Pagas {cloudYearly.charged}, o {cloudMonthly.perMonth} € al mes sin permanencia
-          </div>
-          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-divider p-0 pt-6">
+          {
+            cloudBilling.map((option) => (
+              <div data-billing-show={option.id} hidden={option.id !== defaultBilling}>
+                <div class="mt-7 flex flex-wrap items-baseline gap-2">
+                  <span class="amount text-[48px] leading-none sm:text-[56px] font-semibold tracking-[-0.05em]">
+                    {option.perMonth}<span class={euroSign}>€</span>
+                  </span>
+                  <span class="text-muted-foreground">al mes + IVA</span>
+                </div>
+                <div class="mt-2 flex min-h-[21px] flex-wrap items-center gap-2 text-[14px] text-muted-foreground">
+                  {option.id === "monthly" ? "Sin permanencia" : `Pagas ${option.charged}`}
+                  {option.saving && (
+                    <span class="rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold text-success sm:hidden">
+                      Ahorras un {option.saving}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
+          }
+          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-primary-soft p-0 pt-6">
             <li class="flex items-start gap-2.5 font-semibold">
               <Icon name="check" class="mt-[3px] size-[18px] text-primary [stroke-width:2.25]" />
               Todo lo del plan gratis, y además:
@@ -706,13 +728,11 @@ const phoneShot =
           </ul>
           <a
             href={appLinks.signUp}
-            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand"
           >
             Probar 30 días gratis
           </a>
-          <a href="/online" class="mt-3 flex items-center justify-center gap-1.5 text-[14px] font-medium text-muted-foreground no-underline hover:text-foreground">
-            Ver planes y precios<Icon name="arrow-right" class="size-4" />
-          </a>
+          <div class="mt-3 text-center text-[14px] text-muted-foreground">Sin tarjeta durante la prueba</div>
         </div>
       </div>
       <p class="mx-auto mt-5 mb-0 max-w-[620px] text-center text-[14px] text-muted-foreground">Precios sin IVA.</p>
@@ -736,7 +756,7 @@ const phoneShot =
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Abrir la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href={installUrl} class={secondaryButton}>Instalar gratis</a>
+        <a href="#precio" class={secondaryButton}>Ver precios</a>
       </div>
     </section>
   </main>
@@ -786,6 +806,21 @@ const phoneShot =
         event.preventDefault();
         select(next);
         next.focus();
+      });
+    }
+  }
+
+  // Price: show the hosted plan's price for the chosen billing period
+  for (const root of document.querySelectorAll<HTMLElement>("[data-billing]")) {
+    const options = root.querySelectorAll<HTMLButtonElement>("[data-billing-option]");
+    for (const option of options) {
+      option.addEventListener("click", () => {
+        const billing = option.dataset.billingOption;
+        for (const other of options) other.setAttribute("aria-pressed", String(other === option));
+        for (const price of root.querySelectorAll<HTMLElement>("[data-billing-show]")) {
+          price.hidden = price.dataset.billingShow !== billing;
+        }
+        placeIndicators();
       });
     }
   }
