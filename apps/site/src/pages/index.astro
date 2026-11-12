@@ -161,17 +161,18 @@ const reasons: { icon: IconName; title: string; text: string }[] = [
   {
     icon: "hand-coins",
     title: "Gratis de verdad",
-    text: "En tu servidor no pagas nada y tienes todas las funciones. En Cloud pagas el alojamiento, nunca una función.",
+    text: "Facturas y gastos ilimitados, impuestos incluidos. Sin plan recortado.",
   },
 ];
 
 /** Comparison rows: a string is shown as text, a boolean as a check or a cross. */
 const comparison: { label: string; badge?: string; others: string | boolean; ours: string | boolean }[] = [
-  { label: "Facturas y gastos ilimitados", others: "Según el plan", ours: "Incluido" },
-  { label: "IVA, IRPF y calendario fiscal", others: "Según el plan", ours: "Incluido" },
-  { label: "Conéctalo a tus agentes de IA", badge: "API", others: "Según el plan", ours: "Incluido" },
+  { label: "Facturas y gastos ilimitados", others: "De pago", ours: "Gratis" },
+  { label: "IVA, IRPF y calendario fiscal", others: "De pago", ours: "Gratis" },
+  { label: "Conéctalo a tus agentes de IA", badge: "API incluida", others: "De pago", ours: "Gratis" },
   { label: "Código abierto y auditable", others: false, ours: true },
-  { label: "Tus datos en tu propio servidor", others: false, ours: true },
+  { label: "Puedes instalarlo en tu servidor", others: false, ours: true },
+  { label: "Tus datos son privados", others: false, ours: true },
 ];
 
 const freePlan = [
@@ -257,7 +258,7 @@ const phoneShot =
     <section class="relative isolate mx-auto max-w-[1200px] px-4 pt-6 text-center sm:px-6 sm:pt-8 md:pt-10">
       <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] bg-hero-glow"></div>
       <h1
-        class="mx-auto mt-0 mb-0 animate-rise-in font-display text-[clamp(36px,6vw,74px)] leading-[1.02] font-medium tracking-[-0.03em] text-balance"
+        class="mx-auto mt-2 mb-0 animate-rise-in font-display text-[clamp(36px,5.2vw,64px)] sm:mt-4 leading-[1.02] font-semibold tracking-[-0.03em] text-balance"
       >
         Tus impuestos, bajo control.
       </h1>
@@ -418,12 +419,38 @@ const phoneShot =
       </div>
     </section>
 
+    <section id="escaner" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,620px)] lg:items-center lg:gap-14">
+        <div data-reveal class="text-left">
+          <div class="flex items-center gap-2.5">
+            <span class={eyebrow}>Escáner de gastos</span>
+            <span class="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs font-semibold text-primary-hover">Próximamente</span>
+          </div>
+          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Del ticket al trimestre, sin teclear.</h2>
+          <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
+            Haz una foto al ticket o sube la factura, y cuentalibre la apunta sola en su trimestre.
+          </p>
+        </div>
+        <div data-reveal style={{ "--i": 1 }} class="mx-auto mt-8 max-w-[620px] lg:mt-0 lg:max-w-none">
+          <video
+            data-scanner
+            class="block aspect-[4/3] w-full [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent),linear-gradient(to_bottom,transparent,black_5%,black_92%,transparent)] [mask-composite:intersect]"
+            muted
+            loop
+            playsinline
+            preload="none"
+            aria-label="Un ticket desde la app y una factura en PDF desde el ordenador se escanean y quedan registrados como gastos del trimestre."
+          ></video>
+        </div>
+      </div>
+    </section>
+
     <section id="codigo-abierto" class="mx-auto mt-10 sm:mt-20 md:mt-30 max-w-[1200px] px-4 sm:px-6">
       <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,540px)] lg:items-center lg:gap-16">
         <div>
-          <div data-reveal class="text-center lg:text-left">
+          <div data-reveal class="text-left">
             <div class={eyebrow}>Por qué cuentalibre</div>
-            <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Código que puedes leer. Datos que te puedes llevar.</h2>
+            <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Tus cuentas son <em>tuyas</em>.</h2>
             <p class="mt-4 mb-0 hidden max-w-[520px] text-[17px] text-muted-foreground lg:block">
               Tus datos fiscales, con un software que puedes revisar, auditar y ejecutar en tu propio servidor.
             </p>
@@ -455,7 +482,7 @@ const phoneShot =
               <thead>
                 <tr>
                   <th scope="col" class="py-2.5"><span class="sr-only">Función</span></th>
-                  <th scope="col" class="w-[76px] pb-3 align-bottom text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otras apps</th>
+                  <th scope="col" class="w-[76px] pb-3 align-bottom text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otros</th>
                   <th scope="col" class="w-[96px] rounded-t-xl bg-primary-soft pt-4 pb-3 align-bottom text-xs font-semibold text-primary sm:w-28 sm:text-sm">
                     <span class="flex flex-col items-center gap-1.5">
                       <Logo class="h-[22px] w-5 text-foreground" />
@@ -511,14 +538,13 @@ const phoneShot =
 
     <section id="instalar" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
       <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,580px)] lg:items-center lg:gap-16">
-        <div data-reveal class="text-center lg:text-left">
+        <div data-reveal class="text-left">
           <div class={eyebrow}>En tu servidor</div>
-          <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Funciona hasta en una Raspberry&nbsp;Pi.</h2>
-          <p class="mx-auto mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground lg:mx-0">
+          <p class="mt-2 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
             Un contenedor con la app y la API, y otro con la base de datos. Lo pones detrás de tu Cloudflare Tunnel, Tailscale o
             proxy, y tus datos no salen de casa.
           </p>
-          <ul class="mx-auto mt-7 mb-0 flex max-w-[520px] list-none flex-col gap-3 p-0 text-left lg:mx-0">
+          <ul class="mt-7 mb-0 flex max-w-[520px] list-none flex-col gap-3 p-0">
             {
               installNeeds.map((need) => (
                 <li class="flex items-start gap-2.5">
@@ -528,7 +554,7 @@ const phoneShot =
               ))
             }
           </ul>
-          <div class="mt-8 flex flex-col items-center gap-x-6 gap-y-3 sm:flex-row sm:justify-center lg:justify-start">
+          <div class="mt-8 flex flex-col items-start gap-x-6 gap-y-3 sm:flex-row sm:items-center">
             <a href={installUrl} class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
               Leer la guía de instalación<Icon name="arrow-right" class="size-[17px]" />
             </a>
@@ -559,14 +585,14 @@ const phoneShot =
 
     <section id="agentes" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
       <div class="lg:grid lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-center lg:gap-16">
-        <div data-reveal class="text-center lg:order-2 lg:text-left">
+        <div data-reveal class="text-left lg:order-2">
           <div class={eyebrow}>Agentes de IA</div>
-          <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Pídeselo a tu agente.</h2>
-          <p class="mx-auto mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground lg:mx-0">
+          <h2 class:list={[sectionTitle, "mt-2 mb-0"]}>Pídeselo a tu agente.</h2>
+          <p class="mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground">
             Claude Code, Codex, n8n o Zapier pueden registrar un ticket, preparar las facturas del mes o decirte cuánto IVA
             llevas. Usan la misma API que la app, con una clave para cada agente que puedes revocar cuando quieras.
           </p>
-          <div class="mt-8 flex flex-col items-center gap-x-6 gap-y-3 sm:flex-row sm:justify-center lg:justify-start">
+          <div class="mt-8 flex flex-col items-start gap-x-6 gap-y-3 sm:flex-row sm:items-center">
             <a href="/docs/agentes" class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
               Cómo conectar un agente<Icon name="arrow-right" class="size-[17px]" />
             </a>
@@ -838,6 +864,35 @@ const phoneShot =
     track.addEventListener("scroll", syncEnds, { passive: true });
     window.addEventListener("resize", syncEnds);
     syncEnds();
+  }
+
+  // Scanner: play the clip in the site's theme while it is on screen; reduced motion shows its still frame
+  for (const video of document.querySelectorAll<HTMLVideoElement>("[data-scanner]")) {
+    const still = matchMedia("(prefers-reduced-motion: reduce)");
+    let onScreen = false;
+    const sync = () => {
+      const name = document.documentElement.classList.contains("dark") ? "escaner-oscuro" : "escaner-claro";
+      if (video.dataset.clip !== name) {
+        video.dataset.clip = name;
+        video.poster = `/videos/${name}-poster.jpg`;
+        video.replaceChildren(
+          Object.assign(document.createElement("source"), { src: `/videos/${name}.webm`, type: "video/webm" }),
+          Object.assign(document.createElement("source"), { src: `/videos/${name}.mp4`, type: "video/mp4" }),
+        );
+        if (video.preload !== "none") video.load();
+      }
+      if (onScreen && !still.matches) {
+        video.preload = "auto";
+        video.play().catch(() => {});
+      } else video.pause();
+    };
+    new IntersectionObserver(([entry]) => {
+      onScreen = !!entry?.isIntersecting;
+      sync();
+    }, { rootMargin: "200px 0px" }).observe(video);
+    addEventListener("site-theme-change", sync);
+    still.addEventListener("change", sync);
+    sync();
   }
 
   // Fetch the other screenshots once the page is idle, so switching tabs never shows a blank frame
