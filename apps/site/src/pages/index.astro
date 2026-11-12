@@ -5,6 +5,8 @@ import Browser from "../components/Browser.astro";
 import Logo from "../components/Logo.astro";
 import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
+import Faq from "../components/Faq.astro";
+import { buttonRow, euroSign, eyebrow, indicator, primaryButton, secondaryButton, sectionTitle } from "../classes";
 import { appLinks, cloudBilling, demoLinkAttrs, externalLinkAttrs, sourceUrl } from "../site";
 
 import bancosMovilOscuro from "../assets/screens/bancos-movil-oscuro.jpg";
@@ -227,6 +229,43 @@ const onlinePlan = [
   "Exporta tus datos cuando quieras",
 ];
 
+/** The self-hosting commands, as the install guide runs them. */
+const installSteps = [
+  { command: "git clone https://github.com/cuentalibre-app/cuentalibre.git" },
+  { command: "cd cuentalibre/selfhost" },
+  { command: "cp .env.example .env", note: "tu dirección y dos claves" },
+  { command: "docker compose up -d --build" },
+];
+
+const installNeeds = [
+  "Un servidor Linux con Docker. Una Raspberry Pi 4 o 5 también vale",
+  "Unos 2 GB de memoria libres la primera vez",
+  "Sin abrir puertos en el router",
+];
+
+const faq = [
+  {
+    question: "¿Por qué es gratis?",
+    answer:
+      "Porque el código es libre (licencia AGPL-3.0) y cualquiera puede instalarlo. El desarrollo lo paga cuentalibre Cloud, la versión que alojamos nosotros para quien no quiere ocuparse de un servidor. La versión gratuita tiene todas las funciones.",
+  },
+  {
+    question: "¿Puedo fiarme de los cálculos de IVA e IRPF?",
+    answer:
+      "Las reglas fiscales están en el código, a la vista y con pruebas automáticas. Puedes revisar de dónde sale cada casilla del 303 o del 130. Aun así, repasa siempre lo que presentas: cuentalibre prepara los modelos, pero no los presenta por ti.",
+  },
+  {
+    question: "¿Necesito saber de servidores?",
+    answer:
+      'Para instalarlo tú, sí: hace falta manejar un servidor Linux con Docker. Si no es tu caso, <a href="/online">cuentalibre Cloud</a> funciona desde el navegador, con las mismas funciones.',
+  },
+  {
+    question: "¿Mis datos son míos?",
+    answer:
+      "Sí. Puedes exportarlos todos cuando quieras. En tu servidor no salen de él; en cuentalibre Cloud se guardan en servidores de la Unión Europea.",
+  },
+];
+
 /** Where the free edition starts: the self-hosting guide. */
 const installUrl = "/docs/instalar";
 
@@ -234,22 +273,8 @@ const installUrl = "/docs/instalar";
 const cloudYearly = cloudBilling.find((option) => option.id === "yearly")!;
 const cloudMonthly = cloudBilling.find((option) => option.id === "monthly")!;
 
-/** In the big prices a monospaced space reads as a gap, so the euro sign gets a narrow margin instead */
-const euroSign = "ml-[0.28em]";
-
-/** White tab that slides under the chosen tab; the script places it and marks the group ready */
-const indicator =
-  "pointer-events-none absolute top-0 left-0 rounded-lg bg-background opacity-0 shadow-tab transition-[transform,width,height] duration-300 ease-out in-data-ready:opacity-100";
 const phoneShot =
   "mx-auto w-[min(260px,72vw)] md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]";
-const eyebrow = "font-brand text-[14px] font-semibold text-primary";
-const sectionTitle =
-  "font-display text-[clamp(32px,4vw,44px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance";
-/** Call-to-action pair: compact buttons with the app's corners, stacked and centered on phones, side by side from sm */
-const buttonRow = "flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center";
-const ctaButton = "inline-flex min-w-[216px] items-center justify-center gap-2 rounded-[10px] px-5 py-2.5 text-[15px] no-underline sm:min-w-0";
-const primaryButton = `${ctaButton} font-semibold button-brand`;
-const secondaryButton = `${ctaButton} border border-input font-medium text-foreground transition-[background-color,transform] duration-150 hover:bg-muted active:scale-[0.98]`;
 ---
 
 <Base title={title} description={description}>
@@ -506,6 +531,89 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
       </div>
     </section>
 
+    <section id="instalar" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
+      <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,580px)] lg:items-center lg:gap-16">
+        <div data-reveal class="text-center lg:text-left">
+          <div class={eyebrow}>En tu servidor</div>
+          <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Funciona hasta en una Raspberry&nbsp;Pi.</h2>
+          <p class="mx-auto mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground lg:mx-0">
+            Un contenedor con la app y la API, y otro con la base de datos. Lo pones detrás de tu Cloudflare Tunnel, Tailscale o
+            proxy, y tus datos no salen de casa.
+          </p>
+          <ul class="mx-auto mt-7 mb-0 flex max-w-[520px] list-none flex-col gap-3 p-0 text-left lg:mx-0">
+            {
+              installNeeds.map((need) => (
+                <li class="flex items-start gap-2.5">
+                  <Icon name="check" class="mt-[3px] size-[18px] shrink-0 text-primary [stroke-width:2.25]" />
+                  {need}
+                </li>
+              ))
+            }
+          </ul>
+          <div class="mt-8 flex flex-col items-center gap-x-6 gap-y-3 sm:flex-row sm:justify-center lg:justify-start">
+            <a href={installUrl} class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
+              Leer la guía de instalación<Icon name="arrow-right" class="size-[17px]" />
+            </a>
+            <a
+              href={`${sourceUrl}/releases`}
+              {...externalLinkAttrs}
+              class="font-medium text-muted-foreground no-underline hover:text-foreground"
+            >
+              Versiones publicadas
+            </a>
+          </div>
+        </div>
+        <div data-reveal style={{ "--i": 1 }} class="mt-10 overflow-hidden rounded-2xl border border-border bg-sidebar lg:mt-0">
+          <div class="flex items-center gap-2 border-b border-divider px-4 py-3">
+            <span class="size-3 rounded-full bg-window-close"></span>
+            <span class="size-3 rounded-full bg-window-minimize"></span>
+            <span class="size-3 rounded-full bg-window-zoom"></span>
+            <span class="ml-2 font-mono text-[13px] text-muted-foreground">tu-servidor</span>
+          </div>
+          <pre class="m-0 overflow-x-auto px-5 py-5 font-mono text-[13px] leading-[1.9] sm:text-[14px]"><code>{
+            installSteps.map((step) => (
+              <span class="block whitespace-pre"><span class="text-muted-foreground select-none">$ </span>{step.command}{step.note && <span class="hidden text-muted-foreground sm:inline">  # {step.note}</span>}</span>
+            ))
+          }</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="agentes" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
+      <div class="lg:grid lg:grid-cols-[minmax(0,540px)_minmax(0,1fr)] lg:items-center lg:gap-16">
+        <div data-reveal class="text-center lg:order-2 lg:text-left">
+          <div class={eyebrow}>Agentes de IA</div>
+          <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 lg:mx-0"]}>Pídeselo a tu agente.</h2>
+          <p class="mx-auto mt-4 mb-0 max-w-[520px] text-[17px] text-muted-foreground lg:mx-0">
+            Claude Code, Codex, n8n o Zapier pueden registrar un ticket, preparar las facturas del mes o decirte cuánto IVA
+            llevas. Usan la misma API que la app, con una clave para cada agente que puedes revocar cuando quieras.
+          </p>
+          <div class="mt-8 flex flex-col items-center gap-x-6 gap-y-3 sm:flex-row sm:justify-center lg:justify-start">
+            <a href="/docs/agentes" class="inline-flex items-center gap-1.5 font-semibold text-primary no-underline hover:text-primary-hover">
+              Cómo conectar un agente<Icon name="arrow-right" class="size-[17px]" />
+            </a>
+            <a href="/docs/api" class="font-medium text-muted-foreground no-underline hover:text-foreground">Referencia de la API</a>
+          </div>
+        </div>
+        <div data-reveal style={{ "--i": 1 }} class="mt-10 flex flex-col gap-4 rounded-2xl border border-divider bg-sidebar/60 p-5 sm:p-7 lg:order-1 lg:mt-0 dark:border-border dark:bg-card">
+          <div class="max-w-[85%] self-end rounded-2xl rounded-br-md bg-primary px-4 py-3 text-[15px] text-primary-foreground">
+            ¿Cuánto IVA llevo este trimestre?
+          </div>
+          <div class="max-w-[90%] self-start rounded-2xl rounded-bl-md border border-divider bg-background px-4 py-3 text-[15px]">
+            En el cuarto trimestre llevas <span class="amount font-semibold">2.140,50 €</span> de IVA repercutido y{" "}
+            <span class="amount font-semibold">610,20 €</span> de soportado. En el 303 saldrían a pagar{" "}
+            <span class="amount font-semibold">1.530,30 €</span>.
+          </div>
+          <div class="max-w-[85%] self-end rounded-2xl rounded-br-md bg-primary px-4 py-3 text-[15px] text-primary-foreground">
+            Prepárame la factura de noviembre para Estudio Norte, como la de octubre.
+          </div>
+          <div class="max-w-[90%] self-start rounded-2xl rounded-bl-md border border-divider bg-background px-4 py-3 text-[15px]">
+            Tengo el borrador: <span class="amount font-semibold">1.800,00 €</span> + IVA, con retención del 15&nbsp;%. ¿La emito?
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="precio" class="mx-auto mt-16 sm:mt-24 md:mt-34 max-w-[1200px] px-4 sm:px-6">
       <div data-reveal class="text-center">
         <div class={eyebrow}>Precio</div>
@@ -602,9 +710,17 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
           >
             Probar 30 días gratis
           </a>
+          <a href="/online" class="mt-3 flex items-center justify-center gap-1.5 text-[14px] font-medium text-muted-foreground no-underline hover:text-foreground">
+            Ver planes y precios<Icon name="arrow-right" class="size-4" />
+          </a>
         </div>
       </div>
       <p class="mx-auto mt-5 mb-0 max-w-[620px] text-center text-[14px] text-muted-foreground">Precios sin IVA.</p>
+    </section>
+
+    <section id="preguntas" class="mx-auto mt-16 max-w-[1200px] px-4 sm:mt-24 sm:px-6 md:mt-34">
+      <h2 data-reveal class:list={[sectionTitle, "mx-auto mt-0 mb-8 text-center sm:mb-10"]}>Preguntas frecuentes</h2>
+      <Faq items={faq} />
     </section>
 
     <section data-reveal class="mx-auto mt-16 max-w-[1200px] px-4 text-center sm:mt-24 sm:px-6 md:mt-34">
@@ -627,29 +743,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
 </Base>
 
 <script>
-  // Segmented controls: slide the white pill under the chosen option
-  const placeIndicators = () => {
-    for (const group of document.querySelectorAll<HTMLElement>("[data-indicator-group]")) {
-      const indicator = group.querySelector<HTMLElement>("[data-indicator]")!;
-      const active = group.querySelector<HTMLElement>('[aria-selected="true"], [aria-pressed="true"]');
-      if (!active) continue;
-      const first = !group.hasAttribute("data-ready");
-      // The first placement jumps into position instead of sliding from the corner
-      if (first) indicator.style.transition = "none";
-      indicator.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
-      indicator.style.width = `${active.offsetWidth}px`;
-      indicator.style.height = `${active.offsetHeight}px`;
-      indicator.style.borderRadius = getComputedStyle(active).borderRadius;
-      if (first) {
-        indicator.getBoundingClientRect();
-        indicator.style.transition = "";
-        group.setAttribute("data-ready", "");
-      }
-    }
-  };
-  placeIndicators();
-  document.fonts.ready.then(placeIndicators);
-  window.addEventListener("resize", placeIndicators);
+  import { placeIndicators } from "../scripts/indicators";
 
   // Hero: switch the screenshot with the tabs, and move between tabs with the arrow keys
   for (const root of document.querySelectorAll<HTMLElement>("[data-screens]")) {
