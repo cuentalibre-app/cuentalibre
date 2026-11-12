@@ -208,8 +208,7 @@ const comparison: { label: string; badge?: string; others: string | boolean; our
   { label: "IVA, IRPF y calendario fiscal", others: "De pago", ours: "Gratis" },
   { label: "Conéctalo a tus agentes de IA", badge: "API incluida", others: "De pago", ours: "Gratis" },
   { label: "Código abierto y auditable", others: false, ours: true },
-  { label: "Puedes instalarlo en tu servidor", others: false, ours: true },
-  { label: "Tus datos son privados", others: false, ours: true },
+  { label: "Tus datos en tu propio servidor", others: false, ours: true },
 ];
 
 const freePlan = [
@@ -228,7 +227,12 @@ const onlinePlan = [
   "Exporta tus datos cuando quieras",
 ];
 
-const defaultBilling = "yearly";
+/** Where the free edition starts: the self-hosting guide. */
+const installUrl = "/docs/instalar";
+
+/** The hosted plan leads with its cheapest monthly equivalent and names what is actually charged. */
+const cloudYearly = cloudBilling.find((option) => option.id === "yearly")!;
+const cloudMonthly = cloudBilling.find((option) => option.id === "monthly")!;
 
 /** In the big prices a monospaced space reads as a gap, so the euro sign gets a narrow margin instead */
 const euroSign = "ml-[0.28em]";
@@ -257,13 +261,13 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
         Impuestos al día.<br /><span class="text-gradient-brand">100&nbsp;% código abierto.</span>
       </h1>
       <p class="mx-auto mt-5 mb-0 max-w-[560px] animate-rise-in text-[17px] [--i:2] leading-normal sm:mt-6 sm:text-[19px] text-pretty text-muted-foreground">
-        La primera app de gestión para autónomos 100&nbsp;% privada, gratis y de código abierto.
+        Facturas, gastos, IVA e IRPF para autónomos. De código abierto y gratis en tu propio servidor.
       </p>
       <div class:list={[buttonRow, "mt-8 animate-rise-in [--i:4] sm:mt-9"]}>
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Probar la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href="#precio" class={secondaryButton}>Empezar gratis</a>
+        <a href={installUrl} class={secondaryButton}>Instalar gratis</a>
       </div>
     </section>
 
@@ -448,7 +452,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
               <thead>
                 <tr>
                   <th scope="col" class="py-2.5"><span class="sr-only">Función</span></th>
-                  <th scope="col" class="w-[76px] pb-3 align-bottom text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otros</th>
+                  <th scope="col" class="w-[76px] pb-3 align-bottom text-center text-xs font-medium sm:w-24 sm:text-sm text-muted-foreground">Otras apps</th>
                   <th scope="col" class="w-[96px] rounded-t-xl bg-primary-soft pt-4 pb-3 align-bottom text-xs font-semibold text-primary sm:w-28 sm:text-sm">
                     <span class="flex flex-col items-center gap-1.5">
                       <Logo class="h-[22px] w-5 text-foreground" />
@@ -502,44 +506,19 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
       </div>
     </section>
 
-    <section id="precio" class="mx-auto mt-16 sm:mt-24 md:mt-34 max-w-[1200px] px-4 sm:px-6" data-billing={defaultBilling}>
+    <section id="precio" class="mx-auto mt-16 sm:mt-24 md:mt-34 max-w-[1200px] px-4 sm:px-6">
       <div data-reveal class="text-center">
         <div class={eyebrow}>Precio</div>
-        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0"]}>Gratis. Y online si lo prefieres.</h2>
+        <h2 class:list={[sectionTitle, "mx-auto mt-2 mb-0 max-w-[720px]"]}>Gratis en tu servidor. Online si no quieres ocuparte.</h2>
         <p class="mx-auto mt-3.5 mb-0 max-w-[540px] text-[17px] text-muted-foreground">
           Las dos opciones tienen todas las funciones. Solo cambia quién se encarga del servidor.
         </p>
-        <div
-          role="group"
-          aria-label="Forma de pago"
-          data-indicator-group
-          class="relative mx-auto mt-7 grid w-full max-w-[360px] grid-cols-3 gap-1 rounded-[12px] bg-muted p-1 sm:flex sm:w-fit sm:max-w-none"
-        >
-          <span data-indicator aria-hidden="true" class={indicator}></span>
-          {
-            cloudBilling.map((option) => (
-              <button
-                type="button"
-                data-billing-option={option.id}
-                aria-pressed={option.id === defaultBilling ? "true" : "false"}
-                class="inline-flex items-center justify-center gap-2 rounded-lg border-0 bg-transparent px-2 py-2 sm:px-4 font-[inherit] text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-background aria-pressed:text-foreground aria-pressed:shadow-tab relative z-10 in-data-ready:aria-pressed:bg-transparent in-data-ready:aria-pressed:shadow-none"
-              >
-                {option.label}
-                {option.saving && (
-                  <span class="hidden rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold whitespace-nowrap text-success sm:inline">
-                    −{option.saving}
-                  </span>
-                )}
-              </button>
-            ))
-          }
-        </div>
       </div>
 
       <div class="mx-auto mt-12 grid max-w-[960px] grid-cols-[repeat(auto-fit,minmax(min(320px,100%),1fr))] gap-4">
-        <div data-reveal class="flex flex-col rounded-2xl border border-accent bg-background p-6 sm:p-8">
+        <div data-reveal class="border-gradient-brand flex flex-col rounded-2xl p-6 text-foreground shadow-plan sm:p-8">
           <div class="flex items-center gap-3">
-            <div class="flex size-10 items-center justify-center rounded-[10px] bg-muted text-foreground">
+            <div class="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
               <Icon name="server" />
             </div>
             <div>
@@ -552,7 +531,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
             <span class="text-muted-foreground">para siempre</span>
           </div>
           <div class="mt-2 min-h-[21px] text-[14px] text-muted-foreground">Sin límites y sin letra pequeña</div>
-          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-divider p-0 pt-6">
+          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-primary-soft p-0 pt-6">
             {
               freePlan.map((item) => (
                 <li class="flex items-start gap-2.5">
@@ -566,46 +545,39 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
               Instalación, copias y actualizaciones a tu cargo
             </li>
           </ul>
+          <a href={installUrl} class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand">
+            Instalar gratis
+          </a>
           <a
             href={sourceUrl}
             {...externalLinkAttrs}
-            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
+            class="mt-3 flex items-center justify-center gap-2 text-[14px] font-medium text-muted-foreground no-underline hover:text-foreground"
           >
-            <Icon name="code" class="size-[18px]" />Instalar desde GitHub
+            <Icon name="code" class="size-4" />Ver el código en GitHub
           </a>
         </div>
 
-        <div data-reveal style={{ "--i": 1 }} class="border-gradient-brand flex flex-col rounded-2xl p-6 text-foreground shadow-plan sm:p-8">
+        <div data-reveal style={{ "--i": 1 }} class="flex flex-col rounded-2xl border border-accent bg-background p-6 sm:p-8">
           <div class="flex items-center gap-3">
-            <div class="flex size-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+            <div class="flex size-10 items-center justify-center rounded-[10px] bg-muted text-foreground">
               <Icon name="cloud" />
             </div>
             <div>
               <h3 class="m-0 text-[18px] font-semibold">cuentalibre Cloud</h3>
-              <div class="text-[14px] text-muted-foreground">Nosotros lo alojamos por ti</div>
+              <div class="text-[14px] text-muted-foreground">Opcional. Lo alojamos por ti</div>
             </div>
           </div>
-          {
-            cloudBilling.map((option) => (
-              <div data-billing-show={option.id} hidden={option.id !== defaultBilling}>
-                <div class="mt-7 flex flex-wrap items-baseline gap-2">
-                  <span class="amount text-[48px] leading-none sm:text-[56px] font-semibold tracking-[-0.05em]">
-                    {option.perMonth}<span class={euroSign}>€</span>
-                  </span>
-                  <span class="text-muted-foreground">al mes + IVA</span>
-                </div>
-                <div class="mt-2 flex min-h-[21px] flex-wrap items-center gap-2 text-[14px] text-muted-foreground">
-                  {option.id === "monthly" ? "Sin permanencia" : `Pagas ${option.charged}`}
-                  {option.saving && (
-                    <span class="rounded-full bg-success-soft px-[7px] py-px text-xs font-semibold text-success sm:hidden">
-                      Ahorras un {option.saving}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))
-          }
-          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-primary-soft p-0 pt-6">
+          <div class="mt-7 flex flex-wrap items-baseline gap-2">
+            <span class="text-muted-foreground">desde</span>
+            <span class="amount text-[36px] leading-none sm:text-[40px] font-semibold tracking-[-0.04em]">
+              {cloudYearly.perMonth}<span class={euroSign}>€</span>
+            </span>
+            <span class="text-muted-foreground">al mes + IVA</span>
+          </div>
+          <div class="mt-2 min-h-[21px] text-[14px] text-muted-foreground">
+            Pagas {cloudYearly.charged}, o {cloudMonthly.perMonth} € al mes sin permanencia
+          </div>
+          <ul class="m-0 mt-7 flex flex-1 list-none flex-col gap-3 border-t border-divider p-0 pt-6">
             <li class="flex items-start gap-2.5 font-semibold">
               <Icon name="check" class="mt-[3px] size-[18px] text-primary [stroke-width:2.25]" />
               Todo lo del plan gratis, y además:
@@ -626,7 +598,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
           </ul>
           <a
             href={appLinks.signUp}
-            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] p-3 font-semibold no-underline button-brand"
+            class="mt-8 flex items-center justify-center gap-2 rounded-[10px] border border-input p-3 font-semibold text-foreground no-underline hover:bg-muted"
           >
             Probar 30 días gratis
           </a>
@@ -648,7 +620,7 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
         <a href={appLinks.demo} {...demoLinkAttrs} class={primaryButton}>
           Abrir la demo<Icon name="arrow-right" class="size-[18px]" />
         </a>
-        <a href="#precio" class={secondaryButton}>Empezar gratis</a>
+        <a href={installUrl} class={secondaryButton}>Instalar gratis</a>
       </div>
     </section>
   </main>
@@ -743,21 +715,6 @@ const secondaryButton = `${ctaButton} border border-input font-medium text-foreg
     track.addEventListener("scroll", syncEnds, { passive: true });
     window.addEventListener("resize", syncEnds);
     syncEnds();
-  }
-
-  // Price: show the hosted plan's price for the chosen billing period
-  for (const root of document.querySelectorAll<HTMLElement>("[data-billing]")) {
-    const options = root.querySelectorAll<HTMLButtonElement>("[data-billing-option]");
-    for (const option of options) {
-      option.addEventListener("click", () => {
-        const billing = option.dataset.billingOption;
-        for (const other of options) other.setAttribute("aria-pressed", String(other === option));
-        for (const price of root.querySelectorAll<HTMLElement>("[data-billing-show]")) {
-          price.hidden = price.dataset.billingShow !== billing;
-        }
-        placeIndicators();
-      });
-    }
   }
 
   // Fetch the other screenshots once the page is idle, so switching tabs never shows a blank frame
