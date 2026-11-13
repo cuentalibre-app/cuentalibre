@@ -137,6 +137,10 @@ describe("AI settings", () => {
     expect(createAiProvider(loadEnv({}))).toBeNull();
   });
 
+  it("tell the app whether documents can be read", async () => {
+    expect(await (await openAiApp.request("/v1/sign-in-methods")).json()).toMatchObject({ ai: true });
+  });
+
   it("need a key for OpenAI or Anthropic, or a base URL for another provider", () => {
     expect(() => loadEnv({ AI_MODEL: "gpt-4.1-mini" })).toThrow(/AI_MODEL needs AI_API_KEY/);
     expect(() => loadEnv({ AI_MODEL: "qwen2.5vl", AI_BASE_URL: "http://localhost:11434/v1" })).not.toThrow();

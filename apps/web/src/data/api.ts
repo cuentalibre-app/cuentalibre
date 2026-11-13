@@ -11,6 +11,7 @@ import {
   type FileListing,
   type Me,
   type OrganizationMember,
+  type PurchaseExtraction,
   type StoredFile,
   type SyncCommand,
   type UserSettingsSection,
@@ -198,6 +199,9 @@ export function createApiBackend(
       invoices: async () => (await request<{ invoices: BillingInvoice[] }>("/v1/billing/invoices")).invoices,
       pdfUrl: (invoiceId) => `${baseUrl}/v1/billing/invoices/${encodeURIComponent(invoiceId)}/pdf`,
     },
+
+    extractPurchase: (fileId) =>
+      request<PurchaseExtraction>("/v1/purchases/extract", { method: "POST", body: JSON.stringify({ fileId }) }),
 
     async members() {
       return (await request<{ members: OrganizationMember[] }>("/v1/organization/members")).members;
