@@ -80,6 +80,15 @@ const envSchema = z
     /** The version errors are tagged with; the image build sets it to the commit, or leaves it empty. */
     SENTRY_RELEASE: z.string().optional(),
     /**
+     * Reading received invoices and receipts with an AI model. Without `AI_MODEL` it is off.
+     * `AI_BASE_URL` points at any OpenAI-compatible API (Ollama, OpenRouter, LM Studio…) or
+     * at Anthropic's; without it, an Anthropic key (`sk-ant-`) goes to Anthropic and any
+     * other to OpenAI. The key never leaves the server; local models don't need one.
+     */
+    AI_MODEL: z.string().min(1).optional(),
+    AI_API_KEY: z.string().min(1).optional(),
+    AI_BASE_URL: z.url().optional(),
+    /**
      * Charging for Cloud with Stripe: all of them, or none and billing is off. The prices are
      * the product's three periods; the tax rate, the VAT added on top of them.
      */
@@ -110,6 +119,10 @@ const envSchema = z
   .refine((env) => !env.SMTP_URL || env.EMAIL_FROM, {
     message: "SMTP_URL needs EMAIL_FROM",
     path: ["EMAIL_FROM"],
+  })
+  .refine((env) => !env.AI_MODEL || env.AI_BASE_URL || env.AI_API_KEY, {
+    message: "AI_MODEL needs AI_API_KEY for OpenAI or Anthropic, or AI_BASE_URL for another provider",
+    path: ["AI_API_KEY"],
   })
   .refine((env) => new Set(STRIPE_VARIABLES.map((name) => Boolean(env[name]))).size === 1, {
     message: `Billing needs all of ${STRIPE_VARIABLES.join(", ")}, or none of them`,

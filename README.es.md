@@ -176,6 +176,7 @@ Todos vienen desactivados y se configuran en `apps/api/.env`; [`.env.example`](a
 | Enviar correos (facturas, verificación, recuperar la contraseña) | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM` |
 | Archivos en un bucket compatible con S3 en vez del disco         | `STORAGE_DRIVER=s3`, `S3_*`                    |
 | Enviar los errores inesperados a Sentry                          | `SENTRY_DSN`                                   |
+| Leer facturas recibidas y tickets con IA                         | `AI_MODEL`, `AI_API_KEY`, `AI_BASE_URL`        |
 
 ### Comprobaciones
 

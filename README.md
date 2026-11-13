@@ -178,6 +178,7 @@ All of these are off by default and set in `apps/api/.env`; [`.env.example`](app
 | Sending email (invoices, verification, password reset) | `SMTP_URL`, `EMAIL_FROM`, `ACCOUNT_EMAIL_FROM` |
 | Files in an S3-compatible bucket instead of local disk | `STORAGE_DRIVER=s3`, `S3_*`                    |
 | Reporting unexpected errors to Sentry                  | `SENTRY_DSN`                                   |
+| Reading received invoices and receipts with AI         | `AI_MODEL`, `AI_API_KEY`, `AI_BASE_URL`        |
 
 ### Checks
 

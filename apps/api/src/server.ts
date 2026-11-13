@@ -1,4 +1,5 @@
 import { serve } from "@hono/node-server";
+import { createAiProvider } from "./ai";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { createBilling } from "./billing";
@@ -22,6 +23,7 @@ const app = createApp({
   storage,
   mailer,
   billing: createBilling(env),
+  ai: createAiProvider(env),
 });
 
 const stopWorker = startWorker(db, {

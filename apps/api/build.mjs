@@ -13,6 +13,7 @@ await build({
   target: "node22",
   sourcemap: true,
   logLevel: "warning",
-  // Some dependencies are CommonJS and call require().
+  // Some dependencies are CommonJS and use __dirname (libheif's WebAssembly loader) or call require().
+  define: { __dirname: "import.meta.dirname", __filename: "import.meta.filename" },
   banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" },
 });
