@@ -66,7 +66,8 @@ export function ReceiptDrop({
   onChange,
   prompt = "Arrastra aquí la factura del proveedor",
   label = "Justificante",
-  pickLabel = "Adjuntar justificante",
+  pickLabel = "Elige la factura del proveedor",
+  readLabel,
   note,
   accept = "application/pdf,image/*",
   onRead,
@@ -76,8 +77,10 @@ export function ReceiptDrop({
   onChange: (a: Attachment[]) => void;
   prompt?: string;
   label?: string;
-  /** Phones have nothing to drag from: they get a button with this text instead of the drop area. */
+  /** Touch and narrow screens have nothing to drag from: they get a button with this text instead of the drop area. */
   pickLabel?: string;
+  /** Replaces `pickLabel` when the picked file will be read with AI. */
+  readLabel?: string;
   note?: string;
   accept?: string;
   onRead?: (attachment: Attachment) => void;
@@ -96,9 +99,17 @@ export function ReceiptDrop({
   };
   return (
     <section aria-label={label} className="flex animate-rise-in flex-col gap-3" style={{ "--i": 0 } as CSSProperties}>
-      <Button variant="secondary" className="self-start lg:hidden" onClick={() => inputRef.current?.click()}>
-        <Paperclip strokeWidth={1.8} aria-hidden="true" />
-        {pickLabel}
+      <Button
+        variant="secondary"
+        className="self-start sm:pointer-fine:hidden"
+        onClick={() => inputRef.current?.click()}
+      >
+        {readLabel ? (
+          <ScanText strokeWidth={1.8} aria-hidden="true" />
+        ) : (
+          <Paperclip strokeWidth={1.8} aria-hidden="true" />
+        )}
+        {readLabel ?? pickLabel}
       </Button>
       <div
         onDragOver={(e) => {
@@ -108,7 +119,7 @@ export function ReceiptDrop({
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
         className={cn(
-          "flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-5 py-6 text-center transition-colors duration-150 max-lg:hidden",
+          "flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-5 py-6 text-center transition-colors duration-150 not-pointer-fine:hidden max-sm:hidden",
           over && "border-primary bg-primary-soft",
         )}
       >
@@ -123,7 +134,7 @@ export function ReceiptDrop({
           <ScanText className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
           {note ??
             (onRead
-              ? "PDF o imagen. Se leen sus datos con IA para rellenar el formulario."
+              ? "PDF o imagen. La IA rellena el formulario."
               : filesAreStored()
                 ? "PDF o imagen."
                 : "PDF o imagen. Se guarda solo en esta sesión.")}

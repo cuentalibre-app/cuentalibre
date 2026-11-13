@@ -463,7 +463,8 @@ function ExpenseForm({
             attachments={form.attachments}
             onChange={changeAttachments}
             prompt="Arrastra aquí el ticket o el recibo"
-            pickLabel="Adjuntar ticket o recibo"
+            pickLabel="Elige el ticket o el recibo"
+            readLabel={autoRead ? "Leer ticket con IA" : undefined}
             onRead={reading.available ? (a) => void reading.read(a) : undefined}
             readingId={reading.state.status === "reading" ? reading.state.attachment.id : undefined}
           />
