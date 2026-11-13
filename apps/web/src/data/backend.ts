@@ -10,6 +10,7 @@ import type {
   FileListing,
   NewApiKey,
   OrganizationMember,
+  PurchaseExtraction,
 } from "@cuentalibre/contracts";
 import type { Command } from "./commands";
 
@@ -55,6 +56,8 @@ export interface Backend {
     /** Where an invoice's PDF opens, in the browser's viewer. */
     pdfUrl(invoiceId: string): string;
   };
+  /** Reads a stored PDF or photo with AI: a draft for a received invoice or an expense, nothing saved. */
+  extractPurchase?(fileId: string): Promise<PurchaseExtraction>;
   /** The people in the organization. Without a server, the sample users stand in. */
   members?(): Promise<OrganizationMember[]>;
 }

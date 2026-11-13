@@ -155,6 +155,7 @@ describe("an instance that can't send email", () => {
       google: false,
       email: false,
       billing: false,
+      ai: false,
     });
 
     const before = accountEmails.length;

@@ -47,6 +47,7 @@ import { paymentMethodName } from "@/features/settings/settings-model";
 import { TagChips } from "@/features/settings/tag-chip";
 import { attachmentUrl } from "@/data/files";
 import { AttachmentsDialog } from "./form-parts";
+import { ReadDocumentButton } from "./reading";
 import { ExpenseLink } from "./expense-detail";
 import { ExpensePaymentDialog } from "./payment-dialogs";
 import {
@@ -216,6 +217,7 @@ export function ExpensesListPage() {
           }
           actions={
             <>
+              <ReadDocumentButton label="Leer ticket con IA" formPath={NEW_EXPENSE_PATH} />
               <Link to={NEW_EXPENSE_PATH} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
                 <Plus strokeWidth={2} aria-hidden="true" />
                 <span className="max-lg:sr-only">Nuevo gasto</span>
@@ -269,21 +271,21 @@ export function ExpensesListPage() {
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
-          <FiltersPanel
-            lead={
-              <div className="flex min-w-0 flex-col gap-1 lg:hidden">
-                <span className="text-xs font-medium text-muted-foreground">Estado</span>
-                {statusFilter}
-              </div>
-            }
-            filters={filters}
-            period={period}
-            payees={payees}
-            tags={tags}
-            onChange={set}
-            // On phones the status is one of the panel's filters, so it goes too
-            onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: desktop ? f.status : ALL }))}
-          />
+            <FiltersPanel
+              lead={
+                <div className="flex min-w-0 flex-col gap-1 lg:hidden">
+                  <span className="text-xs font-medium text-muted-foreground">Estado</span>
+                  {statusFilter}
+                </div>
+              }
+              filters={filters}
+              period={period}
+              payees={payees}
+              tags={tags}
+              onChange={set}
+              // On phones the status is one of the panel's filters, so it goes too
+              onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: desktop ? f.status : ALL }))}
+            />
           </FiltersSheet>
 
           {rows.length === 0 ? (
@@ -385,7 +387,7 @@ function FiltersPanel({
   return (
     <div
       id="expense-filters"
-      className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:px-4"
+      className="grid gap-3 sm:grid-cols-2 lg:animate-fade-in lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:border-y lg:border-border lg:bg-muted/50 lg:px-4 lg:py-3"
     >
       {lead}
       <label className="flex min-w-0 flex-col gap-1">
@@ -759,7 +761,15 @@ function useExpenseActions(row: Row) {
   // Phones open on the everyday few; the rest stays behind "Más acciones"
   const essentials: Action[] = [primary, view, attach];
 
-  return { attach, primary, groups, essentials, dialogs, attachments: attachments.length, label: `gasto ${doc.concept}` };
+  return {
+    attach,
+    primary,
+    groups,
+    essentials,
+    dialogs,
+    attachments: attachments.length,
+    label: `gasto ${doc.concept}`,
+  };
 }
 
 /** Desktop: the usual operations one click away, the rest behind the ellipsis. */
@@ -781,7 +791,11 @@ function RowActions({ row }: { row: Row }) {
   return (
     <>
       {dialogs}
-      <ActionsMenu groups={groups} essentials={essentials} trigger={<MoreActionsTrigger label={`Acciones del ${label}`} />} />
+      <ActionsMenu
+        groups={groups}
+        essentials={essentials}
+        trigger={<MoreActionsTrigger label={`Acciones del ${label}`} />}
+      />
     </>
   );
 }

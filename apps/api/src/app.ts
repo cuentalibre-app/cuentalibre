@@ -100,6 +100,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
           google: hasGoogleSignIn(env),
           email: Boolean(mailer),
           billing: Boolean(billing),
+          ai: Boolean(ai),
         },
         env.SENTRY_RELEASE,
       ),

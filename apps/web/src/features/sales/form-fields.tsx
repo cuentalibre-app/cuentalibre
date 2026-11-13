@@ -108,6 +108,8 @@ interface FieldProps {
   label: string;
   required?: boolean;
   error?: string;
+  /** Something to check, such as a value read from a document that doesn't add up. An error goes before it. */
+  warning?: string;
   hint?: string;
   /** Explanation behind a help icon next to the label. */
   help?: string;
@@ -118,9 +120,9 @@ interface FieldProps {
 }
 
 /** Label, control and message. The control receives the id and ARIA wiring. */
-export function Field({ label, required, error, hint, help, action, className, children }: FieldProps) {
+export function Field({ label, required, error, warning, hint, help, action, className, children }: FieldProps) {
   const id = useId();
-  const message = error ?? hint;
+  const message = error ?? warning ?? hint;
   return (
     <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
       {/* Fixed height so a small action button doesn't push the input below the ones beside it */}
@@ -143,7 +145,10 @@ export function Field({ label, required, error, hint, help, action, className, c
         "aria-describedby": message ? `${id}-msg` : undefined,
       })}
       {message && (
-        <p id={`${id}-msg`} className={cn("m-0 text-xs", error ? "text-destructive" : "text-muted-foreground")}>
+        <p
+          id={`${id}-msg`}
+          className={cn("m-0 text-xs", error ? "text-destructive" : warning ? "text-warning" : "text-muted-foreground")}
+        >
           {message}
         </p>
       )}
