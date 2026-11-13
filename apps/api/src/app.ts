@@ -2,6 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
+import type { AiProvider } from "./ai";
 import { hasGoogleSignIn, type Auth } from "./auth";
 import type { Billing } from "./billing";
 import type { AppEnv } from "./context";
@@ -19,6 +20,7 @@ import { emailRoutes } from "./routes/emails";
 import { fileRoutes } from "./routes/files";
 import { recordRoutes } from "./routes/records";
 import { metaRoutes } from "./routes/meta";
+import { purchaseRoutes } from "./routes/purchases";
 import { syncRoutes } from "./routes/sync";
 import type { FileStorage } from "./storage";
 import { serveWeb } from "./web";
@@ -32,13 +34,15 @@ interface Deps {
   mailer: Mailer | null;
   /** Null when the instance doesn't bill: self-hosted ones never do. */
   billing?: Billing | null;
+  /** Null when the instance has no AI model to read documents with. */
+  ai?: AiProvider | null;
 }
 
 /**
  * Builds the HTTP app. Everything lives under `/v1`, since the API will be public;
  * with `WEB_DIR`, the rest of the paths serve the web app.
  */
-export function createApp({ db, auth, env, storage, mailer, billing = null }: Deps) {
+export function createApp({ db, auth, env, storage, mailer, billing = null, ai = null }: Deps) {
   const app = new OpenAPIHono<AppEnv>({
     defaultHook: (result, c) => {
       if (!result.success)
@@ -62,6 +66,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
     c.set("storage", storage);
     c.set("mailer", mailer);
     c.set("billing", billing);
+    c.set("ai", ai);
 
     c.set("emailQuota", { daily: env.EMAIL_DAILY_RECIPIENTS, monthly: env.EMAIL_MONTHLY_RECIPIENTS });
     c.set("fileMaxBytes", env.FILE_MAX_BYTES);
@@ -103,6 +108,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null }: De
     .route("/v1", syncRoutes)
     .route("/v1", contactRoutes)
     .route("/v1", recordRoutes)
+    .route("/v1", purchaseRoutes)
     .route("/v1", fileRoutes)
     .route("/v1", emailRoutes)
     .route("/v1", apiKeyRoutes(auth));

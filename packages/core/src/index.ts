@@ -24,3 +24,4 @@ export * from "./facturae";
 export * from "./email-templates";
 export * from "./aeat-files";
 export * from "./record-books";
+export * from "./extraction";
