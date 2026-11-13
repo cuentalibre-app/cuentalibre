@@ -670,6 +670,7 @@ function PurchaseForm({
           <ReceiptDrop
             attachments={form.attachments}
             onChange={changeAttachments}
+            readLabel={autoRead ? "Leer factura con IA" : undefined}
             onRead={reading.available ? (a) => void reading.read(a) : undefined}
             readingId={reading.state.status === "reading" ? reading.state.attachment.id : undefined}
           />
