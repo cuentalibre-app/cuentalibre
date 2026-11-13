@@ -30,13 +30,29 @@ export function sniffType(bytes: Uint8Array): "pdf" | ImageType | null {
   return null;
 }
 
-/** The PDF's text layer, or null when it has none worth reading (a scan) or can't be parsed. */
+/**
+ * Control characters, or the replacement character, where a PDF's font has glyphs
+ * without a Unicode mapping: pdf.js gives them as NUL, so "9BF0758D-8798006" reads
+ * "9BF0758D\u00008798006". Such a text layer can't be trusted to the digit.
+ */
+const UNMAPPED_GLYPHS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFD]/;
+
+/**
+ * A PDF's extracted text, if it is worth sending: null when it is empty or noise (a
+ * scan) or has unmapped glyphs, and then the model reads the file itself.
+ */
+export function readableText(text: string): string | null {
+  if (UNMAPPED_GLYPHS.test(text)) return null;
+  const characters = text.replace(/[^\p{L}\p{N}]/gu, "").length;
+  return characters >= MIN_TEXT_CHARACTERS ? text.slice(0, MAX_TEXT_CHARACTERS) : null;
+}
+
+/** The PDF's text layer, or null when it isn't worth reading or can't be parsed. */
 async function pdfText(bytes: Uint8Array): Promise<string | null> {
   try {
     // pdf.js takes ownership of the buffer it reads, so it gets a copy
     const { text } = await extractText(bytes.slice(), { mergePages: true });
-    const characters = text.replace(/[^\p{L}\p{N}]/gu, "").length;
-    return characters >= MIN_TEXT_CHARACTERS ? text.slice(0, MAX_TEXT_CHARACTERS) : null;
+    return readableText(text);
   } catch {
     return null;
   }
