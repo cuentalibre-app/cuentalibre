@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { aiProtocol, createAiProvider } from "./ai";
 import type { ModelAnswer } from "./ai/answer";
 import { toDraft } from "./ai/answer";
-import { sniffType } from "./ai/extract";
+import { readableText, sniffType } from "./ai/extract";
 import { parseJsonMessage } from "./ai/openai";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
@@ -181,6 +181,17 @@ describe("the model's answer", () => {
 
   it("is read without the code fence some local models add", () => {
     expect(parseJsonMessage('```json\n{"a": 1}\n```')).toEqual({ a: 1 });
+  });
+
+  it("drops control characters a model copies from a broken text layer", () => {
+    expect(toDraft(answer({ number: "9BF0758D\u00008798006" })).number).toBe("9BF0758D8798006");
+  });
+
+  it("doesn't trust a PDF's text with unmapped glyphs, nor one too short", () => {
+    const line = "Factura 9BF0758D-8798006 de Brisa Telecom SL, total 121,00 EUR";
+    expect(readableText(line)).toBe(line);
+    expect(readableText(line.replace("-", "\u0000"))).toBeNull();
+    expect(readableText("Total 121")).toBeNull();
   });
 
   it("tells files by their bytes", () => {
