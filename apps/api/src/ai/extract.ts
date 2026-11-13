@@ -7,6 +7,7 @@ import type { FileStorage } from "../storage";
 import { liveContacts } from "../sync/contacts";
 import { findFile } from "../sync/files";
 import { EXTRACTION_PROMPT, modelAnswerJsonSchema, modelAnswerSchema, toDraft } from "./answer";
+import { ImageError, prepareImage, type ImageType } from "./image";
 import { AiError, type AiProvider, type ModelInput } from "./provider";
 
 /** Below this many letters and digits, a PDF's text layer is empty or noise: it is read as a scan. */
@@ -14,14 +15,18 @@ const MIN_TEXT_CHARACTERS = 40;
 /** An invoice's text fits easily; anything longer is cut, so a huge PDF can't run up the bill. */
 const MAX_TEXT_CHARACTERS = 20_000;
 
+/** Major brands of HEIF files, HEIC (iPhone photos) among them. */
+const HEIF_BRANDS = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"]);
+
 /** The type of a file by its first bytes, which can't be faked by its name or upload type. */
-export function sniffType(bytes: Uint8Array): "pdf" | "image/jpeg" | "image/png" | "image/webp" | "image/gif" | null {
+export function sniffType(bytes: Uint8Array): "pdf" | ImageType | null {
   const ascii = (start: number, end: number) => String.fromCharCode(...bytes.subarray(start, end));
   if (ascii(0, 5) === "%PDF-") return "pdf";
   if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "image/jpeg";
   if (ascii(1, 4) === "PNG" && bytes[0] === 0x89) return "image/png";
   if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
   if (ascii(0, 4) === "GIF8") return "image/gif";
+  if (ascii(4, 8) === "ftyp" && HEIF_BRANDS.has(ascii(8, 12))) return "image/heic";
   return null;
 }
 
@@ -40,8 +45,16 @@ async function pdfText(bytes: Uint8Array): Promise<string | null> {
 /** What the model reads from a file: a PDF's text if it has one, else the file itself. */
 export async function modelInput(bytes: Uint8Array): Promise<ModelInput> {
   const type = sniffType(bytes);
-  if (!type) throw new ApiError(415, "unsupported_file", "Only PDFs and JPEG, PNG, WebP or GIF images can be read.");
-  if (type !== "pdf") return { kind: "image", mediaType: type, data: bytes };
+  if (!type)
+    throw new ApiError(415, "unsupported_file", "Only PDFs and JPEG, PNG, HEIC, WebP or GIF images can be read.");
+  if (type !== "pdf") {
+    try {
+      return { kind: "image", ...(await prepareImage(type, bytes)) };
+    } catch (error) {
+      if (!(error instanceof ImageError)) throw error;
+      throw new ApiError(415, "unsupported_file", "The image couldn't be read.");
+    }
+  }
   const text = await pdfText(bytes);
   return text ? { kind: "text", text } : { kind: "pdf", data: bytes };
 }
