@@ -3,6 +3,27 @@
 @import "@fontsource-variable/source-serif-4/wght-italic.css";
 
 /*
+ * The site keeps the blue brand and its gradient; the app inside is drawn in ink.
+ * The dark block comes second so it wins over the light one on <html class="dark">.
+ */
+:root {
+  --primary: var(--blue-600);
+  --primary-hover: var(--blue-800);
+  --primary-soft: var(--blue-50);
+  --selection: var(--blue-200);
+  --ring: var(--blue-600);
+}
+
+.dark {
+  --primary: #7f8ff2;
+  --primary-foreground: #0e1440;
+  --primary-hover: #9aa7f5;
+  --primary-soft: #1f2440;
+  --selection: #34407f;
+  --ring: #7f8ff2;
+}
+
+/*
  * The site speaks louder than the app but in the same voice: the app's sans for
  * text, the serif for headlines and the wordmark's monospace for section labels.
  */

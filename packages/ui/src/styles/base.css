@@ -100,11 +100,6 @@
   letter-spacing: var(--tracking-tight);
 }
 
-/* The brand wash fixed behind every page of the app */
-@utility bg-aurora {
-  background-image: var(--aurora);
-}
-
 /* A card lifted off the page: the one shape for panels, tables and grouped lists */
 @utility surface {
   border-radius: var(--radius-2xl);

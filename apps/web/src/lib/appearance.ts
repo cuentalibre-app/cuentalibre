@@ -1,36 +1,29 @@
 import { useSyncExternalStore } from "react";
 
 /*
- * How the app looks on this device: light, dark or following the system, and the wash behind
- * the pages. A per-device preference, so it lives in localStorage rather than the account.
+ * How the app looks on this device: light, dark or following the system. A per-device preference, so it lives in localStorage rather than the account.
  * `public/appearance.js` applies the same stored value before the first paint; keep the key, the
  * shape and the theme colours in step with it.
  */
 
 export type Theme = "light" | "dark" | "system";
-export type Backdrop = "aurora" | "sunset" | "forest" | "plain";
 
 export interface Appearance {
   theme: Theme;
-  backdrop: Backdrop;
 }
 
 export const THEMES: readonly Theme[] = ["light", "dark", "system"];
-export const BACKDROPS: readonly Backdrop[] = ["aurora", "sunset", "forest", "plain"];
 
 const STORAGE_KEY = "cuentalibre:appearance";
-const DEFAULT: Appearance = { theme: "system", backdrop: "aurora" };
+const DEFAULT: Appearance = { theme: "system" };
 
 /** Reads a stored value, falling back to the default for anything missing or unknown. */
 export function parseAppearance(raw: string | null): Appearance {
   try {
     const value: unknown = JSON.parse(raw ?? "{}");
     if (typeof value !== "object" || value === null) return DEFAULT;
-    const { theme, backdrop } = value as Record<string, unknown>;
-    return {
-      theme: THEMES.includes(theme as Theme) ? (theme as Theme) : DEFAULT.theme,
-      backdrop: BACKDROPS.includes(backdrop as Backdrop) ? (backdrop as Backdrop) : DEFAULT.backdrop,
-    };
+    const { theme } = value as Record<string, unknown>;
+    return { theme: THEMES.includes(theme as Theme) ? (theme as Theme) : DEFAULT.theme };
   } catch {
     return DEFAULT;
   }
@@ -61,7 +54,6 @@ function apply() {
   const root = document.documentElement;
   const dark = isDark(current.theme, darkQuery?.matches ?? false);
   root.classList.toggle("dark", dark);
-  root.dataset.backdrop = current.backdrop;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLORS[dark ? "dark" : "light"]);
 }
 
