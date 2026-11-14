@@ -75,3 +75,14 @@ export const purchaseExtractionSchema = z.object({
   source: z.enum(["text", "image", "pdf"]),
 });
 export type PurchaseExtraction = z.infer<typeof purchaseExtractionSchema>;
+
+/** Documents the organization had read with AI this month, against the instance's monthly limit. */
+export const extractionUsageSchema = z.object({
+  /** Readings that called the model; reading the same file again doesn't count. */
+  used: z.int().min(0),
+  /** Null when there is no limit. */
+  limit: z.int().positive().nullable(),
+  /** The month counted, `YYYY-MM` in Spain's time; the count starts afresh on the 1st. */
+  month: z.string().regex(/^\d{4}-\d{2}$/),
+});
+export type ExtractionUsage = z.infer<typeof extractionUsageSchema>;

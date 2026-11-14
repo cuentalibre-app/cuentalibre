@@ -22,11 +22,14 @@ export function NewContactDialog({
   open,
   onOpenChange,
   onCreated,
+  initial,
 }: {
   role: ContactRole;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (contact: Contact) => void;
+  /** Data to start from, such as what was read from the contact's invoice. */
+  initial?: Partial<ContactDraft>;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,6 +37,7 @@ export function NewContactDialog({
         {open && (
           <QuickForm
             role={role}
+            initial={initial}
             onCreated={(c) => {
               onCreated(c);
               onOpenChange(false);
@@ -48,15 +52,17 @@ export function NewContactDialog({
 
 function QuickForm({
   role,
+  initial,
   onCreated,
   onCancel,
 }: {
   role: ContactRole;
+  initial?: Partial<ContactDraft>;
   onCreated: (contact: Contact) => void;
   onCancel: () => void;
 }) {
   const config = ROLES[role];
-  const [draft, setDraft] = useState<ContactDraft>(() => toDraft(undefined));
+  const [draft, setDraft] = useState<ContactDraft>(() => ({ ...toDraft(undefined), ...initial }));
   const [errors, setErrors] = useState<DraftErrors>({});
   const set = <K extends keyof ContactDraft>(key: K, value: ContactDraft[K]) => {
     setDraft((d) => ({ ...d, [key]: value }));

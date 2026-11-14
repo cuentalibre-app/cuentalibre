@@ -9,9 +9,23 @@ export type ModelInput =
   | { kind: "image"; mediaType: string; data: Uint8Array }
   | { kind: "pdf"; data: Uint8Array };
 
+/** Tokens a call took, as the provider reports them; null when it doesn't. */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface Completion {
+  /** The model's JSON answer, unchecked. */
+  answer: unknown;
+  usage: TokenUsage | null;
+}
+
 export interface AiProvider {
-  /** Asks the model for a JSON answer that should match `schema`; returns it unchecked. */
-  complete(input: ModelInput, request: { prompt: string; schema: Record<string, unknown> }): Promise<unknown>;
+  /** The model's name, as configured: part of the cache key of what it read. */
+  model: string;
+  /** Asks the model for a JSON answer that should match `schema`. */
+  complete(input: ModelInput, request: { prompt: string; schema: Record<string, unknown> }): Promise<Completion>;
 }
 
 /** The provider failed or answered something that isn't the requested JSON. */
@@ -56,3 +70,15 @@ export async function postJson(
 }
 
 export const toBase64 = (data: Uint8Array) => Buffer.from(data).toString("base64");
+
+/** A count of tokens from a provider's answer, or null when it isn't one. */
+const tokens = (value: unknown) => (typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null);
+
+/** The usage a provider reports under these names, or null when it reports none. */
+export function usageOf(usage: unknown, input: string, output: string): TokenUsage | null {
+  if (!usage || typeof usage !== "object") return null;
+  const record = usage as Record<string, unknown>;
+  const inputTokens = tokens(record[input]);
+  const outputTokens = tokens(record[output]);
+  return inputTokens === null || outputTokens === null ? null : { inputTokens, outputTokens };
+}

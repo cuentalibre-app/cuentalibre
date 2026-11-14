@@ -67,6 +67,11 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
     c.set("mailer", mailer);
     c.set("billing", billing);
     c.set("ai", ai);
+    c.set("aiLimits", {
+      monthlyDocuments: env.AI_MONTHLY_DOCUMENTS,
+      inputPrice: env.AI_INPUT_PRICE ?? null,
+      outputPrice: env.AI_OUTPUT_PRICE ?? null,
+    });
 
     c.set("emailQuota", { daily: env.EMAIL_DAILY_RECIPIENTS, monthly: env.EMAIL_MONTHLY_RECIPIENTS });
     c.set("fileMaxBytes", env.FILE_MAX_BYTES);
@@ -100,6 +105,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
           google: hasGoogleSignIn(env),
           email: Boolean(mailer),
           billing: Boolean(billing),
+          ai: Boolean(ai),
         },
         env.SENTRY_RELEASE,
       ),

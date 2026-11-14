@@ -89,6 +89,17 @@ const envSchema = z
     AI_API_KEY: z.string().min(1).optional(),
     AI_BASE_URL: z.url().optional(),
     /**
+     * Most documents an organization may have read with AI in a calendar month (Spain's
+     * time). Reading a file already read doesn't count. Unset or 0 means no limit.
+     */
+    AI_MONTHLY_DOCUMENTS: z.coerce.number().int().min(0).default(0),
+    /**
+     * The model's prices in dollars per million input and output tokens, to estimate
+     * what each reading costs the instance. Without them, only tokens are recorded.
+     */
+    AI_INPUT_PRICE: z.coerce.number().min(0).optional(),
+    AI_OUTPUT_PRICE: z.coerce.number().min(0).optional(),
+    /**
      * Charging for Cloud with Stripe: all of them, or none and billing is off. The prices are
      * the product's three periods; the tax rate, the VAT added on top of them.
      */
