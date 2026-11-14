@@ -65,6 +65,10 @@ describe("checkTaxId", () => {
   it("only checks the characters of foreign tax IDs", () => {
     expect(checkTaxId("DE123456789", "Alemania")).toEqual({ valid: true, kind: "foreign" });
     expect(checkTaxId("86-1696045", "Estados Unidos")).toEqual({ valid: true, kind: "foreign" });
+    expect(checkTaxId("A&C010101ÑB1", "México")).toEqual({ valid: true, kind: "foreign" });
+    expect(checkTaxId("ΕΛ094019245", "Grecia")).toEqual({ valid: true, kind: "foreign" });
+    expect(checkTaxId("GB123*456", "Reino Unido")).toEqual({ valid: false, reason: "format" });
+    expect(checkTaxId("1".repeat(31), "Estados Unidos")).toEqual({ valid: false, reason: "format" });
     expect(checkTaxId("ñ", "Francia")).toEqual({ valid: false, reason: "format" });
     expect(checkTaxId(" ", "Francia")).toEqual({ valid: false, reason: "empty" });
   });

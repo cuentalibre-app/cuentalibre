@@ -224,7 +224,14 @@ describe("contacts", () => {
 
     expect(await rejected({ taxId: "" })).toEqual({ code: "invalid_tax_id", message: "taxId: required." });
     expect((await rejected({ taxId: "hola" })).code).toBe("invalid_tax_id");
-    expect((await rejected({ taxId: "B12345675" })).message).toBe("taxId: the control character is wrong.");
+    expect((await rejected({ taxId: "B12345675" })).message).toBe(
+      "taxId: the control character is wrong. Checked as Spanish: set country for a foreign contact.",
+    );
+    expect((await rejected({ taxId: "B12345675", country: "España" })).message).toBe(
+      "taxId: the control character is wrong.",
+    );
+    // A Mexican RFC can have Ñ and &
+    expect((await create({ taxId: "A&C010101ÑB1", country: "México", name: "A&C SA" })).status).toBe(201);
     expect((await rejected({ taxId: "DE#123", country: "Alemania" })).code).toBe("invalid_tax_id");
 
     const foreign = await create({ taxId: "fr 40 303 265 045", country: "Francia" });

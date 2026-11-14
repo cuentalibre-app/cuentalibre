@@ -135,7 +135,7 @@ export function taxIdError(taxId: string, country: string): string | undefined {
   if (check.reason === "checksum") return "La letra o el dígito de control no es correcto. Revisa el NIF.";
   return country === SPAIN
     ? "El formato del NIF no es correcto. Formatos válidos: 12345678Z (NIF), X1234567L (NIE) o B12345674 (CIF)."
-    : "Solo letras y números, sin espacios.";
+    : "Solo letras, números y &, hasta 30 caracteres.";
 }
 
 /** Advice that doesn't block saving: what intra-EU invoices need. */

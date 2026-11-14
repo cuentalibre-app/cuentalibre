@@ -18,7 +18,7 @@ Clients and suppliers. `role` is `client` or `supplier` and can't change.
 | -------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
 | `role`                                       | `client` \| `supplier` | Required on create.                                                                           |
 | `name`                                       | text                   | Required. Name or company name.                                                               |
-| `taxId`                                      | text                   | Required and valid for the country, else `400 invalid_tax_id`. NIF, or EU VAT number. Stored without separators. |
+| `taxId`                                      | text                   | Required and valid for the country, else `400 invalid_tax_id`: a full NIF/NIE/CIF check in Spain; abroad, letters, digits and `&`, up to 30. Without `country` it is checked as Spanish, so always set it for foreign contacts. Stored without separators. |
 | `variousClients`                             | boolean                | Clients only: the "Clientes varios" client, the only contact that may have an empty `taxId`.  |
 | `address`, `postalCode`, `city`, `province`  | text                   | `city` is the town (población).                                                               |
 | `country`                                    | text                   | Spanish name (`"Francia"`); Spain when missing.                                               |
