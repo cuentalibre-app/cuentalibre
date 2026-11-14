@@ -17,10 +17,21 @@ export async function readAttachment(attachment: Attachment): Promise<PurchaseEx
   return extract(attachment.id);
 }
 
+/** "diciembre": the month after `today`'s, when the monthly limit starts afresh. */
+export function nextMonthName(today = new Date()): string {
+  const next = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+  return next.toLocaleDateString("es-ES", { month: "long" });
+}
+
+/** Whether trying the same reading again may work: not when the month's limit is reached. */
+export const canRetryReading = (error: unknown) => !(error instanceof ApiError && error.code === "ai_quota_exceeded");
+
 /** Why a reading failed, for the user. */
 export function readingError(error: unknown): string {
   const code = error instanceof ApiError ? error.code : null;
   switch (code) {
+    case "ai_quota_exceeded":
+      return `Has leído con IA todos los documentos de este mes. Podrás leer más desde el 1 de ${nextMonthName()}; mientras, rellena los datos a mano.`;
     case "unsupported_file":
       return "No se puede leer este archivo: tiene que ser un PDF o una foto.";
     case "file_too_large":

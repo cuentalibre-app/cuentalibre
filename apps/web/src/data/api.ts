@@ -11,6 +11,7 @@ import {
   type FileListing,
   type Me,
   type OrganizationMember,
+  type ExtractionUsage,
   type PurchaseExtraction,
   type StoredFile,
   type SyncCommand,
@@ -202,6 +203,7 @@ export function createApiBackend(
 
     extractPurchase: (fileId) =>
       request<PurchaseExtraction>("/v1/purchases/extract", { method: "POST", body: JSON.stringify({ fileId }) }),
+    extractionUsage: () => request<ExtractionUsage>("/v1/purchases/extract/usage"),
 
     async members() {
       return (await request<{ members: OrganizationMember[] }>("/v1/organization/members")).members;

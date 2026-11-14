@@ -10,6 +10,7 @@ import type {
   FileListing,
   NewApiKey,
   OrganizationMember,
+  ExtractionUsage,
   PurchaseExtraction,
 } from "@cuentalibre/contracts";
 import type { Command } from "./commands";
@@ -58,6 +59,8 @@ export interface Backend {
   };
   /** Reads a stored PDF or photo with AI: a draft for a received invoice or an expense, nothing saved. */
   extractPurchase?(fileId: string): Promise<PurchaseExtraction>;
+  /** Documents read with AI this month, against the server's limit. */
+  extractionUsage?(): Promise<ExtractionUsage>;
   /** The people in the organization. Without a server, the sample users stand in. */
   members?(): Promise<OrganizationMember[]>;
 }
