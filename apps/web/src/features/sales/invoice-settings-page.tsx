@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
-import { Link } from "react-router";
 import { Check, ImageUp, Trash2 } from "lucide-react";
 import { LOGO_MAX_SIZE, type InvoiceSettings } from "@cuentalibre/contracts";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { Notice, Page } from "@/components/page";
+import { Page } from "@/components/page";
 import { SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
@@ -99,13 +98,6 @@ export function InvoiceSettingsPage() {
               />
             </div>
           </div>
-          <Notice>
-            La moneda depende del país configurado en{" "}
-            <Link to="/impuestos" className={buttonVariants({ variant: "link" })}>
-              Impuestos
-            </Link>
-            .
-          </Notice>
         </Section>
 
         <div id="logotipo" className="scroll-mt-6">
