@@ -127,12 +127,12 @@ function Form111({ year, quarter, today }: { year: number; quarter: Quarter; tod
       />
       <MissingProvinces books={books} perceptors={r.perceptors} />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 111</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 111</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormSections sections={LAYOUT_111} boxes={r.boxes} countBoxes={COUNT_BOXES_111} showEmpty={showEmpty} />
       <section aria-label="Perceptores del trimestre" className="flex flex-col gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Perceptores del trimestre</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Perceptores del trimestre</h2>
         <RecordsTable
           label="Perceptores del trimestre"
           columns={PERCEPTOR_COLUMNS}
@@ -199,7 +199,7 @@ function Form190({ year, today }: { year: number; today: Date }) {
       <MissingProvinces books={books} perceptors={r.perceptors} />
       <section aria-label="Perceptores del año" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Perceptores</h2>
+          <h2 className="m-0 text-lg font-semibold tracking-tight">Perceptores</h2>
           <span className="text-xs text-muted-foreground">
             Clave{" "}
             {Object.entries(KEY_LABEL)

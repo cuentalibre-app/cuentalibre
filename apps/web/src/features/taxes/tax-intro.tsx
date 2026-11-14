@@ -112,7 +112,7 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
           className="flex animate-rise-in flex-col gap-4 surface p-5"
           style={{ "--i": i } as CSSProperties}
         >
-          <h2 id={`modelo-${f.code}`} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+          <h2 id={`modelo-${f.code}`} className="m-0 text-lg font-semibold tracking-tight">
             {FACTS[f.code].title}
           </h2>
           <FormFactsList form={f.code} />

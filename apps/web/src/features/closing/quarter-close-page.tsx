@@ -92,7 +92,7 @@ function Step({
     >
       <h2
         id={`step-${index}`}
-        className="m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight lg:text-title"
+        className="m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight"
       >
         <span className="flex size-6 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           {index}
@@ -467,7 +467,7 @@ function ClosedList({ closed, onSelect }: { closed: ClosedQuarter[]; onSelect: (
       className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 5 } as CSSProperties}
     >
-      <h2 id="closed-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+      <h2 id="closed-title" className="m-0 text-lg font-semibold tracking-tight">
         Trimestres cerrados
       </h2>
       {rows.length === 0 ? (

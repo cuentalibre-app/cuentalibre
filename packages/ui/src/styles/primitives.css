@@ -26,6 +26,17 @@
   --blue-600: #2f45c9;
   --blue-800: #1e2f96;
 
+  /* Ink: the brand, on buttons and text; a warm ochre wash for soft highlights */
+  --ink-900: #1d2024;
+  --ink-700: #3a3e44;
+  --ochre-50: #f5eddd;
+  --ochre-200: #ead7ad;
+
+  /* Chart series: slate for income and taxes, peach for expenses */
+  --slate-300: #a9bccf;
+  --slate-700: #3e5c7a;
+  --peach-400: #e39a6b;
+
   /* Brand gradient: blue into violet and teal */
   --violet-500: #6a4fe0;
   --teal-600: #0e8fae;

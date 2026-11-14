@@ -34,7 +34,7 @@ export function MethodCards({
 
   return (
     <section aria-labelledby="methods-title" className="flex flex-col gap-3">
-      <h2 id="methods-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+      <h2 id="methods-title" className="m-0 text-lg font-semibold tracking-tight">
         Cuentas y formas de pago
       </h2>
       <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4">

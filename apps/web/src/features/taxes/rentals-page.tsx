@@ -144,7 +144,7 @@ function Form115({ year, quarter, today }: { year: number; quarter: Quarter; tod
       />
       <UnusualRates ids={unusual} />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 115</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 115</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormSections sections={LAYOUT_115} boxes={r.boxes} countBoxes={COUNT_BOXES_115} showEmpty={showEmpty} />
@@ -221,7 +221,7 @@ function Form180({ year, today }: { year: number; today: Date }) {
       <UnusualRates ids={r.unusual.map((o) => o.id)} />
       <MissingProvinces books={books} perceptors={r.landlords} />
       <section aria-label="Arrendadores" className="flex flex-col gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Arrendadores e inmuebles</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Arrendadores e inmuebles</h2>
         <RecordsTable
           label="Arrendadores e inmuebles"
           columns={LANDLORD_COLUMNS}

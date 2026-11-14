@@ -1,6 +1,8 @@
 import { useRef, useState, type CSSProperties } from "react";
+import { ChartColumn } from "lucide-react";
 import { cents, eurosToCents, type Cents } from "@cuentalibre/core";
-import { Card, CardTitle } from "@cuentalibre/ui/components/card";
+import { Card } from "@cuentalibre/ui/components/card";
+import { cardHeaderClass, cardIconClass, cardTitleClass } from "@/components/page";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -29,14 +31,14 @@ function Gridlines() {
 
 /** Bars grow from the baseline on mount, left to right; later changes in height ease. */
 const barClass =
-  "origin-bottom animate-grow-up rounded-t-sm [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
+  "origin-bottom animate-grow-up rounded-t-[3px] [animation-delay:calc(var(--i)*30ms)] transition-[height] duration-500 ease-out";
 
 function barStyle(value: number, max: number, index: number) {
   return { height: pct(value, max), "--i": index } as CSSProperties;
 }
 
 function Dot({ className }: { className: string }) {
-  return <span className={cn("size-2 shrink-0 rounded-full", className)} aria-hidden="true" />;
+  return <span className={cn("size-2.5 shrink-0 rounded-[2px]", className)} aria-hidden="true" />;
 }
 
 type View = "monthly" | "cumulative";
@@ -72,20 +74,19 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
   const current = selected === null ? null : monthly[selected];
   const lastPoint = monthly[data.lastMonthWithData];
   const lineY = (v: number) => 200 - (Math.max(0, v) / cumulativeMax) * 196;
-  const linePoints = points
-    .map(
-      (m) => `${(m.month + 0.5) * 100},${lineY(m.cumulativeProfit).toFixed(1)}`,
-    )
-    .join(" ");
+  const linePoints = points.map((m) => `${(m.month + 0.5) * 100},${lineY(m.cumulativeProfit).toFixed(1)}`).join(" ");
   const first = points[0];
   const last = points.at(-1);
   const areaPoints =
     first && last ? `${(first.month + 0.5) * 100},200 ${linePoints} ${(last.month + 0.5) * 100},200` : "";
 
   return (
-    <Card aria-labelledby="cash-flow-title" className={cn("gap-4", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <CardTitle id="cash-flow-title">Ingresos y gastos {period.year}</CardTitle>
+    <Card aria-labelledby="cash-flow-title" className={cn("gap-4 p-0", className)}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-3 lg:py-2", cardHeaderClass)}>
+        <h2 id="cash-flow-title" className={cardTitleClass}>
+          <ChartColumn className={cardIconClass} strokeWidth={1.8} aria-hidden="true" />
+          Ingresos y gastos {period.year}
+        </h2>
         <SegmentedControl
           label="Vista"
           value={view}
@@ -97,7 +98,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         />
       </div>
 
-      <div aria-live="polite" className="flex min-h-[22px] flex-wrap items-baseline gap-x-[18px] gap-y-1.5">
+      <div aria-live="polite" className="flex min-h-[22px] flex-wrap items-baseline gap-x-[18px] gap-y-1.5 px-4">
         {selected === null ? (
           view === "monthly" ? (
             <>
@@ -106,7 +107,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                 [
                   ["Ingresos", data.totals.income, "bg-chart-income"],
                   ["Gastos", data.totals.expenses, "bg-chart-expense"],
-                  ["Beneficio", data.profit, "bg-foreground"],
+                  ["Beneficio", data.profit, "bg-success"],
                 ] as const
               ).map(([label, value, dot]) => (
                 <span key={label} className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -117,7 +118,9 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
             </>
           ) : (
             <>
-              <span className="font-semibold">Hasta {MONTHS[data.lastMonthWithData]!.toLowerCase()} {period.year}</span>
+              <span className="font-semibold">
+                Hasta {MONTHS[data.lastMonthWithData]!.toLowerCase()} {period.year}
+              </span>
               <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                 <Dot className="bg-chart-income" />
                 Beneficio acumulado{" "}
@@ -141,7 +144,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
               [
                 ["Ingresos", current.income, "bg-chart-income"],
                 ["Gastos", current.expenses, "bg-chart-expense"],
-                ["Beneficio", current.profit, "bg-foreground"],
+                ["Beneficio", current.profit, "bg-success"],
               ] as const
             ).map(([label, value, dot]) => (
               <span key={label} className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -163,7 +166,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         )}
       </div>
 
-      <div className="flex gap-2.5">
+      <div className="flex gap-2.5 px-4 pb-4">
         <div
           aria-hidden="true"
           className="-mt-1.5 mb-1.5 flex h-[200px] min-w-10 flex-col justify-between text-right text-2xs text-muted-foreground tabular-nums"

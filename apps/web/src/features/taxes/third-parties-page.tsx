@@ -196,7 +196,7 @@ export function ThirdPartiesPage() {
 
         <section aria-label="Declarados" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Declarados</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight">Declarados</h2>
             <span className="text-xs text-muted-foreground">
               Compras y ventas con la misma persona se declaran por separado
             </span>

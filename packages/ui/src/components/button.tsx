@@ -18,12 +18,10 @@ const variants = cva(
     variants: {
       variant: {
         // Lit from above so it has the same depth as the cards around it
-        primary:
-          "bg-primary bg-linear-to-b from-primary-top to-primary font-semibold text-primary-foreground shadow-primary hover:from-primary hover:to-primary-hover",
-        // The brand gradient, for the one main action a screen leads with (as on the site)
-        brand: "button-brand font-semibold",
-        secondary:
-          "border border-border bg-secondary text-secondary-foreground shadow-control hover:border-input hover:bg-muted",
+        primary: "bg-primary font-semibold text-primary-foreground hover:bg-primary-hover",
+        // The one main action a screen leads with: as primary inside the app, flat like the rest
+        brand: "bg-primary font-semibold text-primary-foreground hover:bg-primary-hover",
+        secondary: "border border-border bg-secondary text-secondary-foreground hover:border-input hover:bg-muted",
         ghost: "text-foreground hover:bg-accent",
         destructive: "bg-destructive font-semibold text-destructive-foreground hover:opacity-90",
         chip: "border border-input bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary",

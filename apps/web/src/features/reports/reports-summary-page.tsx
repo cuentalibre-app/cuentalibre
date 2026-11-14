@@ -15,7 +15,6 @@ import {
 } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Card, CardTitle } from "@cuentalibre/ui/components/card";
-import { Badge } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
@@ -45,13 +44,13 @@ function Change({ value, inverse, year }: { value: number | null; inverse?: bool
   const up = value >= 0;
   const good = inverse ? !up : up;
   return (
-    <span className="flex items-center gap-2 text-sm text-muted-foreground">
-      <Badge tone={good ? "success" : "danger"} className="h-6 text-xs">
+    <span className="text-sm text-muted-foreground">
+      <span className={cn("amount font-medium", good ? "text-success" : "text-destructive")}>
         {up ? "↑" : "↓"} {formatPercent(Math.abs(value) * 100)}
-      </Badge>
-      {/* Phones: the year itself, so the line fits beside the badge in a half-width card */}
-      <span className="lg:hidden">vs. {year - 1}</span>
-      <span className="max-lg:hidden">vs. año anterior</span>
+      </span>{" "}
+      {/* Phones: the year itself, so the line fits in a half-width card */}
+      <span className="lg:hidden">respecto a {year - 1}</span>
+      <span className="max-lg:hidden">respecto al año anterior</span>
     </span>
   );
 }
@@ -74,11 +73,16 @@ function Kpi({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex animate-rise-in flex-col gap-2 surface p-4 lg:p-5" style={{ "--i": index } as CSSProperties}>
-      <span className="text-sm font-semibold lg:text-lg">{label}</span>
-      <span className="amount text-xl font-semibold lg:text-2xl">{value}</span>
-      {change !== undefined && <Change value={change} inverse={inverse} year={year} />}
-      {children}
+    <div className="flex animate-rise-in flex-col surface" style={{ "--i": index } as CSSProperties}>
+      {/* Ruled off from the figure, like the cards on Inicio */}
+      <span className="border-b border-divider px-3.5 py-2.5 text-sm font-semibold lg:px-4 lg:py-3 lg:text-lg">
+        {label}
+      </span>
+      <div className="flex flex-col gap-1.5 px-3.5 pt-3 pb-3.5 lg:gap-2 lg:p-4">
+        <span className="amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium">{value}</span>
+        {change !== undefined && <Change value={change} inverse={inverse} year={year} />}
+        {children}
+      </div>
     </div>
   );
 }
@@ -209,7 +213,7 @@ function MonthsTable({ months }: { months: MonthResult[] }) {
       className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 5 } as CSSProperties}
     >
-      <h2 id="months-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+      <h2 id="months-title" className="m-0 text-lg font-semibold tracking-tight">
         Detalle por meses
       </h2>
       <div className="overflow-x-auto surface">

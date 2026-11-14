@@ -145,7 +145,7 @@ function NextFiling({ today }: { today: Date }) {
             <span className="text-2xs">{MONTHS_SHORT[first.dueOn.getMonth()]}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <h2 id="next-filing-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+            <h2 id="next-filing-title" className="m-0 text-lg font-semibold tracking-tight">
               Próxima presentación
             </h2>
             <span className="text-sm font-semibold text-warning">{daysLeftLabel(days)}</span>
@@ -198,7 +198,7 @@ function QuarterStatus({ year, quarter, today }: { year: number; quarter: Quarte
 
 function SectionTitle({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+    <h2 id={id} className="m-0 text-lg font-semibold tracking-tight">
       {children}
     </h2>
   );

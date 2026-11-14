@@ -618,7 +618,7 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
   return (
     <section aria-label={title} className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:surface">
       <div className="flex flex-wrap items-center justify-between gap-3 lg:px-4 lg:pt-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">{title}</h2>
         <SegmentedControl
           label="Tipo de documento"
           value={active}

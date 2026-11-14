@@ -163,7 +163,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
         file={file}
       />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 130</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 130</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormSections
@@ -269,7 +269,7 @@ function IncomeTax100({ year, today }: { year: number; today: Date }) {
         file={file}
       />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Apartado D1 y pagos a cuenta</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Apartado D1 y pagos a cuenta</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormAnswers title="Actividades realizadas" rows={answers100(tax)} />
