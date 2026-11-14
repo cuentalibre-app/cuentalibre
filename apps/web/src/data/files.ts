@@ -81,6 +81,16 @@ export function settleFiles(ids: string[], stored: boolean) {
   }
 }
 
+/**
+ * Stores an attachment's file now, before any record names it, so the server can read it.
+ * Stored files and those only in this tab without a server are left as they are.
+ */
+export async function storeNow(attachment: Attachment): Promise<void> {
+  const entry = pending.get(attachment.id);
+  const upload = currentBackend().upload;
+  if (entry && upload) await upload(attachment.id, entry.file);
+}
+
 function forget(id: string) {
   const entry = pending.get(id);
   if (!entry) return;

@@ -26,7 +26,15 @@ import {
   type PurchaseOperationType,
   type WithholdingKind,
 } from "@cuentalibre/core";
-import type { Attachment, Contact, ExpenseType, PurchaseInvoice, RentalLocation } from "@cuentalibre/contracts";
+import type {
+  Attachment,
+  Contact,
+  ExpenseType,
+  ExtractedPurchase,
+  PurchaseExtraction,
+  PurchaseInvoice,
+  RentalLocation,
+} from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
@@ -76,6 +84,17 @@ import {
 } from "./purchases-model";
 import { AssetSection, assetDraftError, toAsset, toAssetDraft, type AssetDraft } from "./asset-fields";
 import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
+import { NEW_EXPENSE_PATH } from "./expenses-model";
+import { ReadingNotice, useHandoff, useReading, useSendToForm } from "./reading";
+import {
+  betterForm,
+  contactFromDraft,
+  invoiceFlags,
+  isReadable,
+  linesFromDraft,
+  withholdingKindOf,
+  type InvoiceFlag,
+} from "./reading-model";
 import { purchasesStore } from "./purchases-store";
 
 const DUE_TERMS = [30, 60, 90] as const;
@@ -272,6 +291,7 @@ export function PurchaseFormPage({ kind = "invoice" }: { kind?: PurchaseFormKind
         creditNote={creditNote}
         justSaved={justSaved}
         presetSupplierId={!existing && !source ? params.get("proveedor") : null}
+        handoffId={!existing ? params.get("leer") : null}
       />
     </SectionsAtAGlance>
   );
@@ -284,6 +304,7 @@ function PurchaseForm({
   creditNote,
   justSaved,
   presetSupplierId,
+  handoffId,
 }: {
   kind: PurchaseFormKind;
   existing?: PurchaseInvoice;
@@ -293,6 +314,8 @@ function PurchaseForm({
   presetSupplierId: string | null;
   /** The invoice registered right before, with "Registrar y añadir otra". */
   justSaved?: PurchaseInvoice;
+  /** A file handed over to be read, from the list or the expense form. */
+  handoffId: string | null;
 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -328,10 +351,21 @@ function PurchaseForm({
     if (location.hash === "#pagos") paymentsRef.current?.scrollIntoView({ block: "start" });
   }, [location.hash]);
 
-  const clearError = (key: ErrorKey) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+  // Fields a reading with AI flagged, until they are changed
+  const [flags, setFlags] = useState<Partial<Record<InvoiceFlag, string>>>({});
+  // The total printed on the document read, to compare with the form's
+  const [readTotal, setReadTotal] = useState<Cents | null>(null);
+  // The supplier read, when it isn't one of the user's yet
+  const [readSupplier, setReadSupplier] = useState<ExtractedPurchase["supplier"] | null>(null);
+  const clearFlag = (key: string) => setFlags((f) => (key in f ? { ...f, [key]: undefined } : f));
+  const clearError = (key: ErrorKey) => {
+    setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+    clearFlag(key);
+  };
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
     if (key in ERROR_KEYS) clearError(key as ErrorKey);
+    else clearFlag(key);
   };
   const setLines = (update: (lines: LineDraft[]) => LineDraft[]) => {
     setForm((f) => ({ ...f, lines: update(f.lines) }));
@@ -416,6 +450,49 @@ function PurchaseForm({
     }));
     clearError("customsDocument");
   };
+
+  /** Fills the form with what was read; the document wins over the supplier's usual terms. */
+  const applyReading = ({ draft, supplierId, issues }: PurchaseExtraction) => {
+    const lines = linesFromDraft(draft);
+    setForm((f) => {
+      const base = supplierId ? (existing ? { ...f, supplierId } : prefillFromSupplier(f, supplierId, kind)) : f;
+      const issuedOn = draft.issuedOn ?? base.issuedOn;
+      return {
+        ...base,
+        number: draft.number.trim() || base.number,
+        issuedOn,
+        bookedOn: bookedFollows ? issuedOn : base.bookedOn,
+        dueOn: draft.dueOn ?? base.dueOn,
+        lines: lines.length ? lines : base.lines,
+        withholding: draft.withholding
+          ? withholdingKindOf(draft.withholding.rate)
+          : lines.length
+            ? "none"
+            : base.withholding,
+      };
+    });
+    if (draft.dueOn) setDueTerm("custom");
+    if (lines.some((l) => l.surchargeRate)) setAdvanced(true);
+    setErrors({});
+    setFlags(invoiceFlags(issues, Boolean(supplierId)));
+    setReadTotal(draft.total);
+    setReadSupplier(!supplierId && draft.supplier.name.trim() ? draft.supplier : null);
+  };
+  const reading = useReading(applyReading);
+  const sendToForm = useSendToForm();
+  useHandoff(handoffId, (a) => setForm((f) => ({ ...f, attachments: [...f.attachments, a] })), reading);
+  // A new invoice reads the first PDF or photo attached to it
+  const autoRead = reading.available && !existing && !source && reading.state.status === "idle";
+  const changeAttachments = (attachments: Attachment[]) => {
+    const added = attachments.find((a) => isReadable(a.name) && !form.attachments.some((x) => x.id === a.id));
+    set("attachments", attachments);
+    if (autoRead && added) void reading.read(added);
+  };
+  const readDone = reading.state.status === "done" ? reading.state : null;
+  const totalDiffers = readTotal !== null && Math.abs(readTotal - totals.total) > Math.max(1, form.lines.length);
+  const suggestExpense =
+    readDone && kind === "invoice" && betterForm(readDone.extraction.draft, "invoice") === "expense";
+  const readCurrency = readDone?.extraction.draft.currency.toUpperCase();
 
   function validate(): Errors {
     const next: Errors = {};
@@ -590,7 +667,51 @@ function PurchaseForm({
           disabled={Boolean(locked)}
           className="m-0 flex min-w-0 flex-col gap-5 border-0 p-0 lg:gap-6 disabled:[&_button:disabled]:opacity-60"
         >
-          <ReceiptDrop attachments={form.attachments} onChange={(a) => set("attachments", a)} />
+          <ReceiptDrop
+            attachments={form.attachments}
+            onChange={changeAttachments}
+            readLabel={autoRead ? "Leer factura con IA" : undefined}
+            onRead={reading.available ? (a) => void reading.read(a) : undefined}
+            readingId={reading.state.status === "reading" ? reading.state.attachment.id : undefined}
+          />
+
+          <ReadingNotice
+            state={reading.state}
+            onRetry={() => reading.state.status === "failed" && void reading.read(reading.state.attachment)}
+            tone={Object.values(flags).some(Boolean) || totalDiffers || readCurrency !== "EUR" ? "warning" : "success"}
+          >
+            {readDone && (
+              <div className="flex flex-col gap-1">
+                <p className="m-0">
+                  Datos leídos de {readDone.attachment.name}.{" "}
+                  {Object.values(flags).some(Boolean) || totalDiffers
+                    ? "Revisa los campos marcados antes de registrar."
+                    : "Revísalos antes de registrar."}
+                  {readCurrency && readCurrency !== "EUR" && ` Los importes están en ${readCurrency}: pásalos a euros.`}
+                </p>
+                {readSupplier && !form.supplierId && (
+                  <p className="m-0">
+                    {readSupplier.name}
+                    {readSupplier.taxId && ` (${readSupplier.taxId})`} no está entre tus proveedores.{" "}
+                    <Button variant="link" onClick={() => setCreatingSupplier(true)}>
+                      Crear proveedor
+                    </Button>
+                  </p>
+                )}
+                {suggestExpense && (
+                  <p className="m-0">
+                    Parece un ticket sin IVA desglosado.{" "}
+                    <Button
+                      variant="link"
+                      onClick={() => sendToForm(NEW_EXPENSE_PATH, readDone.attachment, readDone.extraction)}
+                    >
+                      Registrarlo como gasto
+                    </Button>
+                  </p>
+                )}
+              </div>
+            )}
+          </ReadingNotice>
 
           <Section title="Información de la factura" index={1}>
             {supplier && <SupplierSummary supplier={supplier} />}
@@ -600,6 +721,7 @@ function PurchaseForm({
                 label="Proveedor"
                 required
                 error={errors.supplierId}
+                warning={flags.supplierId}
                 action={
                   <Button variant="link" onClick={() => setCreatingSupplier(true)}>
                     Nuevo proveedor
@@ -635,6 +757,7 @@ function PurchaseForm({
                 label="Número"
                 required
                 error={errors.number}
+                warning={flags.number}
                 help="El número que figura en la factura del proveedor."
               >
                 {(p) => (
@@ -670,7 +793,7 @@ function PurchaseForm({
                 </Field>
               )}
 
-              <Field label="Fecha de la factura" required error={errors.issuedOn}>
+              <Field label="Fecha de la factura" required error={errors.issuedOn} warning={flags.issuedOn}>
                 {(p) => (
                   <Input {...p} type="date" value={form.issuedOn} onChange={(e) => changeIssuedOn(e.target.value)} />
                 )}
@@ -769,6 +892,7 @@ function PurchaseForm({
 
               <Field
                 label="Retención"
+                warning={flags.withholding}
                 help="IRPF que retienes al proveedor (un profesional, un alquiler…) e ingresas tú a Hacienda con el modelo 111 o 115."
               >
                 {(p) => (
@@ -835,10 +959,12 @@ function PurchaseForm({
               }
               onReorder={() => setReordering(true)}
             />
-            {errors.lines && (
+            {errors.lines ? (
               <p role="alert" className="m-0 text-sm text-destructive">
                 {errors.lines}
               </p>
+            ) : (
+              flags.lines && <p className="m-0 text-sm text-warning">{flags.lines}</p>
             )}
             <Button
               variant="secondary"
@@ -851,6 +977,12 @@ function PurchaseForm({
           </Section>
 
           <Totals totals={totals} withholding={form.withholding} advanced={advanced} />
+
+          {totalDiffers && (
+            <Notice tone="warning">
+              El total del documento es {formatEUR(readTotal!)} y el de los conceptos, {formatEUR(totals.total)}.
+            </Notice>
+          )}
 
           <DeductibleStrip
             base={isAssetForm ? (amortized?.value ?? cents(0)) : deductible.base}
@@ -1035,6 +1167,7 @@ function PurchaseForm({
         <NewContactDialog
           role="supplier"
           open={creatingSupplier}
+          initial={readSupplier && !form.supplierId ? contactFromDraft(readSupplier) : undefined}
           onOpenChange={setCreatingSupplier}
           onCreated={(c) => {
             setForm((f) =>

@@ -11,7 +11,6 @@ import {
   Paperclip,
   Pencil,
   Plus,
-  ScanText,
   Trash2,
   X,
 } from "lucide-react";
@@ -47,6 +46,7 @@ import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/l
 import { usePeriod } from "@/lib/use-period";
 import { availableYears } from "@/mocks/data";
 import { attachmentUrl } from "@/data/files";
+import { ReadDocumentButton } from "./reading";
 import { AttachmentsDialog } from "./form-parts";
 import { PurchaseLink } from "./purchase-detail";
 import { PurchasePaymentsDialog } from "./payment-dialogs";
@@ -267,24 +267,7 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
           title={copy.title}
           actions={
             <>
-              {kind === "invoice" && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {/* aria-disabled keeps the tooltip reachable, unlike disabled */}
-                    <Button
-                      variant="secondary"
-                      aria-disabled
-                      className="hidden cursor-not-allowed opacity-50 lg:inline-flex"
-                    >
-                      <ScanText strokeWidth={1.8} aria-hidden="true" />
-                      Leer factura con OCR
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-64">
-                    Disponible próximamente: leerá los datos del PDF por ti.
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              {kind === "invoice" && <ReadDocumentButton label="Leer factura con IA" formPath={copy.newPath} />}
               <Link to={copy.newPath} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
                 <Plus strokeWidth={2} aria-hidden="true" />
                 <span className="max-lg:sr-only">{copy.newLabel}</span>
@@ -342,21 +325,21 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
-          <FiltersPanel
-            lead={
-              <div className="flex min-w-0 flex-col gap-1 lg:hidden">
-                <span className="text-xs font-medium text-muted-foreground">Estado</span>
-                {statusFilter}
-              </div>
-            }
-            filters={filters}
-            period={period}
-            suppliers={periodSuppliers}
-            tags={tags}
-            onChange={set}
-            // On phones the status is one of the panel's filters, so it goes too
-            onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: desktop ? f.status : ALL }))}
-          />
+            <FiltersPanel
+              lead={
+                <div className="flex min-w-0 flex-col gap-1 lg:hidden">
+                  <span className="text-xs font-medium text-muted-foreground">Estado</span>
+                  {statusFilter}
+                </div>
+              }
+              filters={filters}
+              period={period}
+              suppliers={periodSuppliers}
+              tags={tags}
+              onChange={set}
+              // On phones the status is one of the panel's filters, so it goes too
+              onClear={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query, status: desktop ? f.status : ALL }))}
+            />
           </FiltersSheet>
 
           {rows.length === 0 ? (
@@ -512,7 +495,7 @@ function FiltersPanel({
   return (
     <div
       id="purchase-filters"
-      className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:px-4"
+      className="grid gap-3 sm:grid-cols-2 lg:animate-fade-in lg:grid-cols-[repeat(5,minmax(0,1fr))_auto] lg:items-end lg:border-y lg:border-border lg:bg-muted/50 lg:px-4 lg:py-3"
     >
       {lead}
       <label className="flex min-w-0 flex-col gap-1">
@@ -971,7 +954,15 @@ function usePurchaseActions(row: Row) {
   // Phones open on the everyday few; the rest stays behind "Más acciones"
   const essentials: Action[] = [primary, view, attach];
 
-  return { attach, primary, groups, essentials, dialogs, attachments: attachments.length, label: `la factura ${doc.number}` };
+  return {
+    attach,
+    primary,
+    groups,
+    essentials,
+    dialogs,
+    attachments: attachments.length,
+    label: `la factura ${doc.number}`,
+  };
 }
 
 /** Desktop: the usual operations one click away, the rest behind the ellipsis. */
@@ -993,7 +984,11 @@ function RowActions({ row }: { row: Row }) {
   return (
     <>
       {dialogs}
-      <ActionsMenu groups={groups} essentials={essentials} trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />} />
+      <ActionsMenu
+        groups={groups}
+        essentials={essentials}
+        trigger={<MoreActionsTrigger label={`Acciones de ${label}`} />}
+      />
     </>
   );
 }

@@ -1,13 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
-import { CreditCard, ExternalLink, FileText, Loader2 } from "lucide-react";
-import type { Billing, BillingInvoice, BillingPeriod, Plan } from "@cuentalibre/contracts";
+import { CreditCard, ExternalLink, FileText, Loader2, ScanText } from "lucide-react";
+import type { Billing, BillingInvoice, BillingPeriod, ExtractionUsage, Plan } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { ApiError } from "@/data/api";
 import { currentBackend } from "@/data/backend";
+import { nextMonthName } from "@/data/extraction";
 import { signInMethods } from "@/features/auth/auth-api";
 import { Section } from "@/features/sales/form-fields";
 import { formatDate } from "@/lib/format";
@@ -144,6 +145,7 @@ function BillingDetails({ billing, justPaid }: { billing: Billing; justPaid: boo
         </p>
       )}
       <PlanPanel billing={billing} />
+      <ReadingUsage />
       {subscribed ? <ManageSection billing={billing} /> : <SubscribeSection plan={billing.plan} />}
       {billing.subscription && <InvoicesSection />}
     </>
@@ -220,6 +222,60 @@ function PlanPanel({ billing }: { billing: Billing }) {
           <div className="h-full rounded-full bg-primary" style={{ width: `${(trialUsed / TRIAL_DAYS) * 100}%` }} />
         </div>
       )}
+    </section>
+  );
+}
+
+/** Documents read with AI this month, where the server reads them and has a monthly limit. */
+function ReadingUsage() {
+  const [usage, setUsage] = useState<ExtractionUsage | null>(null);
+  useEffect(() => {
+    const read = currentBackend().extractionUsage;
+    if (!read) return;
+    let active = true;
+    void signInMethods()
+      .then(({ ai }) => (ai ? read() : null))
+      .then((next) => active && setUsage(next))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+  if (!usage?.limit) return null;
+  const { used, limit } = usage;
+  const full = used >= limit;
+  return (
+    <section
+      aria-label="Documentos leídos con IA"
+      className="flex flex-col gap-2.5 rounded-xl border border-border p-4"
+    >
+      <div className="flex items-center gap-3">
+        <ScanText className="size-5 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+        <p className="m-0 flex-1 text-sm">
+          <span className="font-medium">Documentos leídos con IA</span>
+          <span className="block text-muted-foreground">
+            {full
+              ? `Has usado todos los de este mes. Podrás leer más desde el 1 de ${nextMonthName()}.`
+              : `Se renuevan el 1 de ${nextMonthName()}.`}
+          </span>
+        </p>
+        <span className="shrink-0 amount text-sm font-semibold">
+          {Math.min(used, limit)} de {limit} este mes
+        </span>
+      </div>
+      <div
+        role="meter"
+        aria-label="Documentos leídos con IA este mes"
+        aria-valuemin={0}
+        aria-valuemax={limit}
+        aria-valuenow={Math.min(used, limit)}
+        className="h-1.5 overflow-hidden rounded-full bg-muted"
+      >
+        <div
+          className={cn("h-full rounded-full", full ? "bg-warning" : "bg-primary")}
+          style={{ width: `${(Math.min(used, limit) / limit) * 100}%` }}
+        />
+      </div>
     </section>
   );
 }

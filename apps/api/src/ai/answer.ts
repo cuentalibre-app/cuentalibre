@@ -68,7 +68,8 @@ Answer with the fields of the document exactly as printed. Never compute, guess 
 
 const CODE_COUNTRIES = new Map(Object.entries(COUNTRY_CODES).map(([country, code]) => [code, country]));
 
-const text = (value: string | null) => value?.trim() ?? "";
+/** Trimmed text without control characters, which a model may copy from a broken text layer and Postgres refuses. */
+const text = (value: string | null) => value?.replace(/[\u0000-\u001F\u007F]/g, "").trim() ?? "";
 
 /** An ISO date that exists, or null: models sometimes answer 2026-02-30 or the printed format. */
 function isoDateOrNull(value: string | null): string | null {

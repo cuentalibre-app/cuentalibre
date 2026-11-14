@@ -10,7 +10,14 @@ import {
   toIsoDate,
   type Cents,
 } from "@cuentalibre/core";
-import type { Attachment, Expense, ExpenseType, OtherPayee, RentalLocation } from "@cuentalibre/contracts";
+import type {
+  Attachment,
+  Expense,
+  ExpenseType,
+  OtherPayee,
+  PurchaseExtraction,
+  RentalLocation,
+} from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
@@ -42,6 +49,8 @@ import { EXPENSES_PATH, NEW_EXPENSE_PATH, expenseIdentity, payeeOf } from "./exp
 import { expensesStore } from "./expenses-store";
 import { PercentInput, ReceiptDrop, parseImputation } from "./form-parts";
 import { EXPENSE_TYPE_GROUPS, NEW_PURCHASE_PATH } from "./purchases-model";
+import { ReadingNotice, useHandoff, useReading, useSendToForm } from "./reading";
+import { betterForm, draftTotal, expenseFlags, isReadable, type ExpenseFlag } from "./reading-model";
 
 /** Values of the payee select besides the supplier ids. */
 const NO_PAYEE = "none";
@@ -172,6 +181,7 @@ export function ExpenseFormPage() {
         source={source}
         justSaved={justSaved}
         presetSupplierId={!existing && !source ? params.get("proveedor") : null}
+        handoffId={!existing ? params.get("leer") : null}
       />
     </SectionsAtAGlance>
   );
@@ -182,6 +192,7 @@ function ExpenseForm({
   source,
   justSaved,
   presetSupplierId,
+  handoffId,
 }: {
   existing?: Expense;
   source?: Expense;
@@ -189,6 +200,8 @@ function ExpenseForm({
   presetSupplierId: string | null;
   /** The expense registered right before, with "Registrar y añadir otro". */
   justSaved?: Expense;
+  /** A file handed over to be read, from the list or the received invoice form. */
+  handoffId: string | null;
 }) {
   const navigate = useNavigate();
   const [form, setForm] = useState(() => {
@@ -210,10 +223,17 @@ function ExpenseForm({
   // Prefill from the payee's last expense only on a blank form, until the user picks a type
   const [prefill, setPrefill] = useState(!existing && !source);
 
-  const clearError = (key: ErrorKey) => setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+  // Fields a reading with AI flagged, until they are changed
+  const [flags, setFlags] = useState<Partial<Record<ExpenseFlag, string>>>({});
+  const clearFlag = (key: string) => setFlags((f) => (key in f ? { ...f, [key]: undefined } : f));
+  const clearError = (key: ErrorKey) => {
+    setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
+    clearFlag(key);
+  };
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
     if (key in ERROR_KEYS) clearError(key as ErrorKey);
+    if (key === "otherTaxId" || key === "otherName") clearFlag("payee");
   };
 
   const amount = parseEuros(form.amount);
@@ -232,6 +252,7 @@ function ExpenseForm({
       !prefill || payee === NO_PAYEE || payee === OTHER_PAYEE ? { ...f, payee } : prefillFromPayee(f, payee),
     );
     clearError("otherName");
+    clearFlag("payee");
   };
 
   const applyPreset = (preset: Preset) => {
@@ -247,6 +268,44 @@ function ExpenseForm({
     clearError("amount");
     clearError("otherName");
   };
+
+  /** Fills the form with what was read: a saved supplier by its tax ID, or the payee as read. */
+  const applyReading = ({ draft, supplierId, issues }: PurchaseExtraction) => {
+    const total = draftTotal(draft);
+    setForm((f) => {
+      const base = supplierId
+        ? prefill
+          ? prefillFromPayee(f, supplierId)
+          : { ...f, payee: supplierId }
+        : draft.supplier.name.trim()
+          ? { ...f, payee: OTHER_PAYEE, otherName: draft.supplier.name, otherTaxId: draft.supplier.taxId }
+          : f;
+      const date = draft.issuedOn ?? base.date;
+      return {
+        ...base,
+        date,
+        paidOn: paidOnFollows ? date : base.paidOn,
+        number: draft.number.trim() || base.number,
+        concept: draft.concept.trim() || base.concept,
+        amount: total !== null ? formatEurosInput(total) : base.amount,
+      };
+    });
+    setErrors({});
+    setFlags(expenseFlags(issues, draft, Boolean(supplierId)));
+  };
+  const reading = useReading(applyReading);
+  const sendToForm = useSendToForm();
+  useHandoff(handoffId, (a) => setForm((f) => ({ ...f, attachments: [...f.attachments, a] })), reading);
+  // A new expense reads the first PDF or photo attached to it
+  const autoRead = reading.available && !existing && !source && reading.state.status === "idle";
+  const changeAttachments = (attachments: Attachment[]) => {
+    const added = attachments.find((a) => isReadable(a.name) && !form.attachments.some((x) => x.id === a.id));
+    set("attachments", attachments);
+    if (autoRead && added) void reading.read(added);
+  };
+  const readDone = reading.state.status === "done" ? reading.state : null;
+  const suggestInvoice = readDone && betterForm(readDone.extraction.draft, "expense") === "invoice";
+  const readCurrency = readDone?.extraction.draft.currency.toUpperCase();
 
   function toExpense(): Expense {
     const other = form.payee === OTHER_PAYEE;
@@ -402,10 +461,42 @@ function ExpenseForm({
         >
           <ReceiptDrop
             attachments={form.attachments}
-            onChange={(a) => set("attachments", a)}
+            onChange={changeAttachments}
             prompt="Arrastra aquí el ticket o el recibo"
-            pickLabel="Adjuntar ticket o recibo"
+            pickLabel="Elige el ticket o el recibo"
+            readLabel={autoRead ? "Leer ticket con IA" : undefined}
+            onRead={reading.available ? (a) => void reading.read(a) : undefined}
+            readingId={reading.state.status === "reading" ? reading.state.attachment.id : undefined}
           />
+
+          <ReadingNotice
+            state={reading.state}
+            onRetry={() => reading.state.status === "failed" && void reading.read(reading.state.attachment)}
+            tone={Object.values(flags).some(Boolean) || readCurrency !== "EUR" ? "warning" : "success"}
+          >
+            {readDone && (
+              <div className="flex flex-col gap-1">
+                <p className="m-0">
+                  Datos leídos de {readDone.attachment.name}.{" "}
+                  {Object.values(flags).some(Boolean)
+                    ? "Revisa los campos marcados antes de registrar."
+                    : "Revísalos antes de registrar."}
+                  {readCurrency && readCurrency !== "EUR" && ` El importe está en ${readCurrency}: pásalo a euros.`}
+                </p>
+                {suggestInvoice && (
+                  <p className="m-0">
+                    Es una factura con IVA desglosado: como factura recibida también deduces el IVA.{" "}
+                    <Button
+                      variant="link"
+                      onClick={() => sendToForm(NEW_PURCHASE_PATH, readDone.attachment, readDone.extraction)}
+                    >
+                      Registrarla como factura recibida
+                    </Button>
+                  </p>
+                )}
+              </div>
+            )}
+          </ReadingNotice>
 
           <Section title="Datos del gasto" index={1}>
             {!existing && !source && (
@@ -420,7 +511,13 @@ function ExpenseForm({
             )}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              <Field label="Fecha" required error={errors.date} help="Decide el trimestre en el que se deduce.">
+              <Field
+                label="Fecha"
+                required
+                error={errors.date}
+                warning={flags.date}
+                help="Decide el trimestre en el que se deduce."
+              >
                 {(p) => <Input {...p} type="date" value={form.date} onChange={(e) => changeDate(e.target.value)} />}
               </Field>
 
@@ -439,6 +536,7 @@ function ExpenseForm({
                 label="Importe"
                 required
                 error={errors.amount}
+                warning={flags.amount}
                 help="Lo que has pagado, impuestos incluidos. Sin factura no se puede deducir el IVA, así que todo cuenta como gasto."
               >
                 {(p) => (
@@ -496,6 +594,7 @@ function ExpenseForm({
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <Field
                 label="Pagado a"
+                warning={form.payee === OTHER_PAYEE ? undefined : flags.payee}
                 action={
                   <Button variant="link" onClick={() => setCreatingSupplier(true)}>
                     Nuevo proveedor
@@ -516,7 +615,7 @@ function ExpenseForm({
                       />
                     )}
                   </Field>
-                  <Field label="NIF" hint="Si aparece en el justificante.">
+                  <Field label="NIF" hint="Si aparece en el justificante." warning={flags.payee}>
                     {(p) => (
                       <Input
                         {...p}

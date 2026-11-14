@@ -1,5 +1,5 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
-import { ExternalLink, Paperclip, ScanText, Trash2, Upload } from "lucide-react";
+import { ExternalLink, Loader2, Paperclip, ScanText, Trash2, Upload } from "lucide-react";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import {
   Dialog,
@@ -16,6 +16,7 @@ import { formatFileSize, parseDecimal } from "@/lib/format";
 import { isValidImputation } from "@cuentalibre/core";
 import type { Attachment } from "@cuentalibre/contracts";
 import { attachFile, attachmentUrl, discardAttachments, filesAreStored } from "@/data/files";
+import { isReadable } from "./reading-model";
 
 /* Form building blocks shared by received invoices and expenses. Tooltips need a TooltipProvider above. */
 
@@ -57,25 +58,33 @@ export function PercentInput({
 
 /**
  * The supplier's PDF or a photo of the receipt. With an API, picked files are uploaded when the record
- * that names them is saved; otherwise they stay in this browser tab. Reading the data from them (OCR) comes later.
+ * that names them is saved; otherwise they stay in this browser tab. With `onRead`, each PDF or photo
+ * can be read with AI to fill in the form; `readingId` is the one being read.
  */
 export function ReceiptDrop({
   attachments,
   onChange,
   prompt = "Arrastra aquí la factura del proveedor",
   label = "Justificante",
-  pickLabel = "Adjuntar justificante",
+  pickLabel = "Elige la factura del proveedor",
+  readLabel,
   note,
   accept = "application/pdf,image/*",
+  onRead,
+  readingId,
 }: {
   attachments: Attachment[];
   onChange: (a: Attachment[]) => void;
   prompt?: string;
   label?: string;
-  /** Phones have nothing to drag from: they get a button with this text instead of the drop area. */
+  /** Touch and narrow screens have nothing to drag from: they get a button with this text instead of the drop area. */
   pickLabel?: string;
+  /** Replaces `pickLabel` when the picked file will be read with AI. */
+  readLabel?: string;
   note?: string;
   accept?: string;
+  onRead?: (attachment: Attachment) => void;
+  readingId?: string;
 }) {
   const [over, setOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,9 +99,17 @@ export function ReceiptDrop({
   };
   return (
     <section aria-label={label} className="flex animate-rise-in flex-col gap-3" style={{ "--i": 0 } as CSSProperties}>
-      <Button variant="secondary" className="self-start lg:hidden" onClick={() => inputRef.current?.click()}>
-        <Paperclip strokeWidth={1.8} aria-hidden="true" />
-        {pickLabel}
+      <Button
+        variant="secondary"
+        className="self-start sm:pointer-fine:hidden"
+        onClick={() => inputRef.current?.click()}
+      >
+        {readLabel ? (
+          <ScanText strokeWidth={1.8} aria-hidden="true" />
+        ) : (
+          <Paperclip strokeWidth={1.8} aria-hidden="true" />
+        )}
+        {readLabel ?? pickLabel}
       </Button>
       <div
         onDragOver={(e) => {
@@ -102,7 +119,7 @@ export function ReceiptDrop({
         onDragLeave={() => setOver(false)}
         onDrop={onDrop}
         className={cn(
-          "flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-5 py-6 text-center transition-colors duration-150 max-lg:hidden",
+          "flex flex-col items-center gap-2 rounded-xl border border-dashed border-border px-5 py-6 text-center transition-colors duration-150 not-pointer-fine:hidden max-sm:hidden",
           over && "border-primary bg-primary-soft",
         )}
       >
@@ -116,9 +133,11 @@ export function ReceiptDrop({
         <p className="m-0 flex items-center gap-1.5 text-xs text-muted-foreground">
           <ScanText className="size-3.5" strokeWidth={1.8} aria-hidden="true" />
           {note ??
-            (filesAreStored()
-              ? "PDF o imagen. La lectura automática de datos (OCR) llegará más adelante."
-              : "PDF o imagen. Se guarda solo en esta sesión; la lectura automática de datos (OCR) llegará más adelante.")}
+            (onRead
+              ? "PDF o imagen. La IA rellena el formulario."
+              : filesAreStored()
+                ? "PDF o imagen."
+                : "PDF o imagen. Se guarda solo en esta sesión.")}
         </p>
         <input
           ref={inputRef}
@@ -136,6 +155,8 @@ export function ReceiptDrop({
       {attachments.length > 0 && (
         <AttachmentList
           attachments={attachments}
+          onRead={onRead}
+          readingId={readingId}
           onRemove={(a) => {
             onChange(attachments.filter((x) => x.id !== a.id));
             discardAttachments([a]);
@@ -146,13 +167,20 @@ export function ReceiptDrop({
   );
 }
 
-/** Attached files, each one opened in a new tab; `onRemove` adds a button to take it off. */
+/**
+ * Attached files, each one opened in a new tab; `onRemove` adds a button to take it off,
+ * and `onRead` one to read a PDF or photo with AI.
+ */
 export function AttachmentList({
   attachments,
   onRemove,
+  onRead,
+  readingId,
 }: {
   attachments: Attachment[];
   onRemove?: (attachment: Attachment) => void;
+  onRead?: (attachment: Attachment) => void;
+  readingId?: string;
 }) {
   return (
     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
@@ -184,6 +212,22 @@ export function AttachmentList({
                   El archivo se adjuntó en otra sesión y no se guardó; vuelve a adjuntarlo.
                 </TooltipContent>
               </Tooltip>
+            )}
+            {onRead && isReadable(a.name) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={readingId !== undefined}
+                onClick={() => onRead(a)}
+                aria-label={`Leer los datos de ${a.name}`}
+              >
+                {readingId === a.id ? (
+                  <Loader2 className="animate-spin" aria-hidden="true" />
+                ) : (
+                  <ScanText strokeWidth={1.8} aria-hidden="true" />
+                )}
+                <span className="max-sm:sr-only">Leer datos</span>
+              </Button>
             )}
             {onRemove && (
               <Button
