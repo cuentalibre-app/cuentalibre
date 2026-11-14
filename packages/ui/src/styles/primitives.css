@@ -26,13 +26,13 @@
   --blue-600: #2f45c9;
   --blue-800: #1e2f96;
 
-  /* Ink: the brand, on buttons and text; a warm ochre wash for soft highlights */
+  /* Ink: the brand, on buttons and text */
   --ink-900: #1d2024;
   --ink-700: #3a3e44;
-  --ochre-50: #f5eddd;
-  --ochre-200: #ead7ad;
 
-  /* Chart series: slate for income and taxes, peach for expenses */
+  /* Slate: soft highlights, and the chart series for income and taxes (peach for expenses) */
+  --slate-50: #edf1f5;
+  --slate-200: #cdd8e3;
   --slate-300: #a9bccf;
   --slate-700: #3e5c7a;
   --peach-400: #e39a6b;

@@ -13,7 +13,7 @@ const eur = (euros: number) => formatEUR(eurosToCents(euros));
 const colorGroups: { title: string; tokens: string[] }[] = [
   { title: "Superficies", tokens: ["background", "card", "popover", "sidebar", "muted", "muted-strong", "accent"] },
   { title: "Texto", tokens: ["foreground", "muted-foreground"] },
-  { title: "Marca", tokens: ["primary", "primary-hover", "primary-soft", "ring"] },
+  { title: "Marca", tokens: ["primary", "primary-hover", "primary-soft", "primary-soft-foreground", "ring"] },
   { title: "Bordes", tokens: ["border", "input", "divider"] },
   {
     title: "Estados",

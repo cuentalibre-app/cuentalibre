@@ -74,7 +74,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
       // Cap the stagger so the last cards of a long hub don't lag
       style={{ "--i": Math.min(index, 6) } as CSSProperties}
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
         <entry.icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
