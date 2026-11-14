@@ -16,7 +16,7 @@ import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { editContactPath } from "@/features/contacts/contacts-model";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { FormInfo } from "./form-info";
 import { usePartyBooks, type PartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
@@ -231,6 +231,7 @@ function Form190({ year, today }: { year: number; today: Date }) {
 }
 
 export function WithholdingsPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const annual = period.quarter === null;

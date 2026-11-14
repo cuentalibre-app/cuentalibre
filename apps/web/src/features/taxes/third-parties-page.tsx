@@ -9,7 +9,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { FormInfo } from "./form-info";
 import { usePartyBooks, type PartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
@@ -131,6 +131,7 @@ function Excluded({ books, excluded }: { books: PartyBooks; excluded: ReturnType
 }
 
 export function ThirdPartiesPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const year = period.year;

@@ -20,7 +20,7 @@ import { PeriodSelect } from "@/components/period-select";
 import { contactPath } from "@/features/contacts/contacts-model";
 import { formatDate } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { FormInfo } from "./form-info";
 import { usePartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow, type RecordValue } from "./records-table";
@@ -89,9 +89,10 @@ interface Selection {
 /** Months a bimonthly or monthly filing can pick, newest first, up to the current month. */
 function monthlyOptions(
   periodicity: Periodicity349,
+  years: number[],
   today: Date,
 ): { key: string; label: string; year: number; months: number[] }[] {
-  return availableYears.flatMap((year) => {
+  return years.flatMap((year) => {
     const last = year === today.getFullYear() ? today.getMonth() : 11;
     if (periodicity === "monthly") {
       return Array.from({ length: last + 1 }, (_, m) => ({
@@ -116,10 +117,11 @@ function monthlyOptions(
 }
 
 export function IntraEuPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [periodicity, setPeriodicity] = useState<Periodicity349>("quarterly");
-  const options = useMemo(() => monthlyOptions(periodicity, today), [periodicity, today]);
+  const options = useMemo(() => monthlyOptions(periodicity, availableYears, today), [periodicity, availableYears, today]);
   const [monthKey, setMonthKey] = useState<string | null>(null);
   const books = usePartyBooks();
 

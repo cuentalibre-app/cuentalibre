@@ -17,7 +17,7 @@ import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatShortDate, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { FlowsChart } from "./flows-chart";
 import { MethodCards } from "./method-cards";
 import { ManualPaymentDialog, SignedAmount } from "./treasury-parts";
@@ -47,6 +47,7 @@ interface Sort {
 
 /** Banks: what came in and went out over the last year, and every collection and payment. */
 export function PaymentsPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const { paymentMethods } = useSettings();
