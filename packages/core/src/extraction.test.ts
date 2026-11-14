@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkPurchaseDraft, findSupplierByTaxId, type PurchaseDraft } from "./extraction";
+import { checkPurchaseDraft, findSupplierByTaxId, readingMonth, type PurchaseDraft } from "./extraction";
 import type { Cents } from "./money";
 
 const c = (value: number) => value as Cents;
@@ -152,5 +152,16 @@ describe("findSupplierByTaxId", () => {
 
   it("never matches an empty tax ID", () => {
     expect(findSupplierByTaxId("", suppliers)).toBeUndefined();
+  });
+});
+
+describe("readingMonth", () => {
+  it("counts by the calendar month in Spain", () => {
+    expect(readingMonth(new Date("2026-11-14T12:00:00Z"))).toBe("2026-11");
+    // 23:30 UTC on 31 October is already 1 November in Madrid (CET, UTC+1)
+    expect(readingMonth(new Date("2026-10-31T23:30:00Z"))).toBe("2026-11");
+    // 22:30 UTC on 31 July is 00:30 on 1 August in summer time (CEST, UTC+2)
+    expect(readingMonth(new Date("2026-07-31T22:30:00Z"))).toBe("2026-08");
+    expect(readingMonth(new Date("2026-12-31T22:59:00Z"))).toBe("2026-12");
   });
 });

@@ -1,5 +1,6 @@
 import type { PurchaseExtraction } from "@cuentalibre/contracts";
-import { newId } from "@cuentalibre/core";
+import { newId, readingMonth } from "@cuentalibre/core";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { aiProtocol, createAiProvider } from "./ai";
 import type { ModelAnswer } from "./ai/answer";
@@ -9,6 +10,7 @@ import { parseJsonMessage } from "./ai/openai";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { loadEnv, type Env } from "./env";
+import { aiReading } from "./db/schema";
 import { accountMailer, createOrganization, db, env, mailer, signUp, storage, type Client } from "./test/harness";
 import { send } from "./test/sync";
 
@@ -80,15 +82,16 @@ const provider = {
 const openAiReply = (content: unknown) => () =>
   Response.json({
     choices: [{ message: { content: typeof content === "string" ? content : JSON.stringify(content) } }],
+    usage: { prompt_tokens: 1200, completion_tokens: 300, total_tokens: 1500 },
   });
 const anthropicReply = (input: unknown) => () =>
   Response.json({ content: [{ type: "tool_use", id: "toolu_1", name: "record_purchase", input }] });
 
-function appWith(ai: Pick<Env, "AI_MODEL" | "AI_API_KEY" | "AI_BASE_URL">) {
+function appWith(ai: Pick<Env, "AI_MODEL" | "AI_API_KEY" | "AI_BASE_URL">, limits: Partial<Env> = {}) {
   return createApp({
     db,
     auth: createAuth(db, env, accountMailer),
-    env,
+    env: { ...env, ...limits },
     storage,
     mailer,
     ai: createAiProvider(ai, provider.fetch),
@@ -327,5 +330,90 @@ describe("POST /v1/purchases/extract", () => {
     provider.reply = openAiReply("Lo siento, no puedo leerlo.");
     response = await extract(ana, fileId);
     expect(response.status).toBe(502);
+  });
+});
+
+describe("reading each file once", () => {
+  const ollama = { AI_MODEL: "qwen2.5vl", AI_BASE_URL: "http://ollama.test:11434/v1" };
+  const limitedApp = appWith(ollama, { AI_MONTHLY_DOCUMENTS: 2, AI_INPUT_PRICE: 0.4, AI_OUTPUT_PRICE: 1.6 });
+  const usage = async (user: Client) => {
+    const response = await user.request("/v1/purchases/extract/usage");
+    expect(response.status).toBe(200);
+    return response.json();
+  };
+
+  it("reuses the answer for the same bytes, working out the supplier afresh", async () => {
+    const ana = await memberOf(openAiApp);
+    provider.reply = openAiReply(answer());
+    const first = await extract(ana, await upload(ana, pdf(INVOICE_TEXT)));
+    expect(((await first.json()) as PurchaseExtraction).supplierId).toBeNull();
+
+    const brisa = { id: newId(), name: "Brisa Telecom SL", taxId: "B12345674" };
+    expect((await send(ana, [{ type: "create", entity: "suppliers", data: brisa }])).status).toBe(200);
+    provider.reply = () => new Response(null, { status: 500 });
+    // The same PDF, uploaded again as another file
+    const again = await extract(ana, await upload(ana, pdf(INVOICE_TEXT)));
+    expect(again.status).toBe(200);
+    expect(await again.json()).toMatchObject({ supplierId: brisa.id, source: "text", draft: { number: "F-118" } });
+    expect(provider.requests).toHaveLength(1);
+    expect(await usage(ana)).toEqual({ used: 1, limit: null, month: readingMonth(new Date()) });
+  });
+
+  it("doesn't count nor keep a reading that failed, so retrying calls the model again", async () => {
+    const ana = await memberOf(openAiApp);
+    const fileId = await upload(ana, pdf(INVOICE_TEXT));
+    provider.reply = () => new Response(null, { status: 503 });
+    expect((await extract(ana, fileId)).status).toBe(502);
+    provider.reply = openAiReply({ total: "ciento veintiuno" });
+    expect((await extract(ana, fileId)).status).toBe(502);
+    expect(await usage(ana)).toMatchObject({ used: 0 });
+
+    provider.reply = openAiReply(answer());
+    expect((await extract(ana, fileId)).status).toBe(200);
+    expect(provider.requests).toHaveLength(3);
+    expect(await usage(ana)).toMatchObject({ used: 1 });
+  });
+
+  it("stops at the monthly limit, still serving files already read", async () => {
+    const ana = await memberOf(limitedApp);
+    provider.reply = openAiReply(answer());
+    const read = await upload(ana, pdf(INVOICE_TEXT));
+    expect((await extract(ana, read)).status).toBe(200);
+    expect((await extract(ana, await upload(ana, pdf([])))).status).toBe(200);
+    expect(await usage(ana)).toMatchObject({ used: 2, limit: 2 });
+
+    const response = await extract(ana, await upload(ana, JPEG, "image/jpeg"));
+    expect(response.status).toBe(429);
+    expect(await response.json()).toMatchObject({ error: { code: "ai_quota_exceeded" } });
+    expect((await extract(ana, read)).status).toBe(200);
+    expect(provider.requests).toHaveLength(2);
+
+    // Another organization has its own count
+    const bea = await memberOf(limitedApp);
+    expect((await extract(bea, await upload(bea, JPEG, "image/jpeg"))).status).toBe(200);
+  });
+
+  it("counts concurrent readings against the limit", async () => {
+    const ana = await memberOf(limitedApp);
+    provider.reply = openAiReply(answer());
+    const files = await Promise.all([pdf(INVOICE_TEXT), pdf([]), JPEG].map((bytes) => upload(ana, bytes)));
+    const statuses = await Promise.all(files.map(async (fileId) => (await extract(ana, fileId)).status));
+    expect(statuses.sort()).toEqual([200, 200, 429]);
+  });
+
+  it("records the tokens and the estimated cost, not shown to the organization", async () => {
+    const ana = await signUp("Ana", limitedApp);
+    const { id: organizationId } = await createOrganization(ana, "Ana SL");
+    provider.reply = openAiReply(answer());
+    expect((await extract(ana, await upload(ana, pdf(INVOICE_TEXT)))).status).toBe(200);
+    const [row] = await db.select().from(aiReading).where(eq(aiReading.organizationId, organizationId));
+    // 1200 × 0.40 $ + 300 × 1.60 $ per million tokens
+    expect(row).toMatchObject({ model: "qwen2.5vl", inputTokens: 1200, outputTokens: 300, costMicros: 960 });
+  });
+
+  it("isn't available without a model", async () => {
+    const user = await signUp("Ana");
+    await createOrganization(user, "Ana SL");
+    expect((await user.request("/v1/purchases/extract/usage")).status).toBe(503);
   });
 });

@@ -6,7 +6,7 @@ import { Button } from "@cuentalibre/ui/components/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { Notice } from "@/components/page";
 import { currentBackend } from "@/data/backend";
-import { readAttachment, readingError } from "@/data/extraction";
+import { canRetryReading, readAttachment, readingError } from "@/data/extraction";
 import { attachFile } from "@/data/files";
 import { signInMethods } from "@/features/auth/auth-api";
 
@@ -33,12 +33,13 @@ export function useCanReadDocuments(): boolean {
 export type ReadingState =
   | { status: "idle" }
   | { status: "reading"; attachment: Attachment }
-  | { status: "failed"; attachment: Attachment; message: string }
+  | { status: "failed"; attachment: Attachment; message: string; retry: boolean }
   | { status: "done"; attachment: Attachment; extraction: PurchaseExtraction };
 
 /**
  * Reads attachments and hands each result to `apply`. A reading started later
  * wins over an earlier one still on its way, and none lands after the form is gone.
+ * An attachment already read on this page isn't sent again.
  */
 export function useReading(apply: (extraction: PurchaseExtraction, attachment: Attachment) => void) {
   const available = useCanReadDocuments();
@@ -47,6 +48,7 @@ export function useReading(apply: (extraction: PurchaseExtraction, attachment: A
   const mounted = useRef(false);
   const applyRef = useRef(apply);
   applyRef.current = apply;
+  const results = useRef(new Map<string, PurchaseExtraction>());
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -55,6 +57,7 @@ export function useReading(apply: (extraction: PurchaseExtraction, attachment: A
   }, []);
 
   const done = useCallback((attachment: Attachment, extraction: PurchaseExtraction) => {
+    results.current.set(attachment.id, extraction);
     setState({ status: "done", attachment, extraction });
     applyRef.current(extraction, attachment);
   }, []);
@@ -62,13 +65,15 @@ export function useReading(apply: (extraction: PurchaseExtraction, attachment: A
   const read = useCallback(
     async (attachment: Attachment) => {
       const token = ++latest.current;
+      const known = results.current.get(attachment.id);
+      if (known) return done(attachment, known);
       setState({ status: "reading", attachment });
       try {
         const extraction = await readAttachment(attachment);
         if (token === latest.current && mounted.current) done(attachment, extraction);
       } catch (error) {
         if (token === latest.current && mounted.current)
-          setState({ status: "failed", attachment, message: readingError(error) });
+          setState({ status: "failed", attachment, message: readingError(error), retry: canRetryReading(error) });
       }
     },
     [done],
@@ -98,10 +103,15 @@ export function ReadingNotice({
   if (state.status === "failed")
     return (
       <Notice role="alert" tone="danger">
-        {state.message}{" "}
-        <Button variant="link" onClick={onRetry}>
-          Volver a intentarlo
-        </Button>
+        {state.message}
+        {state.retry && (
+          <>
+            {" "}
+            <Button variant="link" onClick={onRetry}>
+              Volver a intentarlo
+            </Button>
+          </>
+        )}
       </Notice>
     );
   if (state.status === "done")

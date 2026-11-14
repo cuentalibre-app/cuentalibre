@@ -95,3 +95,18 @@ export function checkPurchaseDraft(draft: PurchaseDraft): DraftIssue[] {
 export function findSupplierByTaxId<T extends { taxId: string }>(taxId: string, suppliers: T[]): T | undefined {
   return suppliers.find((supplier) => sameTaxId(supplier.taxId, taxId));
 }
+
+const MONTH_IN_SPAIN = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Madrid",
+  year: "numeric",
+  month: "2-digit",
+});
+
+/**
+ * The month a document read with AI counts towards, as `YYYY-MM` in Spain's
+ * peninsular time: the limit starts afresh at midnight on the 1st there.
+ */
+export function readingMonth(at: Date): string {
+  const parts = Object.fromEntries(MONTH_IN_SPAIN.formatToParts(at).map(({ type, value }) => [type, value]));
+  return `${parts.year}-${parts.month}`;
+}
