@@ -203,7 +203,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
       <nav
         aria-label="Principal"
         className={cn(
-          "sticky top-0 h-dvh shrink-0 flex-col gap-0.5 overflow-x-hidden overflow-y-auto bg-sidebar px-3 py-4 transition-[width] duration-300 ease-out",
+          "sticky top-(--demo-banner-h,0px) h-[calc(100dvh-var(--demo-banner-h,0px))] shrink-0 flex-col gap-0.5 overflow-x-hidden overflow-y-auto bg-sidebar px-3 py-4 transition-[width] duration-300 ease-out",
           collapsed ? "w-16" : "w-60",
           className,
         )}

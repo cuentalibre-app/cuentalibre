@@ -24,3 +24,8 @@
     color: oklch(from var(--tag) 0.9 min(calc(c * 1.6), 0.08) h);
   }
 }
+
+/* Anchors and scrollIntoView land below the demo banner pinned on top */
+html {
+  scroll-padding-top: var(--demo-banner-h, 0px);
+}
