@@ -6,6 +6,7 @@ import {
   filingDeadline,
   filingStatus,
   fiscalCalendar,
+  quarterToFile,
   upcomingDeadlines,
 } from "./deadlines";
 
@@ -141,5 +142,27 @@ describe("calendarStatus", () => {
     expect(calendarStatus(october, new Date(2026, 9, 16))).toBe("inProgress");
     expect(calendarStatus(october, new Date(2026, 9, 30))).toBe("open");
     expect(calendarStatus(october, new Date(2026, 9, 31))).toBe("closed");
+  });
+});
+
+describe("quarterToFile", () => {
+  const at = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y!, m! - 1, d!);
+  };
+  const pick = (iso: string) => {
+    const q = quarterToFile(at(iso));
+    return [q.year, q.quarter, ymd(q.dueOn), q.status];
+  };
+
+  it("points at the last quarter while it can still be filed", () => {
+    expect(pick("2026-10-20")).toEqual([2026, 3, "2026-10-20", "open"]);
+    expect(pick("2027-01-15")).toEqual([2026, 4, "2027-02-01", "open"]);
+  });
+
+  it("points at the running quarter once the last one is closed", () => {
+    expect(pick("2026-10-21")).toEqual([2026, 4, "2027-02-01", "inProgress"]);
+    expect(pick("2026-11-14")).toEqual([2026, 4, "2027-02-01", "inProgress"]);
+    expect(pick("2027-02-02")).toEqual([2027, 1, "2027-04-20", "inProgress"]);
   });
 });

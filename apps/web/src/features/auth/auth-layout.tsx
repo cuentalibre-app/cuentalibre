@@ -1,10 +1,9 @@
 import type { ComponentProps, FormEvent, ReactNode } from "react";
-import { Code, HandCoins, LockKeyhole, type LucideIcon } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { LegalLinks, SITE_URL } from "@/components/legal-links";
 import { LogoMark } from "@/components/logo";
-import appScreen from "./assets/inicio.webp";
+import { DeadlinePanel, ProductPanel } from "./brand-panels";
 
 interface AuthLayoutProps {
   title: string;
@@ -16,14 +15,16 @@ interface AuthLayoutProps {
   eyebrow?: ReactNode;
   /** A wider column, for forms with fields side by side. */
   wide?: boolean;
+  /** What the panel beside the form shows: the next filing deadline, or the app, to people signing up. */
+  panel?: "deadline" | "product";
 }
 
 /**
  * The screens around the app (sign-in, sign-up, onboarding). On wide screens they speak like the public
- * site: serif headline and a brand panel that shows the app. On phones they look like the app itself:
+ * site: serif headline and a brand panel beside the form. On phones they look like the app itself:
  * the brand wash behind, a sans headline and the form on a card.
  */
-export function AuthLayout({ title, description, children, footer, eyebrow, wide = false }: AuthLayoutProps) {
+export function AuthLayout({ title, description, children, footer, eyebrow, wide = false, panel = "deadline" }: AuthLayoutProps) {
   return (
     <div className="relative isolate grid min-h-dvh bg-canvas lg:grid-cols-2 lg:bg-background">
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 bg-aurora lg:hidden" />
@@ -46,7 +47,7 @@ export function AuthLayout({ title, description, children, footer, eyebrow, wide
         {/* Phones reach these from the consent line and from the app's menu */}
         <LegalLinks className="hidden lg:flex" />
       </main>
-      <BrandPanel />
+      {panel === "product" ? <ProductPanel /> : <DeadlinePanel />}
     </div>
   );
 }
@@ -62,50 +63,6 @@ function Brand() {
       <LogoMark className="h-6" />
       <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
     </a>
-  );
-}
-
-const reasons: { icon: LucideIcon; title: string; text: string }[] = [
-  { icon: Code, title: "Código abierto", text: "Cada cálculo de IVA e IRPF, a la vista." },
-  { icon: LockKeyhole, title: "Privado por defecto", text: "Tus datos fiscales no son nuestro negocio." },
-  { icon: HandCoins, title: "Gratis de verdad", text: "Facturas y gastos ilimitados." },
-];
-
-/** The site's promise beside the form, over a glimpse of the app. Only on wide screens. */
-function BrandPanel() {
-  return (
-    <aside className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-brand-glow lg:flex lg:flex-col">
-      <div className="relative z-10 flex flex-col gap-8 p-12 xl:p-16">
-        <p className="m-0 font-display text-[clamp(36px,3.6vw,52px)] leading-[1.04] font-semibold tracking-[-0.025em] text-balance">
-          Impuestos al día.
-          <br />
-          <span className="text-gradient-brand">100&nbsp;% código abierto.</span>
-        </p>
-        <ul className="m-0 flex list-none flex-col gap-4 p-0">
-          {reasons.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex items-center gap-3.5">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-primary">
-                <Icon className="size-[18px]" aria-hidden />
-              </span>
-              <span className="flex flex-col">
-                <span className="text-md font-semibold">{title}</span>
-                <span className="text-base text-muted-foreground">{text}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      {/* Decorative: the app's home screen, peeking in from the bottom-right corner */}
-      <img
-        src={appScreen}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        width={1400}
-        height={875}
-        className="pointer-events-none absolute top-[min(60%,420px)] left-12 w-[1100px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
-      />
-    </aside>
   );
 }
 

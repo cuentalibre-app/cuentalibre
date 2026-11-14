@@ -470,6 +470,7 @@ export function OnboardingPage() {
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <AuthLayout
         wide
+        panel="product"
         eyebrow={<Progress steps={steps} step={step} />}
         title={current.title}
         description={current.description}
