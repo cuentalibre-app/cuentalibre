@@ -45,7 +45,7 @@ import { SettingsLink } from "@/features/settings/settings-parts";
 import { settingsStore } from "@/features/settings/settings-store";
 import { TagChips } from "@/features/settings/tag-chip";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { Page, PageHeader, Toolbar } from "@/components/page";
+import { HelpTip, Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { MONTHS, formatDate, formatPercent, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -251,154 +251,157 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   );
 
   return (
-    <Page>
-      <PageHeader
-        title={config.title}
-        actions={
-          <>
-            <SettingsLink
-              to={SETTINGS_PATHS[kind]}
-              from={config.title.toLowerCase()}
-              aria-label={`Configurar ${config.title.toLowerCase()}`}
-              title={`Configurar ${config.title.toLowerCase()}`}
-              className={buttonVariants({ variant: "secondary", size: "icon" })}
-            >
-              <Settings strokeWidth={1.8} aria-hidden="true" />
-            </SettingsLink>
-            <Link to={config.newPath} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
-              <Plus strokeWidth={2} aria-hidden="true" />
-              <span className="max-lg:sr-only">{config.newLabel}</span>
-            </Link>
-          </>
-        }
-      />
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <Page>
+        <PageHeader
+          title={config.title}
+          inline={<HelpTip side="bottom">{config.help}</HelpTip>}
+          actions={
+            <>
+              <SettingsLink
+                to={SETTINGS_PATHS[kind]}
+                from={config.title.toLowerCase()}
+                aria-label={`Configurar ${config.title.toLowerCase()}`}
+                title={`Configurar ${config.title.toLowerCase()}`}
+                className={buttonVariants({ variant: "secondary", size: "icon" })}
+              >
+                <Settings strokeWidth={1.8} aria-hidden="true" />
+              </SettingsLink>
+              <Link to={config.newPath} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
+                <Plus strokeWidth={2} aria-hidden="true" />
+                <span className="max-lg:sr-only">{config.newLabel}</span>
+              </Link>
+            </>
+          }
+        />
 
-      {kind === "invoice" && <InvoiceSummary rows={periodRows} />}
+        {kind === "invoice" && <InvoiceSummary rows={periodRows} />}
 
-      <section
-        aria-label={`Listado de ${config.title.toLowerCase()}`}
-        className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
-        style={{ "--i": 1 } as CSSProperties}
-      >
-        <Toolbar>
-          <SearchField
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por número, cliente o NIF"
-            aria-label="Buscar"
-          />
-          {statusFilter && <div className="max-lg:hidden">{statusFilter}</div>}
-          <PeriodSelect
-            compact
-            value={period}
-            onChange={(p) => {
-              setPeriod(p);
-              setThisMonth(false);
-              // The month belongs to the old period
-              set("month", ALL);
-            }}
-            years={availableYears}
-            today={today}
-          />
-          {thisMonth && (
+        <section
+          aria-label={`Listado de ${config.title.toLowerCase()}`}
+          className="flex animate-rise-in flex-col lg:overflow-hidden lg:surface"
+          style={{ "--i": 1 } as CSSProperties}
+        >
+          <Toolbar>
+            <SearchField
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por número, cliente o NIF"
+              aria-label="Buscar"
+            />
+            {statusFilter && <div className="max-lg:hidden">{statusFilter}</div>}
+            <PeriodSelect
+              compact
+              value={period}
+              onChange={(p) => {
+                setPeriod(p);
+                setThisMonth(false);
+                // The month belongs to the old period
+                set("month", ALL);
+              }}
+              years={availableYears}
+              today={today}
+            />
+            {thisMonth && (
+              <Button
+                variant="secondary"
+                onClick={() => setThisMonth(false)}
+                aria-label="Quitar el filtro del mes en curso"
+              >
+                Solo {MONTH_NAME.format(today)}
+                <X aria-hidden="true" />
+              </Button>
+            )}
+            {defaults && (
+              <SettingsLink
+                to={PREFERENCES_PATH}
+                from={config.title.toLowerCase()}
+                aria-label="Filtros por defecto"
+                title="Filtros por defecto"
+                className={buttonVariants({ variant: "secondary", size: "icon" })}
+              >
+                <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
+              </SettingsLink>
+            )}
+            <FiltersButton
+              open={showFilters}
+              controls="sales-filters"
+              count={extraFilters}
+              phoneCount={extraFilters + (statusFilter && status !== ALL ? 1 : 0)}
+              onToggle={() => setShowFilters((s) => !s)}
+            />
             <Button
               variant="secondary"
-              onClick={() => setThisMonth(false)}
-              aria-label="Quitar el filtro del mes en curso"
+              className="max-lg:hidden lg:ml-auto"
+              disabled={!canExport}
+              onClick={downloadCsvFile}
             >
-              Solo {MONTH_NAME.format(today)}
-              <X aria-hidden="true" />
+              <Download strokeWidth={1.8} aria-hidden="true" />
+              CSV
             </Button>
-          )}
-          {defaults && (
-            <SettingsLink
-              to={PREFERENCES_PATH}
-              from={config.title.toLowerCase()}
-              aria-label="Filtros por defecto"
-              title="Filtros por defecto"
-              className={buttonVariants({ variant: "secondary", size: "icon" })}
+            <Button
+              variant="secondary"
+              className="max-lg:hidden"
+              disabled={!canExport || exporting}
+              aria-label={`Descargar ${rows.length} PDF en un .zip`}
+              title="Un PDF por documento, en un .zip"
+              onClick={downloadPdfs}
             >
-              <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
-            </SettingsLink>
+              <FileArchive strokeWidth={1.8} aria-hidden="true" />
+              PDF (.zip)
+            </Button>
+          </Toolbar>
+
+          <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
+            <FiltersPanel
+              lead={
+                statusFilter && (
+                  <div className="flex min-w-0 flex-col gap-1 lg:hidden">
+                    <span className="text-xs font-medium text-muted-foreground">Estado</span>
+                    {statusFilter}
+                  </div>
+                )
+              }
+              filters={filters}
+              // Within the current month only that month can be picked
+              months={thisMonth ? [today.getMonth()] : periodMonths(period)}
+              clients={periodClients}
+              tags={tags}
+              incomeTypes={kind === "invoice" || kind === "draft"}
+              onChange={set}
+              onClear={() => {
+                setFilters(NO_FILTERS);
+                // On phones the status is one of the panel's filters, so it goes too
+                if (!desktop) setStatus(ALL);
+              }}
+            />
+          </FiltersSheet>
+
+          {rows.length === 0 ? (
+            <EmptyState
+              message={filtered ? "Ningún resultado coincide con la búsqueda." : config.empty}
+              hint={
+                filtered ? "Prueba con otro término o quita algún filtro." : "Puedes cambiar el periodo en el selector."
+              }
+              action={
+                !filtered && (
+                  <Link to={config.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
+                    <Plus strokeWidth={2} aria-hidden="true" />
+                    {config.newLabel}
+                  </Link>
+                )
+              }
+            />
+          ) : (
+            <>
+              {/* Keyed by period so the rows replay their entrance when it changes, like the dashboard */}
+              <DocumentsTable key={`table-${periodKey(period)}`} rows={rows} sort={sort} onSort={setSort} />
+              <DocumentsList key={`list-${periodKey(period)}`} rows={rows} />
+            </>
           )}
-          <FiltersButton
-            open={showFilters}
-            controls="sales-filters"
-            count={extraFilters}
-            phoneCount={extraFilters + (statusFilter && status !== ALL ? 1 : 0)}
-            onToggle={() => setShowFilters((s) => !s)}
-          />
-          <Button
-            variant="secondary"
-            className="max-lg:hidden lg:ml-auto"
-            disabled={!canExport}
-            onClick={downloadCsvFile}
-          >
-            <Download strokeWidth={1.8} aria-hidden="true" />
-            CSV
-          </Button>
-          <Button
-            variant="secondary"
-            className="max-lg:hidden"
-            disabled={!canExport || exporting}
-            aria-label={`Descargar ${rows.length} PDF en un .zip`}
-            title="Un PDF por documento, en un .zip"
-            onClick={downloadPdfs}
-          >
-            <FileArchive strokeWidth={1.8} aria-hidden="true" />
-            PDF (.zip)
-          </Button>
-        </Toolbar>
-
-        <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
-        <FiltersPanel
-          lead={
-            statusFilter && (
-              <div className="flex min-w-0 flex-col gap-1 lg:hidden">
-                <span className="text-xs font-medium text-muted-foreground">Estado</span>
-                {statusFilter}
-              </div>
-            )
-          }
-          filters={filters}
-          // Within the current month only that month can be picked
-          months={thisMonth ? [today.getMonth()] : periodMonths(period)}
-          clients={periodClients}
-          tags={tags}
-          incomeTypes={kind === "invoice" || kind === "draft"}
-          onChange={set}
-          onClear={() => {
-            setFilters(NO_FILTERS);
-            // On phones the status is one of the panel's filters, so it goes too
-            if (!desktop) setStatus(ALL);
-          }}
-        />
-        </FiltersSheet>
-
-        {rows.length === 0 ? (
-          <EmptyState
-            message={filtered ? "Ningún resultado coincide con la búsqueda." : config.empty}
-            hint={
-              filtered ? "Prueba con otro término o quita algún filtro." : "Puedes cambiar el periodo en el selector."
-            }
-            action={
-              !filtered && (
-                <Link to={config.newPath} className={cn(buttonVariants({ variant: "secondary" }), "mt-3")}>
-                  <Plus strokeWidth={2} aria-hidden="true" />
-                  {config.newLabel}
-                </Link>
-              )
-            }
-          />
-        ) : (
-          <>
-            {/* Keyed by period so the rows replay their entrance when it changes, like the dashboard */}
-            <DocumentsTable key={`table-${periodKey(period)}`} rows={rows} sort={sort} onSort={setSort} />
-            <DocumentsList key={`list-${periodKey(period)}`} rows={rows} />
-          </>
-        )}
-      </section>
-    </Page>
+        </section>
+      </Page>
+    </TooltipProvider>
   );
 }
 
@@ -430,7 +433,7 @@ function FiltersPanel({
     <div
       id="sales-filters"
       className={cn(
-        "grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:items-end lg:px-4",
+        "grid gap-3 sm:grid-cols-2 lg:animate-fade-in lg:items-end lg:border-y lg:border-border lg:bg-muted/50 lg:px-4 lg:py-3",
         incomeTypes ? "lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]" : "lg:grid-cols-[repeat(4,minmax(0,1fr))_auto]",
       )}
     >
@@ -553,8 +556,10 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
     <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 wide:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col surface">
-          <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-          <dd className="m-0 amount px-4 pt-4 text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium">
+          <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">
+            {s.label}
+          </dt>
+          <dd className="m-0 px-4 pt-4 amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium">
             <AnimatedAmount value={s.value} />
           </dd>
           <dd className="m-0 px-4 pt-1.5 pb-4 text-sm text-muted-foreground">{s.detail}</dd>
