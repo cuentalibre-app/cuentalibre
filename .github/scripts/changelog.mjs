@@ -1,55 +1,28 @@
-// Reads and rewrites CHANGELOG.md for a release. PRs add lines under "## Próxima versión";
-// releasing moves the ones that shipped into a section of their own.
+// Adds a released version to CHANGELOG.md, newest first, from the release notes GitHub
+// generated for it (one line per merged PR, plus new contributors).
 //
-//   node changelog.mjs notes <changelog>
-//     prints what's under "## Próxima versión"
-//   node changelog.mjs release <changelog> <version> <date> <shipped notes file>
-//     moves the shipped lines from "## Próxima versión" to "## <version> (<date>)", in place
+//   node changelog.mjs release <changelog> <version> <date> <notes file>
 import { readFileSync, writeFileSync } from "node:fs";
 
-const NEXT = "## Próxima versión";
-
-function split(text) {
-  const lines = text.split("\n");
-  const start = lines.indexOf(NEXT);
-  if (start === -1) throw new Error(`CHANGELOG.md has no "${NEXT}" heading`);
-  let end = lines.findIndex((line, i) => i > start && line.startsWith("## "));
-  if (end === -1) end = lines.length;
-  return { before: lines.slice(0, start), next: lines.slice(start + 1, end), after: lines.slice(end) };
+const [command, file, version, date, notesFile] = process.argv.slice(2);
+if (command !== "release" || !notesFile) {
+  throw new Error("usage: changelog.mjs release <changelog> <version> <date> <notes file>");
 }
 
-const trim = (lines) => {
-  const out = [...lines];
-  while (out.length && !out[0].trim()) out.shift();
-  while (out.length && !out.at(-1).trim()) out.pop();
-  return out;
-};
+const notes = readFileSync(notesFile, "utf8")
+  .split("\n")
+  // The version heading already says what changed; the rest moves one level down under it
+  .filter((line) => line.trim() !== "## What's Changed")
+  .map((line) => (line.startsWith("## ") ? `#${line}` : line))
+  .join("\n")
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
 
-const [command, file, ...args] = process.argv.slice(2);
-const { before, next, after } = split(readFileSync(file, "utf8"));
+const text = readFileSync(file, "utf8");
+const lines = text.split("\n");
+const first = lines.findIndex((line) => line.startsWith("## "));
+const head = (first === -1 ? lines : lines.slice(0, first)).join("\n").trimEnd();
+const rest = first === -1 ? "" : lines.slice(first).join("\n").trim();
 
-if (command === "notes") {
-  const notes = trim(next);
-  if (notes.length) process.stdout.write(notes.join("\n") + "\n");
-} else if (command === "release") {
-  const [version, date, shippedFile] = args;
-  // Lines merged after the promoted commit stay for the next version
-  const shipped = new Set(trim(readFileSync(shippedFile, "utf8").split("\n")).filter((l) => l.trim()));
-  const kept = trim(next.filter((line) => line.trim() && !shipped.has(line)));
-  const released = trim(next.filter((line) => !line.trim() || shipped.has(line)));
-  const section = released.some((l) => l.trim()) ? released : ["Correcciones y mejoras internas."];
-  const out = [
-    ...trim(before),
-    "",
-    NEXT,
-    "",
-    ...(kept.length ? [...kept, ""] : []),
-    `## ${version} (${date})`,
-    "",
-    ...section,
-    ...(after.length ? ["", ...after] : [""]),
-  ];
-  writeFileSync(file, out.join("\n").replace(/\n*$/, "\n"));
-} else {
-  throw new Error(`Unknown command: ${command}`);
-}
+const section = `## ${version} (${date})\n\n${notes}`;
+writeFileSync(file, [head, section, rest].filter(Boolean).join("\n\n") + "\n");

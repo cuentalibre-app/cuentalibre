@@ -80,8 +80,8 @@ Run the same workflow from a `v*` tag instead of `main` (_Use workflow from_ ›
 Every promotion is a SemVer version for self-hosters, so they run exactly what production runs, and [the install guide](../apps/site/src/content/docs/instalar.md) checks out the latest `v*` tag rather than `main`. The tag is the only place the version lives.
 
 - The workflow asks for the kind of version: `patch` (the default) for fixes, `minor` for something new, `major` for a change that breaks something for self-hosters. While on `0.x`, a breaking change bumps the middle number instead.
-- `CHANGELOG.md` says what each version changes, in Spanish and for the people who run cuentalibre. A PR with a change people will notice adds a line under `## Próxima versión`; internal changes add nothing.
-- `publish-version.sh` tags the promoted commit, creates a GitHub Release with what that commit's changelog lists under `Próxima versión` ("Correcciones y mejoras internas." when it's empty), and commits to `main` the changelog with those lines under `## <version> (<date>)`. Lines merged after the promoted commit stay for the next version. That commit runs no CI (pushes with the workflow token start no workflows) and changes no app, so the next promotion's CI check looks past it.
+- `CHANGELOG.md` says what each version changes, newest first. Nobody edits it by hand: a version lists the PRs merged since the previous one, so a PR's title is its changelog line and should say what changes for the people who use or run cuentalibre.
+- `publish-version.sh` tags the promoted commit, has GitHub generate the release notes from the PRs merged since the last tag (title, author, link, and first-time contributors), creates the GitHub Release with them, and commits them to `main` as `## <version> (<date>)` in the changelog. That commit runs no CI (pushes with the workflow token start no workflows) and changes no app, so the next promotion's CI check looks past it.
 - Promoting a commit with nothing new since the last version, apart from the changelog, publishes nothing.
 
 ### Settings
