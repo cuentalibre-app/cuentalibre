@@ -48,8 +48,8 @@ function Change({ value, inverse, year }: { value: number | null; inverse?: bool
       <span className={cn("amount font-medium", good ? "text-success" : "text-destructive")}>
         {up ? "↑" : "↓"} {formatPercent(Math.abs(value) * 100)}
       </span>{" "}
-      {/* Phones: the year itself, so the line fits in a half-width card */}
-      <span className="lg:hidden">respecto a {year - 1}</span>
+      {/* Phones: the short form, so the line fits in a half-width card */}
+      <span className="lg:hidden">vs. {year - 1}</span>
       <span className="max-lg:hidden">respecto al año anterior</span>
     </span>
   );
@@ -74,11 +74,11 @@ function Kpi({
 }) {
   return (
     <div className="flex animate-rise-in flex-col surface" style={{ "--i": index } as CSSProperties}>
-      {/* Ruled off from the figure, like the cards on Inicio */}
-      <span className="border-b border-divider px-3.5 py-2.5 text-sm font-semibold lg:px-4 lg:py-3 lg:text-lg">
+      {/* Desktop: ruled off from the figure, like the cards on Inicio; phones keep it compact */}
+      <span className="px-3.5 pt-3 text-sm font-semibold text-muted-foreground lg:border-b lg:border-divider lg:px-4 lg:py-3 lg:text-lg lg:text-foreground">
         {label}
       </span>
-      <div className="flex flex-col gap-1.5 px-3.5 pt-3 pb-3.5 lg:gap-2 lg:p-4">
+      <div className="flex flex-col gap-1 px-3.5 pt-1 pb-3.5 lg:gap-2 lg:p-4">
         <span className="amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium">{value}</span>
         {change !== undefined && <Change value={change} inverse={inverse} year={year} />}
         {children}

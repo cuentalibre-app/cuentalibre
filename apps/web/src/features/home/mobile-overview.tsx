@@ -400,7 +400,7 @@ function TakeHomeSummary({ data }: { data: HomeData }) {
   return (
     <section aria-labelledby="mobile-take-home-title" className="flex flex-col gap-2.5 pt-2">
       <h2 id="mobile-take-home-title" className="m-0 text-lg font-semibold tracking-tight">
-        Lo que te queda
+        Beneficio neto estimado
       </h2>
       <div className="surface flex flex-col overflow-hidden">
         <div className="flex flex-col gap-3.5 px-4 pt-4 pb-3">

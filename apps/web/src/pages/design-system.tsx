@@ -266,7 +266,7 @@ export function DesignSystemPage() {
 
           <Card className="min-w-0 flex-[1_1_300px]">
             <div className="flex flex-col gap-1">
-              <CardTitle>Neto después de impuestos</CardTitle>
+              <CardTitle>Beneficio neto estimado</CardTitle>
               <span className="text-sm text-muted-foreground">De {eur(ingresos)} facturados sin IVA</span>
             </div>
             <span className="amount text-4xl font-medium">{eur(neto)}</span>
