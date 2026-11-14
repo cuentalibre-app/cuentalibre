@@ -9,7 +9,7 @@ import { useLayoutEffect, useRef } from "react";
 
 const NOT_TYPED = new Set(["checkbox", "radio", "button", "submit", "reset", "file", "range", "color", "image"]);
 
-const isTouchScreen = () => window.matchMedia("(pointer: coarse)").matches;
+export const isTouchScreen = () => window.matchMedia("(pointer: coarse)").matches;
 
 function raisesKeyboard(element: Element | null): boolean {
   if (element instanceof HTMLTextAreaElement) return true;
@@ -43,7 +43,8 @@ export function withClosedKeyboard(onOpenAutoFocus?: (event: Event) => void) {
 
 /**
  * A field with `autoFocus` takes the focus as it mounts, before the panel's `onOpenAutoFocus`
- * (which then never fires). Rendered last inside the panel, this undoes it on touch screens.
+ * (which then never fires). Rendered last inside the panel, this undoes it on touch screens
+ * for fields that are not our `Input` or `Textarea`, which already skip `autoFocus` there.
  */
 export function ClosedKeyboardGuard() {
   const ref = useRef<HTMLSpanElement>(null);
