@@ -188,7 +188,8 @@ interface SidebarProps {
   className?: string;
   /** Icon-only rail: labels hide and groups open as flyout menus. */
   collapsed: boolean;
-  onToggle: () => void;
+  /** Omitted when the rail is forced (narrow screens), which shows the logo mark instead of the toggle */
+  onToggle?: () => void;
 }
 
 export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
@@ -223,29 +224,39 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
               </span>
             </>
           )}
-          <RailTooltip
-            enabled
-            side={collapsed ? "right" : "bottom"}
-            label={
-              <>
-                {collapsed ? "Expandir menú" : "Contraer menú"}
-                <kbd className="font-sans text-xs opacity-60">⌘B</kbd>
-              </>
-            }
-          >
-            <button
-              type="button"
-              onClick={onToggle}
-              aria-label={collapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
-              aria-keyshortcuts="Meta+B Control+B"
-              className={cn(
-                "grid size-8 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground active:scale-[0.94]",
-                !collapsed && "-mr-1.5",
-              )}
+          {onToggle ? (
+            <RailTooltip
+              enabled
+              side={collapsed ? "right" : "bottom"}
+              label={
+                <>
+                  {collapsed ? "Expandir menú" : "Contraer menú"}
+                  <kbd className="font-sans text-xs opacity-60">⌘B</kbd>
+                </>
+              }
             >
-              <ToggleIcon className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
-            </button>
-          </RailTooltip>
+              <button
+                type="button"
+                onClick={onToggle}
+                aria-label={collapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
+                aria-keyshortcuts="Meta+B Control+B"
+                className={cn(
+                  "grid size-8 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground active:scale-[0.94]",
+                  !collapsed && "-mr-1.5",
+                )}
+              >
+                <ToggleIcon className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
+              </button>
+            </RailTooltip>
+          ) : (
+            <NavLink
+              to="/"
+              aria-label="Ir a inicio"
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-sidebar-foreground no-underline"
+            >
+              <LogoMark className="h-5" />
+            </NavLink>
+          )}
         </div>
 
         <CreateMenu
@@ -253,7 +264,11 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           openOnHover={collapsed}
           contentClassName={collapsed ? undefined : "w-[var(--radix-dropdown-menu-trigger-width)]"}
         >
-          <Button variant="secondary" size="sm" className={cn("mb-3 w-full overflow-hidden font-medium", collapsed && "px-0")}>
+          <Button
+            variant="secondary"
+            size="sm"
+            className={cn("mb-3 w-full overflow-hidden font-medium", collapsed && "px-0")}
+          >
             <Plus strokeWidth={2} aria-hidden="true" />
             <span className={collapsed ? "sr-only" : undefined}>Crear</span>
           </Button>

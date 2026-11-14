@@ -2,6 +2,16 @@
 @import "@cuentalibre/ui/styles.css";
 
 /*
+ * The desktop shell (sidebar rail, cards, tables) starts at tablet width: an iPad gets the
+ * desktop layout with the forced rail, and only phones fall back to the bottom nav.
+ */
+@theme {
+  --breakpoint-lg: 48rem;
+  /* The old desktop width, for rows that need it (four cards abreast, the invoice line editor) */
+  --breakpoint-wide: 64rem;
+}
+
+/*
  * A chip in the colour the user picked for a tag (--tag, set inline). In light it is that colour
  * with black or white text (--tag-text); in dark a pale pastel would glare, so the chip takes a
  * deep tint of the same hue with light text of that hue.

@@ -23,7 +23,7 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 import { useSettings } from "@/features/settings/settings-store";
 
 // Panels are separate cards with room between them; rows rise in one after another.
-const sheet = "flex flex-col gap-5 lg:gap-3";
+const sheet = "@container flex flex-col gap-5 lg:gap-3";
 const row = "flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch lg:gap-3";
 
 export function HomePage() {
