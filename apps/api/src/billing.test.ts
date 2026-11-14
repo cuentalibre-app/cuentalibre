@@ -417,7 +417,7 @@ describe("the plan", () => {
       .set({ createdAt: new Date(Date.now() - days * DAY) })
       .where(eq(organization.id, organizationId));
   const addSupplier = (client: Client, name: string) =>
-    client.request("/v1/contacts", { method: "POST", body: { role: "supplier", name, taxId: "B11111111" } });
+    client.request("/v1/contacts", { method: "POST", body: { role: "supplier", name, taxId: "B11111119" } });
 
   it("turns away writes once the trial ends, keeps reads, and writes again after subscribing", async () => {
     const ana = await owner();

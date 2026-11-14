@@ -14,7 +14,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { sumBy, type Cents } from "@cuentalibre/core";
+import { countryOf, sumBy, type Cents } from "@cuentalibre/core";
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { SearchField } from "@cuentalibre/ui/components/input";
@@ -48,7 +48,7 @@ import { TagChips } from "@/features/settings/tag-chip";
 import { attachFile } from "@/data/files";
 import { customFieldLabels } from "./contact-settings-store";
 import { contactActivity, type ActivityRow } from "./contacts-activity";
-import { ROLES, contactPath, countryOf, downloadVCard, editContactPath, formatAddress } from "./contacts-model";
+import { ROLES, contactPath, downloadVCard, editContactPath, formatAddress } from "./contacts-model";
 import { contactsStore, useContacts } from "./contacts-store";
 
 const ALL = "all";

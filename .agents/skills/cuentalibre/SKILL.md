@@ -108,7 +108,7 @@ Use an expense for tickets, the autónomo fee, fees and anything without a full 
 
 ### Received invoice
 
-1. Find the supplier by its tax ID (`GET /contacts?role=supplier&taxId=…`) or create it. The API accepts repeated tax IDs, so look before creating.
+1. Find the supplier by its tax ID (`GET /contacts?role=supplier&taxId=…`) or create it. The API accepts repeated tax IDs, so look before creating. A new contact needs a valid tax ID (`400 invalid_tax_id`); if the one on the document is unreadable, ask the user.
 2. Upload the PDF with a new UUID (`UPLOAD <file> <uuid>`).
 3. `POST /purchase-invoices` with the supplier's `number`, `issuedOn`, `bookedOn` (usually the same day; it decides the quarter), `expenseType`, `imputation`, `vatImputation: null`, `withholding`, `operationType`, `cashBasis`, `rental`, `lines` (unit prices in euros, VAT as a fraction), `payments`, `privateNotes: ""` and the attachment. Add `asset` for investment goods that are amortized.
 4. Check that the totals you computed from the lines match the document before reporting back.
