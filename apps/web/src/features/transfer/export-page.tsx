@@ -23,7 +23,10 @@ const OPTIONS: { to: string; title: string; description: string; icon: LucideIco
 
 export function ExportPage() {
   return (
-    <PageShell title="Exportaciones">
+    <PageShell
+      title="Exportaciones"
+      help="Descarga tus datos en Excel o CSV, para tu gestoría, para Hacienda o para guardarlos."
+    >
       <div className="grid gap-4 md:grid-cols-2">
         {OPTIONS.map((o, i) => (
           <Link
