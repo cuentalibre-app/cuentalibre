@@ -198,9 +198,7 @@ export function SeriesTable() {
           «{blocked?.series.name}» numera {blocked?.uses}{" "}
           {blocked?.uses === 1 ? "factura o borrador" : "facturas o borradores"}, así que no se puede eliminar.
         </p>
-        <p className="m-0">
-          Puedes desactivarla: no se podrán crear facturas nuevas en ella, pero las que tiene la conservan.
-        </p>
+        <p className="m-0">Desactivada, no admite facturas nuevas; las existentes se mantienen.</p>
       </ConfirmDialog>
     </>
   );

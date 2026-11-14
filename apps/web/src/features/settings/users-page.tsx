@@ -126,7 +126,7 @@ function UserDialog({
         <DialogDescription>
           {user
             ? "Cambia su rol o hasta cuándo puede acceder a tu empresa."
-            : "Le enviaremos una invitación por email para que acceda a tu empresa con su propio usuario."}
+            : "Le enviaremos una invitación por email."}
         </DialogDescription>
         <form
           className="flex flex-col gap-4"
@@ -389,7 +389,7 @@ function MembersPage() {
       <SettingsHeader title="Gestión de usuarios" description="Las personas que tienen acceso a tu empresa." />
       {error && (
         <p role="alert" className="m-0 rounded-xl bg-destructive-soft px-3.5 py-3 text-sm text-destructive">
-          No se han podido cargar los usuarios. Recarga la página para intentarlo de nuevo.
+          No se han podido cargar los usuarios. Recarga la página.
         </p>
       )}
       {members && (
@@ -397,7 +397,7 @@ function MembersPage() {
           index={0}
           readOnly
           title="Usuarios con acceso a la empresa"
-          description="Tú y quienes trabajan contigo, cada uno con su propio usuario y contraseña."
+          description="Quién tiene acceso a tu empresa."
           users={members}
           actions={() => []}
           onEdit={() => {}}
@@ -454,7 +454,7 @@ function DemoUsersPage() {
         <UsersTable
           index={0}
           title="Usuarios con acceso a la empresa"
-          description="Tú y quienes trabajan contigo, cada uno con su propio usuario y contraseña."
+          description="Quién tiene acceso a tu empresa."
           users={members}
           actions={actions}
           onEdit={(u) => setEditing({ user: u, kind: u.kind })}
@@ -464,13 +464,13 @@ function DemoUsersPage() {
         <UsersTable
           index={1}
           title="Gestores con acceso a la empresa"
-          description="Tu gestoría o asesor entra con su propio usuario para revisar tus cuentas y preparar tus impuestos."
+          description="Tu gestoría entra con su propio usuario, sin pedirte archivos."
           users={advisors}
           actions={actions}
           onEdit={(u) => setEditing({ user: u, kind: u.kind })}
           empty={{
             message: "Ningún gestor tiene acceso",
-            hint: "Invita a tu gestoría para que trabaje sobre tus datos sin pedirte archivos.",
+            hint: "Invita a tu gestoría para que trabaje con tus datos.",
             action: (
               <Button variant="secondary" onClick={() => setEditing({ user: null, kind: "advisor" })}>
                 <UserRound aria-hidden="true" />

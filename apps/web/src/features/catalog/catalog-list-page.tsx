@@ -323,7 +323,6 @@ export function CatalogListPage() {
             </FilterField>
             <FilterField
               label="Por alarma de stock"
-              help="Muestra los productos con alarma según su stock comparado con las unidades mínimas de la alarma."
             >
               <GroupedSelect
                 id="filter-alarm"

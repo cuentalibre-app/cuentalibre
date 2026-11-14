@@ -13,16 +13,6 @@ import { formatDecimalInput, parseDecimal } from "@/lib/format";
 import { RULE_OPTIONS } from "./catalog-model";
 import { catalogStore, useCatalog } from "./catalog-store";
 
-const RULE_HELP = {
-  invoices:
-    "Nunca: las facturas emitidas no tocan el stock. Al crear/editar una factura: se descuenta al crear una factura o al editarla.",
-  deliveryNotes:
-    "Nunca: los albaranes no tocan el stock. Al crear/editar: se descuenta al crear o editar el albarán. Al facturar: se descuenta al crear la factura del albarán.",
-  quotes:
-    "Nunca: los presupuestos no tocan el stock. Al albaranar: se descuenta al convertirlo en albarán. Al facturar: se descuenta al convertirlo en factura.",
-  drafts: "Nunca: los borradores no tocan el stock. Al facturar: se descuenta al emitir el borrador como factura.",
-};
-
 function Card({
   id,
   title,
@@ -142,7 +132,7 @@ export function CatalogSettingsPage() {
         <Card
           index={2}
           title="Productos en facturas, presupuestos y albaranes"
-          description="Al elegir un producto del catálogo en un concepto se rellena todo automáticamente. Elige qué texto lleva el concepto y si se copia la descripción del producto."
+          description="Qué se copia del producto al añadirlo a un concepto."
         >
           <div className="flex flex-col gap-3">
             <RadioOption
@@ -171,7 +161,7 @@ export function CatalogSettingsPage() {
         <Card
           index={3}
           title="Control de stock"
-          description="En qué documentos se descuenta el stock de los productos que lo tienen activado, y con qué valores empiezan los productos nuevos."
+          description="Cuándo se descuenta el stock y con qué valores empiezan los productos nuevos."
         >
           <Field
             label="Email donde recibir los avisos de stock"
@@ -195,7 +185,7 @@ export function CatalogSettingsPage() {
           <div className="grid gap-x-6 gap-y-5 border-t border-divider pt-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="flex flex-col gap-3">
               <h3 className="m-0 text-sm font-semibold">Facturas emitidas</h3>
-              <Field label="Descontar stock en facturas" help={RULE_HELP.invoices}>
+              <Field label="Descontar stock en facturas">
                 {(p) => (
                   <GroupedSelect
                     {...p}
@@ -214,7 +204,7 @@ export function CatalogSettingsPage() {
             </div>
             <div className="flex flex-col gap-3">
               <h3 className="m-0 text-sm font-semibold">Albaranes</h3>
-              <Field label="Descontar stock en albaranes" help={RULE_HELP.deliveryNotes}>
+              <Field label="Descontar stock en albaranes">
                 {(p) => (
                   <GroupedSelect
                     {...p}
@@ -233,7 +223,7 @@ export function CatalogSettingsPage() {
             </div>
             <div className="flex flex-col gap-3">
               <h3 className="m-0 text-sm font-semibold">Presupuestos</h3>
-              <Field label="Descontar stock en presupuestos" help={RULE_HELP.quotes}>
+              <Field label="Descontar stock en presupuestos">
                 {(p) => (
                   <GroupedSelect
                     {...p}
@@ -246,7 +236,7 @@ export function CatalogSettingsPage() {
             </div>
             <div className="flex flex-col gap-3">
               <h3 className="m-0 text-sm font-semibold">Facturas borrador</h3>
-              <Field label="Descontar stock en borradores" help={RULE_HELP.drafts}>
+              <Field label="Descontar stock en borradores">
                 {(p) => (
                   <GroupedSelect
                     {...p}
@@ -263,8 +253,7 @@ export function CatalogSettingsPage() {
             <div className="flex flex-col gap-0.5">
               <h3 className="m-0 text-sm font-semibold">Valores por defecto</h3>
               <p className="m-0 text-sm text-muted-foreground">
-                Con los que empieza un producto nuevo (puedes cambiarlos antes de crearlo) y los que se usan al importar
-                cuando el Excel deja vacías las columnas de stock.
+                Para productos nuevos e importaciones sin columnas de stock.
               </p>
             </div>
             <CheckField
@@ -328,7 +317,7 @@ export function CatalogSettingsPage() {
           id="borrar-catalogo"
           index={4}
           title="Borrar catálogo"
-          description="Borra todos los productos y servicios del catálogo de una vez. Es útil si lo llevas en un Excel y quieres volver a importarlo desde cero. Las facturas que ya los usan no cambian."
+          description="Borra todo el catálogo, por ejemplo para reimportarlo desde Excel. Las facturas no cambian."
         >
           <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium">
             <Checkbox checked={withFamilies} onChange={(e) => setWithFamilies(e.target.checked)} />

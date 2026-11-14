@@ -20,7 +20,7 @@ export interface TourStep {
 export const TOUR_STEPS: TourStep[] = [
   {
     title: "Te damos la bienvenida",
-    body: "Te enseñamos lo básico en un minuto, para que sepas dónde está cada cosa. Puedes saltarlo cuando quieras.",
+    body: "Lo básico en un minuto. Puedes saltarlo cuando quieras.",
     targets: [],
   },
   {
@@ -45,7 +45,7 @@ export const TOUR_STEPS: TourStep[] = [
   },
   {
     title: "Configuración",
-    body: "Antes de emitir tu primera factura, completa los datos de tu empresa: tu NIF y tu dirección tienen que aparecer en ella.",
+    body: "Antes de facturar, completa tu NIF y tu dirección.",
     targets: ["/configuracion", "/mas"],
     action: { label: "Completar los datos de la empresa", to: BUSINESS_PATH },
   },

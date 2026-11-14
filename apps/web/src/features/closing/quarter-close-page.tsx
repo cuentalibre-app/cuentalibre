@@ -544,7 +544,7 @@ export function QuarterClosePage() {
       <Page>
         <PageHeader
           title="Cierre de trimestres"
-          description="Cuando hayas presentado los impuestos de un trimestre, ciérralo para que sus documentos no se puedan modificar."
+          description="Cierra cada trimestre tras presentarlo para bloquear sus documentos."
           actions={
             <Select
               value={String(period.year)}
