@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cents, fraction, id, isoDate } from "./common";
+import { expenseTypeSchema } from "./purchases";
 
 /*
  * Reading a received invoice or receipt with an AI model. The server returns a
@@ -41,6 +42,11 @@ export const extractedPurchaseSchema = z.object({
   withholding: z.object({ rate: fraction, amount: cents }).nullable(),
   /** What was paid or is owed, taxes included. */
   total: cents.nullable(),
+  /**
+   * The expense account the model proposes for what was bought; null when it can't
+   * tell. A supplier's own history is a better guide, so the forms prefer it.
+   */
+  expenseType: expenseTypeSchema.nullable(),
 });
 export type ExtractedPurchase = z.infer<typeof extractedPurchaseSchema>;
 

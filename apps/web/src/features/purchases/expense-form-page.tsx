@@ -225,6 +225,8 @@ function ExpenseForm({
 
   // Fields a reading with AI flagged, until they are changed
   const [flags, setFlags] = useState<Partial<Record<ExpenseFlag, string>>>({});
+  // The expense type the model proposed, when the supplier had no expense to go by
+  const [readType, setReadType] = useState<ExpenseType | null>(null);
   const clearFlag = (key: string) => setFlags((f) => (key in f ? { ...f, [key]: undefined } : f));
   const clearError = (key: ErrorKey) => {
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
@@ -272,6 +274,10 @@ function ExpenseForm({
   /** Fills the form with what was read: a saved supplier by its tax ID, or the payee as read. */
   const applyReading = ({ draft, supplierId, issues }: PurchaseExtraction) => {
     const total = draftTotal(draft);
+    const proposedType =
+      prefill && !(supplierId && expensesStore.all().some((e) => e.supplierId === supplierId))
+        ? draft.expenseType
+        : null;
     setForm((f) => {
       const base = supplierId
         ? prefill
@@ -288,10 +294,12 @@ function ExpenseForm({
         number: draft.number.trim() || base.number,
         concept: draft.concept.trim() || base.concept,
         amount: total !== null ? formatEurosInput(total) : base.amount,
+        expenseType: proposedType ?? base.expenseType,
       };
     });
     setErrors({});
     setFlags(expenseFlags(issues, draft, Boolean(supplierId)));
+    setReadType(proposedType);
   };
   const reading = useReading(applyReading);
   const sendToForm = useSendToForm();
@@ -564,7 +572,9 @@ function ExpenseForm({
                 hint={
                   prefill && expensesStore.all().some((e) => e.supplierId === form.payee)
                     ? "Según el último gasto de este proveedor."
-                    : undefined
+                    : prefill && readType === form.expenseType
+                      ? "Propuesto al leer el documento."
+                      : undefined
                 }
               >
                 {(p) => (
