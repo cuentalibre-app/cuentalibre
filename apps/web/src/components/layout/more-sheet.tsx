@@ -1,11 +1,12 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ChevronRight, UserRound } from "lucide-react";
+import { ChevronRight, MessageCircleQuestionMark, UserRound } from "lucide-react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@cuentalibre/ui/components/sheet";
 import { PROFILE_PATH, accountName, initials } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { LegalLinks } from "@/components/legal-links";
+import { HelpChatSheet } from "@/features/help-chat/help-chat-sheet";
 import { moreNav, type MoreEntry } from "./nav";
 import { useNavGroupOpen } from "./use-nav-group-open";
 
@@ -17,45 +18,65 @@ interface MoreSheetProps {
   children: ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Whether the instance has the AI help chat, offered as the last row. */
+  helpChat?: boolean;
 }
 
 /** Everything that doesn't fit in the mobile tab bar: the account first, then the sections as in the sidebar. */
-export function MoreSheet({ children, open, onOpenChange }: MoreSheetProps) {
+export function MoreSheet({ children, open, onOpenChange, helpChat = false }: MoreSheetProps) {
   const { profile } = useSettings();
   const name = accountName(profile);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent title="Más">
-        <nav aria-label="Más secciones" className="flex flex-col">
-          <SheetClose asChild>
-            <Link to={PROFILE_PATH} className={cn(row, "border-b border-divider py-2")}>
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
-                {name ? initials(name) : <UserRound className="size-4.5" strokeWidth={1.8} aria-hidden="true" />}
-              </span>
-              <span className="min-w-0 flex-1 truncate">{name || "Tu cuenta"}</span>
-              <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
-            </Link>
-          </SheetClose>
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetTrigger asChild>{children}</SheetTrigger>
+        <SheetContent title="Más">
+          <nav aria-label="Más secciones" className="flex flex-col">
+            <SheetClose asChild>
+              <Link to={PROFILE_PATH} className={cn(row, "border-b border-divider py-2")}>
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+                  {name ? initials(name) : <UserRound className="size-4.5" strokeWidth={1.8} aria-hidden="true" />}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{name || "Tu cuenta"}</span>
+                <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
+              </Link>
+            </SheetClose>
 
-          {moreNav.map((entry) =>
-            entry.kind === "link" ? (
-              <SheetClose key={entry.item.to} asChild>
-                <Link to={entry.item.to} className={cn(row, "border-b border-divider")}>
-                  <entry.item.icon className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="flex-1">{entry.item.label}</span>
-                  <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
-                </Link>
-              </SheetClose>
-            ) : (
-              <MoreGroup key={entry.to} group={entry} />
-            ),
-          )}
-          <LegalLinks className="pt-6" />
-        </nav>
-      </SheetContent>
-    </Sheet>
+            {moreNav.map((entry) =>
+              entry.kind === "link" ? (
+                <SheetClose key={entry.item.to} asChild>
+                  <Link to={entry.item.to} className={cn(row, "border-b border-divider")}>
+                    <entry.item.icon className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                    <span className="flex-1">{entry.item.label}</span>
+                    <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
+                  </Link>
+                </SheetClose>
+              ) : (
+                <MoreGroup key={entry.to} group={entry} />
+              ),
+            )}
+            {helpChat && (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenChange(false);
+                  setHelpOpen(true);
+                }}
+                className={cn(row, "w-full cursor-pointer border-b border-divider text-left")}
+              >
+                <MessageCircleQuestionMark className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                <span className="flex-1">Ayuda</span>
+                <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
+              </button>
+            )}
+            <LegalLinks className="pt-6" />
+          </nav>
+        </SheetContent>
+      </Sheet>
+      {helpChat && <HelpChatSheet open={helpOpen} onOpenChange={setHelpOpen} />}
+    </>
   );
 }
 

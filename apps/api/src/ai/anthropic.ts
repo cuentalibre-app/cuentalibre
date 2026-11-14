@@ -32,7 +32,7 @@ export function anthropicProvider({
   baseUrl = DEFAULT_BASE_URL,
   fetch: fetcher = fetch,
 }: AiConfig): AiProvider {
-  // `AI_BASE_URL` may name the host alone or end in /v1, like OpenAI's
+  // `AI_SCAN_BASE_URL` may name the host alone or end in /v1, like OpenAI's
   const url = `${baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1/messages`;
   return {
     model,

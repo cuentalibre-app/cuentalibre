@@ -4,6 +4,8 @@ import { VerifyEmailBanner } from "@/features/auth/verify-email-banner";
 import { ReadOnlyBanner } from "@/features/settings/read-only-banner";
 import { SubscribedNotice } from "@/features/settings/subscribed-notice";
 import { FirstRunTour } from "@/features/tour/first-run-tour";
+import { HelpChatPanel } from "@/features/help-chat/help-chat-panel";
+import { useHelpChatAvailable } from "@/features/help-chat/help-chat-store";
 import { BottomNav } from "./bottom-nav";
 import { CommandErrorNotice } from "./command-error-notice";
 import { Sidebar } from "./sidebar";
@@ -12,6 +14,7 @@ import { useSidebarCollapsed } from "./use-sidebar-collapsed";
 export function AppLayout() {
   const { pathname } = useLocation();
   const { collapsed, canExpand, toggle } = useSidebarCollapsed();
+  const helpChat = useHelpChatAvailable();
 
   return (
     <>
@@ -27,7 +30,12 @@ export function AppLayout() {
         >
           Saltar al contenido
         </a>
-        <Sidebar className="hidden lg:flex" collapsed={collapsed} onToggle={canExpand ? toggle : undefined} />
+        <Sidebar
+          className="hidden lg:flex"
+          collapsed={collapsed}
+          onToggle={canExpand ? toggle : undefined}
+          helpChat={helpChat}
+        />
         <main
           id="main"
           className="min-w-0 flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:my-2 lg:mr-2 lg:min-h-[calc(100dvh-1rem)] lg:rounded-xl lg:border lg:border-border lg:bg-background lg:pb-0"
@@ -37,7 +45,8 @@ export function AppLayout() {
             <Outlet />
           </div>
         </main>
-        <BottomNav className="lg:hidden" />
+        {helpChat && <HelpChatPanel className="hidden lg:block" />}
+        <BottomNav className="lg:hidden" helpChat={helpChat} />
       </div>
       <FirstRunTour />
     </>
