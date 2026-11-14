@@ -1,34 +1,30 @@
 import { useId } from "react";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { Section } from "@/features/sales/form-fields";
-import {
-  listPreferencesStore,
-  useListPreferences,
-  type FilteredKind,
-  type ListFilterDefaults,
-} from "@/features/sales/list-preferences";
+import type { ListFilterDefaults, ListPreferences } from "@cuentalibre/contracts";
 import { RadioOption } from "@/features/transfer/transfer-parts";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
+import { userStore, useUserSettings } from "./user-store";
 import { Page } from "@/components/page";
 
-const LISTS: { kind: FilteredKind; title: string; plural: string }[] = [
+const LISTS: { kind: keyof ListPreferences; title: string; plural: string }[] = [
   { kind: "deliveryNote", title: "Filtro por defecto de los listados de albaranes", plural: "albaranes" },
   { kind: "quote", title: "Filtro por defecto de los listados de presupuestos", plural: "presupuestos" },
 ];
 
-/** Default filters of the quote and delivery note lists. Lists aren't paginated, so there's no page size to pick. */
+/** Default filters of the quote and delivery note lists, saved with the user's own settings. */
 export function PreferencesPage() {
-  const saved = useListPreferences();
+  const saved = useUserSettings().lists;
   const { draft, set, dirty, justSaved, markSaved } = useDraft(saved);
   const save = () => {
-    listPreferencesStore.update(draft);
+    userStore.updateListPreferences(draft);
     markSaved();
   };
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
-        <SettingsHeader title="Ordenación y filtrado" description="Cómo se abren tus listados.">
+        <SettingsHeader title="Filtros de listados" description="Con qué filtros se abren tus presupuestos y albaranes.">
           <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />
         </SettingsHeader>
 

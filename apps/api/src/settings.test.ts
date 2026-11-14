@@ -27,7 +27,7 @@ describe("settings", () => {
   it("feeds saved sections", async () => {
     const ana = await member();
     const { cursor } = await workspace(ana);
-    const contacts = { customFieldNames: ["Sector", ""], autocomplete: false };
+    const contacts = { customFieldNames: ["Sector", ""] };
     await send(ana, [{ type: "saveSettings", section: "contactSettings", data: contacts }]);
     expect((await changes(ana, cursor)).changes).toEqual([
       { op: "upsert", entity: "settings", data: { section: "contactSettings", data: contacts } },

@@ -30,7 +30,13 @@ export type Entity =
  * Settings stored as one document per section: the organization's (see
  * `organizationSettingsSchema`), plus the ones the server doesn't store yet.
  */
-export type SettingsSection = OrganizationSection | "userProfile" | "notificationPrefs" | "userTour" | "userAccess";
+export type SettingsSection =
+  | OrganizationSection
+  | "userProfile"
+  | "notificationPrefs"
+  | "userTour"
+  | "listPreferences"
+  | "userAccess";
 
 export type Command =
   | { type: "create"; entity: Entity; data: { id: string } }

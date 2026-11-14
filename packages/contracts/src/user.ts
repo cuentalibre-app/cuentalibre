@@ -34,6 +34,26 @@ export type TourStatus = z.infer<typeof tourStatusSchema>;
 export const userTourSchema = z.object({ status: tourStatusSchema });
 export type UserTour = z.infer<typeof userTourSchema>;
 
+/** Filters a list of quotes or delivery notes opens with; the user can still clear them. */
+export const listFilterDefaultsSchema = z.object({
+  /** "open" hides the documents already invoiced or rejected. */
+  status: z.enum(["all", "open"]),
+  /** "month" shows only the documents issued this month. */
+  date: z.enum(["all", "month"]),
+});
+export type ListFilterDefaults = z.infer<typeof listFilterDefaultsSchema>;
+
+export const listPreferencesSchema = z.object({
+  quote: listFilterDefaultsSchema,
+  deliveryNote: listFilterDefaultsSchema,
+});
+export type ListPreferences = z.infer<typeof listPreferencesSchema>;
+
+export const DEFAULT_LIST_PREFERENCES: ListPreferences = {
+  quote: { status: "all", date: "all" },
+  deliveryNote: { status: "all", date: "all" },
+};
+
 export const linkedProviderSchema = z.enum(["google", "apple"]);
 export type LinkedProvider = z.infer<typeof linkedProviderSchema>;
 
@@ -60,6 +80,7 @@ export const userSettingsSchema = z.object({
     gender: genderSchema,
   }),
   userTour: userTourSchema,
+  listPreferences: listPreferencesSchema,
 });
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 

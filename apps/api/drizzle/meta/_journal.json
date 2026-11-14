@@ -176,6 +176,13 @@
       "when": 1794673261417,
       "tag": "0024_contact_various_clients",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794689452824,
+      "tag": "0025_drop_ledger_accounts",
+      "breakpoints": true
     }
   ]
 }

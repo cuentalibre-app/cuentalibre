@@ -181,14 +181,14 @@ describe("api backend", () => {
           salesDocuments: [],
           settings: {
             ...DEFAULT_ORGANIZATION_SETTINGS,
-            contactSettings: { customFieldNames: ["Sector", ""], autocomplete: false },
+            contactSettings: { customFieldNames: ["Sector", ""] },
           },
         },
       },
     );
     const contacts = createStore(DEFAULT_ORGANIZATION_SETTINGS.contactSettings);
     syncSettings("contactSettings", contacts.set);
-    const data: ContactSettings = { customFieldNames: ["Zona", ""], autocomplete: true };
+    const data: ContactSettings = { customFieldNames: ["Zona", ""] };
     await contacts.write(data, [
       { type: "saveSettings", section: "contactSettings", data },
       // Not stored by the server yet
@@ -197,7 +197,7 @@ describe("api backend", () => {
     expect(calls[0]!.body).toEqual({ commands: [{ type: "saveSettings", section: "contactSettings", data }] });
 
     await api.loadWorkspace();
-    expect(contacts.get()).toEqual({ customFieldNames: ["Sector", ""], autocomplete: false });
+    expect(contacts.get()).toEqual({ customFieldNames: ["Sector", ""] });
   });
 
   it("saves the user's own settings apart from the organization's, and takes them from the account", async () => {
