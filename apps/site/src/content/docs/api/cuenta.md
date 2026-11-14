@@ -23,6 +23,7 @@ Guarda una sección de tus ajustes personales, entera. Te siguen en todas tus em
 
 - `userProfile`: `{ firstName, lastName, birthDate, phone, gender }`. `firstName` es obligatorio (hasta 100 caracteres); `birthDate`, `"AAAA-MM-DD"` o vacío; `gender`, `""`, `"male"` o `"female"`. Cambia también tu nombre de usuario.
 - `userTour`: `{ status }`, que es `"pending"` (al principio), `"finished"` o `"skipped"`. Mientras está pendiente, la aplicación enseña el recorrido de bienvenida.
+- `listPreferences`: `{ quote, deliveryNote }`, cada uno `{ status, date }`: los filtros con los que se abren esos listados. `status` es `"all"` u `"open"` (oculta los facturados y rechazados); `date`, `"all"` o `"month"` (solo el mes en curso).
 
 ## Claves de API
 

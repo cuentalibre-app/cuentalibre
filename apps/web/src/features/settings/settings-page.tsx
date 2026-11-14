@@ -143,13 +143,13 @@ export function SettingsPage() {
       entries: [
         {
           title: "Datos personales",
-          description: "Tu nombre y tus notificaciones.",
+          description: "Tu nombre y tus datos de contacto.",
           to: PROFILE_PATH,
           icon: UserRound,
         },
         {
           title: "Credenciales de acceso",
-          description: "Cómo entras en cuentalibre: contraseña, código y cuentas vinculadas.",
+          description: "Cómo entras en cuentalibre: contraseña y cuentas vinculadas.",
           to: ACCESS_PATH,
           icon: KeyRound,
         },
@@ -173,19 +173,19 @@ export function SettingsPage() {
         },
         {
           title: "Facturas borrador",
-          description: "Series de numeración y plantilla de las facturas borrador.",
+          description: "Plantilla del PDF y textos de las facturas borrador.",
           to: DRAFT_SETTINGS_PATH,
           icon: FilePen,
         },
         {
           title: "Presupuestos",
-          description: "Series de numeración y plantilla de los presupuestos.",
+          description: "Plantilla del PDF y textos de los presupuestos.",
           to: QUOTE_SETTINGS_PATH,
           icon: FileText,
         },
         {
           title: "Albaranes",
-          description: "Series de numeración y plantilla de los albaranes.",
+          description: "Plantilla del PDF, textos y facturación de los albaranes.",
           to: DELIVERY_NOTE_SETTINGS_PATH,
           icon: ClipboardList,
         },
@@ -224,7 +224,7 @@ export function SettingsPage() {
         },
         {
           title: "Clientes y proveedores",
-          description: "Campos personalizados y autocompletado de sus datos.",
+          description: "Los campos personalizados de sus fichas.",
           to: CONTACT_SETTINGS_PATH,
           icon: UsersRound,
         },
@@ -252,8 +252,8 @@ export function SettingsPage() {
       title: "Otras opciones",
       entries: [
         {
-          title: "Ordenación y filtrado",
-          description: "Cómo se muestran y filtran de entrada tus listados.",
+          title: "Filtros de listados",
+          description: "Con qué filtros se abren tus presupuestos y albaranes.",
           to: PREFERENCES_PATH,
           icon: ArrowDownWideNarrow,
         },

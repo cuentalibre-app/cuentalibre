@@ -1,4 +1,12 @@
-import type { NotificationPrefs, TourStatus, UserAccess, UserProfile, UserTour } from "@cuentalibre/contracts";
+import {
+  DEFAULT_LIST_PREFERENCES,
+  type ListPreferences,
+  type NotificationPrefs,
+  type TourStatus,
+  type UserAccess,
+  type UserProfile,
+  type UserTour,
+} from "@cuentalibre/contracts";
 import type { SettingsSection } from "@/data/commands";
 import { createStore } from "@/data/store";
 import { syncMe } from "@/data/sync";
@@ -10,6 +18,8 @@ export interface UserSettings {
   notifications: NotificationPrefs;
   access: UserAccess;
   tour: UserTour;
+  /** The filters the quote and delivery note lists open with. */
+  lists: ListPreferences;
 }
 
 const user = createStore<UserSettings>({
@@ -17,17 +27,19 @@ const user = createStore<UserSettings>({
   notifications: initialNotificationPrefs,
   access: initialUserAccess,
   tour: initialUserTour,
+  lists: DEFAULT_LIST_PREFERENCES,
 });
 
 /** Whether the account's email is verified; the demo's is. The API changes it, not commands. */
 const emailVerification = createStore({ verified: true });
 
-// Signed in, the profile and tour are the account's; the picture and notifications stay sample data for now.
+// Signed in, the profile, tour and list filters are the account's; the picture and notifications stay sample data for now.
 syncMe(({ user: account, settings }) => {
   user.set({
     ...user.get(),
     profile: { ...settings.userProfile, email: account.email, avatarUrl: null },
     tour: settings.userTour,
+    lists: settings.listPreferences,
   });
   emailVerification.set({ verified: account.emailVerified });
 });
@@ -41,6 +53,7 @@ const SECTIONS = {
   notifications: "notificationPrefs",
   access: "userAccess",
   tour: "userTour",
+  lists: "listPreferences",
 } satisfies Record<keyof UserSettings, SettingsSection>;
 
 function save<K extends keyof UserSettings>(key: K, value: UserSettings[K]) {
@@ -53,6 +66,7 @@ export const userStore = {
   updateNotifications: (notifications: NotificationPrefs) => save("notifications", notifications),
   updateAccess: (changes: Partial<UserAccess>) => save("access", { ...user.get().access, ...changes }),
   setTourStatus: (status: TourStatus) => save("tour", { status }),
+  updateListPreferences: (lists: ListPreferences) => save("lists", lists),
   /** The user verified `email` with a code, maybe switching to it. */
   emailVerified: (email: string) => {
     user.set({ ...user.get(), profile: { ...user.get().profile, email } });
