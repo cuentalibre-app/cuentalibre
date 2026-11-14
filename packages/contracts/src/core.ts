@@ -89,8 +89,6 @@ export const stockMovementSchema = z.object({
 export const stockRulesSchema = z.object({
   invoices: z.enum(["never", "createEdit"]),
   deliveryNotes: z.enum(["never", "createEdit", "invoice"]),
-  quotes: z.enum(["never", "deliveryNote", "invoice"]),
-  drafts: z.enum(["never", "invoice"]),
 });
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;

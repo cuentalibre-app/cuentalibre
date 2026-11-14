@@ -183,8 +183,6 @@ export function stockChanges(
 export interface StockRules {
   invoices: "never" | "createEdit";
   deliveryNotes: "never" | "createEdit" | "invoice";
-  quotes: "never" | "deliveryNote" | "invoice";
-  drafts: "never" | "invoice";
 }
 
 export type StockDocumentKind = "invoice" | "draft" | "quote" | "deliveryNote";
@@ -205,12 +203,10 @@ export function documentTakesStock(
         if (rules.deliveryNotes === "createEdit") return false;
         if (rules.deliveryNotes === "invoice") return true;
       }
-      if (origin === "quote" && rules.quotes === "invoice") return true;
-      if (origin === "draft" && rules.drafts === "invoice") return true;
       return rules.invoices === "createEdit";
     }
     case "deliveryNote":
-      return rules.deliveryNotes === "createEdit" || (origin === "quote" && rules.quotes === "deliveryNote");
+      return rules.deliveryNotes === "createEdit";
     case "quote":
     case "draft":
       return false;

@@ -52,9 +52,6 @@ export const STOCK_COLUMNS = [
   "Permitir vender sin stock",
   "Activar alarma de stock",
   "Avisar cuando el número de unidades sea inferior a",
-  "Avisar en el Dashboard",
-  "Avisar mediante notificación",
-  "Avisar mediante correo electrónico",
 ];
 
 export type CatalogImportKind = "products" | "productsStock";
@@ -127,11 +124,8 @@ export function sampleSheets(kind: CatalogImportKind): Sheet[] {
           ],
           ["Stock relativo", "Unidades que se suman (o restan, en negativo) al stock de un producto existente.", "No"],
           ["Permitir vender sin stock", "Sí o No. Vacío: el valor por defecto.", "No"],
-          ["Activar alarma de stock", "Sí o No. Con Sí, activa al menos una forma de aviso.", "No"],
+          ["Activar alarma de stock", "Sí o No.", "No"],
           ["Avisar cuando el número de unidades sea inferior a", "Unidades mínimas antes de avisar.", "No"],
-          ["Avisar en el Dashboard", "Sí o No.", "No"],
-          ["Avisar mediante notificación", "Sí o No.", "No"],
-          ["Avisar mediante correo electrónico", "Sí o No.", "No"],
         ]
       : []),
   ];
@@ -181,9 +175,6 @@ export function catalogSheet(state: Pick<CatalogState, "products" | "families" |
           p.stock ? yesNo(p.stock.allowWithoutStock) : "",
           p.stock ? yesNo(!!alarm) : "",
           alarm ? alarm.minUnits : null,
-          alarm ? yesNo(alarm.dashboard) : "",
-          alarm ? yesNo(alarm.notification) : "",
-          alarm ? yesNo(alarm.email) : "",
         ];
       }),
   };
@@ -357,18 +348,7 @@ export function previewCatalogImport(kind: CatalogImportKind, table: string[][])
         const minText = get(cells, "Avisar cuando el número de unidades sea inferior a");
         const minUnits = minText ? parseAmount(minText) : (base?.minUnits ?? 0);
         if (minText && minUnits === null) errors.push(`Unidades mínimas no válidas: «${minText}».`);
-        const alarm = alarmOn
-          ? {
-              minUnits: minUnits ?? 0,
-              dashboard: yn("Avisar en el Dashboard", base?.dashboard ?? false),
-              notification: yn("Avisar mediante notificación", base?.notification ?? false),
-              email: yn("Avisar mediante correo electrónico", base?.email ?? false),
-            }
-          : null;
-        if (alarm && !alarm.dashboard && !alarm.notification && !alarm.email)
-          errors.push("Con la alarma de stock activada, elige al menos una forma de aviso.");
-        if (alarm?.email && !settings.alarmEmail)
-          warnings.push("Falta el email de avisos de stock en la configuración del catálogo.");
+        const alarm = alarmOn ? { minUnits: minUnits ?? 0 } : null;
         stock = {
           allowWithoutStock: yn(
             "Permitir vender sin stock",
