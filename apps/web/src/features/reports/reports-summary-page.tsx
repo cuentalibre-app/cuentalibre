@@ -15,10 +15,11 @@ import {
 } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { Card } from "@cuentalibre/ui/components/card";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { Page, PageHeader, cardHeaderClass, cardIconClass, cardTitleClass } from "@/components/page";
+import { HelpTip, Page, PageHeader, cardHeaderClass, cardIconClass, cardTitleClass } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { TopCounterparties } from "@/features/home/top-counterparties";
 import { PURCHASES_PATH } from "@/features/purchases/purchases-model";
@@ -302,100 +303,103 @@ export function ReportsSummaryPage() {
   const inPeriod = periodMonths(period);
 
   return (
-    <Page>
-      <PageHeader
-        title="Informes"
-        description={`Cómo va tu negocio ${periodPhrase(period)}: ingresos sin IVA y gastos deducibles.`}
-        descriptionClassName="max-lg:hidden"
-        // Phones: the report link and the period share one line under the title
-        actionsClassName="max-lg:w-full max-lg:flex-nowrap max-lg:[&>a]:flex-1"
-        actions={
-          <>
-            <Link to={PNL_PATH} className={buttonVariants({ variant: "secondary" })}>
-              <FileBarChart strokeWidth={1.8} aria-hidden="true" />
-              Pérdidas y ganancias
-            </Link>
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} compact />
-          </>
-        }
-      />
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <Page>
+        <PageHeader
+          title="Informes"
+          inline={
+            <HelpTip side="bottom">{`Cómo va tu negocio ${periodPhrase(period)}: ingresos sin IVA y gastos deducibles.`}</HelpTip>
+          }
+          // Phones: the report link and the period share one line under the title
+          actionsClassName="max-lg:w-full max-lg:flex-nowrap max-lg:[&>a]:flex-1"
+          actions={
+            <>
+              <Link to={PNL_PATH} className={buttonVariants({ variant: "secondary" })}>
+                <FileBarChart strokeWidth={1.8} aria-hidden="true" />
+                Pérdidas y ganancias
+              </Link>
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} compact />
+            </>
+          }
+        />
 
-      <section aria-label="Cifras del periodo" className="grid grid-cols-2 gap-3 wide:grid-cols-4">
-        <Kpi
-          label="Ingresos"
-          value={formatEUR(data.pnl.income)}
-          change={data.changes.income}
-          year={period.year}
-          index={0}
-        />
-        <Kpi
-          label="Gastos"
-          value={formatEUR(data.pnl.expenses)}
-          change={data.changes.expenses}
-          inverse
-          year={period.year}
-          index={1}
-        />
-        <Kpi
-          label="Resultado"
-          value={formatEUR(data.pnl.operating)}
-          change={data.changes.result}
-          year={period.year}
-          index={2}
-        />
-        <Kpi
-          label="Margen"
-          value={data.margin === null ? "—" : formatPercent(data.margin * 100)}
-          year={period.year}
-          index={3}
+        <section aria-label="Cifras del periodo" className="grid grid-cols-2 gap-3 wide:grid-cols-4">
+          <Kpi
+            label="Ingresos"
+            value={formatEUR(data.pnl.income)}
+            change={data.changes.income}
+            year={period.year}
+            index={0}
+          />
+          <Kpi
+            label="Gastos"
+            value={formatEUR(data.pnl.expenses)}
+            change={data.changes.expenses}
+            inverse
+            year={period.year}
+            index={1}
+          />
+          <Kpi
+            label="Resultado"
+            value={formatEUR(data.pnl.operating)}
+            change={data.changes.result}
+            year={period.year}
+            index={2}
+          />
+          <Kpi
+            label="Margen"
+            value={data.margin === null ? "—" : formatPercent(data.margin * 100)}
+            year={period.year}
+            index={3}
+          >
+            <span className="text-sm text-muted-foreground">del resultado sobre los ingresos</span>
+          </Kpi>
+        </section>
+
+        <div className="animate-rise-in" style={{ "--i": 4 } as CSSProperties}>
+          <MonthlyChart
+            key={`${period.year}-${period.quarter}`}
+            year={period.year}
+            months={data.months}
+            inPeriod={inPeriod}
+          />
+        </div>
+        <MonthsTable months={inPeriod.filter((m) => !isFuture(period.year, m, today)).map((m) => data.months[m]!)} />
+
+        <section
+          aria-label="Desglose"
+          className="grid animate-rise-in grid-cols-1 gap-4 lg:grid-cols-3"
+          style={{ "--i": 6 } as CSSProperties}
         >
-          <span className="text-sm text-muted-foreground">del resultado sobre los ingresos</span>
-        </Kpi>
-      </section>
-
-      <div className="animate-rise-in" style={{ "--i": 4 } as CSSProperties}>
-        <MonthlyChart
-          key={`${period.year}-${period.quarter}`}
-          year={period.year}
-          months={data.months}
-          inPeriod={inPeriod}
-        />
-      </div>
-      <MonthsTable months={inPeriod.filter((m) => !isFuture(period.year, m, today)).map((m) => data.months[m]!)} />
-
-      <section
-        aria-label="Desglose"
-        className="grid animate-rise-in grid-cols-1 gap-4 lg:grid-cols-3"
-        style={{ "--i": 6 } as CSSProperties}
-      >
-        <TopCounterparties
-          id="by-client"
-          title="Ingresos por cliente"
-          noun="clientes"
-          ranking={data.breakdowns.clients}
-          barClass="bg-chart-income"
-          href={KINDS.invoice.path}
-          empty="No hay facturas emitidas en este periodo."
-        />
-        <TopCounterparties
-          id="by-category"
-          title="Gastos por categoría"
-          noun="categorías"
-          ranking={data.breakdowns.categories}
-          barClass="bg-chart-expense"
-          href={PNL_PATH}
-          empty="No hay gastos en este periodo."
-        />
-        <TopCounterparties
-          id="by-supplier"
-          title="Gastos por proveedor"
-          noun="proveedores"
-          ranking={data.breakdowns.suppliers}
-          barClass="bg-chart-expense"
-          href={PURCHASES_PATH}
-          empty="No hay gastos en este periodo."
-        />
-      </section>
-    </Page>
+          <TopCounterparties
+            id="by-client"
+            title="Ingresos por cliente"
+            noun="clientes"
+            ranking={data.breakdowns.clients}
+            barClass="bg-chart-income"
+            href={KINDS.invoice.path}
+            empty="No hay facturas emitidas en este periodo."
+          />
+          <TopCounterparties
+            id="by-category"
+            title="Gastos por categoría"
+            noun="categorías"
+            ranking={data.breakdowns.categories}
+            barClass="bg-chart-expense"
+            href={PNL_PATH}
+            empty="No hay gastos en este periodo."
+          />
+          <TopCounterparties
+            id="by-supplier"
+            title="Gastos por proveedor"
+            noun="proveedores"
+            ranking={data.breakdowns.suppliers}
+            barClass="bg-chart-expense"
+            href={PURCHASES_PATH}
+            empty="No hay gastos en este periodo."
+          />
+        </section>
+      </Page>
+    </TooltipProvider>
   );
 }

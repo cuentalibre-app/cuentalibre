@@ -23,7 +23,7 @@ import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { Page, PageHeader, Toolbar } from "@/components/page";
+import { HelpTip, Page, PageHeader, Toolbar } from "@/components/page";
 import { useExpenses } from "@/features/purchases/expenses-store";
 import { NEW_EXPENSE_PATH } from "@/features/purchases/expenses-model";
 import { NEW_PURCHASE_PATH } from "@/features/purchases/purchases-model";
@@ -143,14 +143,12 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
       <Page>
         <PageHeader
           title={config.title}
-          description={
-            <>
-              {contacts.length === 1
-                ? `1 ${config.singular.toLowerCase()}`
-                : `${contacts.length} ${config.title.toLowerCase()}`}
-              . Sus datos fiscales se usan en{" "}
-              {role === "client" ? "las facturas que emites" : "las facturas recibidas y los gastos"}.
-            </>
+          inline={
+            <HelpTip side="bottom">
+              {role === "client"
+                ? "A quién facturas. Sus datos fiscales aparecen en las facturas que emites."
+                : "A quién compras. Sus datos fiscales se usan en las facturas recibidas y los gastos."}
+            </HelpTip>
           }
           actions={
             <Link to={config.newPath} className={cn(buttonVariants(), "hidden lg:inline-flex")}>
@@ -190,39 +188,39 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
-          <div
-            id="contact-filters"
-            className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-3 lg:grid-cols-[repeat(3,minmax(0,16rem))_auto] lg:items-end lg:px-4"
-          >
-            {(
-              [
-                ["country", "País", countries, "Todos"],
-                ["province", "Provincia", provinces, "Todas"],
-                ["tag", "Etiqueta", tags, tags.length ? "Todas" : "Sin etiquetas"],
-              ] as const
-            ).map(([key, label, values, allLabel]) => (
-              <label key={key} className="flex min-w-0 flex-col gap-1">
-                <span className="text-xs font-medium text-muted-foreground">{label}</span>
-                <GroupedSelect
-                  id={`filter-${key}`}
-                  value={filters[key]}
-                  onChange={(v) => set(key, v)}
-                  disabled={values.length === 0}
-                  groups={[
-                    { options: [{ value: ALL, label: allLabel }, ...values.map((v) => ({ value: v, label: v }))] },
-                  ]}
-                />
-              </label>
-            ))}
-            <Button
-              variant="secondary"
-              onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
-              className="justify-self-start"
+            <div
+              id="contact-filters"
+              className="grid gap-3 sm:grid-cols-3 lg:animate-fade-in lg:grid-cols-[repeat(3,minmax(0,16rem))_auto] lg:items-end lg:border-y lg:border-border lg:bg-muted/50 lg:px-4 lg:py-3"
             >
-              <X strokeWidth={1.8} aria-hidden="true" />
-              Quitar filtros
-            </Button>
-          </div>
+              {(
+                [
+                  ["country", "País", countries, "Todos"],
+                  ["province", "Provincia", provinces, "Todas"],
+                  ["tag", "Etiqueta", tags, tags.length ? "Todas" : "Sin etiquetas"],
+                ] as const
+              ).map(([key, label, values, allLabel]) => (
+                <label key={key} className="flex min-w-0 flex-col gap-1">
+                  <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                  <GroupedSelect
+                    id={`filter-${key}`}
+                    value={filters[key]}
+                    onChange={(v) => set(key, v)}
+                    disabled={values.length === 0}
+                    groups={[
+                      { options: [{ value: ALL, label: allLabel }, ...values.map((v) => ({ value: v, label: v }))] },
+                    ]}
+                  />
+                </label>
+              ))}
+              <Button
+                variant="secondary"
+                onClick={() => setFilters((f) => ({ ...NO_FILTERS, query: f.query }))}
+                className="justify-self-start"
+              >
+                <X strokeWidth={1.8} aria-hidden="true" />
+                Quitar filtros
+              </Button>
+            </div>
           </FiltersSheet>
 
           {rows.length === 0 ? (

@@ -38,7 +38,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuent
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { useFormsInUse } from "@/features/taxes/forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "@/features/taxes/tax-books";
 import { FILING_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "@/features/taxes/taxes-model";
@@ -90,10 +90,7 @@ function Step({
       className="flex animate-rise-in flex-col gap-3 surface p-4 lg:p-5"
       style={style}
     >
-      <h2
-        id={`step-${index}`}
-        className="m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight"
-      >
+      <h2 id={`step-${index}`} className="m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight">
         <span className="flex size-6 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           {index}
         </span>
@@ -541,7 +538,11 @@ export function QuarterClosePage() {
       <Page>
         <PageHeader
           title="Cierre de trimestres"
-          description="Cierra cada trimestre tras presentarlo para bloquear sus documentos."
+          inline={
+            <HelpTip side="bottom">
+              Cierra un trimestre cuando lo hayas presentado: sus documentos quedan bloqueados.
+            </HelpTip>
+          }
           actions={
             <Select
               value={String(period.year)}
