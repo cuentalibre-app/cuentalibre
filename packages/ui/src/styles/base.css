@@ -100,18 +100,11 @@
   letter-spacing: var(--tracking-tight);
 }
 
-/* A card lifted off the page: the one shape for panels, tables and grouped lists */
+/* A flat panel drawn by a hairline: the one shape for panels, tables and grouped lists */
 @utility surface {
-  border-radius: var(--radius-2xl);
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
   background-color: var(--card);
-  box-shadow: var(--shadow-card);
-  /* Desktop: flat panels drawn by a hairline, like the rest of the frame */
-  @media (width >= 64rem) {
-    border-radius: var(--radius-xl);
-    border-color: var(--border);
-    box-shadow: none;
-  }
 }
 
 /* Popovers slide in from the side they open on */

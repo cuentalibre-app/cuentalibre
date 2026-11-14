@@ -103,7 +103,7 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   ];
 
   return (
-    <Section id="take-home-title" icon={Wallet} title="Neto después de impuestos" className={className}>
+    <Section id="take-home-title" icon={Wallet} title="Beneficio neto estimado" className={className}>
 
       <div className="flex flex-col gap-1.5">
         <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium" />

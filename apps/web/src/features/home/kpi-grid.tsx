@@ -56,7 +56,7 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
 
 /**
  * What to set aside for the period: the VAT due (303), the period's share of the yearly income tax estimate and
- * the self-employed fees not booked yet, the same figures as in "Neto después de impuestos". The 130 advances
+ * the self-employed fees not booked yet, the same figures as in "Beneficio neto estimado". The 130 advances
  * are paid out of this reserve.
  */
 function reserveOf(data: HomeData): Cents {

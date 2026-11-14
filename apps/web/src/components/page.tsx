@@ -163,10 +163,13 @@ interface SectionProps {
 /** A card's title row on desktop: icon and title on the left, a ruled line under it. */
 export const cardHeaderClass =
   "lg:flex lg:items-center lg:justify-between lg:gap-3 lg:border-b lg:border-divider lg:px-4 lg:py-3";
-/** The card's title: larger than body text, with its icon. */
-export const cardTitleClass = "m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight";
-/** The icon before a card's title; hidden on phones, where the title sits on the page. */
-export const cardIconClass = "hidden size-5 shrink-0 text-foreground lg:block";
+/** The card's title: larger than body text, with its icon standing on the text's baseline. */
+export const cardTitleClass = "m-0 flex items-baseline gap-2.5 text-lg font-semibold tracking-tight";
+/**
+ * The icon before a card's title; hidden on phones, where the title sits on the page. Nudged down
+ * by the icon's inner padding so its drawing, not its box, stands on the baseline.
+ */
+export const cardIconClass = "hidden size-5 shrink-0 translate-y-[1.5px] text-foreground lg:block";
 
 /**
  * A titled block of a dashboard. On phones the title sits on the page and the content in a card
