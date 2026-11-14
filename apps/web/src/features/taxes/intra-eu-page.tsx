@@ -317,7 +317,7 @@ export function IntraEuPage() {
 
         <section aria-label="Lista de operaciones" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Lista de operaciones</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight">Lista de operaciones</h2>
             <span className="text-xs text-muted-foreground">Un registro por operador y clave</span>
           </div>
           <RecordsTable
@@ -332,7 +332,7 @@ export function IntraEuPage() {
         {rectificationRows.length > 0 && (
           <section aria-label="Rectificaciones" className="flex flex-col gap-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+              <h2 className="m-0 text-lg font-semibold tracking-tight">
                 Rectificaciones de periodos anteriores
               </h2>
               <span className="text-xs text-muted-foreground">Un registro por operador, clave y periodo</span>

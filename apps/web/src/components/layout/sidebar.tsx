@@ -25,9 +25,9 @@ type Badges = ReturnType<typeof useNavBadges>;
 
 // Items keep the same left padding in both modes, so icons stay put while the width animates
 const itemClass =
-  "flex h-9 shrink-0 items-center gap-3 overflow-hidden rounded-lg px-3 font-semibold whitespace-nowrap text-sidebar-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98]";
+  "flex h-8 shrink-0 items-center gap-2.5 overflow-hidden rounded-md px-2.5 font-medium whitespace-nowrap text-sidebar-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98]";
 const subItemClass =
-  "flex h-8 shrink-0 items-center justify-between rounded-md px-3 text-sidebar-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98]";
+  "flex h-7 shrink-0 items-center justify-between rounded-md px-2.5 text-sm text-muted-foreground hover:text-sidebar-foreground aria-[current=page]:text-sidebar-foreground aria-[current=page]:font-medium no-underline transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98]";
 const activeClass = "bg-sidebar-accent";
 // NavLink marks the current page with aria-current; a static class survives the tooltip's prop merge,
 // which would stringify NavLink's function form of className
@@ -42,7 +42,7 @@ function NavIcon({ item, dot }: { item: NavItem; dot?: boolean }) {
   const Icon = item.icon;
   return (
     <span className="relative shrink-0">
-      <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
+      <Icon className="size-4" strokeWidth={1.8} aria-hidden="true" />
       {dot && <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-warning ring-2 ring-sidebar" />}
     </span>
   );
@@ -161,7 +161,7 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
         )}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="flex flex-col gap-0.5 pt-1 pl-8">
+          <div className="ml-[17px] flex flex-col gap-px border-l border-sidebar-border py-0.5 pl-2.5">
             {item.children!.map((child) => (
               <Fragment key={child.to}>
                 {child.separator && <div className="mx-3 my-1.5 h-px shrink-0 bg-sidebar-border" />}
@@ -202,8 +202,8 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
       <nav
         aria-label="Principal"
         className={cn(
-          "sticky top-0 h-dvh shrink-0 flex-col gap-1 overflow-x-hidden overflow-y-auto border-r border-sidebar-border bg-sidebar px-3.5 backdrop-blur-2xl py-5 transition-[width] duration-300 ease-out",
-          collapsed ? "w-18" : "w-66",
+          "sticky top-0 h-dvh shrink-0 flex-col gap-0.5 overflow-x-hidden overflow-y-auto bg-sidebar px-3 py-4 transition-[width] duration-300 ease-out",
+          collapsed ? "w-16" : "w-60",
           className,
         )}
       >
@@ -217,8 +217,8 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
                   aria-label="Ir a inicio"
                   className="flex items-baseline gap-3 rounded-md text-sidebar-foreground no-underline"
                 >
-                  <LogoMark className="h-7" />
-                  <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
+                  <LogoMark className="h-6" />
+                  <span className="font-brand text-lg font-semibold tracking-[-0.01em]">cuentalibre</span>
                 </NavLink>
               </span>
             </>
@@ -253,7 +253,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           openOnHover={collapsed}
           contentClassName={collapsed ? undefined : "w-[var(--radix-dropdown-menu-trigger-width)]"}
         >
-          <Button variant="secondary" className={cn("mb-4 w-full overflow-hidden font-semibold", collapsed && "px-0")}>
+          <Button variant="secondary" size="sm" className={cn("mb-3 w-full overflow-hidden font-medium", collapsed && "px-0")}>
             <Plus strokeWidth={2} aria-hidden="true" />
             <span className={collapsed ? "sr-only" : undefined}>Crear</span>
           </Button>

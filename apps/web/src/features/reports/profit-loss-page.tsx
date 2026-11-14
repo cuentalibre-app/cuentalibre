@@ -222,7 +222,7 @@ export function ProfitLossPage() {
 
       <article aria-labelledby="pnl-title" className="flex animate-rise-in flex-col gap-5 surface p-4 sm:p-6 lg:p-8">
         <div className="flex flex-col gap-2 border-b border-foreground pb-3">
-          <h2 id="pnl-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+          <h2 id="pnl-title" className="m-0 text-lg font-semibold tracking-tight">
             Informe de pérdidas y ganancias
           </h2>
           <dl className="m-0 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
@@ -267,7 +267,7 @@ export function ProfitLossPage() {
           style={{ "--i": 2 } as CSSProperties}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Distribución en el ejercicio</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight">Distribución en el ejercicio</h2>
             <SegmentedControl
               label="Ejercicio"
               value={chartYear}

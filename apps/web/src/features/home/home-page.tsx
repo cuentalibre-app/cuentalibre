@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
-import { Camera, Plus } from "lucide-react";
+import { Camera, Plus, Store, Users } from "lucide-react";
 import { periodKey, previousPeriod } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { useAvailableYears } from "@/lib/use-available-years";
@@ -23,8 +23,8 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 import { useSettings } from "@/features/settings/settings-store";
 
 // Panels are separate cards with room between them; rows rise in one after another.
-const sheet = "flex flex-col gap-5";
-const row = "flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch";
+const sheet = "flex flex-col gap-5 lg:gap-3";
+const row = "flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch lg:gap-3";
 
 export function HomePage() {
   const availableYears = useAvailableYears();
@@ -78,17 +78,17 @@ export function HomePage() {
         inline={periodSelect()}
         actions={
           <>
-            <Link to="/compras/gastos/nuevo" className={buttonVariants({ variant: "secondary" })}>
+            <Link to="/compras/gastos/nuevo" className={buttonVariants({ variant: "secondary", size: "sm" })}>
               <Camera strokeWidth={1.8} aria-hidden="true" />
               Subir gasto
             </Link>
-            <Link to="/ventas/facturas/nueva" className={buttonVariants({ variant: "brand" })}>
+            <Link to="/ventas/facturas/nueva" className={buttonVariants({ variant: "brand", size: "sm" })}>
               <Plus strokeWidth={2} aria-hidden="true" />
               Nueva factura
             </Link>
-            <div className="ml-2 flex items-center gap-2.5 border-l border-divider pl-4">
-              <Notifications />
-              <UserMenu />
+            <div className="ml-1 flex items-center gap-2 border-l border-divider pl-3">
+              <Notifications className="size-8" />
+              <UserMenu className="size-8" />
             </div>
           </>
         }
@@ -98,28 +98,21 @@ export function HomePage() {
         <KpiGrid data={data} reserve={reserve} className="hidden lg:grid" />
 
         <div className={row} style={{ "--i": 4 } as CSSProperties}>
-          <CashFlowChart
-            key={`cash-${chartKey}`}
-            data={data}
-            className="hidden min-w-0 lg:flex lg:flex-[2_1_560px]"
-          />
+          <CashFlowChart key={`cash-${chartKey}`} data={data} className="hidden min-w-0 lg:flex lg:flex-[2_1_560px]" />
           {/* On phones it sits right under the chart, in the overview */}
           <TakeHomeCard data={data} className="min-w-0 max-lg:hidden lg:flex-[1_1_320px]" />
         </div>
 
         <div className={row} style={{ "--i": 6 } as CSSProperties}>
           <RecentInvoices data={data} className="order-2 min-w-0 lg:order-none lg:flex-[2_1_560px]" />
-          <TaxCalendar
-            data={data}
-            today={today}
-            className="order-1 min-w-0 lg:order-none lg:flex-[1_1_320px]"
-          />
+          <TaxCalendar data={data} today={today} className="order-1 min-w-0 lg:order-none lg:flex-[1_1_320px]" />
         </div>
 
         <div className={row} style={{ "--i": 7 } as CSSProperties}>
           <TopCounterparties
             id="top-clients"
             title="Principales clientes"
+            icon={Users}
             ranking={data.clients}
             barClass="bg-chart-income"
             href="/contactos/clientes"
@@ -130,6 +123,7 @@ export function HomePage() {
           <TopCounterparties
             id="top-suppliers"
             title="Principales proveedores"
+            icon={Store}
             ranking={data.suppliers}
             barClass="bg-chart-expense"
             href="/contactos/proveedores"

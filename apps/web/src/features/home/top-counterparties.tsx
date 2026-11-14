@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import type { LucideIcon } from "lucide-react";
 import { ECONOMIC_DEPENDENCY_THRESHOLD, type CounterpartyRanking } from "@cuentalibre/core";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -18,17 +19,19 @@ interface Props {
   empty: string;
   /** Shown above the list when the ranking signals a risk. */
   warning?: string;
+  icon?: LucideIcon;
   className?: string;
 }
 
 /** Ranked bars: who makes up most of the period's income or expenses (tax base). */
-export function TopCounterparties({ id, title, noun, ranking, barClass, href, empty, warning, className }: Props) {
+export function TopCounterparties({ id, title, noun, ranking, barClass, href, empty, warning, icon, className }: Props) {
   const titleId = `${id}-title`;
 
   return (
     <Section
       id={titleId}
       title={title}
+      icon={icon}
       subtitle={
         noun && (
           <span className="text-sm text-muted-foreground">
@@ -50,7 +53,7 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
       {ranking.items.length === 0 ? (
         <p className="m-0 py-6 text-center text-sm text-muted-foreground">{empty}</p>
       ) : (
-        <ol className="m-0 flex list-none flex-col gap-3 p-0">
+        <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
           {ranking.items.map((item, i) => (
             <li key={item.name} className="flex flex-col gap-1.5">
               <div className="flex items-baseline gap-3">
@@ -62,7 +65,7 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
                   {formatPercent(item.share * 100)}
                 </span>
               </div>
-              <div aria-hidden="true" className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div aria-hidden="true" className="h-1 overflow-hidden rounded-full bg-muted">
                 <div
                   className={cn(
                     "h-full origin-left animate-reveal-x rounded-full transition-[width] duration-500 ease-out [animation-delay:calc(var(--i)*60ms)]",

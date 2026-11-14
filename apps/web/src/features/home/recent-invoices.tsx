@@ -1,10 +1,11 @@
 import { Link } from "react-router";
+import { ReceiptText } from "lucide-react";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { formatDate, formatShortDate } from "@/lib/format";
-import { ListGroup, listRowClass, SeeAllLink } from "@/components/page";
+import { cardHeaderClass, cardIconClass, cardTitleClass, ListGroup, listRowClass, SeeAllLink } from "@/components/page";
 import { CollectionSummary } from "./collection-summary";
 import type { HomeData, InvoiceStatus } from "./home-data";
 
@@ -22,8 +23,9 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       aria-labelledby="recent-invoices-title"
       className={cn("flex flex-col lg:overflow-hidden lg:surface", className)}
     >
-      <div className="flex items-baseline justify-between gap-3 pb-2.5 lg:px-5 lg:pt-5 lg:pb-3">
-        <h2 id="recent-invoices-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+      <div className={cn("flex items-baseline justify-between gap-3 pb-2.5", cardHeaderClass)}>
+        <h2 id="recent-invoices-title" className={cardTitleClass}>
+          <ReceiptText className={cardIconClass} strokeWidth={1.8} aria-hidden="true" />
           <span className="lg:hidden">Últimas facturas</span>
           <span className="hidden lg:inline">Últimas facturas emitidas</span>
         </h2>
@@ -54,7 +56,10 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
                 <td className={cn(table.td, "text-muted-foreground")}>{formatDate(inv.issuedOn)}</td>
                 <td className={cn(table.td, "text-right amount")}>{formatEUR(inv.total)}</td>
                 <td className={table.td}>
-                  <Badge tone={STATUS[inv.status].tone}>{STATUS[inv.status].label}</Badge>
+                  <Badge tone={STATUS[inv.status].tone}>
+                    <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+                    {STATUS[inv.status].label}
+                  </Badge>
                 </td>
               </tr>
             ))}
@@ -66,10 +71,7 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       <ListGroup className="lg:hidden">
         {data.invoices.slice(0, 3).map((inv) => (
           <li key={inv.id}>
-            <Link
-              to={`/ventas/facturas/${inv.id}`}
-              className={listRowClass}
-            >
+            <Link to={`/ventas/facturas/${inv.id}`} className={listRowClass}>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <span className="truncate font-medium">{inv.client}</span>
                 <span className="text-sm text-muted-foreground">
@@ -86,7 +88,10 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       </ListGroup>
 
       {/* Pinned to the bottom so the card can stretch to match the tax calendar beside it */}
-      <CollectionSummary data={data} className="hidden lg:mt-auto lg:flex lg:border-t lg:border-divider lg:px-5 lg:py-4" />
+      <CollectionSummary
+        data={data}
+        className="hidden lg:mt-auto lg:flex lg:border-t lg:border-divider lg:px-4 lg:py-3"
+      />
     </section>
   );
 }

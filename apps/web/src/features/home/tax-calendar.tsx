@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { CalendarClock } from "lucide-react";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -7,13 +8,13 @@ import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
 import { daysLeftLabel, deadlineTitle, MONTHS_SHORT } from "@/lib/format";
 import type { DeadlineItem, HomeData } from "./home-data";
-import { ListGroup, listRowClass, SeeAllLink } from "@/components/page";
+import { cardHeaderClass, cardIconClass, cardTitleClass, ListGroup, listRowClass, SeeAllLink } from "@/components/page";
 
 function DateBlock({ date, className }: { date: Date; className?: string }) {
   return (
     <div className={cn("flex w-11 shrink-0 flex-col items-center", className)}>
-      <span className="text-xl font-semibold">{date.getDate()}</span>
-      <span className="text-2xs text-muted-foreground uppercase">{MONTHS_SHORT[date.getMonth()]}</span>
+      <span className="amount text-xl font-medium">{date.getDate()}</span>
+      <span className="font-mono text-2xs text-muted-foreground uppercase">{MONTHS_SHORT[date.getMonth()]}</span>
     </div>
   );
 }
@@ -35,17 +36,12 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
   return (
     <section
       aria-labelledby="tax-calendar-title"
-      className={cn(
-        "flex flex-col gap-2.5 lg:gap-4 lg:surface lg:p-5",
-        className,
-      )}
+      className={cn("flex flex-col gap-2.5 lg:gap-3 lg:surface lg:px-4 lg:pb-4", className)}
     >
-      <div className="flex items-baseline justify-between gap-3">
+      <div className={cn("flex items-baseline justify-between gap-3 lg:-mx-4", cardHeaderClass)}>
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2
-            id="tax-calendar-title"
-            className="m-0 text-lg font-semibold tracking-tight whitespace-nowrap lg:text-title"
-          >
+          <h2 id="tax-calendar-title" className={cn(cardTitleClass, "whitespace-nowrap")}>
+            <CalendarClock className={cardIconClass} strokeWidth={1.8} aria-hidden="true" />
             <span className="lg:hidden">Próximos vencimientos</span>
             <span className="hidden lg:inline">Calendario fiscal</span>
           </h2>
@@ -59,7 +55,7 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
         {data.deadlines.map((item) => (
           <li
             key={`${item.deadline.kind}-${item.deadline.date.toISOString()}`}
-            className="flex items-center gap-3.5 border-b border-divider py-2.5 last:border-b-0"
+            className="flex items-center gap-3.5 border-b border-divider py-2 last:border-b-0"
           >
             <DateBlock date={item.deadline.date} />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -91,7 +87,7 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
       </div>
       <Link
         to={closingPath(toClose)}
-        className={cn(buttonVariants({ variant: "secondary" }), "hidden font-semibold no-underline lg:inline-flex")}
+        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "hidden no-underline lg:inline-flex")}
       >
         Continuar cierre de trimestre
       </Link>

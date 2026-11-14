@@ -334,7 +334,7 @@ function PlanStep({ trialEndsAt }: { trialEndsAt: string | null }) {
       </div>
 
       <section aria-labelledby="subscribe-now" className="flex flex-col gap-3 border-t border-border pt-6">
-        <h2 id="subscribe-now" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+        <h2 id="subscribe-now" className="m-0 text-lg font-semibold tracking-tight">
           ¿Ya sabes que te quedas?
         </h2>
         <PeriodPicker rows value={period} onChange={setPeriod} />

@@ -111,6 +111,12 @@
   border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
   background-color: var(--card);
   box-shadow: var(--shadow-card);
+  /* Desktop: flat panels drawn by a hairline, like the rest of the frame */
+  @media (width >= 64rem) {
+    border-radius: var(--radius-xl);
+    border-color: var(--border);
+    box-shadow: none;
+  }
 }
 
 /* Popovers slide in from the side they open on */
@@ -138,5 +144,13 @@
       animation-delay: 0ms !important;
       transition-duration: 1ms !important;
     }
+  }
+}
+
+/* Sortable table headers are buttons: they take the header's case and spacing, not the button's */
+@layer base {
+  th button {
+    text-transform: inherit;
+    letter-spacing: inherit;
   }
 }

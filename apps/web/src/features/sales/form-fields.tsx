@@ -69,17 +69,23 @@ export function Section({
   });
   return (
     <section
-      className="flex animate-rise-in flex-col gap-4 surface p-5 text-card-foreground"
+      className="flex animate-rise-in flex-col surface text-card-foreground"
       style={{ "--i": index } as CSSProperties}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+      {/* Ruled off from its fields while open, like the cards on Inicio */}
+      <div
+        className={cn(
+          "flex min-h-14 flex-wrap items-center justify-between gap-3 px-5 py-2.5",
+          open && "border-b border-divider",
+        )}
+      >
+        <h2 className="m-0 text-lg font-semibold tracking-tight">
           <button
             type="button"
             aria-expanded={open}
             aria-controls={id}
             onClick={() => setOpen((o) => !o)}
-            className="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left text-lg font-semibold tracking-tight text-foreground lg:text-title"
+            className="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-left text-lg font-semibold tracking-tight text-foreground"
           >
             {title}
             <ChevronDown
@@ -90,7 +96,7 @@ export function Section({
         </h2>
         {open && action}
       </div>
-      <div ref={body} id={id} className={cn(open ? "flex" : "hidden", "flex-col gap-4")}>
+      <div ref={body} id={id} className={cn(open ? "flex" : "hidden", "flex-col gap-4 p-5")}>
         {children}
       </div>
     </section>

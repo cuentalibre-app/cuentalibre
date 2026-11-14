@@ -33,7 +33,7 @@ function Card({
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex flex-col gap-1">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">{title}</h2>
         {description && <p className="m-0 max-w-3xl text-sm text-muted-foreground">{description}</p>}
       </div>
       {children}

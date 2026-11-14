@@ -21,7 +21,7 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 
 /** A page's outer frame: side margins and the gap between its blocks. */
 export function Page({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cn("flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-6 lg:px-8", className)} {...props} />;
+  return <div className={cn("flex flex-col gap-5 px-5 pt-6 pb-8 lg:gap-5 lg:px-6 lg:pt-5", className)} {...props} />;
 }
 
 /** The round-cornered square arrow at the start of a header that leads one level up. */
@@ -77,7 +77,7 @@ export function PageHeader({
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {eyebrow}
           <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3">
-            <h1 className="m-0 min-w-0 text-2xl font-semibold tracking-tight text-balance lg:text-3xl">{title}</h1>
+            <h1 className="m-0 min-w-0 text-2xl font-semibold tracking-tight text-balance lg:text-title">{title}</h1>
             {inline}
           </div>
           {description && (
@@ -152,29 +152,47 @@ interface SectionProps {
   subtitle?: ReactNode;
   /** One link at the end of the title row, usually a <SeeAllLink>. */
   action?: ReactNode;
+  /** A small icon before the title on desktop. */
+  icon?: LucideIcon;
   className?: string;
   /** Classes for the body; on phones it is the card. */
   bodyClassName?: string;
   children: ReactNode;
 }
 
+/** A card's title row on desktop: icon and title on the left, a ruled line under it. */
+export const cardHeaderClass =
+  "lg:flex lg:items-center lg:justify-between lg:gap-3 lg:border-b lg:border-divider lg:px-4 lg:py-3";
+/** The card's title: larger than body text, with its icon. */
+export const cardTitleClass = "m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight";
+/** The icon before a card's title; hidden on phones, where the title sits on the page. */
+export const cardIconClass = "hidden size-5 shrink-0 text-foreground lg:block";
+
 /**
  * A titled block of a dashboard. On phones the title sits on the page and the content in a card
  * under it; on desktop title and content share one card.
  */
-export function Section({ id, title, subtitle, action, className, bodyClassName, children }: SectionProps) {
+export function Section({ id, title, subtitle, action, icon: Icon, className, bodyClassName, children }: SectionProps) {
   return (
-    <section aria-labelledby={id} className={cn("flex flex-col gap-2.5 lg:gap-4 lg:surface lg:p-5", className)}>
-      <div className="flex items-baseline justify-between gap-3">
+    <section aria-labelledby={id} className={cn("flex flex-col gap-2.5 lg:gap-0 lg:surface", className)}>
+      <div className={cn("flex items-baseline justify-between gap-3", cardHeaderClass)}>
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 id={id} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+          <h2 id={id} className={cardTitleClass}>
+            {Icon && <Icon className={cardIconClass} strokeWidth={1.8} aria-hidden="true" />}
             {title}
           </h2>
           {subtitle}
         </div>
         {action}
       </div>
-      <div className={cn("flex flex-col gap-4 surface p-4 lg:contents", bodyClassName)}>{children}</div>
+      <div
+        className={cn(
+          "flex flex-col gap-4 surface p-4 lg:flex-1 lg:rounded-none lg:border-0 lg:bg-transparent",
+          bodyClassName,
+        )}
+      >
+        {children}
+      </div>
     </section>
   );
 }
@@ -187,7 +205,7 @@ export function SeeAllLink({ className, children, ...props }: LinkProps) {
   return (
     <Link
       className={cn(
-        "group -mr-1.5 inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-1 text-sm font-medium text-primary no-underline transition-colors duration-150 hover:bg-primary-soft hover:text-primary-hover",
+        "group -mr-1.5 inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-1 text-sm font-medium text-muted-foreground no-underline transition-colors duration-150 hover:bg-muted hover:text-foreground",
         className,
       )}
       {...props}

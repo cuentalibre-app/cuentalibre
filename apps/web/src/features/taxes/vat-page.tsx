@@ -222,7 +222,7 @@ function Vat303({ year, quarter, today }: { year: number; quarter: Quarter; toda
         </PageNotice>
       )}
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 303</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 303</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormAnswers
@@ -359,7 +359,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         </PageNotice>
       )}
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 390</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 390</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormAnswers title="Sujeto pasivo y devengo" rows={answers390(tax)} />

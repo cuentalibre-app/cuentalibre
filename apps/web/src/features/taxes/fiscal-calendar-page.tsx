@@ -520,7 +520,7 @@ function CalendarList({
         <section key={month} aria-labelledby={`month-${month}`} className="flex flex-col gap-2">
           <h2
             id={`month-${month}`}
-            className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight lg:text-title"
+            className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight"
           >
             {MONTHS[month]} {calendarYear}
             {isCurrentYear && month === today.getMonth() && <Badge tone="primary">Este mes</Badge>}

@@ -21,7 +21,6 @@ export function AppLayout() {
       <VerifyEmailBanner />
       <CommandErrorNotice />
       <div className="relative isolate flex min-h-dvh bg-canvas">
-        <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 bg-aurora" />
         <a
           href="#main"
           className="sr-only z-20 rounded-lg bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -29,7 +28,10 @@ export function AppLayout() {
           Saltar al contenido
         </a>
         <Sidebar className="hidden lg:flex" collapsed={collapsed} onToggle={toggleSidebar} />
-        <main id="main" className="min-w-0 flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <main
+          id="main"
+          className="min-w-0 flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:my-2 lg:mr-2 lg:min-h-[calc(100dvh-1rem)] lg:rounded-xl lg:border lg:border-border lg:bg-background lg:pb-0"
+        >
           {/* Keyed by path so each page plays its entrance; query changes (e.g. ?periodo) don't */}
           <div key={pathname} className="animate-page-in">
             <Outlet />
