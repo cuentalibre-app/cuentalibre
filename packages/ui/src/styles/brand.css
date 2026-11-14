@@ -1,17 +1,7 @@
 /*
- * The brand's louder voice, shared by the public site and the screens around
- * the app (sign-in, sign-up): gradient text, gradient borders and the main
- * call to action. Inside the app the UI stays flat but for the home screen's
- * main action, so the gradient follows the user in from the site.
+ * The brand's louder voice on the public site: gradient borders and the main
+ * call to action. The app and its sign-in screens stay flat.
  */
-@utility text-gradient-brand {
-  background: var(--brand-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-
 @utility border-gradient-brand {
   border: 2px solid transparent;
   background:
@@ -46,12 +36,4 @@
   &:active {
     transform: scale(0.98);
   }
-}
-
-/* A soft wash of the brand colors, behind the sign-in screens' brand panel */
-@utility bg-brand-glow {
-  background:
-    radial-gradient(circle at 85% 0%, color-mix(in srgb, var(--brand-violet) 18%, transparent), transparent 55%),
-    radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--brand-teal) 16%, transparent), transparent 50%),
-    color-mix(in srgb, var(--primary-soft) 70%, var(--background));
 }

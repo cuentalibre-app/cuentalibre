@@ -8,7 +8,6 @@ import { cn } from "../lib/cn";
  * - `sm` (32px) inside a card or a row;
  * - `xl` (52px) for the main action at the foot of a phone screen;
  * - `icon` / `icon-sm` for a button that is only an icon (give it an aria-label).
- * `brand` is the gradient call to action, one per screen at most.
  * `chip` is a small pill that toggles (aria-pressed) or picks a preset; `link` is inline text.
  * A card's "Ver todas" is a <SeeAllLink>, not a button.
  */
@@ -17,24 +16,19 @@ const variants = cva(
   {
     variants: {
       variant: {
-        // Lit from above so it has the same depth as the cards around it
-        primary:
-          "bg-primary bg-linear-to-b from-primary-top to-primary font-semibold text-primary-foreground shadow-primary hover:from-primary hover:to-primary-hover",
-        // The brand gradient, for the one main action a screen leads with (as on the site)
-        brand: "button-brand font-semibold",
-        secondary:
-          "border border-border bg-secondary text-secondary-foreground shadow-control hover:border-input hover:bg-muted",
+        primary: "bg-primary font-semibold text-primary-foreground hover:bg-primary-hover",
+        secondary: "border border-border bg-secondary text-secondary-foreground hover:border-input hover:bg-muted",
         ghost: "text-foreground hover:bg-accent",
         destructive: "bg-destructive font-semibold text-destructive-foreground hover:opacity-90",
         chip: "border border-input bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:text-primary",
-        link: "text-primary hover:text-primary-hover hover:underline underline-offset-2 active:scale-100",
+        link: "text-primary underline-offset-2 hover:text-primary-hover hover:underline active:scale-100",
       },
       size: {
         sm: "h-8 px-3 text-base",
         lg: "h-10 px-4 text-base", // default (40px), the height of inputs and selects
         xl: "h-13 rounded-xl px-5 text-md", // primary mobile actions (52px)
         icon: "size-10 px-0",
-        "icon-sm": "size-8 px-0 pointer-coarse:size-10 text-muted-foreground hover:text-foreground [&_svg]:size-4",
+        "icon-sm": "size-8 px-0 text-muted-foreground hover:text-foreground pointer-coarse:size-10 [&_svg]:size-4",
       },
     },
     compoundVariants: [

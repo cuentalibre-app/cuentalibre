@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Navigate, useLocation } from "react-router";
@@ -45,11 +45,32 @@ export function GuestOnly({ children }: { children: ReactNode }) {
   return children;
 }
 
-/** Reminds the user the demo runs on sample data, with a way into a real account. */
+/**
+ * Reminds the user the demo runs on sample data, with a way into a real account. It stays pinned on
+ * scroll and publishes its height as --demo-banner-h, so sticky things (the sidebar) sit below it.
+ */
 export function DemoBanner() {
-  if (sessionState() !== "demo") return null;
+  const ref = useRef<HTMLDivElement>(null);
+  const demo = sessionState() === "demo";
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() => root.style.setProperty("--demo-banner-h", `${el.offsetHeight}px`));
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--demo-banner-h");
+    };
+  }, [demo]);
+
+  if (!demo) return null;
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-primary-soft px-4 py-2 text-center text-sm text-foreground">
+    <div
+      ref={ref}
+      className="sticky top-0 z-30 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-primary-soft px-4 py-2 text-center text-sm text-foreground"
+    >
       <span>Estás en la demo: los datos son de ejemplo y los cambios no se guardan.</span>
       <span className="flex gap-2">
         {API_URL && (

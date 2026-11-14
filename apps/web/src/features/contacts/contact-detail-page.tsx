@@ -212,7 +212,7 @@ function InfoCard({
       className={cn("flex animate-rise-in flex-col gap-3 surface p-5 text-card-foreground", className)}
       style={{ "--i": index } as CSSProperties}
     >
-      <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
+      <h2 className="m-0 text-lg font-semibold tracking-tight">{title}</h2>
       {children}
     </section>
   );

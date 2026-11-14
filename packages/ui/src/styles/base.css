@@ -100,17 +100,11 @@
   letter-spacing: var(--tracking-tight);
 }
 
-/* The brand wash fixed behind every page of the app */
-@utility bg-aurora {
-  background-image: var(--aurora);
-}
-
-/* A card lifted off the page: the one shape for panels, tables and grouped lists */
+/* A flat panel drawn by a hairline: the one shape for panels, tables and grouped lists */
 @utility surface {
-  border-radius: var(--radius-2xl);
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
   background-color: var(--card);
-  box-shadow: var(--shadow-card);
 }
 
 /* Popovers slide in from the side they open on */
@@ -138,5 +132,13 @@
       animation-delay: 0ms !important;
       transition-duration: 1ms !important;
     }
+  }
+}
+
+/* Sortable table headers are buttons: they take the header's case and spacing, not the button's */
+@layer base {
+  th button {
+    text-transform: inherit;
+    letter-spacing: inherit;
   }
 }

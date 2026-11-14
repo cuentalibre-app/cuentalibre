@@ -19,17 +19,19 @@
   --popover: var(--neutral-0);
   --popover-foreground: var(--neutral-950);
 
-  --primary: var(--blue-600);
+  --primary: var(--ink-900);
+  /* The head on the logo mark: a light slate that stands out from the ink columns */
+  --brand-mark: var(--slate-500);
   --primary-foreground: var(--neutral-0);
-  --primary-hover: var(--blue-800);
+  --primary-hover: var(--ink-700);
   --primary-top: color-mix(in oklab, var(--primary) 84%, white); /* lit top of the primary button */
-  --primary-soft: var(--blue-50); /* highlighted period, info notes */
-  --selection: var(--blue-200); /* selected text */
-  /* Brand gradient: headline accents and calls to action on the site and the sign-in screens */
+  --primary-soft: var(--slate-50); /* highlighted period, info notes */
+  --primary-soft-foreground: var(--slate-700); /* icons and labels on primary-soft */
+  --selection: var(--slate-200); /* selected text */
+  /* Brand gradient: calls to action and plan cards on the public site */
   --brand-violet: var(--violet-500);
   --brand-teal: var(--teal-600);
   --brand-gradient: linear-gradient(90deg, var(--primary) 0%, var(--brand-violet) 55%, var(--brand-teal) 100%);
-  --aurora-strength: 1;
   /* Frosted surfaces floating over the page: the tab bar and its sheets */
   --glass: color-mix(in oklab, var(--popover) 30%, transparent);
   --glass-edge: color-mix(in oklab, var(--neutral-0) 70%, transparent);
@@ -49,7 +51,7 @@
   --border: var(--neutral-200);
   --input: var(--neutral-300);
   --divider: var(--neutral-100);
-  --ring: var(--blue-600);
+  --ring: var(--ink-900);
 
   --success: var(--green-700);
   --success-foreground: var(--neutral-0);
@@ -61,19 +63,19 @@
   --destructive-foreground: var(--neutral-0);
   --destructive-soft: var(--red-50);
 
-  --sidebar: color-mix(in oklab, var(--neutral-0) 50%, transparent); /* frosted over the page's wash */
+  --sidebar: var(--neutral-50);
   --sidebar-foreground: var(--neutral-950);
   --sidebar-accent: var(--neutral-150);
   --sidebar-accent-foreground: var(--neutral-950);
   --sidebar-border: var(--neutral-200);
 
   /* Charts */
-  --chart-income: var(--blue-600);
-  --chart-expense: var(--orange-500);
-  --chart-tax: var(--blue-300);
+  --chart-income: var(--slate-700);
+  --chart-expense: var(--peach-400);
+  --chart-tax: var(--slate-300);
   --chart-grid: var(--neutral-200);
   --chart-axis: var(--neutral-300);
-  --chart-highlight: var(--blue-50);
+  --chart-highlight: var(--neutral-50);
 }
 
 /*
@@ -93,14 +95,15 @@
   --popover: #232429;
   --popover-foreground: #ededeb;
 
-  --primary: #7f8ff2;
-  --primary-foreground: #0e1440;
-  --primary-hover: #9aa7f5;
-  --primary-soft: #1f2440;
-  --selection: #34407f;
+  --primary: #ededeb;
+  --brand-mark: #8fa9c4;
+  --primary-foreground: #131416;
+  --primary-hover: #ffffff;
+  --primary-soft: #1c242d;
+  --primary-soft-foreground: #a9bccf;
+  --selection: #34475c;
   --brand-violet: #a08cf4;
   --brand-teal: #4fc0db;
-  --aurora-strength: 1.4;
   --glass: color-mix(in oklab, #26272b 40%, transparent);
   --glass-edge: color-mix(in oklab, #ffffff 12%, transparent);
   --modal: color-mix(in oklab, #232429 90%, transparent);
@@ -118,7 +121,7 @@
   --border: #3a3c42;
   --input: #46494f;
   --divider: #2d2f34;
-  --ring: #7f8ff2;
+  --ring: #ededeb;
 
   --success: #5bc08a;
   --success-foreground: #0b1a12;
@@ -130,50 +133,16 @@
   --destructive-foreground: #2a0d09;
   --destructive-soft: #2e1714;
 
-  --sidebar: color-mix(in oklab, #18191c 55%, transparent);
+  --sidebar: #0d0e10;
   --sidebar-foreground: #ededeb;
   --sidebar-accent: #2f3136;
   --sidebar-accent-foreground: #ededeb;
   --sidebar-border: #3a3c42;
 
-  --chart-income: #7f8ff2;
-  --chart-expense: #e8a34a;
-  --chart-tax: #5d69bd;
+  --chart-income: #8fa9c4;
+  --chart-expense: #e9a47a;
+  --chart-tax: #4f6782;
   --chart-grid: #2a2c30;
   --chart-axis: #3a3d42;
-  --chart-highlight: #1f2440;
-}
-
-/*
- * The wash fixed behind the app, picked by the user (data-backdrop on <html>). A swatch carrying
- * the same attribute previews its own wash with bg-aurora.
- */
-:root,
-[data-backdrop="aurora"] {
-  /* Soft wash of the brand colors, top to bottom */
-  --aurora:
-    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 20%), transparent), transparent 70%),
-    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--brand-violet) calc(var(--aurora-strength) * 18%), transparent), transparent 70%),
-    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--brand-teal) calc(var(--aurora-strength) * 13%), transparent), transparent 70%),
-    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--primary) calc(var(--aurora-strength) * 15%), transparent), transparent 70%);
-}
-
-[data-backdrop="sunset"] {
-  --aurora:
-    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--amber-400) calc(var(--aurora-strength) * 22%), transparent), transparent 70%),
-    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--rose-500) calc(var(--aurora-strength) * 16%), transparent), transparent 70%),
-    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--orange-500) calc(var(--aurora-strength) * 14%), transparent), transparent 70%),
-    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--violet-500) calc(var(--aurora-strength) * 13%), transparent), transparent 70%);
-}
-
-[data-backdrop="forest"] {
-  --aurora:
-    radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--green-500) calc(var(--aurora-strength) * 18%), transparent), transparent 70%),
-    radial-gradient(50% 45% at 100% 28%, color-mix(in oklab, var(--teal-600) calc(var(--aurora-strength) * 16%), transparent), transparent 70%),
-    radial-gradient(55% 40% at 0% 72%, color-mix(in oklab, var(--amber-400) calc(var(--aurora-strength) * 12%), transparent), transparent 70%),
-    radial-gradient(60% 45% at 100% 100%, color-mix(in oklab, var(--green-500) calc(var(--aurora-strength) * 14%), transparent), transparent 70%);
-}
-
-[data-backdrop="plain"] {
-  --aurora: none;
+  --chart-highlight: #232429;
 }

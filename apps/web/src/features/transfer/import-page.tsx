@@ -1,6 +1,6 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { Link, useSearchParams } from "react-router";
-import { CircleAlert, CircleCheck, FileSpreadsheet, Info, TriangleAlert, Upload, X } from "lucide-react";
+import { CircleAlert, CircleCheck, FileSpreadsheet, TriangleAlert, Upload, X } from "lucide-react";
 import { sumBy } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
@@ -83,16 +83,15 @@ export function ImportPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <PageShell title="Importación de facturas y gastos">
-        <div className="flex animate-rise-in gap-2 rounded-xl bg-primary-soft px-3.5 py-3 text-sm" role="note">
-          <Info className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.8} aria-hidden="true" />
-          <p className="m-0">
-            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, descarga la
-            plantilla si no la tienes, sube el archivo y pulsa <strong>Continuar</strong>: verás lo que se va a importar
-            antes de confirmarlo. Las facturas con varios conceptos ocupan una fila por concepto con el mismo número.
-          </p>
-        </div>
-
+      <PageShell
+        title="Importación de facturas y gastos"
+        help={
+          <>
+            Sube un Excel o CSV con las columnas de la plantilla y revisa lo que se va a importar antes de confirmarlo.
+            Una factura con varios conceptos ocupa una fila por concepto, con el mismo número.
+          </>
+        }
+      >
         {imported && (
           <div
             role="status"
@@ -238,7 +237,7 @@ function Preview({
   if (preview.fileErrors.length)
     return (
       <section className="flex animate-rise-in flex-col gap-2 rounded-xl bg-destructive-soft p-5">
-        <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive lg:text-title">
+        <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive">
           <CircleAlert className="size-5" strokeWidth={1.8} aria-hidden="true" />
           No se puede importar el archivo
         </h2>
@@ -256,7 +255,7 @@ function Preview({
       className="flex animate-rise-in flex-col overflow-hidden surface"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Vista previa</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Vista previa</h2>
         <span className="text-sm">
           <span className="font-semibold">{valid.length}</span>{" "}
           {valid.length === 1 ? `${singular} lista` : `${plural} listas`} para importar ·{" "}

@@ -26,14 +26,21 @@
   --blue-600: #2f45c9;
   --blue-800: #1e2f96;
 
+  /* Ink: the brand, on buttons and text */
+  --ink-900: #1d2024;
+  --ink-700: #3a3e44;
+
+  /* Slate: soft highlights, and the chart series for income and taxes (peach for expenses) */
+  --slate-50: #edf1f5;
+  --slate-200: #cdd8e3;
+  --slate-300: #a9bccf;
+  --slate-500: #6f8aa6;
+  --slate-700: #3e5c7a;
+  --peach-400: #e39a6b;
+
   /* Brand gradient: blue into violet and teal */
   --violet-500: #6a4fe0;
   --teal-600: #0e8fae;
-
-  /* Backdrop washes the user can pick */
-  --rose-500: #e0567a;
-  --amber-400: #f0b04a;
-  --green-500: #2f9e64;
 
   /* Status */
   --green-50: #e3f1e8;

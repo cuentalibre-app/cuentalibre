@@ -12,7 +12,11 @@ export function CatalogExportPage() {
   const count = state.products.length;
 
   return (
-    <PageShell title="Exportar catálogo" back={{ to: PRODUCTS_PATH, label: "productos" }}>
+    <PageShell
+      title="Exportar catálogo"
+      help="Descarga tu catálogo para editarlo en Excel y volver a importarlo."
+      back={{ to: PRODUCTS_PATH, label: "productos" }}
+    >
       <Panel
         title="Exportación de catálogo"
         description={

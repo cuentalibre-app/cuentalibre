@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { cents, type Cents } from "@cuentalibre/core";
-import { Badge } from "@cuentalibre/ui/components/badge";
+import { ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, type LucideIcon } from "lucide-react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { formatPercent, periodShortLabel } from "@/lib/format";
@@ -8,8 +8,9 @@ import type { HomeData } from "./home-data";
 
 interface Kpi {
   label: string;
-  /** Marker color, matching the figure's color in the charts. */
-  dot: string;
+  icon: LucideIcon;
+  /** Icon color, matching the figure's color in the charts. */
+  tint: string;
   value: Cents;
   change: number | null;
   /** Whether going up is good news (true), bad news (false) or neither (null). */
@@ -21,38 +22,41 @@ function tone(change: number, upIsGood: boolean | null) {
   return change >= 0 === upIsGood ? ("success" as const) : ("danger" as const);
 }
 
+const TONE_TEXT = { success: "text-success", danger: "text-destructive", neutral: "text-muted-foreground" } as const;
+
 function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string; index: number }) {
   const change = kpi.change;
   const t = change === null ? null : tone(change, kpi.upIsGood);
   const changeText = change === null ? null : `${change >= 0 ? "↑" : "↓"} ${formatPercent(Math.abs(change))}`;
+  const Icon = kpi.icon;
 
   return (
-    <div
-      className="flex animate-rise-in flex-col gap-1.5 surface p-3.5 lg:gap-2.5 lg:p-5"
-      style={{ "--i": index } as CSSProperties}
-    >
-      <span className="flex min-w-0 items-center gap-2 text-sm font-semibold lg:text-lg">
-        <span className={cn("size-2.5 shrink-0 rounded-full", kpi.dot)} aria-hidden="true" />
+    <div className="flex animate-rise-in flex-col surface" style={{ "--i": index } as CSSProperties}>
+      {/* Header row: the series-colored icon and the label, ruled off from the figure */}
+      <span className="flex min-w-0 items-center gap-2.5 border-b border-divider px-3.5 py-2.5 text-sm font-semibold lg:px-4 lg:py-3 lg:text-lg">
+        <Icon className={cn("size-4 shrink-0 lg:size-5", kpi.tint)} strokeWidth={2} aria-hidden="true" />
         <span className="truncate">{kpi.label}</span>
       </span>
-      <AnimatedAmount value={kpi.value} className="amount text-xl font-semibold lg:text-2xl" />
-      {changeText && t ? (
-        <span className="flex items-center gap-2 text-xs text-muted-foreground lg:text-sm">
-          <Badge tone={t} className="h-6 text-xs">
-            {changeText}
-          </Badge>
-          vs. {compareLabel}
-        </span>
-      ) : (
-        <span className="text-xs text-muted-foreground lg:text-sm">{"\u00a0"}</span>
-      )}
+      <div className="flex flex-col gap-1.5 px-3.5 pt-3 pb-3.5 lg:gap-2 lg:px-4 lg:pt-4 lg:pb-4">
+        <AnimatedAmount
+          value={kpi.value}
+          className="amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium"
+        />
+        {changeText && t ? (
+          <span className="text-xs text-muted-foreground lg:text-sm">
+            <span className={cn("amount font-medium", TONE_TEXT[t])}>{changeText}</span> respecto al {compareLabel}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground lg:text-sm">{"\u00a0"}</span>
+        )}
+      </div>
     </div>
   );
 }
 
 /**
  * What to set aside for the period: the VAT due (303), the period's share of the yearly income tax estimate and
- * the self-employed fees not booked yet, the same figures as in "Neto después de impuestos". The 130 advances
+ * the self-employed fees not booked yet, the same figures as in "Beneficio neto estimado". The 130 advances
  * are paid out of this reserve.
  */
 function reserveOf(data: HomeData): Cents {
@@ -78,28 +82,32 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
   const kpis: Kpi[] = [
     {
       label: "Ingresos",
-      dot: "bg-chart-income",
+      icon: ArrowDownLeft,
+      tint: "text-chart-income",
       value: data.totals.income,
       change: data.changes.income,
       upIsGood: true,
     },
     {
       label: "Gastos",
-      dot: "bg-chart-expense",
+      icon: ArrowUpRight,
+      tint: "text-chart-expense",
       value: data.totals.expenses,
       change: data.changes.expenses,
       upIsGood: false,
     },
     {
       label: "Beneficio",
-      dot: "bg-success",
+      icon: TrendingUp,
+      tint: "text-success",
       value: data.profit,
       change: data.changes.profit,
       upIsGood: true,
     },
     {
       label: "Reserva para impuestos",
-      dot: "bg-chart-tax",
+      icon: PiggyBank,
+      tint: "text-chart-tax",
       value: reserve.value,
       change: reserve.change,
       // More to set aside means more taxes to pay, as with expenses
@@ -108,7 +116,10 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
   ];
 
   return (
-    <section aria-label="Resumen del periodo" className={cn("grid grid-cols-2 gap-2.5 lg:gap-5 xl:grid-cols-4", className)}>
+    <section
+      aria-label="Resumen del periodo"
+      className={cn("grid grid-cols-2 gap-2.5 lg:gap-3 @[60rem]:grid-cols-4", className)}
+    >
       {kpis.map((kpi, i) => (
         <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />
       ))}

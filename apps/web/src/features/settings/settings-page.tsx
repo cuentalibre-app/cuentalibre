@@ -55,7 +55,8 @@ import {
   vatRegimeLabel,
 } from "./settings-model";
 import { useSettings } from "./settings-store";
-import { Page, PageHeader } from "@/components/page";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 
 interface Entry {
   title: string;
@@ -74,7 +75,7 @@ function EntryCard({ entry, index }: { entry: Entry; index: number }) {
       // Cap the stagger so the last cards of a long hub don't lag
       style={{ "--i": Math.min(index, 6) } as CSSProperties}
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
         <entry.icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -274,7 +275,14 @@ export function SettingsPage() {
   let index = 0;
   return (
     <Page>
-      <PageHeader title="Configuración" description="Los datos de tu negocio y cómo trabaja cuentalibre con ellos." />
+      <PageHeader
+        title="Configuración"
+        inline={
+          <TooltipProvider delayDuration={300}>
+            <HelpTip side="bottom">Los datos de tu negocio y cómo trabaja cuentalibre con ellos.</HelpTip>
+          </TooltipProvider>
+        }
+      />
 
       {billing && (
         <section aria-label="Tu plan" className="flex flex-col gap-3">

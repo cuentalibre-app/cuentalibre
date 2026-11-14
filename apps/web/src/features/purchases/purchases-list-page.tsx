@@ -26,7 +26,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { useLockedQuarter } from "@/features/closing/closing-store";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { Page, PageHeader, Toolbar } from "@/components/page";
+import { HelpTip, Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import {
   ActionsMenu,
@@ -76,10 +76,11 @@ export type PurchaseListKind = "invoice" | "asset";
 
 const LIST_KINDS: Record<
   PurchaseListKind,
-  { title: string; newLabel: string; newPath: string; export: string; empty: string; filtered: string }
+  { title: string; help: string; newLabel: string; newPath: string; export: string; empty: string; filtered: string }
 > = {
   invoice: {
     title: "Facturas recibidas",
+    help: "Las facturas de tus proveedores. Su IVA y su importe se deducen en tus impuestos.",
     newLabel: "Nueva factura recibida",
     newPath: NEW_PURCHASE_PATH,
     export: "facturas-recibidas",
@@ -88,6 +89,7 @@ const LIST_KINDS: Record<
   },
   asset: {
     title: "Bienes de inversión",
+    help: "Compras que usas durante años, como un ordenador o una furgoneta. Se deducen poco a poco con la amortización.",
     newLabel: "Nuevo bien de inversión",
     newPath: NEW_ASSET_PATH,
     export: "bienes-de-inversion",
@@ -266,6 +268,7 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
       <Page>
         <PageHeader
           title={copy.title}
+          inline={<HelpTip side="bottom">{copy.help}</HelpTip>}
           actions={
             <>
               {kind === "invoice" && <ReadDocumentButton label="Leer factura con IA" formPath={copy.newPath} />}
@@ -417,14 +420,16 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
   ];
   // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 hidden animate-rise-in gap-4 lg:grid lg:grid-cols-4">
+    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 wide:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
-          <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-          <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
+        <div key={s.label} className="flex flex-col surface">
+          <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">
+            {s.label}
+          </dt>
+          <dd className="m-0 px-4 pt-4 amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium">
             <AnimatedAmount value={s.value} />
           </dd>
-          <dd className="m-0 text-sm text-muted-foreground">{s.detail}</dd>
+          <dd className="m-0 px-4 pt-1.5 pb-4 text-sm text-muted-foreground">{s.detail}</dd>
         </div>
       ))}
     </dl>
@@ -459,14 +464,16 @@ function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: Cents
   ];
   // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 hidden animate-rise-in gap-4 lg:grid lg:grid-cols-4">
+    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 wide:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex flex-col gap-1.5 surface p-4 lg:p-5">
-          <dt className="text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
-          <dd className="m-0 amount text-xl font-semibold lg:text-2xl">
+        <div key={s.label} className="flex flex-col surface">
+          <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">
+            {s.label}
+          </dt>
+          <dd className="m-0 px-4 pt-4 amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium">
             <AnimatedAmount value={s.value} />
           </dd>
-          <dd className="m-0 text-sm text-muted-foreground">{s.detail}</dd>
+          <dd className="m-0 px-4 pt-1.5 pb-4 text-sm text-muted-foreground">{s.detail}</dd>
         </div>
       ))}
     </dl>
