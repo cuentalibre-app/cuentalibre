@@ -177,19 +177,16 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
           </Field>
         </Section>
 
-        {kind !== "quote" && (
-          <Section title={`Facturar ${copy.plural}`} index={index++}>
+        {kind === "deliveryNote" && (
+          <Section title="Facturar albaranes" index={index++}>
             <CheckField
-              label={`Convertir ${copy.plural} en facturas conservando todas sus líneas`}
+              label="Convertir albaranes en facturas conservando todas sus líneas"
               checked={draft.keepLinesOnInvoice}
               onChange={(v) => set("keepLinesOnInvoice", v)}
             />
             <ul className="m-0 flex max-w-3xl flex-col gap-1.5 pl-5 text-sm text-muted-foreground">
               <li>Marcada: copia cada concepto con su descripción.</li>
-              <li>
-                Desmarcada: una línea por tipo de impuesto, útil para agrupar muchos{" "}
-                {kind === "draft" ? "borradores" : "albaranes"} en una factura.
-              </li>
+              <li>Desmarcada: una línea por tipo de impuesto.</li>
             </ul>
           </Section>
         )}
