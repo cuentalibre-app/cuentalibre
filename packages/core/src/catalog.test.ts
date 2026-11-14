@@ -146,7 +146,7 @@ describe("stock and documents", () => {
     ]);
   });
 
-  const never: StockRules = { invoices: "never", deliveryNotes: "never", quotes: "never", drafts: "never" };
+  const never: StockRules = { invoices: "never", deliveryNotes: "never" };
 
   it("never takes stock with the default settings", () => {
     for (const kind of ["invoice", "draft", "quote", "deliveryNote"] as const)
@@ -162,17 +162,17 @@ describe("stock and documents", () => {
     expect(documentTakesStock("invoice", "deliveryNote", rules)).toBe(false);
   });
 
-  it("takes stock when a delivery note, quote or draft is invoiced", () => {
+  it("takes stock when a delivery note is invoiced", () => {
     expect(documentTakesStock("invoice", "deliveryNote", { ...never, deliveryNotes: "invoice" })).toBe(true);
-    expect(documentTakesStock("invoice", "quote", { ...never, quotes: "invoice" })).toBe(true);
-    expect(documentTakesStock("invoice", "draft", { ...never, drafts: "invoice" })).toBe(true);
-    expect(documentTakesStock("invoice", "draft", never)).toBe(false);
-    expect(documentTakesStock("draft", undefined, { ...never, drafts: "invoice" })).toBe(false);
+    expect(documentTakesStock("deliveryNote", undefined, { ...never, deliveryNotes: "invoice" })).toBe(false);
   });
 
-  it("takes stock when a quote becomes a delivery note", () => {
-    expect(documentTakesStock("deliveryNote", "quote", { ...never, quotes: "deliveryNote" })).toBe(true);
-    expect(documentTakesStock("deliveryNote", undefined, { ...never, quotes: "deliveryNote" })).toBe(false);
+  it("treats documents made from a quote or draft like any other invoice or delivery note", () => {
+    const rules: StockRules = { invoices: "createEdit", deliveryNotes: "createEdit" };
+    expect(documentTakesStock("invoice", "draft", rules)).toBe(true);
+    expect(documentTakesStock("invoice", "quote", rules)).toBe(true);
+    expect(documentTakesStock("deliveryNote", "quote", rules)).toBe(true);
+    expect(documentTakesStock("invoice", "draft", never)).toBe(false);
   });
 
   it("finds sales that would leave a product without stock", () => {

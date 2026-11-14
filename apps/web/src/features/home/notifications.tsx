@@ -27,7 +27,7 @@ function readStored(): string[] {
   }
 }
 
-/** Stock alarms that ask to warn on the home page, with the ones the user has marked as read. */
+/** Stock alarms of active products, with the ones the user has marked as read. */
 function useNotices() {
   const { products, movements } = useCatalog();
   const [read, setRead] = useState(readStored);
@@ -36,7 +36,7 @@ function useNotices() {
     () =>
       products.flatMap((p): Notice[] => {
         const alarm = p.stock?.alarm;
-        if (!p.active || !alarm?.dashboard) return [];
+        if (!p.active || !alarm) return [];
         const s = productStock(p, movements);
         if (!s || !s.alarm || s.alarm === "ok") return [];
         const out = s.alarm === "out";

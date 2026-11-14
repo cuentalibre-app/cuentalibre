@@ -179,15 +179,12 @@ const catalogDefaults: CatalogSettings = {
   customFieldNames: ["Personalizado1", "Personalizado2", "Personalizado3", "Personalizado4"],
   conceptText: "name",
   copyDescription: false,
-  alarmEmail: "",
-  rules: { invoices: "never", deliveryNotes: "never", quotes: "never", drafts: "never" },
-  restoreOnDeleteInvoice: false,
-  restoreOnDeleteDeliveryNote: false,
+  rules: { invoices: "never", deliveryNotes: "never" },
   defaults: {
     enabled: false,
     allowWithoutStock: false,
     alarmOn: false,
-    alarm: { minUnits: 0, dashboard: false, notification: false, email: false },
+    alarm: { minUnits: 0 },
   },
 };
 

@@ -48,7 +48,6 @@ export function CatalogSettingsPage() {
   const [minUnits, setMinUnits] = useState(() => formatDecimalInput(settings.defaults.alarm?.minUnits ?? 0));
   const [withFamilies, setWithFamilies] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [emailError, setEmailError] = useState<string | null>(null);
 
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" });
@@ -58,34 +57,18 @@ export function CatalogSettingsPage() {
     set("rules", { ...draft.rules, [key]: value });
   const setDefaults = (changes: Partial<CatalogSettings["defaults"]>) =>
     set("defaults", { ...draft.defaults, ...changes });
-  const setAlarm = (changes: Partial<NonNullable<CatalogSettings["defaults"]["alarm"]>>) =>
-    setDefaults({
-      alarm: { minUnits: 0, dashboard: false, notification: false, email: false, ...draft.defaults.alarm, ...changes },
-    });
 
   const minDirty = (parseDecimal(minUnits) ?? 0) !== (settings.defaults.alarm?.minUnits ?? 0);
 
   const save = () => {
-    const email = draft.alarmEmail.trim();
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("El email no es correcto.");
-      return;
-    }
     const next: CatalogSettings = {
       ...draft,
-      alarmEmail: email,
       customFieldNames: draft.customFieldNames.map(
         (n, i) => n.trim() || `Personalizado${i + 1}`,
       ) as CatalogSettings["customFieldNames"],
       defaults: {
         ...draft.defaults,
-        alarm: {
-          dashboard: false,
-          notification: false,
-          email: false,
-          ...draft.defaults.alarm,
-          minUnits: parseDecimal(minUnits) ?? 0,
-        },
+        alarm: { minUnits: parseDecimal(minUnits) ?? 0 },
       },
     };
     catalogStore.updateSettings(next);
@@ -163,90 +146,27 @@ export function CatalogSettingsPage() {
           title="Control de stock"
           description="Cuándo se descuenta el stock y con qué valores empiezan los productos nuevos."
         >
-          <Field
-            label="Email donde recibir los avisos de stock"
-            error={emailError ?? undefined}
-            help="Adonde se envían los avisos de los productos con la alarma de stock y el aviso por correo activados."
-            className="max-w-md"
-          >
-            {(p) => (
-              <Input
-                {...p}
-                type="email"
-                value={draft.alarmEmail}
-                onChange={(e) => {
-                  set("alarmEmail", e.target.value);
-                  setEmailError(null);
-                }}
-              />
-            )}
-          </Field>
-
-          <div className="grid gap-x-6 gap-y-5 border-t border-divider pt-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="flex flex-col gap-3">
-              <h3 className="m-0 text-sm font-semibold">Facturas emitidas</h3>
-              <Field label="Descontar stock en facturas">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={draft.rules.invoices}
-                    onChange={(v) => setRule("invoices", v as CatalogSettings["rules"]["invoices"])}
-                    groups={[{ options: RULE_OPTIONS.invoices }]}
-                  />
-                )}
-              </Field>
-              <CheckField
-                label="Recuperar el stock al eliminar una factura"
-                help="Al eliminar una factura emitida, vuelven al stock las unidades de sus productos."
-                checked={draft.restoreOnDeleteInvoice}
-                onChange={(v) => set("restoreOnDeleteInvoice", v)}
-              />
-            </div>
-            <div className="flex flex-col gap-3">
-              <h3 className="m-0 text-sm font-semibold">Albaranes</h3>
-              <Field label="Descontar stock en albaranes">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={draft.rules.deliveryNotes}
-                    onChange={(v) => setRule("deliveryNotes", v as CatalogSettings["rules"]["deliveryNotes"])}
-                    groups={[{ options: RULE_OPTIONS.deliveryNotes }]}
-                  />
-                )}
-              </Field>
-              <CheckField
-                label="Recuperar el stock al eliminar un albarán"
-                help="Al eliminar un albarán, vuelven al stock las unidades de sus productos."
-                checked={draft.restoreOnDeleteDeliveryNote}
-                onChange={(v) => set("restoreOnDeleteDeliveryNote", v)}
-              />
-            </div>
-            <div className="flex flex-col gap-3">
-              <h3 className="m-0 text-sm font-semibold">Presupuestos</h3>
-              <Field label="Descontar stock en presupuestos">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={draft.rules.quotes}
-                    onChange={(v) => setRule("quotes", v as CatalogSettings["rules"]["quotes"])}
-                    groups={[{ options: RULE_OPTIONS.quotes }]}
-                  />
-                )}
-              </Field>
-            </div>
-            <div className="flex flex-col gap-3">
-              <h3 className="m-0 text-sm font-semibold">Facturas borrador</h3>
-              <Field label="Descontar stock en borradores">
-                {(p) => (
-                  <GroupedSelect
-                    {...p}
-                    value={draft.rules.drafts}
-                    onChange={(v) => setRule("drafts", v as CatalogSettings["rules"]["drafts"])}
-                    groups={[{ options: RULE_OPTIONS.drafts }]}
-                  />
-                )}
-              </Field>
-            </div>
+          <div className="grid max-w-3xl gap-4 md:grid-cols-2">
+            <Field label="Descontar stock en facturas">
+              {(p) => (
+                <GroupedSelect
+                  {...p}
+                  value={draft.rules.invoices}
+                  onChange={(v) => setRule("invoices", v as CatalogSettings["rules"]["invoices"])}
+                  groups={[{ options: RULE_OPTIONS.invoices }]}
+                />
+              )}
+            </Field>
+            <Field label="Descontar stock en albaranes">
+              {(p) => (
+                <GroupedSelect
+                  {...p}
+                  value={draft.rules.deliveryNotes}
+                  onChange={(v) => setRule("deliveryNotes", v as CatalogSettings["rules"]["deliveryNotes"])}
+                  groups={[{ options: RULE_OPTIONS.deliveryNotes }]}
+                />
+              )}
+            </Field>
           </div>
 
           <div className="flex flex-col gap-3 border-t border-divider pt-4">
@@ -289,21 +209,6 @@ export function CatalogSettingsPage() {
                         </div>
                       )}
                     </Field>
-                    <CheckField
-                      label="Avisar en el inicio"
-                      checked={draft.defaults.alarm?.dashboard ?? false}
-                      onChange={(v) => setAlarm({ dashboard: v })}
-                    />
-                    <CheckField
-                      label="Enviar notificaciones"
-                      checked={draft.defaults.alarm?.notification ?? false}
-                      onChange={(v) => setAlarm({ notification: v })}
-                    />
-                    <CheckField
-                      label="Enviar correo electrónico"
-                      checked={draft.defaults.alarm?.email ?? false}
-                      onChange={(v) => setAlarm({ email: v })}
-                    />
                   </div>
                 )}
               </div>
