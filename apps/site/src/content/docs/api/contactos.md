@@ -19,7 +19,7 @@ Clientes y proveedores. Cada contacto tiene un `role`, `client` o `supplier`, qu
 
 ## NIF
 
-Todo contacto necesita un NIF válido para su país. En España se comprueba la letra o el dígito de control de NIF, NIE y CIF, con o sin el prefijo `ES`; en otros países, que sean solo letras y números. Si no es válido, responde `400 invalid_tax_id`. Se guarda sin espacios, puntos ni guiones (`b-12.345.674` queda `B12345674`).
+Todo contacto necesita un NIF válido para su país. En España se comprueba la letra o el dígito de control de NIF, NIE y CIF, con o sin el prefijo `ES`; en otros países, que sean letras (de cualquier alfabeto), números o `&`, hasta 30. Si no es válido, responde `400 invalid_tax_id`. Sin `country`, el contacto es de España y su NIF se comprueba como español: indica el país de los contactos extranjeros. Se guarda sin espacios, puntos ni guiones (`b-12.345.674` queda `B12345674`).
 
 La única excepción es el cliente «Clientes varios» (`variousClients: true`), que agrupa las ventas a clientes sin identificar: puede ir sin NIF.
 

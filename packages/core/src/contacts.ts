@@ -206,14 +206,15 @@ function checksum(): TaxIdCheck {
 
 /**
  * Checks a contact's tax ID for its country. Spanish ones are validated in
- * full; foreign ones only need to be letters and digits, since each country
- * has its own format.
+ * full. Each other country has its own format, so foreign ones only need to
+ * be letters of any alphabet, digits and "&" (a Mexican RFC can have Ñ and &),
+ * up to 30 of them once separators are dropped.
  */
 export function checkTaxId(value: string, country: string): TaxIdCheck {
   if (country === SPAIN) return checkSpanishTaxId(value);
   const id = normalizeTaxId(value);
   if (!id) return { valid: false, reason: "empty" };
-  return /^[0-9A-Z]{2,20}$/.test(id) ? { valid: true, kind: "foreign" } : { valid: false, reason: "format" };
+  return /^[\p{L}\p{N}&]{2,30}$/u.test(id) ? { valid: true, kind: "foreign" } : { valid: false, reason: "format" };
 }
 
 /** A contact's country: Spain when it has none. */

@@ -38,7 +38,7 @@ function invalid(error: z.ZodError): never {
 
 const TAX_ID_PROBLEMS = {
   empty: "taxId: required.",
-  format: "taxId: not a valid tax ID for the contact's country.",
+  format: "taxId: not a valid tax ID for the contact's country (abroad: letters, digits and &, up to 30).",
   checksum: "taxId: the control character is wrong.",
 };
 
@@ -51,7 +51,12 @@ function checked(role: ContactRole, record: StoredContact): StoredContact {
   if (record.variousClients && role !== "client")
     throw new ApiError(400, "invalid_contact", "variousClients: only clients can have it.");
   const problem = contactTaxIdProblem(record);
-  if (problem) throw new ApiError(400, "invalid_tax_id", TAX_ID_PROBLEMS[problem]);
+  if (problem) {
+    // Without a country the tax ID is taken as Spanish, which a foreign one fails
+    const hint =
+      !record.country && problem !== "empty" ? " Checked as Spanish: set country for a foreign contact." : "";
+    throw new ApiError(400, "invalid_tax_id", TAX_ID_PROBLEMS[problem] + hint);
+  }
   return {
     ...record,
     taxId: storedTaxId(record.taxId, countryOf(record)),
