@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import { Dialog as Primitive } from "radix-ui";
 import { cn } from "../lib/cn";
 import { useDragToDismiss, useMergedRefs } from "../lib/drag-to-dismiss";
+import { ClosedKeyboardGuard, withClosedKeyboard } from "../lib/touch-keyboard";
 import { ModalCloseButton, ModalHandle, modalOverlayClass, modalPanelClass, modalTitleClass } from "./dialog";
 
 export const Sheet = Primitive.Root;
@@ -18,6 +19,7 @@ export function SheetContent({
   className,
   children,
   ref,
+  onOpenAutoFocus,
   ...props
 }: ComponentProps<typeof Primitive.Content> & { title: string }) {
   const panelRef = useMergedRefs(ref, useDragToDismiss<HTMLDivElement>());
@@ -32,6 +34,7 @@ export function SheetContent({
           "fixed inset-x-2 bottom-[max(8px,env(safe-area-inset-bottom))] max-h-[85dvh] data-[state=closed]:animate-sheet-out data-[state=open]:animate-sheet-in",
           className,
         )}
+        onOpenAutoFocus={withClosedKeyboard(onOpenAutoFocus)}
         {...props}
       >
         <ModalHandle className="mt-2.5" />
@@ -40,6 +43,7 @@ export function SheetContent({
           <ModalCloseButton />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-4">{children}</div>
+        <ClosedKeyboardGuard />
       </Primitive.Content>
     </Primitive.Portal>
   );
