@@ -2,6 +2,7 @@ import type { ComponentProps } from "react";
 import { Dialog as Primitive } from "radix-ui";
 import { cn } from "../lib/cn";
 import { useDragToDismiss, useMergedRefs } from "../lib/drag-to-dismiss";
+import { ClosedKeyboardGuard, withClosedKeyboard } from "../lib/touch-keyboard";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -57,7 +58,13 @@ const isSheetLayout = () => window.matchMedia("(width < 40rem)").matches;
  * and a finger dragging it down closes it. Its children keep their height: the panel scrolls
  * instead of squashing one that clips its overflow, such as a bordered table.
  */
-export function DialogContent({ className, children, ref, ...props }: ComponentProps<typeof Primitive.Content>) {
+export function DialogContent({
+  className,
+  children,
+  ref,
+  onOpenAutoFocus,
+  ...props
+}: ComponentProps<typeof Primitive.Content>) {
   const panelRef = useMergedRefs(ref, useDragToDismiss<HTMLDivElement>(isSheetLayout));
   return (
     <Primitive.Portal>
@@ -70,11 +77,13 @@ export function DialogContent({ className, children, ref, ...props }: ComponentP
           "sm:inset-x-auto sm:top-1/2 sm:bottom-auto sm:left-1/2 sm:m-0 sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:pt-6 sm:data-[state=closed]:animate-fade-out sm:data-[state=open]:animate-fade-in",
           className,
         )}
+        onOpenAutoFocus={withClosedKeyboard(onOpenAutoFocus)}
         {...props}
       >
         <ModalHandle className="absolute top-2.5 left-1/2 -translate-x-1/2 sm:hidden" />
         {children}
         <ModalCloseButton className="absolute top-8 right-5 sm:top-6" />
+        <ClosedKeyboardGuard />
       </Primitive.Content>
     </Primitive.Portal>
   );
