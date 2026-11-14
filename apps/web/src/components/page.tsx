@@ -8,9 +8,10 @@ import {
   CircleHelp,
   Info,
   TriangleAlert,
+  X,
   type LucideIcon,
 } from "lucide-react";
-import { buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 
@@ -248,20 +249,29 @@ const NOTICE_TONES = {
   success: { box: "bg-success-soft", icon: "text-success", Icon: CircleCheck },
 } as const;
 
-/** A short message in a soft tinted box with its tone's icon: the one shape for inline notes and warnings. */
+/**
+ * A short message in a soft tinted box with its tone's icon: the one shape for inline notes and warnings.
+ * With `onDismiss` it gets a close button.
+ */
 export function Notice({
   tone = "info",
   icon,
+  onDismiss,
   className,
   children,
   ...props
-}: ComponentProps<"div"> & { tone?: keyof typeof NOTICE_TONES; icon?: LucideIcon }) {
+}: ComponentProps<"div"> & { tone?: keyof typeof NOTICE_TONES; icon?: LucideIcon; onDismiss?: () => void }) {
   const { box, icon: iconClass, Icon: DefaultIcon } = NOTICE_TONES[tone];
   const Icon = icon ?? DefaultIcon;
   return (
     <div className={cn("flex gap-2 rounded-xl px-3.5 py-3 text-sm text-foreground", box, className)} {...props}>
       <Icon className={cn("mt-0.5 size-4 shrink-0", iconClass)} strokeWidth={2} aria-hidden="true" />
       <div className="min-w-0 flex-1">{children}</div>
+      {onDismiss && (
+        <Button variant="ghost" size="icon-sm" aria-label="Cerrar el aviso" onClick={onDismiss} className="-my-1.5 -mr-1.5">
+          <X aria-hidden="true" />
+        </Button>
+      )}
     </div>
   );
 }
