@@ -78,7 +78,7 @@ export function PageHeader({
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {eyebrow}
           <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3">
-            <h1 className="m-0 min-w-0 text-2xl font-semibold tracking-tight text-balance lg:text-title">{title}</h1>
+            <h1 className="m-0 min-w-0 text-xl font-semibold tracking-tight text-balance lg:text-title">{title}</h1>
             {inline}
           </div>
           {description && (
