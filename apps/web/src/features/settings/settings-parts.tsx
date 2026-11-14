@@ -10,7 +10,8 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@cuentalibre/ui/components/dialog";
-import { BackLink, PageHeader } from "@/components/page";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { BackLink, HelpTip, PageHeader } from "@/components/page";
 import { sameValue } from "@/lib/same-value";
 import { SETTINGS_PATH } from "./settings-model";
 
@@ -47,7 +48,13 @@ export function SettingsHeader({
   return (
     <PageHeader
       title={title}
-      description={description}
+      inline={
+        description && (
+          <TooltipProvider delayDuration={300}>
+            <HelpTip side="bottom">{description}</HelpTip>
+          </TooltipProvider>
+        )
+      }
       back={<BackLink to={origin?.path ?? back} label={`Volver a ${origin?.label ?? "configuración"}`} />}
       actions={children}
       actionsClassName="max-sm:basis-full"
