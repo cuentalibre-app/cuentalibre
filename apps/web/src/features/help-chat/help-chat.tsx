@@ -138,7 +138,7 @@ function Composer({ disabled }: { disabled: boolean }) {
       </div>
       {/* Required (EU AI Act art. 50): say it is an AI, and that it gives no tax advice */}
       <p className="m-0 text-xs text-muted-foreground">
-        Responde una IA con la guía de cuentalibre. Puede equivocarse y no da asesoría fiscal.
+        Respuestas generadas por IA. Tómalas como orientación general, no como asesoría fiscal.
       </p>
     </form>
   );
