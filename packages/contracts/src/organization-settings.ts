@@ -123,8 +123,6 @@ export type DocumentSettings = z.infer<typeof documentSettingsSchema>;
 export const contactSettingsSchema = z.object({
   /** Names of the two free fields of every client and supplier. */
   customFieldNames: z.tuple([z.string(), z.string()]),
-  /** Look up the company's details from its NIF or name when creating a contact. */
-  autocomplete: z.boolean(),
 });
 export type ContactSettings = z.infer<typeof contactSettingsSchema>;
 
@@ -234,7 +232,7 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
     deliveryNote: documentDefaults("deliveryNote"),
   },
   catalogSettings: catalogDefaults,
-  contactSettings: { customFieldNames: ["Personalizado 1", "Personalizado 2"], autocomplete: true },
+  contactSettings: { customFieldNames: ["Personalizado 1", "Personalizado 2"] },
   emailTemplates: { templates: [], defaults: {} },
   // The usual accounts of the Spanish chart of accounts (PGC)
   ledgerAccounts: {

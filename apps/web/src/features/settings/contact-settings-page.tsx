@@ -6,11 +6,11 @@ import {
   contactSettingsStore,
   useContactSettings,
 } from "@/features/contacts/contact-settings-store";
-import { CheckField, Field, Section } from "@/features/sales/form-fields";
+import { Field, Section } from "@/features/sales/form-fields";
 import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { Page } from "@/components/page";
 
-/** Options for clients and suppliers: the names of the two free fields and the data autocomplete. */
+/** Options for clients and suppliers: the names of the two free fields. */
 export function ContactSettingsPage() {
   const saved = useContactSettings();
   const { draft, set, dirty, justSaved, markSaved } = useDraft<ContactSettings>(saved);
@@ -61,19 +61,6 @@ export function ContactSettingsPage() {
               </Field>
             ))}
           </div>
-        </Section>
-
-        <Section title="Autocompletar datos de clientes y proveedores" index={1}>
-          <p className="m-0 max-w-3xl text-muted-foreground">
-            Al escribir el NIF o el nombre de un cliente o proveedor, cuentalibre busca sus datos en registros de
-            empresas y los completa.
-          </p>
-          <CheckField
-            label="Activar el autocompletar para clientes y proveedores"
-            hint="La consulta llegará con el servidor de cuentalibre; por ahora se guarda tu preferencia."
-            checked={draft.autocomplete}
-            onChange={(v) => set("autocomplete", v)}
-          />
         </Section>
       </Page>
     </TooltipProvider>

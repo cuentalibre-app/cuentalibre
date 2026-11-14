@@ -1,4 +1,5 @@
 import {
+  DEFAULT_LIST_PREFERENCES,
   meSchema,
   membershipSchema,
   organizationMemberSchema,
@@ -57,7 +58,7 @@ const saveUserSettings = createRoute({
   tags: ["Account"],
   summary: "Replace a section of the signed-in user's own settings",
   description:
-    "The body is the whole section: `userProfile` (first and last names, birth date, phone, gender) or `userTour` (whether the first-run tour was finished or skipped). Saving the profile also renames the user.",
+    "The body is the whole section: `userProfile` (first and last names, birth date, phone, gender) `userTour` (whether the first-run tour was finished or skipped) or `listPreferences` (the filters the quote and delivery note lists open with). Saving the profile also renames the user.",
   middleware: [requireUser] as const,
   request: {
     params: z.object({ section: userSettingsSectionSchema }),
@@ -175,6 +176,7 @@ async function readUserSettings(db: Db, user: { id: string; name: string }): Pro
   return {
     userProfile: saved.userProfile ?? { firstName: user.name, lastName: "", birthDate: "", phone: "", gender: "" },
     userTour: saved.userTour ?? { status: "pending" },
+    listPreferences: saved.listPreferences ?? DEFAULT_LIST_PREFERENCES,
   };
 }
 

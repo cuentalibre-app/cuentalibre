@@ -1,8 +1,6 @@
 import { Link } from "react-router";
-import { Plus } from "lucide-react";
 import type { DocumentKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
-import { Button } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { Page } from "@/components/page";
@@ -105,10 +103,6 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
               </tbody>
             </table>
           </div>
-          <Button variant="secondary" className="self-start" disabled title="Próximamente">
-            <Plus aria-hidden="true" />
-            Nueva serie
-          </Button>
         </Section>
 
         <Section title={copy.template} index={index++}>
