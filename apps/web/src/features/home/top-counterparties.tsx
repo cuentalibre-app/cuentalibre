@@ -1,10 +1,27 @@
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ECONOMIC_DEPENDENCY_THRESHOLD, type CounterpartyRanking } from "@cuentalibre/core";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { Notice, SeeAllLink, Section } from "@/components/page";
 import { formatPercent } from "@/lib/format";
+
+interface Warning {
+  /** What the user closes: a new id (say, another client) shows it again. */
+  id: string;
+  text: string;
+}
+
+const DISMISSED_KEY = "cuentalibre:dismissed-warnings";
+
+function readDismissed(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 interface Props {
   id: string;
@@ -17,8 +34,8 @@ interface Props {
   /** "Ver todos" link; omitted when there is no list to open. */
   href?: string;
   empty: string;
-  /** Shown above the list when the ranking signals a risk. */
-  warning?: string;
+  /** Shown above the list when the ranking signals a risk; closing it hides it for good while `id` stays the same. */
+  warning?: Warning;
   icon?: LucideIcon;
   className?: string;
 }
@@ -26,6 +43,16 @@ interface Props {
 /** Ranked bars: who makes up most of the period's income or expenses (tax base). */
 export function TopCounterparties({ id, title, noun, ranking, barClass, href, empty, warning, icon, className }: Props) {
   const titleId = `${id}-title`;
+  const [dismissed, setDismissed] = useState(readDismissed);
+  const dismiss = (warningId: string) => {
+    const next = [...dismissed, warningId];
+    setDismissed(next);
+    try {
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify(next));
+    } catch {
+      // Storage unavailable: it stays hidden until the page reloads.
+    }
+  };
 
   return (
     <Section
@@ -46,8 +73,10 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
       }
       className={className}
     >
-      {warning && (
-<Notice tone="warning">{warning}</Notice>
+      {warning && !dismissed.includes(warning.id) && (
+        <Notice tone="warning" onDismiss={() => dismiss(warning.id)}>
+          {warning.text}
+        </Notice>
       )}
 
       {ranking.items.length === 0 ? (
@@ -83,9 +112,10 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
 }
 
 /** Warning for the clients card when one client reaches the TRADE threshold. */
-export function dependencyWarning(ranking: CounterpartyRanking): string {
+export function dependencyWarning(ranking: CounterpartyRanking): Warning {
   const top = ranking.items[0]!;
-  return `El ${formatPercent(top.share * 100)} de tus ingresos viene de ${top.name}. Desde el ${formatPercent(
+  const text = `El ${formatPercent(top.share * 100)} de tus ingresos viene de ${top.name}. Desde el ${formatPercent(
     ECONOMIC_DEPENDENCY_THRESHOLD * 100,
   )} podrías ser autónomo económicamente dependiente (TRADE).`;
+  return { id: `trade:${top.name}`, text };
 }
