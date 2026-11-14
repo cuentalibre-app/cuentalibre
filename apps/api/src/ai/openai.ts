@@ -1,4 +1,4 @@
-import { AiError, postJson, toBase64, type AiConfig, type AiProvider, type ModelInput } from "./provider";
+import { AiError, postJson, toBase64, usageOf, type AiConfig, type AiProvider, type ModelInput } from "./provider";
 
 /*
  * OpenAI's chat completions API, which OpenAI, Ollama, LM Studio, OpenRouter, Mistral,
@@ -50,6 +50,7 @@ export function openAiProvider({
 }: AiConfig): AiProvider {
   const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
   return {
+    model,
     async complete(input, { prompt, schema }) {
       const answer = (await postJson(fetcher, url, apiKey ? { authorization: `Bearer ${apiKey}` } : {}, {
         model,
@@ -58,11 +59,14 @@ export function openAiProvider({
           { role: "user", content: userContent(input) },
         ],
         response_format: { type: "json_schema", json_schema: { name: "purchase", strict: true, schema } },
-      })) as { choices?: { message?: { content?: unknown; refusal?: unknown } }[] };
+      })) as { choices?: { message?: { content?: unknown; refusal?: unknown } }[]; usage?: unknown };
       const message = answer.choices?.[0]?.message;
       if (typeof message?.refusal === "string" && message.refusal) throw new AiError("The model refused to answer.");
       if (typeof message?.content !== "string") throw new AiError("The model's answer has no content.");
-      return parseJsonMessage(message.content);
+      return {
+        answer: parseJsonMessage(message.content),
+        usage: usageOf(answer.usage, "prompt_tokens", "completion_tokens"),
+      };
     },
   };
 }

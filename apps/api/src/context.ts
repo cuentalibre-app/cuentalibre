@@ -1,6 +1,7 @@
 import type { MembershipRole } from "@cuentalibre/contracts";
 
 import type { AiProvider } from "./ai";
+import type { AiLimits } from "./ai/readings";
 import type { Auth } from "./auth";
 import type { Billing } from "./billing";
 import type { Mailer } from "./email/mailer";
@@ -18,6 +19,8 @@ export interface AppEnv {
     mailer: Mailer | null;
     /** Reads documents with an AI model; null when the instance has none set up. */
     ai: AiProvider | null;
+    /** Most documents an organization may read with AI a month (0 means no limit), and the model's prices. */
+    aiLimits: AiLimits;
     /** Charging for Cloud; null when the instance doesn't bill. */
     billing: Billing | null;
     /** Whether new passwords are checked against data breaches. */

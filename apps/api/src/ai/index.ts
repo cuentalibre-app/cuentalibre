@@ -3,7 +3,7 @@ import { anthropicProvider } from "./anthropic";
 import { openAiProvider } from "./openai";
 import type { AiConfig, AiProvider } from "./provider";
 
-export { AiError, type AiProvider, type ModelInput } from "./provider";
+export { AiError, type AiProvider, type ModelInput, type TokenUsage } from "./provider";
 
 /*
  * Reading documents with an AI model. The provider sits behind this small adapter,
