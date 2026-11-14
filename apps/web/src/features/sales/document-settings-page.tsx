@@ -2,10 +2,10 @@ import { Link } from "react-router";
 import { Plus } from "lucide-react";
 import type { DocumentKind } from "@cuentalibre/contracts";
 import { Badge } from "@cuentalibre/ui/components/badge";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
-import { Notice, Page } from "@/components/page";
+import { Page } from "@/components/page";
 import { SaveButton, SettingsHeader, UnsavedChangesGuard, useDraft } from "@/features/settings/settings-parts";
 import { INVOICE_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { DefaultMark, LookFields } from "./document-look";
@@ -153,13 +153,6 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
               </div>
             )}
           </div>
-          <Notice>
-            La moneda depende del país configurado en{" "}
-            <Link to="/impuestos" className={buttonVariants({ variant: "link" })}>
-              Impuestos
-            </Link>
-            .
-          </Notice>
         </Section>
 
         <Section title={`Logotipo de ${copy.plural}`} index={index++}>
