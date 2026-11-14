@@ -11,10 +11,11 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* A mouse or trackpad has no pull-to-refresh: keep the page from rubber-banding past its ends */
+  /* A mouse or trackpad has no pull-to-refresh: keep the page from rubber-banding past its ends.
+     Vertical only: horizontal overscroll drives the browser's two-finger back/forward swipe */
   @media (pointer: fine) {
     html {
-      overscroll-behavior: none;
+      overscroll-behavior-y: none;
     }
   }
 
