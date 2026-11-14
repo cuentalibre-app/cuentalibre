@@ -66,7 +66,7 @@ export function IdentityFields({
       <div className="grid gap-4 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
         <Field
           label="NIF"
-          required
+          required={!draft.variousClients}
           error={errors.taxId}
           hint={hint}
           help={

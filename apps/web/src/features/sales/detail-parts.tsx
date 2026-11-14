@@ -1,11 +1,10 @@
 import type { ComponentProps, MouseEvent, ReactNode } from "react";
 import { Link } from "react-router";
-import { cents, eurosToCents, lineBase, type Cents, type InvoiceTotals } from "@cuentalibre/core";
+import { cents, countryOf, eurosToCents, lineBase, type Cents, type InvoiceTotals } from "@cuentalibre/core";
 import type { Attachment, Contact, Payment, SalesLine } from "@cuentalibre/contracts";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { countryOf } from "@/features/contacts/contacts-model";
 import { AttachmentList } from "@/features/purchases/form-parts";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import { formatDate } from "@/lib/format";

@@ -133,7 +133,7 @@ describe("plain records", () => {
     expect((await blockedBy()).message).toBe("Still named by purchaseInvoices.payments.");
     await send(ana, [{ type: "delete", entity: "purchaseInvoices", id: bill.id }]);
 
-    const sur = client({ name: "Sur S.L.", taxId: "B11111118" });
+    const sur = client({ name: "Sur S.L.", taxId: "B11111119" });
     await send(ana, [{ type: "create", entity: "clients", data: sur }]);
     const issued = await send(ana, [{ type: "issue", data: document(sur.id) }]);
     const { changes: written } = (await issued.json()) as { changes: { data: SalesDocument }[] };

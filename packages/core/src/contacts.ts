@@ -216,6 +216,24 @@ export function checkTaxId(value: string, country: string): TaxIdCheck {
   return /^[0-9A-Z]{2,20}$/.test(id) ? { valid: true, kind: "foreign" } : { valid: false, reason: "format" };
 }
 
+/** A contact's country: Spain when it has none. */
+export const countryOf = (contact: { country?: string }) => contact.country || SPAIN;
+
+/**
+ * Why a contact's tax ID can't be saved, or null when it can. Every client and
+ * supplier needs a valid one, except the "Clientes varios" client, which
+ * groups sales to unidentified clients and may have none.
+ */
+export function contactTaxIdProblem(contact: {
+  taxId: string;
+  country?: string;
+  variousClients?: boolean;
+}): "empty" | "format" | "checksum" | null {
+  if (contact.variousClients && !normalizeTaxId(contact.taxId)) return null;
+  const check = checkTaxId(contact.taxId, countryOf(contact));
+  return check.valid ? null : check.reason;
+}
+
 /**
  * Whether a foreign EU tax ID starts with its country's VAT prefix (DE…, FR…),
  * as an intra-EU invoice requires. Null outside the EU.

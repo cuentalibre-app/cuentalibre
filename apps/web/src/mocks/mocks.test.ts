@@ -21,6 +21,7 @@ import {
   userProfileSchema,
   userTourSchema,
 } from "@cuentalibre/contracts";
+import { contactTaxIdProblem } from "@cuentalibre/core";
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
 import { initialCatalogSettings, initialFamilies, initialMovements, initialProducts } from "./catalog";
@@ -78,5 +79,10 @@ describe("sample data", () => {
 
   it.each(singletons)("%s match their schema", (_, schema, value) => {
     expect(issues(schema, value)).toEqual([]);
+  });
+
+  it("contacts have a valid tax ID, as the API requires", () => {
+    const invalid = [...initialClients, ...initialSuppliers].filter((c) => contactTaxIdProblem(c));
+    expect(invalid.map((c) => c.name)).toEqual([]);
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  contactTaxIdProblem,
   checkSpanishTaxId,
   checkTaxId,
   countryFromVatPrefix,
@@ -185,5 +186,20 @@ describe("provinceFromPostalCode", () => {
     expect(provinceFromPostalCode("00001")).toBeNull();
     expect(provinceFromPostalCode("2801")).toBeNull();
     expect(provinceFromPostalCode("D24")).toBeNull();
+  });
+});
+
+describe("contactTaxIdProblem", () => {
+  it("checks the tax ID for the contact's country, Spain by default", () => {
+    expect(contactTaxIdProblem({ taxId: "B12345674" })).toBeNull();
+    expect(contactTaxIdProblem({ taxId: "" })).toBe("empty");
+    expect(contactTaxIdProblem({ taxId: "B12345675" })).toBe("checksum");
+    expect(contactTaxIdProblem({ taxId: "12345" })).toBe("format");
+    expect(contactTaxIdProblem({ taxId: "12345", country: "Estados Unidos" })).toBeNull();
+  });
+
+  it('lets the "Clientes varios" client go without one, but checks one it has', () => {
+    expect(contactTaxIdProblem({ taxId: " ", variousClients: true })).toBeNull();
+    expect(contactTaxIdProblem({ taxId: "B12345675", variousClients: true })).toBe("checksum");
   });
 });

@@ -29,8 +29,13 @@ export const contactSchema = z.object({
   id,
   /** Name or company name. */
   name: z.string().min(1),
-  /** NIF, or VAT number for EU contacts. */
+  /** NIF, or VAT number for EU contacts. Required unless `variousClients`. */
   taxId: z.string(),
+  /**
+   * Clients only: the "Clientes varios" client that groups sales to
+   * unidentified clients. The only contact that may have no tax ID.
+   */
+  variousClients: z.boolean().optional(),
   address: z.string().optional(),
   postalCode: z.string().optional(),
   /** Town (población). */

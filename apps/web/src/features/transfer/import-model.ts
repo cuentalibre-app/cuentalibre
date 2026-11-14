@@ -3,6 +3,8 @@ import {
   WITHHOLDING_RATES,
   cents,
   centsToEuros,
+  contactTaxIdProblem,
+  countryOf,
   defaultIncomeAccount,
   eurosToCents,
   groupRows,
@@ -18,6 +20,7 @@ import {
   parsePercent,
   paymentStatus,
   purchaseCarriesVat,
+  storedTaxId,
   sumBy,
   surchargeRateFromPercent,
   vatRateFromPercent,
@@ -343,21 +346,32 @@ class ContactResolver {
         : undefined;
     if (found) return found;
     if (!name) return null;
+    const country = get(`${prefix} - País`) || undefined;
     const contact: Contact = {
       id: newId(),
       name,
-      taxId: taxId.toUpperCase(),
+      taxId: storedTaxId(taxId, countryOf({ country })),
       address: get(`${prefix} - Dirección`) || undefined,
       postalCode: get(`${prefix} - Cód. Postal`) || undefined,
       city: get(`${prefix} - Población`) || undefined,
       province: get(`${prefix} - Provincia`) || undefined,
-      country: get(`${prefix} - País`) || undefined,
+      country,
       phone: get(`${prefix} - Telf`) || get("Cliente - Teléfono") || undefined,
       fax: get(`${prefix} - Fax`) || undefined,
       email: get(`${prefix} - Email`) || undefined,
     };
     this.created.push(contact);
     return contact;
+  }
+
+  /** Why a contact the import would create can't be saved: every new one needs a valid tax ID. */
+  taxIdError(contact: Contact, label: "cliente" | "proveedor"): string | undefined {
+    if (!this.created.includes(contact)) return undefined;
+    const problem = contactTaxIdProblem(contact);
+    if (!problem) return undefined;
+    return problem === "empty"
+      ? `Falta el NIF del ${label} «${contact.name}».`
+      : `El NIF ${contact.taxId} del ${label} «${contact.name}» no es válido.`;
   }
 }
 
@@ -499,6 +513,8 @@ function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: C
         errors.push(`Tipo de ingreso desconocido: «${at("Tipo ingreso")}».`);
       const client = contacts.resolve((c) => at(c), "Cliente");
       if (!client) errors.push("Falta el cliente: indica su NIF o su nombre.");
+      const clientTaxIdError = client && contacts.taxIdError(client, "cliente");
+      if (clientTaxIdError) errors.push(clientTaxIdError);
       const { lines, withholding } = parseLines(
         rows,
         get,
@@ -626,6 +642,8 @@ function parsePurchases(body: { row: string[]; line: number }[], get: Getter, ct
       errors.push("La imputación a IVA debe ser un número entero entre 0 y 100.");
     const supplier = contacts.resolve((c) => at(c), "Proveedor");
     if (!supplier) errors.push("Falta el proveedor: indica su NIF o su nombre.");
+    const supplierTaxIdError = supplier && contacts.taxIdError(supplier, "proveedor");
+    if (supplierTaxIdError) errors.push(supplierTaxIdError);
     const { lines, withholding } = parseLines(
       rows,
       get,

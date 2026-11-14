@@ -100,7 +100,7 @@ curl https://api.cuentalibre.es/v1/invoices \
   "number": "2026-0007",
   "status": "pending",
   "issued": {
-    "client": { "name": "Estudio Nube SL", "taxId": "B12345678" },
+    "client": { "name": "Estudio Nube SL", "taxId": "B12345674" },
     "totals": {
       "base": 120000,
       "vat": 25200,
