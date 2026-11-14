@@ -120,38 +120,6 @@ export const filedReturnSchema = z.object({
 });
 export type FiledReturn = z.infer<typeof filedReturnSchema>;
 
-export const ledgerAccountKeySchema = z.enum([
-  "customers",
-  "suppliers",
-  "assetSuppliers",
-  "creditors",
-  "sales",
-  "purchases",
-  "outputVat",
-  "inputVat",
-  "salesWithholding",
-  "purchasesWithholding",
-  "cash",
-  "bank",
-  "nonDeductible",
-]);
-export type LedgerAccountKey = z.infer<typeof ledgerAccountKeySchema>;
-
-export const ledgerAccountSettingsSchema = z.object({
-  /** Company code in the accounting program the books are transferred to. */
-  companyCode: z.string(),
-  /** Length of every account number. */
-  digits: z.int().min(6).max(12),
-  prefixes: z.record(ledgerAccountKeySchema, z.string()),
-  /** Code after the prefix used when a contact or method has none of its own. */
-  defaults: z.record(ledgerAccountKeySchema, z.string()),
-  /** Own codes by contact id; empty means the default. */
-  contactCodes: z.record(id, z.string()),
-  /** Own codes by payment method id. */
-  methodCodes: z.record(id, z.string()),
-});
-export type LedgerAccountSettings = z.infer<typeof ledgerAccountSettingsSchema>;
-
 /** People who work in the company, or an outside advisor (gestoría) who keeps its books. */
 export const userKindSchema = z.enum(["member", "advisor"]);
 export type UserKind = z.infer<typeof userKindSchema>;

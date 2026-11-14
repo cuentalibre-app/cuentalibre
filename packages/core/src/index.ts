@@ -19,7 +19,6 @@ export * from "./assets";
 export * from "./transfer";
 export * from "./catalog";
 export * from "./rectifying";
-export * from "./accounting-codes";
 export * from "./facturae";
 export * from "./email-templates";
 export * from "./aeat-files";

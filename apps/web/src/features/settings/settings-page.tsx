@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 import { Link } from "react-router";
 import {
   ArrowDownWideNarrow,
-  BookText,
   Bot,
   Building2,
   ChevronRight,
@@ -46,7 +45,6 @@ import {
   FILES_PATH,
   incomeTaxMethodLabel,
   INVOICE_SETTINGS_PATH,
-  LEDGER_ACCOUNTS_PATH,
   PAYMENT_METHODS_PATH,
   PREFERENCES_PATH,
   PROFILE_PATH,
@@ -215,12 +213,6 @@ export function SettingsPage() {
           to: PAYMENT_METHODS_PATH,
           icon: Landmark,
           summary: `${activeMethods} ${activeMethods === 1 ? "activa" : "activas"}`,
-        },
-        {
-          title: "Cuentas contables",
-          description: "Los números de cuenta para pasar tu contabilidad a tu gestoría.",
-          to: LEDGER_ACCOUNTS_PATH,
-          icon: BookText,
         },
         {
           title: "Clientes y proveedores",

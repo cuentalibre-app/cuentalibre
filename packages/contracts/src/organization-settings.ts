@@ -9,7 +9,7 @@ import {
   salesKindSchema,
   storedInvoiceSeriesSchema,
 } from "./sales";
-import { businessProfileSchema, ledgerAccountKeySchema, ledgerAccountSettingsSchema, taxSetupSchema } from "./settings";
+import { businessProfileSchema, taxSetupSchema } from "./settings";
 
 /* ───────────────────────── Sales documents ───────────────────────── */
 
@@ -145,7 +145,6 @@ export const organizationSettingsSchema = z.object({
   contactSettings: contactSettingsSchema,
   /** Subjects and messages for emailing sales documents. */
   emailTemplates: emailTemplateSettingsSchema,
-  ledgerAccounts: ledgerAccountSettingsSchema,
 });
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>;
 
@@ -234,31 +233,4 @@ export const DEFAULT_ORGANIZATION_SETTINGS: OrganizationSettings = {
   catalogSettings: catalogDefaults,
   contactSettings: { customFieldNames: ["Personalizado 1", "Personalizado 2"] },
   emailTemplates: { templates: [], defaults: {} },
-  // The usual accounts of the Spanish chart of accounts (PGC)
-  ledgerAccounts: {
-    companyCode: "",
-    digits: 8,
-    prefixes: {
-      customers: "430",
-      suppliers: "400",
-      assetSuppliers: "523",
-      creditors: "410",
-      sales: "700",
-      purchases: "600",
-      outputVat: "477",
-      inputVat: "472",
-      salesWithholding: "473",
-      purchasesWithholding: "475",
-      cash: "570",
-      bank: "572",
-      nonDeductible: "629",
-    },
-    defaults: {
-      ...Object.fromEntries(ledgerAccountKeySchema.options.map((key) => [key, "00000"])),
-      purchasesWithholding: "01000",
-      nonDeductible: "99999",
-    } as OrganizationSettings["ledgerAccounts"]["defaults"],
-    contactCodes: {},
-    methodCodes: {},
-  },
 };
