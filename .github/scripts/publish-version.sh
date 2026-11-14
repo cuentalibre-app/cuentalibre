@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Publishes the commit production now runs as the next version for self-hosters: tags it
-# `v<version>`, creates a GitHub Release with what CHANGELOG.md lists under "Próxima versión"
-# at that commit, and commits the changelog with that section under the version to main.
+# `v<version>`, creates a GitHub Release with notes GitHub generates from the PRs merged since
+# the last version, and commits those notes to main as the version's section in CHANGELOG.md.
 #
 #   .github/scripts/publish-version.sh <patch|minor|major> <commit>
 set -euo pipefail
@@ -27,21 +27,21 @@ if git diff --quiet "$last" "$commit" -- . ':(exclude)CHANGELOG.md'; then
   exit 0
 fi
 
-git show "$commit:CHANGELOG.md" > "$tmp/CHANGELOG.md"
-node "$scripts/changelog.mjs" notes "$tmp/CHANGELOG.md" > "$tmp/shipped.md"
-if [ -s "$tmp/shipped.md" ]; then cp "$tmp/shipped.md" "$tmp/notes.md"; else echo "Correcciones y mejoras internas." > "$tmp/notes.md"; fi
+# One line per PR merged since the last version, with its author, plus first-time contributors
+gh api "repos/{owner}/{repo}/releases/generate-notes" \
+  -f tag_name="v$version" -f target_commitish="$commit" -f previous_tag_name="$last" \
+  --jq .body > "$tmp/notes.md"
 
 gh release create "v$version" --target "$commit" --title "v$version" --notes-file "$tmp/notes.md"
 echo "Published v$version (was $last)"
 
-# On main's latest commit: lines merged after the promoted commit stay under Próxima versión
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 date=$(TZ=Europe/Madrid date +%Y-%m-%d)
 for attempt in 1 2 3; do
   git fetch --quiet origin main
   git checkout --quiet -B release-changelog origin/main
-  node "$scripts/changelog.mjs" release CHANGELOG.md "$version" "$date" "$tmp/shipped.md"
+  node "$scripts/changelog.mjs" release CHANGELOG.md "$version" "$date" "$tmp/notes.md"
   git commit --quiet -am "Release v$version"
   git push --quiet origin HEAD:main && exit 0
   echo "main moved while releasing, trying again ($attempt)" >&2
