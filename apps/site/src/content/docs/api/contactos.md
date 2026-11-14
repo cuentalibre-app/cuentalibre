@@ -17,6 +17,12 @@ Clientes y proveedores. Cada contacto tiene un `role`, `client` o `supplier`, qu
 | `PATCH /v1/contacts/{id}`      | Cambia algunos campos.                                                     |
 | `DELETE /v1/contacts/{id}`     | Lo borra. Las facturas ya emitidas conservan sus datos. Un proveedor con facturas recibidas o gastos no se puede borrar (`409 in_use`). |
 
+## NIF
+
+Todo contacto necesita un NIF válido para su país. En España se comprueba la letra o el dígito de control de NIF, NIE y CIF, con o sin el prefijo `ES`; en otros países, que sean letras (de cualquier alfabeto), números o `&`, hasta 30. Si no es válido, responde `400 invalid_tax_id`. Sin `country`, el contacto es de España y su NIF se comprueba como español: indica el país de los contactos extranjeros. Se guarda sin espacios, puntos ni guiones (`b-12.345.674` queda `B12345674`).
+
+La única excepción es el cliente «Clientes varios» (`variousClients: true`), que agrupa las ventas a clientes sin identificar: puede ir sin NIF.
+
 ## NIF repetidos
 
 Se pueden crear varios contactos con el mismo NIF: una empresa con varias direcciones de facturación o un organismo público con varias unidades DIR3. Casi siempre es un descuido, así que antes de crear un contacto puedes buscarlo por NIF con `GET /v1/contacts?taxId=B12345674`. La búsqueda ignora mayúsculas, espacios, puntos, guiones y el prefijo `ES`.
@@ -27,7 +33,8 @@ Se pueden crear varios contactos con el mismo NIF: una empresa con varias direcc
 | -------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `role`                                       | `client` \| `supplier`                             | Obligatorio.                                                                                     |
 | `name`                                       | texto                                              | Obligatorio. Nombre o razón social.                                                              |
-| `taxId`                                      | texto                                              | Obligatorio (puede ir vacío). NIF, o NIF-IVA para contactos de la UE.                            |
+| `taxId`                                      | texto                                              | Obligatorio. NIF, o NIF-IVA para contactos de la UE. Ver [NIF](#nif).                            |
+| `variousClients`                             | booleano                                           | Solo clientes: es «Clientes varios» y puede ir sin NIF.                                          |
 | `address`, `postalCode`, `city`, `province`  | texto                                              | Dirección. `city` es la población.                                                               |
 | `country`                                    | texto                                              | Nombre del país en español (`"Francia"`). Sin él, España.                                        |
 | `email`, `phone`, `mobile`, `fax`, `website` | texto                                              |                                                                                                  |
@@ -47,6 +54,6 @@ Se pueden crear varios contactos con el mismo NIF: una empresa con varias direcc
 ```sh
 curl https://api.cuentalibre.es/v1/contacts \
   -H "Authorization: Bearer fsk_…" -H "Content-Type: application/json" \
-  -d '{ "role": "client", "name": "Estudio Nube SL", "taxId": "B12345678",
+  -d '{ "role": "client", "name": "Estudio Nube SL", "taxId": "B12345674",
         "email": "admin@estudionube.es", "city": "Valencia", "withholding": "professional" }'
 ```

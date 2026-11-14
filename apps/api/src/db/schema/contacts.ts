@@ -20,6 +20,7 @@ export const contact = pgTable(
     role: text().$type<ContactRole>().notNull(),
     name: text().notNull(),
     taxId: text().notNull(),
+    variousClients: boolean(),
     address: text(),
     postalCode: text(),
     city: text(),

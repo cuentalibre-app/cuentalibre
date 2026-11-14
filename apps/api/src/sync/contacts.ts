@@ -1,4 +1,5 @@
 import { storedContactSchema, type ContactRole } from "@cuentalibre/contracts";
+import { contactTaxIdProblem, countryOf, storedTaxId } from "@cuentalibre/core";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { z } from "zod";
 import { contact, expense, purchaseInvoice } from "../db/schema";
@@ -35,6 +36,34 @@ function invalid(error: z.ZodError): never {
   throw new ApiError(400, "invalid_contact", `${where}${issue?.message ?? "Invalid contact."}`);
 }
 
+const TAX_ID_PROBLEMS = {
+  empty: "taxId: required.",
+  format: "taxId: not a valid tax ID for the contact's country (abroad: letters, digits and &, up to 30).",
+  checksum: "taxId: the control character is wrong.",
+};
+
+/**
+ * Checks what parsing can't: a valid tax ID for the contact's country, and
+ * the "Clientes varios" mark only on clients. Returns the record with its tax
+ * ID normalized, as the web app stores it.
+ */
+function checked(role: ContactRole, record: StoredContact): StoredContact {
+  if (record.variousClients && role !== "client")
+    throw new ApiError(400, "invalid_contact", "variousClients: only clients can have it.");
+  const problem = contactTaxIdProblem(record);
+  if (problem) {
+    // Without a country the tax ID is taken as Spanish, which a foreign one fails
+    const hint =
+      !record.country && problem !== "empty" ? " Checked as Spanish: set country for a foreign contact." : "";
+    throw new ApiError(400, "invalid_tax_id", TAX_ID_PROBLEMS[problem] + hint);
+  }
+  return {
+    ...record,
+    taxId: storedTaxId(record.taxId, countryOf(record)),
+    variousClients: record.variousClients || undefined,
+  };
+}
+
 function notFound(): never {
   throw new ApiError(404, "not_found", "Contact not found.");
 }
@@ -42,10 +71,11 @@ function notFound(): never {
 export async function createContact(tx: Tx, organizationId: string, role: ContactRole, data: StoredContact) {
   const parsed = storedContactSchema.safeParse(data);
   if (!parsed.success) invalid(parsed.error);
-  await checkAttachments(tx, organizationId, parsed.data.attachments);
+  const record = checked(role, parsed.data);
+  await checkAttachments(tx, organizationId, record.attachments);
   const [row] = await tx
     .insert(contact)
-    .values({ ...toColumns(parsed.data), organizationId, role })
+    .values({ ...toColumns(record), organizationId, role })
     .onConflictDoNothing()
     .returning({ id: contact.id });
   if (!row) alreadyExists();
@@ -74,10 +104,11 @@ export async function updateContact(
   }
   const parsed = storedContactSchema.safeParse(merged);
   if (!parsed.success) invalid(parsed.error);
-  await checkAttachments(tx, organizationId, parsed.data.attachments, row.attachments ?? []);
+  const record = checked(role, parsed.data);
+  await checkAttachments(tx, organizationId, record.attachments, row.attachments ?? []);
   await tx
     .update(contact)
-    .set(toColumns(parsed.data))
+    .set(toColumns(record))
     .where(live(organizationId, role, id));
 }
 

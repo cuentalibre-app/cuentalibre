@@ -1,4 +1,4 @@
-import { SPAIN, checkTaxId, hasEuVatPrefix, isOtherEuCountry } from "@cuentalibre/core";
+import { SPAIN, checkTaxId, countryOf, hasEuVatPrefix, isOtherEuCountry } from "@cuentalibre/core";
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
 
 export interface RoleConfig {
@@ -127,8 +127,6 @@ export const COUNTRIES: { label?: string; options: string[] }[] = [
   },
 ];
 
-export const countryOf = (contact: Pick<Contact, "country">) => contact.country || SPAIN;
-
 /** Why a tax ID can't be saved, or undefined when it is fine. */
 export function taxIdError(taxId: string, country: string): string | undefined {
   const check = checkTaxId(taxId, country);
@@ -137,7 +135,7 @@ export function taxIdError(taxId: string, country: string): string | undefined {
   if (check.reason === "checksum") return "La letra o el dígito de control no es correcto. Revisa el NIF.";
   return country === SPAIN
     ? "El formato del NIF no es correcto. Formatos válidos: 12345678Z (NIF), X1234567L (NIE) o B12345674 (CIF)."
-    : "Solo letras y números, sin espacios.";
+    : "Solo letras, números y &, hasta 30 caracteres.";
 }
 
 /** Advice that doesn't block saving: what intra-EU invoices need. */

@@ -1,7 +1,15 @@
-import { SPAIN, isOtherEuCountry, isValidEmail, storedTaxId, type WithholdingKind } from "@cuentalibre/core";
+import {
+  SPAIN,
+  countryOf,
+  isOtherEuCountry,
+  isValidEmail,
+  normalizeTaxId,
+  storedTaxId,
+  type WithholdingKind,
+} from "@cuentalibre/core";
 import type { Attachment, BankAccount, Contact, ContactRole, EInvoiceCodes } from "@cuentalibre/contracts";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
-import { countryOf, taxIdError } from "./contacts-model";
+import { taxIdError } from "./contacts-model";
 
 /** Radix Select can't hold an empty value: this stands for "no default". */
 export const NO_DEFAULT = "default";
@@ -9,6 +17,8 @@ export const NO_DEFAULT = "default";
 /** What the contact form edits: text as typed, parsed on save. */
 export interface ContactDraft {
   taxId: string;
+  /** The "Clientes varios" client, which may have no tax ID. */
+  variousClients: boolean;
   name: string;
   country: string;
   vies: boolean;
@@ -43,6 +53,7 @@ export type DraftErrors = Partial<Record<DraftErrorKey, string>>;
 export function toDraft(contact: Contact | undefined): ContactDraft {
   return {
     taxId: contact?.taxId ?? "",
+    variousClients: contact?.variousClients ?? false,
     name: contact?.name ?? "",
     country: contact ? countryOf(contact) : SPAIN,
     vies: contact?.vies ?? false,
@@ -88,6 +99,7 @@ export function fromDraft(role: ContactRole, draft: ContactDraft, id: string): C
   return {
     id,
     taxId: storedTaxId(draft.taxId, draft.country),
+    variousClients: role === "client" && draft.variousClients ? true : undefined,
     name: draft.name.trim(),
     country: draft.country,
     vies: isOtherEuCountry(draft.country) && draft.vies ? true : undefined,
@@ -119,7 +131,8 @@ export function fromDraft(role: ContactRole, draft: ContactDraft, id: string): C
 /** A repeated tax ID is not an error: the form warns about it instead (see DuplicateTaxIdNotice). */
 export function validateDraft(draft: ContactDraft): DraftErrors {
   const errors: DraftErrors = {};
-  errors.taxId = taxIdError(draft.taxId, draft.country);
+  const exempt = draft.variousClients && !normalizeTaxId(draft.taxId);
+  errors.taxId = exempt ? undefined : taxIdError(draft.taxId, draft.country);
   if (!draft.name.trim()) errors.name = "Introduce un nombre.";
   if (draft.email.trim() && !isValidEmail(draft.email)) errors.email = "El email no es correcto.";
   if (draft.discount.trim()) {

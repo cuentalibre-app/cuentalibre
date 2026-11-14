@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  contactTaxIdProblem,
   checkSpanishTaxId,
   checkTaxId,
   countryFromVatPrefix,
@@ -64,6 +65,10 @@ describe("checkTaxId", () => {
   it("only checks the characters of foreign tax IDs", () => {
     expect(checkTaxId("DE123456789", "Alemania")).toEqual({ valid: true, kind: "foreign" });
     expect(checkTaxId("86-1696045", "Estados Unidos")).toEqual({ valid: true, kind: "foreign" });
+    expect(checkTaxId("A&C010101ÑB1", "México")).toEqual({ valid: true, kind: "foreign" });
+    expect(checkTaxId("ΕΛ094019245", "Grecia")).toEqual({ valid: true, kind: "foreign" });
+    expect(checkTaxId("GB123*456", "Reino Unido")).toEqual({ valid: false, reason: "format" });
+    expect(checkTaxId("1".repeat(31), "Estados Unidos")).toEqual({ valid: false, reason: "format" });
     expect(checkTaxId("ñ", "Francia")).toEqual({ valid: false, reason: "format" });
     expect(checkTaxId(" ", "Francia")).toEqual({ valid: false, reason: "empty" });
   });
@@ -185,5 +190,20 @@ describe("provinceFromPostalCode", () => {
     expect(provinceFromPostalCode("00001")).toBeNull();
     expect(provinceFromPostalCode("2801")).toBeNull();
     expect(provinceFromPostalCode("D24")).toBeNull();
+  });
+});
+
+describe("contactTaxIdProblem", () => {
+  it("checks the tax ID for the contact's country, Spain by default", () => {
+    expect(contactTaxIdProblem({ taxId: "B12345674" })).toBeNull();
+    expect(contactTaxIdProblem({ taxId: "" })).toBe("empty");
+    expect(contactTaxIdProblem({ taxId: "B12345675" })).toBe("checksum");
+    expect(contactTaxIdProblem({ taxId: "12345" })).toBe("format");
+    expect(contactTaxIdProblem({ taxId: "12345", country: "Estados Unidos" })).toBeNull();
+  });
+
+  it('lets the "Clientes varios" client go without one, but checks one it has', () => {
+    expect(contactTaxIdProblem({ taxId: " ", variousClients: true })).toBeNull();
+    expect(contactTaxIdProblem({ taxId: "B12345675", variousClients: true })).toBe("checksum");
   });
 });
