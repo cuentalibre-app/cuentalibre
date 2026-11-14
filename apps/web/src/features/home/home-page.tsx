@@ -9,7 +9,8 @@ import { buildHomeData } from "./home-data";
 import { KpiGrid, taxReserve } from "./kpi-grid";
 import { MobileOverview } from "./mobile-overview";
 import { Notifications } from "./notifications";
-import { Page, PageHeader } from "@/components/page";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { UserMenu } from "@/components/layout/user-menu";
 import { RecentInvoices } from "./recent-invoices";
@@ -75,7 +76,16 @@ export function HomePage() {
       <PageHeader
         className="hidden lg:flex"
         title="Inicio"
-        inline={periodSelect()}
+        inline={
+          <>
+            <TooltipProvider delayDuration={300}>
+              <HelpTip side="bottom">
+                Cómo va tu negocio en el periodo: lo facturado, lo gastado y lo que apartar para impuestos.
+              </HelpTip>
+            </TooltipProvider>
+            {periodSelect()}
+          </>
+        }
         actions={
           <>
             <Link to="/compras/gastos/nuevo" className={buttonVariants({ variant: "secondary", size: "sm" })}>
