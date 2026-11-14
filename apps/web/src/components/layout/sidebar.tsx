@@ -1,6 +1,6 @@
 import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
-import { ChevronRight, MessageCircleQuestionMark, PanelLeftClose, PanelLeftOpen, Plus, UserRound } from "lucide-react";
+import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, UserRound } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import {
   DropdownMenu,
@@ -14,8 +14,6 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { accountName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { LogoMark } from "@/components/logo";
-import { HELP_CHAT_PANEL_ID } from "@/features/help-chat/help-chat-panel";
-import { toggleHelpChat, useHelpChat } from "@/features/help-chat/help-chat-store";
 import { CreateMenu } from "./create-menu";
 import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
@@ -192,30 +190,9 @@ interface SidebarProps {
   collapsed: boolean;
   /** Omitted when the rail is forced (narrow screens), which shows the logo mark instead of the toggle */
   onToggle?: () => void;
-  /** Whether the instance has the AI help chat, which the sidebar opens and closes. */
-  helpChat?: boolean;
 }
 
-/** Opens and closes the help chat docked on the right; lit while it is open. */
-function HelpChatToggle({ collapsed }: { collapsed: boolean }) {
-  const { open } = useHelpChat();
-  return (
-    <RailTooltip enabled={collapsed} label="Ayuda">
-      <button
-        type="button"
-        onClick={toggleHelpChat}
-        aria-expanded={open}
-        aria-controls={HELP_CHAT_PANEL_ID}
-        className={cn(itemClass, "mb-2 w-full cursor-pointer text-left font-normal", open && activeClass)}
-      >
-        <MessageCircleQuestionMark className="size-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-        <span className={labelClass(collapsed)}>Ayuda</span>
-      </button>
-    </RailTooltip>
-  );
-}
-
-export function Sidebar({ className, collapsed, onToggle, helpChat = false }: SidebarProps) {
+export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
   const badges = useNavBadges();
   const { profile, tax } = useSettings();
   const name = accountName(profile);
@@ -337,8 +314,6 @@ export function Sidebar({ className, collapsed, onToggle, helpChat = false }: Si
         ))}
 
         <div className="flex-1" />
-
-        {helpChat && <HelpChatToggle collapsed={collapsed} />}
 
         <div className="shrink-0 border-t border-sidebar-border pt-3">
           <UserMenu side={collapsed ? "right" : "top"} align={collapsed ? "end" : "start"}>
