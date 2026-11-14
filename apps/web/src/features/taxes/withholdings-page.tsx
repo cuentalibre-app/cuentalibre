@@ -12,7 +12,7 @@ import {
 } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { editContactPath } from "@/features/contacts/contacts-model";
 import { usePeriod } from "@/lib/use-period";
@@ -243,11 +243,12 @@ export function WithholdingsPage() {
           eyebrow={<ModuleBreadcrumb module="withholdings" form={annual ? "190" : "111"} />}
           back={<TaxesBackLink />}
           title="Retenciones"
-          descriptionClassName="max-lg:hidden"
-          description={
-            annual
-              ? "Modelo 190: resumen anual de las retenciones practicadas, perceptor por perceptor."
-              : "Modelo 111: lo que has retenido a los profesionales que te facturan, a ingresar en Hacienda."
+          inline={
+            <HelpTip side="bottom">
+              {annual
+                ? "Modelo 190: resumen anual de las retenciones practicadas, perceptor por perceptor."
+                : "Modelo 111: lo que has retenido a los profesionales que te facturan, a ingresar en Hacienda."}
+            </HelpTip>
           }
           actions={
             <>

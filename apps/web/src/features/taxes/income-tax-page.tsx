@@ -12,7 +12,7 @@ import {
 } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { deductibleOf, EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { useExpenses } from "@/features/purchases/expenses-store";
@@ -303,11 +303,12 @@ export function IncomeTaxPage() {
           eyebrow={<ModuleBreadcrumb module="incomeTax" form={annual ? "100" : "130"} />}
           back={<TaxesBackLink />}
           title="IRPF"
-          descriptionClassName="max-lg:hidden"
-          description={
-            annual
-              ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."
-              : "Modelo 130: pago a cuenta del 20 % de lo que llevas ganado en el año."
+          inline={
+            <HelpTip side="bottom">
+              {annual
+                ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."
+                : "Modelo 130: pago a cuenta del 20 % de lo que llevas ganado en el año."}
+            </HelpTip>
           }
           actions={
             <>

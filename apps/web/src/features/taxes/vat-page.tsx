@@ -20,7 +20,7 @@ import {
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Notice as PageNotice, Page, PageHeader } from "@/components/page";
+import { HelpTip, Notice as PageNotice, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { deductible, PURCHASE_OPERATION_TYPES, purchaseTotals, supplierOf } from "@/features/purchases/purchases-model";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
@@ -338,7 +338,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         result={result}
         file={file}
       />
-      <section aria-label="Resultados de los 303 del año" className="grid grid-cols-2 gap-3 wide:grid-cols-4 lg:gap-4">
+      <section aria-label="Resultados de los 303 del año" className="grid grid-cols-2 gap-3 lg:gap-4 wide:grid-cols-4">
         {r.quarters.map((q, i) => (
           <Link
             key={i}
@@ -408,11 +408,12 @@ export function VatPage() {
           eyebrow={<ModuleBreadcrumb module="vat" form={annual ? "390" : "303"} />}
           back={<TaxesBackLink />}
           title="IVA"
-          descriptionClassName="max-lg:hidden"
-          description={
-            annual
-              ? "Modelo 390: resumen anual del IVA repercutido y soportado. Es informativo."
-              : "Modelo 303: el IVA que has cobrado menos el que puedes deducir en el trimestre."
+          inline={
+            <HelpTip side="bottom">
+              {annual
+                ? "Modelo 390: resumen anual del IVA repercutido y soportado. Es informativo."
+                : "Modelo 303: el IVA que has cobrado menos el que puedes deducir en el trimestre."}
+            </HelpTip>
           }
           actions={
             <>

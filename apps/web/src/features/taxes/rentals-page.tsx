@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { cents, file115, model115, model180, obligation, sumCents, type Quarter } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -258,11 +258,12 @@ export function RentalsPage() {
           eyebrow={<ModuleBreadcrumb module="rentals" form={annual ? "180" : "115"} />}
           back={<TaxesBackLink />}
           title="Retenciones de alquileres"
-          descriptionClassName="max-lg:hidden"
-          description={
-            annual
-              ? "Modelo 180: resumen anual de las retenciones de alquileres, por arrendador e inmueble."
-              : "Modelo 115: la retención del alquiler de tu local u oficina, a ingresar en Hacienda."
+          inline={
+            <HelpTip side="bottom">
+              {annual
+                ? "Modelo 180: resumen anual de las retenciones de alquileres, por arrendador e inmueble."
+                : "Modelo 115: la retención del alquiler de tu local u oficina, a ingresar en Hacienda."}
+            </HelpTip>
           }
           actions={
             <>
