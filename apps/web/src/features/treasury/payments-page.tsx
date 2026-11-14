@@ -9,10 +9,18 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { Page, PageHeader, Toolbar } from "@/components/page";
+import { HelpTip, Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { GroupedSelect } from "@/features/sales/form-fields";
-import { ActionsMenu, EmptyState, IconAction, MoreActionsTrigger, SortHeader, downloadCsv, type Action } from "@/features/sales/list-parts";
+import {
+  ActionsMenu,
+  EmptyState,
+  IconAction,
+  MoreActionsTrigger,
+  SortHeader,
+  downloadCsv,
+  type Action,
+} from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatShortDate, periodCode } from "@/lib/format";
@@ -128,23 +136,26 @@ export function PaymentsPage() {
         <PageHeader
           title="Bancos y caja"
           inline={
-            // Below lg the new-payment action is an icon beside the period, so both share one row
-            <div className="flex w-full items-center gap-2 sm:w-auto">
-              <PeriodSelect
-                value={period}
-                onChange={setPeriod}
-                years={availableYears}
-                today={today}
-                className="h-12 min-w-0 flex-1 sm:h-10 sm:w-auto sm:flex-none"
-              />
-              <Button
-                aria-label="Nuevo cobro / pago manual"
-                onClick={() => setCreating(true)}
-                className="size-12 shrink-0 px-0 sm:size-10 lg:hidden"
-              >
-                <Plus strokeWidth={2} aria-hidden="true" />
-              </Button>
-            </div>
+            <>
+              <HelpTip side="bottom">Los cobros y pagos del periodo, por cuenta, tarjeta o caja.</HelpTip>
+              {/* Below lg the new-payment action is an icon beside the period, so both share one row */}
+              <div className="flex w-full items-center gap-2 sm:w-auto">
+                <PeriodSelect
+                  value={period}
+                  onChange={setPeriod}
+                  years={availableYears}
+                  today={today}
+                  className="h-12 min-w-0 flex-1 sm:h-10 sm:w-auto sm:flex-none"
+                />
+                <Button
+                  aria-label="Nuevo cobro / pago manual"
+                  onClick={() => setCreating(true)}
+                  className="size-12 shrink-0 px-0 sm:size-10 lg:hidden"
+                >
+                  <Plus strokeWidth={2} aria-hidden="true" />
+                </Button>
+              </div>
+            </>
           }
           actionsClassName="max-lg:hidden"
           actions={
@@ -406,10 +417,7 @@ function QuickActions({ row, onRemove }: { row: Row; onRemove: () => void }) {
   return (
     <div className="flex items-center justify-center gap-0.5">
       <IconAction action={open} />
-      <ActionsMenu
-        groups={groups}
-        trigger={<MoreActionsTrigger label="Más acciones" tooltip />}
-      />
+      <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label="Más acciones" tooltip />} />
     </div>
   );
 }
@@ -417,10 +425,7 @@ function QuickActions({ row, onRemove }: { row: Row; onRemove: () => void }) {
 function RowMenu({ row, onRemove }: { row: Row; onRemove: () => void }) {
   const { groups } = usePaymentActions(row, onRemove);
   return (
-    <ActionsMenu
-      groups={groups}
-      trigger={<MoreActionsTrigger label={`Acciones de ${row.payment.reference}`} />}
-    />
+    <ActionsMenu groups={groups} trigger={<MoreActionsTrigger label={`Acciones de ${row.payment.reference}`} />} />
   );
 }
 

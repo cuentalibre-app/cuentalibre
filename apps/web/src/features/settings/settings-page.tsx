@@ -55,7 +55,8 @@ import {
   vatRegimeLabel,
 } from "./settings-model";
 import { useSettings } from "./settings-store";
-import { Page, PageHeader } from "@/components/page";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 
 interface Entry {
   title: string;
@@ -274,7 +275,14 @@ export function SettingsPage() {
   let index = 0;
   return (
     <Page>
-      <PageHeader title="Configuración" description="Los datos de tu negocio y cómo trabaja cuentalibre con ellos." />
+      <PageHeader
+        title="Configuración"
+        inline={
+          <TooltipProvider delayDuration={300}>
+            <HelpTip side="bottom">Los datos de tu negocio y cómo trabaja cuentalibre con ellos.</HelpTip>
+          </TooltipProvider>
+        }
+      />
 
       {billing && (
         <section aria-label="Tu plan" className="flex flex-col gap-3">
