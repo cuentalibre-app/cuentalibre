@@ -67,6 +67,32 @@ function groupBy<T>(items: T[], key: (item: T) => string): Map<string, T[]> {
   return groups;
 }
 
+/**
+ * The party an operation is with: its normalized tax ID, or its contact when it has none.
+ * Contacts may share a tax ID (DIR3 units of an administration, branches of a company), and
+ * the AEAT sees them as one party (#90).
+ */
+export function partyKey(contactId: string, taxId?: string): string {
+  const id = normalizeTaxId(taxId ?? "");
+  return id ? `nif:${id}` : `contact:${contactId}`;
+}
+
+const partyOf = (op: PartyOperation) => partyKey(op.contactId, op.taxId);
+
+/**
+ * The contacts of a party's operations, and the one shown for it: the one with the largest
+ * amount when several share its tax ID.
+ */
+function partyContacts(group: PartyOperation[], amount: (op: PartyOperation) => Cents) {
+  const amounts = new Map<string, Cents>();
+  for (const o of group) amounts.set(o.contactId, cents((amounts.get(o.contactId) ?? 0) + amount(o)));
+  const contactIds = [...amounts.keys()];
+  return {
+    contactId: contactIds.reduce((a, b) => (Math.abs(amounts.get(b)!) > Math.abs(amounts.get(a)!) ? b : a)),
+    contactIds,
+  };
+}
+
 /* ─────────────────── Forms 111 and 190: professionals' withholdings ─────────────────── */
 
 /** Sporadic services (courses, talks, seminars) are taken as earned income. */
@@ -84,7 +110,10 @@ function withheldPurchases(ops: PartyOperation[]): PartyOperation[] {
 export type PerceptorKey190 = "F" | "G";
 
 export interface Perceptor {
+  /** Contact shown for the perceptor: the one with the largest base when several share its tax ID. */
   contactId: string;
+  /** Every contact with the perceptor's tax ID. */
+  contactIds: string[];
   key: PerceptorKey190;
   /** Subkey of the key: G01 general rate, G02 reduced rate of new professionals, G04 Ceuta and Melilla. */
   subkey: string;
@@ -108,15 +137,17 @@ function commonRate(ops: PartyOperation[]): number | null {
   return ops.every((o) => Math.abs(o.withholdingRate - first) < 1e-9) ? first : null;
 }
 
+const key190 = (op: PartyOperation): PerceptorKey190 => (op.account === EARNED_INCOME_ACCOUNT ? "F" : "G");
+
 /** Withholdings per perceptor and key, largest first. */
 function perceptors(ops: PartyOperation[]): Perceptor[] {
-  const groups = groupBy(ops, (o) => `${o.contactId}|${o.account === EARNED_INCOME_ACCOUNT ? "F" : "G"}`);
-  return [...groups.entries()]
-    .map(([k, group]) => {
-      const key = k.split("|")[1] as PerceptorKey190;
+  const groups = groupBy(ops, (o) => `${partyOf(o)}|${key190(o)}`);
+  return [...groups.values()]
+    .map((group) => {
+      const key = key190(group[0]!);
       const rate = commonRate(group);
       return {
-        contactId: group[0]!.contactId,
+        ...partyContacts(group, (o) => o.base),
         key,
         subkey: subkeyOf(key, rate ?? group[0]!.withholdingRate),
         base: sumBy(group, (o) => o.base),
@@ -142,7 +173,7 @@ export function model111(ops: PartyOperation[], year: number, quarter: Quarter):
   const docs = withheldPurchases(ops).filter((o) => inQuarter(o.date, year, quarter));
   const work = docs.filter((o) => o.account === EARNED_INCOME_ACCOUNT);
   const activities = docs.filter((o) => o.account !== EARNED_INCOME_ACCOUNT);
-  const people = (group: PartyOperation[]) => new Set(group.map((o) => o.contactId)).size;
+  const people = (group: PartyOperation[]) => new Set(group.map(partyOf)).size;
 
   const boxes: Boxes = {
     "01": people(work),
@@ -196,7 +227,7 @@ export interface Model115 {
 export function model115(ops: PartyOperation[], year: number, quarter: Quarter): Model115 {
   const docs = rentals(ops).filter((o) => o.withholding !== 0 && inQuarter(o.date, year, quarter));
   const boxes: Boxes = {
-    "01": new Set(docs.map((o) => o.contactId)).size,
+    "01": new Set(docs.map(partyOf)).size,
     "02": sumBy(docs, (o) => o.base),
     "03": sumBy(docs, (o) => o.withholding),
     // Box 04 only applies to supplementary returns
@@ -216,7 +247,10 @@ export const PROPERTY_SITUATION: Record<RentalLocation, string> = {
 };
 
 export interface Landlord {
+  /** Contact shown for the landlord: the one with the largest base when several share its tax ID. */
   contactId: string;
+  /** Every contact with the landlord's tax ID. */
+  contactIds: string[];
   cadastralRef: string;
   /** Situation code of form 180 (1–4). */
   situation: string;
@@ -243,10 +277,10 @@ export interface Model180 {
 export function model180(ops: PartyOperation[], year: number): Model180 {
   const yearRentals = rentals(ops).filter((o) => inYear(o.date, year));
   const docs = yearRentals.filter((o) => o.withholding !== 0);
-  const groups = groupBy(docs, (o) => `${o.contactId}|${o.cadastralRef ?? ""}`);
+  const groups = groupBy(docs, (o) => `${partyOf(o)}|${o.cadastralRef ?? ""}`);
   const landlords = [...groups.values()]
     .map((group) => ({
-      contactId: group[0]!.contactId,
+      ...partyContacts(group, (o) => o.base),
       cadastralRef: group[0]!.cadastralRef ?? "",
       situation: PROPERTY_SITUATION[group[0]!.rentalLocation ?? "spain"],
       base: sumBy(group, (o) => o.base),
@@ -274,13 +308,13 @@ export const CASH_THRESHOLD_347 = cents(600_000);
 /** Operations other forms already report: intra-EU (349), imports and exports (customs). */
 const OUTSIDE_347: (OperationType | PurchaseOperationType)[] = ["intraEu", "export", "import"];
 
-/** Why an operation is left out of form 347; null when it counts. */
-export function excludedFrom347(
-  op: PartyOperation,
-  excludedContactIds: ReadonlySet<string> = new Set(),
-): string | null {
+/**
+ * Why an operation is left out of form 347; null when it counts. `excludedParties` holds
+ * {@link partyKey}s: excluding a contact excludes every contact with its tax ID.
+ */
+export function excludedFrom347(op: PartyOperation, excludedParties: ReadonlySet<string> = new Set()): string | null {
   if (!op.contactId) return "Sin cliente ni proveedor identificado";
-  if (excludedContactIds.has(op.contactId)) return "Contacto excluido en la configuración";
+  if (excludedParties.has(partyOf(op))) return "Contacto excluido en la configuración";
   if (op.withholding !== 0) return "Lleva retención: se declara en el 190 o el 180";
   if (OUTSIDE_347.includes(op.operation) || op.abroad) return "Operación con el extranjero";
   return null;
@@ -290,7 +324,10 @@ export function excludedFrom347(
 export type Key347 = "A" | "B";
 
 export interface Declared347 {
+  /** Contact shown for the party: the one with the largest total when several share its tax ID. */
   contactId: string;
+  /** Every contact with the party's tax ID. */
+  contactIds: string[];
   key: Key347;
   total: Cents;
   /** Total per quarter, as the form asks. */
@@ -312,18 +349,18 @@ export interface Model347 {
 export function model347(
   ops: PartyOperation[],
   year: number,
-  excludedContactIds: ReadonlySet<string> = new Set(),
+  excludedParties: ReadonlySet<string> = new Set(),
 ): Model347 {
   const yearOps = ops.filter((o) => inYear(o.date, year));
   const excluded: Model347["excluded"] = [];
   const counted: PartyOperation[] = [];
   for (const op of yearOps) {
-    const reason = excludedFrom347(op, excludedContactIds);
+    const reason = excludedFrom347(op, excludedParties);
     if (reason) excluded.push({ op, reason });
     else counted.push(op);
   }
-  // Sales and purchases with the same person are reported apart
-  const groups = groupBy(counted, (o) => `${o.contactId}|${o.side}`);
+  // Sales and purchases with the same party are reported apart
+  const groups = groupBy(counted, (o) => `${partyOf(o)}|${o.side}`);
   const all = [...groups.values()]
     .map((group): Declared347 => {
       const quarters = ([1, 2, 3, 4] as const).map((q) =>
@@ -335,7 +372,7 @@ export function model347(
       const key: Key347 = group[0]!.side === "sale" ? "B" : "A";
       const cash = key === "B" ? sumBy(group, (o) => o.cash) : cents(0);
       return {
-        contactId: group[0]!.contactId,
+        ...partyContacts(group, (o) => o.total),
         key,
         total: sumBy(group, (o) => o.total),
         quarters,
@@ -465,13 +502,9 @@ export function model349(ops: PartyOperation[], period: Period349): Model349 {
   const keyOf = (op: PartyOperation) => key349(root(op));
 
   const record = (group: PartyOperation[]): Operation349 => {
-    const bases = new Map<string, Cents>();
-    for (const o of group) bases.set(o.contactId, cents((bases.get(o.contactId) ?? 0) + o.base));
-    const contactIds = [...bases.keys()];
     const { code, number } = operator349(group[0]!);
     return {
-      contactId: contactIds.reduce((a, b) => (Math.abs(bases.get(b)!) > Math.abs(bases.get(a)!) ? b : a)),
-      contactIds,
+      ...partyContacts(group, (o) => o.base),
       code,
       number,
       key: keyOf(group[0]!),
