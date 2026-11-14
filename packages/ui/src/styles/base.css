@@ -18,15 +18,8 @@
     }
   }
 
-  /* Taps act at once: no wait for a possible double-tap zoom */
-  a,
-  button,
-  input,
-  select,
-  textarea,
-  label,
-  summary,
-  [role="button"] {
+  /* No double-tap zoom anywhere, so taps act at once */
+  html {
     touch-action: manipulation;
   }
 
