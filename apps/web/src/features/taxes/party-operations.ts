@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { cents, SPAIN, sumBy, WITHHOLDING_RATES, type PartyOperation } from "@cuentalibre/core";
+import { cents, partyKey, SPAIN, sumBy, WITHHOLDING_RATES, type PartyOperation } from "@cuentalibre/core";
 import type { Contact, Expense, PurchaseInvoice, SalesDocument } from "@cuentalibre/contracts";
 import { useContacts } from "@/features/contacts/contacts-store";
 import { useExpenses } from "@/features/purchases/expenses-store";
@@ -32,13 +32,13 @@ export interface PartyBooks {
   ops: PartyOperation[];
   documents: Map<string, PartyDocument>;
   contacts: Map<string, Contact>;
-  /** "Clientes varios": left out of form 347. */
+  /** "Clientes varios", as a party key: it and every contact with its tax ID are left out of form 347. */
   excludedFrom347: Set<string>;
 }
 
 const isAbroad = (contact: Contact | undefined) => Boolean(contact) && (contact!.country || SPAIN) !== SPAIN;
 
-/** The contact's tax ID and country, which identify operators in form 349. */
+/** The contact's tax ID and country, which identify the party in forms 111 to 349. */
 const identity = (contact: Contact | undefined) => ({ taxId: contact?.taxId, country: contact?.country });
 
 function fromSale(doc: SalesDocument, contacts: Map<string, Contact>, cash: Set<string>): PartyOperation {
@@ -115,6 +115,7 @@ function fromExpense(expense: Expense, contacts: Map<string, Contact>, cash: Set
     cadastralRef: expense.cadastralRef,
     rentalLocation: expense.rentalLocation,
     cash: cash.has(expense.payment?.paymentMethodId ?? "") ? expense.amount : cents(0),
+    ...identity(contacts.get(expense.supplierId ?? "")),
   };
 }
 
@@ -172,7 +173,9 @@ export function usePartyBooks(): PartyBooks {
       ops,
       documents: index,
       contacts,
-      excludedFrom347: new Set(tax.variousClientsId ? [tax.variousClientsId] : []),
+      excludedFrom347: new Set(
+        tax.variousClientsId ? [partyKey(tax.variousClientsId, contacts.get(tax.variousClientsId)?.taxId)] : [],
+      ),
     };
   }, [documents, purchases, expenses, clients, suppliers, tax.variousClientsId, paymentMethods]);
 }

@@ -8,6 +8,7 @@ import {
   model190,
   model347,
   model349,
+  partyKey,
   periods349,
   splitVatNumber,
   type PartyOperation,
@@ -95,6 +96,20 @@ describe("model190", () => {
     expect(r.withholding).toBe(eur(30));
   });
 
+  it("counts contacts that share a tax ID as one perceptor", () => {
+    const ops = [
+      op("2026-01-10", 100, { taxId: "12345678Z", withholdingRate: 0.15 }),
+      op("2026-02-10", 300, { contactId: "s2", taxId: "12345678Z", withholdingRate: 0.15 }),
+      op("2026-03-10", 100, { contactId: "s3", withholdingRate: 0.15 }),
+    ];
+    const r = model190(ops, 2026);
+    expect(r.perceptors.map((p) => [p.contactId, p.contactIds, p.base])).toEqual([
+      ["s2", ["s1", "s2"], eur(400)],
+      ["s3", ["s3"], eur(100)],
+    ]);
+    expect(model111(ops, 2026, 1).boxes["07"]).toBe(2);
+  });
+
   it("flags mixed rates with a null rate", () => {
     const ops = [op("2026-01-10", 100, { withholdingRate: 0.15 }), op("2026-02-10", 100, { withholdingRate: 0.07 })];
     expect(model190(ops, 2026).perceptors[0]!.rate).toBeNull();
@@ -134,6 +149,17 @@ describe("rentals: model115 and model180", () => {
     expect(r.paid).toEqual([285, 95, 0, 0].map(eur));
   });
 
+  it("counts contacts that share a tax ID as one landlord", () => {
+    const shared = [
+      rent("2026-01-01", { taxId: "12345678Z" }),
+      rent("2026-02-01", { contactId: "l2", taxId: "12345678Z" }),
+    ];
+    expect(model115(shared, 2026, 1).boxes["01"]).toBe(1);
+    expect(model180(shared, 2026).landlords.map((l) => [l.contactIds, l.withholding])).toEqual([
+      [["l1", "l2"], eur(190)],
+    ]);
+  });
+
   it("warns about rentals with an unusual rate", () => {
     expect(model180(ops, 2026).unusual.map((o) => o.contactId)).toEqual(["c1"]);
   });
@@ -163,8 +189,29 @@ describe("model347", () => {
     expect(excludedFrom347(sale("2026-01-01", 5000, { operation: "intraEu" }))).toMatch(/extranjero/);
     expect(excludedFrom347(op("2026-01-01", 5000, { operation: "reverseCharge", abroad: true }))).toMatch(/extranjero/);
     expect(excludedFrom347(op("2026-01-01", 5000, { contactId: "" }))).toMatch(/identificado/);
-    expect(excludedFrom347(sale("2026-01-01", 5000), new Set(["c1"]))).toMatch(/excluido/);
+    expect(excludedFrom347(sale("2026-01-01", 5000), new Set([partyKey("c1")]))).toMatch(/excluido/);
     expect(excludedFrom347(sale("2026-01-01", 5000))).toBeNull();
+  });
+
+  it("adds up contacts that share a tax ID, which only then cross the threshold", () => {
+    const ops = [
+      sale("2026-01-10", 2000, { taxId: "B12345678" }),
+      sale("2026-02-10", 2500, { contactId: "c2", taxId: "b-1234 5678" }),
+      sale("2026-03-10", 2000, { contactId: "c3", taxId: "B87654321" }),
+    ];
+    const r = model347(ops, 2026);
+    expect(r.declared.map((d) => [d.contactId, d.contactIds, d.total])).toEqual([["c2", ["c1", "c2"], eur(4500)]]);
+    expect(r.belowThreshold.map((d) => d.contactId)).toEqual(["c3"]);
+  });
+
+  it("excludes every contact with the tax ID of an excluded one", () => {
+    const ops = [
+      sale("2026-01-10", 4000, { taxId: "B12345678" }),
+      sale("2026-02-10", 4000, { contactId: "c2", taxId: "B12345678" }),
+    ];
+    const r = model347(ops, 2026, new Set([partyKey("c1", "B12345678")]));
+    expect(r.declared).toEqual([]);
+    expect(r.excluded).toHaveLength(2);
   });
 
   it("reports cash collected only above 6.000 €", () => {
