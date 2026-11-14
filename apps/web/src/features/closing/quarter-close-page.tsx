@@ -164,7 +164,6 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
       code: "303",
       title: "IVA",
       amount: (filedVat ?? computedVat!).result,
-      filedOn: filedVat?.filedOn,
       to: modelPath(VAT_PATH, period),
     },
     {
@@ -172,7 +171,6 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
       title: "IRPF",
       // A negative 130 is filed with nothing to pay
       amount: cents(Math.max(0, (filedIrpf ?? computedIrpf!).result)),
-      filedOn: filedIrpf?.filedOn,
       to: modelPath(INCOME_TAX_PATH, period),
     },
   ];
@@ -188,22 +186,21 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
           <li key={f.code}>
             <Link
               to={f.to}
-              className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3.5 py-2.5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.98]"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3.5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-muted active:scale-[0.98]"
             >
-              <span className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
-                  Modelo {f.code} · {f.title}
-                </span>
-                <span className={cn("amount", f.amount < 0 && "text-success")}>{formatEUR(f.amount)}</span>
-                {(f.amount < 0 || f.filedOn) && (
-                  <span className="text-2xs text-muted-foreground">
-                    {[f.amount < 0 && "a compensar", f.filedOn && `presentado el ${formatDate(f.filedOn)}`]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                )}
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-semibold">Modelo {f.code}</span>
+                <span className="text-sm text-muted-foreground">{f.title}</span>
               </span>
-              <ArrowRight className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+              <span className="flex flex-col items-end gap-0.5">
+                <span className={cn("amount text-lg font-semibold", f.amount < 0 && "text-success")}>
+                  {formatEUR(f.amount)}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {f.amount > 0 ? "A ingresar" : f.amount < 0 ? "A compensar" : "Sin cuota"}
+                </span>
+              </span>
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
             </Link>
           </li>
         ))}
