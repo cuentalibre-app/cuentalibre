@@ -210,3 +210,17 @@ export function calendarStatus(entry: CalendarEntry, today: Date): CalendarStatu
   if (from < entry.opensOn) return entry.form === "reta" ? "inProgress" : "waiting";
   return from <= entry.dueOn ? "open" : "closed";
 }
+
+/**
+ * The quarterly return (forms 303 and 130) a worker should have in mind today:
+ * the last quarter while its filing window is open, otherwise the running one.
+ */
+export function quarterToFile(today: Date): { year: number; quarter: Quarter; dueOn: Date; status: "open" | "inProgress" } {
+  const year = today.getFullYear();
+  const current = (Math.floor(today.getMonth() / 3) + 1) as Quarter;
+  const last = current === 1 ? { year: year - 1, quarter: 4 as Quarter } : { year, quarter: (current - 1) as Quarter };
+  if (filingStatus(last.year, last.quarter, today) === "open") {
+    return { ...last, dueOn: filingDeadline(last.year, last.quarter), status: "open" };
+  }
+  return { year, quarter: current, dueOn: filingDeadline(year, current), status: "inProgress" };
+}

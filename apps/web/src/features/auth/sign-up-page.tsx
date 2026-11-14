@@ -36,6 +36,7 @@ export function SignUpPage() {
 
   return (
     <AuthLayout
+      panel="product"
       title="Crear cuenta"
       description="Empieza a llevar tus facturas e impuestos en cuentalibre."
       footer={

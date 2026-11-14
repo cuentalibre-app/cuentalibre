@@ -55,3 +55,7 @@
     radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--brand-teal) 16%, transparent), transparent 50%),
     color-mix(in srgb, var(--primary-soft) 70%, var(--background));
 }
+
+@utility bg-gradient-brand {
+  background: var(--brand-gradient);
+}
