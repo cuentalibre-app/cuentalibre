@@ -65,6 +65,7 @@ const answer = (fields: Partial<ModelAnswer> = {}): ModelAnswer => ({
   vatLines: [{ ratePercent: 21, base: 100, vat: 21, surchargePercent: null, surcharge: null }],
   withholding: null,
   total: 121,
+  expenseAccount: "6291",
   ...fields,
 });
 
@@ -240,6 +241,7 @@ describe("POST /v1/purchases/extract", () => {
         vatBreakdown: [{ rate: 0.21, base: 10000, vat: 2100, surchargeRate: 0, surcharge: 0 }],
         withholding: null,
         total: 12100,
+        expenseType: "6291",
       },
       supplierId: brisa.id,
       issues: [],

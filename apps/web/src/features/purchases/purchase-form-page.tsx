@@ -357,6 +357,8 @@ function PurchaseForm({
   const [readTotal, setReadTotal] = useState<Cents | null>(null);
   // The supplier read, when it isn't one of the user's yet
   const [readSupplier, setReadSupplier] = useState<ExtractedPurchase["supplier"] | null>(null);
+  // The expense type the model proposed, when the supplier had no invoice to go by
+  const [readType, setReadType] = useState<ExpenseType | null>(null);
   const clearFlag = (key: string) => setFlags((f) => (key in f ? { ...f, [key]: undefined } : f));
   const clearError = (key: ErrorKey) => {
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
@@ -454,11 +456,16 @@ function PurchaseForm({
   /** Fills the form with what was read; the document wins over the supplier's usual terms. */
   const applyReading = ({ draft, supplierId, issues }: PurchaseExtraction) => {
     const lines = linesFromDraft(draft);
+    const proposedType =
+      prefill && !isAssetForm && !(supplierId && lastExpenseType(supplierId, purchasesStore.all()))
+        ? draft.expenseType
+        : null;
     setForm((f) => {
       const base = supplierId ? (existing ? { ...f, supplierId } : prefillFromSupplier(f, supplierId, kind)) : f;
       const issuedOn = draft.issuedOn ?? base.issuedOn;
       return {
         ...base,
+        expenseType: proposedType ?? base.expenseType,
         number: draft.number.trim() || base.number,
         issuedOn,
         bookedOn: bookedFollows ? issuedOn : base.bookedOn,
@@ -477,6 +484,7 @@ function PurchaseForm({
     setFlags(invoiceFlags(issues, Boolean(supplierId)));
     setReadTotal(draft.total);
     setReadSupplier(!supplierId && draft.supplier.name.trim() ? draft.supplier : null);
+    setReadType(proposedType);
   };
   const reading = useReading(applyReading);
   const sendToForm = useSendToForm();
@@ -866,7 +874,9 @@ function PurchaseForm({
                     ? "Se propone según el tipo de bien de la amortización."
                     : prefill && lastExpenseType(form.supplierId, purchasesStore.all())
                       ? "Según la última factura de este proveedor."
-                      : undefined
+                      : prefill && readType === form.expenseType
+                        ? "Propuesto al leer el documento."
+                        : undefined
                 }
               >
                 {(p) => (

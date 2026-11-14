@@ -1,4 +1,4 @@
-import type { ExtractedPurchase } from "@cuentalibre/contracts";
+import type { ExpenseType, ExtractedPurchase } from "@cuentalibre/contracts";
 import { COUNTRY_CODES, eurosToCents, storedTaxId } from "@cuentalibre/core";
 import { z } from "zod";
 
@@ -9,6 +9,40 @@ import { z } from "zod";
  * decimal. Every field is required and nullable, as OpenAI's strict structured
  * outputs require; a field the document lacks is null.
  */
+
+/**
+ * The expense accounts (PGC group 6) a received document can be booked to, as the
+ * model is told about them. Payroll and amortization never come from a supplier's
+ * document, so they aren't offered.
+ */
+const EXPENSE_ACCOUNTS = {
+  "600": "goods bought to resell or raw materials",
+  "602": "other supplies consumed by the business (packaging, spare parts)",
+  "607": "work subcontracted to other companies",
+  "621": "rent and leases (premises, coworking, equipment rental)",
+  "622": "repairs and maintenance",
+  "623": "independent professionals (accountant, lawyer, freelancers, notary)",
+  "624": "transport (fuel, transport passes, courier)",
+  "625": "insurance premiums",
+  "626": "bank and payment fees",
+  "627": "advertising, marketing and business meals with clients",
+  "628": "utilities (electricity, water, gas)",
+  "629": "other services, including software subscriptions and hosting",
+  "6291": "communications (internet, phone)",
+  "6292": "travel, hotels, parking, taxis and tolls",
+  "6293": "office supplies",
+  "6294": "computer equipment and peripherals",
+  "6295": "the worker's own meals on a working day",
+  "6297": "memberships, professional associations, magazines",
+  "631": "taxes and fees (IBI, waste collection, administrative fees)",
+  "6422": "the worker's own social security contribution (cuota de autónomos) or mutual fund",
+  "660": "loan interest and fees",
+} satisfies Partial<Record<ExpenseType, string>>;
+
+const expenseAccounts = Object.keys(EXPENSE_ACCOUNTS) as [
+  keyof typeof EXPENSE_ACCOUNTS,
+  ...(keyof typeof EXPENSE_ACCOUNTS)[],
+];
 
 export const modelAnswerSchema = z.object({
   documentType: z
@@ -47,6 +81,10 @@ export const modelAnswerSchema = z.object({
     })
     .nullable(),
   total: z.number().nullable().describe("Total to pay, in euros"),
+  expenseAccount: z
+    .enum(expenseAccounts)
+    .nullable()
+    .describe("The expense account for what was bought; null when none fits clearly"),
 });
 export type ModelAnswer = z.infer<typeof modelAnswerSchema>;
 
@@ -64,7 +102,11 @@ Answer with the fields of the document exactly as printed. Never compute, guess 
 - Rates as percentages: 21 for 21 %.
 - vatLines: one entry per VAT rate in the breakdown. A ticket that only says "IVA incluido" without a base and a VAT amount has none.
 - withholding: only an IRPF withholding (retención) printed on the document.
-- concept: a short Spanish description of what was bought, such as "Fibra y móvil octubre" or "Comida de trabajo".`;
+- concept: a short Spanish description of what was bought, such as "Fibra y móvil octubre" or "Comida de trabajo".
+- expenseAccount: the one account of the Spanish chart of accounts that fits what was bought, judged from the supplier and the items. Use null rather than a loose fit.
+${Object.entries(EXPENSE_ACCOUNTS)
+  .map(([code, meaning]) => `  ${code}: ${meaning}`)
+  .join("\n")}`;
 
 const CODE_COUNTRIES = new Map(Object.entries(COUNTRY_CODES).map(([country, code]) => [code, country]));
 
@@ -119,5 +161,6 @@ export function toDraft(answer: ModelAnswer): ExtractedPurchase {
           }
         : null,
     total: answer.total === null ? null : eurosToCents(answer.total),
+    expenseType: answer.expenseAccount,
   };
 }
