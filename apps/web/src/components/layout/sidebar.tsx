@@ -241,11 +241,23 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
                 aria-label={collapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
                 aria-keyshortcuts="Meta+B Control+B"
                 className={cn(
-                  "grid size-8 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground active:scale-[0.94]",
+                  "group grid size-8 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground active:scale-[0.94]",
                   !collapsed && "-mr-1.5",
                 )}
               >
-                <ToggleIcon className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
+                {collapsed ? (
+                  // The rail keeps the logo; hovering or focusing it reveals the expand icon in its place
+                  <>
+                    <LogoMark className="col-start-1 row-start-1 h-5 text-sidebar-foreground transition-opacity duration-150 group-hover:opacity-0 group-focus-visible:opacity-0" />
+                    <ToggleIcon
+                      className="col-start-1 row-start-1 size-4.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                  </>
+                ) : (
+                  <ToggleIcon className="size-4.5" strokeWidth={1.8} aria-hidden="true" />
+                )}
               </button>
             </RailTooltip>
           ) : (
