@@ -1,4 +1,4 @@
-import { AiError, postJson, toBase64, type AiConfig, type AiProvider, type ModelInput } from "./provider";
+import { AiError, postJson, toBase64, usageOf, type AiConfig, type AiProvider, type ModelInput } from "./provider";
 
 /*
  * Anthropic's Messages API. The answer comes as the input of a tool the model is
@@ -35,6 +35,7 @@ export function anthropicProvider({
   // `AI_BASE_URL` may name the host alone or end in /v1, like OpenAI's
   const url = `${baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1/messages`;
   return {
+    model,
     async complete(input, { prompt, schema }) {
       const answer = (await postJson(
         fetcher,
@@ -48,10 +49,10 @@ export function anthropicProvider({
           tool_choice: { type: "tool", name: TOOL },
           messages: [{ role: "user", content: userContent(input) }],
         },
-      )) as { content?: { type: string; name?: string; input?: unknown }[] };
+      )) as { content?: { type: string; name?: string; input?: unknown }[]; usage?: unknown };
       const call = answer.content?.find((block) => block.type === "tool_use" && block.name === TOOL);
       if (!call) throw new AiError("The model didn't answer with the document's fields.");
-      return call.input;
+      return { answer: call.input, usage: usageOf(answer.usage, "input_tokens", "output_tokens") };
     },
   };
 }
