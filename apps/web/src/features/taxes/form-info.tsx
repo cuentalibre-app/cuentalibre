@@ -108,7 +108,7 @@ export const FACTS: Record<FormCode, FormFacts> = {
   "303": {
     title: "Modelo 303",
     description: [
-      "La autoliquidación trimestral del IVA: el IVA que has cobrado en tus facturas menos el que has pagado en tus compras. Sale a pagar si cobraste más del que pagaste, a cero si no hubo movimiento y negativo en caso contrario.",
+      "La autoliquidación trimestral del IVA: el que has cobrado menos el que has pagado.",
       "Un resultado negativo se arrastra para descontarlo en los trimestres siguientes; en el 4T puedes pedir que te lo devuelvan.",
       PAPER_OR_ONLINE,
       NO_VAT_REGIONS,
@@ -143,7 +143,7 @@ export const FACTS: Record<FormCode, FormFacts> = {
     title: "Modelo 130",
     description: [
       "El pago a cuenta del IRPF de los autónomos: ingresos, gastos y retenciones acumulados desde el 1 de enero hasta el final del trimestre.",
-      "Si al menos el 70 % de lo que facturas lleva retención, puedes dejar de presentarlo, pero solo después de comunicarlo con el modelo 036 o 037. Mientras no lo comuniques, sigue siendo obligatorio.",
+      "Si al menos el 70 % de lo que facturas lleva retención, puedes dejar de presentarlo, pero antes debes comunicarlo con el modelo 036 o 037.",
       "Los profesionales retienen un 15 % en sus facturas, o un 7 % el año en que se dan de alta y los dos siguientes.",
       "Solo se retiene al facturar a empresas y autónomos; a los particulares no.",
       PAPER_OR_ONLINE,
@@ -159,7 +159,7 @@ export const FACTS: Record<FormCode, FormFacts> = {
     description: [
       "La declaración anual del IRPF. Aquí ves el rendimiento de tu actividad en el año, que es lo que pasa a la renta.",
       "La renta se hace en Renta WEB, en la sede de la AEAT. Para entrar necesitas certificado digital, Cl@ve o un número de referencia, que se pide con la casilla 505 de la renta del año anterior.",
-      "Renta WEB carga tus datos fiscales, pero a veces tienen errores: revísalos, porque responde de la declaración quien la firma.",
+      "Revisa los datos que carga Renta WEB: a veces tienen errores.",
     ],
     kind: "Liquidación: puede salir a pagar.",
     periodicity: "Anual",

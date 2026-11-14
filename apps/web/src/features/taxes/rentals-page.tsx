@@ -237,7 +237,7 @@ function Form180({ year, today }: { year: number; today: Date }) {
           "Un registro por arrendador e inmueble: si el mismo arrendador te alquila varios, se separan por su referencia catastral.",
           "Supone que el alquiler se paga en dinero, no en especie.",
           "La situación del inmueble y la referencia catastral salen de cada factura; revísalas si están vacías.",
-          "La provincia de cada arrendador es obligatoria: si falta en la ficha del proveedor, complétala antes de presentar.",
+          "La provincia de cada proveedor es obligatoria.",
           ONLY_RECORDED,
         ]}
       />

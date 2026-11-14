@@ -50,7 +50,7 @@ export function VerifyEmailBanner() {
     <div className="flex items-center gap-3 bg-warning-soft px-4 py-2 text-sm text-foreground">
       <MailWarning className="hidden size-4 shrink-0 text-warning sm:block" aria-hidden="true" />
       <p className="m-0 flex flex-1 flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center sm:justify-start sm:text-left">
-        <span>Tu email no está verificado: sin él no podrás recuperar tu cuenta si olvidas la contraseña.</span>
+        <span>Verifica tu email para poder recuperar tu cuenta.</span>
         <span className="flex gap-3">
           <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
             Verificar mi email

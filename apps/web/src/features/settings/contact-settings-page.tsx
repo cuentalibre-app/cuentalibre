@@ -65,9 +65,8 @@ export function ContactSettingsPage() {
 
         <Section title="Autocompletar datos de clientes y proveedores" index={1}>
           <p className="m-0 max-w-3xl text-muted-foreground">
-            Al crear un cliente o proveedor, cuando hayas escrito su NIF completo o tres caracteres o más de su nombre o
-            razón social, cuentalibre puede consultar bases de datos externas de empresas y completar sus datos para
-            ahorrarte el tiempo de escribirlos. Si no te gusta, desmarca la casilla.
+            Al escribir el NIF o el nombre de un cliente o proveedor, cuentalibre busca sus datos en registros de
+            empresas y los completa.
           </p>
           <CheckField
             label="Activar el autocompletar para clientes y proveedores"

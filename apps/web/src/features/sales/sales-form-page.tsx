@@ -1211,7 +1211,6 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
                     <>
                       <CheckField
                         label="Marcar factura como cobrada"
-                        help="Registra el cobro con su fecha y el método por el que lo recibiste."
                         checked={form.markPaid}
                         onChange={(v) => set("markPaid", v)}
                       />

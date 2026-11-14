@@ -197,9 +197,9 @@ export function SendDialog({ doc, onOpenChange }: DialogProps) {
             : code === "email_unverified"
               ? "Verifica tu email para enviar documentos desde cuentalibre."
               : code === "email_quota_exceeded"
-                ? "Has llegado al límite de destinatarios de tu empresa por hoy o por este mes. Inténtalo más adelante."
+                ? "Has llegado al límite de envíos de hoy o de este mes."
                 : code === "storage_quota_exceeded"
-                  ? "Tu empresa ha llegado al límite de espacio para archivos, así que no se puede adjuntar el PDF."
+                  ? "No queda espacio para adjuntar el PDF."
                   : "No se ha podido enviar. Inténtalo de nuevo en un momento.",
       );
     } finally {

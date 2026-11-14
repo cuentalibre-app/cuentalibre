@@ -106,7 +106,7 @@ export function AccessPage() {
                   {access.twoFactor ? "Activada" : "Desactivada"}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
-                  Además de la contraseña, te pediremos un código que enviamos a tu correo cada vez que entres.
+                  Al entrar, te pediremos también un código enviado a tu email.
                 </span>
               </Row>
             )}
@@ -714,10 +714,7 @@ function LinkDialog({
     <Dialog open={provider !== null} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogTitle>Vincular tu cuenta de {name}</DialogTitle>
-        <DialogDescription>
-          Se abrirá la ventana de {name} para que inicies sesión y autorices a cuentalibre. Después podrás entrar con un
-          solo clic.
-        </DialogDescription>
+        <DialogDescription>Después podrás entrar con {name} en un clic.</DialogDescription>
         <DialogFooter>
           <DialogClose asChild>
             <Button variant="secondary">Cancelar</Button>

@@ -18,7 +18,7 @@ export function CatalogExportPage() {
         description={
           count === 0
             ? "Tu catálogo está vacío."
-            : `${count === 1 ? "1 producto" : `${count} productos`} con sus familias, precios, costes, campos personalizados y stock. El archivo tiene las mismas columnas que la importación, así que puedes editarlo y volver a importarlo.`
+            : `${count === 1 ? "1 producto" : `${count} productos`} con sus familias, precios, costes, campos personalizados y stock. Puedes editarlo y volver a importarlo.`
         }
       >
         <FormatField value={format} onChange={setFormat} />

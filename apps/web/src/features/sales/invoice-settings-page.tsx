@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
-import { Link } from "react-router";
 import { Check, ImageUp, Trash2 } from "lucide-react";
 import { LOGO_MAX_SIZE, type InvoiceSettings } from "@cuentalibre/contracts";
-import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
+import { Button } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { Notice, Page } from "@/components/page";
+import { Page } from "@/components/page";
 import { SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
@@ -59,10 +58,6 @@ export function InvoiceSettingsPage() {
 
         <div id="series" className="scroll-mt-6">
           <Section title="Sistema de auto-numeración" index={1}>
-            <p className="m-0 max-w-3xl text-muted-foreground">
-              Las series de numeración definen los formatos de numeración de las facturas y permiten proponer el
-              siguiente número disponible de cada serie al crear una factura.
-            </p>
             <SeriesTable />
           </Section>
         </div>
@@ -103,13 +98,6 @@ export function InvoiceSettingsPage() {
               />
             </div>
           </div>
-          <Notice>
-            El símbolo de la moneda depende del país y la región fiscal configurados en{" "}
-            <Link to="/impuestos" className={buttonVariants({ variant: "link" })}>
-              Impuestos
-            </Link>
-            . Elige otro país para cambiar la moneda.
-          </Notice>
         </Section>
 
         <div id="logotipo" className="scroll-mt-6">
@@ -121,7 +109,7 @@ export function InvoiceSettingsPage() {
         <Section title="Pie de factura fijo" index={4}>
           <Field
             label="Texto en todas las facturas"
-            hint="Se imprime en un lateral de la factura: inscripción en el Registro Mercantil, protección de datos… Si tu impresora no imprime pegado al margen, deja uno o dos saltos de línea antes del texto."
+            hint="Texto lateral de la factura: Registro Mercantil, protección de datos…"
           >
             {(p) => <Textarea {...p} rows={3} value={draft.footer} onChange={(e) => set("footer", e.target.value)} />}
           </Field>
@@ -154,10 +142,7 @@ function LogoField({ logo, onChange }: { logo: string | undefined; onChange: (lo
     void accept(e.dataTransfer.files[0]);
   };
 
-  const notes: ReactNode[] = [
-    "Si supera 325 × 200 píxeles, se reduce proporcionalmente.",
-    "Se imprime arriba a la izquierda en el PDF de facturas, borradores, presupuestos y albaranes.",
-  ];
+  const notes: ReactNode[] = ["PNG o JPG. Se ajusta a 325 × 200 px."];
 
   return (
     <div className="flex flex-col gap-4">

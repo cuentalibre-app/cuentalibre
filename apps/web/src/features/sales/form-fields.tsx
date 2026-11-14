@@ -249,7 +249,8 @@ export function CheckField({
         </span>
       </label>
       {help && (
-        <span className="mt-1">
+        // As tall as the label's first line, so the icon centers on it
+        <span className="flex h-[1lh] items-center font-medium">
           <Help text={help} />
         </span>
       )}

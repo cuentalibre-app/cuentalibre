@@ -147,7 +147,7 @@ function Form111({ year, quarter, today }: { year: number; quarter: Quarter; tod
           "Solo declara las retenciones de las facturas recibidas que no son alquileres (esas van al 115). Si tienes trabajadores o pagas premios, añade sus retenciones a mano en la sede de la AEAT.",
           "Las facturas con la cuenta 6231 (servicios esporádicos: cursos, conferencias, seminarios) se declaran como rendimientos del trabajo; el resto, como actividades económicas.",
           "Cuenta la fecha de contabilización de cada factura recibida.",
-          "La provincia del perceptor es obligatoria: si falta en la ficha del proveedor, complétala antes de presentar.",
+          "La provincia de cada proveedor es obligatoria.",
           ONLY_RECORDED,
           "Se calcula como una única declaración, sin complementarias.",
         ]}
@@ -222,7 +222,7 @@ function Form190({ year, today }: { year: number; today: Date }) {
           "Solo recoge las retenciones de facturas recibidas. Las de trabajadores u otros perceptores se añaden a mano en la sede de la AEAT.",
           "Las facturas con la cuenta 6231 se declaran con la clave F (cursos y conferencias); el resto, con la clave G (actividades profesionales). La subclave sale del tipo de retención: G01 general, G02 profesionales en sus primeros años, G04 Ceuta y Melilla.",
           "Se calcula como una única declaración, sin complementarias ni sustitutivas.",
-          "La provincia de cada perceptor es obligatoria: si falta en la ficha del proveedor, complétala antes de presentar.",
+          "La provincia de cada proveedor es obligatoria.",
           ONLY_RECORDED,
         ]}
       />
