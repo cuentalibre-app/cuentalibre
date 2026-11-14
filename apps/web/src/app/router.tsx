@@ -60,7 +60,6 @@ import { ContactSettingsPage } from "@/features/settings/contact-settings-page";
 import { ApiKeysPage } from "@/features/settings/api-keys-page";
 import { EmailTemplatesPage } from "@/features/settings/email-templates-page";
 import { FilesPage } from "@/features/settings/files-page";
-import { LedgerAccountsPage } from "@/features/settings/ledger-accounts-page";
 import { PaymentMethodsPage } from "@/features/settings/payment-methods-page";
 import { PreferencesPage } from "@/features/settings/preferences-page";
 import { ProfilePage } from "@/features/settings/profile-page";
@@ -75,7 +74,6 @@ import {
   API_KEYS_PATH,
   FILES_PATH,
   INVOICE_SETTINGS_PATH,
-  LEDGER_ACCOUNTS_PATH,
   OLD_PAYMENT_METHODS_PATHS,
   PAYMENT_METHODS_PATH,
   PREFERENCES_PATH,
@@ -252,7 +250,6 @@ const settingsRoutes = [
     path: DELIVERY_NOTE_SETTINGS_PATH.slice(1),
     element: <DocumentSettingsPage key="deliveryNote" kind="deliveryNote" />,
   },
-  { path: LEDGER_ACCOUNTS_PATH.slice(1), element: <LedgerAccountsPage /> },
   { path: CONTACT_SETTINGS_PATH.slice(1), element: <ContactSettingsPage /> },
   { path: USERS_PATH.slice(1), element: <UsersPage /> },
   { path: TAGS_PATH.slice(1), element: <TagsPage /> },

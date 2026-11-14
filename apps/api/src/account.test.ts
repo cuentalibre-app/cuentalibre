@@ -1,4 +1,4 @@
-import type { Me } from "@cuentalibre/contracts";
+import { DEFAULT_LIST_PREFERENCES, type Me } from "@cuentalibre/contracts";
 import { newId } from "@cuentalibre/core";
 import { eq, inArray } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -226,6 +226,7 @@ describe("creating a password", () => {
 
 describe("the user's own settings", () => {
   const profile = { firstName: "Ana", lastName: "Ruiz Gil", birthDate: "1990-05-02", phone: "600 000 000", gender: "" };
+  const listPreferences = { quote: { status: "open", date: "all" }, deliveryNote: { status: "all", date: "month" } };
   const me = async (someone: Client) => (await (await someone.request("/v1/me")).json()) as Me;
   const save = (someone: Client, section: string, body: unknown) =>
     someone.request(`/v1/me/settings/${section}`, { method: "PUT", body });
@@ -237,6 +238,7 @@ describe("the user's own settings", () => {
     expect(settings).toEqual({
       userProfile: { firstName: "Ana Ruiz", lastName: "", birthDate: "", phone: "", gender: "" },
       userTour: { status: "pending" },
+      listPreferences: DEFAULT_LIST_PREFERENCES,
     });
   });
 
@@ -246,12 +248,14 @@ describe("the user's own settings", () => {
 
     expect((await save(ana, "userProfile", profile)).status).toBe(204);
     expect((await save(ana, "userTour", { status: "skipped" })).status).toBe(204);
+    expect((await save(ana, "listPreferences", listPreferences)).status).toBe(204);
 
     const { user, settings } = await me(ana);
     expect(user.name).toBe("Ana Ruiz Gil");
     expect(settings).toEqual({
       userProfile: profile,
       userTour: { status: "skipped" },
+      listPreferences,
     });
     expect((await me(eve)).settings.userProfile.firstName).toBe("Eve");
     expect((await me(eve)).settings.userTour.status).toBe("pending");

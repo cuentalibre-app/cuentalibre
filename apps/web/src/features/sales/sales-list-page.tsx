@@ -75,7 +75,7 @@ import { GroupedSelect } from "./form-fields";
 import { PaymentDialog, SendDialog, sendWithMailClient, TagsDialog } from "./document-dialogs";
 import { IssuerDialog } from "./issuer-dialog";
 import { AttachmentsDialog } from "@/features/purchases/form-parts";
-import { OPEN_STATUSES, listPreferencesStore } from "./list-preferences";
+import { userStore } from "@/features/settings/user-store";
 import {
   ActionsMenu,
   EmptyState,
@@ -138,7 +138,9 @@ function matches(r: Row, f: Filters): boolean {
   );
 }
 
-const isOpen = (status: StatusKey) => (OPEN_STATUSES as StatusKey[]).includes(status);
+/** Statuses a quote or delivery note is still pending in. */
+const OPEN_STATUSES: StatusKey[] = ["created", "sent", "accepted"];
+const isOpen = (status: StatusKey) => OPEN_STATUSES.includes(status);
 
 function inPeriod(isoDate: string, period: Period): boolean {
   const [year, month] = isoDate.split("-").map(Number);
@@ -162,8 +164,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [query, setQuery] = useState("");
-  // Quotes and delivery notes open with the default filters of "Ordenación y filtrado"
-  const defaults = kind === "quote" || kind === "deliveryNote" ? listPreferencesStore.get()[kind] : null;
+  // Quotes and delivery notes open with the filters chosen in "Filtros de listados"
+  const defaults = kind === "quote" || kind === "deliveryNote" ? userStore.get().lists[kind] : null;
   const [status, setStatus] = useState<string>(defaults?.status === "open" ? OPEN : ALL);
   const [thisMonth, setThisMonth] = useState(defaults?.date === "month");
   const [filters, setFilters] = useState(NO_FILTERS);
