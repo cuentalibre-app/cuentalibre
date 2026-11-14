@@ -1,21 +1,35 @@
 import { useLayoutEffect, useRef, type ComponentProps } from "react";
 import { MAX_DATE, MIN_DATE } from "@cuentalibre/core";
 import { cn } from "../lib/cn";
+import { isTouchScreen } from "../lib/touch-keyboard";
 
 const fieldClass =
   "w-full min-w-0 rounded-lg border border-input bg-background px-3 text-foreground transition-colors duration-150 outline-none placeholder:text-muted-foreground hover:border-muted-strong focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50 aria-invalid:border-destructive";
 
-export function Input({ className, ...props }: ComponentProps<"input">) {
+/**
+ * `autoFocus` only where a keyboard is already at hand: on a phone it would raise the on-screen
+ * keyboard over a page or sheet that has just opened, before the user has even read it.
+ */
+const autoFocusOnDesktop = (autoFocus: boolean | undefined) => autoFocus && !isTouchScreen();
+
+export function Input({ className, autoFocus, ...props }: ComponentProps<"input">) {
   // Without bounds browsers let the year run to six digits (20269-01-21)
   const bounds = props.type === "date" ? { min: MIN_DATE, max: MAX_DATE } : undefined;
   // Browsers draw a password's dots at text size, too small to count: larger and spaced out
   const dots =
     "[&[type=password]:not(:placeholder-shown)]:text-xl [&[type=password]:not(:placeholder-shown)]:tracking-[0.2em]";
-  return <input className={cn(fieldClass, "h-10", dots, className)} {...bounds} {...props} />;
+  return (
+    <input
+      className={cn(fieldClass, "h-10", dots, className)}
+      autoFocus={autoFocusOnDesktop(autoFocus)}
+      {...bounds}
+      {...props}
+    />
+  );
 }
 
 /** A search box: magnifier, then the text. Same height and border as any input. */
-export function SearchField({ className, ...props }: Omit<ComponentProps<"input">, "type">) {
+export function SearchField({ className, autoFocus, ...props }: Omit<ComponentProps<"input">, "type">) {
   return (
     <label
       className={cn(
@@ -36,6 +50,7 @@ export function SearchField({ className, ...props }: Omit<ComponentProps<"input"
       </svg>
       <input
         type="search"
+        autoFocus={autoFocusOnDesktop(autoFocus)}
         className="h-full min-w-0 flex-1 border-0 bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
         {...props}
       />
@@ -48,7 +63,7 @@ interface TextareaProps extends ComponentProps<"textarea"> {
   autoGrow?: boolean;
 }
 
-export function Textarea({ className, rows = 3, autoGrow = false, ref, ...props }: TextareaProps) {
+export function Textarea({ className, rows = 3, autoGrow = false, autoFocus, ref, ...props }: TextareaProps) {
   const own = useRef<HTMLTextAreaElement>(null);
 
   useLayoutEffect(() => {
@@ -74,6 +89,7 @@ export function Textarea({ className, rows = 3, autoGrow = false, ref, ...props 
         else if (ref) ref.current = el;
       }}
       rows={rows}
+      autoFocus={autoFocusOnDesktop(autoFocus)}
       className={cn(fieldClass, autoGrow ? "resize-none overflow-hidden" : "resize-y", "py-2.5", className)}
       {...props}
     />
