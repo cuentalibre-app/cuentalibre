@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { Camera, Plus } from "lucide-react";
 import { periodKey, previousPeriod } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { CashFlowChart } from "./charts";
 import { buildHomeData } from "./home-data";
 import { KpiGrid, taxReserve } from "./kpi-grid";
@@ -27,6 +27,7 @@ const sheet = "flex flex-col gap-5";
 const row = "flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch";
 
 export function HomePage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const documents = useSalesDocuments();

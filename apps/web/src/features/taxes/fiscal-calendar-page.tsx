@@ -24,7 +24,7 @@ import { Page, PageHeader } from "@/components/page";
 import { MONTHS, MONTHS_SHORT } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { useSettings } from "@/features/settings/settings-store";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
 import { usePartyBooks } from "./party-operations";
 import { TaxesBackLink } from "./tax-intro";
@@ -544,6 +544,7 @@ function CalendarList({
 }
 
 export function FiscalCalendarPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const year = period.year;

@@ -10,7 +10,7 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 import { periodCode, periodLabel } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { downloadSheets, type SpreadsheetFormat } from "@/lib/xlsx";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { advancedSheets, type AdvancedOptions, type DateRange } from "./export-data";
 import { ExportButton, FormatField, PageShell, Panel } from "./transfer-parts";
 import { EXPORT_PATH } from "./transfer-model";
@@ -29,6 +29,7 @@ function periodRange(period: Period): DateRange {
 type Toggle = Exclude<keyof AdvancedOptions, "quotes" | "deliveryNotes"> | "quotesOn" | "deliveryNotesOn";
 
 export function ExportAdvancedPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const documents = useSalesDocuments();

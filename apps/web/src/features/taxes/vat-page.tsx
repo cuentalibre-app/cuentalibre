@@ -29,7 +29,7 @@ import { clientOf, documentTotals, KINDS, OPERATION_TYPES } from "@/features/sal
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { useSettings } from "@/features/settings/settings-store";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { usePartyBooks } from "./party-operations";
 import { useTaxBooks } from "./tax-books";
 import {
@@ -396,6 +396,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
 }
 
 export function VatPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const annual = period.quarter === null;

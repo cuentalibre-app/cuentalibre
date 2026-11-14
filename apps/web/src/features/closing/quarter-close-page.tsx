@@ -44,7 +44,7 @@ import { TAX_OPTIONS, useTaxBooks } from "@/features/taxes/tax-books";
 import { FILING_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "@/features/taxes/taxes-model";
 import { formatDate, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { quarterName, quarterToClose, useQuarterChecks, type QuarterCheck } from "./closing-model";
 import { closingStore, useClosedQuarters, useFiledReturn, type ReturnToFile } from "./closing-store";
 
@@ -525,6 +525,7 @@ function ClosedList({ closed, onSelect }: { closed: ClosedQuarter[]; onSelect: (
 }
 
 export function QuarterClosePage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const closed = useClosedQuarters();
   const [urlPeriod, setPeriod] = usePeriod(today);

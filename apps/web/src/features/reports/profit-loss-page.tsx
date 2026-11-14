@@ -24,7 +24,7 @@ import { businessName } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { formatDate, formatPercent, MONTHS } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { pnlRows, type PnlRow } from "./pnl-rows";
 import { REPORTS_PATH, useReportSources } from "./reports-model";
 
@@ -157,6 +157,7 @@ function Distribution({ pnl, year }: { pnl: ProfitAndLoss; year: number }) {
 }
 
 export function ProfitLossPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [version, setVersion] = useState<Version>("summary");

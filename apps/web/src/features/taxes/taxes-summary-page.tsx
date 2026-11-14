@@ -32,7 +32,7 @@ import { Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { daysLeftLabel, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
 import { usePartyBooks } from "./party-operations";
@@ -629,6 +629,7 @@ function OtherForms({ year }: { year: number }) {
 }
 
 export function TaxesSummaryPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const year = period.year;
