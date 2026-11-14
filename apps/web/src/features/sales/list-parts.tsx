@@ -210,7 +210,7 @@ export function FiltersButton({
   );
 }
 
-const desktopQuery = "(width >= 64rem)";
+const desktopQuery = "(width >= 48rem)";
 const subscribeToDesktop = (onChange: () => void) => {
   const query = window.matchMedia(desktopQuery);
   query.addEventListener("change", onChange);

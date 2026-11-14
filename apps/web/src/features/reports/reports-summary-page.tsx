@@ -320,7 +320,7 @@ export function ReportsSummaryPage() {
         }
       />
 
-      <section aria-label="Cifras del periodo" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section aria-label="Cifras del periodo" className="grid grid-cols-2 gap-3 wide:grid-cols-4">
         <Kpi
           label="Ingresos"
           value={formatEUR(data.pnl.income)}

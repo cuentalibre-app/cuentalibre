@@ -41,7 +41,7 @@ const FoldedContext = createContext(false);
 export function SectionsAtAGlance({ when, children }: { when: boolean; children: ReactNode }) {
   // Read once, at mount: rotating the phone mid-edit shouldn't fold what the user opened
   const [folded] = useState(
-    () => when && typeof window !== "undefined" && window.matchMedia("(width < 64rem)").matches,
+    () => when && typeof window !== "undefined" && window.matchMedia("(width < 48rem)").matches,
   );
   return <FoldedContext.Provider value={folded}>{children}</FoldedContext.Provider>;
 }

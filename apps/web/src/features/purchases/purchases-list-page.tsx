@@ -417,7 +417,7 @@ function PurchaseSummary({ rows }: { rows: Row[] }) {
   ];
   // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-4">
+    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 wide:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col surface">
           <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>
@@ -459,7 +459,7 @@ function AssetSummary({ rows, amortization }: { rows: Row[]; amortization: Cents
   ];
   // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-4">
+    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 wide:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col surface">
           <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">{s.label}</dt>

@@ -161,7 +161,7 @@ export function StockPage() {
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
           <div
             id="stock-filters"
-            className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 lg:grid-cols-4 lg:px-4"
+            className="grid gap-3 lg:animate-fade-in lg:border-y lg:border-border lg:bg-muted/50 lg:py-3 sm:grid-cols-2 wide:grid-cols-4 lg:px-4"
           >
             <FilterBox label="Por familia de producto">
               <GroupedSelect

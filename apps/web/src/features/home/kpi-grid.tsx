@@ -118,7 +118,7 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
   return (
     <section
       aria-label="Resumen del periodo"
-      className={cn("grid grid-cols-2 gap-2.5 lg:gap-3 xl:grid-cols-4", className)}
+      className={cn("grid grid-cols-2 gap-2.5 lg:gap-3 @[60rem]:grid-cols-4", className)}
     >
       {kpis.map((kpi, i) => (
         <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />

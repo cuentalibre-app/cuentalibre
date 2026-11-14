@@ -338,7 +338,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
         result={result}
         file={file}
       />
-      <section aria-label="Resultados de los 303 del año" className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <section aria-label="Resultados de los 303 del año" className="grid grid-cols-2 gap-3 wide:grid-cols-4 lg:gap-4">
         {r.quarters.map((q, i) => (
           <Link
             key={i}
