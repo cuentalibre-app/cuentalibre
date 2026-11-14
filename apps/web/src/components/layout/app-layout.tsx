@@ -30,12 +30,7 @@ export function AppLayout() {
         >
           Saltar al contenido
         </a>
-        <Sidebar
-          className="hidden lg:flex"
-          collapsed={collapsed}
-          onToggle={canExpand ? toggle : undefined}
-          helpChat={helpChat}
-        />
+        <Sidebar className="hidden lg:flex" collapsed={collapsed} onToggle={canExpand ? toggle : undefined} />
         <main
           id="main"
           className="min-w-0 flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:my-2 lg:mr-2 lg:min-h-[calc(100dvh-1rem)] lg:rounded-xl lg:border lg:border-border lg:bg-background lg:pb-0"

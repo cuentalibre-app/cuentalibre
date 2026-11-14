@@ -17,7 +17,7 @@ export function HelpChatPanel({ className }: { className?: string }) {
   return (
     <aside
       id={HELP_CHAT_PANEL_ID}
-      aria-label="Ayuda"
+      aria-label="Asistente"
       inert={!open}
       onKeyDown={(e) => e.key === "Escape" && setHelpChatOpen(false)}
       className={cn(
@@ -29,7 +29,7 @@ export function HelpChatPanel({ className }: { className?: string }) {
       {/* Fixed width, so the conversation doesn't reflow while the panel widens */}
       <div className="flex h-full w-96 flex-col rounded-xl border border-border bg-background">
         <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-divider pr-2 pl-4">
-          <h2 className="m-0 text-md font-semibold tracking-tight">Ayuda</h2>
+          <h2 className="m-0 text-md font-semibold tracking-tight">Asistente</h2>
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center gap-0.5">
               {messages.length > 0 && (
@@ -47,7 +47,7 @@ export function HelpChatPanel({ className }: { className?: string }) {
                   <Button
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="Cerrar la ayuda"
+                    aria-label="Cerrar el asistente"
                     onClick={() => setHelpChatOpen(false)}
                   >
                     <PanelRightClose strokeWidth={1.8} aria-hidden="true" />

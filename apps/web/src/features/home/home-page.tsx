@@ -8,6 +8,7 @@ import { CashFlowChart } from "./charts";
 import { buildHomeData } from "./home-data";
 import { KpiGrid, taxReserve } from "./kpi-grid";
 import { MobileOverview } from "./mobile-overview";
+import { HelpChatToggle } from "@/features/help-chat/help-chat-toggle";
 import { Notifications } from "./notifications";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { HelpTip, Page, PageHeader } from "@/components/page";
@@ -76,6 +77,7 @@ export function HomePage() {
       <PageHeader
         className="hidden lg:flex"
         title="Inicio"
+        assistant={false}
         inline={
           <>
             <TooltipProvider delayDuration={300}>
@@ -97,6 +99,7 @@ export function HomePage() {
               Nueva factura
             </Link>
             <div className="ml-1 flex items-center gap-2 border-l border-divider pl-3">
+              <HelpChatToggle className="size-8" />
               <Notifications className="size-8" />
               <UserMenu className="size-8" />
             </div>

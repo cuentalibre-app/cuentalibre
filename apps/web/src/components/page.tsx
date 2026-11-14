@@ -14,6 +14,7 @@ import {
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
+import { HelpChatToggle } from "@/features/help-chat/help-chat-toggle";
 
 /*
  * The frame every page shares: the same margins, the same header and the same toolbar,
@@ -55,6 +56,8 @@ interface PageHeaderProps {
   actions?: ReactNode;
   /** Classes for the actions' row, such as taking a line of its own on phones. */
   actionsClassName?: string;
+  /** The assistant's toggle at the far right; off for headers that place it themselves. */
+  assistant?: boolean;
   className?: string;
 }
 
@@ -68,6 +71,7 @@ export function PageHeader({
   inline,
   actions,
   actionsClassName,
+  assistant = true,
   className,
 }: PageHeaderProps) {
   return (
@@ -86,7 +90,13 @@ export function PageHeader({
           )}
         </div>
       </div>
-      {actions && <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>{actions}</div>}
+      {(actions || assistant) && (
+        <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>
+          {actions}
+          {/* Set apart from the page's own actions, as it belongs to the app rather than the page */}
+          {assistant && <HelpChatToggle className={cn(actions && "ml-1")} />}
+        </div>
+      )}
     </header>
   );
 }
@@ -268,7 +278,13 @@ export function Notice({
       <Icon className={cn("mt-0.5 size-4 shrink-0", iconClass)} strokeWidth={2} aria-hidden="true" />
       <div className="min-w-0 flex-1">{children}</div>
       {onDismiss && (
-        <Button variant="ghost" size="icon-sm" aria-label="Cerrar el aviso" onClick={onDismiss} className="-my-1.5 -mr-1.5">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Cerrar el aviso"
+          onClick={onDismiss}
+          className="-my-1.5 -mr-1.5"
+        >
           <X aria-hidden="true" />
         </Button>
       )}

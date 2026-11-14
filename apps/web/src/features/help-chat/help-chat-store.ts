@@ -1,9 +1,9 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { signInMethods } from "@/features/auth/auth-api";
 
 /*
  * The AI help chat: whether its panel is open, and the conversation so far. One store for the
- * desktop panel, its toggle in the sidebar and the phone's sheet, so they show the same chat.
+ * desktop panel, its toggle in the page headers and the phone's sheet, so they show the same chat.
  * The conversation lives in memory only; reloading the page starts afresh.
  */
 
@@ -71,15 +71,22 @@ export function askHelpChat(text: string) {
   set({ error: "El asistente todavía no puede responder en este servidor." });
 }
 
-/** Whether this instance has the help chat set up (`AI_CHAT_MODEL` on the API); false until it says. */
-export function useHelpChatAvailable(): boolean {
-  const [available, setAvailable] = useState(false);
-  useEffect(() => {
-    let live = true;
-    void signInMethods().then((methods) => live && setAvailable(methods.chat));
-    return () => {
-      live = false;
-    };
-  }, []);
-  return available;
+let available = false;
+let asked = false;
+const availabilityListeners = new Set<() => void>();
+
+/** Asks the API once per load, so toggles on every page don't pop in after each navigation. */
+function subscribeAvailability(listener: () => void) {
+  availabilityListeners.add(listener);
+  if (!asked) {
+    asked = true;
+    void signInMethods().then((methods) => {
+      available = methods.chat;
+      availabilityListeners.forEach((l) => l());
+    });
+  }
+  return () => availabilityListeners.delete(listener);
 }
+
+/** Whether this instance has the help chat set up (`AI_CHAT_MODEL` on the API); false until it says. */
+export const useHelpChatAvailable = () => useSyncExternalStore(subscribeAvailability, () => available);

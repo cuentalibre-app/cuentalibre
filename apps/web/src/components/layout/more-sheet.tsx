@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { ChevronRight, MessageCircleQuestionMark, UserRound } from "lucide-react";
+import { BotMessageSquare, ChevronRight, UserRound } from "lucide-react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@cuentalibre/ui/components/sheet";
 import { PROFILE_PATH, accountName, initials } from "@/features/settings/settings-model";
@@ -66,8 +66,8 @@ export function MoreSheet({ children, open, onOpenChange, helpChat = false }: Mo
                 }}
                 className={cn(row, "w-full cursor-pointer border-b border-divider text-left")}
               >
-                <MessageCircleQuestionMark className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                <span className="flex-1">Ayuda</span>
+                <BotMessageSquare className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                <span className="flex-1">Asistente</span>
                 <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
               </button>
             )}
