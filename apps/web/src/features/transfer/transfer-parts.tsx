@@ -1,7 +1,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
-import { BackLink, Page, PageHeader } from "@/components/page";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { BackLink, HelpTip, Page, PageHeader } from "@/components/page";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import type { SpreadsheetFormat } from "@/lib/xlsx";
 import { FORMAT_OPTIONS } from "./transfer-model";
@@ -10,11 +11,14 @@ import { FORMAT_OPTIONS } from "./transfer-model";
 
 export function PageShell({
   title,
+  help,
   back,
   actions,
   children,
 }: {
   title: string;
+  /** Explanation shown behind the help icon beside the title. */
+  help?: ReactNode;
   /** Link to the page one level up, with its name for the back button. */
   back?: { to: string; label: string };
   actions?: ReactNode;
@@ -24,6 +28,13 @@ export function PageShell({
     <Page>
       <PageHeader
         title={title}
+        inline={
+          help && (
+            <TooltipProvider delayDuration={300}>
+              <HelpTip side="bottom">{help}</HelpTip>
+            </TooltipProvider>
+          )
+        }
         back={back && <BackLink to={back.to} label={`Volver a ${back.label}`} />}
         actions={actions}
       />

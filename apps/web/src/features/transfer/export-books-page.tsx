@@ -25,6 +25,7 @@ export function ExportBooksPage() {
   return (
     <PageShell
       title="Exportación de libros de registro"
+      help="Los libros registro oficiales de IVA e IRPF de un ejercicio, listos para entregar si Hacienda te los pide."
       back={{ to: EXPORT_PATH, label: "exportaciones" }}
       actions={
         <label className="flex items-center gap-2.5 text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
 import { useRef, useState, type CSSProperties, type DragEvent } from "react";
 import { Link, useSearchParams } from "react-router";
-import { CircleAlert, CircleCheck, FileSpreadsheet, Info, TriangleAlert, Upload, X } from "lucide-react";
+import { CircleAlert, CircleCheck, FileSpreadsheet, TriangleAlert, Upload, X } from "lucide-react";
 import { sumBy } from "@cuentalibre/core";
 import { Badge } from "@cuentalibre/ui/components/badge";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
@@ -83,16 +83,15 @@ export function ImportPage() {
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
-      <PageShell title="Importación de facturas y gastos">
-        <div className="flex animate-rise-in gap-2 rounded-xl bg-primary-soft px-3.5 py-3 text-sm" role="note">
-          <Info className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={1.8} aria-hidden="true" />
-          <p className="m-0">
-            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, descarga la
-            plantilla si no la tienes, sube el archivo y pulsa <strong>Continuar</strong>: verás lo que se va a importar
-            antes de confirmarlo. Las facturas con varios conceptos ocupan una fila por concepto con el mismo número.
-          </p>
-        </div>
-
+      <PageShell
+        title="Importación de facturas y gastos"
+        help={
+          <>
+            Sube un Excel o CSV con las columnas de la plantilla y revisa lo que se va a importar antes de confirmarlo.
+            Una factura con varios conceptos ocupa una fila por concepto, con el mismo número.
+          </>
+        }
+      >
         {imported && (
           <div
             role="status"
