@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { MONTHS, MONTHS_SHORT } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { useSettings } from "@/features/settings/settings-store";
@@ -518,10 +518,7 @@ function CalendarList({
       )}
       {months.map(({ month, entries: monthEntries }) => (
         <section key={month} aria-labelledby={`month-${month}`} className="flex flex-col gap-2">
-          <h2
-            id={`month-${month}`}
-            className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight lg:text-title"
-          >
+          <h2 id={`month-${month}`} className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight">
             {MONTHS[month]} {calendarYear}
             {isCurrentYear && month === today.getMonth() && <Badge tone="primary">Este mes</Badge>}
           </h2>
@@ -565,8 +562,9 @@ export function FiscalCalendarPage() {
         <PageHeader
           title="Calendario fiscal"
           back={<TaxesBackLink />}
-          descriptionClassName="max-lg:hidden"
-          description={`Plazos de cada modelo en ${year}. Si un plazo acaba en fin de semana, pasa al lunes; los festivos aún no se tienen en cuenta.`}
+          inline={
+            <HelpTip side="bottom">{`Plazos de cada modelo en ${year}. Si un plazo acaba en fin de semana, pasa al lunes; los festivos aún no se tienen en cuenta.`}</HelpTip>
+          }
           actions={
             <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}>
               <SelectTrigger aria-label={`Año ${year}`} className="min-w-32">

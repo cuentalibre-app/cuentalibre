@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { isDark, parseAppearance } from "./appearance";
 
 describe("parseAppearance", () => {
-  it("defaults to the system theme and the aurora backdrop", () => {
-    expect(parseAppearance(null)).toEqual({ theme: "system", backdrop: "aurora" });
-    expect(parseAppearance("{not json")).toEqual({ theme: "system", backdrop: "aurora" });
+  it("defaults to the system theme", () => {
+    expect(parseAppearance(null)).toEqual({ theme: "system" });
+    expect(parseAppearance("{not json")).toEqual({ theme: "system" });
   });
 
   it("keeps known values and replaces unknown ones", () => {
-    expect(parseAppearance('{"theme":"dark","backdrop":"forest"}')).toEqual({ theme: "dark", backdrop: "forest" });
-    expect(parseAppearance('{"theme":"sepia","backdrop":"plain"}')).toEqual({ theme: "system", backdrop: "plain" });
+    expect(parseAppearance('{"theme":"dark"}')).toEqual({ theme: "dark" });
+    expect(parseAppearance('{"theme":"sepia"}')).toEqual({ theme: "system" });
   });
 });
 

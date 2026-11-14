@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useMediaQuery } from "@/lib/use-media-query";
 
 const STORAGE_KEY = "cuentalibre:sidebar-collapsed";
 
@@ -10,9 +11,13 @@ function readStored(): boolean {
   }
 }
 
-/** Whether the desktop sidebar is shrunk to its icon rail, remembered per browser and toggled with ⌘B / Ctrl+B. */
+/**
+ * Whether the desktop sidebar is shrunk to its icon rail, remembered per browser and toggled with ⌘B / Ctrl+B.
+ * Below the xl breakpoint the rail is forced so the content keeps its wide layout; `canExpand` is then false.
+ */
 export function useSidebarCollapsed() {
   const [collapsed, setCollapsed] = useState(readStored);
+  const canExpand = useMediaQuery("(min-width: 80rem)");
 
   useEffect(() => {
     try {
@@ -25,6 +30,7 @@ export function useSidebarCollapsed() {
   const toggle = useCallback(() => setCollapsed((c) => !c), []);
 
   useEffect(() => {
+    if (!canExpand) return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.key.toLowerCase() === "b" && (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey) {
         e.preventDefault();
@@ -33,7 +39,7 @@ export function useSidebarCollapsed() {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [toggle]);
+  }, [toggle, canExpand]);
 
-  return [collapsed, toggle] as const;
+  return { collapsed: collapsed || !canExpand, canExpand, toggle };
 }

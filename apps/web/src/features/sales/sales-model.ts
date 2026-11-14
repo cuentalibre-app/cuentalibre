@@ -50,6 +50,8 @@ import { invoiceSettingsStore } from "./invoice-settings";
 
 export interface KindConfig {
   title: string;
+  /** Short explanation shown in the list header's help tooltip. */
+  help: string;
   /** "Factura", for titles. */
   singular: string;
   /** Lowercase noun with article, for sentences: "la factura". */
@@ -75,6 +77,7 @@ export interface KindConfig {
 export const KINDS: Record<SalesKind, KindConfig> = {
   invoice: {
     title: "Facturas emitidas",
+    help: "Las facturas que emites a tus clientes. Cuentan para el IVA y el IRPF del trimestre.",
     singular: "Factura",
     noun: "la factura",
     path: "/ventas/facturas",
@@ -91,6 +94,7 @@ export const KINDS: Record<SalesKind, KindConfig> = {
   },
   draft: {
     title: "Borradores",
+    help: "Facturas aún sin número. No cuentan en tus impuestos hasta que las emites.",
     singular: "Factura borrador",
     noun: "la factura borrador",
     path: "/ventas/borradores",
@@ -107,6 +111,7 @@ export const KINDS: Record<SalesKind, KindConfig> = {
   },
   quote: {
     title: "Presupuestos",
+    help: "Propuestas de precio para tus clientes. Cuando te las aceptan, puedes convertirlas en factura.",
     singular: "Presupuesto",
     noun: "el presupuesto",
     path: "/ventas/presupuestos",
@@ -123,6 +128,7 @@ export const KINDS: Record<SalesKind, KindConfig> = {
   },
   deliveryNote: {
     title: "Albaranes",
+    help: "Justifican la entrega de un pedido. Puedes facturarlos después.",
     singular: "Albarán",
     noun: "el albarán",
     path: "/ventas/albaranes",

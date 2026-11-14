@@ -15,7 +15,7 @@ import {
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { contactPath } from "@/features/contacts/contacts-model";
 import { formatDate } from "@/lib/format";
@@ -121,7 +121,10 @@ export function IntraEuPage() {
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [periodicity, setPeriodicity] = useState<Periodicity349>("quarterly");
-  const options = useMemo(() => monthlyOptions(periodicity, availableYears, today), [periodicity, availableYears, today]);
+  const options = useMemo(
+    () => monthlyOptions(periodicity, availableYears, today),
+    [periodicity, availableYears, today],
+  );
   const [monthKey, setMonthKey] = useState<string | null>(null);
   const books = usePartyBooks();
 
@@ -232,8 +235,11 @@ export function IntraEuPage() {
           eyebrow={<ModuleBreadcrumb module="intraEu" form="349" />}
           back={<TaxesBackLink />}
           title="Operaciones intracomunitarias"
-          descriptionClassName="max-lg:hidden"
-          description="Modelo 349: compras y ventas con empresas de otros países de la UE inscritas en el VIES."
+          inline={
+            <HelpTip side="bottom">
+              Modelo 349: compras y ventas con empresas de otros países de la UE inscritas en el VIES.
+            </HelpTip>
+          }
           actions={
             <>
               <SegmentedControl
@@ -317,7 +323,7 @@ export function IntraEuPage() {
 
         <section aria-label="Lista de operaciones" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Lista de operaciones</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight">Lista de operaciones</h2>
             <span className="text-xs text-muted-foreground">Un registro por operador y clave</span>
           </div>
           <RecordsTable
@@ -332,9 +338,7 @@ export function IntraEuPage() {
         {rectificationRows.length > 0 && (
           <section aria-label="Rectificaciones" className="flex flex-col gap-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">
-                Rectificaciones de periodos anteriores
-              </h2>
+              <h2 className="m-0 text-lg font-semibold tracking-tight">Rectificaciones de periodos anteriores</h2>
               <span className="text-xs text-muted-foreground">Un registro por operador, clave y periodo</span>
             </div>
             <RecordsTable

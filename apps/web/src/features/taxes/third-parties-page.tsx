@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { usePeriod } from "@/lib/use-period";
 import { useAvailableYears } from "@/lib/use-available-years";
@@ -158,12 +158,15 @@ export function ThirdPartiesPage() {
           eyebrow={<ModuleBreadcrumb module="thirdParties" form="347" />}
           back={<TaxesBackLink />}
           title="Operaciones con terceras personas"
-          descriptionClassName="max-lg:hidden"
-          description={
-            <>
-              Modelo 347: clientes y proveedores con los que has superado {formatEUR(THRESHOLD_347)} en el año, IVA
-              incluido. No existe modelo trimestral.
-            </>
+          inline={
+            <HelpTip side="bottom">
+              {
+                <>
+                  Modelo 347: clientes y proveedores con los que has superado {formatEUR(THRESHOLD_347)} en el año, IVA
+                  incluido. No existe modelo trimestral.
+                </>
+              }
+            </HelpTip>
           }
           actions={
             <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: null })}>
@@ -196,7 +199,7 @@ export function ThirdPartiesPage() {
 
         <section aria-label="Declarados" className="flex flex-col gap-3">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Declarados</h2>
+            <h2 className="m-0 text-lg font-semibold tracking-tight">Declarados</h2>
             <span className="text-xs text-muted-foreground">
               Compras y ventas con la misma persona se declaran por separado
             </span>

@@ -23,7 +23,10 @@ const OPTIONS: { to: string; title: string; description: string; icon: LucideIco
 
 export function ExportPage() {
   return (
-    <PageShell title="Exportaciones">
+    <PageShell
+      title="Exportaciones"
+      help="Descarga tus datos en Excel o CSV, para tu gestoría, para Hacienda o para guardarlos."
+    >
       <div className="grid gap-4 md:grid-cols-2">
         {OPTIONS.map((o, i) => (
           <Link
@@ -32,7 +35,7 @@ export function ExportPage() {
             className="group flex animate-rise-in items-start gap-4 surface p-5 text-card-foreground no-underline transition-[background-color,border-color,scale] duration-150 hover:border-muted-strong hover:bg-accent active:scale-[0.99]"
             style={{ "--i": i } as CSSProperties}
           >
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
               <o.icon strokeWidth={1.8} aria-hidden="true" />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-1">

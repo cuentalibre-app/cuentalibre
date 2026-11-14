@@ -12,7 +12,7 @@ import {
 } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { editContactPath } from "@/features/contacts/contacts-model";
 import { usePeriod } from "@/lib/use-period";
@@ -127,12 +127,12 @@ function Form111({ year, quarter, today }: { year: number; quarter: Quarter; tod
       />
       <MissingProvinces books={books} perceptors={r.perceptors} />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 111</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 111</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormSections sections={LAYOUT_111} boxes={r.boxes} countBoxes={COUNT_BOXES_111} showEmpty={showEmpty} />
       <section aria-label="Perceptores del trimestre" className="flex flex-col gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Perceptores del trimestre</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Perceptores del trimestre</h2>
         <RecordsTable
           label="Perceptores del trimestre"
           columns={PERCEPTOR_COLUMNS}
@@ -199,7 +199,7 @@ function Form190({ year, today }: { year: number; today: Date }) {
       <MissingProvinces books={books} perceptors={r.perceptors} />
       <section aria-label="Perceptores del año" className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Perceptores</h2>
+          <h2 className="m-0 text-lg font-semibold tracking-tight">Perceptores</h2>
           <span className="text-xs text-muted-foreground">
             Clave{" "}
             {Object.entries(KEY_LABEL)
@@ -243,11 +243,12 @@ export function WithholdingsPage() {
           eyebrow={<ModuleBreadcrumb module="withholdings" form={annual ? "190" : "111"} />}
           back={<TaxesBackLink />}
           title="Retenciones"
-          descriptionClassName="max-lg:hidden"
-          description={
-            annual
-              ? "Modelo 190: resumen anual de las retenciones practicadas, perceptor por perceptor."
-              : "Modelo 111: lo que has retenido a los profesionales que te facturan, a ingresar en Hacienda."
+          inline={
+            <HelpTip side="bottom">
+              {annual
+                ? "Modelo 190: resumen anual de las retenciones practicadas, perceptor por perceptor."
+                : "Modelo 111: lo que has retenido a los profesionales que te facturan, a ingresar en Hacienda."}
+            </HelpTip>
           }
           actions={
             <>

@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { cents, file115, model115, model180, obligation, sumCents, type Quarter } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -144,7 +144,7 @@ function Form115({ year, quarter, today }: { year: number; quarter: Quarter; tod
       />
       <UnusualRates ids={unusual} />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 115</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 115</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormSections sections={LAYOUT_115} boxes={r.boxes} countBoxes={COUNT_BOXES_115} showEmpty={showEmpty} />
@@ -221,7 +221,7 @@ function Form180({ year, today }: { year: number; today: Date }) {
       <UnusualRates ids={r.unusual.map((o) => o.id)} />
       <MissingProvinces books={books} perceptors={r.landlords} />
       <section aria-label="Arrendadores" className="flex flex-col gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Arrendadores e inmuebles</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Arrendadores e inmuebles</h2>
         <RecordsTable
           label="Arrendadores e inmuebles"
           columns={LANDLORD_COLUMNS}
@@ -258,11 +258,12 @@ export function RentalsPage() {
           eyebrow={<ModuleBreadcrumb module="rentals" form={annual ? "180" : "115"} />}
           back={<TaxesBackLink />}
           title="Retenciones de alquileres"
-          descriptionClassName="max-lg:hidden"
-          description={
-            annual
-              ? "Modelo 180: resumen anual de las retenciones de alquileres, por arrendador e inmueble."
-              : "Modelo 115: la retención del alquiler de tu local u oficina, a ingresar en Hacienda."
+          inline={
+            <HelpTip side="bottom">
+              {annual
+                ? "Modelo 180: resumen anual de las retenciones de alquileres, por arrendador e inmueble."
+                : "Modelo 115: la retención del alquiler de tu local u oficina, a ingresar en Hacienda."}
+            </HelpTip>
           }
           actions={
             <>

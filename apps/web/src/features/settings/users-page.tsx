@@ -258,7 +258,7 @@ function UsersTable({
       style={{ "--i": index } as CSSProperties}
     >
       <div className="flex flex-col gap-0.5">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">{title}</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">{title}</h2>
         <p className="m-0 text-sm text-muted-foreground">{description}</p>
       </div>
 

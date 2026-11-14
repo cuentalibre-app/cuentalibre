@@ -34,7 +34,7 @@ function InvoicePreview({ profile }: { profile: BusinessProfile }) {
   return (
     <aside
       aria-label="Vista previa en la factura"
-      className="flex animate-rise-in flex-col gap-3 surface p-5 lg:sticky lg:top-6"
+      className="flex animate-rise-in flex-col gap-3 surface p-5 lg:sticky lg:top-[calc(1.5rem+var(--demo-banner-h,0px))]"
     >
       <span className="text-sm font-semibold">Así apareces en tus facturas</span>
       <div className="flex flex-col gap-1 rounded-lg bg-muted px-4 py-3.5">

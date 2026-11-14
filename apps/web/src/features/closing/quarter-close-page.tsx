@@ -38,7 +38,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuent
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { useFormsInUse } from "@/features/taxes/forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "@/features/taxes/tax-books";
 import { FILING_STATUS, INCOME_TAX_PATH, modelPath, VAT_PATH } from "@/features/taxes/taxes-model";
@@ -90,10 +90,7 @@ function Step({
       className="flex animate-rise-in flex-col gap-3 surface p-4 lg:p-5"
       style={style}
     >
-      <h2
-        id={`step-${index}`}
-        className="m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight lg:text-title"
-      >
+      <h2 id={`step-${index}`} className="m-0 flex items-center gap-2.5 text-lg font-semibold tracking-tight">
         <span className="flex size-6 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
           {index}
         </span>
@@ -164,7 +161,6 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
       code: "303",
       title: "IVA",
       amount: (filedVat ?? computedVat!).result,
-      filedOn: filedVat?.filedOn,
       to: modelPath(VAT_PATH, period),
     },
     {
@@ -172,7 +168,6 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
       title: "IRPF",
       // A negative 130 is filed with nothing to pay
       amount: cents(Math.max(0, (filedIrpf ?? computedIrpf!).result)),
-      filedOn: filedIrpf?.filedOn,
       to: modelPath(INCOME_TAX_PATH, period),
     },
   ];
@@ -188,22 +183,21 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
           <li key={f.code}>
             <Link
               to={f.to}
-              className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3.5 py-2.5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-accent active:scale-[0.98]"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3.5 text-foreground no-underline transition-[background-color,scale] duration-150 hover:bg-muted active:scale-[0.98]"
             >
-              <span className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
-                  Modelo {f.code} · {f.title}
-                </span>
-                <span className={cn("amount", f.amount < 0 && "text-success")}>{formatEUR(f.amount)}</span>
-                {(f.amount < 0 || f.filedOn) && (
-                  <span className="text-2xs text-muted-foreground">
-                    {[f.amount < 0 && "a compensar", f.filedOn && `presentado el ${formatDate(f.filedOn)}`]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                )}
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-semibold">Modelo {f.code}</span>
+                <span className="text-sm text-muted-foreground">{f.title}</span>
               </span>
-              <ArrowRight className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
+              <span className="flex flex-col items-end gap-0.5">
+                <span className={cn("amount text-lg font-semibold", f.amount < 0 && "text-success")}>
+                  {formatEUR(f.amount)}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {f.amount > 0 ? "A ingresar" : f.amount < 0 ? "A compensar" : "Sin cuota"}
+                </span>
+              </span>
+              <ArrowRight className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
             </Link>
           </li>
         ))}
@@ -420,7 +414,7 @@ function QuarterPicker({
     <div
       role="radiogroup"
       aria-label="Trimestre"
-      className="grid animate-rise-in grid-cols-2 gap-2 lg:grid-cols-4"
+      className="grid animate-rise-in grid-cols-2 gap-2 wide:grid-cols-4"
       style={{ "--i": 1 } as CSSProperties}
     >
       {QUARTERS.map((quarter) => {
@@ -467,7 +461,7 @@ function ClosedList({ closed, onSelect }: { closed: ClosedQuarter[]; onSelect: (
       className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": 5 } as CSSProperties}
     >
-      <h2 id="closed-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+      <h2 id="closed-title" className="m-0 text-lg font-semibold tracking-tight">
         Trimestres cerrados
       </h2>
       {rows.length === 0 ? (
@@ -544,7 +538,11 @@ export function QuarterClosePage() {
       <Page>
         <PageHeader
           title="Cierre de trimestres"
-          description="Cierra cada trimestre tras presentarlo para bloquear sus documentos."
+          inline={
+            <HelpTip side="bottom">
+              Cierra un trimestre cuando lo hayas presentado: sus documentos quedan bloqueados.
+            </HelpTip>
+          }
           actions={
             <Select
               value={String(period.year)}

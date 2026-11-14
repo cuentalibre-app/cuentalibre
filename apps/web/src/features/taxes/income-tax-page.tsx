@@ -12,7 +12,7 @@ import {
 } from "@cuentalibre/core";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { deductibleOf, EXPENSES_PATH, payeeOf } from "@/features/purchases/expenses-model";
 import { useExpenses } from "@/features/purchases/expenses-store";
@@ -163,7 +163,7 @@ function IncomeTax130({ year, quarter, today }: { year: number; quarter: Quarter
         file={file}
       />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Casillas del modelo 130</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Casillas del modelo 130</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormSections
@@ -269,7 +269,7 @@ function IncomeTax100({ year, today }: { year: number; today: Date }) {
         file={file}
       />
       <div className="flex items-center justify-between gap-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Apartado D1 y pagos a cuenta</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Apartado D1 y pagos a cuenta</h2>
         <EmptyBoxesToggle checked={showEmpty} onChange={setShowEmpty} />
       </div>
       <FormAnswers title="Actividades realizadas" rows={answers100(tax)} />
@@ -303,11 +303,12 @@ export function IncomeTaxPage() {
           eyebrow={<ModuleBreadcrumb module="incomeTax" form={annual ? "100" : "130"} />}
           back={<TaxesBackLink />}
           title="IRPF"
-          descriptionClassName="max-lg:hidden"
-          description={
-            annual
-              ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."
-              : "Modelo 130: pago a cuenta del 20 % de lo que llevas ganado en el año."
+          inline={
+            <HelpTip side="bottom">
+              {annual
+                ? "Modelo 100: lo que tu actividad aporta a la declaración de la renta."
+                : "Modelo 130: pago a cuenta del 20 % de lo que llevas ganado en el año."}
+            </HelpTip>
           }
           actions={
             <>

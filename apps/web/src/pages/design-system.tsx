@@ -13,7 +13,7 @@ const eur = (euros: number) => formatEUR(eurosToCents(euros));
 const colorGroups: { title: string; tokens: string[] }[] = [
   { title: "Superficies", tokens: ["background", "card", "popover", "sidebar", "muted", "muted-strong", "accent"] },
   { title: "Texto", tokens: ["foreground", "muted-foreground"] },
-  { title: "Marca", tokens: ["primary", "primary-hover", "primary-soft", "ring"] },
+  { title: "Marca", tokens: ["primary", "primary-hover", "primary-soft", "primary-soft-foreground", "ring"] },
   { title: "Bordes", tokens: ["border", "input", "divider"] },
   {
     title: "Estados",
@@ -266,7 +266,7 @@ export function DesignSystemPage() {
 
           <Card className="min-w-0 flex-[1_1_300px]">
             <div className="flex flex-col gap-1">
-              <CardTitle>Neto después de impuestos</CardTitle>
+              <CardTitle>Beneficio neto estimado</CardTitle>
               <span className="text-sm text-muted-foreground">De {eur(ingresos)} facturados sin IVA</span>
             </div>
             <span className="amount text-4xl font-medium">{eur(neto)}</span>

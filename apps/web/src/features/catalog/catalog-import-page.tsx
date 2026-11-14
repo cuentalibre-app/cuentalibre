@@ -69,11 +69,11 @@ export function CatalogImportPage() {
     setFile(null);
   };
 
-
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <PageShell
         title="Importar productos o servicios"
+        help="Sube un Excel o CSV con las columnas de la plantilla y revisa lo que se va a importar antes de confirmarlo. Si el código de un producto ya existe, se actualiza."
         back={{ to: PRODUCTS_PATH, label: "productos" }}
         actions={
           <Link to={PRODUCTS_PATH} className={buttonVariants({ variant: "secondary" })}>
@@ -82,14 +82,6 @@ export function CatalogImportPage() {
           </Link>
         }
       >
-        <Notice role="note" className="animate-rise-in">
-          <p className="m-0">
-            Importa un Excel (.xlsx) o un CSV con las columnas de la plantilla. Elige el tipo de datos, sube el archivo
-            y pulsa <strong>Continuar</strong>: verás lo que se va a importar antes de confirmarlo. Si el código de
-            producto de una fila ya existe en tu catálogo, se actualiza ese producto.
-          </p>
-        </Notice>
-
         {done && (
           <Notice role="status" tone="success" className="animate-rise-in">
             <span>
@@ -175,7 +167,7 @@ function Preview({
   if (preview.fileErrors.length)
     return (
       <section className="flex animate-rise-in flex-col gap-2 rounded-xl bg-destructive-soft p-5">
-        <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive lg:text-title">
+        <h2 className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight text-destructive">
           <CircleAlert className="size-5" strokeWidth={1.8} aria-hidden="true" />
           No se puede importar el archivo
         </h2>
@@ -193,7 +185,7 @@ function Preview({
       className="flex animate-rise-in flex-col overflow-hidden surface"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5">
-        <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Vista previa</h2>
+        <h2 className="m-0 text-lg font-semibold tracking-tight">Vista previa</h2>
         <span className="text-sm">
           <span className="font-semibold">{valid.length}</span>{" "}
           {valid.length === 1 ? "producto listo" : "productos listos"} para importar

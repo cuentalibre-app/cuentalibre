@@ -28,7 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuent
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { Page, PageHeader } from "@/components/page";
+import { HelpTip, Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
 import { daysLeftLabel, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
@@ -145,7 +145,7 @@ function NextFiling({ today }: { today: Date }) {
             <span className="text-2xs">{MONTHS_SHORT[first.dueOn.getMonth()]}</span>
           </div>
           <div className="flex flex-col gap-0.5">
-            <h2 id="next-filing-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+            <h2 id="next-filing-title" className="m-0 text-lg font-semibold tracking-tight">
               Próxima presentación
             </h2>
             <span className="text-sm font-semibold text-warning">{daysLeftLabel(days)}</span>
@@ -198,7 +198,7 @@ function QuarterStatus({ year, quarter, today }: { year: number; quarter: Quarte
 
 function SectionTitle({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="m-0 text-lg font-semibold tracking-tight lg:text-title">
+    <h2 id={id} className="m-0 text-lg font-semibold tracking-tight">
       {children}
     </h2>
   );
@@ -663,8 +663,11 @@ export function TaxesSummaryPage() {
       <Page>
         <PageHeader
           title="Impuestos"
-          descriptionClassName="max-lg:hidden"
-          description="Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT."
+          inline={
+            <HelpTip side="bottom">
+              Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT.
+            </HelpTip>
+          }
           actionsClassName="max-lg:w-full"
           actions={
             <nav aria-label="Atajos de impuestos" className="flex flex-1 gap-2.5 *:max-lg:flex-1">

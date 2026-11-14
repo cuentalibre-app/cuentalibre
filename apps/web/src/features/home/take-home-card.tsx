@@ -1,5 +1,6 @@
 import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, cents, centsToEuros, type Cents } from "@cuentalibre/core";
 import { Link } from "react-router";
+import { Wallet } from "lucide-react";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
@@ -102,10 +103,10 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   ];
 
   return (
-    <Section id="take-home-title" title="Neto después de impuestos" className={className}>
+    <Section id="take-home-title" icon={Wallet} title="Beneficio neto estimado" className={className}>
 
       <div className="flex flex-col gap-1.5">
-        <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-4xl" />
+        <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium" />
         <span className="text-sm font-medium text-success">{formatPercent(share(takeHome))} de lo facturado</span>
       </div>
 

@@ -15,9 +15,10 @@ import {
 } from "@cuentalibre/core";
 import { Button } from "@cuentalibre/ui/components/button";
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
+import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { BackLink, Page, PageHeader } from "@/components/page";
+import { BackLink, HelpTip, Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { TopCounterparties } from "@/features/home/top-counterparties";
 import { businessName } from "@/features/settings/settings-model";
@@ -195,95 +196,101 @@ export function ProfitLossPage() {
     );
 
   return (
-    <Page>
-      <PageHeader
-        back={<BackLink to={REPORTS_PATH} label="Volver a informes" />}
-        title="Pérdidas y ganancias"
-        description="Desde principios de año hasta el periodo elegido, frente al año anterior."
-        actions={
-          <>
-            <SegmentedControl
-              label="Versión del informe"
-              value={version}
-              onChange={setVersion}
-              options={[
-                { value: "summary", label: "Resumida" },
-                { value: "extended", label: "Extendida" },
-              ]}
-            />
-            <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-            <Button variant="secondary" onClick={exportPdf}>
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              Exportar PDF
-            </Button>
-          </>
-        }
-      />
+    <TooltipProvider delayDuration={300} skipDelayDuration={300}>
+      <Page>
+        <PageHeader
+          back={<BackLink to={REPORTS_PATH} label="Volver a informes" />}
+          title="Pérdidas y ganancias"
+          inline={
+            <HelpTip side="bottom">
+              Ingresos menos gastos desde enero hasta el periodo elegido, comparados con el año anterior.
+            </HelpTip>
+          }
+          actions={
+            <>
+              <SegmentedControl
+                label="Versión del informe"
+                value={version}
+                onChange={setVersion}
+                options={[
+                  { value: "summary", label: "Resumida" },
+                  { value: "extended", label: "Extendida" },
+                ]}
+              />
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
+              <Button variant="secondary" onClick={exportPdf}>
+                <Download strokeWidth={1.8} aria-hidden="true" />
+                Exportar PDF
+              </Button>
+            </>
+          }
+        />
 
-      <article aria-labelledby="pnl-title" className="flex animate-rise-in flex-col gap-5 surface p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-2 border-b border-foreground pb-3">
-          <h2 id="pnl-title" className="m-0 text-lg font-semibold tracking-tight lg:text-title">
-            Informe de pérdidas y ganancias
-          </h2>
-          <dl className="m-0 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-            <div className="flex gap-1.5">
-              <dt className="text-muted-foreground">Empresa:</dt>
-              <dd className="m-0 font-medium">{businessName(profile)}</dd>
-            </div>
-            <div className="flex gap-1.5 sm:justify-end">
-              <dt className="text-muted-foreground">Generado el</dt>
-              <dd className="m-0 font-medium">{generatedOn}</dd>
-            </div>
-            <div className="flex gap-1.5">
-              <dt className="text-muted-foreground">NIF:</dt>
-              <dd className="m-0 font-medium tabular-nums">{profile.taxId}</dd>
-            </div>
-            <div className="flex gap-1.5 sm:justify-end">
-              <dt className="text-muted-foreground">Periodo:</dt>
-              <dd className="m-0 font-medium">{rangeLabel(range.to)}</dd>
-            </div>
-          </dl>
-        </div>
+        <article aria-labelledby="pnl-title" className="flex animate-rise-in flex-col gap-5 surface p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-2 border-b border-foreground pb-3">
+            <h2 id="pnl-title" className="m-0 text-lg font-semibold tracking-tight">
+              Informe de pérdidas y ganancias
+            </h2>
+            <dl className="m-0 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+              <div className="flex gap-1.5">
+                <dt className="text-muted-foreground">Empresa:</dt>
+                <dd className="m-0 font-medium">{businessName(profile)}</dd>
+              </div>
+              <div className="flex gap-1.5 sm:justify-end">
+                <dt className="text-muted-foreground">Generado el</dt>
+                <dd className="m-0 font-medium">{generatedOn}</dd>
+              </div>
+              <div className="flex gap-1.5">
+                <dt className="text-muted-foreground">NIF:</dt>
+                <dd className="m-0 font-medium tabular-nums">{profile.taxId}</dd>
+              </div>
+              <div className="flex gap-1.5 sm:justify-end">
+                <dt className="text-muted-foreground">Periodo:</dt>
+                <dd className="m-0 font-medium">{rangeLabel(range.to)}</dd>
+              </div>
+            </dl>
+          </div>
 
-        {empty ? (
-          <p className="m-0 py-10 text-center text-muted-foreground">
-            No hay facturas ni gastos entre el 1 de enero y el final del periodo, ni en {year} ni en {year - 1}.
+          {empty ? (
+            <p className="m-0 py-10 text-center text-muted-foreground">
+              No hay facturas ni gastos entre el 1 de enero y el final del periodo, ni en {year} ni en {year - 1}.
+            </p>
+          ) : (
+            <div className="-mx-3 overflow-x-auto sm:mx-0">
+              <ReportTable rows={rows} years={years} />
+            </div>
+          )}
+          <p className="m-0 text-xs text-muted-foreground">
+            Ingresos por su base imponible y gastos por su parte deducible, como en los modelos 130 y 100. No incluye
+            los gastos de difícil justificación de la estimación directa simplificada.
           </p>
-        ) : (
-          <div className="-mx-3 overflow-x-auto sm:mx-0">
-            <ReportTable rows={rows} years={years} />
-          </div>
-        )}
-        <p className="m-0 text-xs text-muted-foreground">
-          Ingresos por su base imponible y gastos por su parte deducible, como en los modelos 130 y 100. No incluye los
-          gastos de difícil justificación de la estimación directa simplificada.
-        </p>
-      </article>
+        </article>
 
-      {!empty && (
-        <section
-          aria-label="Distribución"
-          className="flex animate-rise-in flex-col gap-3"
-          style={{ "--i": 2 } as CSSProperties}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="m-0 text-lg font-semibold tracking-tight lg:text-title">Distribución en el ejercicio</h2>
-            <SegmentedControl
-              label="Ejercicio"
-              value={chartYear}
-              onChange={setChartYear}
-              options={[
-                { value: "current", label: String(year) },
-                { value: "previous", label: String(year - 1) },
-              ]}
+        {!empty && (
+          <section
+            aria-label="Distribución"
+            className="flex animate-rise-in flex-col gap-3"
+            style={{ "--i": 2 } as CSSProperties}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="m-0 text-lg font-semibold tracking-tight">Distribución en el ejercicio</h2>
+              <SegmentedControl
+                label="Ejercicio"
+                value={chartYear}
+                onChange={setChartYear}
+                options={[
+                  { value: "current", label: String(year) },
+                  { value: "previous", label: String(year - 1) },
+                ]}
+              />
+            </div>
+            <Distribution
+              pnl={chartYear === "current" ? current : previous}
+              year={chartYear === "current" ? year : year - 1}
             />
-          </div>
-          <Distribution
-            pnl={chartYear === "current" ? current : previous}
-            year={chartYear === "current" ? year : year - 1}
-          />
-        </section>
-      )}
-    </Page>
+          </section>
+        )}
+      </Page>
+    </TooltipProvider>
   );
 }

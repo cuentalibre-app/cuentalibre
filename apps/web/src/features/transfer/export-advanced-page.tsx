@@ -80,6 +80,7 @@ export function ExportAdvancedPage() {
   return (
     <PageShell
       title="Exportación avanzada"
+      help="Elige qué listados descargar del periodo: facturas, pagos, amortizaciones, gastos, presupuestos, albaranes y contactos."
       back={{ to: EXPORT_PATH, label: "exportaciones" }}
       actions={<PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />}
     >
