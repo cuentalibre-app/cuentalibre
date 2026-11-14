@@ -134,7 +134,7 @@ export function taxIdError(taxId: string, country: string): string | undefined {
   if (check.reason === "empty") return "Introduce un NIF.";
   if (check.reason === "checksum") return "La letra o el dígito de control no es correcto. Revisa el NIF.";
   return country === SPAIN
-    ? "El formato del NIF no es correcto. Formatos válidos: 12345678Z (NIF), X1234567L (NIE) o B12345674 (CIF)."
+    ? "Formato de NIF no válido. Ej.: 12345678Z, X1234567L o B12345674."
     : "Solo letras, números y &, hasta 30 caracteres.";
 }
 

@@ -79,7 +79,7 @@ export function BillingPage() {
         // The webhook may land a moment after Stripe sends people back
         if (justPaid && !isLive(next.subscription) && tries > 1) timer = setTimeout(() => void load(tries - 1), 2000);
       } catch {
-        if (active) setError("No se ha podido cargar tu plan. Recarga la página para intentarlo de nuevo.");
+        if (active) setError("No se ha podido cargar tu plan. Recarga la página.");
       }
     };
     void load(ACTIVATION_TRIES);
@@ -391,7 +391,7 @@ function InvoicesSection() {
         setError(
           failure instanceof ApiError && failure.code === "forbidden"
             ? "Solo quien administra la empresa puede ver sus facturas."
-            : "No se han podido cargar las facturas. Recarga la página para intentarlo de nuevo.",
+            : "No se han podido cargar las facturas. Recarga la página.",
         );
       });
     return () => {

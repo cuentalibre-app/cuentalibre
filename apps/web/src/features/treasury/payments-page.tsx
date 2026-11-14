@@ -238,7 +238,7 @@ export function PaymentsPage() {
               hint={
                 filtered
                   ? "Prueba con otro término o quita algún filtro."
-                  : "Aparecen al marcar facturas como cobradas o pagadas. Puedes cambiar el periodo en el selector."
+                  : "Aparecen al marcar facturas como cobradas o pagadas."
               }
             />
           ) : (

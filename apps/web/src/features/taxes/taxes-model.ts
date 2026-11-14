@@ -502,7 +502,7 @@ export const LAYOUT_390: FormSection[] = [
       {
         label: "Total resultados a ingresar en las autoliquidaciones de IVA del ejercicio",
         cells: ["95"],
-        hint: "Suma de los resultados [71] de los cuatro 303 del año que salieron a ingresar. Los negativos no cuentan: no es un error.",
+        hint: "Suma de los [71] a ingresar de los cuatro 303 del año.",
         total: true,
       },
       {
@@ -560,7 +560,7 @@ export const LAYOUT_130: FormSection[] = [
           text: [
             "Suma de las casillas **[07] positivas** de los 130 anteriores de este año.",
             "Si en esos trimestres rellenaste la casilla **[16]** por el préstamo de tu vivienda habitual, resta aquí la suma de esas deducciones.",
-            "cuentalibre la calcula con los trimestres cerrados tal como se presentaron y el resto con tus datos actuales. Si pagaste otra cantidad, escribe aquí lo que pagaste de verdad.",
+            "Calculada con lo presentado en los trimestres cerrados. Si pagaste otra cantidad, corrígela.",
           ],
         },
         "05",

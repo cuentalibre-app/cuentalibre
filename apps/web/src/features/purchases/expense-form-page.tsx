@@ -716,9 +716,7 @@ function ExpenseForm({
                         Elegir movimiento bancario
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-64">
-                      Disponible cuando conectes tus cuentas bancarias: podrás enlazar el pago con un movimiento.
-                    </TooltipContent>
+                    <TooltipContent className="max-w-64">Disponible al conectar tus cuentas bancarias.</TooltipContent>
                   </Tooltip>
                 </div>
               </>

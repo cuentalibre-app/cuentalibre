@@ -73,7 +73,7 @@ export function PaymentMethodsPage() {
       <Page>
         <SettingsHeader
           title="Formas de cobro y pago"
-          description="Cómo te pagan tus clientes y cómo pagas a tus proveedores: tus cuentas, tarjetas, PayPal o efectivo."
+          description="Cuentas, tarjetas, PayPal o efectivo con los que cobras y pagas."
         >
           <Button onClick={() => setEditing("new")}>
             <Plus aria-hidden="true" />

@@ -34,7 +34,7 @@ const WORDS: Record<
     list: "Cobros realizados hasta la fecha",
     none: "Todavía no hay cobros.",
     noun: "cobro",
-    done: "La factura está cobrada por completo. Si un cobro está mal, quítalo y vuelve a registrarlo.",
+    done: "Cobrada por completo. Para corregir un cobro, quítalo y regístralo de nuevo.",
   },
   payment: {
     title: "Gestión de pagos",
@@ -43,7 +43,7 @@ const WORDS: Record<
     list: "Pagos realizados hasta la fecha",
     none: "Todavía no hay pagos.",
     noun: "pago",
-    done: "La factura está pagada por completo. Si un pago está mal, quítalo y vuelve a registrarlo.",
+    done: "Pagada por completo. Para corregir un pago, quítalo y regístralo de nuevo.",
   },
 };
 
