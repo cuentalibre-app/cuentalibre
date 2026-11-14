@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type FormEvent, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { Check, KeyRound, ShieldCheck } from "lucide-react";
 import type { LinkedProvider } from "@cuentalibre/contracts";
@@ -30,6 +30,7 @@ import {
 import { VerifyEmailDialog } from "@/features/auth/email-code";
 import { ForgotPasswordLink } from "@/features/auth/forgot-password-link";
 import { PasswordMeter, newPasswordHint } from "@/features/auth/password-meter";
+import { AppleLogo, GoogleLogo } from "@/features/auth/provider-logos";
 import { sessionState } from "@/features/auth/session";
 import { Field, Section } from "@/features/sales/form-fields";
 import { ACCESS_PATH } from "./settings-model";
@@ -37,9 +38,9 @@ import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { userStore, useUserSettings } from "./user-store";
 import { Page } from "@/components/page";
 
-const PROVIDERS: { value: LinkedProvider; label: string }[] = [
-  { value: "google", label: "Cuenta de Google" },
-  { value: "apple", label: "Cuenta de Apple" },
+const PROVIDERS: { value: LinkedProvider; name: string; Logo: ComponentType<{ className?: string }> }[] = [
+  { value: "google", name: "Google", Logo: GoogleLogo },
+  { value: "apple", name: "Apple", Logo: AppleLogo },
 ];
 
 const dateFormat = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", year: "numeric" });
@@ -119,13 +120,15 @@ export function AccessPage() {
             <p className="m-0 max-w-3xl text-muted-foreground">
               Si lo prefieres, puedes vincular tu cuenta de Google o Apple para entrar a cuentalibre en un solo clic.
             </p>
-            <dl className="m-0 flex flex-col divide-y divide-divider">
-              {PROVIDERS.map(({ value, label }) => {
+            <ul className="m-0 flex list-none flex-col divide-y divide-divider p-0">
+              {PROVIDERS.map(({ value, name, Logo }) => {
                 const email = access.linked[value];
                 return (
-                  <Row
+                  <ProviderRow
                     key={value}
-                    label={label}
+                    name={name}
+                    logo={<Logo className="size-5" />}
+                    email={email}
                     action={
                       email ? (
                         <Button variant="secondary" onClick={() => setUnlink(value)}>
@@ -137,19 +140,10 @@ export function AccessPage() {
                         </Button>
                       )
                     }
-                  >
-                    {email ? (
-                      <>
-                        <span className="text-sm text-muted-foreground">Correo electrónico</span>
-                        <span className="font-medium break-all">{email}</span>
-                      </>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Sin vincular</span>
-                    )}
-                  </Row>
+                  />
                 );
               })}
-            </dl>
+            </ul>
           </Section>
         )}
       </Page>
@@ -460,9 +454,11 @@ function LinkedAccountsSection() {
         </p>
       )}
       {state && (state.google || google) && (
-        <dl className="m-0 flex flex-col divide-y divide-divider">
-          <Row
-            label="Cuenta de Google"
+        <ul className="m-0 flex list-none flex-col p-0">
+          <ProviderRow
+            name="Google"
+            logo={<GoogleLogo className="size-5" />}
+            email={google ? state.email : undefined}
             action={
               google ? (
                 <Button variant="secondary" onClick={() => setUnlinkOpen(true)}>
@@ -474,17 +470,8 @@ function LinkedAccountsSection() {
                 </Button>
               )
             }
-          >
-            {google ? (
-              <>
-                <span className="text-sm text-muted-foreground">Correo electrónico</span>
-                <span className="font-medium break-all">{state.email}</span>
-              </>
-            ) : (
-              <span className="text-sm text-muted-foreground">Sin vincular</span>
-            )}
-          </Row>
-        </dl>
+          />
+        </ul>
       )}
       {state && !state.google && !google && (
         <p className="m-0 text-sm text-muted-foreground">Este servidor no tiene activado el acceso con Google.</p>
@@ -500,6 +487,32 @@ function LinkedAccountsSection() {
         <p className="m-0">Ya no podrás entrar con ella; seguirás pudiendo entrar con tu correo y contraseña.</p>
       </ConfirmDialog>
     </Section>
+  );
+}
+
+/** A sign-in provider: its logo, and the email it is linked with or that it isn't linked. */
+function ProviderRow({
+  name,
+  logo,
+  email,
+  action,
+}: {
+  name: string;
+  logo: ReactNode;
+  email: string | undefined;
+  action: ReactNode;
+}) {
+  return (
+    <li className="flex items-center gap-3.5 py-3.5 first:pt-0 last:pb-0">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-background">
+        {logo}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="font-medium">{name}</span>
+        <span className="text-sm break-all text-muted-foreground">{email ?? "Sin vincular"}</span>
+      </div>
+      <div className="shrink-0">{action}</div>
+    </li>
   );
 }
 
