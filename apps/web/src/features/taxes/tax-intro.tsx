@@ -3,7 +3,8 @@ import { Link, useSearchParams } from "react-router";
 import { Calculator, ChevronRight } from "lucide-react";
 import type { Period } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { BackLink, Page, PageHeader } from "@/components/page";
+import { cn } from "@cuentalibre/ui/lib/cn";
+import { BackLink, Page, PageHeader, cardTitleClass } from "@/components/page";
 import { usePeriod } from "@/lib/use-period";
 import { FACTS, FormFactsList } from "./form-info";
 import {
@@ -109,13 +110,15 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
         <section
           key={f.code}
           aria-labelledby={`modelo-${f.code}`}
-          className="flex animate-rise-in flex-col gap-4 surface p-5"
+          className="flex animate-rise-in flex-col surface"
           style={{ "--i": i } as CSSProperties}
         >
-          <h2 id={`modelo-${f.code}`} className="m-0 text-lg font-semibold tracking-tight">
+          <h2 id={`modelo-${f.code}`} className={cn(cardTitleClass, "border-b border-divider px-5 py-3")}>
             {FACTS[f.code].title}
           </h2>
-          <FormFactsList form={f.code} />
+          <div className="p-5">
+            <FormFactsList form={f.code} />
+          </div>
         </section>
       ))}
     </Page>

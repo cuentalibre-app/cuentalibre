@@ -24,7 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/compone
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
-import { Notice as PageNotice } from "@/components/page";
+import { Notice as PageNotice, cardHeaderClass, cardTitleClass } from "@/components/page";
 import { useSettings } from "@/features/settings/settings-store";
 import { copyText } from "@/lib/clipboard";
 import { daysLeftLabel, formatDate, parseEuros } from "@/lib/format";
@@ -616,9 +616,9 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
   const td = cn(table.td, "px-2.5");
 
   return (
-    <section aria-label={title} className="flex animate-rise-in flex-col gap-3 lg:overflow-hidden lg:surface">
-      <div className="flex flex-wrap items-center justify-between gap-3 lg:px-4 lg:pt-3">
-        <h2 className="m-0 text-lg font-semibold tracking-tight">{title}</h2>
+    <section aria-label={title} className="flex animate-rise-in flex-col gap-3 lg:gap-0 lg:overflow-hidden lg:surface">
+      <div className={cn("flex flex-wrap items-center justify-between gap-3", cardHeaderClass)}>
+        <h2 className={cardTitleClass}>{title}</h2>
         <SegmentedControl
           label="Tipo de documento"
           value={active}
@@ -628,7 +628,9 @@ export function DocumentsPanel({ title, groups }: { title: string; groups: Docum
       </div>
 
       {group.rows.length === 0 ? (
-        <p className="m-0 border-t border-border px-4 py-8 text-center text-sm text-muted-foreground">{group.empty}</p>
+        <p className="m-0 border-t border-border px-4 py-8 text-center text-sm text-muted-foreground lg:border-t-0">
+          {group.empty}
+        </p>
       ) : (
         <>
           <div className="hidden overflow-x-auto lg:block">

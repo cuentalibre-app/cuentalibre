@@ -21,16 +21,20 @@ interface AuthLayoutProps {
 /**
  * The screens around the app (sign-in, sign-up, onboarding). On wide screens they speak like the public
  * site: serif headline and a brand panel that shows the app. On phones they look like the app itself:
- * the brand wash behind, a sans headline and the form on a card.
+ * a sans headline and the form on a card.
  */
 export function AuthLayout({ title, description, children, footer, eyebrow, wide = false }: AuthLayoutProps) {
   return (
     <div className="relative isolate grid min-h-dvh bg-canvas lg:grid-cols-2 lg:bg-background">
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 bg-aurora lg:hidden" />
       <main className="flex flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-10 sm:py-8">
         <Brand />
         <div className="flex flex-1 justify-center pt-6 pb-2 lg:items-center lg:py-10">
-          <div className={cn("flex w-full animate-rise-in flex-col gap-5 lg:gap-7", wide ? "max-w-[480px]" : "max-w-[400px]")}>
+          <div
+            className={cn(
+              "flex w-full animate-rise-in flex-col gap-5 lg:gap-7",
+              wide ? "max-w-[480px]" : "max-w-[400px]",
+            )}
+          >
             <div className="flex flex-col gap-2">
               {eyebrow}
               <h1 className="m-0 text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-balance lg:font-display lg:text-[clamp(32px,5vw,40px)] lg:leading-[1.08] lg:tracking-[-0.025em]">
@@ -39,7 +43,7 @@ export function AuthLayout({ title, description, children, footer, eyebrow, wide
               {description && <p className="m-0 text-md text-pretty text-muted-foreground">{description}</p>}
             </div>
             {/* A card on phones, like the app's panels; on wide screens the form sits on the page */}
-            <div className="surface flex flex-col gap-5 p-5 lg:contents">{children}</div>
+            <div className="flex flex-col gap-5 surface p-5 lg:contents">{children}</div>
             {footer && <div className="flex flex-col items-center gap-2 text-base text-muted-foreground">{footer}</div>}
           </div>
         </div>
@@ -74,12 +78,12 @@ const reasons: { icon: LucideIcon; title: string; text: string }[] = [
 /** The site's promise beside the form, over a glimpse of the app. Only on wide screens. */
 function BrandPanel() {
   return (
-    <aside className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-brand-glow lg:flex lg:flex-col">
+    <aside className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-canvas lg:flex lg:flex-col">
       <div className="relative z-10 flex flex-col gap-8 p-12 xl:p-16">
         <p className="m-0 font-display text-[clamp(36px,3.6vw,52px)] leading-[1.04] font-semibold tracking-[-0.025em] text-balance">
           Impuestos al día.
           <br />
-          <span className="text-gradient-brand">100&nbsp;% código abierto.</span>
+          <span className="text-muted-foreground">100&nbsp;% código abierto.</span>
         </p>
         <ul className="m-0 flex list-none flex-col gap-4 p-0">
           {reasons.map(({ icon: Icon, title, text }) => (
@@ -137,9 +141,9 @@ export function AuthForm({ onSubmit, submitLabel, pending, error, children }: Au
   );
 }
 
-/** The main action of an auth screen: full width, in the brand gradient like the site's. */
+/** The main action of an auth screen: full width, sized for the foot of a phone screen. */
 export function AuthButton({ className, ...props }: ComponentProps<typeof Button>) {
-  return <Button variant="brand" size="xl" className={cn("w-full", className)} {...props} />;
+  return <Button size="xl" className={cn("w-full", className)} {...props} />;
 }
 
 /** Runs a form action, keeping track of whether it's pending and the error to show. */
