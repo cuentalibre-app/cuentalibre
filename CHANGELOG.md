@@ -7,6 +7,10 @@ Qué cambia en cada versión de cuentalibre para quien lo instala en su servidor
 
 ## Próxima versión
 
+## 0.1.4 (2026-11-14)
+
+Correcciones y mejoras internas.
+
 ## 0.1.3 (2026-11-12)
 
 Correcciones y mejoras internas.
