@@ -6,7 +6,6 @@ import {
   companyUserSchema,
   contactSchema,
   expenseSchema,
-  ledgerAccountSettingsSchema,
   manualPaymentSchema,
   noteTemplateSchema,
   notificationPrefsSchema,
@@ -30,7 +29,6 @@ import { initialClosedQuarters } from "./closing";
 import { initialClients, initialSuppliers } from "./contacts";
 import { initialExpenses } from "./expenses";
 import { initialNoteTemplates } from "./invoicing";
-import { initialLedgerAccounts } from "./ledger-accounts";
 import { initialPurchaseInvoices } from "./purchases";
 import { initialSalesDocuments } from "./sales";
 import { initialPaymentMethods, initialProfile, initialTaxSetup } from "./settings";
@@ -60,7 +58,6 @@ const collections: [string, z.ZodType, unknown[]][] = [
 const singletons: [string, z.ZodType, unknown][] = [
   ["catalog settings", catalogSettingsSchema, initialCatalogSettings],
 
-  ["ledger accounts", ledgerAccountSettingsSchema, initialLedgerAccounts],
   ["business profile", businessProfileSchema, initialProfile],
   ["tax setup", taxSetupSchema, initialTaxSetup],
   ["user profile", userProfileSchema, initialUserProfile],

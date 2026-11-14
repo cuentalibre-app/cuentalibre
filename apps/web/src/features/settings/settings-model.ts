@@ -32,7 +32,6 @@ export const ACCESS_PATH = "/configuracion/credenciales";
 export const DRAFT_SETTINGS_PATH = "/configuracion/facturas-borrador";
 export const QUOTE_SETTINGS_PATH = "/configuracion/presupuestos";
 export const DELIVERY_NOTE_SETTINGS_PATH = "/configuracion/albaranes";
-export const LEDGER_ACCOUNTS_PATH = "/configuracion/cuentas-contables";
 export const CONTACT_SETTINGS_PATH = "/configuracion/clientes-proveedores";
 export const USERS_PATH = "/configuracion/usuarios";
 export const TAGS_PATH = "/configuracion/etiquetas";
