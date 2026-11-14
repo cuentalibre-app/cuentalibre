@@ -92,15 +92,6 @@ export const RULE_OPTIONS: { [K in keyof StockRules]: Option<StockRules[K]>[] } 
     { value: "createEdit", label: "Al crear/editar un albarán" },
     { value: "invoice", label: "Al facturar un albarán" },
   ],
-  quotes: [
-    { value: "never", label: "Nunca" },
-    { value: "deliveryNote", label: "Al albaranar un presupuesto" },
-    { value: "invoice", label: "Al facturar un presupuesto" },
-  ],
-  drafts: [
-    { value: "never", label: "Nunca" },
-    { value: "invoice", label: "Al facturar una factura borrador" },
-  ],
 };
 
 /** Whether any kind of document moves stock; until then stock only changes by hand. */

@@ -60,22 +60,10 @@ interface Draft {
   allowWithoutStock: boolean;
   alarmOn: boolean;
   minUnits: string;
-  dashboard: boolean;
-  notification: boolean;
-  email: boolean;
 }
 
 type ErrorKey =
-  | "name"
-  | "sku"
-  | "price"
-  | "discount"
-  | "surcharge"
-  | "cost"
-  | "costSurcharge"
-  | "initialStock"
-  | "minUnits"
-  | "alarm";
+  "name" | "sku" | "price" | "discount" | "surcharge" | "cost" | "costSurcharge" | "initialStock" | "minUnits";
 type Errors = Partial<Record<ErrorKey, string>>;
 
 function toDraft(product: Product | undefined): Draft {
@@ -105,9 +93,6 @@ function toDraft(product: Product | undefined): Draft {
     allowWithoutStock: stock?.allowWithoutStock ?? defaults.allowWithoutStock,
     alarmOn: !!alarm,
     minUnits: alarm ? formatDecimalInput(alarm.minUnits) : "",
-    dashboard: alarm?.dashboard ?? defaults.alarm?.dashboard ?? false,
-    notification: alarm?.notification ?? defaults.alarm?.notification ?? false,
-    email: alarm?.email ?? defaults.alarm?.email ?? false,
   };
 }
 
@@ -134,11 +119,8 @@ function validate(draft: Draft, existingId: string | undefined, isNew: boolean):
   if (draft.stockEnabled) {
     if (isNew && parseDecimal(draft.initialStock || "0") === null)
       errors.initialStock = "Escribe un número de unidades válido.";
-    if (draft.alarmOn) {
-      if (!draft.minUnits.trim() || parseDecimal(draft.minUnits) === null)
-        errors.minUnits = "Indica a partir de cuántas unidades avisar.";
-      if (!draft.dashboard && !draft.notification && !draft.email) errors.alarm = "Elige al menos una forma de aviso.";
-    }
+    if (draft.alarmOn && (!draft.minUnits.trim() || parseDecimal(draft.minUnits) === null))
+      errors.minUnits = "Indica a partir de cuántas unidades avisar.";
   }
   return errors;
 }
@@ -166,14 +148,7 @@ function fromDraft(draft: Draft, id: string): Product {
     stock: draft.stockEnabled
       ? {
           allowWithoutStock: draft.allowWithoutStock,
-          alarm: draft.alarmOn
-            ? {
-                minUnits: parseDecimal(draft.minUnits) ?? 0,
-                dashboard: draft.dashboard,
-                notification: draft.notification,
-                email: draft.email,
-              }
-            : null,
+          alarm: draft.alarmOn ? { minUnits: parseDecimal(draft.minUnits) ?? 0 } : null,
         }
       : null,
   };
@@ -632,7 +607,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                   />
                   <CheckField
                     label="Activar alarma de stock"
-                    help="Te avisa cuando el stock baje de las unidades que indiques."
+                    help="Cuando el stock baja de las unidades que indiques, el producto aparece en los avisos del inicio hasta que lo marques como leído."
                     checked={draft.alarmOn}
                     onChange={(v) => set("alarmOn", v)}
                   />
@@ -657,32 +632,6 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                           </div>
                         )}
                       </Field>
-                      <CheckField
-                        label="Avisar en el inicio"
-                        help="Los productos en alerta de stock aparecen en los avisos de la pantalla de inicio hasta que los marques como leídos."
-                        checked={draft.dashboard}
-                        onChange={(v) => set("dashboard", v)}
-                      />
-                      <CheckField
-                        label="Enviar notificaciones"
-                        checked={draft.notification}
-                        onChange={(v) => set("notification", v)}
-                      />
-                      <CheckField
-                        label="Enviar correo electrónico"
-                        hint={
-                          settings.alarmEmail
-                            ? `A ${settings.alarmEmail}.`
-                            : "Falta el email de avisos en la configuración del catálogo."
-                        }
-                        checked={draft.email}
-                        onChange={(v) => set("email", v)}
-                      />
-                      {errors.alarm && (
-                        <p role="alert" className="m-0 text-xs text-destructive">
-                          {errors.alarm}
-                        </p>
-                      )}
                     </div>
                   )}
                 </div>

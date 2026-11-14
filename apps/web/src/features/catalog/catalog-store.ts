@@ -266,24 +266,18 @@ export function syncDocumentStock(doc: SalesDocument, origin?: StockDocumentKind
   );
 }
 
-/** A deleted document gives its units back when the settings say so. */
+/** A deleted document gives back the units it took. */
 export function releaseDocumentStock(doc: SalesDocument) {
   const before = catalog.get().taken[doc.id];
   if (!before) return;
   const { [doc.id]: _, ...taken } = catalog.get().taken;
-  const restore =
-    doc.kind === "deliveryNote"
-      ? catalog.get().settings.restoreOnDeleteDeliveryNote
-      : catalog.get().settings.restoreOnDeleteInvoice;
-  const given = restore
-    ? Object.entries(before.quantities).map(([productId, quantity]) =>
-        movement(productId, quantity, {
-          kind: doc.kind === "deliveryNote" ? "deliveryNote" : "invoice",
-          documentId: doc.id,
-          comments: `Eliminación de ${doc.kind === "deliveryNote" ? "albarán" : "factura"} ${doc.number ?? ""}`.trim(),
-        }),
-      )
-    : [];
+  const given = Object.entries(before.quantities).map(([productId, quantity]) =>
+    movement(productId, quantity, {
+      kind: doc.kind === "deliveryNote" ? "deliveryNote" : "invoice",
+      documentId: doc.id,
+      comments: `Eliminación de ${doc.kind === "deliveryNote" ? "albarán" : "factura"} ${doc.number ?? ""}`.trim(),
+    }),
+  );
   const { movements } = catalog.get();
   void write(
     { taken, movements: given.length ? [...movements, ...given] : movements },

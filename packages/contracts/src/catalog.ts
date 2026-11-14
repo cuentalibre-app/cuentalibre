@@ -3,12 +3,8 @@ import { fraction, id } from "./common";
 import { catalogUnitSchema, stockRulesSchema } from "./core";
 
 export const stockAlarmSettingsSchema = z.object({
-  /** Warn when fewer units than this are left. */
+  /** List the product on the home page when fewer units than this are left. */
   minUnits: z.number().nonnegative(),
-  /** List the product on the home page. */
-  dashboard: z.boolean(),
-  notification: z.boolean(),
-  email: z.boolean(),
 });
 export type StockAlarmSettings = z.infer<typeof stockAlarmSettingsSchema>;
 
@@ -57,12 +53,7 @@ export const catalogSettingsSchema = z.object({
   conceptText: z.enum(["name", "codeAndName"]),
   /** Copy the product description into the concept's detailed description. */
   copyDescription: z.boolean(),
-  /** Where stock alarms are emailed. */
-  alarmEmail: z.string(),
   rules: stockRulesSchema,
-  /** Put the stock back when an invoice or delivery note that took it is deleted. */
-  restoreOnDeleteInvoice: z.boolean(),
-  restoreOnDeleteDeliveryNote: z.boolean(),
   /** Stock options a new product starts with, and imports fall back to. */
   defaults: stockControlSchema.extend({ enabled: z.boolean(), alarmOn: z.boolean() }),
 });
