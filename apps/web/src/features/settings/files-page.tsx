@@ -115,7 +115,7 @@ export function FilesPage() {
               <p className="m-0 rounded-xl border border-dashed border-border px-5 py-8 text-center text-sm text-muted-foreground">
                 {filter === "unused"
                   ? "Todos tus archivos están adjuntos a algo."
-                  : "Aún no has adjuntado archivos. Los justificantes de tus gastos y facturas aparecerán aquí."}
+                  : "Aquí aparecerán los justificantes que adjuntes."}
               </p>
             ) : (
               <ul className="m-0 flex list-none flex-col divide-y divide-border surface p-0">

@@ -273,7 +273,7 @@ function BrowserNotifications() {
     granted:
       "Este navegador ya recibe tus notificaciones. Para dejar de recibirlas, bloquéalas en los ajustes del sitio.",
     denied: "Has bloqueado las notificaciones en este navegador. Puedes permitirlas en los ajustes del sitio.",
-    default: "Si lo deseas, puedes recibir las notificaciones push en este navegador.",
+    default: "Recibe notificaciones en este navegador.",
   }[permission];
 
   return (
@@ -301,19 +301,18 @@ function DeleteAccountSection() {
     <Section title="Eliminar cuenta" index={1} defaultOpen={false}>
       <div className="flex max-w-3xl flex-col gap-2 text-muted-foreground">
         <p className="m-0">
-          Se borrarán tu usuario y todas las empresas en las que eres el único usuario, con sus facturas, gastos,
-          contactos, documentos adjuntos y configuración. No se puede deshacer.
+          Se borran tu usuario y las empresas en las que eres el único usuario, con todos sus datos. No se puede
+          deshacer.
         </p>
         <p className="m-0">
-          La Ley General Tributaria te obliga a conservar tus facturas y libros durante al menos cuatro años.{" "}
+          Hacienda exige conservar facturas y libros cuatro años:{" "}
           <Link to={EXPORT_PATH} className="font-medium text-primary hover:text-primary-hover">
-            Exporta tus datos
+            exporta tus datos
           </Link>{" "}
-          antes de eliminar la cuenta.
+          antes.
         </p>
         <p className="m-0">
-          Las empresas que compartes con otros usuarios se mantienen; solo dejarás de pertenecer a ellas. Las copias de
-          seguridad que aún contengan tus datos se borran solas en un plazo de 31 días.
+          De las empresas compartidas solo sales tú. Las copias de seguridad con tus datos se borran en 31 días.
         </p>
       </div>
       <Button variant="destructive" className="self-start" onClick={() => setOpen(true)}>

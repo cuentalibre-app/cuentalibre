@@ -120,7 +120,7 @@ export function StockPage() {
       <Page>
         <PageHeader
           title="Regularización de stock"
-          description="Todos los movimientos de stock: los que hacen las facturas y albaranes, y los ajustes que haces a mano por pérdidas, compras o recuentos."
+          description="Movimientos de facturas, albaranes y ajustes manuales."
           actions={
             <Button onClick={() => setCreating(true)} disabled={stocked.length === 0}>
               <Plus strokeWidth={2} aria-hidden="true" />

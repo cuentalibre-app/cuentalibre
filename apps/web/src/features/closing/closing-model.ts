@@ -109,7 +109,7 @@ export function useQuarterChecks(period: Period): QuarterCheck[] {
             id: "uncollected",
             tone: "notice",
             title: plural(uncollected.length, "factura emitida sin cobrar", "facturas emitidas sin cobrar"),
-            detail: "No impide cerrar: podrás marcarlas como cobradas desde la lista con el trimestre cerrado.",
+            detail: "Puedes cerrar igualmente y marcarlas como cobradas después.",
             to: `${KINDS.invoice.path}?periodo=${key}`,
           }
         : { id: "uncollected", tone: "ok", title: "Facturas emitidas cobradas", detail: "No hay cobros pendientes." },
@@ -118,7 +118,7 @@ export function useQuarterChecks(period: Period): QuarterCheck[] {
             id: "unpaid",
             tone: "notice",
             title: plural(unpaid.length, "factura recibida sin pagar", "facturas recibidas sin pagar"),
-            detail: "No impide cerrar: podrás marcarlas como pagadas desde la lista con el trimestre cerrado.",
+            detail: "Puedes cerrar igualmente y marcarlas como pagadas después.",
             to: `${PURCHASES_PATH}?periodo=${key}`,
           }
         : { id: "unpaid", tone: "ok", title: "Facturas recibidas pagadas", detail: "No hay pagos pendientes." },

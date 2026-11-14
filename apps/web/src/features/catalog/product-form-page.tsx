@@ -35,8 +35,7 @@ import { catalogStore, useCatalog } from "./catalog-store";
 import { FamilyDialog } from "./family-dialog";
 import { SettingsLink } from "@/features/settings/settings-parts";
 
-const DEFAULT_HELP =
-  "Este valor es el que se marcará por defecto al introducir este producto en una factura. Se puede modificar en la propia factura.";
+const DEFAULT_HELP = "Valor por defecto en las facturas; se puede cambiar en cada una.";
 
 interface Draft {
   familyId: string | null;
@@ -364,10 +363,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                     />
                   )}
                 </Field>
-                <Field
-                  label="Notas privadas"
-                  help="Notas privadas sobre el producto que no se mostrarán en la factura."
-                >
+                <Field label="Notas privadas" help="No aparecen en la factura.">
                   {(p) => (
                     <Textarea
                       {...p}
@@ -585,8 +581,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                   {!rulesActive(settings.rules) && (
                     <Notice tone="warning">
                       <p className="m-0">
-                        Todavía no has elegido en qué documentos se descuenta el stock, así que solo cambiará cuando lo
-                        regularices a mano. Configúralo en la{" "}
+                        El stock solo cambia a mano hasta que elijas cuándo se descuenta en la{" "}
                         <SettingsLink
                           from="el producto"
                           to={CATALOG_SETTINGS_PATH}
@@ -632,7 +627,6 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                   )}
                   <CheckField
                     label="Permitir vender sin stock"
-                    help="Si marcas esta opción, se podrá vender el producto aunque esté fuera de stock."
                     checked={draft.allowWithoutStock}
                     onChange={(v) => set("allowWithoutStock", v)}
                   />
@@ -671,7 +665,6 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                       />
                       <CheckField
                         label="Enviar notificaciones"
-                        help="Recibirás un aviso en el programa cuando el stock baje de esas unidades."
                         checked={draft.notification}
                         onChange={(v) => set("notification", v)}
                       />

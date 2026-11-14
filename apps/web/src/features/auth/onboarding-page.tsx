@@ -96,10 +96,7 @@ function RegimeStep({ setup, setProfile, setTax }: { setup: Setup; setProfile: S
         options={BUSINESS_KINDS}
         className="self-start"
       />
-      <Field
-        label="Región fiscal"
-        help="Cada territorio tiene su propia normativa: en Canarias, por ejemplo, se aplica el IGIC en lugar del IVA."
-      >
+      <Field label="Región fiscal">
         {(p) => (
           <GroupedSelect
             {...p}
@@ -156,10 +153,6 @@ function RegimeStep({ setup, setProfile, setTax }: { setup: Setup; setProfile: S
           <p className="m-0">
             Lo elegiste al darte de alta en Hacienda: aparece en el modelo 036 o 037 que presentaste. Si te lo tramitó
             una gestoría, pídeselo.
-          </p>
-          <p className="m-0">
-            Lo más habitual es la estimación directa simplificada para el IRPF y el régimen general para el IVA. Si no
-            estás seguro, déjalos así: podrás cambiarlos en Configuración › Impuestos.
           </p>
         </div>
       </details>

@@ -351,7 +351,7 @@ export function IntraEuPage() {
         <Assumptions
           items={[
             "Recoge solo las facturas con el tipo de operación Intracomunitaria, sea cual sea el país del cliente o proveedor.",
-            "El código de país sale del prefijo del NIF-IVA y, si no lo tiene, del país de la ficha del contacto. Si falta el país en alguna operación, escribe el NIF-IVA con su prefijo (por ejemplo, FR12345678901) o completa el país en la ficha.",
+            "El país sale del prefijo del NIF-IVA o, si no lo tiene, de la ficha del contacto.",
             "Las ventas de la cuenta 700 y las compras de las cuentas 600 y 602 son bienes (claves E y A); el resto, servicios (S e I).",
             "Las facturas rectificativas de operaciones de un periodo anterior van como rectificaciones de ese periodo, con la base declarada y la base una vez rectificada. Las del mismo periodo se suman a su operación.",
             "Los clientes y proveedores con el mismo NIF-IVA se declaran como un solo operador.",

@@ -65,10 +65,6 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
         <UnsavedChangesGuard dirty={dirty} />
 
         <Section title="Sistema de auto-numeración" index={index++}>
-          <p className="m-0 max-w-3xl text-muted-foreground">
-            Las series de numeración definen los formatos de numeración de {copy.plural} y permiten proponer el
-            siguiente número disponible de cada serie al crear {kind === "draft" ? "una" : "un"} {copy.one}.
-          </p>
           <div className="flex flex-col gap-1 rounded-lg border border-border px-3 py-2.5 md:hidden">
             <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <span className="font-medium">{config.seriesLabel}</span>
@@ -158,11 +154,11 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
             )}
           </div>
           <Notice>
-            El símbolo de la moneda depende del país y la región fiscal configurados en{" "}
+            La moneda depende del país configurado en{" "}
             <Link to="/impuestos" className={buttonVariants({ variant: "link" })}>
               Impuestos
             </Link>
-            . Elige otro país para cambiar la moneda.
+            .
           </Notice>
         </Section>
 
@@ -196,14 +192,10 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
               onChange={(v) => set("keepLinesOnInvoice", v)}
             />
             <ul className="m-0 flex max-w-3xl flex-col gap-1.5 pl-5 text-sm text-muted-foreground">
+              <li>Marcada: copia cada concepto con su descripción.</li>
               <li>
-                Marcada, la factura copia los conceptos {kind === "draft" ? "de la factura borrador" : "del albarán"}{" "}
-                uno a uno, con su descripción.
-              </li>
-              <li>
-                Desmarcada, copia una línea por cada tipo de impuesto que nombra{" "}
-                {kind === "draft" ? "la factura borrador" : "el albarán"} de origen. Es lo recomendable si facturas
-                muchos {kind === "draft" ? "borradores" : "albaranes"} en una sola factura.
+                Desmarcada: una línea por tipo de impuesto, útil para agrupar muchos{" "}
+                {kind === "draft" ? "borradores" : "albaranes"} en una factura.
               </li>
             </ul>
           </Section>

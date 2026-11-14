@@ -58,7 +58,7 @@ export function taxIdError(kind: BusinessKind, taxId: string): string | undefine
   if (!check.valid) {
     if (check.reason === "empty") return "Introduce tu NIF.";
     if (check.reason === "checksum") return "La letra o el dígito de control no es correcto.";
-    return "El formato no es correcto. Ejemplos: 12345678Z (NIF), X1234567L (NIE) o B12345674 (CIF).";
+    return "Formato de NIF no válido. Ej.: 12345678Z, X1234567L o B12345674.";
   }
   if (kind === "selfEmployed" && check.kind === "cif")
     return "Un CIF es de una sociedad. Cambia el tipo de empresa o revisa el NIF.";

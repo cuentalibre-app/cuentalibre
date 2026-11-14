@@ -34,7 +34,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     key: "email",
     label: "Email",
     title: "Confirma tu email",
-    description: "Así sabremos que está bien escrito y podrás recuperar tu cuenta si olvidas la contraseña.",
+    description: "Para recuperar tu cuenta si olvidas la contraseña.",
     optional: true,
   },
   {
@@ -69,7 +69,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     key: "plan",
     label: "Plan",
     title: "Tienes 30 días gratis",
-    description: "Usa cuentalibre entero, sin tarjeta. Si ya sabes que te quedas, puedes suscribirte ahora.",
+    description: "Pruébalo todo gratis o suscríbete ya.",
     optional: false,
   },
 ];

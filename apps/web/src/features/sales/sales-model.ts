@@ -514,31 +514,30 @@ export const OPERATION_TYPES: { value: OperationType; label: string; hint: strin
   {
     value: "intraEu",
     label: "Intracomunitaria",
-    hint: "Si el destinatario está inscrito en el VIES y es autónomo o sociedad con domicilio fiscal fuera de España pero en la UE.",
+    hint: "Empresa o autónomo de otro país de la UE inscrito en el VIES.",
   },
   {
     value: "export",
     label: "Exportación",
-    hint: "Entrega de mercancías si el destinatario tiene domicilio social en Canarias, Ceuta, Melilla o fuera de la Unión Europea.",
+    hint: "Entregas a Canarias, Ceuta, Melilla o fuera de la UE.",
   },
 ];
 
 export const RENTAL_LOCATIONS: Option<RentalLocation>[] = [
   {
     value: "spain",
-    label:
-      "Inmueble con referencia catastral situado en cualquier punto del territorio español, con excepción de la Comunidad Autónoma del País Vasco y Comunidad Foral de Navarra",
+    label: "Con referencia catastral, en España salvo País Vasco y Navarra",
   },
   {
     value: "basqueCountry",
-    label: "Inmueble con referencia catastral situado en la Comunidad Autónoma del País Vasco",
+    label: "Con referencia catastral, en el País Vasco",
   },
-  { value: "navarre", label: "Inmueble con referencia catastral situado en la Comunidad Foral de Navarra" },
+  { value: "navarre", label: "Con referencia catastral, en Navarra" },
   {
     value: "noCadastralRef",
-    label: "Inmueble situado en cualquier punto del territorio español, pero sin tener asignada referencia catastral",
+    label: "En España, sin referencia catastral",
   },
-  { value: "abroad", label: "Inmueble situado en el extranjero" },
+  { value: "abroad", label: "En el extranjero" },
 ];
 
 /** "7,5 %" */

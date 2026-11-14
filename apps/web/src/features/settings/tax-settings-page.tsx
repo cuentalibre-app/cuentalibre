@@ -288,10 +288,7 @@ export function TaxSettingsPage() {
             </Link>
           </p>
           <div className="grid gap-4 md:grid-cols-3">
-            <Field
-              label="Región fiscal"
-              help="Cada territorio tiene su propia normativa: en Canarias, por ejemplo, se aplica el IGIC en lugar del IVA."
-            >
+            <Field label="Región fiscal">
               {(p) => (
                 <GroupedSelect
                   {...p}

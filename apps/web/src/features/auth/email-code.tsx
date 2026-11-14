@@ -222,8 +222,7 @@ function ChangeEmail({
   return (
     <form onSubmit={(e) => void submit(e)} noValidate className="flex flex-col gap-4">
       <p className="m-0 text-pretty">
-        Ahora usas <strong className="break-all">{current}</strong>. Te enviaremos un código al nuevo para comprobar que
-        es tuyo; al escribirlo, tu cuenta pasa a usarlo.
+        Ahora usas <strong className="break-all">{current}</strong>. Te enviaremos un código al nuevo para confirmarlo.
       </p>
       <Field label="Email correcto" error={error ?? undefined}>
         {(p) => (

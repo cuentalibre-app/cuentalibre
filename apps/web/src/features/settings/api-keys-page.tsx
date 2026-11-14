@@ -87,7 +87,7 @@ export function ApiKeysPage() {
 
         {!api ? (
           <p className="m-0 max-w-3xl rounded-lg bg-muted px-4 py-3 text-sm">
-            Las claves de API están disponibles cuando usas cuentalibre con tu cuenta.
+            Crea una cuenta para usar claves de API.
           </p>
         ) : (
           <>
