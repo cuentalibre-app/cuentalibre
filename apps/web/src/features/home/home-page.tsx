@@ -99,9 +99,9 @@ export function HomePage() {
               Nueva factura
             </Link>
             <div className="ml-1 flex items-center gap-2 border-l border-divider pl-3">
-              <HelpChatToggle className="size-8" />
               <Notifications className="size-8" />
               <UserMenu className="size-8" />
+              <HelpChatToggle className="size-8" />
             </div>
           </>
         }
