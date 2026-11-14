@@ -204,7 +204,7 @@ function ActivitiesTable({
 /** "Clientes varios": one client for every sale to an unidentified customer. */
 function VariousClients({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
   const clients = useContacts("client");
-  const existing = clients.find((c) => /^clientes? varios$/i.test(c.name.trim()));
+  const existing = clients.find((c) => c.variousClients);
   const NONE = "none";
 
   return (
@@ -233,7 +233,7 @@ function VariousClients({ value, onChange }: { value: string | null; onChange: (
             variant="secondary"
             onClick={() => {
               const id = newId();
-              contactsStore.add("client", { id, name: "Clientes varios", taxId: "" });
+              contactsStore.add("client", { id, name: "Clientes varios", taxId: "", variousClients: true });
               onChange(id);
             }}
           >

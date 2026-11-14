@@ -1,4 +1,4 @@
-import { SPAIN, checkTaxId, hasEuVatPrefix, isOtherEuCountry } from "@cuentalibre/core";
+import { SPAIN, checkTaxId, countryOf, hasEuVatPrefix, isOtherEuCountry } from "@cuentalibre/core";
 import type { Contact, ContactRole } from "@cuentalibre/contracts";
 
 export interface RoleConfig {
@@ -126,8 +126,6 @@ export const COUNTRIES: { label?: string; options: string[] }[] = [
     ],
   },
 ];
-
-export const countryOf = (contact: Pick<Contact, "country">) => contact.country || SPAIN;
 
 /** Why a tax ID can't be saved, or undefined when it is fine. */
 export function taxIdError(taxId: string, country: string): string | undefined {

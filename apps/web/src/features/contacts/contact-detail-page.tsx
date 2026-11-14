@@ -4,6 +4,7 @@ import { ExternalLink, MapPin, MoreHorizontal, Pencil } from "lucide-react";
 import {
   cents,
   checkTaxId,
+  countryOf,
   defaultPeriod,
   formatIban,
   isOtherEuCountry,
@@ -44,7 +45,7 @@ import {
 } from "./contacts-activity";
 import { useCustomFieldLabels } from "./contact-settings-store";
 import { TagsDialog, useContactActions } from "./contacts-list-page";
-import { ROLES, contactPath, countryOf, editContactPath, formatAddress } from "./contacts-model";
+import { ROLES, contactPath, editContactPath, formatAddress } from "./contacts-model";
 import { contactsStore, useContacts } from "./contacts-store";
 
 type Tab = "ficha" | "documentos" | "facturacion" | "adjuntos";

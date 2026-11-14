@@ -168,7 +168,7 @@ describe("contacts", () => {
     const ana = await member();
     const created = await ana.request("/v1/contacts", {
       method: "POST",
-      body: { role: "supplier", name: "Papelería Sol", taxId: "B11111111" },
+      body: { role: "supplier", name: "Papelería Sol", taxId: "B11111119" },
     });
     expect(created.status).toBe(201);
     const sol = (await created.json()) as { id: string };
@@ -176,7 +176,7 @@ describe("contacts", () => {
       id: expect.stringMatching(/^[0-9a-f-]{36}$/),
       role: "supplier",
       name: "Papelería Sol",
-      taxId: "B11111111",
+      taxId: "B11111119",
     });
 
     const listed = await ana.request("/v1/contacts?role=supplier");
@@ -197,11 +197,11 @@ describe("contacts", () => {
 
   it("accepts a repeated tax ID and finds contacts by it", async () => {
     const ana = await member();
-    const create = (name: string, taxId: string) =>
-      ana.request("/v1/contacts", { method: "POST", body: { role: "client", name, taxId } });
+    const create = (name: string, taxId: string, variousClients?: boolean) =>
+      ana.request("/v1/contacts", { method: "POST", body: { role: "client", name, taxId, variousClients } });
     expect((await create("Norte SL", "B12345674")).status).toBe(201);
     expect((await create("Norte SL (Bilbao)", "ES-B12.345.674")).status).toBe(201);
-    expect((await create("Ana", "")).status).toBe(201);
+    expect((await create("Clientes varios", "", true)).status).toBe(201);
 
     const names = async (query: string) =>
       ((await (await ana.request(`/v1/contacts?${query}`)).json()) as { contacts: { name: string }[] }).contacts
@@ -210,6 +210,57 @@ describe("contacts", () => {
     expect(await names("taxId=b12345674")).toEqual(["Norte SL", "Norte SL (Bilbao)"]);
     expect(await names("role=supplier&taxId=B12345674")).toEqual([]);
     expect(await names("taxId=")).toEqual([]);
+  });
+
+  it("needs a valid tax ID for the contact's country", async () => {
+    const ana = await member();
+    const create = (body: Record<string, unknown>) =>
+      ana.request("/v1/contacts", { method: "POST", body: { role: "client", name: "Norte SL", ...body } });
+    const rejected = async (body: Record<string, unknown>) => {
+      const response = await create(body);
+      expect(response.status).toBe(400);
+      return ((await response.json()) as { error: { code: string; message: string } }).error;
+    };
+
+    expect(await rejected({ taxId: "" })).toEqual({ code: "invalid_tax_id", message: "taxId: required." });
+    expect((await rejected({ taxId: "hola" })).code).toBe("invalid_tax_id");
+    expect((await rejected({ taxId: "B12345675" })).message).toBe("taxId: the control character is wrong.");
+    expect((await rejected({ taxId: "DE#123", country: "Alemania" })).code).toBe("invalid_tax_id");
+
+    const foreign = await create({ taxId: "fr 40 303 265 045", country: "Francia" });
+    expect(foreign.status).toBe(201);
+    expect(await foreign.json()).toMatchObject({ taxId: "FR40303265045", country: "Francia" });
+
+    const created = await create({ taxId: "b-12.345.674" });
+    expect(created.status).toBe(201);
+    const norte = (await created.json()) as { id: string; taxId: string };
+    expect(norte.taxId).toBe("B12345674");
+
+    const patch = (body: Record<string, unknown>) => ana.request(`/v1/contacts/${norte.id}`, { method: "PATCH", body });
+    expect(await errorCode(await patch({ taxId: "B12345675" }))).toBe("invalid_tax_id");
+    // Moving to the UK keeps the NIF, which is still letters and digits; a stray symbol isn't
+    expect((await patch({ country: "Reino Unido" })).status).toBe(200);
+    expect(await errorCode(await patch({ taxId: "GB 123/456*" }))).toBe("invalid_tax_id");
+  });
+
+  it('lets only the "Clientes varios" client go without a tax ID', async () => {
+    const ana = await member();
+    const various = client({ name: "Clientes varios", taxId: "", variousClients: true });
+    expect((await send(ana, [{ type: "create", entity: "clients", data: various }])).status).toBe(200);
+    const saved = await ana.request(`/v1/contacts/${various.id}`, { method: "PATCH", body: { city: "Sevilla" } });
+    expect(saved.status).toBe(200);
+
+    // A tax ID it does have must still be valid, and dropping the mark makes it required
+    const patch = (body: Record<string, unknown>) =>
+      ana.request(`/v1/contacts/${various.id}`, { method: "PATCH", body });
+    expect(await errorCode(await patch({ taxId: "hola" }))).toBe("invalid_tax_id");
+    expect(await errorCode(await patch({ variousClients: null }))).toBe("invalid_tax_id");
+
+    const supplier = await send(ana, [
+      { type: "create", entity: "suppliers", data: client({ taxId: "", variousClients: true }) },
+    ]);
+    expect(supplier.status).toBe(400);
+    expect(await errorCode(supplier)).toBe("invalid_contact");
   });
 
   it("documents the routes", async () => {
