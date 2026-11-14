@@ -30,7 +30,7 @@ import { ActionsMenu, EmptyState } from "@/features/sales/list-parts";
 import { WITHHOLDING_GROUPS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { MONTHS_SHORT, formatDate, periodCode } from "@/lib/format";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import { TagChip } from "@/features/settings/tag-chip";
 import { filesAreStored } from "@/data/files";
@@ -524,6 +524,7 @@ function Documents({ role, rows }: { role: ContactRole; rows: ActivityRow[] }) {
 }
 
 function Billing({ role, rows, today }: { role: ContactRole; rows: ActivityRow[]; today: Date }) {
+  const availableYears = useAvailableYears();
   const [period, setPeriod] = useState<Period>(() => defaultPeriod(today));
   const all = summarizeActivity(rows);
   const inPeriod = summarizeActivity(rows, period);

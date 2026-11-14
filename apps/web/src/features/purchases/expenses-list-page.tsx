@@ -42,7 +42,7 @@ import {
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { paymentMethodName } from "@/features/settings/settings-model";
 import { TagChips } from "@/features/settings/tag-chip";
 import { attachmentUrl } from "@/data/files";
@@ -129,6 +129,7 @@ function matches(r: Row, f: Filters): boolean {
 }
 
 export function ExpensesListPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [filters, setFilters] = useState(NO_FILTERS);

@@ -22,7 +22,7 @@ import { clientOf, documentTotals, KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { useSettings } from "@/features/settings/settings-store";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
 import {
   Assumptions,
@@ -291,6 +291,7 @@ function IncomeTax100({ year, today }: { year: number; today: Date }) {
 }
 
 export function IncomeTaxPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const annual = period.quarter === null;

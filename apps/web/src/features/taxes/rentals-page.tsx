@@ -7,7 +7,7 @@ import { Page, PageHeader } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { formatDate } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { FormInfo } from "./form-info";
 import { usePartyBooks } from "./party-operations";
 import { RecordsTable, type RecordColumn, type RecordRow } from "./records-table";
@@ -246,6 +246,7 @@ function Form180({ year, today }: { year: number; today: Date }) {
 }
 
 export function RentalsPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const annual = period.quarter === null;
