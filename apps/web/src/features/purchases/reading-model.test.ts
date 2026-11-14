@@ -22,6 +22,7 @@ const draft = (fields: Partial<ExtractedPurchase> = {}): ExtractedPurchase => ({
   vatBreakdown: [{ rate: 0.21, base: cents(10000), vat: cents(2100), surchargeRate: 0, surcharge: cents(0) }],
   withholding: null,
   total: cents(12100),
+  expenseType: null,
   ...fields,
 });
 
