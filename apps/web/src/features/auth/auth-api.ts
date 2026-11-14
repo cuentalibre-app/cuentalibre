@@ -103,7 +103,8 @@ export const unlinkAccount = (accountId: string) => post("/unlink-account", { ac
 /**
  * What this instance offers besides email and password: Google, and email
  * (verifying it, resetting a forgotten password); whether it charges for its
- * plan (cuentalibre Cloud); whether it reads received invoices with AI. Nothing
+ * plan (cuentalibre Cloud); whether it reads received invoices with AI;
+ * whether it has the AI help chat. Nothing
  * extra if the API can't say.
  */
 export interface SignInMethods {
@@ -111,6 +112,7 @@ export interface SignInMethods {
   email: boolean;
   billing: boolean;
   ai: boolean;
+  chat: boolean;
 }
 
 let methods: Promise<SignInMethods> | undefined;
@@ -126,7 +128,7 @@ async function fetchSignInMethods(): Promise<SignInMethods> {
     // Unreachable API: the screen still offers email and password.
   }
   methods = undefined;
-  return { google: false, email: false, billing: false, ai: false };
+  return { google: false, email: false, billing: false, ai: false, chat: false };
 }
 
 export const signOut = () => post("/sign-out", {});

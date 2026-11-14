@@ -25,6 +25,7 @@ const signInMethodsSchema = z.object({
   email: z.boolean(),
   billing: z.boolean(),
   ai: z.boolean(),
+  chat: z.boolean(),
 });
 
 const signInMethods = createRoute({
@@ -33,7 +34,7 @@ const signInMethods = createRoute({
   tags: ["Meta"],
   summary: "How people can sign in to this instance, besides email and password",
   description:
-    "`google`: sign in with Google. `email`: the instance sends email, so people verify their address and reset a forgotten password. `billing`: the instance charges for its plan (cuentalibre Cloud). `ai`: it reads received invoices and receipts with an AI model (`POST /v1/purchases/extract`).",
+    "`google`: sign in with Google. `email`: the instance sends email, so people verify their address and reset a forgotten password. `billing`: the instance charges for its plan (cuentalibre Cloud). `ai`: it reads received invoices and receipts with an AI model (`POST /v1/purchases/extract`). `chat`: it has an AI help chat about using the app.",
   responses: {
     200: {
       description: "The sign-in methods",
