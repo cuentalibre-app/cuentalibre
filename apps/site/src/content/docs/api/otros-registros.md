@@ -73,7 +73,7 @@ No se puede borrar mientras la use un cobro o pago suelto. La que se propone en 
 | `cost`                                 | número \| null   | Coste unitario en euros, sin impuestos; `null` si no se sabe.                        |
 | `costVatRate`, `costSurchargeRate`     | fracción         |                                                                                      |
 | `custom`                               | 4 textos         | Campos libres, con los nombres de los ajustes del catálogo.                          |
-| `stock`                                | objeto \| null   | `null` si no se controla; si no, `{ allowWithoutStock, alarm }`, con `alarm` `null` o `{ minUnits, dashboard, notification, email }`. |
+| `stock`                                | objeto \| null   | `null` si no se controla; si no, `{ allowWithoutStock, alarm }`, con `alarm` `null` o `{ minUnits }`. |
 
 ## Movimientos de stock
 

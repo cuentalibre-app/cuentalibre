@@ -7,15 +7,12 @@ export const initialCatalogSettings: CatalogSettings = {
   customFieldNames: ["Personalizado1", "Personalizado2", "Personalizado3", "Personalizado4"],
   conceptText: "name",
   copyDescription: false,
-  alarmEmail: "",
-  rules: { invoices: "never", deliveryNotes: "never", quotes: "never", drafts: "never" },
-  restoreOnDeleteInvoice: false,
-  restoreOnDeleteDeliveryNote: false,
+  rules: { invoices: "never", deliveryNotes: "never" },
   defaults: {
     enabled: false,
     allowWithoutStock: false,
     alarmOn: false,
-    alarm: { minUnits: 0, dashboard: false, notification: false, email: false },
+    alarm: { minUnits: 0 },
   },
 };
 
@@ -76,14 +73,14 @@ export const initialProducts: Product[] = [
     supplierRef: "GRF-A4-24P",
     cost: 1.2,
     privateNotes: "Imprenta Gráficas del Norte; pedido mínimo 500.",
-    stock: { allowWithoutStock: false, alarm: { minUnits: 100, dashboard: true, notification: true, email: false } },
+    stock: { allowWithoutStock: false, alarm: { minUnits: 100 } },
   }),
   service("p6", "f5", "Tarjetas de visita (caja de 500)", 28, "uds", {
     sku: "IMP-TARJ",
     supplierRef: "GRF-TV-500",
     discount: 0.05,
     cost: 11.5,
-    stock: { allowWithoutStock: true, alarm: { minUnits: 10, dashboard: true, notification: false, email: false } },
+    stock: { allowWithoutStock: true, alarm: { minUnits: 10 } },
   }),
   service("p7", "f2", "Diseño de logotipo", 600, null, { sku: "WEB-LOGO", active: false }),
 ];
