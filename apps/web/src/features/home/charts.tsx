@@ -19,12 +19,23 @@ function pct(value: number, max: number) {
   return `${(Math.max(0, value) / max) * 100}%`;
 }
 
-function Gridlines() {
+/** Dashed rows at each axis tick; with `columns`, also a dashed line down every month. */
+function Gridlines({ columns = false }: { columns?: boolean }) {
   return (
-    <div aria-hidden="true" className="absolute inset-0 flex flex-col justify-between">
-      <div className="border-t border-dashed border-chart-grid" />
-      <div className="border-t border-dashed border-chart-grid" />
-      <div className="border-t border-chart-axis" />
+    <div aria-hidden="true" className="absolute inset-0">
+      <div className="absolute inset-0 flex flex-col justify-between">
+        <div className="border-t border-dashed border-chart-grid" />
+        <div className="border-t border-dashed border-chart-grid" />
+        <div className="border-t border-chart-axis" />
+      </div>
+      {columns &&
+        MONTHS_SHORT.map((_, i) => (
+          <div
+            key={i}
+            className="absolute inset-y-0 border-l border-dashed border-chart-grid"
+            style={{ left: `${((i + 0.5) / 12) * 100}%` }}
+          />
+        ))}
     </div>
   );
 }
@@ -177,7 +188,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <div ref={plot} onMouseLeave={() => setHovered(null)} className="relative h-[200px]">
-            <Gridlines />
+            <Gridlines columns={view === "cumulative"} />
             {view === "monthly" ? (
               <div className="absolute inset-0 flex animate-fade-in items-end gap-1.5">
                 {monthly.map((m, i) => (
@@ -209,21 +220,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
               </div>
             ) : (
               <>
-                <svg
-                  viewBox="0 0 1200 200"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                  className="absolute inset-0 block h-[200px] w-full animate-fade-in"
-                >
-                  <rect
-                    x={months[0]! * 100}
-                    y="0"
-                    width={months.length * 100}
-                    height="200"
-                    className="fill-chart-highlight"
-                  />
-                </svg>
-                {/* The line draws itself from left to right */}
+{/* The line draws itself from left to right */}
                 <svg
                   viewBox="0 0 1200 200"
                   preserveAspectRatio="none"
