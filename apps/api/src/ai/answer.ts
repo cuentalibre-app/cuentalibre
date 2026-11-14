@@ -73,7 +73,7 @@ export const modelAnswerSchema = z.object({
         surcharge: z.number().nullable().describe("Equivalence surcharge amount, in euros"),
       }),
     )
-    .describe("One entry per VAT rate printed; empty when the document shows no breakdown"),
+    .describe("One entry per VAT rate printed, 0 % included; empty only when no base is shown"),
   withholding: z
     .object({
       ratePercent: z.number().describe("IRPF withholding (retención) rate, e.g. 15"),
@@ -100,7 +100,7 @@ Answer with the fields of the document exactly as printed. Never compute, guess 
 - Amounts in euros as plain numbers with a dot for decimals: "1.234,56 €" is 1234.56. Keep the minus sign of credit notes (facturas rectificativas, abonos).
 - Dates as YYYY-MM-DD. Spanish documents print them day first: 07/10/2026 is 2026-10-07.
 - Rates as percentages: 21 for 21 %.
-- vatLines: one entry per VAT rate in the breakdown. A ticket that only says "IVA incluido" without a base and a VAT amount has none.
+- vatLines: one entry per VAT rate printed, whether in a breakdown table or only on the item lines and totals. Invoices without VAT (0 %, exempt, reverse charge, "inversión del sujeto pasivo", foreign suppliers) still get one entry with the rate printed (0 when none is), the printed subtotal as base and 0 as vat. A ticket that only says "IVA incluido" without a base and a VAT amount has none.
 - withholding: only an IRPF withholding (retención) printed on the document.
 - concept: a short Spanish description of what was bought, such as "Fibra y móvil octubre" or "Comida de trabajo".
 - expenseAccount: the one account of the Spanish chart of accounts that fits what was bought, judged from the supplier and the items. Use null rather than a loose fit.
