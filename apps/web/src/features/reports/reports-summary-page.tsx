@@ -26,7 +26,7 @@ import { PURCHASES_PATH } from "@/features/purchases/purchases-model";
 import { KINDS } from "@/features/sales/sales-model";
 import { formatPercent, formatThousands, MONTHS, MONTHS_SHORT, periodLabel } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { PNL_PATH, useReportSources } from "./reports-model";
 
 /** "en 2026" or "en el 3.er trimestre de 2026". */
@@ -265,6 +265,7 @@ function MonthsTable({ months }: { months: MonthResult[] }) {
 }
 
 export function ReportsSummaryPage() {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const { books, breakdowns } = useReportSources();

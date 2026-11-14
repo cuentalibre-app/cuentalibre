@@ -44,7 +44,7 @@ import { GroupedSelect } from "@/features/sales/form-fields";
 import { TagChips } from "@/features/settings/tag-chip";
 import { MONTHS, formatDate, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { attachmentUrl } from "@/data/files";
 import { ReadDocumentButton } from "./reading";
 import { AttachmentsDialog } from "./form-parts";
@@ -176,6 +176,7 @@ function matches(r: Row, f: Filters): boolean {
 }
 
 export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKind }) {
+  const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
   const [filters, setFilters] = useState(NO_FILTERS);

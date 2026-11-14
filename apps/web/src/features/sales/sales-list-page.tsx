@@ -49,7 +49,7 @@ import { Page, PageHeader, Toolbar } from "@/components/page";
 import { PeriodSelect } from "@/components/period-select";
 import { MONTHS, formatDate, formatPercent, formatShortDate, parseEuros, periodCode } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import {
   INCOME_TYPE_GROUPS,
   KINDS,
@@ -157,6 +157,7 @@ const SETTINGS_PATHS: Record<SalesKind, string> = {
 };
 
 export function SalesListPage({ kind }: { kind: SalesKind }) {
+  const availableYears = useAvailableYears();
   const config = KINDS[kind];
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);

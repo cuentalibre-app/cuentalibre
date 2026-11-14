@@ -5,7 +5,7 @@ import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import { useSalesDocuments } from "@/features/sales/sales-store";
 import { downloadSheets, type SpreadsheetFormat } from "@/lib/xlsx";
-import { availableYears } from "@/mocks/data";
+import { useAvailableYears } from "@/lib/use-available-years";
 import { incomeTaxBooks, unifiedBooks, vatBooks } from "./export-data";
 import { ExportButton, FormatField, PageShell, Panel, RadioOption } from "./transfer-parts";
 import { EXPORT_PATH } from "./transfer-model";
@@ -13,6 +13,7 @@ import { EXPORT_PATH } from "./transfer-model";
 type OldBook = "vat" | "incomeTax";
 
 export function ExportBooksPage() {
+  const availableYears = useAvailableYears();
   const documents = useSalesDocuments();
   const purchases = usePurchaseInvoices();
   const expenses = useExpenses();
