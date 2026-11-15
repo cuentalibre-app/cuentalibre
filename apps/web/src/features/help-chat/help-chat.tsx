@@ -6,6 +6,7 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { LogoMark } from "@/components/logo";
 import { Notice } from "@/components/page";
 import { askHelpChat, useHelpChat, type HelpMessage } from "./help-chat-store";
+import { splitLinks } from "./links";
 
 /** Questions people ask while finding their way around, to start with a tap. */
 const SUGGESTIONS = [
@@ -93,7 +94,17 @@ function Message({ message }: { message: HelpMessage }) {
   }
   return (
     <li>
-      <p className="m-0 text-base leading-relaxed whitespace-pre-wrap">{message.text}</p>
+      <p className="m-0 text-base leading-relaxed break-words whitespace-pre-wrap">
+        {splitLinks(message.text).map((part, i) =>
+          "href" in part ? (
+            <a key={i} href={part.href} target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover">
+              {part.href}
+            </a>
+          ) : (
+            part.text
+          ),
+        )}
+      </p>
     </li>
   );
 }
