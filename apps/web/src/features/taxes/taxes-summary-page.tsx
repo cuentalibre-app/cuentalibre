@@ -27,7 +27,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { HelpTip, Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
-import { daysLeftLabel, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
+import { daysLeftLabel, formatDate, MONTHS_SHORT } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { useAvailableYears } from "@/lib/use-available-years";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
@@ -49,14 +49,11 @@ import { SettingsLink } from "@/features/settings/settings-parts";
 
 const QUARTERS = [1, 2, 3, 4] as const;
 
-/** "A compensar" for a negative 303, which is carried forward rather than paid. */
+/** A negative 303 is carried forward rather than paid, so it shows in green. */
 function VatAmount({ amount }: { amount: Cents }) {
-  if (amount >= 0)
-    return <span className={cn("amount", amount === 0 && "text-muted-foreground")}>{formatEUR(amount)}</span>;
   return (
-    <span className="flex flex-col items-end">
-      <span className="amount text-success">{formatEUR(amount)}</span>
-      <span className="text-2xs text-muted-foreground">a compensar</span>
+    <span className={cn("amount", amount === 0 && "text-muted-foreground", amount < 0 && "text-success")}>
+      {formatEUR(amount)}
     </span>
   );
 }
@@ -329,7 +326,6 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
   const closedLabel = closedCount === 1 ? "1 trimestre cerrado" : `${closedCount} trimestres cerrados`;
   const firstClosed = closedRows[0]?.quarter ?? 1;
   const lastClosed = closedRows.at(-1)?.quarter ?? 1;
-  const closedRange = `${periodRange({ year, quarter: firstClosed }).split(" – ")[0]} – ${periodRange({ year, quarter: lastClosed }).split(" – ")[1]}`;
   const closedName = firstClosed === lastClosed ? `${firstClosed}T` : `${firstClosed}T – ${lastClosed}T`;
   const toggleClosed = () => setShowClosed((v) => !v);
   const th = cn(table.th, "px-4");
@@ -391,8 +387,7 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
                     }}
                     className="cursor-pointer border-0 bg-transparent p-0 text-left text-foreground"
                   >
-                    <span className="font-semibold">{closedName}</span>{" "}
-                    <span className="text-sm text-muted-foreground">{closedRange}</span>
+                    <span className="font-semibold">{closedName}</span>
                   </button>
                 </td>
                 <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.vat)}</td>
@@ -420,8 +415,7 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
               return (
                 <tr key={r.quarter} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
                   <td className={td}>
-                    <span className="font-semibold">{r.quarter}T</span>{" "}
-                    <span className="text-sm text-muted-foreground">{periodRange(period)}</span>
+                    <span className="font-semibold">{r.quarter}T</span>
                   </td>
                   <td className={cn(td, "text-right")}>
                     <Link to={modelPath(VAT_PATH, period)} className={cn(linkClass, "justify-end")}>
@@ -483,10 +477,7 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
                 className="flex min-h-14 w-full cursor-pointer items-center gap-3 border-0 bg-transparent px-4 py-2.5 text-left text-foreground transition-opacity duration-150 active:opacity-60"
               >
                 <span className="flex flex-1 flex-col">
-                  <span>
-                    <span className="font-semibold">{r.quarter}T</span>{" "}
-                    <span className="text-sm text-muted-foreground">{periodRange({ year, quarter: r.quarter })}</span>
-                  </span>
+                  <span className="font-semibold">{r.quarter}T</span>
                   <span className="text-sm text-muted-foreground">
                     {FILING_STATUS[filingStatus(year, r.quarter, today)].label}
                   </span>
