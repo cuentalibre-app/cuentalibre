@@ -46,6 +46,7 @@ const mail = `mailto:${owner.email}`;
     <li><strong>Perfil y preferencias:</strong> los datos que añadas en tu perfil y tus preferencias de notificaciones.</li>
     <li><strong>Registros técnicos:</strong> los servidores anotan cada petición (IP, fecha, ruta y resultado) para detectar errores y ataques.</li>
     <li><strong>Comunicaciones:</strong> los mensajes que nos envíes al pedir ayuda.</li>
+    <li><strong>Preguntas al asistente:</strong> lo que escribes en el asistente de ayuda de la aplicación, que responde con inteligencia artificial. No lo guardamos: solo contamos cuántas preguntas hace cada empresa al día.</li>
     <li><strong>Pago:</strong> cuando activemos los cobros, los datos de facturación que nos des. Los datos de la tarjeta los gestiona directamente el proveedor de pagos; nosotros no los vemos.</li>
   </ul>
   <p>
@@ -61,6 +62,10 @@ const mail = `mailto:${owner.email}`;
     <tbody>
       <tr>
         <td>Crear y mantener tu cuenta y prestarte el servicio, incluidos los avisos necesarios sobre él (plazos, seguridad, cambios en las condiciones).</td>
+        <td>Ejecución del contrato (art. 6.1.b)</td>
+      </tr>
+      <tr>
+        <td>Responder tus dudas sobre cómo usar la aplicación con el asistente de ayuda.</td>
         <td>Ejecución del contrato (art. 6.1.b)</td>
       </tr>
       <tr>
@@ -88,6 +93,10 @@ const mail = `mailto:${owner.email}`;
       para poder recuperarlos, desaparecen en un máximo de 31 días.
     </li>
     <li><strong>Las sesiones</strong> caducan a los 7 días sin uso.</li>
+    <li>
+      <strong>Las preguntas al asistente</strong> no las conservamos. El proveedor de inteligencia artificial puede
+      guardarlas hasta 30 días para detectar abusos y después las borra.
+    </li>
     <li><strong>Los registros técnicos</strong> se sobrescriben automáticamente por tamaño, normalmente en pocas semanas.</li>
     <li>
       <strong>Las facturas que te emitamos</strong> y sus datos de cobro, durante los 6 años que exige el Código de
@@ -130,6 +139,14 @@ const mail = `mailto:${owner.email}`;
         <td>Alemania (UE), con sede en EE. UU.</td>
       </tr>
       <tr>
+        <td>OpenAI Ireland Ltd.</td>
+        <td>
+          Asistente de ayuda: recibe tus preguntas, la conversación y la documentación de cuentalibre, nunca los datos de
+          tu contabilidad. No las usa para entrenar sus modelos
+        </td>
+        <td>Irlanda (UE), con sede en EE. UU.</td>
+      </tr>
+      <tr>
         <td>Stripe Payments Europe, Ltd.</td>
         <td>Cobro de la suscripción, cuando activemos los pagos</td>
         <td>Irlanda (UE)</td>
@@ -145,7 +162,8 @@ const mail = `mailto:${owner.email}`;
     Tus datos se almacenan en la Unión Europea. Cloudflare es una empresa estadounidense y el tráfico puede pasar por
     servidores fuera de la UE. Está adherida al Marco de Privacidad de Datos UE-EE. UU. y, además, hemos suscrito con
     ella las cláusulas contractuales tipo de la Comisión Europea. Sentry también es estadounidense: guarda los informes
-    de errores en Alemania y su contrato de encargo incluye esas mismas cláusulas.
+    de errores en Alemania y su contrato de encargo incluye esas mismas cláusulas. OpenAI puede procesar las preguntas
+    al asistente en EE. UU.; su contrato de encargo también incluye las cláusulas contractuales tipo.
   </p>
 
   <h2>Cómo protegemos tus datos</h2>
