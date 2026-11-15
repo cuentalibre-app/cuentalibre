@@ -6,7 +6,7 @@ import { HELP_CHAT_PANEL_ID } from "./help-chat-panel";
 import { toggleHelpChat, useHelpChat, useHelpChatAvailable } from "./help-chat-store";
 
 /**
- * Opens the assistant from the top right of every page header: docked on the right on desktop,
+ * Opens the assistant from every page header (top right on desktop, first of the actions on phones): docked on the right on desktop,
  * lit while it is open; as a sheet over the page on phones.
  */
 export function HelpChatToggle({ className }: { className?: string }) {
