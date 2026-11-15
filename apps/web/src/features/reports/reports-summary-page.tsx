@@ -29,7 +29,7 @@ import { usePeriod } from "@/lib/use-period";
 import { useAvailableYears } from "@/lib/use-available-years";
 import { PNL_PATH, useReportSources } from "./reports-model";
 
-/** "en 2026" or "en el 3.er trimestre de 2026". */
+/** "en 2026" or "en el 3T de 2026". */
 const periodPhrase = (period: Period) =>
   period.quarter === null ? `en ${period.year}` : `en el ${periodLabel(period).replace(/ (\d{4})$/, " de $1")}`;
 
