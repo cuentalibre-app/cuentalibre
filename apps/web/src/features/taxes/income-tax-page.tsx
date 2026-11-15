@@ -232,7 +232,7 @@ function useRecordBooks(year: number): AeatFile {
     build: () => blob!,
     missing:
       !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
-        ? "Para generar los libros, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
+        ? "Para generar los libros, completa tu NIF, nombre y apellidos en Configuración › Datos de la empresa."
         : !activity
           ? "Para generar los libros, añade tu actividad económica en Configuración › Impuestos."
           : undefined,

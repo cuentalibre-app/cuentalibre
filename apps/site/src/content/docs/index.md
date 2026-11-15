@@ -49,8 +49,7 @@ Es el mismo programa, con las mismas funciones. Cambia quién lo instala y lo ma
 
 ## Qué hay aquí
 
+- **[Guía de uso](/docs/guia/primeros-pasos):** cómo llevar tu contabilidad en la aplicación, desde la primera factura hasta cerrar el trimestre.
 - **[Instalar en tu servidor](/docs/instalar):** paso a paso, con Docker, para usar cuentalibre gratis.
 - **[Conectar un agente](/docs/agentes):** cómo dejar que un asistente de IA o una automatización lea y escriba tu contabilidad, con seguridad.
 - **[Referencia de la API](/docs/api):** todas las rutas, sus campos y sus errores, para programar contra cuentalibre.
-
-Pronto añadiremos guías de la aplicación: emitir tu primera factura, registrar gastos, cerrar un trimestre y presentar los modelos 303 y 130.
