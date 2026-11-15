@@ -8,6 +8,7 @@ import { CashFlowChart } from "./charts";
 import { buildHomeData } from "./home-data";
 import { KpiGrid, taxReserve } from "./kpi-grid";
 import { MobileOverview } from "./mobile-overview";
+import { HelpChatToggle } from "@/features/help-chat/help-chat-toggle";
 import { Notifications } from "./notifications";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { HelpTip, Page, PageHeader } from "@/components/page";
@@ -55,7 +56,7 @@ export function HomePage() {
 
   return (
     <Page>
-      {/* Mobile: round shortcuts on the right, then the period's profit and its line through the year */}
+      {/* Mobile: shortcuts on the right, then the period's profit and its line through the year */}
       <div className="flex flex-col gap-4 lg:hidden">
         <MobileOverview
           data={data}
@@ -65,8 +66,9 @@ export function HomePage() {
           today={today}
           actions={
             <>
-              <Notifications className="size-11 rounded-full border-glass-edge bg-glass backdrop-blur-xl hover:bg-glass" />
-              <UserMenu className="size-11" />
+              <HelpChatToggle className="mr-1" />
+              <Notifications />
+              <UserMenu />
             </>
           }
         />
@@ -76,6 +78,7 @@ export function HomePage() {
       <PageHeader
         className="hidden lg:flex"
         title="Inicio"
+        assistant={false}
         inline={
           <>
             <TooltipProvider delayDuration={300}>
@@ -99,6 +102,7 @@ export function HomePage() {
             <div className="ml-1 flex items-center gap-2 border-l border-divider pl-3">
               <Notifications className="size-8" />
               <UserMenu className="size-8" />
+              <HelpChatToggle className="size-8" />
             </div>
           </>
         }

@@ -69,14 +69,14 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
 
       <div className="hidden flex-col gap-2 pt-1 lg:flex">
         <div className="flex justify-between text-sm">
-          <span className="font-medium">Cierre del T{toClose.quarter}</span>
+          <span className="font-medium">Cierre del {toClose.quarter}T</span>
           <span className="text-muted-foreground">
             {empty ? "Sin movimientos" : `${reviewed} de ${checks.length} revisados`}
           </span>
         </div>
         <div
           role="progressbar"
-          aria-label={`Cierre del T${toClose.quarter}`}
+          aria-label={`Cierre del ${toClose.quarter}T`}
           aria-valuemin={0}
           aria-valuemax={checks.length}
           aria-valuenow={reviewed}

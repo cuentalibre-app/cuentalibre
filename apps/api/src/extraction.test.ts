@@ -88,7 +88,7 @@ const openAiReply = (content: unknown) => () =>
 const anthropicReply = (input: unknown) => () =>
   Response.json({ content: [{ type: "tool_use", id: "toolu_1", name: "record_purchase", input }] });
 
-function appWith(ai: Pick<Env, "AI_MODEL" | "AI_API_KEY" | "AI_BASE_URL">, limits: Partial<Env> = {}) {
+function appWith(ai: Pick<Env, "AI_SCAN_MODEL" | "AI_SCAN_API_KEY" | "AI_SCAN_BASE_URL">, limits: Partial<Env> = {}) {
   return createApp({
     db,
     auth: createAuth(db, env, accountMailer),
@@ -99,8 +99,8 @@ function appWith(ai: Pick<Env, "AI_MODEL" | "AI_API_KEY" | "AI_BASE_URL">, limit
   });
 }
 
-const openAiApp = appWith({ AI_MODEL: "qwen2.5vl", AI_BASE_URL: "http://ollama.test:11434/v1" });
-const anthropicApp = appWith({ AI_MODEL: "claude-haiku-4-5", AI_API_KEY: "sk-ant-test" });
+const openAiApp = appWith({ AI_SCAN_MODEL: "qwen2.5vl", AI_SCAN_BASE_URL: "http://ollama.test:11434/v1" });
+const anthropicApp = appWith({ AI_SCAN_MODEL: "claude-haiku-4-5", AI_SCAN_API_KEY: "sk-ant-test" });
 
 async function memberOf(app: ReturnType<typeof createApp>) {
   const user = await signUp("Ana", app);
@@ -146,8 +146,8 @@ describe("AI settings", () => {
   });
 
   it("need a key for OpenAI or Anthropic, or a base URL for another provider", () => {
-    expect(() => loadEnv({ AI_MODEL: "gpt-4.1-mini" })).toThrow(/AI_MODEL needs AI_API_KEY/);
-    expect(() => loadEnv({ AI_MODEL: "qwen2.5vl", AI_BASE_URL: "http://localhost:11434/v1" })).not.toThrow();
+    expect(() => loadEnv({ AI_SCAN_MODEL: "gpt-4.1-mini" })).toThrow(/AI_SCAN_MODEL needs AI_SCAN_API_KEY/);
+    expect(() => loadEnv({ AI_SCAN_MODEL: "qwen2.5vl", AI_SCAN_BASE_URL: "http://localhost:11434/v1" })).not.toThrow();
   });
 });
 
@@ -336,8 +336,12 @@ describe("POST /v1/purchases/extract", () => {
 });
 
 describe("reading each file once", () => {
-  const ollama = { AI_MODEL: "qwen2.5vl", AI_BASE_URL: "http://ollama.test:11434/v1" };
-  const limitedApp = appWith(ollama, { AI_MONTHLY_DOCUMENTS: 2, AI_INPUT_PRICE: 0.4, AI_OUTPUT_PRICE: 1.6 });
+  const ollama = { AI_SCAN_MODEL: "qwen2.5vl", AI_SCAN_BASE_URL: "http://ollama.test:11434/v1" };
+  const limitedApp = appWith(ollama, {
+    AI_SCAN_MONTHLY_DOCUMENTS: 2,
+    AI_SCAN_INPUT_PRICE: 0.4,
+    AI_SCAN_OUTPUT_PRICE: 1.6,
+  });
   const usage = async (user: Client) => {
     const response = await user.request("/v1/purchases/extract/usage");
     expect(response.status).toBe(200);

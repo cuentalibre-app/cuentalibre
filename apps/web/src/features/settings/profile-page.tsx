@@ -23,6 +23,7 @@ import { SaveButton, SettingsHeader, useDraft } from "./settings-parts";
 import { initials } from "./settings-model";
 import { userFullName, userStore, useUserSettings } from "./user-store";
 import { Page } from "@/components/page";
+import { resetHelpChat } from "@/features/help-chat/help-chat-store";
 
 const MAX_AVATAR_BYTES = 1.5 * 1024 * 1024;
 
@@ -359,6 +360,7 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
     setError(null);
     try {
       await deleteAccount(hasPassword ? password : undefined);
+      resetHelpChat();
       reloadAt(SIGN_IN_PATH);
     } catch (failure) {
       setError(authErrorMessage(failure));

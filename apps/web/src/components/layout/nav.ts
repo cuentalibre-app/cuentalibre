@@ -131,9 +131,23 @@ export type MoreEntry =
  * pages of its own is a titled group, a single page is a plain row.
  */
 export const moreNav: MoreEntry[] = [
-  ...mainNav
-    .filter((item) => !tabPaths.includes(item.to))
-    .map((item): MoreEntry =>
+  ...mainNav.flatMap((item): MoreEntry[] => {
+    // Taxes has a tab, but its summary leaves the calendar and settings out on phones; they live here
+    if (item.to === "/impuestos")
+      return [
+        {
+          kind: "group",
+          to: item.to,
+          title: item.label,
+          icon: item.icon,
+          links: [
+            { label: "Calendario fiscal", to: "/impuestos/calendario" },
+            { label: "Configurar impuestos", to: "/configuracion/impuestos" },
+          ],
+        },
+      ];
+    if (tabPaths.includes(item.to)) return [];
+    return [
       item.children
         ? {
             kind: "group",
@@ -143,7 +157,8 @@ export const moreNav: MoreEntry[] = [
             links: item.children.filter((leaf) => !leaf.desktopOnly),
           }
         : { kind: "link", item },
-    ),
+    ];
+  }),
   ...secondaryNav.map((item): MoreEntry => ({ kind: "link", item })),
 ];
 

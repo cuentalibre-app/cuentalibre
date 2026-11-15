@@ -433,7 +433,7 @@ function QuarterPicker({
             )}
           >
             <span className="flex w-full items-baseline justify-between gap-2">
-              <span className="font-semibold">T{quarter}</span>
+              <span className="font-semibold">{quarter}T</span>
               <span className="text-xs text-muted-foreground">{periodRange({ year, quarter })}</span>
             </span>
             <Badge tone={state.tone}>

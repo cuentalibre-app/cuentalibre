@@ -19,9 +19,9 @@ import { useSalesDocuments } from "@/features/sales/sales-store";
 
 export const CLOSING_PATH = "/cierre-trimestre";
 
-/** "T3 2026" */
+/** "3T 2026" */
 export function quarterName(period: Period): string {
-  return `T${period.quarter} ${period.year}`;
+  return `${period.quarter}T ${period.year}`;
 }
 
 /** Shown wherever a closed quarter blocks a change. */

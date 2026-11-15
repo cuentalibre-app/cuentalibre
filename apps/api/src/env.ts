@@ -80,25 +80,33 @@ const envSchema = z
     /** The version errors are tagged with; the image build sets it to the commit, or leaves it empty. */
     SENTRY_RELEASE: z.string().optional(),
     /**
-     * Reading received invoices and receipts with an AI model. Without `AI_MODEL` it is off.
-     * `AI_BASE_URL` points at any OpenAI-compatible API (Ollama, OpenRouter, LM Studio…) or
+     * Reading received invoices and receipts with an AI model. Without `AI_SCAN_MODEL` it is off.
+     * `AI_SCAN_BASE_URL` points at any OpenAI-compatible API (Ollama, OpenRouter, LM Studio…) or
      * at Anthropic's; without it, an Anthropic key (`sk-ant-`) goes to Anthropic and any
      * other to OpenAI. The key never leaves the server; local models don't need one.
      */
-    AI_MODEL: z.string().min(1).optional(),
-    AI_API_KEY: z.string().min(1).optional(),
-    AI_BASE_URL: z.url().optional(),
+    AI_SCAN_MODEL: z.string().min(1).optional(),
+    AI_SCAN_API_KEY: z.string().min(1).optional(),
+    AI_SCAN_BASE_URL: z.url().optional(),
     /**
      * Most documents an organization may have read with AI in a calendar month (Spain's
      * time). Reading a file already read doesn't count. Unset or 0 means no limit.
      */
-    AI_MONTHLY_DOCUMENTS: z.coerce.number().int().min(0).default(0),
+    AI_SCAN_MONTHLY_DOCUMENTS: z.coerce.number().int().min(0).default(0),
     /**
      * The model's prices in dollars per million input and output tokens, to estimate
      * what each reading costs the instance. Without them, only tokens are recorded.
      */
-    AI_INPUT_PRICE: z.coerce.number().min(0).optional(),
-    AI_OUTPUT_PRICE: z.coerce.number().min(0).optional(),
+    AI_SCAN_INPUT_PRICE: z.coerce.number().min(0).optional(),
+    AI_SCAN_OUTPUT_PRICE: z.coerce.number().min(0).optional(),
+    /**
+     * The in-app help chat, which answers questions about using cuentalibre from its guide.
+     * Without `AI_CHAT_MODEL` it is off and the chat is hidden. The provider is chosen as
+     * for scanning, so the two may use different providers and models.
+     */
+    AI_CHAT_MODEL: z.string().min(1).optional(),
+    AI_CHAT_API_KEY: z.string().min(1).optional(),
+    AI_CHAT_BASE_URL: z.url().optional(),
     /**
      * Charging for Cloud with Stripe: all of them, or none and billing is off. The prices are
      * the product's three periods; the tax rate, the VAT added on top of them.
@@ -131,9 +139,13 @@ const envSchema = z
     message: "SMTP_URL needs EMAIL_FROM",
     path: ["EMAIL_FROM"],
   })
-  .refine((env) => !env.AI_MODEL || env.AI_BASE_URL || env.AI_API_KEY, {
-    message: "AI_MODEL needs AI_API_KEY for OpenAI or Anthropic, or AI_BASE_URL for another provider",
-    path: ["AI_API_KEY"],
+  .refine((env) => !env.AI_SCAN_MODEL || env.AI_SCAN_BASE_URL || env.AI_SCAN_API_KEY, {
+    message: "AI_SCAN_MODEL needs AI_SCAN_API_KEY for OpenAI or Anthropic, or AI_SCAN_BASE_URL for another provider",
+    path: ["AI_SCAN_API_KEY"],
+  })
+  .refine((env) => !env.AI_CHAT_MODEL || env.AI_CHAT_BASE_URL || env.AI_CHAT_API_KEY, {
+    message: "AI_CHAT_MODEL needs AI_CHAT_API_KEY for OpenAI or Anthropic, or AI_CHAT_BASE_URL for another provider",
+    path: ["AI_CHAT_API_KEY"],
   })
   .refine((env) => new Set(STRIPE_VARIABLES.map((name) => Boolean(env[name]))).size === 1, {
     message: `Billing needs all of ${STRIPE_VARIABLES.join(", ")}, or none of them`,

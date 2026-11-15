@@ -205,8 +205,8 @@ export function DesignSystemPage() {
           <Badge tone="solidWarning">2</Badge>
         </div>
         <div className="flex flex-wrap gap-6 text-xs font-semibold">
-          <span className="text-success">↑ 12 % vs. T2</span>
-          <span className="text-destructive">↓ 8 % vs. T2</span>
+          <span className="text-success">↑ 12 % vs. 2T</span>
+          <span className="text-destructive">↓ 8 % vs. 2T</span>
           <span className="text-warning">Quedan 5 días</span>
         </div>
       </Section>
@@ -214,9 +214,9 @@ export function DesignSystemPage() {
       <Section title="Composición">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(220px,100%),1fr))] gap-4">
           {[
-            { label: "Ingresos", value: ingresos, delta: "↑ 12 % vs. T2", tone: "text-success" },
-            { label: "Gastos", value: gastos, delta: "↓ 4 % vs. T2", tone: "text-muted-foreground" },
-            { label: "Beneficio", value: ingresos - gastos, delta: "↑ 15 % vs. T2", tone: "text-success" },
+            { label: "Ingresos", value: ingresos, delta: "↑ 12 % vs. 2T", tone: "text-success" },
+            { label: "Gastos", value: gastos, delta: "↓ 4 % vs. 2T", tone: "text-muted-foreground" },
+            { label: "Beneficio", value: ingresos - gastos, delta: "↑ 15 % vs. 2T", tone: "text-success" },
           ].map((k) => (
             <Card key={k.label} className="gap-2.5">
               <div className="flex items-center justify-between gap-2">
