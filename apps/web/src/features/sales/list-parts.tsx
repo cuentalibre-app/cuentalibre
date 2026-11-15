@@ -156,8 +156,7 @@ export function MoreActionsTrigger({ label, tooltip = false }: { label: string; 
         size={tooltip ? "icon-sm" : "icon"}
         aria-label={label}
         className={cn(
-          !tooltip &&
-            "shrink-0 rounded-full bg-muted text-foreground [&_svg]:size-5 data-[state=open]:bg-muted-strong",
+          !tooltip && "shrink-0 rounded-full bg-muted text-foreground data-[state=open]:bg-muted-strong [&_svg]:size-5",
         )}
       >
         <MoreHorizontal strokeWidth={2} aria-hidden="true" />
@@ -200,10 +199,11 @@ export function FiltersButton({
       aria-expanded={open}
       aria-controls={controls}
       onClick={onToggle}
-      className="max-lg:px-3"
+      // Just the funnel wherever the page is narrow: on phones, and beside the docked assistant
+      className="@max-5xl:min-w-10 @max-5xl:px-2.5"
     >
       <Filter strokeWidth={1.8} aria-hidden="true" />
-      <span className="max-lg:sr-only">Filtros</span>
+      <span className="@max-5xl:sr-only">Filtros</span>
       {phoneCount > 0 && <span className={cn(badge, "lg:hidden")}>{phoneCount}</span>}
       {count > 0 && <span className={cn(badge, "max-lg:hidden")}>{count}</span>}
     </Button>
