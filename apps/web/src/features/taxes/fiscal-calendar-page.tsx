@@ -119,7 +119,7 @@ const day = (date: Date) => `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]!.
 function entryTitle(entry: CalendarEntry, calendarYear: number): string {
   const { form, year, quarter, month } = entry;
   if (form === "reta") return `${FORMS.reta.name} · ${MONTHS[month!]!.toLowerCase()}`;
-  const period = quarter === null ? String(year) : year === calendarYear ? `T${quarter}` : `T${quarter} ${year}`;
+  const period = quarter === null ? String(year) : year === calendarYear ? `${quarter}T` : `${quarter}T ${year}`;
   return `Modelo ${form} · ${FORMS[form].name} ${period}`;
 }
 
@@ -232,14 +232,14 @@ function GridCell({
   const status = calendarStatus(entry, today);
   const statusInfo = (entry.form === "reta" ? CHARGE_STATUS : CALENDAR_STATUS)[status];
   const to = entryLink(entry);
-  const tag = entry.form === "reta" ? null : entry.quarter === null ? "Anual" : `T${entry.quarter}`;
+  const tag = entry.form === "reta" ? null : entry.quarter === null ? "Anual" : `${entry.quarter}T`;
   /* The row and the column already say the form and the due date; the tooltip adds what they don't. */
   const period =
     entry.form === "reta"
       ? MONTHS[entry.month!]
       : entry.quarter === null
         ? `Ejercicio ${entry.year}`
-        : `T${entry.quarter} ${entry.year}`;
+        : `${entry.quarter}T ${entry.year}`;
   const className = cn(
     "flex h-10 w-full flex-col items-center justify-center rounded-md border border-border text-sm leading-tight no-underline transition-[background-color,scale] duration-150",
     CELL_TONE[status],

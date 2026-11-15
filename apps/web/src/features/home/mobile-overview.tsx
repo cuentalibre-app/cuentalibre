@@ -312,7 +312,7 @@ function PeriodChips({
 }) {
   const lastQuarter = period.year === today.getFullYear() ? quarterOfMonth(today.getMonth()) : 4;
   const options: { quarter: Period["quarter"]; label: string }[] = [
-    ...([1, 2, 3, 4] as const).map((q) => ({ quarter: q, label: `T${q}` })),
+    ...([1, 2, 3, 4] as const).map((q) => ({ quarter: q, label: `${q}T` })),
     { quarter: null, label: "Año" },
   ];
 

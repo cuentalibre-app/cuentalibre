@@ -345,7 +345,7 @@ function Vat390({ year, today }: { year: number; today: Date }) {
             to={modelPath(VAT_PATH, { year, quarter: (i + 1) as Quarter })}
             className="flex flex-col gap-1 surface p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
           >
-            <span className="text-sm text-muted-foreground">303 · T{i + 1}</span>
+            <span className="text-sm text-muted-foreground">303 · {i + 1}T</span>
             <span className="amount text-lg font-semibold">{formatEUR(q)}</span>
             <span className="text-xs text-muted-foreground">
               {q > 0 ? "A ingresar" : q < 0 ? "A compensar" : "Sin resultado"}
