@@ -34,6 +34,30 @@ export class ApiError extends Error {
   }
 }
 
+async function errorOf(response: Response): Promise<ApiError> {
+  const body = (await response.json().catch(() => null)) as { error?: { code: string; message: string } } | null;
+  return new ApiError(response.status, body?.error?.code ?? "http_error", body?.error?.message ?? response.statusText);
+}
+
+/** The server-sent events in a response body, as they arrive. */
+async function* readEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<{ event: string; data: string }> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    buffer += decoder.decode(value, { stream: true });
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop()!;
+    for (const block of blocks) {
+      const event = /^event: (.*)$/m.exec(block)?.[1] ?? "message";
+      const data = /^data: (.*)$/m.exec(block)?.[1] ?? "";
+      yield { event, data };
+    }
+  }
+}
+
 export interface ApiBackend extends Backend {
   /** Downloads the workspace and replaces the synced collections with it. */
   loadWorkspace: () => Promise<void>;
@@ -103,14 +127,7 @@ export function createApiBackend(
       onSessionExpired();
       return new Promise<R>(() => {});
     }
-    if (!response.ok) {
-      const body = (await response.json().catch(() => null)) as { error?: { code: string; message: string } } | null;
-      throw new ApiError(
-        response.status,
-        body?.error?.code ?? "http_error",
-        body?.error?.message ?? response.statusText,
-      );
-    }
+    if (!response.ok) throw await errorOf(response);
     // 204 No Content, e.g. after a delete
     if (response.status === 204) return undefined as R;
     return (await response.json()) as R;
@@ -204,6 +221,30 @@ export function createApiBackend(
     extractPurchase: (fileId) =>
       request<PurchaseExtraction>("/v1/purchases/extract", { method: "POST", body: JSON.stringify({ fileId }) }),
     extractionUsage: () => request<ExtractionUsage>("/v1/purchases/extract/usage"),
+
+    async helpChat(messages, onText, signal) {
+      const response = await fetchImpl(`${baseUrl}/v1/help-chat`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ messages }),
+        signal,
+      });
+      if (response.status === 401 && signedIn && onSessionExpired) {
+        onSessionExpired();
+        return new Promise<void>(() => {});
+      }
+      if (!response.ok || !response.body) throw await errorOf(response);
+      for await (const { event, data } of readEvents(response.body)) {
+        if (event === "text") onText(JSON.parse(data) as string);
+        else if (event === "done") return;
+        else if (event === "error") {
+          const error = JSON.parse(data) as { code: string; message: string };
+          throw new ApiError(502, error.code, error.message);
+        }
+      }
+      throw new ApiError(502, "ai_failed", "The answer was cut off.");
+    },
 
     async members() {
       return (await request<{ members: OrganizationMember[] }>("/v1/organization/members")).members;

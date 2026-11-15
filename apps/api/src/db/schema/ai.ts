@@ -40,3 +40,27 @@ export const aiReading = pgTable(
     check("ai_reading_source_check", sql`${table.source} in ('text', 'image', 'pdf')`),
   ],
 );
+
+/**
+ * Each question asked to the help chat: what the daily limit counts. Neither the question
+ * nor the answer is kept, only what it took. A row is made before the model is called and
+ * removed if the call fails before answering; tokens are null until it ends.
+ */
+export const aiChatQuestion = pgTable(
+  "ai_chat_question",
+  {
+    organizationId: uuid()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    id: uuid().notNull(),
+    /** `YYYY-MM-DD` in Spain's time, the day it counts towards. */
+    day: text().notNull(),
+    model: text().notNull(),
+    inputTokens: integer(),
+    /** Input tokens the provider read from its cache, part of `inputTokens`. */
+    cachedInputTokens: integer(),
+    outputTokens: integer(),
+    createdAt: createdAt(),
+  },
+  (table) => [primaryKey({ columns: [table.organizationId, table.id] }), index().on(table.organizationId, table.day)],
+);

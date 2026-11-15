@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
-import { createAiProvider } from "./ai";
+import { createAiProvider, createChatProvider } from "./ai";
+import { loadHelpPrompt } from "./ai/help-guide";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { createBilling } from "./billing";
@@ -16,6 +17,7 @@ startErrorReporting(env);
 const db = createDb(env.DATABASE_URL);
 const storage = createStorage(env);
 const mailer = createMailer(env);
+const chatProvider = createChatProvider(env);
 const app = createApp({
   db,
   auth: createAuth(db, env, createAccountMailer(env)),
@@ -24,6 +26,11 @@ const app = createApp({
   mailer,
   billing: createBilling(env),
   ai: createAiProvider(env),
+  chat: chatProvider && {
+    provider: chatProvider,
+    prompt: loadHelpPrompt(env.AI_CHAT_DOCS_DIR),
+    dailyQuestions: env.AI_CHAT_DAILY_QUESTIONS,
+  },
 });
 
 const stopWorker = startWorker(db, {

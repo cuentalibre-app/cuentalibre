@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkPurchaseDraft, findSupplierByTaxId, readingMonth, type PurchaseDraft } from "./extraction";
+import { checkPurchaseDraft, findSupplierByTaxId, questionDay, readingMonth, type PurchaseDraft } from "./extraction";
 import type { Cents } from "./money";
 
 const c = (value: number) => value as Cents;
@@ -163,5 +163,15 @@ describe("readingMonth", () => {
     // 22:30 UTC on 31 July is 00:30 on 1 August in summer time (CEST, UTC+2)
     expect(readingMonth(new Date("2026-07-31T22:30:00Z"))).toBe("2026-08");
     expect(readingMonth(new Date("2026-12-31T22:59:00Z"))).toBe("2026-12");
+  });
+});
+
+describe("questionDay", () => {
+  it("counts by the calendar day in Spain", () => {
+    expect(questionDay(new Date("2026-11-14T12:00:00Z"))).toBe("2026-11-14");
+    // 23:30 UTC is already the next day in Madrid, in winter (UTC+1) and summer (UTC+2) time
+    expect(questionDay(new Date("2026-11-14T23:30:00Z"))).toBe("2026-11-15");
+    expect(questionDay(new Date("2026-07-14T22:30:00Z"))).toBe("2026-07-15");
+    expect(questionDay(new Date("2026-07-14T21:59:00Z"))).toBe("2026-07-14");
   });
 });

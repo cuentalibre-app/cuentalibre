@@ -179,7 +179,7 @@ All of these are off by default and set in `apps/api/.env`; [`.env.example`](app
 | Files in an S3-compatible bucket instead of local disk | `STORAGE_DRIVER=s3`, `S3_*`                                                         |
 | Reporting unexpected errors to Sentry                  | `SENTRY_DSN`                                                                        |
 | Reading received invoices and receipts with AI         | `AI_SCAN_MODEL`, `AI_SCAN_API_KEY`, `AI_SCAN_BASE_URL`, `AI_SCAN_MONTHLY_DOCUMENTS` |
-| Help chat about using the app, answered by AI          | `AI_CHAT_MODEL`, `AI_CHAT_API_KEY`, `AI_CHAT_BASE_URL`                              |
+| Help chat about using the app, answered by AI          | `AI_CHAT_MODEL`, `AI_CHAT_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_DAILY_QUESTIONS`   |
 
 ### Checks
 

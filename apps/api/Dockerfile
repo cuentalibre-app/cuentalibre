@@ -32,6 +32,9 @@ ENV NODE_ENV=production STORAGE_DIR=/app/data/files SENTRY_RELEASE=$SENTRY_RELEA
 WORKDIR /app
 COPY --from=build /repo/apps/api/dist dist
 COPY --from=build /repo/apps/api/drizzle drizzle
+# What the help chat answers from
+COPY apps/site/src/content/docs docs
+ENV AI_CHAT_DOCS_DIR=/app/docs
 RUN mkdir -p data/files && chown node:node data/files
 USER node
 EXPOSE 3000
