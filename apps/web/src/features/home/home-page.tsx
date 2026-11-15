@@ -56,7 +56,7 @@ export function HomePage() {
 
   return (
     <Page>
-      {/* Mobile: round shortcuts on the right, then the period's profit and its line through the year */}
+      {/* Mobile: shortcuts on the right, then the period's profit and its line through the year */}
       <div className="flex flex-col gap-4 lg:hidden">
         <MobileOverview
           data={data}
@@ -66,9 +66,9 @@ export function HomePage() {
           today={today}
           actions={
             <>
-              <Notifications className="size-11 rounded-full border-glass-edge bg-glass backdrop-blur-xl hover:bg-glass" />
-              <UserMenu className="size-11" />
-              <HelpChatToggle className="size-11 rounded-full border-glass-edge bg-glass backdrop-blur-xl hover:bg-glass" />
+              <HelpChatToggle className="mr-1" />
+              <Notifications />
+              <UserMenu />
             </>
           }
         />

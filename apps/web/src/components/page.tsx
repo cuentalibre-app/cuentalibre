@@ -56,7 +56,7 @@ interface PageHeaderProps {
   actions?: ReactNode;
   /** Classes for the actions' row, such as taking a line of its own on phones. */
   actionsClassName?: string;
-  /** The assistant's toggle at the far right; off for headers that place it themselves. */
+  /** The assistant's toggle (far right on desktop, first on phones); off for headers that place it themselves. */
   assistant?: boolean;
   className?: string;
 }
@@ -93,8 +93,11 @@ export function PageHeader({
       {(actions || assistant) && (
         <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>
           {actions}
-          {/* Set apart from the page's own actions, as it belongs to the app rather than the page */}
-          {assistant && <HelpChatToggle className={cn(actions && "ml-1")} />}
+          {/*
+           * Set apart from the page's own actions, as it belongs to the app rather than the page: last on
+           * desktop; first on phones, so the page's main action keeps the corner
+           */}
+          {assistant && <HelpChatToggle className={cn("max-lg:order-first", actions && "max-lg:mr-1 lg:ml-1")} />}
         </div>
       )}
     </header>
