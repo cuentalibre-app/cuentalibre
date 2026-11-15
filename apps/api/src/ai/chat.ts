@@ -18,6 +18,8 @@ export type ChatEvent = { type: "text"; text: string } | { type: "usage"; usage:
 
 export interface ChatRequest {
   system: string;
+  /** Instructions for this question only, sent after `system` so the cached prompt stays the same. */
+  context?: string;
   messages: HelpChatMessage[];
   /** Stops the call, as when the person leaves. */
   signal?: AbortSignal;
@@ -80,7 +82,7 @@ export function openAiChat({
   const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
   return {
     model,
-    async stream({ system, messages, signal }) {
+    async stream({ system, context, messages, signal }) {
       const body = await connect(
         fetcher,
         url,
@@ -89,7 +91,11 @@ export function openAiChat({
           model,
           stream: true,
           stream_options: { include_usage: true },
-          messages: [{ role: "system", content: system }, ...messages],
+          messages: [
+            { role: "system", content: system },
+            ...(context ? [{ role: "system", content: context }] : []),
+            ...messages,
+          ],
         },
         signal,
       );
@@ -126,7 +132,7 @@ export function anthropicChat({
   const url = `${baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "")}/v1/messages`;
   return {
     model,
-    async stream({ system, messages, signal }) {
+    async stream({ system, context, messages, signal }) {
       const body = await connect(
         fetcher,
         url,
@@ -135,7 +141,10 @@ export function anthropicChat({
           model,
           max_tokens: MAX_ANSWER_TOKENS,
           stream: true,
-          system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
+          system: [
+            { type: "text", text: system, cache_control: { type: "ephemeral" } },
+            ...(context ? [{ type: "text", text: context }] : []),
+          ],
           messages,
         },
         signal,

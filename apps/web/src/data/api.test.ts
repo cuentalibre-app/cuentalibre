@@ -436,6 +436,7 @@ describe("the help chat", () => {
     return { requests, backend: createApiBackend("https://api.test", { fetch: fetchImpl }) };
   }
   const messages = [{ role: "user" as const, content: "¿Cómo rectifico una factura?" }];
+  const question = { messages, screen: { device: "phone" as const, path: "/ventas/facturas" } };
 
   it("passes the answer on as it streams", async () => {
     const { requests, backend } = streaming(200, [
@@ -444,21 +445,21 @@ describe("the help chat", () => {
       "event: done\ndata: {}\n\n",
     ]);
     const pieces: string[] = [];
-    await backend.helpChat!(messages, (text) => pieces.push(text));
+    await backend.helpChat!(question, (text) => pieces.push(text));
     expect(pieces).toEqual(["Abre la factura", " y pulsa «Rectificar»."]);
-    expect(requests).toEqual([{ url: "https://api.test/v1/help-chat", body: { messages } }]);
+    expect(requests).toEqual([{ url: "https://api.test/v1/help-chat", body: question }]);
   });
 
   it("fails with the server's error, before or while answering", async () => {
-    await expect(streaming(429, []).backend.helpChat!(messages, () => {})).rejects.toMatchObject({
+    await expect(streaming(429, []).backend.helpChat!(question, () => {})).rejects.toMatchObject({
       code: "ai_quota_exceeded",
     });
     const halfway = streaming(200, [
       'event: text\ndata: "Abre"\n\n',
       'event: error\ndata: {"code":"ai_failed","message":"x"}\n\n',
     ]);
-    await expect(halfway.backend.helpChat!(messages, () => {})).rejects.toMatchObject({ code: "ai_failed" });
+    await expect(halfway.backend.helpChat!(question, () => {})).rejects.toMatchObject({ code: "ai_failed" });
     const cut = streaming(200, ['event: text\ndata: "Abre"\n\n']);
-    await expect(cut.backend.helpChat!(messages, () => {})).rejects.toBeInstanceOf(ApiError);
+    await expect(cut.backend.helpChat!(question, () => {})).rejects.toBeInstanceOf(ApiError);
   });
 });
