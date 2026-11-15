@@ -5,6 +5,7 @@ import {
   aeatFileName,
   aeatText,
   declarationType130,
+  aeatFiler,
   declarationType303,
   declarationTypeWithholdings,
   file111,
@@ -68,6 +69,39 @@ describe("aeatAmount", () => {
     expect(() => aeatAmount(-1, 17, false)).toThrow(RangeError);
     expect(() => aeatAmount(1e17, 17, false)).toThrow(RangeError);
     expect(() => aeatAmount(0.5, 17, false)).toThrow(RangeError);
+  });
+});
+
+describe("aeatFiler", () => {
+  const person = {
+    kind: "selfEmployed" as const,
+    taxId: "50123456Q",
+    firstName: " Lucía ",
+    lastName: "Martín",
+    secondLastName: "Gómez",
+    legalName: "",
+    phone: "600123456",
+  };
+  const company = { ...person, kind: "company" as const, taxId: "B12345674", firstName: "", lastName: "", secondLastName: "", legalName: " Peña Diseño S.L. " }; // prettier-ignore
+
+  it("takes a person's surnames and first name", () => {
+    expect(aeatFiler(person)).toEqual({ taxId: "50123456Q", surnames: "Martín Gómez", name: "Lucía", phone: "600123456" }); // prettier-ignore
+    expect(aeatFiler({ ...person, secondLastName: "" })?.surnames).toBe("Martín");
+  });
+
+  it("puts a company's legal name in the surnames field", () => {
+    expect(aeatFiler(company)).toEqual({ taxId: "B12345674", surnames: "Peña Diseño S.L.", name: "", phone: "600123456" }); // prettier-ignore
+  });
+
+  it("is null until the profile has the NIF and the name", () => {
+    expect(aeatFiler({ ...person, taxId: " " })).toBeNull();
+    expect(aeatFiler({ ...person, firstName: "" })).toBeNull();
+    expect(aeatFiler({ ...person, lastName: "" })).toBeNull();
+    expect(aeatFiler({ ...company, taxId: "" })).toBeNull();
+    expect(aeatFiler({ ...company, legalName: " " })).toBeNull();
+    // A company doesn't need a person's name, nor a person the legal name
+    expect(aeatFiler({ ...person, legalName: "" })).not.toBeNull();
+    expect(aeatFiler({ ...company, firstName: "", lastName: "" })).not.toBeNull();
   });
 });
 
@@ -388,6 +422,14 @@ describe("file303", () => {
     expect(page1(file, 109, 6)).toBe("223222");
     // …no special proration, no insolvency, no SII, and the Q4 and fuel flags at zero
     expect(page1(file, 115, 16)).toBe("222" + " ".repeat(9) + "2000");
+  });
+
+  it("names a company by its legal name", () => {
+    const filed = file303(form, { taxId: "B12345674", surnames: "Peña Diseño S.L.", name: "" });
+    expect(filed).toHaveLength(file.length);
+    expect(page1(filed, 14, 9)).toBe("B12345674");
+    expect(page1(filed, 23, 80)).toBe("PEÑA DISEÑO S L".padEnd(80));
+    expect(page1(filed, 103, 4)).toBe("2026");
   });
 
   it("puts the general regime boxes at their 2026 positions", () => {
