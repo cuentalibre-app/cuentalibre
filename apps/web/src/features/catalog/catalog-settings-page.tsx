@@ -93,7 +93,7 @@ export function CatalogSettingsPage() {
           title="Campos personalizados"
           description="Define hasta cuatro campos propios para cada producto o servicio del catálogo."
         >
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-4">
             {draft.customFieldNames.map((name, i) => (
               <Field key={i} label={`Nombre del campo personalizado ${i + 1}`}>
                 {(p) => (

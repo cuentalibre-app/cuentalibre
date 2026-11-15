@@ -29,6 +29,7 @@ import { HelpTip, Page, PageHeader, Toolbar } from "@/components/page";
 import { GroupedSelect, Help } from "@/features/sales/form-fields";
 import {
   FiltersButton,
+  ToolbarButton,
   FiltersSheet,
   ActionsMenu,
   EmptyState,
@@ -233,7 +234,7 @@ export function CatalogListPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Buscar por nombre, código, familia o descripción"
+              placeholder="Nombre, código o familia"
               aria-label="Buscar"
             />
             <FiltersButton
@@ -242,10 +243,13 @@ export function CatalogListPage() {
               count={extraFilters}
               onToggle={() => setShowFilters((s) => !s)}
             />
-            <Link to={CATALOG_EXPORT_PATH} className={cn(buttonVariants({ variant: "secondary" }), "lg:ml-auto")}>
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              Exportar
-            </Link>
+            <ToolbarButton
+              to={CATALOG_EXPORT_PATH}
+              icon={Download}
+              text="Exportar"
+              label="Exportar el catálogo"
+              className="lg:ml-auto"
+            />
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>

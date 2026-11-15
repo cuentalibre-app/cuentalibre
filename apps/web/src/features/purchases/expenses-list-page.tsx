@@ -31,6 +31,7 @@ import {
   ActionsMenu,
   EmptyState,
   FiltersButton,
+  ToolbarButton,
   FiltersSheet,
   IconAction,
   MoreActionsTrigger,
@@ -235,7 +236,7 @@ export function ExpensesListPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Buscar por concepto, proveedor, NIF o número"
+              placeholder="Concepto, proveedor o NIF"
               aria-label="Buscar"
             />
             <div className="max-lg:hidden">{statusFilter}</div>
@@ -257,15 +258,14 @@ export function ExpensesListPage() {
               phoneCount={extraFilters + (filters.status !== ALL ? 1 : 0)}
               onToggle={() => setShowFilters((s) => !s)}
             />
-            <Button
-              variant="secondary"
+            <ToolbarButton
+              icon={Download}
+              text="CSV"
+              label="Descargar en CSV"
               className="max-lg:hidden lg:ml-auto"
               disabled={rows.length === 0}
               onClick={() => exportCsv(rows, exportName)}
-            >
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              CSV
-            </Button>
+            />
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
@@ -475,15 +475,17 @@ interface Sort {
   dir: SortDir;
 }
 
-const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
+/** Columns marked `wide` only show when the page is wide, so the table fits beside the docked assistant. */
+const COLUMNS: { key: SortKey; label: string; numeric?: boolean; wide?: boolean }[] = [
   { key: "date", label: "Fecha" },
   { key: "concept", label: "Concepto" },
   { key: "payee", label: "Proveedor" },
-  { key: "type", label: "Tipo de gasto" },
+  { key: "type", label: "Tipo de gasto", wide: true },
   { key: "status", label: "Estado" },
   { key: "amount", label: "Importe", numeric: true },
-  { key: "deductible", label: "Imputable", numeric: true },
+  { key: "deductible", label: "Imputable", numeric: true, wide: true },
 ];
+const { wideOnly } = table;
 
 const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
 
@@ -525,7 +527,7 @@ function ExpensesTable({
   const td = cn(table.td, "px-2.5");
   return (
     <div className="hidden overflow-x-auto lg:block">
-      <table className="w-full min-w-[980px] border-collapse">
+      <table className="w-full border-collapse @5xl:min-w-[980px]">
         <thead>
           <tr className={table.headRow}>
             {COLUMNS.map((c) => (
@@ -535,7 +537,7 @@ function ExpensesTable({
                 numeric={c.numeric}
                 dir={sort.key === c.key ? sort.dir : null}
                 onClick={() => onSort(nextSort(sort, c.key))}
-                className={th}
+                className={cn(th, c.wide && wideOnly)}
               />
             ))}
             <th scope="col" className={cn(th, "text-center")}>
@@ -590,7 +592,7 @@ function ExpensesTable({
                   <span className="text-muted-foreground">—</span>
                 )}
               </td>
-              <td className={cn(td, "text-sm")}>
+              <td className={cn(td, wideOnly, "text-sm")}>
                 <span className="block max-w-32 truncate" title={expenseTypeLabel(r.doc.expenseType)}>
                   {expenseTypeShortLabel(r.doc.expenseType)}
                 </span>
@@ -599,7 +601,7 @@ function ExpensesTable({
                 <StatusBadge row={r} />
               </td>
               <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.amount)}</td>
-              <td className={cn(td, "text-right")}>
+              <td className={cn(td, wideOnly, "text-right")}>
                 <span
                   className={cn(
                     "block text-sm font-medium whitespace-nowrap",
@@ -618,13 +620,15 @@ function ExpensesTable({
         </tbody>
         <tfoot>
           <tr className="border-t border-border bg-muted font-semibold">
-            <td colSpan={5} className={cn(td, "text-sm text-muted-foreground")}>
+            <td colSpan={3} className={cn(td, "text-sm text-muted-foreground")}>
               {rows.length} {rows.length === 1 ? "gasto" : "gastos"}
             </td>
+            <td className={cn(td, wideOnly)} />
+            <td className={td} />
             <td className={cn(td, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "amount")} />
             </td>
-            <td className={cn(td, "text-right amount")}>
+            <td className={cn(td, wideOnly, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "deductible")} />
             </td>
             <td className={td} />

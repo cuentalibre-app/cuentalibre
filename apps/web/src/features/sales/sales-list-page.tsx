@@ -80,6 +80,8 @@ import {
   ActionsMenu,
   EmptyState,
   FiltersButton,
+  ToolbarButton,
+  ToolbarTip,
   FiltersSheet,
   IconAction,
   MoreActionsTrigger,
@@ -314,15 +316,16 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               </Button>
             )}
             {defaults && (
-              <SettingsLink
-                to={PREFERENCES_PATH}
-                from={config.title.toLowerCase()}
-                aria-label="Filtros por defecto"
-                title="Filtros por defecto"
-                className={buttonVariants({ variant: "secondary", size: "icon" })}
-              >
-                <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
-              </SettingsLink>
+              <ToolbarTip label="Filtros por defecto">
+                <SettingsLink
+                  to={PREFERENCES_PATH}
+                  from={config.title.toLowerCase()}
+                  aria-label="Filtros por defecto"
+                  className={buttonVariants({ variant: "secondary", size: "icon" })}
+                >
+                  <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
+                </SettingsLink>
+              </ToolbarTip>
             )}
             <FiltersButton
               open={showFilters}
@@ -331,29 +334,22 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               phoneCount={extraFilters + (statusFilter && status !== ALL ? 1 : 0)}
               onToggle={() => setShowFilters((s) => !s)}
             />
-            <Button
-              variant="secondary"
-              className="max-lg:hidden lg:ml-auto @max-5xl:w-10 @max-5xl:px-0"
+            <ToolbarButton
+              icon={Download}
+              text="CSV"
+              label="Descargar en CSV"
+              className="max-lg:hidden lg:ml-auto"
               disabled={!canExport}
-              aria-label="Descargar CSV"
-              title="Descargar CSV"
               onClick={downloadCsvFile}
-            >
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              {/* Icons only beside the docked assistant, so the toolbar keeps to one row */}
-              <span className="@max-5xl:hidden">CSV</span>
-            </Button>
-            <Button
-              variant="secondary"
-              className="max-lg:hidden @max-5xl:w-10 @max-5xl:px-0"
+            />
+            <ToolbarButton
+              icon={FileArchive}
+              text="PDF (.zip)"
+              label="Descargar los PDF en un .zip"
+              className="max-lg:hidden"
               disabled={!canExport || exporting}
-              aria-label={`Descargar ${rows.length} PDF en un .zip`}
-              title="Un PDF por documento, en un .zip"
               onClick={downloadPdfs}
-            >
-              <FileArchive strokeWidth={1.8} aria-hidden="true" />
-              <span className="@max-5xl:hidden">PDF (.zip)</span>
-            </Button>
+            />
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
@@ -591,7 +587,7 @@ const COLUMNS: { key: SortKey; label: string; numeric?: boolean; wide?: boolean 
   { key: "withholding", label: "Retención", numeric: true, wide: true },
   { key: "total", label: "Total", numeric: true },
 ];
-const wideOnly = "@max-5xl:hidden";
+const { wideOnly } = table;
 
 const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
 

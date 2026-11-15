@@ -198,10 +198,10 @@ export function AddressFields({
       <div
         className={cn(
           "grid gap-4 sm:grid-cols-2",
-          !compact && "xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]",
+          !compact && "@5xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]",
         )}
       >
-        <Field label="Dirección" required={required} className={cn("sm:col-span-2", !compact && "xl:col-span-1")}>
+        <Field label="Dirección" required={required} className={cn("sm:col-span-2", !compact && "@5xl:col-span-1")}>
           {(p) =>
             draft.country === SPAIN ? (
               <AddressSearchInput

@@ -344,10 +344,11 @@ function CalendarGrid({
 
   return (
     <div className="hidden animate-rise-in overflow-x-auto surface lg:block" style={{ "--i": 1 } as CSSProperties}>
-      <table className="w-full min-w-[920px] table-fixed border-collapse">
+      <table className="w-full table-fixed border-collapse @5xl:min-w-[920px]">
         <thead>
           <tr className="text-xs text-muted-foreground">
-            <th scope="col" className="sticky left-0 z-10 w-96 bg-muted px-4 py-2 text-left font-medium">
+            {/* Narrower beside the docked assistant, so the twelve months still fit without scrolling */}
+            <th scope="col" className="sticky left-0 z-10 w-56 bg-muted px-4 py-2 text-left font-medium @5xl:w-96">
               Modelo
             </th>
             {MONTHS_SHORT.map((label, month) => (
