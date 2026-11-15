@@ -17,11 +17,14 @@ export type HelpChatMessage = z.infer<typeof helpChatMessageSchema>;
  */
 export const helpChatScreenSchema = z.object({
   device: z.enum(["phone", "desktop"]),
-  /** The app's page, without its query, as the browser encodes it: "/ventas/facturas". */
+  /**
+   * The screen, as the guide's screen list writes its address: "/ventas/facturas/:id",
+   * "/impuestos/iva?periodo=trimestre". Never a record's id or the period itself.
+   */
   path: z
     .string()
     .max(200)
-    .regex(/^\/[^\s?#"<>]*$/),
+    .regex(/^\/[^\s?#"<>]*(\?periodo=(trimestre|año))?$/),
 });
 export type HelpChatScreen = z.infer<typeof helpChatScreenSchema>;
 
