@@ -211,7 +211,8 @@ export function buildHomeData(
 
   const lastMonthWithData = [...months].reverse().find((m) => monthly[m] != null) ?? months[0]!;
 
-  const deadlines = upcomingDeadlines(today, 4).map((d) => deadlineItem(d, returns));
+  const incomeTaxFiler = settingsStore.get().profile.kind === "selfEmployed";
+  const deadlines = upcomingDeadlines(today, 4, { incomeTax: incomeTaxFiler }).map((d) => deadlineItem(d, returns));
   const nextFiling = deadlines.find((d) => d.deadline.kind !== "social-security");
   const filingsSoon = deadlines.filter(
     (d) => d.deadline.kind !== "social-security" && daysUntil(today, d.deadline.date) <= 30,

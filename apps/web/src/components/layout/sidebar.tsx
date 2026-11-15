@@ -15,7 +15,7 @@ import { accountName, incomeTaxMethodLabel, initials } from "@/features/settings
 import { useSettings } from "@/features/settings/settings-store";
 import { LogoMark } from "@/components/logo";
 import { CreateMenu } from "./create-menu";
-import { mainNav, secondaryNav, type NavItem, type NavLeaf } from "./nav";
+import { mainNavFor, secondaryNav, type NavItem, type NavLeaf } from "./nav";
 import { useHoverMenu } from "./use-hover-menu";
 import { useNavBadges } from "./use-nav-badges";
 import { useNavGroupOpen } from "./use-nav-group-open";
@@ -286,7 +286,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           </Button>
         </CreateMenu>
 
-        {mainNav.map((item) => {
+        {mainNavFor(profile.kind).map((item) => {
           if (item.children) return <NavGroup key={item.to} item={item} badges={badges} collapsed={collapsed} />;
           const count = item.badge ? badges[item.badge] : 0;
           return (
