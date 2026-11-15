@@ -95,16 +95,26 @@ beforeEach(() => {
 describe("the help chat's prompt", () => {
   const prompt = loadHelpPrompt(env.AI_CHAT_DOCS_DIR);
 
-  it("holds the rules and every page of the documentation, with its address", () => {
+  it("holds the rules and the documentation's pages, with their address", () => {
     expect(prompt).toContain("no tax, legal or accounting advice");
     expect(prompt).toContain('<page url="https://cuentalibre.es/docs" title="Documentación de cuentalibre">');
-    expect(prompt).toContain('<page url="https://cuentalibre.es/docs/api/ventas" title="Ventas">');
+    expect(prompt).toContain('<page url="https://cuentalibre.es/docs/guia/facturas" title="Facturas emitidas">');
   });
 
-  it("leaves out the front matter and the site's markup", () => {
+  it("leaves out the API reference", () => {
+    expect(prompt).not.toContain('<page url="https://cuentalibre.es/docs/api');
+  });
+
+  it("leaves out the front matter, the site's markup and Markdown emphasis", () => {
     expect(prompt).not.toMatch(/^section:/m);
     expect(prompt).not.toContain("<svg");
     expect(prompt).not.toContain('<div class="doc-option">');
+    expect(prompt).not.toContain("**");
+  });
+
+  it("writes links with their full address", () => {
+    expect(prompt).toContain("Cerrar un trimestre (https://cuentalibre.es/docs/guia/cierre-de-trimestre)");
+    expect(prompt.slice(prompt.indexOf("# Documentation"))).not.toMatch(/\]\(/);
   });
 
   it("refuses to start without the documentation", () => {

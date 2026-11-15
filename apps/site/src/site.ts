@@ -61,6 +61,7 @@ export const legalUpdated = "15 de noviembre de 2026";
 /** The groups of the documentation's index, in the order it shows them. */
 export const docSections = [
   { id: "start", label: "Empezar" },
+  { id: "guide", label: "Guía de uso" },
   { id: "integrations", label: "Integraciones" },
   { id: "api", label: "Referencia de la API" },
 ] as const;

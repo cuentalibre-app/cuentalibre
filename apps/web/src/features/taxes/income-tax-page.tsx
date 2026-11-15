@@ -228,7 +228,7 @@ function useRecordBooks(year: number): AeatFile {
     label: "Libros para Renta WEB",
     build: () => blob!,
     missing: !filer
-      ? "Para generar los libros, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
+      ? "Para generar los libros, completa tu NIF, nombre y apellidos en Configuración › Datos de la empresa."
       : !activity
         ? "Para generar los libros, añade tu actividad económica en Configuración › Impuestos."
         : undefined,
