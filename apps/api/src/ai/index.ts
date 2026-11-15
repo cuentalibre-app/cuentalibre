@@ -1,8 +1,10 @@
 import type { Env } from "../env";
 import { anthropicProvider } from "./anthropic";
+import { anthropicChat, openAiChat, type ChatProvider } from "./chat";
 import { openAiProvider } from "./openai";
 import type { AiConfig, AiProvider } from "./provider";
 
+export type { ChatEvent, ChatProvider, ChatUsage } from "./chat";
 export { AiError, type AiProvider, type ModelInput, type TokenUsage } from "./provider";
 
 /*
@@ -37,4 +39,19 @@ export function createAiProvider(
     fetch: fetcher,
   };
   return aiProtocol(config) === "anthropic" ? anthropicProvider(config) : openAiProvider(config);
+}
+
+/** The help chat's provider, or null when `AI_CHAT_MODEL` is unset and the chat is off. */
+export function createChatProvider(
+  env: Pick<Env, "AI_CHAT_MODEL" | "AI_CHAT_API_KEY" | "AI_CHAT_BASE_URL">,
+  fetcher?: typeof fetch,
+): ChatProvider | null {
+  if (!env.AI_CHAT_MODEL) return null;
+  const config: AiConfig = {
+    model: env.AI_CHAT_MODEL,
+    apiKey: env.AI_CHAT_API_KEY,
+    baseUrl: env.AI_CHAT_BASE_URL,
+    fetch: fetcher,
+  };
+  return aiProtocol(config) === "anthropic" ? anthropicChat(config) : openAiChat(config);
 }

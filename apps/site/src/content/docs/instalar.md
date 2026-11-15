@@ -95,6 +95,7 @@ Todo se configura con variables en el `.env`. Están explicadas en [`apps/api/.e
 - **Correo** (`SMTP_URL`, `EMAIL_FROM`): para enviar las facturas desde cuentalibre, verificar el correo al registrarse y recuperar la contraseña. Sin él, las facturas se envían con tu programa de correo y no hay recuperación de contraseña.
 - **Entrar con Google** (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`), con `<PUBLIC_URL>/v1/auth/callback/google` como URI de redirección.
 - **Archivos en un bucket S3** (`STORAGE_DRIVER=s3` y las variables `S3_*`): por defecto se guardan en el volumen `files`.
+- **Asistente de ayuda** (`AI_CHAT_MODEL`, `AI_CHAT_API_KEY`, `AI_CHAT_BASE_URL`): responde dudas sobre cómo usar cuentalibre a partir de esta documentación. Sirve cualquier API compatible con la de OpenAI, también un modelo local con Ollama, o la de Anthropic. Al proveedor solo le llegan las preguntas y la documentación, nunca los datos de tu contabilidad. Sin `AI_CHAT_MODEL`, el asistente no aparece.
 - **El puerto** (`PORT`): el del servidor en el que escucha cuentalibre, 3000 si no dices nada.
 
 Después de cambiar el `.env`, aplica los cambios con `docker compose up -d`.

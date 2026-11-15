@@ -183,6 +183,13 @@
       "when": 1794689452824,
       "tag": "0025_drop_ledger_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1794746486582,
+      "tag": "0026_help_chat_questions",
+      "breakpoints": true
     }
   ]
 }

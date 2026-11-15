@@ -20,10 +20,11 @@ export function HelpChat({ className }: { className?: string }) {
   const { messages, pending, error } = useHelpChat();
   const end = useRef<HTMLDivElement>(null);
 
-  // Keep the latest message in view as the conversation grows
+  const last = messages.at(-1);
+  // Keep the latest message in view as the conversation and the answer grow
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });
-  }, [messages.length, pending, error]);
+  }, [messages.length, last?.text, pending, error]);
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
@@ -35,7 +36,7 @@ export function HelpChat({ className }: { className?: string }) {
             {messages.map((message) => (
               <Message key={message.id} message={message} />
             ))}
-            {pending && (
+            {pending && last?.role === "user" && (
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
                 Buscando en la guía…
@@ -104,7 +105,7 @@ function Composer({ disabled }: { disabled: boolean }) {
   function submit(e?: FormEvent) {
     e?.preventDefault();
     if (!canSend) return;
-    askHelpChat(text);
+    void askHelpChat(text);
     setText("");
   }
 
