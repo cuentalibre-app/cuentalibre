@@ -553,7 +553,12 @@ export function FiscalCalendarPage() {
     () => [...new Set([today.getFullYear() + 1, ...availableYears, today.getFullYear()])].sort((a, b) => b - a),
     [today],
   );
-  const calendar = useMemo(() => fiscalCalendar(year), [year]);
+  // A company never files the 130 or the 100, not even under "Todos los modelos"
+  const incomeTax = useSettings().profile.kind === "selfEmployed";
+  const calendar = useMemo(
+    () => fiscalCalendar(year).filter((e) => incomeTax || (e.form !== "130" && e.form !== "100")),
+    [year, incomeTax],
+  );
   const entries = scope === "all" ? calendar : calendar.filter((e) => appliesTo(e) === true);
 
   return (

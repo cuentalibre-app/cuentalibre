@@ -126,22 +126,27 @@ function Checks({ checks }: { checks: QuarterCheck[] }) {
   );
 }
 
-/** Forms 303 and 130 of the quarter as the books give them now: what closing it files. */
+/**
+ * Forms 303 and, for a self-employed worker, 130 of the quarter as the books give them now: what
+ * closing it files.
+ */
 function useQuarterReturns({ year, quarter }: Period & { quarter: Quarter }): ReturnToFile[] {
   const books = useTaxBooks();
+  const { incomeTax } = useFormsInUse()(year);
   return useMemo(() => {
     const vat = vatReturns(books, year)[quarter - 1]!;
-    const irpf = incomeTaxYear(books, year, TAX_OPTIONS).quarters[quarter - 1]!;
-    return [
-      { form: "303", boxes: vat.boxes, result: vat.result },
-      { form: "130", boxes: irpf.boxes, result: irpf.result },
-    ];
-  }, [books, year, quarter]);
+    const returns: ReturnToFile[] = [{ form: "303", boxes: vat.boxes, result: vat.result }];
+    if (incomeTax) {
+      const irpf = incomeTaxYear(books, year, TAX_OPTIONS).quarters[quarter - 1]!;
+      returns.push({ form: "130", boxes: irpf.boxes, result: irpf.result });
+    }
+    return returns;
+  }, [books, year, quarter, incomeTax]);
 }
 
 /**
- * Forms 303 and 130 of the quarter, as filed once it is closed, plus reminders of the forms
- * cuentalibre doesn't prepare yet.
+ * Forms 303 and 130 (only a self-employed worker files it) of the quarter, as filed once it is
+ * closed, plus reminders of the forms cuentalibre doesn't prepare yet.
  */
 function Returns({ period, today }: { period: Period & { quarter: Quarter }; today: Date }) {
   const inUse = useFormsInUse()(period.year);
@@ -163,14 +168,14 @@ function Returns({ period, today }: { period: Period & { quarter: Quarter }; tod
       amount: (filedVat ?? computedVat!).result,
       to: modelPath(VAT_PATH, period),
     },
-    {
+    inUse.incomeTax && {
       code: "130",
       title: "IRPF",
       // A negative 130 is filed with nothing to pay
       amount: cents(Math.max(0, (filedIrpf ?? computedIrpf!).result)),
       to: modelPath(INCOME_TAX_PATH, period),
     },
-  ];
+  ].filter((f) => !!f);
 
   return (
     <div className="flex flex-col gap-3">
@@ -320,8 +325,9 @@ function OpenQuarter({
           {periodRange(period)}). Podrás seguir marcándolos como cobrados o pagados desde las listas.
         </p>
         <p className="m-0">
-          Se guardan los modelos 303 y 130 tal como están ahora, como lo presentado: los trimestres siguientes parten de
-          esas cifras.
+          {returns.length > 1 ? "Se guardan los modelos 303 y 130" : "Se guarda el modelo 303"} tal como{" "}
+          {returns.length > 1 ? "están" : "está"} ahora, como lo presentado: los trimestres siguientes parten de esas
+          cifras.
         </p>
         {state === "inProgress" && (
           <p className="m-0 font-medium text-warning">El trimestre todavía no ha terminado.</p>

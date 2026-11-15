@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@cuentalibre/ui/components/dropdown-menu";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { SETTINGS_PATH, accountName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
+import { SETTINGS_PATH, accountName, initials, profitTaxLabel } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { signOut } from "@/features/auth/auth-api";
 import { resetHelpChat } from "@/features/help-chat/help-chat-store";
@@ -61,7 +61,7 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
           <span className="truncate font-semibold">{name || "Tu cuenta"}</span>
           <span className="truncate text-xs text-muted-foreground">
             {name && name !== profile.email.trim()
-              ? profile.email.trim() || incomeTaxMethodLabel(tax.incomeTaxMethod)
+              ? profile.email.trim() || profitTaxLabel(profile.kind, tax.incomeTaxMethod)
               : "Completa los datos de tu negocio"}
           </span>
         </div>

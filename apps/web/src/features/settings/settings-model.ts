@@ -158,6 +158,9 @@ const label = <T extends string>(options: Option<T>[], value: T) =>
   options.find((o) => o.value === value)?.label ?? value;
 export const regionLabel = (region: FiscalRegion) => label(REGIONS, region);
 export const incomeTaxMethodLabel = (method: IncomeTaxMethod) => label(INCOME_TAX_METHODS, method);
+/** How the business's profit is taxed: a company pays corporate tax, a self-employed worker IRPF by its method. */
+export const profitTaxLabel = (kind: BusinessKind, method: IncomeTaxMethod) =>
+  kind === "company" ? "Impuesto sobre Sociedades" : incomeTaxMethodLabel(method);
 export const vatRegimeLabel = (regime: VatRegime) => label(VAT_REGIMES, regime);
 
 /**

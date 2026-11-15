@@ -193,13 +193,18 @@ export function buildHomeData(
   const quarters = (results: Cents[]) => (period.quarter ? [results[period.quarter - 1]!] : results);
   const vat = sumCents(quarters(returns(period.year).vat));
 
+  // A company pays corporate tax, not IRPF, and no self-employed fees: nothing of either is estimated for it
+  const selfEmployed = settingsStore.get().profile.kind === "selfEmployed";
+
   // The progressive scale needs the whole year: its rate is spread over the period
   const incomeTax = estimateIncomeTax(year, period.year, TAX_OPTIONS.simplified);
 
   // Self-employed fees (PGC 6422) not booked yet are estimated from the settings, so the take-home doesn't overshoot
   const monthlyFee = settingsStore.get().tax.socialSecurityFee;
   const feesBookedOn = otherExpenses.filter((e) => e.expenseType === "6422").map((e) => e.date);
-  const socialSecurityEstimate = pendingSocialSecurity(months, period.year, today, feesBookedOn, monthlyFee);
+  const socialSecurityEstimate = selfEmployed
+    ? pendingSocialSecurity(months, period.year, today, feesBookedOn, monthlyFee)
+    : cents(0);
 
   let running = cents(0);
   const monthly: (MonthPoint | null)[] = year.map((m, month) => {
@@ -211,7 +216,7 @@ export function buildHomeData(
 
   const lastMonthWithData = [...months].reverse().find((m) => monthly[m] != null) ?? months[0]!;
 
-  const deadlines = upcomingDeadlines(today, 4).map((d) => deadlineItem(d, returns));
+  const deadlines = upcomingDeadlines(today, 4, { incomeTax: selfEmployed }).map((d) => deadlineItem(d, returns));
   const nextFiling = deadlines.find((d) => d.deadline.kind !== "social-security");
   const filingsSoon = deadlines.filter(
     (d) => d.deadline.kind !== "social-security" && daysUntil(today, d.deadline.date) <= 30,
@@ -233,10 +238,12 @@ export function buildHomeData(
       profit: change(profit, previousProfit),
     },
     taxes: { vat },
+    /** Whether the take-home is estimated after IRPF; a company's profit is shown before tax. */
+    estimatesIncomeTax: selfEmployed,
     incomeTax,
     takeHome: takeHomeEstimate(
       { income: totals.income, expenses: cents(totals.expenses + socialSecurityEstimate) },
-      incomeTax.rate,
+      selfEmployed ? incomeTax.rate : 0,
     ),
     months,
     monthly,
@@ -252,7 +259,7 @@ export function buildHomeData(
     /** Self-employed fees of the period not booked as expenses yet, at the monthly fee in the settings. */
     socialSecurityEstimate,
     /** No fee booked in the period and none in the settings to estimate it with. */
-    socialSecurityFeeMissing: monthlyFee === 0 && !feesBookedOn.some((date) => isInPeriod(date, period)),
+    socialSecurityFeeMissing: selfEmployed && monthlyFee === 0 && !feesBookedOn.some((date) => isInPeriod(date, period)),
     economicallyDependent: isEconomicallyDependent(clients),
     collection: collectionStatus(periodInvoices),
   };

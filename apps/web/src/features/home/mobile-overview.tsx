@@ -382,16 +382,19 @@ function TakeHomeSummary({ data }: { data: HomeData }) {
   const taxes = cents(incomeTax + data.socialSecurityEstimate);
   const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
 
+  // A company's profit is shown before tax: cuentalibre doesn't estimate corporate tax
+  const estimates = data.estimatesIncomeTax;
+
   const parts = [
-    { label: "Te queda", value: takeHome, color: "bg-chart-income" },
-    { label: "Impuestos estimados", value: taxes, color: "bg-chart-tax" },
+    { label: estimates ? "Te queda" : "Beneficio", value: takeHome, color: "bg-chart-income" },
+    estimates && { label: "Impuestos estimados", value: taxes, color: "bg-chart-tax" },
     { label: "Gastos", value: expenses, color: "bg-chart-expense" },
-  ];
+  ].filter((p) => !!p);
 
   const lines: Line[] = [
     { label: "Facturado", to: "/ventas/facturas", value: income, dot: "bg-chart-income" },
     { label: "Gastos", to: "/compras/facturas", value: expenses, dot: "bg-chart-expense" },
-    { label: "Impuestos estimados", to: "/impuestos", value: taxes, dot: "bg-chart-tax" },
+    ...(estimates ? [{ label: "Impuestos estimados", to: "/impuestos", value: taxes, dot: "bg-chart-tax" }] : []),
     ...(data.taxes.vat > 0
       ? [{ label: "IVA a pagar", to: "/impuestos", value: data.taxes.vat, dot: "outline" }]
       : []),
@@ -400,7 +403,7 @@ function TakeHomeSummary({ data }: { data: HomeData }) {
   return (
     <section aria-labelledby="mobile-take-home-title" className="flex flex-col gap-2.5 pt-2">
       <h2 id="mobile-take-home-title" className="m-0 text-lg font-semibold tracking-tight">
-        Beneficio neto estimado
+        {estimates ? "Beneficio neto estimado" : "Beneficio antes de impuestos"}
       </h2>
       <div className="surface flex flex-col overflow-hidden">
         <div className="flex flex-col gap-3.5 px-4 pt-4 pb-3">
