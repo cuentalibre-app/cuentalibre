@@ -414,7 +414,7 @@ export function useAeatFile(
       ? undefined
       : profile.kind === "company"
         ? "Para generar el fichero, completa el NIF y la razón social en Configuración › Datos de la empresa."
-        : "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales.",
+        : "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos de la empresa.",
   };
 }
 
