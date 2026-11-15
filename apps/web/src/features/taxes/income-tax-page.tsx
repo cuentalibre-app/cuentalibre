@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import {
+  aeatFiler,
   cents,
   earlierInstallments,
   file130,
@@ -221,21 +222,16 @@ function useRecordBooks(year: number): AeatFile {
     () => (activity ? recordBooksFile(documents, purchases, expenses, year, activity) : null),
     [documents, purchases, expenses, year, activity],
   );
-  const filer = {
-    taxId: profile.taxId,
-    surnames: `${profile.lastName} ${profile.secondLastName}`,
-    name: profile.firstName,
-  };
+  const filer = aeatFiler(profile);
   return {
-    name: recordBooksFileName(year, filer),
+    name: filer ? recordBooksFileName(year, filer) : "",
     label: "Libros para Renta WEB",
     build: () => blob!,
-    missing:
-      !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
-        ? "Para generar los libros, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
-        : !activity
-          ? "Para generar los libros, añade tu actividad económica en Configuración › Impuestos."
-          : undefined,
+    missing: !filer
+      ? "Para generar los libros, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
+      : !activity
+        ? "Para generar los libros, añade tu actividad económica en Configuración › Impuestos."
+        : undefined,
   };
 }
 
