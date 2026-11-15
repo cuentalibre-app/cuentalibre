@@ -233,7 +233,7 @@ Dirección: /ventas/facturas/nueva
 
 - Botones de arriba: «Volver a facturas emitidas»; «Configurar factura»; «Nuevo cliente»; «Crear factura»; «Más formas de crear»: «Crear e ir a la pantalla de editar», «Crear y enviar», «Crear y generar recibo de cobro».
 - Información de la factura: Cliente (obligatorio), Número (ayuda: Se asigna al emitir la factura: el siguiente de la serie, en orden de fecha.), Serie (obligatorio), Fecha (obligatorio), Vencimiento, «30 días», «60 días», «90 días», «Sin fecha», Tipo de ingreso (ayuda: Cuenta del Plan General Contable (grupo 7) en la que se registra el ingreso.), Retención (ayuda: IRPF que el cliente te retiene e ingresa a Hacienda en tu nombre.).
-- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad, concepto 1», «Sumar una unidad, concepto 1», Descuento, «Eliminar concepto 1», «Más opciones del concepto 1», «Añadir otro concepto».
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
 - Notas: Notas en la factura (ayuda: Se imprimen en el documento. Guarda las que repites como notas predefinidas.), «Nota predefinida», «Gestionar información de la nota», Notas privadas (ayuda: Solo las ves tú: no aparecen en el documento.), Etiquetas, «Añadir etiqueta».
 - Opciones avanzadas: Fecha de operación, Tipo de operación (ayuda: Decide cómo se trata el IVA y en qué casillas de los modelos 303, 349 y 390 aparece.), Factura emitida en criterio de caja (ayuda: El IVA se declara cuando cobras, no cuando emites. Solo si estás acogido al régimen especial de criterio de caja.), Operación de arrendamiento de inmuebles (ayuda: Alquiler de un local o vivienda. Se informa en los modelos 115, 180 y 347 con su situación y referencia catastral.), Marcar factura como cobrada.
 - Otros: Idioma, Formato numérico.
@@ -245,7 +245,7 @@ Dirección: /compras/facturas/nueva
 - Botones de arriba: «Volver a facturas recibidas»; «Nuevo proveedor»; «Registrar factura»; «Más formas de registrar»: «Registrar e ir a la pantalla de editar», «Registrar y añadir otra».
 - «elige un archivo».
 - Información de la factura: Proveedor (obligatorio), Número (obligatorio) (ayuda: El número que figura en la factura del proveedor.), Fecha de la factura (obligatorio), Fecha contable (obligatorio) (ayuda: Decide el trimestre en el que se deduce. Si una factura te llega tarde, puedes contabilizarla en un trimestre posterior.), Vencimiento, «30 días», «60 días», «90 días», «Sin fecha», Tipo de gasto (ayuda: Cuenta del Plan General Contable (grupo 6) en la que se registra el gasto.), Imputación (ayuda: Parte de la factura que cuenta como gasto deducible. Por ejemplo, si trabajas en casa y dedicas el 20 % de la vivienda a la actividad, de la luz puedes deducir el 30 % de ese 20 %: un 6 %.), Retención (ayuda: IRPF que retienes al proveedor (un profesional, un alquiler…) e ingresas tú a Hacienda con el modelo 111 o 115.).
-- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad, concepto 1», «Sumar una unidad, concepto 1», Descuento, «Eliminar concepto 1», «Más opciones del concepto 1», «Añadir otro concepto».
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
 - Pagos: «Marcar como pagada», «Elegir movimiento bancario», «Nuevo método».
 - Notas: Notas privadas (ayuda: Solo las ves tú.), Etiquetas, «Añadir etiqueta».
 
@@ -267,7 +267,7 @@ Dirección: /compras/bienes-de-inversion/nuevo
 - Botones de arriba: «Volver a bienes de inversión»; «Nuevo proveedor»; «Registrar bien»; «Más formas de registrar»: «Registrar e ir a la pantalla de editar», «Registrar y añadir otro».
 - «elige un archivo».
 - Información de la factura: Proveedor (obligatorio), Número (obligatorio), Fecha de la factura (obligatorio), Fecha contable (obligatorio), Vencimiento, «30 días», «60 días», «90 días», «Sin fecha», Tipo de gasto, Imputación, Retención.
-- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad, concepto 1», «Sumar una unidad, concepto 1», Descuento, «Eliminar concepto 1», «Más opciones del concepto 1», «Añadir otro concepto».
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
 - Información sobre la amortización: Tipo de bien (obligatorio) (ayuda: Decide los coeficientes de amortización que permite la tabla simplificada de estimación directa.), Identificador.
 - Pagos: «Marcar como pagada», «Elegir movimiento bancario», «Nuevo método».
 - Notas: Notas privadas, Etiquetas, «Añadir etiqueta».
@@ -278,7 +278,7 @@ Dirección: /ventas/albaranes/nuevo
 
 - Botones de arriba: «Volver a albaranes»; «Configurar albarán»; «Nuevo cliente»; «Crear albarán»; «Más formas de crear»: «Crear e ir a la pantalla de editar», «Crear y enviar».
 - Información del albarán: Cliente (obligatorio), Número (obligatorio) (ayuda: Número correlativo dentro de la serie. «Obtener número» propone el siguiente libre.), «Obtener número», Serie (obligatorio), Fecha (obligatorio), Retención.
-- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad, concepto 1», «Sumar una unidad, concepto 1», Descuento, «Eliminar concepto 1», «Más opciones del concepto 1», «Añadir otro concepto».
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
 - Notas: Notas en el albarán, «Nota predefinida», «Gestionar información de la nota», Notas privadas, Etiquetas, «Añadir etiqueta».
 - Otros: Idioma, Formato numérico.
 
@@ -288,7 +288,7 @@ Dirección: /ventas/presupuestos/nuevo
 
 - Botones de arriba: «Volver a presupuestos»; «Configurar presupuesto»; «Nuevo cliente»; «Crear presupuesto»; «Más formas de crear»: «Crear e ir a la pantalla de editar», «Crear y enviar».
 - Información del presupuesto: Cliente, Número (obligatorio), «Obtener número», Serie (obligatorio), Fecha (obligatorio), Fecha de validez, «30 días», «60 días», «90 días», «Sin fecha», Retención.
-- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad, concepto 1», «Sumar una unidad, concepto 1», Descuento, «Eliminar concepto 1», «Más opciones del concepto 1», «Añadir otro concepto».
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
 - Notas: Notas en el presupuesto, «Nota predefinida», «Gestionar información de la nota», Notas privadas, Etiquetas, «Añadir etiqueta».
 - Otros: Idioma, Formato numérico.
 
@@ -325,6 +325,17 @@ Dirección: /catalogo/productos/nuevo
 - Coste de adquisición: Coste unitario (base imponible) (ayuda: Lo que te cuesta adquirir el producto más lo necesario para tenerlo disponible (transporte, aduanas…). Indica la base imponible total de esos costes.) (ayuda: Se propone al añadir el producto a una factura recibida.).
 - Control de stock: Habilitar control de stock.
 
+## Facturas emitidas › Detalle
+
+Dirección: /ventas/facturas/:id
+
+- Botones de arriba: «Volver a facturas emitidas»; «Configurar factura»; «Nuevo cliente»; «Guardar cambios».
+- Información de la factura: Dirección: Cliente (obligatorio), Número (ayuda: Número que recibió al emitirse.), Serie (obligatorio), Fecha (obligatorio), Vencimiento, «30 días», «60 días», «90 días», «Sin fecha», Tipo de ingreso, Retención.
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
+- Notas: Notas en la factura, «Nota predefinida», «Gestionar información de la nota», Notas privadas, Etiquetas, «Añadir etiqueta».
+- Opciones avanzadas: Fecha de operación, Tipo de operación, Factura emitida en criterio de caja, Operación de arrendamiento de inmuebles.
+- Otros: Idioma, Formato numérico.
+
 ## Configuración de facturas
 
 Dirección: /configuracion/facturas
@@ -351,7 +362,17 @@ Dirección: /ventas/borradores/nuevo
 
 - Botones de arriba: «Volver a borradores»; «Configurar factura borrador»; «Nuevo cliente»; «Emitir factura»; «Crear factura borrador»; «Más formas de crear»: «Crear e ir a la pantalla de editar», «Crear y enviar».
 - Información de la factura borrador: Cliente, Número (obligatorio), «Obtener número», Serie (obligatorio), Fecha (obligatorio), Fecha de validez, «30 días», «60 días», «90 días», «Sin fecha», Retención.
-- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad, concepto 1», «Sumar una unidad, concepto 1», Descuento, «Eliminar concepto 1», «Más opciones del concepto 1», «Añadir otro concepto».
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
+- Notas: Notas en la factura borrador, «Nota predefinida», «Gestionar información de la nota», Notas privadas, Etiquetas, «Añadir etiqueta».
+- Otros: Idioma, Formato numérico.
+
+## Borradores › Detalle
+
+Dirección: /ventas/borradores/:id
+
+- Botones de arriba: «Volver a borradores»; «Configurar factura borrador»; «Nuevo cliente»; «Emitir factura»; «Guardar cambios».
+- Información de la factura borrador: Dirección: Cliente, Número (obligatorio), «Obtener número», Serie (obligatorio), Fecha (obligatorio), Fecha de validez, «30 días», «60 días», «90 días», «Sin fecha», Retención.
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
 - Notas: Notas en la factura borrador, «Nota predefinida», «Gestionar información de la nota», Notas privadas, Etiquetas, «Añadir etiqueta».
 - Otros: Idioma, Formato numérico.
 
@@ -373,6 +394,16 @@ Dirección: /configuracion/filtros-de-listados
 - Filtro por defecto de los listados de albaranes: Por estado, No filtrar, Mostrar inicialmente solo albaranes pendientes, Por fecha, Mostrar inicialmente solo albaranes del mes en curso.
 - Filtro por defecto de los listados de presupuestos: Mostrar inicialmente solo presupuestos pendientes, Mostrar inicialmente solo presupuestos del mes en curso.
 
+## Albaranes › Detalle
+
+Dirección: /ventas/albaranes/:id
+
+- Botones de arriba: «Volver a albaranes»; «Configurar albarán»; «Nuevo cliente»; «Guardar cambios».
+- Información del albarán: Dirección: Cliente (obligatorio), Número (obligatorio), «Obtener número», Serie (obligatorio), Fecha (obligatorio), Retención.
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
+- Notas: Notas en el albarán, «Nota predefinida», «Gestionar información de la nota», Notas privadas, Etiquetas, «Añadir etiqueta».
+- Otros: Idioma, Formato numérico.
+
 ## Configuración de presupuestos
 
 Dirección: /configuracion/presupuestos
@@ -381,6 +412,16 @@ Dirección: /configuracion/presupuestos
 - Plantilla de presupuesto: Clásica, Clásica Tradicional, Moderna, Moderna Tradicional, Elegante, Elegante Tradicional, Vanguardista, Fuente, Color texto, Color líneas, Color fondo, «Restablecer», Idioma, Formato numérico, Mostrar las unidades de producto, Mostrar fechas de prestación del servicio, Mostrar los precios de los productos/servicios, Mostrar los impuestos, Pero esconder los impuestos cuando su importe sea 0.
 - Logotipo de presupuestos: «Configuración de facturas».
 - Pie de presupuesto fijo: Texto en todos los presupuestos.
+
+## Presupuestos › Detalle
+
+Dirección: /ventas/presupuestos/:id
+
+- Botones de arriba: «Volver a presupuestos»; «Configurar presupuesto»; «Nuevo cliente»; «Guardar cambios».
+- Información del presupuesto: Dirección: Cliente, Número (obligatorio), «Obtener número», Serie (obligatorio), Fecha (obligatorio), Fecha de validez, «30 días», «60 días», «90 días», «Sin fecha», Retención.
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
+- Notas: Notas en el presupuesto, «Nota predefinida», «Gestionar información de la nota», Notas privadas, Etiquetas, «Añadir etiqueta».
+- Otros: Idioma, Formato numérico.
 
 ## Exportación de libros de registro
 
@@ -398,6 +439,41 @@ Dirección: /exportar/avanzada
 - Botones de arriba: «Volver a exportaciones».
 - Selecciona la información a exportar: Listado de facturas (emitidas, recibidas y bienes de inversión), Incluir el detalle de las facturas, Incluir el detalle de los pagos y cobros, Listado de amortizaciones de bienes de inversión, Listado de gastos, Presupuestos entre las fechas, Incluir el detalle de los presupuestos, Albaranes entre las fechas, Incluir el detalle de los albaranes, Listado de clientes y proveedores, Formato de exportación, «Exportar».
 
+## Facturas recibidas › Detalle
+
+Dirección: /compras/facturas/:id
+
+- Botones de arriba: «Volver a facturas recibidas»; «Nuevo proveedor»; «Guardar cambios».
+- «elige un archivo».
+- Información de la factura: Proveedor (obligatorio), Número (obligatorio), Fecha de la factura (obligatorio), Fecha contable (obligatorio), Vencimiento, «30 días», «60 días», «90 días», «Sin fecha», Tipo de gasto, Imputación, Retención.
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
+- Pagos: «Marcar como pagada», «Elegir movimiento bancario», «Nuevo método».
+- Notas: Notas privadas, Etiquetas, «Añadir etiqueta».
+- Opciones avanzadas: Fecha de operación, Tipo de operación, Imputación a IVA (ayuda: Parte del IVA que se deduce en los modelos de IVA, si es distinta de la del gasto. Por ejemplo, un coche: 0 % como gasto (se amortiza) y 50 % del IVA.), Proveedor acogido al régimen de criterio de caja (ayuda: El proveedor no ingresa el IVA hasta cobrarlo, y tú no puedes deducirlo hasta pagarlo.), Operación de arrendamiento de inmuebles (ayuda: Alquiler de un local u oficina. Se informa en los modelos 115, 180 y 347 con su situación y referencia catastral.).
+
+## Bienes de inversión › Detalle
+
+Dirección: /compras/bienes-de-inversion/:id
+
+- Botones de arriba: «Volver a bienes de inversión»; «Nuevo proveedor»; «Guardar cambios».
+- «elige un archivo».
+- Información de la factura: Proveedor (obligatorio), Número (obligatorio), Fecha de la factura (obligatorio), Fecha contable (obligatorio), Vencimiento, «30 días», «60 días», «90 días», «Sin fecha», Tipo de gasto, Imputación, Retención.
+- Conceptos: «Mostrar edición avanzada», «Seleccionar producto del catálogo», Base, Cantidad, «Restar una unidad», «Sumar una unidad», Descuento, «Eliminar concepto», «Más opciones del concepto», «Añadir otro concepto».
+- Información sobre la amortización: Tipo de bien (obligatorio), Método de amortización (ayuda: Un porcentaje del valor cada año, o el valor repartido en un número de años.), Coeficiente anual, Identificador.
+- Pagos: «Marcar como pagada», «Elegir movimiento bancario», «Nuevo método».
+- Notas: Notas privadas, Etiquetas, «Añadir etiqueta».
+
+## Gastos › Detalle
+
+Dirección: /compras/gastos/:id
+
+- Botones de arriba: «Volver a gastos»; «Guardar cambios».
+- «elige un archivo».
+- Datos del gasto: Fecha (obligatorio), Concepto (obligatorio), Importe (obligatorio), Tipo de gasto, Imputación.
+- Proveedor: Pagado a, «Nuevo proveedor», Nombre o razón social (obligatorio), NIF, Número, «Regístrala como factura recibida».
+- Pago: Pagado.
+- Notas: Notas privadas, Etiquetas, «Añadir etiqueta», «Quitar etiqueta».
+
 ## Configuración › Impuestos
 
 Dirección: /configuracion/impuestos
@@ -411,7 +487,7 @@ Dirección: /configuracion/impuestos
 
 ## Retenciones de alquileres (un trimestre)
 
-Dirección: /impuestos/alquileres?periodo=2026-T4
+Dirección: /impuestos/alquileres?periodo=trimestre
 
 - Botones de arriba: «115 · Trimestral»; «180 · Anual».
 - «Fichero para la AEAT», «Presentar el 115».
@@ -420,7 +496,7 @@ Dirección: /impuestos/alquileres?periodo=2026-T4
 
 ## Retenciones (un trimestre)
 
-Dirección: /impuestos/retenciones?periodo=2026-T4
+Dirección: /impuestos/retenciones?periodo=trimestre
 
 - Botones de arriba: «111 · Trimestral»; «190 · Anual».
 - «Fichero para la AEAT», «Presentar el 111».
@@ -429,7 +505,7 @@ Dirección: /impuestos/retenciones?periodo=2026-T4
 
 ## IVA (un trimestre)
 
-Dirección: /impuestos/iva?periodo=2026-T4
+Dirección: /impuestos/iva?periodo=trimestre
 
 - Botones de arriba: «303 · Trimestral»; «390 · Anual».
 - «Fichero para la AEAT», «Presentar el 303».
@@ -439,7 +515,7 @@ Dirección: /impuestos/iva?periodo=2026-T4
 
 ## IRPF (un trimestre)
 
-Dirección: /impuestos/irpf?periodo=2026-T4
+Dirección: /impuestos/irpf?periodo=trimestre
 
 - Botones de arriba: «130 · Trimestral»; «100 · Anual».
 - «Fichero para la AEAT», «Presentar el 130».
@@ -448,14 +524,14 @@ Dirección: /impuestos/irpf?periodo=2026-T4
 
 ## Operaciones intracomunitarias (un trimestre)
 
-Dirección: /impuestos/intracomunitarias?periodo=2026-T4
+Dirección: /impuestos/intracomunitarias?periodo=trimestre
 
 - Botones de arriba: «Trimestral»; «Bimensual»; «Mensual».
 - «Fichero para la AEAT», «Presentar el 349».
 
 ## IVA (el año)
 
-Dirección: /impuestos/iva?periodo=2026
+Dirección: /impuestos/iva?periodo=año
 
 - Botones de arriba: «303 · Trimestral»; «390 · Anual».
 - «Fichero para la AEAT», «Presentar el 390».
@@ -464,7 +540,7 @@ Dirección: /impuestos/iva?periodo=2026
 
 ## IRPF (el año)
 
-Dirección: /impuestos/irpf?periodo=2026
+Dirección: /impuestos/irpf?periodo=año
 
 - Botones de arriba: «130 · Trimestral»; «100 · Anual».
 - «Libros para Renta WEB», «Ir a Renta WEB».
@@ -473,7 +549,7 @@ Dirección: /impuestos/irpf?periodo=2026
 
 ## Retenciones (el año)
 
-Dirección: /impuestos/retenciones?periodo=2026
+Dirección: /impuestos/retenciones?periodo=año
 
 - Botones de arriba: «111 · Trimestral»; «190 · Anual».
 - «Cumplimentar el 190».
@@ -481,7 +557,7 @@ Dirección: /impuestos/retenciones?periodo=2026
 
 ## Retenciones de alquileres (el año)
 
-Dirección: /impuestos/alquileres?periodo=2026
+Dirección: /impuestos/alquileres?periodo=año
 
 - Botones de arriba: «115 · Trimestral»; «180 · Anual».
 - «Cumplimentar el 180».
@@ -489,7 +565,7 @@ Dirección: /impuestos/alquileres?periodo=2026
 
 ## Operaciones con terceras personas (el año)
 
-Dirección: /impuestos/terceras-personas?periodo=2026
+Dirección: /impuestos/terceras-personas?periodo=año
 
 - «Cumplimentar el 347».
 - Declarados: «Configuración › Impuestos», «Cl@ve PIN», «Calendario del Contribuyente de la Agencia Tributaria».
@@ -500,6 +576,33 @@ Dirección: /configuracion/formas-de-cobro-y-pago
 
 - Botones de arriba: «Volver a configuración»; «Nueva forma de pago».
 - «Todas», «Activas», «Inactivas», «Editar», «Más opciones de Ingreso/Transferencia», «Más opciones de Cuenta principal», «Más opciones de Tarjeta de empresa», «Más opciones de PayPal», «Más opciones de Efectivo».
+
+## Clientes › Detalle
+
+Dirección: /contactos/clientes/:id
+
+- Botones de arriba: «Volver a clientes»; «Nueva factura»; «Editar»; «Más acciones»: «Ver ficha», «Editar contacto», «Nueva factura», «Nuevo presupuesto», «Nuevo albarán», «Adjuntar archivos», «Gestionar etiquetas», «Descargar vCard», «Crear por copia», «Copiar como proveedor», «Eliminar contacto».
+- Información básica, Documentos, Informes de facturación, Documentos adjuntos.
+- Dirección: «Ver en el mapa».
+
+## Proveedores › Detalle
+
+Dirección: /contactos/proveedores/:id
+
+- Botones de arriba: «Volver a proveedores»; «Nueva factura recibida»; «Editar»; «Más acciones»: «Ver ficha», «Editar contacto», «Nueva factura recibida», «Nuevo gasto», «Adjuntar archivos», «Gestionar etiquetas», «Descargar vCard», «Crear por copia», «Copiar como cliente», «Eliminar contacto».
+- Información básica, Documentos, Informes de facturación, Documentos adjuntos.
+- Dirección: «Ver en el mapa».
+
+## Catálogo de productos y servicios › Detalle
+
+Dirección: /catalogo/productos/:id
+
+- Botones de arriba: «Volver al catálogo»; «Guardar cambios».
+- Información del producto: «Quitar la familia», «Cambiar», Nombre (obligatorio), Descripción, Notas privadas, Tipo de unidad, Etiquetas, «Añadir etiqueta», Producto visible (activo).
+- Referencias: Código de producto (SKU), Referencia proveedor.
+- Precio de venta: «Mostrar edición avanzada», Precio unitario (base imponible) (obligatorio), Porcentaje de descuento, Porcentaje de IVA (obligatorio).
+- Coste de adquisición: Coste unitario (base imponible).
+- Control de stock: Habilitar control de stock, «configuración del catálogo», «Regularizar stock», Permitir vender sin stock, Activar alarma de stock (ayuda: Cuando el stock baja de las unidades que indiques, el producto aparece en los avisos del inicio hasta que lo marques como leído.), Avisar cuando queden menos de (obligatorio).
 
 ## Datos personales
 
@@ -573,3 +676,25 @@ Dirección: /configuracion/plantillas-correo
 Dirección: /configuracion/api
 
 - Botones de arriba: «Volver a configuración».
+
+## Editar cliente
+
+Dirección: /contactos/clientes/:id/editar
+
+- Botones de arriba: «Volver a la ficha»; «Guardar cambios».
+- Datos de facturación: NIF (obligatorio), Nombre o razón social (obligatorio), País.
+- Dirección: Código postal, Población, Provincia, «Ver en el mapa».
+- Datos de contacto: Email, Teléfono, Móvil, Fax, Web.
+- Condiciones por defecto: Descuento, Retención, Método de cobro; Idioma y formato numérico de sus documentos: Idioma, Formato numérico.
+- Otros: Personalizado 1, Personalizado 2, Notas, Etiquetas, «Añadir etiqueta».
+
+## Editar proveedor
+
+Dirección: /contactos/proveedores/:id/editar
+
+- Botones de arriba: «Volver a la ficha»; «Guardar cambios».
+- Datos de facturación: NIF (obligatorio) (ayuda: El número de identificación fiscal del país; en la UE, el NIF-IVA con el código del país delante.), Nombre o razón social (obligatorio), País, Inscrito en el VIES (ayuda: Si el proveedor es empresa o autónomo con NIF-IVA válido en el censo europeo. Sus facturas se proponen como operaciones intracomunitarias, sin IVA.).
+- Dirección: Código postal, Población, Provincia, «Ver en el mapa».
+- Datos de contacto: Email, Teléfono, Móvil, Fax, Web.
+- Condiciones por defecto: Descuento, Retención, Método de pago.
+- Otros: Personalizado 1, Personalizado 2, Notas, Etiquetas, «Añadir etiqueta».

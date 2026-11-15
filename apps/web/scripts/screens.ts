@@ -7,10 +7,11 @@
  * It serves the app with Vite, opens the demo (sample data, no backend) in a headless browser
  * and walks every page reachable from the navigation, on a computer's screen.
  *
- *   pnpm --filter @cuentalibre/web screens          writes the page
- *   pnpm --filter @cuentalibre/web screens --check  fails if the page is out of date (CI)
+ *   pnpm --filter @cuentalibre/web screens
+ *
+ * CI runs it and fails if the page it writes differs from the one committed.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chromium, type Page } from "playwright";
 import { createServer } from "vite";
@@ -47,7 +48,7 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
       .trim();
   // Amounts, dates and counts belong to the sample data, not to the screen
   const isData = (value: string) =>
-    /^Cuenta de |^Copiar casilla |^\dT |€|\b20\d\d\b|\d+ (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\b|\(\d+\)|·\s*\d|^\d+$/i.test(
+    /^Cuenta de |^Copiar casilla |^\dT |€|\S@\S+\.[a-z]{2,}$|\b20\d\d\b|\d+ (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\b|\(\d+\)|·\s*\d|^\d+$/i.test(
       value,
     );
   const skip = (el: Element) =>
@@ -66,6 +67,11 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
     const value = raw
       .replace(/^«|»$/g, "")
       .replace(/, \d+ sin leer$/, "")
+      // A record's buttons name it, or the line or tag they act on: the button is the same for all
+      .replace(/^(Volver a la ficha) de .+$/, "$1")
+      .replace(/^(Quitar etiqueta) .+$/, "$1")
+      .replace(/, concepto \d+$/, "")
+      .replace(/(concepto) \d+$/, "$1")
       .replace(/\b\d+ PDF\b/, "los PDF");
     if (!value || value.length > 90 || isData(value) || seen.has(value)) return;
     seen.add(value);
@@ -143,8 +149,9 @@ async function menuItems(page: Page, open: () => Promise<void>): Promise<string[
     await menu.waitFor({ timeout: 2000 });
     const items = (await menu.locator("[role='menuitem'], [role='menuitemradio']").allInnerTexts())
       .map((item) => item.replace(/\s+/g, " ").trim())
-      // Item names that carry a document's number: keep the action
-      .map((item) => item.replace(/\s+\(.*\)$/, "").replace(/(\s+\S*\d\S*)+$/, ""))
+      // Item names that carry a document's number, such as "F2026-0001": keep the action, and a
+      // form's number, such as "modelo 303", which names the action
+      .map((item) => item.replace(/\s+\(.*\)$/, "").replace(/(\s+(?=\S*\d)(?=\S*[^\d\s])\S+)+$/, ""))
       .filter(Boolean);
     await page.keyboard.press("Escape");
     return items;
@@ -162,18 +169,16 @@ async function rowActions(page: Page): Promise<string[]> {
 }
 
 /**
- * Which page a link leads to, or null for one record or a page outside the app. A period in the
- * query is a page of its own (a tax form's boxes rather than its introduction), once for a
- * quarter and once for a year.
+ * Which screen a link leads to, as the help chat is told it (screen-path.ts), or null for a page
+ * outside the app or a list filtered by its query. One record stands for all of its kind, and a
+ * period in the query is a screen of its own (a tax form's boxes rather than its introduction),
+ * once for a quarter and once for a year.
  */
 function pageKey(link: string): string | null {
   const url = new URL(link, "http://app");
   if (!link.startsWith("/") || url.hash) return null;
-  if (url.pathname.split("/").some((segment) => /\d/.test(segment) || /^[0-9a-f-]{20,}$/.test(segment))) return null;
-  const params = [...url.searchParams.keys()];
-  if (params.length === 0) return url.pathname;
-  if (params.length > 1 || params[0] !== "periodo") return null;
-  return `${url.pathname}?periodo=${/T\d$/.test(url.searchParams.get("periodo")!) ? "trimestre" : "año"}`;
+  if ([...url.searchParams.keys()].some((key) => key !== "periodo")) return null;
+  return screenPath(url.pathname, url.search);
 }
 
 /** Items of a section: a subheading ("Trimestrales:") opens a group of its own. */
@@ -206,7 +211,7 @@ function render(screens: Screen[], sectionOf: (path: string) => string | undefin
   ];
   const titleOf = (screen: Screen) => {
     const period = /[?&]periodo=([^&]+)/.exec(screen.path)?.[1];
-    return period ? `${screen.title} (${/T\d$/.test(period) ? "un trimestre" : "el año"})` : screen.title;
+    return period ? `${screen.title} (${period === "trimestre" ? "un trimestre" : "el año"})` : screen.title;
   };
   const titles = screens.map(titleOf);
   // Help tips repeat across forms: each is written once, where it first appears
@@ -237,6 +242,9 @@ const origin = server.resolvedUrls!.local[0]!.replace(/\/$/, "");
 const nav = (await server.ssrLoadModule(
   "/src/components/layout/nav.ts",
 )) as typeof import("../src/components/layout/nav");
+const { screenPath } = (await server.ssrLoadModule(
+  "/src/features/help-chat/screen-path.ts",
+)) as typeof import("../src/features/help-chat/screen-path");
 const browser = await chromium.launch();
 
 try {
@@ -245,7 +253,8 @@ try {
     locale: "es-ES",
     timezoneId: "Europe/Madrid",
   });
-  // The demo's data and periods follow today's date: a fixed one keeps the page the same from run to run
+  // The demo's data follows today's date: a fixed one keeps the page the same from run to run.
+  // Addresses don't carry it: screenPath names a period by its kind, not by its year
   await page.clock.setFixedTime(new Date("2026-11-15T10:00:00+01:00"));
   // The first-run tour would cover the screens
   await page.addInitScript(() => sessionStorage.setItem("cuentalibre:demo-tour", "skipped"));
@@ -268,9 +277,15 @@ try {
     const landed = (url.pathname.replace(/^\/demo/, "") || "/") + url.search;
     if (landed !== path) continue; // A redirect: the page it lands on is walked on its own
     const read = await page.evaluate(readScreen);
+    // A record's page is titled with its number or name: it is named after its list instead
+    if (key.endsWith("/:id")) {
+      const list = screens.find((s) => s.path === key.slice(0, -"/:id".length));
+      if (!list) throw new Error(`${key} was reached before its list.`);
+      read.title = `${list.title} › Detalle`;
+    }
     const menus = await headerMenus(page);
     const screen: Screen = {
-      path,
+      path: key,
       title: read.title,
       actions: [...read.actions.map((a) => `«${a}»`).filter((a) => !menus.some((m) => m.startsWith(a))), ...menus],
       sections: read.sections,
@@ -286,12 +301,7 @@ try {
   }
   const sections = [...nav.mainNav, ...nav.secondaryNav].filter((item) => item.to !== "/");
   const markdown = render(screens, (path) => sections.find((item) => path.startsWith(item.to))?.label);
-  if (process.argv.includes("--check")) {
-    if (readFileSync(OUTPUT, "utf8") !== markdown) {
-      console.error(`${OUTPUT} is out of date: run \`pnpm --filter @cuentalibre/web screens\` and commit it.`);
-      process.exitCode = 1;
-    }
-  } else writeFileSync(OUTPUT, markdown);
+  writeFileSync(OUTPUT, markdown);
   console.log(`${screens.length} screens.`);
 } finally {
   await browser.close();

@@ -4,6 +4,7 @@ import { ApiError } from "@/data/api";
 import { currentBackend } from "@/data/backend";
 import { signInMethods } from "@/features/auth/auth-api";
 import { routerBasename } from "@/features/auth/session";
+import { screenPath } from "./screen-path";
 
 /*
  * The AI help chat: whether its panel is open, and the conversation so far. One store for the
@@ -128,7 +129,7 @@ export function conversationFor(messages: HelpMessage[]): HelpChatMessage[] {
  * desktop width the app has the phone's tab bar instead of the sidebar.
  */
 function currentScreen(): HelpChatScreen {
-  const path = window.location.pathname.slice(routerBasename()?.length ?? 0) || "/";
+  const path = screenPath(window.location.pathname.slice(routerBasename()?.length ?? 0) || "/", window.location.search);
   return { device: window.matchMedia(DESKTOP).matches ? "desktop" : "phone", path: path.slice(0, 200) };
 }
 

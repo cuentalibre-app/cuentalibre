@@ -15,8 +15,6 @@ const GENERATED = ["mapa.md", "pantallas.md"];
 
 /** Bold text that names no single thing on screen. */
 const NOT_NAMES = new Set([
-  // An example of a button whose name carries the quarter: "Cerrar el {name}"
-  "Cerrar el 3T 2026",
   // A part of the tax form pages, described in the guide's words
   "El resultado",
 ]);

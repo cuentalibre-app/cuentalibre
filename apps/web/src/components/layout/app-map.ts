@@ -39,10 +39,11 @@ function desktop(): string[] {
 }
 
 function phone(): string[] {
-  const ordinals = ["el primero", "el segundo", "el tercero", "el cuarto", "el quinto"];
+  const ordinals = ["el primero", "el segundo", "el tercero", "el cuarto", "el quinto", "el sexto", "el séptimo"];
   const tabs = phoneTabs.map((tab, i) => {
     const place =
       i === phoneTabs.length - 1 ? "el último" : i === (phoneTabs.length - 1) / 2 ? "el del centro" : ordinals[i];
+    if (!place) throw new Error(`The app map has no word for tab ${i + 1}: add it to the ordinals.`);
     if (tab.kind === "create")
       return `- **${tab.label}** (${place}): abre ${phoneShortcuts.map((s) => `**${s.label}**`).join(", ")}.`;
     if (tab.kind === "more") return `- **${tab.label}** (${place}): abre la hoja **Más**, con el resto de secciones.`;
@@ -61,6 +62,13 @@ function phone(): string[] {
   const elsewhere = phoneTabs
     .flatMap((tab) => (tab.kind === "link" && tab.to !== TAXES ? (mainNavItem(tab.to)?.children?.slice(1) ?? []) : []))
     .filter((leaf) => !leaf.desktopOnly && !reachable.has(leaf.to));
+  const desktopOnly = [
+    ...new Map(
+      mainNav
+        .flatMap((item) => item.children?.filter((leaf) => leaf.desktopOnly) ?? [])
+        .map((leaf) => [leaf.label, leaf]),
+    ).values(),
+  ];
   return [
     "## En el móvil",
     "",
@@ -75,7 +83,13 @@ function phone(): string[] {
     ...(elsewhere.length > 0
       ? [`En el móvil, los menús no llevan a ${list(elsewhere)}: se abren desde el ordenador.`, ""]
       : []),
-    "Las pantallas de exportar e importar datos no están en el móvil. Tu cuenta (**Configuración**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.",
+    ...(desktopOnly.length > 0
+      ? [
+          `${new Intl.ListFormat("es").format(desktopOnly.map((leaf) => leaf.label))} no están en el móvil: se usan desde el ordenador.`,
+          "",
+        ]
+      : []),
+    "Tu cuenta (**Configuración**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.",
   ];
 }
 

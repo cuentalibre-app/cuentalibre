@@ -55,7 +55,9 @@ La hoja **Más** reúne, de arriba abajo:
 
 En el móvil, los menús no llevan a Borradores, Albaranes y Presupuestos: se abren desde el ordenador.
 
-Las pantallas de exportar e importar datos no están en el móvil. Tu cuenta (**Configuración**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.
+Exportar e Importar no están en el móvil: se usan desde el ordenador.
+
+Tu cuenta (**Configuración**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.
 
 ## En todas las pantallas
 
