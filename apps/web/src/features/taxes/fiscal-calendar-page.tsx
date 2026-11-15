@@ -276,38 +276,20 @@ function GridCell({
 function RowLabel({ form, applies }: { form: CalendarForm; applies: boolean | null }) {
   const info = FORMS[form];
   return (
-    <span className="flex items-center gap-2.5">
+    <span className="flex min-w-0 items-center gap-2.5">
       {form !== "reta" && (
         <span
           className={cn(
-            "rounded-sm px-1.5 py-0.5 text-xs font-semibold tabular-nums",
+            "shrink-0 rounded-sm px-1.5 py-0.5 text-xs font-semibold tabular-nums",
             applies === true ? "bg-primary-soft text-primary" : "bg-muted text-muted-foreground",
           )}
         >
           {form}
         </span>
       )}
-      <span className={cn("font-medium whitespace-nowrap", applies !== true && "text-muted-foreground")}>
+      <span title={info.row} className={cn("truncate font-medium", applies !== true && "text-muted-foreground")}>
         {info.row}
       </span>
-      {info.condition && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0}>
-              {applies ? (
-                <Badge tone="warning">Te afecta</Badge>
-              ) : (
-                <Badge>{applies === null ? "¿Te afecta?" : "No te afecta"}</Badge>
-              )}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-64">
-            {info.condition}
-            {applies === false && " No hay documentos que lo requieran."}
-            {applies === null && " cuentalibre aún no lo comprueba."}
-          </TooltipContent>
-        </Tooltip>
-      )}
     </span>
   );
 }
