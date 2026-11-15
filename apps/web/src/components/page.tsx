@@ -143,6 +143,8 @@ export function HelpTip({
         <button
           type="button"
           aria-label={label}
+          // Marks the button as an explanation, not an action, for the guide's screen inventory
+          data-help-tip=""
           className={cn(
             "inline-grid size-5 cursor-help place-items-center rounded-full border-0 bg-transparent p-0 text-muted-foreground transition-colors duration-150 hover:text-foreground",
             className,

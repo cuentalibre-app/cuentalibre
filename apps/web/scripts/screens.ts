@@ -67,11 +67,14 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
       .replace(/^«|»$/g, "")
       .replace(/, \d+ sin leer$/, "")
       .replace(/\b\d+ PDF\b/, "los PDF");
-    const help = value.startsWith("(ayuda: ");
-    if (!value || (!help && value.length > 90) || isData(value) || seen.has(value)) return;
+    if (!value || value.length > 90 || isData(value) || seen.has(value)) return;
     seen.add(value);
     list.push(quoted ? `«${value}»` : value);
   };
+  // A field's control, such as a select, shows its value, which belongs to the sample data: its label names it
+  const isFieldValue = (el: Element) =>
+    (el.id !== "" && main.querySelector(`label[for="${CSS.escape(el.id)}"]`) !== null) ||
+    (el.getAttribute("role") === "combobox" && !el.hasAttribute("aria-label"));
 
   for (const el of main.querySelectorAll(
     "h2, h3, label, legend, button, a[href], [role='switch'], [role='radio'], [role='tab'], input[type='checkbox']",
@@ -85,6 +88,14 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
     const value = text(el);
     if (!value || value === title || value === "Asistente" || value === "Más información") continue;
     const current = sections.at(-1)!;
+    // A help tip explains the field before it; one on its own, such as beside a heading, is a button to open
+    if (el.hasAttribute("data-help-tip")) {
+      const last = current.items.length - 1;
+      if (last >= 0 && !current.items[last]!.startsWith("«")) current.items[last] += ` (ayuda: ${value})`;
+      else add(current.items, `«${value}»`);
+      continue;
+    }
+    if (isFieldValue(el)) continue;
     if (current.title && value === current.title) continue;
     if (header?.contains(el) && (tag === "button" || tag === "a")) {
       add(actions, value);
@@ -98,12 +109,15 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
     } else if (tag === "a") {
       add(current.items, `«${value}»`);
     } else if (el.getAttribute("role") === "radio" || el.getAttribute("role") === "tab") add(current.items, value);
-    else if (tag === "button" && value.length > 60) add(current.items, `(ayuda: ${value})`);
     else add(current.items, `«${value}»`);
   }
   // Every page it links to, rows and lists included, to walk next
   for (const a of main.querySelectorAll("a[href^='/']"))
     links.push(a.getAttribute("href")!.replace(/^\/demo(?=\/|$)/, "") || "/");
+  // A subheading whose content is all data, such as a chart, says nothing on its own
+  const heading = (item: string | undefined) => item?.endsWith(":") ?? true;
+  for (const section of sections)
+    section.items = section.items.filter((item, i) => !heading(item) || !heading(section.items[i + 1]));
   return { title, actions, sections: sections.filter((s) => s.items.length > 0), links };
 }
 
@@ -162,7 +176,20 @@ function pageKey(link: string): string | null {
   return `${url.pathname}?periodo=${/T\d$/.test(url.searchParams.get("periodo")!) ? "trimestre" : "año"}`;
 }
 
-function render(screens: Screen[]): string {
+/** Items of a section: a subheading ("Trimestrales:") opens a group of its own. */
+function joinItems(items: string[]): string {
+  return items.reduce((out, item, i) => {
+    if (i === 0) return item;
+    const after = items[i - 1]!.endsWith(":") ? " " : item.endsWith(":") ? "; " : ", ";
+    return `${out}${after}${item}`;
+  }, "");
+}
+
+/**
+ * The guide's page. `sectionOf` names the navigation section a page is under, to tell apart
+ * two screens with the same title, such as Impuestos and Configuración › Impuestos.
+ */
+function render(screens: Screen[], sectionOf: (path: string) => string | undefined): string {
   const lines = [
     "---",
     'title: "Pantallas de la aplicación"',
@@ -177,20 +204,33 @@ function render(screens: Screen[]): string {
     "Cada pantalla de cuentalibre, tal y como se ve en el ordenador: su título, sus botones y menús, y sus secciones con los campos que tienen. Los campos marcados como obligatorios llevan un asterisco en la aplicación. En el móvil las pantallas tienen lo mismo, con la acción principal en el botón **+** de arriba a la derecha.",
     "",
   ];
-  for (const screen of screens) {
+  const titleOf = (screen: Screen) => {
     const period = /[?&]periodo=([^&]+)/.exec(screen.path)?.[1];
-    const title = period ? `${screen.title} (${/T\d$/.test(period) ? "un trimestre" : "el año"})` : screen.title;
+    return period ? `${screen.title} (${/T\d$/.test(period) ? "un trimestre" : "el año"})` : screen.title;
+  };
+  const titles = screens.map(titleOf);
+  // Help tips repeat across forms: each is written once, where it first appears
+  const helps = new Set<string>();
+  const once = (item: string) =>
+    item.replace(/ \(ayuda: (.*)\)$/, (tip, text: string) => (helps.has(text) ? "" : (helps.add(text), tip)));
+  screens.forEach((screen, i) => {
+    const section = sectionOf(screen.path);
+    const shared = titles.indexOf(titles[i]!) !== i || titles.lastIndexOf(titles[i]!) !== i;
+    const title = shared && section && section !== screen.title ? `${section} › ${titles[i]}` : titles[i];
     lines.push(`## ${title}`, "", `Dirección: ${screen.path}`, "");
     if (screen.actions.length > 0) lines.push(`- Botones de arriba: ${screen.actions.join("; ")}.`);
     if (screen.rowActions.length > 0)
       lines.push(`- Menú de tres puntos de cada fila: ${screen.rowActions.map((a) => `«${a}»`).join(", ")}.`);
     for (const section of screen.sections)
-      lines.push(`- ${section.title ? `${section.title}: ` : ""}${section.items.join(", ")}.`);
+      lines.push(`- ${section.title ? `${section.title}: ` : ""}${joinItems(section.items.map(once))}.`);
     lines.push("");
-  }
+  });
   return lines.join("\n");
 }
 
+// As in production, whatever a local .env says: the site's address adds the legal links to settings.
+// Vite lets variables already in the environment win over .env files.
+Object.assign(process.env, { VITE_API_URL: "https://api.cuentalibre.es", VITE_SITE_URL: "https://cuentalibre.es" });
 const server = await createServer({ root: ROOT, logLevel: "error", server: { port: 5199 } });
 await server.listen();
 const origin = server.resolvedUrls!.local[0]!.replace(/\/$/, "");
@@ -244,7 +284,8 @@ try {
     if (!screens.some(same)) screens.push(screen);
     queue.push(...read.links);
   }
-  const markdown = render(screens);
+  const sections = [...nav.mainNav, ...nav.secondaryNav].filter((item) => item.to !== "/");
+  const markdown = render(screens, (path) => sections.find((item) => path.startsWith(item.to))?.label);
   if (process.argv.includes("--check")) {
     if (readFileSync(OUTPUT, "utf8") !== markdown) {
       console.error(`${OUTPUT} is out of date: run \`pnpm --filter @cuentalibre/web screens\` and commit it.`);
