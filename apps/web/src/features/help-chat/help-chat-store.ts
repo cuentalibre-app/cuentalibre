@@ -4,7 +4,7 @@ import { signInMethods } from "@/features/auth/auth-api";
 /*
  * The AI help chat: whether its panel is open, and the conversation so far. One store for the
  * desktop panel, its toggle in the page headers and the phone's sheet, so they show the same chat.
- * The conversation lives in memory only; reloading the page starts afresh.
+ * The conversation is mirrored to sessionStorage, so it survives a reload but not closing the tab.
  */
 
 export interface HelpMessage {
@@ -23,6 +23,7 @@ interface HelpChatState {
 }
 
 const STORAGE_KEY = "cuentalibre:help-chat-open";
+const MESSAGES_KEY = "cuentalibre:help-chat-messages";
 
 function readOpen(): boolean {
   try {
@@ -32,12 +33,28 @@ function readOpen(): boolean {
   }
 }
 
-let state: HelpChatState = { open: readOpen(), messages: [], pending: false, error: null };
-let nextId = 1;
+function readMessages(): HelpMessage[] {
+  try {
+    return JSON.parse(sessionStorage.getItem(MESSAGES_KEY) ?? "[]") as HelpMessage[];
+  } catch {
+    return [];
+  }
+}
+
+let state: HelpChatState = { open: readOpen(), messages: readMessages(), pending: false, error: null };
+let nextId = Math.max(0, ...state.messages.map((message) => message.id)) + 1;
 const listeners = new Set<() => void>();
 
 function set(patch: Partial<HelpChatState>) {
+  const messagesChanged = patch.messages && patch.messages !== state.messages;
   state = { ...state, ...patch };
+  if (messagesChanged) {
+    try {
+      sessionStorage.setItem(MESSAGES_KEY, JSON.stringify(state.messages));
+    } catch {
+      // Storage blocked: the conversation still lasts until the page reloads
+    }
+  }
   listeners.forEach((listener) => listener());
 }
 
@@ -59,7 +76,7 @@ export function setHelpChatOpen(open: boolean) {
 
 export const toggleHelpChat = () => setHelpChatOpen(!state.open);
 
-/** Clears the conversation, to ask about something else. */
+/** Clears the conversation, to ask about something else or before signing out. */
 export const resetHelpChat = () => set({ messages: [], pending: false, error: null });
 
 /** Adds the question to the conversation and asks for its answer. */
