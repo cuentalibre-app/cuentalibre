@@ -13,6 +13,7 @@ import { cn } from "@cuentalibre/ui/lib/cn";
 import { SETTINGS_PATH, accountName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { signOut } from "@/features/auth/auth-api";
+import { resetHelpChat } from "@/features/help-chat/help-chat-store";
 import { SIGN_IN_PATH, canExitDemo, exitDemo, reloadAt, sessionState } from "@/features/auth/session";
 import { THEMES, setAppearance, useAppearance, type Theme } from "@/lib/appearance";
 
@@ -73,7 +74,13 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
         <AppearanceOptions />
         <DropdownMenuSeparator />
         {sessionState() === "connected" ? (
-          <DropdownMenuItem onSelect={() => void signOut().finally(() => reloadAt(SIGN_IN_PATH))}>
+          <DropdownMenuItem
+            onSelect={() => {
+              // Whoever signs in next in this tab mustn't see the questions
+              resetHelpChat();
+              void signOut().finally(() => reloadAt(SIGN_IN_PATH));
+            }}
+          >
             <LogOut strokeWidth={1.8} aria-hidden="true" />
             Cerrar sesión
           </DropdownMenuItem>

@@ -263,7 +263,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
                 from={config.title.toLowerCase()}
                 aria-label={`Configurar ${config.title.toLowerCase()}`}
                 title={`Configurar ${config.title.toLowerCase()}`}
-                className={buttonVariants({ variant: "secondary", size: "icon" })}
+                // Off on phones, where it crowded the new-document button; the menu still reaches it
+                className={cn(buttonVariants({ variant: "secondary", size: "icon" }), "max-lg:hidden")}
               >
                 <Settings strokeWidth={1.8} aria-hidden="true" />
               </SettingsLink>

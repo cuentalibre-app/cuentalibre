@@ -32,12 +32,16 @@ export const MONTHS_SHORT = [
 
 export const MONTHS_INITIAL = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"] as const;
 
-const ORDINAL = { 1: "1.er", 2: "2.º", 3: "3.er", 4: "4.º" } as const;
 const RANGE = { 1: "ene – mar", 2: "abr – jun", 3: "jul – sep", 4: "oct – dic" } as const;
 
-/** "3.er trimestre 2026" or "Año 2026". */
+/** "3T 2026" or "Año 2026". */
 export function periodLabel(period: Period): string {
-  return period.quarter === null ? `Año ${period.year}` : `${ORDINAL[period.quarter]} trimestre ${period.year}`;
+  return period.quarter === null ? `Año ${period.year}` : `${period.quarter}T ${period.year}`;
+}
+
+/** periodLabel inside a sentence: "3T 2026" or "año 2026". */
+export function periodInSentence(period: Period): string {
+  return period.quarter === null ? `año ${period.year}` : periodLabel(period);
 }
 
 /** Compact code: "2026-3T" for a quarter, "2026" for a year. */
@@ -45,10 +49,10 @@ export function periodCode(period: Period): string {
   return period.quarter === null ? String(period.year) : `${period.year}-${period.quarter}T`;
 }
 
-/** "T3" or "T4 2025" when it's not the reference year; "2025" for a whole year. */
+/** "3T" or "4T 2025" when it's not the reference year; "2025" for a whole year. */
 export function periodShortLabel(period: Period, referenceYear: number): string {
   if (period.quarter === null) return String(period.year);
-  return period.year === referenceYear ? `T${period.quarter}` : `T${period.quarter} ${period.year}`;
+  return period.year === referenceYear ? `${period.quarter}T` : `${period.quarter}T ${period.year}`;
 }
 
 export function periodRange(period: Period): string {
@@ -97,9 +101,9 @@ export function formatPercent(value: number): string {
 export function deadlineTitle(deadline: Deadline): string {
   switch (deadline.kind) {
     case "vat-303":
-      return `Modelo 303 · IVA T${deadline.quarter}`;
+      return `Modelo 303 · IVA ${deadline.quarter}T`;
     case "irpf-130":
-      return `Modelo 130 · IRPF T${deadline.quarter}`;
+      return `Modelo 130 · IRPF ${deadline.quarter}T`;
     case "vat-390":
       return "Modelo 390 · Resumen IVA";
     case "social-security":

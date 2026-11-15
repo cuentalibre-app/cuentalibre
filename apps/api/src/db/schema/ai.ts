@@ -29,7 +29,7 @@ export const aiReading = pgTable(
     answer: jsonb(),
     inputTokens: integer(),
     outputTokens: integer(),
-    /** Estimated from `AI_INPUT_PRICE` and `AI_OUTPUT_PRICE`, in millionths of a dollar; null without them. */
+    /** Estimated from `AI_SCAN_INPUT_PRICE` and `AI_SCAN_OUTPUT_PRICE`, in millionths of a dollar; null without them. */
     costMicros: bigint({ mode: "number" }),
     createdAt: createdAt(),
   },

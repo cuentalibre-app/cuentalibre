@@ -17,11 +17,16 @@ export const SheetClose = Primitive.Close;
 export function SheetContent({
   title,
   className,
+  bodyClassName,
   children,
   ref,
   onOpenAutoFocus,
   ...props
-}: ComponentProps<typeof Primitive.Content> & { title: string }) {
+}: ComponentProps<typeof Primitive.Content> & {
+  title: string;
+  /** Classes for the scrolling body, such as handing the scroll to content that scrolls on its own. */
+  bodyClassName?: string;
+}) {
   const panelRef = useMergedRefs(ref, useDragToDismiss<HTMLDivElement>());
   return (
     <Primitive.Portal>
@@ -42,7 +47,9 @@ export function SheetContent({
           <Primitive.Title className={modalTitleClass}>{title}</Primitive.Title>
           <ModalCloseButton />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-4">{children}</div>
+        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-4", bodyClassName)}>
+          {children}
+        </div>
         <ClosedKeyboardGuard />
       </Primitive.Content>
     </Primitive.Portal>
