@@ -1,6 +1,6 @@
 import type { MembershipRole } from "@cuentalibre/contracts";
 
-import type { AiProvider } from "./ai";
+import type { AiProvider, ChatProvider } from "./ai";
 import type { AiLimits } from "./ai/readings";
 import type { Auth } from "./auth";
 import type { Billing } from "./billing";
@@ -9,6 +9,13 @@ import type { Db } from "./db/client";
 import type { FileStorage } from "./storage";
 
 type SessionData = NonNullable<Awaited<ReturnType<Auth["api"]["getSession"]>>>;
+
+export interface HelpChat {
+  provider: ChatProvider;
+  /** Its rules and the documentation it answers from. */
+  prompt: string;
+  dailyQuestions: number;
+}
 
 /** Variables that middleware puts on the request context. */
 export interface AppEnv {
@@ -19,6 +26,8 @@ export interface AppEnv {
     mailer: Mailer | null;
     /** Reads documents with an AI model; null when the instance has none set up. */
     ai: AiProvider | null;
+    /** The help chat: its model, system prompt and daily limit per organization (0 means none); null when off. */
+    chat: HelpChat | null;
     /** Most documents an organization may read with AI a month (0 means no limit), and the model's prices. */
     aiLimits: AiLimits;
     /** Charging for Cloud; null when the instance doesn't bill. */

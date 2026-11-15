@@ -11,6 +11,7 @@ import type {
   NewApiKey,
   OrganizationMember,
   ExtractionUsage,
+  HelpChatMessage,
   PurchaseExtraction,
 } from "@cuentalibre/contracts";
 import type { Command } from "./commands";
@@ -61,6 +62,11 @@ export interface Backend {
   extractPurchase?(fileId: string): Promise<PurchaseExtraction>;
   /** Documents read with AI this month, against the server's limit. */
   extractionUsage?(): Promise<ExtractionUsage>;
+  /**
+   * Asks the help chat the last of `messages`, with the conversation before it, and passes
+   * each piece of the answer to `onText` as it is written. Resolves when the answer ends.
+   */
+  helpChat?(messages: HelpChatMessage[], onText: (text: string) => void, signal?: AbortSignal): Promise<void>;
   /** The people in the organization. Without a server, the sample users stand in. */
   members?(): Promise<OrganizationMember[]>;
 }

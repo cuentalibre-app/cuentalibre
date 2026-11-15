@@ -110,3 +110,19 @@ export function readingMonth(at: Date): string {
   const parts = Object.fromEntries(MONTH_IN_SPAIN.formatToParts(at).map(({ type, value }) => [type, value]));
   return `${parts.year}-${parts.month}`;
 }
+
+const DAY_IN_SPAIN = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Madrid",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/**
+ * The day a question to the help chat counts towards, as `YYYY-MM-DD` in Spain's
+ * peninsular time: the daily limit starts afresh at midnight there.
+ */
+export function questionDay(at: Date): string {
+  const parts = Object.fromEntries(DAY_IN_SPAIN.formatToParts(at).map(({ type, value }) => [type, value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}

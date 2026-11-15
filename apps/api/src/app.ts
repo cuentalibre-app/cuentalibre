@@ -5,7 +5,7 @@ import { secureHeaders } from "hono/secure-headers";
 import type { AiProvider } from "./ai";
 import { hasGoogleSignIn, type Auth } from "./auth";
 import type { Billing } from "./billing";
-import type { AppEnv } from "./context";
+import type { AppEnv, HelpChat } from "./context";
 import type { Db } from "./db/client";
 import type { Mailer } from "./email/mailer";
 import type { Env } from "./env";
@@ -18,6 +18,7 @@ import { billingRoutes } from "./routes/billing";
 import { contactRoutes } from "./routes/contacts";
 import { emailRoutes } from "./routes/emails";
 import { fileRoutes } from "./routes/files";
+import { helpChatRoutes } from "./routes/help-chat";
 import { recordRoutes } from "./routes/records";
 import { metaRoutes } from "./routes/meta";
 import { purchaseRoutes } from "./routes/purchases";
@@ -36,13 +37,15 @@ interface Deps {
   billing?: Billing | null;
   /** Null when the instance has no AI model to read documents with. */
   ai?: AiProvider | null;
+  /** Null when the instance has no help chat. */
+  chat?: HelpChat | null;
 }
 
 /**
  * Builds the HTTP app. Everything lives under `/v1`, since the API will be public;
  * with `WEB_DIR`, the rest of the paths serve the web app.
  */
-export function createApp({ db, auth, env, storage, mailer, billing = null, ai = null }: Deps) {
+export function createApp({ db, auth, env, storage, mailer, billing = null, ai = null, chat = null }: Deps) {
   const app = new OpenAPIHono<AppEnv>({
     defaultHook: (result, c) => {
       if (!result.success)
@@ -67,6 +70,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
     c.set("mailer", mailer);
     c.set("billing", billing);
     c.set("ai", ai);
+    c.set("chat", chat);
     c.set("aiLimits", {
       monthlyDocuments: env.AI_SCAN_MONTHLY_DOCUMENTS,
       inputPrice: env.AI_SCAN_INPUT_PRICE ?? null,
@@ -106,7 +110,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
           email: Boolean(mailer),
           billing: Boolean(billing),
           ai: Boolean(ai),
-          chat: Boolean(env.AI_CHAT_MODEL),
+          chat: Boolean(chat),
         },
         env.SENTRY_RELEASE,
       ),
@@ -118,6 +122,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
     .route("/v1", purchaseRoutes)
     .route("/v1", fileRoutes)
     .route("/v1", emailRoutes)
+    .route("/v1", helpChatRoutes)
     .route("/v1", apiKeyRoutes(auth));
   if (billing) routes.route("/v1", billingRoutes(billing, env.WEB_ORIGIN));
   routes.openAPIRegistry.registerComponent("securitySchemes", "apiKey", {

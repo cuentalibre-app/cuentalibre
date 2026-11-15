@@ -10,3 +10,5 @@ docs
 deploy
 apps/api/data
 apps/site
+# The help chat answers from the site's documentation
+!apps/site/src/content/docs

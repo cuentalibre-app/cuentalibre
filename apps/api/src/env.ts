@@ -107,6 +107,13 @@ const envSchema = z
     AI_CHAT_MODEL: z.string().min(1).optional(),
     AI_CHAT_API_KEY: z.string().min(1).optional(),
     AI_CHAT_BASE_URL: z.url().optional(),
+    /** Most questions an organization may ask the help chat a day (Spain's time). Unset or 0 means no limit. */
+    AI_CHAT_DAILY_QUESTIONS: z.coerce.number().int().min(0).default(0),
+    /**
+     * The documentation the chat answers from: the site's docs, which the image copies.
+     * Relative paths start at the working directory.
+     */
+    AI_CHAT_DOCS_DIR: z.string().min(1).default("../site/src/content/docs"),
     /**
      * Charging for Cloud with Stripe: all of them, or none and billing is off. The prices are
      * the product's three periods; the tax rate, the VAT added on top of them.
