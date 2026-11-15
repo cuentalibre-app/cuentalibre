@@ -1214,7 +1214,7 @@ function hasAdvancedOptions(form: FormState): boolean {
   );
 }
 
-/** "4.º trimestre 2026" */
+/** "4T 2026" */
 function quarterName(isoDate: string): string {
   const [year, month] = isoDate.split("-").map(Number);
   return periodLabel({ year: year!, quarter: quarterOfMonth(month! - 1) });

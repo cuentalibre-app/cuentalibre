@@ -8,7 +8,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { listRowClass } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
-import { MONTHS, MONTHS_SHORT, formatCompactEUR, formatPercent, periodLabel, periodShortLabel } from "@/lib/format";
+import { MONTHS, MONTHS_SHORT, formatCompactEUR, formatPercent, periodInSentence, periodLabel, periodShortLabel } from "@/lib/format";
 import { useDismiss } from "@/lib/use-dismiss";
 import type { HomeData } from "./home-data";
 
@@ -142,7 +142,7 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
 
   const summary =
     view === "line"
-      ? `Beneficio acumulado en ${periodLabel(data.period).toLowerCase()}: ${formatEUR(cents(running))}`
+      ? `Beneficio acumulado en ${periodInSentence(data.period)}: ${formatEUR(cents(running))}`
       : slots
           .map((s, i) =>
             s ? `${MONTHS[months[i]!]}: ingresos ${formatEUR(s.income)}, gastos ${formatEUR(s.expenses)}` : null,
@@ -500,7 +500,7 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, act
         <div aria-live="polite" className="flex flex-col gap-1.5">
           <span className="text-sm text-muted-foreground">
             {month === null
-              ? `Beneficio, ${periodLabel(period).toLowerCase()}`
+              ? `Beneficio, ${periodInSentence(period)}`
               : view === "line" && slot! > 0
                 ? `Beneficio acumulado hasta ${MONTHS[month]!.toLowerCase()}`
                 : `Beneficio de ${MONTHS[month]!.toLowerCase()}`}

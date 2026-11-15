@@ -32,12 +32,16 @@ export const MONTHS_SHORT = [
 
 export const MONTHS_INITIAL = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"] as const;
 
-const ORDINAL = { 1: "1.er", 2: "2.º", 3: "3.er", 4: "4.º" } as const;
 const RANGE = { 1: "ene – mar", 2: "abr – jun", 3: "jul – sep", 4: "oct – dic" } as const;
 
-/** "3.er trimestre 2026" or "Año 2026". */
+/** "3T 2026" or "Año 2026". */
 export function periodLabel(period: Period): string {
-  return period.quarter === null ? `Año ${period.year}` : `${ORDINAL[period.quarter]} trimestre ${period.year}`;
+  return period.quarter === null ? `Año ${period.year}` : `${period.quarter}T ${period.year}`;
+}
+
+/** periodLabel inside a sentence: "3T 2026" or "año 2026". */
+export function periodInSentence(period: Period): string {
+  return period.quarter === null ? `año ${period.year}` : periodLabel(period);
 }
 
 /** Compact code: "2026-3T" for a quarter, "2026" for a year. */

@@ -420,9 +420,10 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
                 </Link>
               ))}
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Hasta el {formatDate(toIsoDate(r.deadline))}</span>
-              <span className="amount font-semibold">{formatEUR(r.total)}</span>
+            {/* The total of the rows above: larger, and lined up with their amounts past the chevrons */}
+            <div className="flex items-baseline justify-between gap-3 pr-7">
+              <span className="text-sm text-muted-foreground">Hasta el {formatDate(toIsoDate(r.deadline))}</span>
+              <span className="amount text-lg font-semibold">{formatEUR(r.total)}</span>
             </div>
           </li>
         ))}
@@ -435,14 +436,12 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
   const { vat, income } = useYearReturns(year);
   const vatPaid = sumBy(vat, (q) => cents(Math.max(0, q.result)));
   const annual = income.annual;
-  const prepaid = cents(annual.boxes["0598"]! + annual.boxes["0599"]! + annual.boxes["0604"]!);
   const cards = [
     {
       code: "390",
       title: "Resumen anual de IVA",
       to: modelPath(VAT_PATH, { year, quarter: null }),
       figure: formatEUR(vatPaid),
-      caption: "ingresado en los 303 del año",
       when: (
         <span className="flex items-center justify-between gap-2">
           Hasta el {formatDate(toIsoDate(filingDeadline(year, null)))}
@@ -452,10 +451,9 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
     },
     {
       code: "100",
-      title: "Renta, actividad económica",
+      title: "Rendimiento neto",
       to: modelPath(INCOME_TAX_PATH, { year, quarter: null }),
       figure: formatEUR(annual.netIncome),
-      caption: `de rendimiento neto, con ${formatEUR(prepaid)} ya adelantados`,
       when: <span>De abril a junio de {year + 1}</span>,
     },
   ];
@@ -467,7 +465,22 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
       style={{ "--i": 2 } as CSSProperties}
     >
       <SectionTitle id="annual-title">Declaraciones anuales</SectionTitle>
-      <div className="grid gap-3 lg:grid-cols-2">
+      {/* Phones: a row per form, like the quarter card */}
+      <div className="overflow-hidden surface lg:hidden">
+        {cards.map((c) => (
+          <Link
+            key={c.code}
+            to={c.to}
+            className="flex min-h-12 items-center gap-3 border-divider px-4 py-2 text-foreground no-underline transition-opacity duration-150 not-first:border-t active:opacity-60"
+          >
+            <FormCode code={c.code} />
+            <span className="flex-1 font-medium">{c.title}</span>
+            <span className="amount">{c.figure}</span>
+            <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+          </Link>
+        ))}
+      </div>
+      <div className="hidden gap-3 lg:grid lg:grid-cols-2">
         {cards.map((c) => (
           <Link
             key={c.code}
@@ -484,10 +497,7 @@ function AnnualForms({ year, today }: { year: number; today: Date }) {
                 aria-hidden="true"
               />
             </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="amount text-xl font-semibold">{c.figure}</span>
-              <span className="text-xs text-muted-foreground">{c.caption}</span>
-            </div>
+            <span className="amount text-xl font-semibold">{c.figure}</span>
             <div className="border-t border-divider pt-3 text-sm text-muted-foreground">{c.when}</div>
           </Link>
         ))}
@@ -561,7 +571,7 @@ function OtherForms({ year }: { year: number }) {
               <li
                 key={f.title}
                 // A card each on phones, like the quarters; rows of one card on wider screens
-                className="flex flex-col gap-3 border-divider px-5 py-3.5 max-sm:overflow-hidden max-sm:surface sm:flex-row sm:items-center sm:gap-6 sm:border-b sm:last:border-b-0"
+                className="flex flex-col gap-3 border-divider px-4 py-3.5 max-sm:overflow-hidden sm:px-5 max-sm:surface sm:flex-row sm:items-center sm:gap-6 sm:border-b sm:last:border-b-0"
               >
                 {/* Only the forms that apply show by default, so a row needs no badge to say so */}
                 <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
@@ -573,7 +583,7 @@ function OtherForms({ year }: { year: number }) {
                   )}
                 </div>
                 {/* Phones: one tappable row per form, like the quarter cards; wider screens: buttons */}
-                <div className="-mx-5 -mb-3.5 border-t border-divider sm:hidden">
+                <div className="-mx-4 -mb-3.5 border-t border-divider sm:hidden">
                   {[
                     quarterly && { code: quarterly, label: "Trimestral", to: modelPath(f.path, quarter) },
                     yearly && { code: yearly, label: "Anual", to: modelPath(f.path, { year, quarter: null }) },
@@ -583,7 +593,7 @@ function OtherForms({ year }: { year: number }) {
                       <Link
                         key={m.code}
                         to={m.to}
-                        className="flex min-h-12 items-center gap-3 border-divider px-5 py-2 text-foreground no-underline transition-opacity duration-150 not-first:border-t active:opacity-60"
+                        className="flex min-h-12 items-center gap-3 border-divider px-4 py-2 text-foreground no-underline transition-opacity duration-150 not-first:border-t active:opacity-60"
                       >
                         <FormCode code={m.code} />
                         <span className={cn("flex-1", !f.applies && "text-muted-foreground")}>{m.label}</span>

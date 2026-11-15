@@ -469,7 +469,7 @@ function optionalDate(text: string, label: string, errors: string[]): string | n
 
 function lockedError(date: string, ctx: Context, errors: string[]) {
   const locked = date ? ctx.isLocked(date) : null;
-  if (locked) errors.push(`El ${locked.quarter}.º trimestre de ${locked.year} está cerrado.`);
+  if (locked) errors.push(`El ${locked.quarter}T ${locked.year} está cerrado.`);
 }
 
 function parseSales(body: { row: string[]; line: number }[], get: Getter, ctx: Context): ImportPreview {
