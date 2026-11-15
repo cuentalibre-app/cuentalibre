@@ -7,4 +7,9 @@ export const table = {
   th: "border-b border-border px-3 py-2 font-medium first:pl-5 last:pr-5",
   row: "border-b border-divider transition-colors duration-150 last:border-b-0 hover:bg-muted",
   td: "px-3 py-2.5 first:pl-5 last:pr-5",
+  /**
+   * For a secondary column's cells: hidden while the page is narrow (the app's <main> is the
+   * container), so the table fits beside the docked assistant without scrolling sideways.
+   */
+  wideOnly: "@max-5xl:hidden",
 };

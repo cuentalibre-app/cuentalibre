@@ -34,10 +34,10 @@ export function PeriodSelect({ value, onChange, years, today, className, compact
     >
       <SelectTrigger
         aria-label={`Periodo: ${periodLabel(value)}`}
-        className={cn("min-w-40", compact && "max-lg:min-w-0", className)}
+        className={cn("min-w-40", compact && "@max-5xl:min-w-0", className)}
       >
         <Calendar
-          className={cn("size-4 text-muted-foreground", compact && "max-lg:hidden")}
+          className={cn("size-4 text-muted-foreground", compact && "@max-5xl:hidden")}
           strokeWidth={1.8}
           aria-hidden="true"
         />

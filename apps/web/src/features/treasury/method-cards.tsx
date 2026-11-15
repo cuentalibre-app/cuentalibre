@@ -37,7 +37,7 @@ export function MethodCards({
       <h2 id="methods-title" className="m-0 text-lg font-semibold tracking-tight">
         Cuentas y formas de pago
       </h2>
-      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4">
+      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 @5xl:grid-cols-4">
         {active.map((m, i) => {
           const Icon = METHOD_ICONS[m.type];
           const own = payments.filter((p) => p.paymentMethodId === m.id);

@@ -76,8 +76,11 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
-      {/* The title keeps a minimum width, so actions that don't fit beside it wrap below instead of squeezing it away */}
-      <div className="flex min-w-0 flex-[1_1_10rem] items-center gap-3">
+      {/*
+       * The title keeps a minimum width, so actions that don't fit beside it wrap below instead of squeezing it
+       * away; on desktop it keeps its whole line, so a long title never breaks to make room for the actions
+       */}
+      <div className="flex min-w-0 flex-[1_1_10rem] items-center gap-3 lg:basis-auto">
         {back}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {eyebrow}
@@ -91,7 +94,8 @@ export function PageHeader({
         </div>
       </div>
       {(actions || assistant) && (
-        <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>
+        // Pushed right also when they wrap below the title, so the assistant's toggle keeps its corner
+        <div className={cn("flex flex-wrap items-center gap-2.5 lg:ml-auto", actionsClassName)}>
           {actions}
           {/*
            * Set apart from the page's own actions, as it belongs to the app rather than the page: last on
@@ -115,6 +119,8 @@ export function Toolbar({ className, ...props }: ComponentProps<"div">) {
         "flex flex-wrap items-center gap-2 pb-3 *:not-first:max-lg:flex-none lg:gap-2.5 lg:px-4 lg:py-3",
         "*:first:max-lg:min-w-0 *:first:max-lg:flex-[1_1_8rem]",
         "[&>label:first-child]:lg:max-w-80 [&>label:first-child]:lg:flex-[1_1_220px]",
+        // Beside the docked assistant the search starts smaller, so the controls keep to one row
+        "[&>label:first-child]:@max-5xl:basis-48!",
         className,
       )}
       {...props}
@@ -143,6 +149,8 @@ export function HelpTip({
         <button
           type="button"
           aria-label={label}
+          // Marks the button as an explanation, not an action, for the guide's screen inventory
+          data-help-tip=""
           className={cn(
             "inline-grid size-5 cursor-help place-items-center rounded-full border-0 bg-transparent p-0 text-muted-foreground transition-colors duration-150 hover:text-foreground",
             className,

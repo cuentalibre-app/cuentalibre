@@ -12,7 +12,7 @@ Las facturas que emites a tus clientes están en **Ventas › Facturas emitidas*
 
 1. Pulsa **Nueva factura** en **Ventas › Facturas emitidas**, o **Crear › Factura emitida**.
 2. Elige el **Cliente**. Si aún no lo tienes, créalo desde el mismo desplegable con **Nuevo cliente**.
-3. Revisa la **Fecha** y, si quieres, el vencimiento (**Vence**), con los plazos rápidos o una fecha concreta.
+3. Revisa la **Fecha** y, si quieres, el **Vencimiento**, con los plazos rápidos o una fecha concreta.
 4. Añade los **Conceptos**: descripción, cantidad, precio e IVA de cada uno. Para traer un producto del catálogo, búscalo desde el concepto. **Mostrar edición avanzada** deja poner un descuento, el recargo de equivalencia, una descripción detallada o el periodo en el que prestaste el servicio.
 5. Si el cliente te retiene IRPF (una empresa o un autónomo que te contrata como profesional), elige la **Retención**.
 6. Pulsa **Crear factura**: la factura queda emitida.

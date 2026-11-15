@@ -80,6 +80,8 @@ import {
   ActionsMenu,
   EmptyState,
   FiltersButton,
+  ToolbarButton,
+  ToolbarTip,
   FiltersSheet,
   IconAction,
   MoreActionsTrigger,
@@ -287,7 +289,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             <SearchField
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por número, cliente o NIF"
+              placeholder="Número, cliente o NIF"
               aria-label="Buscar"
             />
             {statusFilter && <div className="max-lg:hidden">{statusFilter}</div>}
@@ -314,15 +316,16 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               </Button>
             )}
             {defaults && (
-              <SettingsLink
-                to={PREFERENCES_PATH}
-                from={config.title.toLowerCase()}
-                aria-label="Filtros por defecto"
-                title="Filtros por defecto"
-                className={buttonVariants({ variant: "secondary", size: "icon" })}
-              >
-                <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
-              </SettingsLink>
+              <ToolbarTip label="Filtros por defecto">
+                <SettingsLink
+                  to={PREFERENCES_PATH}
+                  from={config.title.toLowerCase()}
+                  aria-label="Filtros por defecto"
+                  className={buttonVariants({ variant: "secondary", size: "icon" })}
+                >
+                  <SlidersHorizontal strokeWidth={1.8} aria-hidden="true" />
+                </SettingsLink>
+              </ToolbarTip>
             )}
             <FiltersButton
               open={showFilters}
@@ -331,26 +334,22 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               phoneCount={extraFilters + (statusFilter && status !== ALL ? 1 : 0)}
               onToggle={() => setShowFilters((s) => !s)}
             />
-            <Button
-              variant="secondary"
+            <ToolbarButton
+              icon={Download}
+              text="CSV"
+              label="Descargar en CSV"
               className="max-lg:hidden lg:ml-auto"
               disabled={!canExport}
               onClick={downloadCsvFile}
-            >
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              CSV
-            </Button>
-            <Button
-              variant="secondary"
+            />
+            <ToolbarButton
+              icon={FileArchive}
+              text="PDF (.zip)"
+              label="Descargar los PDF en un .zip"
               className="max-lg:hidden"
               disabled={!canExport || exporting}
-              aria-label={`Descargar ${rows.length} PDF en un .zip`}
-              title="Un PDF por documento, en un .zip"
               onClick={downloadPdfs}
-            >
-              <FileArchive strokeWidth={1.8} aria-hidden="true" />
-              PDF (.zip)
-            </Button>
+            />
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
@@ -554,7 +553,7 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
   ];
   // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 wide:grid-cols-4">
+    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 @5xl:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col surface">
           <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">
@@ -577,16 +576,18 @@ interface Sort {
   dir: SortDir;
 }
 
-const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
+/** Columns marked `wide` only show when the page is wide; beside the docked assistant the total is enough. */
+const COLUMNS: { key: SortKey; label: string; numeric?: boolean; wide?: boolean }[] = [
   { key: "number", label: "Nº" },
   { key: "date", label: "Fecha" },
   { key: "client", label: "Cliente" },
   { key: "status", label: "Estado" },
-  { key: "base", label: "Base\nimponible", numeric: true },
-  { key: "vat", label: "IVA", numeric: true },
-  { key: "withholding", label: "Retención", numeric: true },
+  { key: "base", label: "Base\nimponible", numeric: true, wide: true },
+  { key: "vat", label: "IVA", numeric: true, wide: true },
+  { key: "withholding", label: "Retención", numeric: true, wide: true },
   { key: "total", label: "Total", numeric: true },
 ];
+const { wideOnly } = table;
 
 const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
 
@@ -623,13 +624,13 @@ function nextSort(current: Sort, key: SortKey): Sort {
 }
 
 function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSort: (sort: Sort) => void }) {
-  // Tighter than the default so nine columns fit on a laptop screen.
-  const th = cn(table.th, "px-3");
-  const td = cn(table.td, "px-3");
+  // Tighter than the default so nine columns fit on a laptop screen, and six beside the assistant
+  const th = cn(table.th, "px-3 @max-5xl:px-2");
+  const td = cn(table.td, "px-3 @max-5xl:px-2");
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[960px] border-collapse">
+        <table className="w-full border-collapse @5xl:min-w-[960px]">
           <thead>
             <tr className={table.headRow}>
               {COLUMNS.map((c) => (
@@ -639,7 +640,7 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                   numeric={c.numeric}
                   dir={sort.key === c.key ? sort.dir : null}
                   onClick={() => onSort(nextSort(sort, c.key))}
-                  className={th}
+                  className={cn(th, c.wide && wideOnly)}
                 />
               ))}
               <th scope="col" className={cn(th, "text-center")}>
@@ -670,9 +671,9 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                 <td className={td}>
                   <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
                 </td>
-                <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
-                <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
-                <td className={cn(td, "text-right amount text-muted-foreground")}>
+                <td className={cn(td, wideOnly, "text-right amount")}>{formatEUR(r.base)}</td>
+                <td className={cn(td, wideOnly, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
+                <td className={cn(td, wideOnly, "text-right amount text-muted-foreground")}>
                   {r.withholding ? formatEUR(cents(-r.withholding)) : "—"}
                 </td>
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
@@ -687,13 +688,13 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
               <td colSpan={4} className={cn(td, "text-sm text-muted-foreground")}>
                 {rows.length} {rows.length === 1 ? "documento" : "documentos"}
               </td>
-              <td className={cn(td, "text-right amount")}>
+              <td className={cn(td, wideOnly, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "base")} />
               </td>
-              <td className={cn(td, "text-right amount")}>
+              <td className={cn(td, wideOnly, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "vat")} />
               </td>
-              <td className={cn(td, "text-right amount")}>
+              <td className={cn(td, wideOnly, "text-right amount")}>
                 <AnimatedAmount value={cents(-sum(rows, "withholding"))} />
               </td>
               <td className={cn(td, "text-right amount")}>

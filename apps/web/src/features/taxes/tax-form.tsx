@@ -818,7 +818,7 @@ export function QuarterCards({
   return (
     <section
       aria-label={`Resultados de los ${form} del año`}
-      className="grid grid-cols-2 gap-3 lg:gap-4 wide:grid-cols-4"
+      className="grid grid-cols-2 gap-3 lg:gap-4 @5xl:grid-cols-4"
     >
       {values.map((v, i) => {
         const quarter = (i + 1) as Quarter;

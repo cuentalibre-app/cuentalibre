@@ -32,6 +32,7 @@ import { TagsField } from "@/features/sales/document-editor";
 import { GroupedSelect } from "@/features/sales/form-fields";
 import {
   FiltersButton,
+  ToolbarButton,
   FiltersSheet,
   ActionsMenu,
   MoreActionsTrigger,
@@ -167,7 +168,7 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Buscar por nombre, NIF, dirección, email, teléfono o notas"
+              placeholder="Nombre, NIF, email o teléfono"
               aria-label="Buscar"
             />
             <FiltersButton
@@ -176,15 +177,14 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
               count={extraFilters}
               onToggle={() => setShowFilters((s) => !s)}
             />
-            <Button
-              variant="secondary"
+            <ToolbarButton
+              icon={Download}
+              text="CSV"
+              label="Descargar en CSV"
               className="lg:ml-auto"
               disabled={rows.length === 0}
               onClick={() => exportCsv(role, rows)}
-            >
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              CSV
-            </Button>
+            />
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
@@ -307,17 +307,19 @@ function ContactsTable({
 }) {
   const th = cn(table.th, "px-2.5");
   const td = cn(table.td, "px-2.5");
-  const columns: { key: SortKey; label: string; numeric?: boolean }[] = [
+  const { wideOnly } = table;
+  // Columns marked `wide` only show when the page is wide, so the table fits beside the docked assistant
+  const columns: { key: SortKey; label: string; numeric?: boolean; wide?: boolean }[] = [
     { key: "name", label: "Nombre" },
     { key: "taxId", label: "NIF" },
-    { key: "place", label: "Dirección" },
-    { key: "phone", label: "Teléfono" },
+    { key: "place", label: "Dirección", wide: true },
+    { key: "phone", label: "Teléfono", wide: true },
     { key: "email", label: "Email" },
     { key: "billed", label: role === "client" ? "Facturado" : "Gastado", numeric: true },
   ];
   return (
     <div className="hidden overflow-x-auto lg:block">
-      <table className="w-full min-w-[980px] border-collapse">
+      <table className="w-full border-collapse @5xl:min-w-[980px]">
         <thead>
           <tr className={table.headRow}>
             {columns.map((c) => (
@@ -327,7 +329,7 @@ function ContactsTable({
                 numeric={c.numeric}
                 dir={sort.key === c.key ? sort.dir : null}
                 onClick={() => onSort(nextSort(sort, c.key))}
-                className={th}
+                className={cn(th, c.wide && wideOnly)}
               />
             ))}
             <th scope="col" className={cn(th, "text-center")}>
@@ -345,7 +347,7 @@ function ContactsTable({
                     <Link
                       to={contactPath(role, c.id)}
                       title={c.name}
-                      className="block max-w-64 truncate font-medium text-foreground no-underline hover:text-primary"
+                      className="block max-w-48 truncate font-medium text-foreground no-underline hover:text-primary @5xl:max-w-64"
                     >
                       {c.name}
                     </Link>
@@ -353,7 +355,7 @@ function ContactsTable({
                   </div>
                 </td>
                 <td className={cn(td, "whitespace-nowrap tabular-nums")}>{c.taxId}</td>
-                <td className={cn(td, "text-sm")}>
+                <td className={cn(td, wideOnly, "text-sm")}>
                   <span className="block max-w-56 truncate" title={r.address}>
                     {r.place || countryOf(c)}
                   </span>
@@ -361,7 +363,7 @@ function ContactsTable({
                     <span className="block text-xs text-muted-foreground">{countryOf(c)}</span>
                   )}
                 </td>
-                <td className={cn(td, "text-sm whitespace-nowrap")}>
+                <td className={cn(td, wideOnly, "text-sm whitespace-nowrap")}>
                   {c.phone || c.mobile ? (
                     <a
                       href={`tel:${(c.phone || c.mobile)!.replace(/\s/g, "")}`}
@@ -378,7 +380,7 @@ function ContactsTable({
                     <a
                       href={`mailto:${c.email}`}
                       title={c.email}
-                      className="block max-w-52 truncate text-foreground no-underline hover:text-primary"
+                      className="block max-w-40 truncate text-foreground no-underline hover:text-primary @5xl:max-w-52"
                     >
                       {c.email}
                     </a>
@@ -401,9 +403,11 @@ function ContactsTable({
         </tbody>
         <tfoot>
           <tr className="border-t border-border bg-muted font-semibold">
-            <td colSpan={5} className={cn(td, "text-sm text-muted-foreground")}>
+            <td colSpan={2} className={cn(td, "text-sm text-muted-foreground")}>
               {rows.length} {rows.length === 1 ? ROLES[role].singular.toLowerCase() : ROLES[role].title.toLowerCase()}
             </td>
+            <td colSpan={2} className={cn(td, wideOnly)} />
+            <td className={td} />
             <td className={cn(td, "text-right amount")}>{formatEUR(sumBy(rows, (r) => r.billed))}</td>
             <td className={td} />
           </tr>

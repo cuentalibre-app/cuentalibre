@@ -322,7 +322,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                   </Button>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
                 <Field label="Nombre" required error={errors.name} hint="Ej.: ordenador, programación…">
                   {(p) => (
                     <Input {...p} autoFocus={isNew} value={draft.name} onChange={(e) => set("name", e.target.value)} />
@@ -405,7 +405,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                 setAdvancedSale((a) => !a);
               })}
             >
-              <div className={cn("grid gap-4 sm:grid-cols-2", advancedSale ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
+              <div className={cn("grid gap-4 sm:grid-cols-2", advancedSale ? "@5xl:grid-cols-4" : "@5xl:grid-cols-3")}>
                 <Field label="Precio unitario (base imponible)" required error={errors.price} hint="Ej.: 198,50 €">
                   {(p) => <MoneyInput {...p} value={draft.price} onChange={(v) => set("price", v)} />}
                 </Field>
@@ -459,7 +459,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                 setAdvancedCost((a) => !a);
               })}
             >
-              <div className={cn("grid gap-4 sm:grid-cols-2", advancedCost ? "xl:grid-cols-3" : "xl:grid-cols-2")}>
+              <div className={cn("grid gap-4 sm:grid-cols-2", advancedCost ? "@5xl:grid-cols-3" : "@5xl:grid-cols-2")}>
                 <Field
                   label="Coste unitario (base imponible)"
                   error={errors.cost}

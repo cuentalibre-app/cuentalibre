@@ -222,12 +222,12 @@ export function createApiBackend(
       request<PurchaseExtraction>("/v1/purchases/extract", { method: "POST", body: JSON.stringify({ fileId }) }),
     extractionUsage: () => request<ExtractionUsage>("/v1/purchases/extract/usage"),
 
-    async helpChat(messages, onText, signal) {
+    async helpChat(question, onText, signal) {
       const response = await fetchImpl(`${baseUrl}/v1/help-chat`, {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify(question),
         signal,
       });
       if (response.status === 401 && signedIn && onSessionExpired) {

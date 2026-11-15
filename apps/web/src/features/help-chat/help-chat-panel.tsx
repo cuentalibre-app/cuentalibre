@@ -9,14 +9,14 @@ import { resetHelpChat, setHelpChatOpen, useHelpChat } from "./help-chat-store";
 export const HELP_CHAT_PANEL_ID = "help-chat-panel";
 
 /**
- * The assistant on the right of the page on desktop. On wide screens it docks beside the content,
- * widening from nothing so the page narrows along with it; where that would leave the page too
- * narrow for its tables, it slides in over the content instead.
+ * The assistant on the right of the page on desktop. From a laptop's width it docks beside the
+ * content, widening from nothing so the page narrows along with it (wide tables scroll sideways
+ * while it is open); on narrower screens it slides in over the content instead.
  */
 export function HelpChatPanel({ className }: { className?: string }) {
   const { open, messages } = useHelpChat();
-  // The expanded sidebar, a page wide enough for the invoice table, and the panel
-  const docked = useMediaQuery("(min-width: 105rem)");
+  // A 13-inch laptop and up: from here every page still fits beside it without scrolling sideways
+  const docked = useMediaQuery("(min-width: 90rem)");
 
   return (
     <aside

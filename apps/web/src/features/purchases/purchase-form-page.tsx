@@ -724,7 +724,7 @@ function PurchaseForm({
           <Section title="Información de la factura" index={1}>
             {supplier && <SupplierSummary supplier={supplier} />}
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
               <Field
                 label="Proveedor"
                 required
@@ -1054,7 +1054,7 @@ function PurchaseForm({
           </Section>
 
           <Section title="Opciones avanzadas" index={6} defaultOpen={hasAdvancedOptions(form)}>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
               <Field label="Fecha de operación" hint="Solo si es distinta de la fecha de la factura.">
                 {(p) => (
                   <Input

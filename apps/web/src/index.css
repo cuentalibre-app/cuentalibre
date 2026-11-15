@@ -7,9 +7,12 @@
  */
 @theme {
   --breakpoint-lg: 48rem;
-  /* The old desktop width, for rows that need it (four cards abreast, the invoice line editor) */
-  --breakpoint-wide: 64rem;
 }
+
+/*
+ * Rows that need room (four cards abreast, the invoice line editor) ask the page, not the window:
+ * <main> is a container, so they also fold when the assistant docks beside it (@5xl = 64rem).
+ */
 
 /*
  * A chip in the colour the user picked for a tag (--tag, set inline). In light it is that colour
