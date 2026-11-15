@@ -287,10 +287,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             <SearchField
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por número, cliente o NIF"
+              placeholder="Número, cliente o NIF"
               aria-label="Buscar"
-              // Too many controls for one row beside the docked assistant: the search takes its own
-              className="@max-5xl:max-w-none! @max-5xl:basis-full!"
             />
             {statusFilter && <div className="max-lg:hidden">{statusFilter}</div>}
             <PeriodSelect
@@ -335,23 +333,26 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             />
             <Button
               variant="secondary"
-              className="max-lg:hidden lg:ml-auto"
+              className="max-lg:hidden lg:ml-auto @max-5xl:w-10 @max-5xl:px-0"
               disabled={!canExport}
+              aria-label="Descargar CSV"
+              title="Descargar CSV"
               onClick={downloadCsvFile}
             >
               <Download strokeWidth={1.8} aria-hidden="true" />
-              CSV
+              {/* Icons only beside the docked assistant, so the toolbar keeps to one row */}
+              <span className="@max-5xl:hidden">CSV</span>
             </Button>
             <Button
               variant="secondary"
-              className="max-lg:hidden"
+              className="max-lg:hidden @max-5xl:w-10 @max-5xl:px-0"
               disabled={!canExport || exporting}
               aria-label={`Descargar ${rows.length} PDF en un .zip`}
               title="Un PDF por documento, en un .zip"
               onClick={downloadPdfs}
             >
               <FileArchive strokeWidth={1.8} aria-hidden="true" />
-              PDF (.zip)
+              <span className="@max-5xl:hidden">PDF (.zip)</span>
             </Button>
           </Toolbar>
 
@@ -579,16 +580,18 @@ interface Sort {
   dir: SortDir;
 }
 
-const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
+/** Columns marked `wide` only show when the page is wide; beside the docked assistant the total is enough. */
+const COLUMNS: { key: SortKey; label: string; numeric?: boolean; wide?: boolean }[] = [
   { key: "number", label: "Nº" },
   { key: "date", label: "Fecha" },
   { key: "client", label: "Cliente" },
   { key: "status", label: "Estado" },
-  { key: "base", label: "Base\nimponible", numeric: true },
-  { key: "vat", label: "IVA", numeric: true },
-  { key: "withholding", label: "Retención", numeric: true },
+  { key: "base", label: "Base\nimponible", numeric: true, wide: true },
+  { key: "vat", label: "IVA", numeric: true, wide: true },
+  { key: "withholding", label: "Retención", numeric: true, wide: true },
   { key: "total", label: "Total", numeric: true },
 ];
+const wideOnly = "@max-5xl:hidden";
 
 const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
 
@@ -625,13 +628,13 @@ function nextSort(current: Sort, key: SortKey): Sort {
 }
 
 function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSort: (sort: Sort) => void }) {
-  // Tighter than the default so nine columns fit on a laptop screen.
-  const th = cn(table.th, "px-3");
-  const td = cn(table.td, "px-3");
+  // Tighter than the default so nine columns fit on a laptop screen, and six beside the assistant
+  const th = cn(table.th, "px-3 @max-5xl:px-2");
+  const td = cn(table.td, "px-3 @max-5xl:px-2");
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[960px] border-collapse">
+        <table className="w-full border-collapse @5xl:min-w-[960px]">
           <thead>
             <tr className={table.headRow}>
               {COLUMNS.map((c) => (
@@ -641,7 +644,7 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                   numeric={c.numeric}
                   dir={sort.key === c.key ? sort.dir : null}
                   onClick={() => onSort(nextSort(sort, c.key))}
-                  className={th}
+                  className={cn(th, c.wide && wideOnly)}
                 />
               ))}
               <th scope="col" className={cn(th, "text-center")}>
@@ -672,9 +675,9 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
                 <td className={td}>
                   <Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>
                 </td>
-                <td className={cn(td, "text-right amount")}>{formatEUR(r.base)}</td>
-                <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
-                <td className={cn(td, "text-right amount text-muted-foreground")}>
+                <td className={cn(td, wideOnly, "text-right amount")}>{formatEUR(r.base)}</td>
+                <td className={cn(td, wideOnly, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
+                <td className={cn(td, wideOnly, "text-right amount text-muted-foreground")}>
                   {r.withholding ? formatEUR(cents(-r.withholding)) : "—"}
                 </td>
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
@@ -689,13 +692,13 @@ function DocumentsTable({ rows, sort, onSort }: { rows: Row[]; sort: Sort; onSor
               <td colSpan={4} className={cn(td, "text-sm text-muted-foreground")}>
                 {rows.length} {rows.length === 1 ? "documento" : "documentos"}
               </td>
-              <td className={cn(td, "text-right amount")}>
+              <td className={cn(td, wideOnly, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "base")} />
               </td>
-              <td className={cn(td, "text-right amount")}>
+              <td className={cn(td, wideOnly, "text-right amount")}>
                 <AnimatedAmount value={sum(rows, "vat")} />
               </td>
-              <td className={cn(td, "text-right amount")}>
+              <td className={cn(td, wideOnly, "text-right amount")}>
                 <AnimatedAmount value={cents(-sum(rows, "withholding"))} />
               </td>
               <td className={cn(td, "text-right amount")}>
