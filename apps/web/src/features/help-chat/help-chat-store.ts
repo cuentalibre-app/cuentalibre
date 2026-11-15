@@ -1,4 +1,7 @@
 import { useSyncExternalStore } from "react";
+import { HELP_CHAT_MAX_MESSAGES, type HelpChatMessage } from "@cuentalibre/contracts";
+import { ApiError } from "@/data/api";
+import { currentBackend } from "@/data/backend";
 import { signInMethods } from "@/features/auth/auth-api";
 
 /*
@@ -94,16 +97,80 @@ export function toggleHelpChat() {
   else setHelpChatSheetOpen(true);
 }
 
-/** Clears the conversation, to ask about something else or before signing out. */
-export const resetHelpChat = () => set({ messages: [], pending: false, error: null });
+/** Stops the answer on its way, if any. */
+let answering: AbortController | null = null;
 
-/** Adds the question to the conversation and asks for its answer. */
-export function askHelpChat(text: string) {
+/** Clears the conversation, to ask about something else or before signing out. */
+export function resetHelpChat() {
+  answering?.abort();
+  answering = null;
+  set({ messages: [], pending: false, error: null });
+}
+
+/**
+ * What the server is sent: the questions that got an answer, each with it, and the last
+ * question; the latest ones only, starting with a question, so messages take turns.
+ */
+export function conversationFor(messages: HelpMessage[]): HelpChatMessage[] {
+  const turns: HelpChatMessage[] = [];
+  messages.forEach((message, i) => {
+    const answered = message.role === "user" && messages[i + 1]?.role === "assistant";
+    const last = i === messages.length - 1;
+    if (message.role === "assistant" || answered || last) turns.push({ role: message.role, content: message.text });
+  });
+  const recent = turns.slice(-HELP_CHAT_MAX_MESSAGES);
+  return recent[0]?.role === "assistant" ? recent.slice(1) : recent;
+}
+
+/** Why a question got no answer, for the user. */
+export function helpChatError(error: unknown): string {
+  switch (error instanceof ApiError ? error.code : null) {
+    case "ai_quota_exceeded":
+      return "Has hecho todas las preguntas de hoy. Podrás preguntar de nuevo mañana.";
+    case "ai_unavailable":
+      return "Este servidor no tiene configurado el asistente.";
+    default:
+      return "El asistente no ha podido responder. Vuelve a intentarlo en un rato.";
+  }
+}
+
+/** Adds the question to the conversation and streams its answer into it. */
+export async function askHelpChat(text: string) {
   const question = text.trim();
   if (!question || state.pending) return;
+  const ask = currentBackend().helpChat;
   set({ messages: [...state.messages, { id: nextId++, role: "user", text: question }], error: null });
-  // The server's endpoint comes next (#103); until then every question ends here.
-  set({ error: "El asistente todavía no puede responder en este servidor." });
+  if (!ask) {
+    set({ error: helpChatError(new ApiError(503, "ai_unavailable", "No server.")) });
+    return;
+  }
+  const controller = new AbortController();
+  answering = controller;
+  set({ pending: true });
+  const answerId = nextId++;
+  try {
+    await ask(
+      conversationFor(state.messages),
+      (piece) => {
+        if (controller.signal.aborted) return;
+        const last = state.messages.at(-1);
+        set({
+          messages:
+            last?.id === answerId
+              ? [...state.messages.slice(0, -1), { ...last, text: last.text + piece }]
+              : [...state.messages, { id: answerId, role: "assistant", text: piece }],
+        });
+      },
+      controller.signal,
+    );
+  } catch (error) {
+    if (!controller.signal.aborted) set({ error: helpChatError(error) });
+  } finally {
+    if (answering === controller) {
+      answering = null;
+      set({ pending: false });
+    }
+  }
 }
 
 let available = false;

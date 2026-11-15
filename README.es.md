@@ -177,7 +177,7 @@ Todos vienen desactivados y se configuran en `apps/api/.env`; [`.env.example`](a
 | Archivos en un bucket compatible con S3 en vez del disco         | `STORAGE_DRIVER=s3`, `S3_*`                                                         |
 | Enviar los errores inesperados a Sentry                          | `SENTRY_DSN`                                                                        |
 | Leer facturas recibidas y tickets con IA                         | `AI_SCAN_MODEL`, `AI_SCAN_API_KEY`, `AI_SCAN_BASE_URL`, `AI_SCAN_MONTHLY_DOCUMENTS` |
-| Chat de ayuda sobre el uso de la app, respondido por IA          | `AI_CHAT_MODEL`, `AI_CHAT_API_KEY`, `AI_CHAT_BASE_URL`                              |
+| Chat de ayuda sobre el uso de la app, respondido por IA          | `AI_CHAT_MODEL`, `AI_CHAT_API_KEY`, `AI_CHAT_BASE_URL`, `AI_CHAT_DAILY_QUESTIONS`   |
 
 ### Comprobaciones
 

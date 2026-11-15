@@ -411,3 +411,54 @@ describe("api backend", () => {
     await expect(api.loadWorkspace()).rejects.toEqual(new ApiError(401, "unauthorized", "Sign in to continue."));
   });
 });
+
+describe("the help chat", () => {
+  /** A fetch that streams these server-sent events. */
+  function streaming(status: number, events: string[]) {
+    const requests: { url: string; body: unknown }[] = [];
+    const fetchImpl = (async (url: string, init: RequestInit = {}) => {
+      requests.push({ url, body: JSON.parse(String(init.body)) });
+      const text = events.join("");
+      // Two chunks split mid-event, as a network may deliver them
+      const stream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          const bytes = new TextEncoder().encode(text);
+          const half = Math.floor(bytes.length / 2);
+          controller.enqueue(bytes.slice(0, half));
+          controller.enqueue(bytes.slice(half));
+          controller.close();
+        },
+      });
+      return status === 200
+        ? new Response(stream, { headers: { "content-type": "text/event-stream" } })
+        : Response.json({ error: { code: "ai_quota_exceeded", message: "Limit." } }, { status });
+    }) as typeof fetch;
+    return { requests, backend: createApiBackend("https://api.test", { fetch: fetchImpl }) };
+  }
+  const messages = [{ role: "user" as const, content: "¿Cómo rectifico una factura?" }];
+
+  it("passes the answer on as it streams", async () => {
+    const { requests, backend } = streaming(200, [
+      'event: text\ndata: "Abre la factura"\n\n',
+      'event: text\ndata: " y pulsa «Rectificar»."\n\n',
+      "event: done\ndata: {}\n\n",
+    ]);
+    const pieces: string[] = [];
+    await backend.helpChat!(messages, (text) => pieces.push(text));
+    expect(pieces).toEqual(["Abre la factura", " y pulsa «Rectificar»."]);
+    expect(requests).toEqual([{ url: "https://api.test/v1/help-chat", body: { messages } }]);
+  });
+
+  it("fails with the server's error, before or while answering", async () => {
+    await expect(streaming(429, []).backend.helpChat!(messages, () => {})).rejects.toMatchObject({
+      code: "ai_quota_exceeded",
+    });
+    const halfway = streaming(200, [
+      'event: text\ndata: "Abre"\n\n',
+      'event: error\ndata: {"code":"ai_failed","message":"x"}\n\n',
+    ]);
+    await expect(halfway.backend.helpChat!(messages, () => {})).rejects.toMatchObject({ code: "ai_failed" });
+    const cut = streaming(200, ['event: text\ndata: "Abre"\n\n']);
+    await expect(cut.backend.helpChat!(messages, () => {})).rejects.toBeInstanceOf(ApiError);
+  });
+});

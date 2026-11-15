@@ -19,3 +19,4 @@ export * from "./email";
 export * from "./api-keys";
 export * from "./billing";
 export * from "./extraction";
+export * from "./help-chat";
