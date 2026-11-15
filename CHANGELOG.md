@@ -4,6 +4,23 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.0.0 (2026-11-15)
+
+* Generate the changelog in English from merged PRs by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/87
+* Read a VAT line from invoices without VAT by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/88
+* Stop the app from zooming on a phone by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/89
+* Validate contact tax IDs in the API like the web form by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/93
+* Group informative returns by tax ID, not by contact by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/95
+* Offer period years from the business's data by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/96
+* Allow the trackpad back swipe; provider logos in linked accounts by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/97
+* Make UI copy more direct by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/98
+* Drop catalog settings that did nothing or repeated others by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/99
+* Keep settings from promising what they don't do by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/100
+* Give the app a denser, flatter dashboard look by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/102
+* Help chat panel, and AI settings split into scan and chat by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/104
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v0.1.4...v1.0.0
+
 ## 0.1.4 (2026-11-14)
 
 * Open the demo in the same tab on phones by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/79
