@@ -484,10 +484,8 @@ const INFORMATIVE_DETAIL = <span className="text-sm text-muted-foreground">Infor
 /** Every form once, by how often it's filed. Payment amounts live in Trimestres; here each form is a way in. */
 function ModelsSection({ year, today }: { year: number; today: Date }) {
   const inUse = useFormsInUse()(year);
-  const { income } = useYearReturns(year);
   const quarter = quarterOf(year, today);
   const annual = { year, quarter: null };
-  const paidOnAccount = cents(income.annual.boxes["0604"] ?? 0);
 
   const quarterly: ModelRow[] = [
     { code: "303", name: "IVA", to: modelPath(VAT_PATH, quarter), applies: true },
@@ -520,12 +518,6 @@ function ModelsSection({ year, today }: { year: number; today: Date }) {
       name: "Renta",
       to: modelPath(INCOME_TAX_PATH, annual),
       applies: inUse.incomeTax,
-      detail: (
-        <span className="flex flex-col items-end">
-          <span className="amount">{formatEUR(paidOnAccount)}</span>
-          <span className="text-2xs text-muted-foreground">pagado a cuenta</span>
-        </span>
-      ),
     },
     {
       code: "190",
