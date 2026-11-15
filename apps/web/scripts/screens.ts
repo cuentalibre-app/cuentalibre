@@ -40,11 +40,14 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
     const box = (el as HTMLElement).getBoundingClientRect();
     return box.width > 0 && box.height > 0 && getComputedStyle(el).visibility !== "hidden";
   };
+  // A card's link reads its title, not the description under it
   const text = (el: Element) =>
-    (el.getAttribute("aria-label") || (el as HTMLElement).innerText || "").replace(/\s+/g, " ").trim();
+    (el.getAttribute("aria-label") || (el as HTMLElement).innerText.split("\n").find((line) => line.trim()) || "")
+      .replace(/\s+/g, " ")
+      .trim();
   // Amounts, dates and counts belong to the sample data, not to the screen
   const isData = (value: string) =>
-    /^Cuenta de |^\dT |€|\b20\d\d\b|\d+ (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\b|\(\d+\)|·\s*\d|^\d+$/i.test(
+    /^Cuenta de |^Copiar casilla |^\dT |€|\b20\d\d\b|\d+ (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)\b|\(\d+\)|·\s*\d|^\d+$/i.test(
       value,
     );
   const skip = (el: Element) =>
@@ -93,13 +96,14 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
       const required = /\*\s*$/.test(value);
       add(current.items, `${value.replace(/\s*\*\s*$/, "")}${required ? " (obligatorio)" : ""}`);
     } else if (tag === "a") {
-      const href = el.getAttribute("href") ?? "";
-      if (href.startsWith("/")) links.push(href.replace(/^\/demo/, "") || "/");
       add(current.items, `«${value}»`);
     } else if (el.getAttribute("role") === "radio" || el.getAttribute("role") === "tab") add(current.items, value);
     else if (tag === "button" && value.length > 60) add(current.items, `(ayuda: ${value})`);
     else add(current.items, `«${value}»`);
   }
+  // Every page it links to, rows and lists included, to walk next
+  for (const a of main.querySelectorAll("a[href^='/']"))
+    links.push(a.getAttribute("href")!.replace(/^\/demo(?=\/|$)/, "") || "/");
   return { title, actions, sections: sections.filter((s) => s.items.length > 0), links };
 }
 
@@ -143,11 +147,20 @@ async function rowActions(page: Page): Promise<string[]> {
   return menuItems(page, () => button.click());
 }
 
-/** A path to walk: a page of the app, not one record, a query or a page outside it. */
-const walkable = (path: string) =>
-  path.startsWith("/") &&
-  !/[?#]/.test(path) &&
-  !path.split("/").some((segment) => /\d/.test(segment) || /^[0-9a-f-]{20,}$/.test(segment));
+/**
+ * Which page a link leads to, or null for one record or a page outside the app. A period in the
+ * query is a page of its own (a tax form's boxes rather than its introduction), once for a
+ * quarter and once for a year.
+ */
+function pageKey(link: string): string | null {
+  const url = new URL(link, "http://app");
+  if (!link.startsWith("/") || url.hash) return null;
+  if (url.pathname.split("/").some((segment) => /\d/.test(segment) || /^[0-9a-f-]{20,}$/.test(segment))) return null;
+  const params = [...url.searchParams.keys()];
+  if (params.length === 0) return url.pathname;
+  if (params.length > 1 || params[0] !== "periodo") return null;
+  return `${url.pathname}?periodo=${/T\d$/.test(url.searchParams.get("periodo")!) ? "trimestre" : "año"}`;
+}
 
 function render(screens: Screen[]): string {
   const lines = [
@@ -165,7 +178,9 @@ function render(screens: Screen[]): string {
     "",
   ];
   for (const screen of screens) {
-    lines.push(`## ${screen.title}`, "", `Dirección: ${screen.path}`, "");
+    const period = /[?&]periodo=([^&]+)/.exec(screen.path)?.[1];
+    const title = period ? `${screen.title} (${/T\d$/.test(period) ? "un trimestre" : "el año"})` : screen.title;
+    lines.push(`## ${title}`, "", `Dirección: ${screen.path}`, "");
     if (screen.actions.length > 0) lines.push(`- Botones de arriba: ${screen.actions.join("; ")}.`);
     if (screen.rowActions.length > 0)
       lines.push(`- Menú de tres puntos de cada fila: ${screen.rowActions.map((a) => `«${a}»`).join(", ")}.`);
@@ -203,23 +218,30 @@ try {
   const screens: Screen[] = [];
   while (queue.length > 0) {
     const path = queue.shift()!;
-    if (visited.has(path) || !walkable(path)) continue;
-    visited.add(path);
+    const key = pageKey(path);
+    if (key === null || visited.has(key)) continue;
+    visited.add(key);
     await page.goto(`${origin}${DEMO}${path === "/" ? "" : path}`);
     await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10_000 });
     await page.waitForLoadState("networkidle");
-    const landed = new URL(page.url()).pathname.replace(/^\/demo/, "") || "/";
+    const url = new URL(page.url());
+    const landed = (url.pathname.replace(/^\/demo/, "") || "/") + url.search;
     if (landed !== path) continue; // A redirect: the page it lands on is walked on its own
     const read = await page.evaluate(readScreen);
     const menus = await headerMenus(page);
-    screens.push({
+    const screen: Screen = {
       path,
       title: read.title,
       actions: [...read.actions.map((a) => `«${a}»`).filter((a) => !menus.some((m) => m.startsWith(a))), ...menus],
       sections: read.sections,
       rowActions: await rowActions(page),
       links: read.links,
-    });
+    };
+    // A period that shows the same as the page without it adds nothing
+    const same = (other: Screen) =>
+      JSON.stringify([other.title, other.actions, other.sections]) ===
+      JSON.stringify([screen.title, screen.actions, screen.sections]);
+    if (!screens.some(same)) screens.push(screen);
     queue.push(...read.links);
   }
   const markdown = render(screens);
