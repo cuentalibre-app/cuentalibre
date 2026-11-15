@@ -97,7 +97,7 @@ function Message({ message }: { message: HelpMessage }) {
       <p className="m-0 text-base leading-relaxed break-words whitespace-pre-wrap">
         {splitLinks(message.text).map((part, i) =>
           "href" in part ? (
-            <a key={i} href={part.href} target="_blank" rel="noreferrer" className="text-primary hover:text-primary-hover">
+            <a key={i} href={part.href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 hover:text-primary-hover">
               {part.href}
             </a>
           ) : (
