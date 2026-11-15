@@ -100,6 +100,9 @@ describe("the help chat's prompt", () => {
     expect(prompt).toContain('<page url="https://cuentalibre.es/docs" title="Documentación de cuentalibre">');
     expect(prompt).toContain('<page url="https://cuentalibre.es/docs/guia/facturas" title="Facturas emitidas">');
     expect(prompt).toContain('<page url="https://cuentalibre.es/docs/guia/mapa" title="Mapa de la aplicación">');
+    expect(prompt).toContain(
+      '<page url="https://cuentalibre.es/docs/guia/pantallas" title="Pantallas de la aplicación">',
+    );
   });
 
   it("leaves out the API reference", () => {
