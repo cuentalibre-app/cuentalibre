@@ -22,6 +22,37 @@ export interface AeatFiler {
   phone?: string;
 }
 
+/** The taxpayer data of a business profile that the filer comes from. */
+export interface FilerProfile {
+  kind: "selfEmployed" | "company";
+  taxId: string;
+  firstName: string;
+  lastName: string;
+  secondLastName: string;
+  legalName: string;
+  phone?: string;
+}
+
+/**
+ * The filer of a business profile: a person's surnames and first name, or a company's legal
+ * name in the surnames field ("Apellidos y nombre o razón social"). Null until the profile has
+ * the NIF and the name: first name and first surname, or the legal name.
+ */
+export function aeatFiler(profile: FilerProfile): AeatFiler | null {
+  if (!profile.taxId.trim()) return null;
+  if (profile.kind === "company") {
+    const legalName = profile.legalName.trim();
+    return legalName ? { taxId: profile.taxId, surnames: legalName, name: "", phone: profile.phone } : null;
+  }
+  if (!profile.firstName.trim() || !profile.lastName.trim()) return null;
+  return {
+    taxId: profile.taxId,
+    surnames: `${profile.lastName.trim()} ${profile.secondLastName.trim()}`.trim(),
+    name: profile.firstName.trim(),
+    phone: profile.phone,
+  };
+}
+
 /**
  * Text as alphanumeric fields take it: upper case, only letters, digits and blanks, left
  * aligned and padded with blanks. Accents go; Ñ and Ç stay, as ISO-8859-1 has them.
