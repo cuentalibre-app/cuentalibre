@@ -43,7 +43,7 @@ import {
   DRAFT_SETTINGS_PATH,
   EMAIL_TEMPLATES_PATH,
   FILES_PATH,
-  incomeTaxMethodLabel,
+  profitTaxLabel,
   INVOICE_SETTINGS_PATH,
   PAYMENT_METHODS_PATH,
   PREFERENCES_PATH,
@@ -194,7 +194,7 @@ export function SettingsPage() {
           to: TAX_SETTINGS_PATH,
           icon: Percent,
           summary: [
-            incomeTaxMethodLabel(tax.incomeTaxMethod),
+            profitTaxLabel(profile.kind, tax.incomeTaxMethod),
             vatRegimeLabel(tax.vatRegime),
             main?.code && `Epígrafe ${main.code}`,
             `RETA ${formatEUR(tax.socialSecurityFee)}/mes`,
