@@ -51,7 +51,8 @@ jobs:
       - run: pnpm test
       # The guide's screen inventory, which the help chat answers from, must match the app
       - run: pnpm --filter @cuentalibre/web exec playwright install --with-deps --only-shell chromium
-      - run: pnpm --filter @cuentalibre/web screens --check
+      # Writes the page again and shows what changed, if anything
+      - run: pnpm --filter @cuentalibre/web screens && git diff --exit-code -- apps/site/src/content/docs/guia/pantallas.md
       - run: pnpm build
         env:
           SITE_URL: https://cuentalibre.es
