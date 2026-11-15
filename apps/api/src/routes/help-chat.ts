@@ -2,6 +2,7 @@ import { helpChatRequestSchema } from "@cuentalibre/contracts";
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { streamSSE } from "hono/streaming";
 import { AiError } from "../ai";
+import { screenContext } from "../ai/help-guide";
 import { recordQuestion, releaseQuestion, reserveQuestion } from "../ai/questions";
 import type { AppEnv } from "../context";
 import { reportError } from "../error-reporting";
@@ -38,12 +39,17 @@ export const helpChatRoutes = new OpenAPIHono<AppEnv>().openapi(ask, async (c) =
   if (!chat) throw new ApiError(503, "ai_unavailable", "This server has no help chat set up.");
   const db = c.get("db");
   const organizationId = c.get("organizationId");
-  const { messages } = c.req.valid("json");
+  const { messages, screen } = c.req.valid("json");
 
   const id = await reserveQuestion(db, organizationId, chat.provider.model, chat.dailyQuestions);
   let events;
   try {
-    events = await chat.provider.stream({ system: chat.prompt, messages, signal: c.req.raw.signal });
+    events = await chat.provider.stream({
+      system: chat.prompt,
+      context: screen && screenContext(screen),
+      messages,
+      signal: c.req.raw.signal,
+    });
   } catch (error) {
     await releaseQuestion(db, organizationId, id);
     if (!(error instanceof AiError)) throw error;

@@ -7,6 +7,8 @@ import {
   ChartColumn,
   ClipboardList,
   FileText,
+  Layers,
+  Menu,
   Package,
   Receipt,
   Landmark,
@@ -131,8 +133,22 @@ export const secondaryNav: NavItem[] = [
   { label: "Configuración", to: "/configuracion", icon: Settings },
 ];
 
+export type PhoneTab =
+  | { kind: "link"; label: string; to: string; icon: LucideIcon; tour: string }
+  | { kind: "create"; label: string; icon: LucideIcon; tour: string }
+  | { kind: "more"; label: string; icon: LucideIcon; tour: string };
+
+/** The phone's tab bar, left to right as drawn: three sections, the shortcuts menu and "Más". */
+export const phoneTabs: PhoneTab[] = [
+  { kind: "link", label: "Inicio", to: "/", icon: LayoutGrid, tour: "/" },
+  { kind: "link", label: "Ventas", to: "/ventas", icon: ReceiptText, tour: "/ventas" },
+  { kind: "create", label: "Accesos rápidos", icon: Layers, tour: "/compras" },
+  { kind: "link", label: "Impuestos", to: "/impuestos", icon: Percent, tour: "/impuestos" },
+  { kind: "more", label: "Más", icon: Menu, tour: "/mas" },
+];
+
 /** Paths with a tab of their own in the mobile tab bar. */
-export const tabPaths = ["/", "/ventas", "/impuestos"];
+export const tabPaths = phoneTabs.flatMap((tab) => (tab.kind === "link" ? [tab.to] : []));
 
 export type MoreEntry =
   { kind: "link"; item: NavItem } | { kind: "group"; to: string; title: string; icon: LucideIcon; links: NavLeaf[] };

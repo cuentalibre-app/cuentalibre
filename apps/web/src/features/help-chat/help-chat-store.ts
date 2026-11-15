@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
-import { HELP_CHAT_MAX_MESSAGES, type HelpChatMessage } from "@cuentalibre/contracts";
+import { HELP_CHAT_MAX_MESSAGES, type HelpChatMessage, type HelpChatScreen } from "@cuentalibre/contracts";
 import { ApiError } from "@/data/api";
 import { currentBackend } from "@/data/backend";
 import { signInMethods } from "@/features/auth/auth-api";
+import { routerBasename } from "@/features/auth/session";
 
 /*
  * The AI help chat: whether its panel is open, and the conversation so far. One store for the
@@ -122,6 +123,15 @@ export function conversationFor(messages: HelpMessage[]): HelpChatMessage[] {
   return recent[0]?.role === "assistant" ? recent.slice(1) : recent;
 }
 
+/**
+ * Where the question is asked from, so the answer names the buttons on screen: below the
+ * desktop width the app has the phone's tab bar instead of the sidebar.
+ */
+function currentScreen(): HelpChatScreen {
+  const path = window.location.pathname.slice(routerBasename()?.length ?? 0) || "/";
+  return { device: window.matchMedia(DESKTOP).matches ? "desktop" : "phone", path: path.slice(0, 200) };
+}
+
 /** Why a question got no answer, for the user. */
 export function helpChatError(error: unknown): string {
   switch (error instanceof ApiError ? error.code : null) {
@@ -150,7 +160,7 @@ export async function askHelpChat(text: string) {
   const answerId = nextId++;
   try {
     await ask(
-      conversationFor(state.messages),
+      { messages: conversationFor(state.messages), screen: currentScreen() },
       (piece) => {
         if (controller.signal.aborted) return;
         const last = state.messages.at(-1);

@@ -1,3 +1,4 @@
+import type { HelpChatScreen } from "@cuentalibre/contracts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
@@ -19,7 +20,9 @@ const RULES = `You are the help assistant inside cuentalibre, an accounting and 
 Rules:
 - Answer only from the documentation below. If it doesn't cover the question, say so plainly and don't guess: never invent screens, buttons, menus or features.
 - Answer in Spanish, unless the person writes in another language.
-- Explain how to do things in the app, in terms of its screens and buttons. Mention the API, its endpoints or code only when the person asks about the API, integrations or agents.
+- Explain how to do things in the app, in terms of its screens and buttons, as the user guide (the pages under /docs/guia) and the app map describe them. Name the menus and buttons exactly as written there, between quotes or in order: «Ventas › Facturas emitidas», then «Nueva factura».
+- The app looks different on a phone and on a computer. When you're told which one the person uses, give the steps for that one only; otherwise give the computer's and add the phone's when they differ. When you're told the page they're on, start from there.
+- Mention the API, its endpoints or code only when the person asks about the API, integrations or agents.
 - You give no tax, legal or accounting advice: whether an expense is deductible, which form, rate or regime applies to their case, how much they will pay. You may explain what the app does with each tax form. For their own case, suggest a tax adviser (asesor fiscal).
 - You can't see the person's data or do anything in the app for them. Don't ask them for amounts, tax IDs or other personal data.
 - Be brief: a sentence or two, or a few numbered steps. Write plain text: the chat shows no Markdown, so never use asterisks, backticks, headings, tables or [text](url) links.
@@ -46,13 +49,24 @@ function readPage(dir: string, file: string): Page {
     .replace(/<\/?[a-z][^>]*>/gi, "")
     .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/`([^`\n]+)`/g, "$1")
-    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, text: string, href: string) =>
-      `${text} (${href.startsWith("/docs") ? `${DOCS_URL}${href.slice("/docs".length)}` : href})`,
+    .replace(
+      /\[([^\]]+)\]\(([^)\s]+)\)/g,
+      (_, text: string, href: string) =>
+        `${text} (${href.startsWith("/docs") ? `${DOCS_URL}${href.slice("/docs".length)}` : href})`,
     )
     .replace(/\n{3,}/g, "\n\n")
     .trim();
   const slug = relative(dir, join(dir, file)).replace(/\.md$/, "").split(sep).join("/");
   return { url: slug === "index" ? DOCS_URL : `${DOCS_URL}/${slug}`, title, body };
+}
+
+/** What the help chat is told about where the person asks from, after its cached prompt. */
+export function screenContext(screen: HelpChatScreen): string {
+  const device =
+    screen.device === "phone"
+      ? "on a phone: the app shows the bottom tab bar and the «Más» sheet, not the sidebar"
+      : "on a computer: the app shows the sidebar with the «Crear» button, not the phone's bottom tab bar";
+  return `The person is using cuentalibre ${device}. They are on the page ${screen.path}.`;
 }
 
 /** The help chat's system prompt: its rules and the pages of the documentation in `dir`, except the API reference. */
