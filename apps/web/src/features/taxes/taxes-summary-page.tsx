@@ -73,9 +73,9 @@ const NEXT_FORMS: Partial<
   Record<CalendarForm, { name: (q: Quarter | null) => string; path: string; applies: true | keyof FormsInUse }>
 > = {
   "303": { name: (q) => `IVA ${q}T`, path: VAT_PATH, applies: true },
-  "130": { name: (q) => `IRPF ${q}T`, path: INCOME_TAX_PATH, applies: true },
+  "130": { name: (q) => `IRPF ${q}T`, path: INCOME_TAX_PATH, applies: "incomeTax" },
   "390": { name: () => "Resumen anual de IVA", path: VAT_PATH, applies: true },
-  "100": { name: () => "Renta, actividad económica", path: INCOME_TAX_PATH, applies: true },
+  "100": { name: () => "Renta, actividad económica", path: INCOME_TAX_PATH, applies: "incomeTax" },
   "111": { name: (q) => `Retenciones ${q}T`, path: WITHHOLDINGS_PATH, applies: "withholdings" },
   "190": { name: () => "Resumen anual de retenciones", path: WITHHOLDINGS_PATH, applies: "withholdings" },
   "115": { name: (q) => `Alquileres ${q}T`, path: RENTALS_PATH, applies: "rentals" },
@@ -245,7 +245,7 @@ function SectionTitle({ id, children }: { id: string; children: ReactNode }) {
   );
 }
 
-/** What each quarter pays: VAT, the income tax installment and, when they apply, the withholding returns. */
+/** What each quarter pays: VAT and, when they apply, the income tax installment and the withholding returns. */
 function useQuarterRows(year: number, today: Date) {
   const { vat, income } = useYearReturns(year);
   const party = usePartyBooks();
@@ -253,7 +253,7 @@ function useQuarterRows(year: number, today: Date) {
   return useMemo(() => {
     const rows = QUARTERS.map((quarter) => {
       const v = vat[quarter - 1]!.result;
-      const irpf = cents(Math.max(0, income.quarters[quarter - 1]!.result));
+      const irpf = inUse.incomeTax ? cents(Math.max(0, income.quarters[quarter - 1]!.result)) : null;
       const withholdings = inUse.withholdings ? cents(model111(party.ops, year, quarter).boxes["30"]!) : null;
       const rentals = inUse.rentals ? cents(model115(party.ops, year, quarter).boxes["05"]!) : null;
       return {
@@ -262,12 +262,12 @@ function useQuarterRows(year: number, today: Date) {
         irpf,
         withholdings,
         rentals,
-        total: cents(Math.max(0, v) + irpf + (withholdings ?? 0) + (rentals ?? 0)),
+        total: cents(Math.max(0, v) + (irpf ?? 0) + (withholdings ?? 0) + (rentals ?? 0)),
         deadline: filingDeadline(year, quarter),
         closed: filingStatus(year, quarter, today) === "closed",
       };
     });
-    return { rows, withholdings: inUse.withholdings, rentals: inUse.rentals };
+    return { rows, incomeTax: inUse.incomeTax, withholdings: inUse.withholdings, rentals: inUse.rentals };
   }, [vat, income, party, inUse, year, today]);
 }
 
@@ -278,7 +278,12 @@ function quarterForms(year: number, r: QuarterRow) {
   const period = { year, quarter: r.quarter };
   return [
     { code: "303", name: "IVA", to: modelPath(VAT_PATH, period), amount: <VatAmount amount={r.vat} /> },
-    { code: "130", name: "IRPF", to: modelPath(INCOME_TAX_PATH, period), amount: <PlainAmount amount={r.irpf} /> },
+    r.irpf !== null && {
+      code: "130",
+      name: "IRPF",
+      to: modelPath(INCOME_TAX_PATH, period),
+      amount: <PlainAmount amount={r.irpf} />,
+    },
     r.withholdings !== null && {
       code: "111",
       name: "Retenciones",
@@ -299,7 +304,7 @@ function PlainAmount({ amount }: { amount: Cents }) {
 }
 
 function QuartersSection({ year, today, yearSelect }: { year: number; today: Date; yearSelect: ReactNode }) {
-  const { rows, withholdings, rentals } = useQuarterRows(year, today);
+  const { rows, incomeTax, withholdings, rentals } = useQuarterRows(year, today);
   // Desktop: quarters past their deadline start folded away, unless the whole year is past and nothing else would show
   const closedRows = rows.filter((r) => r.closed);
   const closedCount = closedRows.length;
@@ -352,9 +357,11 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
               <th scope="col" className={cn(th, "text-right")}>
                 IVA (303)
               </th>
-              <th scope="col" className={cn(th, "text-right")}>
-                IRPF (130)
-              </th>
+              {incomeTax && (
+                <th scope="col" className={cn(th, "text-right")}>
+                  IRPF (130)
+                </th>
+              )}
               {showWithheld && (
                 <th scope="col" className={cn(th, "text-right")}>
                   {withheldLabel}
@@ -389,7 +396,7 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
                   </button>
                 </td>
                 <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.vat)}</td>
-                <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.irpf)}</td>
+                {incomeTax && <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.irpf)}</td>}
                 {showWithheld && <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.withheld)}</td>}
                 <td className={cn(td, "text-right amount font-semibold text-foreground")}>
                   {formatEUR(closedSum.total)}
@@ -421,11 +428,13 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
                       <VatAmount amount={r.vat} />
                     </Link>
                   </td>
-                  <td className={cn(td, "text-right")}>
-                    <Link to={modelPath(INCOME_TAX_PATH, period)} className={cn(linkClass, "justify-end")}>
-                      <PlainAmount amount={r.irpf} />
-                    </Link>
-                  </td>
+                  {r.irpf !== null && (
+                    <td className={cn(td, "text-right")}>
+                      <Link to={modelPath(INCOME_TAX_PATH, period)} className={cn(linkClass, "justify-end")}>
+                        <PlainAmount amount={r.irpf} />
+                      </Link>
+                    </td>
+                  )}
                   {showWithheld && (
                     <td className={cn(td, "text-right")}>
                       <Link
@@ -453,7 +462,7 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
             <tr className="border-t border-border bg-muted/50 font-semibold">
               <td className={td}>Total del año</td>
               <td className={cn(td, "text-right amount")}>{formatEUR(totals.vat)}</td>
-              <td className={cn(td, "text-right amount")}>{formatEUR(totals.irpf)}</td>
+              {incomeTax && <td className={cn(td, "text-right amount")}>{formatEUR(totals.irpf)}</td>}
               {showWithheld && <td className={cn(td, "text-right amount")}>{formatEUR(totals.withheld)}</td>}
               <td className={cn(td, "text-right amount")}>{formatEUR(totals.total)}</td>
               <td className={td} />
@@ -541,7 +550,7 @@ function ModelsSection({ year, today }: { year: number; today: Date }) {
 
   const quarterly: ModelRow[] = [
     { code: "303", name: "IVA", to: modelPath(VAT_PATH, quarter), applies: true },
-    { code: "130", name: "IRPF", to: modelPath(INCOME_TAX_PATH, quarter), applies: true },
+    { code: "130", name: "IRPF", to: modelPath(INCOME_TAX_PATH, quarter), applies: inUse.incomeTax },
     {
       code: "111",
       name: "Retenciones de facturas recibidas",
@@ -569,7 +578,7 @@ function ModelsSection({ year, today }: { year: number; today: Date }) {
       code: "100",
       name: "Renta",
       to: modelPath(INCOME_TAX_PATH, annual),
-      applies: true,
+      applies: inUse.incomeTax,
       detail: (
         <span className="flex flex-col items-end">
           <span className="amount">{formatEUR(paidOnAccount)}</span>

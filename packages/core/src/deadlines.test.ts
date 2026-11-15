@@ -9,11 +9,13 @@ import {
   upcomingDeadlines,
 } from "./deadlines";
 
+const SELF_EMPLOYED = { incomeTax: true };
+
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 describe("deadlinesForYear", () => {
   it("puts quarterly forms on the 20th of the following month", () => {
-    const q3 = deadlinesForYear(2026).filter((d) => d.quarter === 3);
+    const q3 = deadlinesForYear(2026, SELF_EMPLOYED).filter((d) => d.quarter === 3);
     expect(q3.map((d) => [d.kind, ymd(d.date)])).toEqual([
       ["vat-303", "2026-10-20"],
       ["irpf-130", "2026-10-20"],
@@ -22,23 +24,23 @@ describe("deadlinesForYear", () => {
 
   it("moves deadlines that fall on a weekend to Monday", () => {
     // 2025-07-20 is a Sunday
-    const q2 = deadlinesForYear(2025).find((d) => d.kind === "vat-303" && d.quarter === 2);
+    const q2 = deadlinesForYear(2025, SELF_EMPLOYED).find((d) => d.kind === "vat-303" && d.quarter === 2);
     expect(ymd(q2!.date)).toBe("2025-07-21");
     // 2027-01-30 is a Saturday
-    const q4 = deadlinesForYear(2026).find((d) => d.kind === "vat-303" && d.quarter === 4);
+    const q4 = deadlinesForYear(2026, SELF_EMPLOYED).find((d) => d.kind === "vat-303" && d.quarter === 4);
     expect(ymd(q4!.date)).toBe("2027-02-01");
   });
 
   it("charges social security on the last business day of the month", () => {
     // 2026-10-31 is a Saturday
-    const october = deadlinesForYear(2026).find((d) => d.kind === "social-security" && d.month === 9);
+    const october = deadlinesForYear(2026, SELF_EMPLOYED).find((d) => d.kind === "social-security" && d.month === 9);
     expect(ymd(october!.date)).toBe("2026-10-30");
   });
 });
 
 describe("upcomingDeadlines", () => {
   it("lists what's due from today onwards, soonest first", () => {
-    const result = upcomingDeadlines(new Date(2026, 9, 15), 4);
+    const result = upcomingDeadlines(new Date(2026, 9, 15), 4, SELF_EMPLOYED);
     expect(result.map((d) => [d.kind, ymd(d.date)])).toEqual([
       ["vat-303", "2026-10-20"],
       ["irpf-130", "2026-10-20"],
@@ -47,8 +49,16 @@ describe("upcomingDeadlines", () => {
     ]);
   });
 
+  it("leaves the 130 out for a company", () => {
+    const result = upcomingDeadlines(new Date(2026, 9, 15), 2, { incomeTax: false });
+    expect(result.map((d) => [d.kind, ymd(d.date)])).toEqual([
+      ["vat-303", "2026-10-20"],
+      ["social-security", "2026-10-30"],
+    ]);
+  });
+
   it("includes a deadline due today", () => {
-    expect(upcomingDeadlines(new Date(2026, 9, 20, 18, 30), 1)[0]?.kind).toBe("vat-303");
+    expect(upcomingDeadlines(new Date(2026, 9, 20, 18, 30), 1, SELF_EMPLOYED)[0]?.kind).toBe("vat-303");
   });
 });
 
