@@ -1,4 +1,12 @@
-import { Fragment, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  Fragment,
+  useState,
+  useSyncExternalStore,
+  type ComponentProps,
+  type ReactElement,
+  type ReactNode,
+} from "react";
+import { Link } from "react-router";
 import {
   ArrowDown,
   ArrowUp,
@@ -10,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { centsToEuros, type Cents } from "@cuentalibre/core";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Sheet, SheetClose, SheetContent } from "@cuentalibre/ui/components/sheet";
 import {
   DropdownMenu,
@@ -25,7 +33,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@cuentalibre/ui/components/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 
 /* Building blocks shared by the document lists (sales and purchases). Tooltips need a TooltipProvider above. */
@@ -156,8 +164,7 @@ export function MoreActionsTrigger({ label, tooltip = false }: { label: string; 
         size={tooltip ? "icon-sm" : "icon"}
         aria-label={label}
         className={cn(
-          !tooltip &&
-            "shrink-0 rounded-full bg-muted text-foreground [&_svg]:size-5 data-[state=open]:bg-muted-strong",
+          !tooltip && "shrink-0 rounded-full bg-muted text-foreground data-[state=open]:bg-muted-strong [&_svg]:size-5",
         )}
       >
         <MoreHorizontal strokeWidth={2} aria-hidden="true" />
@@ -170,6 +177,65 @@ export function MoreActionsTrigger({ label, tooltip = false }: { label: string; 
       <TooltipTrigger asChild>{trigger}</TooltipTrigger>
       <TooltipContent>Más acciones</TooltipContent>
     </Tooltip>
+  );
+}
+
+/** Says on hover what a toolbar button does: beside the docked assistant some show only their icon. */
+export function ToolbarTip({ label, children }: { label: string; children: ReactElement }) {
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+/**
+ * A list toolbar's secondary action, such as an export: an icon and a short text that shrinks to
+ * the icon wherever the page is narrow (phones, and beside the docked assistant). `to` makes it a link.
+ */
+export function ToolbarButton({
+  label,
+  icon: Icon,
+  text,
+  to,
+  className,
+  ...props
+}: Omit<ComponentProps<"button">, "children"> & {
+  /** What it does, for the tooltip and screen readers. */
+  label: string;
+  icon: LucideIcon;
+  text: string;
+  to?: string;
+}) {
+  const classes = cn(buttonVariants({ variant: "secondary" }), "@max-5xl:w-10 @max-5xl:px-0", className);
+  const content = (
+    <>
+      <Icon strokeWidth={1.8} aria-hidden="true" />
+      <span className="@max-5xl:hidden">{text}</span>
+    </>
+  );
+  return (
+    <ToolbarTip label={label}>
+      {to ? (
+        <Link to={to} aria-label={label} className={classes}>
+          {content}
+        </Link>
+      ) : props.disabled ? (
+        // A disabled button gets no pointer events: the wrapper takes the hover so it still explains itself
+        <span tabIndex={0} className={cn("inline-flex rounded-lg", className)}>
+          <button type="button" aria-label={label} className={cn(classes, "pointer-events-none")} {...props}>
+            {content}
+          </button>
+        </span>
+      ) : (
+        <button type="button" aria-label={label} className={classes} {...props}>
+          {content}
+        </button>
+      )}
+    </ToolbarTip>
   );
 }
 
@@ -195,18 +261,21 @@ export function FiltersButton({
   const badge =
     "flex size-5 items-center justify-center rounded-sm bg-primary text-2xs font-semibold text-primary-foreground";
   return (
-    <Button
-      variant="secondary"
-      aria-expanded={open}
-      aria-controls={controls}
-      onClick={onToggle}
-      className="max-lg:px-3"
-    >
-      <Filter strokeWidth={1.8} aria-hidden="true" />
-      <span className="max-lg:sr-only">Filtros</span>
-      {phoneCount > 0 && <span className={cn(badge, "lg:hidden")}>{phoneCount}</span>}
-      {count > 0 && <span className={cn(badge, "max-lg:hidden")}>{count}</span>}
-    </Button>
+    <ToolbarTip label="Filtros">
+      <Button
+        variant="secondary"
+        aria-expanded={open}
+        aria-controls={controls}
+        onClick={onToggle}
+        // Just the funnel wherever the page is narrow: on phones, and beside the docked assistant
+        className="@max-5xl:min-w-10 @max-5xl:px-2.5"
+      >
+        <Filter strokeWidth={1.8} aria-hidden="true" />
+        <span className="@max-5xl:sr-only">Filtros</span>
+        {phoneCount > 0 && <span className={cn(badge, "lg:hidden")}>{phoneCount}</span>}
+        {count > 0 && <span className={cn(badge, "max-lg:hidden")}>{count}</span>}
+      </Button>
+    </ToolbarTip>
   );
 }
 

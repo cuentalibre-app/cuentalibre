@@ -218,7 +218,7 @@ function ContactForm({
             </Section>
 
             <Section title="Datos de contacto" index={3}>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
                 <Field
                   label="Email"
                   error={errors.email}
@@ -268,7 +268,7 @@ function ContactForm({
                 {isClient ? "una factura, presupuesto o albarán" : "una factura recibida o un gasto"}; puedes cambiarlas
                 en cada documento.
               </p>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)]">
                 <Field label="Descuento" error={errors.discount} help="Se aplica a cada concepto nuevo del documento.">
                   {(p) => (
                     <PercentInput {...p} value={draft.discount} placeholder="0" onChange={(v) => set("discount", v)} />
@@ -356,7 +356,7 @@ function ContactForm({
                 <p className="m-0 text-sm text-muted-foreground">
                   Solo para administraciones públicas: los códigos DIR3 que piden para recibir facturas por FACe.
                 </p>
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-4">
                   {(
                     [
                       ["accountingOffice", "Oficina contable"],
@@ -478,7 +478,7 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
               add();
             }
           }}
-          className="grid gap-4 rounded-lg bg-muted p-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)]"
+          className="grid gap-4 rounded-lg bg-muted p-4 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] @5xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)]"
         >
           <Field label="IBAN" required error={error.iban}>
             {(p) => (
@@ -508,12 +508,12 @@ function BankAccounts({ accounts, onChange }: { accounts: BankAccount[]; onChang
               />
             )}
           </Field>
-          <Field label="Notas" className="sm:col-span-2 xl:col-span-1">
+          <Field label="Notas" className="sm:col-span-2 @5xl:col-span-1">
             {(p) => (
               <Input {...p} value={adding.notes} onChange={(e) => setAdding({ ...adding, notes: e.target.value })} />
             )}
           </Field>
-          <div className="flex flex-wrap items-center gap-3 sm:col-span-2 xl:col-span-3">
+          <div className="flex flex-wrap items-center gap-3 sm:col-span-2 @5xl:col-span-3">
             {accounts.length > 0 && (
               <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium">
                 <Checkbox

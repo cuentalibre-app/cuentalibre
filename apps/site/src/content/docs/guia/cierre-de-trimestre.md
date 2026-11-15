@@ -19,7 +19,7 @@ Abre **Cierre de trimestres** en el menú. Cada trimestre aparece como **En curs
 
    Los borradores y los huecos en la numeración conviene resolverlos antes de cerrar. Los cobros, los pagos y los justificantes puedes completarlos después.
 2. **Presenta los impuestos.** Desde aquí vas a cada modelo del trimestre para revisarlo y presentarlo en la sede de la AEAT.
-3. **Cierra el trimestre.** Pulsa el botón de cerrar (por ejemplo, **Cerrar el 3T 2026**) y confírmalo con **Cerrar trimestre**. Si queda algún aviso, se te recuerda, pero puedes cerrar igualmente.
+3. **Cierra el trimestre.** Pulsa el botón que empieza por **Cerrar el** seguido del trimestre (por ejemplo, «Cerrar el 3T») y confírmalo con **Cerrar trimestre**. Si queda algún aviso, se te recuerda, pero puedes cerrar igualmente.
 
 Al cerrarlo se guardan los modelos 303 y 130 tal como están, como lo presentado: los trimestres siguientes parten de esas cifras.
 

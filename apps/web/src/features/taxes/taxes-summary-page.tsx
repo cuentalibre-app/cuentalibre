@@ -27,7 +27,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { table } from "@cuentalibre/ui/lib/table";
 import { HelpTip, Page, PageHeader } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
-import { daysLeftLabel, formatDate, MONTHS_SHORT, periodRange } from "@/lib/format";
+import { daysLeftLabel, formatDate, MONTHS_SHORT } from "@/lib/format";
 import { usePeriod } from "@/lib/use-period";
 import { useAvailableYears } from "@/lib/use-available-years";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
@@ -49,14 +49,11 @@ import { SettingsLink } from "@/features/settings/settings-parts";
 
 const QUARTERS = [1, 2, 3, 4] as const;
 
-/** "A compensar" for a negative 303, which is carried forward rather than paid. */
+/** A negative 303 is carried forward rather than paid, so it shows in green. */
 function VatAmount({ amount }: { amount: Cents }) {
-  if (amount >= 0)
-    return <span className={cn("amount", amount === 0 && "text-muted-foreground")}>{formatEUR(amount)}</span>;
   return (
-    <span className="flex flex-col items-end">
-      <span className="amount text-success">{formatEUR(amount)}</span>
-      <span className="text-2xs text-muted-foreground">a compensar</span>
+    <span className={cn("amount", amount === 0 && "text-muted-foreground", amount < 0 && "text-success")}>
+      {formatEUR(amount)}
     </span>
   );
 }
@@ -305,14 +302,8 @@ function PlainAmount({ amount }: { amount: Cents }) {
 
 function QuartersSection({ year, today, yearSelect }: { year: number; today: Date; yearSelect: ReactNode }) {
   const { rows, incomeTax, withholdings, rentals } = useQuarterRows(year, today);
-  // Desktop: quarters past their deadline start folded away, unless the whole year is past and nothing else would show
-  const closedRows = rows.filter((r) => r.closed);
-  const closedCount = closedRows.length;
-  const canFold = closedCount > 0 && closedCount < rows.length;
-  const [showClosed, setShowClosed] = useState(false);
   // Phones: every quarter is one row with its total; tapping it opens the forms behind it
   const [open, setOpen] = useState<Quarter | null>(null);
-  const shown = canFold && !showClosed ? rows.filter((r) => !r.closed) : rows;
   const sumOf = (list: QuarterRow[], pick: (r: QuarterRow) => Cents | null) =>
     sumBy(list, (r) => cents(Math.max(0, pick(r) ?? 0)));
   const sums = (list: QuarterRow[]) => ({
@@ -321,17 +312,10 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
     withheld: sumOf(list, (r) => cents((r.withholdings ?? 0) + (r.rentals ?? 0))),
     total: sumOf(list, (r) => r.total),
   });
-  const closedSum = sums(closedRows);
   const totals = sums(rows);
   const showWithheld = withholdings || rentals;
   const withheldLabel =
     withholdings && rentals ? "Retenciones (111 y 115)" : withholdings ? "Retenciones (111)" : "Alquileres (115)";
-  const closedLabel = closedCount === 1 ? "1 trimestre cerrado" : `${closedCount} trimestres cerrados`;
-  const firstClosed = closedRows[0]?.quarter ?? 1;
-  const lastClosed = closedRows.at(-1)?.quarter ?? 1;
-  const closedRange = `${periodRange({ year, quarter: firstClosed }).split(" – ")[0]} – ${periodRange({ year, quarter: lastClosed }).split(" – ")[1]}`;
-  const closedName = firstClosed === lastClosed ? `${firstClosed}T` : `${firstClosed}T – ${lastClosed}T`;
-  const toggleClosed = () => setShowClosed((v) => !v);
   const th = cn(table.th, "px-4");
   const td = cn(table.td, "px-4");
   const linkClass = "inline-flex items-center gap-1 text-foreground no-underline hover:text-primary";
@@ -376,52 +360,12 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
             </tr>
           </thead>
           <tbody>
-            {canFold && (
-              <tr
-                onClick={toggleClosed}
-                className={cn(table.row, "cursor-pointer text-muted-foreground hover:bg-accent")}
-              >
-                <td className={td}>
-                  <button
-                    type="button"
-                    aria-expanded={showClosed}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleClosed();
-                    }}
-                    className="cursor-pointer border-0 bg-transparent p-0 text-left text-foreground"
-                  >
-                    <span className="font-semibold">{closedName}</span>{" "}
-                    <span className="text-sm text-muted-foreground">{closedRange}</span>
-                  </button>
-                </td>
-                <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.vat)}</td>
-                {incomeTax && <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.irpf)}</td>}
-                {showWithheld && <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.withheld)}</td>}
-                <td className={cn(td, "text-right amount font-semibold text-foreground")}>
-                  {formatEUR(closedSum.total)}
-                </td>
-                <td className={td}>
-                  <span className="flex items-center justify-between gap-3">
-                    {closedLabel}
-                    <ChevronDown
-                      className={cn(
-                        "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-                        showClosed && "rotate-180",
-                      )}
-                      aria-hidden="true"
-                    />
-                  </span>
-                </td>
-              </tr>
-            )}
-            {shown.map((r, i) => {
+            {rows.map((r, i) => {
               const period = { year, quarter: r.quarter };
               return (
                 <tr key={r.quarter} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
                   <td className={td}>
-                    <span className="font-semibold">{r.quarter}T</span>{" "}
-                    <span className="text-sm text-muted-foreground">{periodRange(period)}</span>
+                    <span className="font-semibold">{r.quarter}T</span>
                   </td>
                   <td className={cn(td, "text-right")}>
                     <Link to={modelPath(VAT_PATH, period)} className={cn(linkClass, "justify-end")}>
@@ -483,10 +427,7 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
                 className="flex min-h-14 w-full cursor-pointer items-center gap-3 border-0 bg-transparent px-4 py-2.5 text-left text-foreground transition-opacity duration-150 active:opacity-60"
               >
                 <span className="flex flex-1 flex-col">
-                  <span>
-                    <span className="font-semibold">{r.quarter}T</span>{" "}
-                    <span className="text-sm text-muted-foreground">{periodRange({ year, quarter: r.quarter })}</span>
-                  </span>
+                  <span className="font-semibold">{r.quarter}T</span>
                   <span className="text-sm text-muted-foreground">
                     {FILING_STATUS[filingStatus(year, r.quarter, today)].label}
                   </span>
@@ -543,10 +484,8 @@ const INFORMATIVE_DETAIL = <span className="text-sm text-muted-foreground">Infor
 /** Every form once, by how often it's filed. Payment amounts live in Trimestres; here each form is a way in. */
 function ModelsSection({ year, today }: { year: number; today: Date }) {
   const inUse = useFormsInUse()(year);
-  const { income } = useYearReturns(year);
   const quarter = quarterOf(year, today);
   const annual = { year, quarter: null };
-  const paidOnAccount = cents(income.annual.boxes["0604"] ?? 0);
 
   const quarterly: ModelRow[] = [
     { code: "303", name: "IVA", to: modelPath(VAT_PATH, quarter), applies: true },
@@ -579,12 +518,6 @@ function ModelsSection({ year, today }: { year: number; today: Date }) {
       name: "Renta",
       to: modelPath(INCOME_TAX_PATH, annual),
       applies: inUse.incomeTax,
-      detail: (
-        <span className="flex flex-col items-end">
-          <span className="amount">{formatEUR(paidOnAccount)}</span>
-          <span className="text-2xs text-muted-foreground">pagado a cuenta</span>
-        </span>
-      ),
     },
     {
       code: "190",

@@ -40,7 +40,7 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
       <div className="flex flex-col gap-1.5 px-3.5 pt-3 pb-3.5 lg:gap-2 lg:px-4 lg:pt-4 lg:pb-4">
         <AnimatedAmount
           value={kpi.value}
-          className="amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium"
+          className="amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium @[52rem]:text-[1.625rem] @[64rem]:text-[2rem]"
         />
         {changeText && t ? (
           <span className="text-xs text-muted-foreground lg:text-sm">
@@ -118,7 +118,7 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
   return (
     <section
       aria-label="Resumen del periodo"
-      className={cn("grid grid-cols-2 gap-2.5 lg:gap-3 @[60rem]:grid-cols-4", className)}
+      className={cn("grid grid-cols-2 gap-2.5 lg:gap-3 @[52rem]:grid-cols-4", className)}
     >
       {kpis.map((kpi, i) => (
         <KpiCard key={kpi.label} kpi={kpi} compareLabel={compareLabel} index={i} />

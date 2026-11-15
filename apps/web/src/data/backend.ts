@@ -11,7 +11,7 @@ import type {
   NewApiKey,
   OrganizationMember,
   ExtractionUsage,
-  HelpChatMessage,
+  HelpChatRequest,
   PurchaseExtraction,
 } from "@cuentalibre/contracts";
 import type { Command } from "./commands";
@@ -66,7 +66,7 @@ export interface Backend {
    * Asks the help chat the last of `messages`, with the conversation before it, and passes
    * each piece of the answer to `onText` as it is written. Resolves when the answer ends.
    */
-  helpChat?(messages: HelpChatMessage[], onText: (text: string) => void, signal?: AbortSignal): Promise<void>;
+  helpChat?(request: HelpChatRequest, onText: (text: string) => void, signal?: AbortSignal): Promise<void>;
   /** The people in the organization. Without a server, the sample users stand in. */
   members?(): Promise<OrganizationMember[]>;
 }

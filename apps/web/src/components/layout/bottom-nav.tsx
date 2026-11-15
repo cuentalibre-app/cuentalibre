@@ -1,24 +1,9 @@
 import { useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { Layers, LayoutGrid, Menu, Percent, ReceiptText, type LucideIcon } from "lucide-react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { CreateMenu } from "./create-menu";
 import { MoreSheet } from "./more-sheet";
-import { phoneShortcuts, tabPaths } from "./nav";
-
-type Slot =
-  | { kind: "link"; label: string; to: string; icon: LucideIcon; tour: string }
-  | { kind: "create"; label: string; icon: LucideIcon; tour: string }
-  | { kind: "more"; label: string; icon: LucideIcon; tour: string };
-
-/** Left to right, as drawn: the lens slides over these slots. */
-const slots: Slot[] = [
-  { kind: "link", label: "Inicio", to: "/", icon: LayoutGrid, tour: "/" },
-  { kind: "link", label: "Ventas", to: "/ventas", icon: ReceiptText, tour: "/ventas" },
-  { kind: "create", label: "Accesos rápidos", icon: Layers, tour: "/compras" },
-  { kind: "link", label: "Impuestos", to: "/impuestos", icon: Percent, tour: "/impuestos" },
-  { kind: "more", label: "Más", icon: Menu, tour: "/mas" },
-];
+import { phoneShortcuts, phoneTabs as slots, tabPaths } from "./nav";
 
 const MORE = slots.findIndex((s) => s.kind === "more");
 /** A finger has to travel this far before a press becomes a drag. */

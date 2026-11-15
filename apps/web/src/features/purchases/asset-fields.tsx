@@ -106,13 +106,13 @@ export function AssetSection({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
         <Field
           label="Tipo de bien"
           required
           error={!draft.category ? error : undefined}
           help="Decide los coeficientes de amortización que permite la tabla simplificada de estimación directa."
-          className="sm:col-span-2 xl:col-span-3"
+          className="sm:col-span-2 @5xl:col-span-3"
         >
           {(p) => (
             <div className="flex flex-wrap items-center gap-3">

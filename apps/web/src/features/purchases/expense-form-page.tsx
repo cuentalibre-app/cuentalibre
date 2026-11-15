@@ -518,7 +518,7 @@ function ExpenseForm({
               </div>
             )}
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
               <Field
                 label="Fecha"
                 required
@@ -529,7 +529,7 @@ function ExpenseForm({
                 {(p) => <Input {...p} type="date" value={form.date} onChange={(e) => changeDate(e.target.value)} />}
               </Field>
 
-              <Field label="Concepto" required error={errors.concept} className="xl:col-span-2">
+              <Field label="Concepto" required error={errors.concept} className="@5xl:col-span-2">
                 {(p) => (
                   <Input
                     {...p}
@@ -601,7 +601,7 @@ function ExpenseForm({
           </Section>
 
           <Section title="Proveedor" index={2}>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
               <Field
                 label="Pagado a"
                 warning={form.payee === OTHER_PAYEE ? undefined : flags.payee}

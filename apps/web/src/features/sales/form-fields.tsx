@@ -290,7 +290,7 @@ export function LocaleFields({
     : [{ value: CLIENT_DEFAULT, label: defaultLabels.format }];
   const sample = formatSample(language, numberFormat, new Date());
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
       <div className="flex flex-col gap-4">
         <Field label="Idioma">
           {(p) => (

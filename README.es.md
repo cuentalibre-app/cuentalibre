@@ -125,7 +125,7 @@ Puedes usarlo de dos formas:
 ### 1. Instala
 
 ```sh
-git clone https://github.com/jesuspb2/cuentalibre.git
+git clone https://github.com/cuentalibre-app/cuentalibre.git
 cd cuentalibre
 pnpm install
 ```

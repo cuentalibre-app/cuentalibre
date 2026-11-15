@@ -6,7 +6,7 @@ Thanks for helping. This guide explains how to report a problem and how to propo
 
 ## Ways to help
 
-- **Report a bug.** Open an [issue](https://github.com/jesuspb2/cuentalibre/issues) with what you did, what you expected and what happened. Screenshots help, but remove any real tax ID, name or amount first.
+- **Report a bug.** Open an [issue](https://github.com/cuentalibre-app/cuentalibre/issues) with what you did, what you expected and what happened. Screenshots help, but remove any real tax ID, name or amount first.
 - **Fix a tax rule.** If a calculation, a deadline or a form box is wrong, say which one and link the source (BOE, AEAT instructions for the form, the law and article). Rules without a source are hard to review.
 - **Suggest a feature.** Open an issue first and describe the problem it solves for an autónomo; it saves building something that won't fit.
 - **Pick up an issue.** Those labelled `good first issue` are a good start; comment on one before you begin so two people don't work on it at once.
@@ -14,7 +14,7 @@ Thanks for helping. This guide explains how to report a problem and how to propo
 
 ## Getting set up
 
-Follow [Running it locally](README.md#running-it-locally) in the README: Node 22, pnpm 12 and Docker for the database. `pnpm dev` starts the app, the API and the site.
+Follow [Running it locally](README.md#running-it-locally) in the README: Node 26, pnpm 12 and Docker for the database. `pnpm dev` starts the app, the API and the site.
 
 ## Making a change
 
@@ -34,7 +34,12 @@ pnpm build
 pnpm format      # Prettier
 ```
 
-CI runs `typecheck`, `test` and `build`, and fails if the database migrations don't match the schema.
+CI also fails when a generated file is out of date. Before you open a pull request:
+
+- If you changed anything a user sees in the app (a title, button, label or menu), run `pnpm --filter @cuentalibre/web screens` and commit the regenerated `apps/site/src/content/docs/guia/pantallas.md`. The help chat answers from it.
+- If you changed the navigation, run `pnpm --filter @cuentalibre/web test -u` to regenerate `guia/mapa.md`.
+- If you changed the database schema, commit the migration (see [Database](#database)).
+- If you added or upgraded a dependency, run `pnpm audit --prod --audit-level high`.
 
 ## Conventions
 

@@ -6,7 +6,7 @@ Gracias por echar una mano. Esta guía explica cómo avisar de un problema y có
 
 ## Cómo ayudar
 
-- **Avisa de un error.** Abre un [issue](https://github.com/jesuspb2/cuentalibre/issues) con lo que hiciste, lo que esperabas y lo que pasó. Las capturas ayudan, pero quita antes cualquier NIF, nombre o importe real.
+- **Avisa de un error.** Abre un [issue](https://github.com/cuentalibre-app/cuentalibre/issues) con lo que hiciste, lo que esperabas y lo que pasó. Las capturas ayudan, pero quita antes cualquier NIF, nombre o importe real.
 - **Corrige una regla fiscal.** Si un cálculo, un plazo o una casilla de un modelo está mal, di cuál y enlaza la fuente (el BOE, las instrucciones del modelo de la AEAT, la ley y el artículo). Una regla sin fuente es difícil de revisar.
 - **Propón una funcionalidad.** Abre antes un issue y cuenta qué problema le resuelve a un autónomo: así no construyes algo que luego no encaja.
 - **Coge un issue.** Los que tienen la etiqueta `good first issue` son buenos para empezar. Comenta en él antes de ponerte, para que no lo hagan dos personas a la vez.
@@ -14,7 +14,7 @@ Gracias por echar una mano. Esta guía explica cómo avisar de un problema y có
 
 ## Prepara tu entorno
 
-Sigue [Ponerlo en marcha en local](README.es.md#ponerlo-en-marcha-en-local) en el README: Node 22, pnpm 12 y Docker para la base de datos. `pnpm dev` arranca la aplicación, la API y la web pública.
+Sigue [Ponerlo en marcha en local](README.es.md#ponerlo-en-marcha-en-local) en el README: Node 26, pnpm 12 y Docker para la base de datos. `pnpm dev` arranca la aplicación, la API y la web pública.
 
 ## Cómo proponer un cambio
 
@@ -34,7 +34,12 @@ pnpm build
 pnpm format      # Prettier
 ```
 
-La integración continua ejecuta `typecheck`, `test` y `build`, y falla si las migraciones de la base de datos no coinciden con el esquema.
+La integración continua también falla cuando un fichero generado no está al día. Antes de abrir una pull request:
+
+- Si cambiaste algo que se ve en la aplicación (un título, botón, etiqueta o menú), ejecuta `pnpm --filter @cuentalibre/web screens` y haz commit del `apps/site/src/content/docs/guia/pantallas.md` regenerado. El chat de ayuda responde a partir de él.
+- Si cambiaste la navegación, ejecuta `pnpm --filter @cuentalibre/web test -u` para regenerar `guia/mapa.md`.
+- Si cambiaste el esquema de la base de datos, haz commit de la migración (mira [Base de datos](#base-de-datos)).
+- Si añadiste o actualizaste una dependencia, ejecuta `pnpm audit --prod --audit-level high`.
 
 ## Convenciones
 
