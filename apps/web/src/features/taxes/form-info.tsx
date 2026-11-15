@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { BookOpen, ChevronDown, Globe } from "lucide-react";
 import { table } from "@cuentalibre/ui/lib/table";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { AEAT_LINKS, type FormCode } from "./taxes-model";
 
 /* What each form is for, who files it and when, shown before computing it. */
@@ -328,7 +329,7 @@ export function FormFactsList({ form }: { form: FormCode }) {
                 <tbody>
                   {facts.deadlines.map(([quarter, deadline]) => (
                     <tr key={quarter} className={table.row}>
-                      <td className={table.td}>{quarter}</td>
+                      <td className={cn(table.td, "lg:whitespace-nowrap")}>{quarter}</td>
                       <td className={table.td}>{deadline}</td>
                     </tr>
                   ))}
