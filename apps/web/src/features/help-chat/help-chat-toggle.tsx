@@ -6,8 +6,8 @@ import { HELP_CHAT_PANEL_ID } from "./help-chat-panel";
 import { toggleHelpChat, useHelpChat, useHelpChatAvailable } from "./help-chat-store";
 
 /**
- * Opens and closes the assistant docked on the right, from the top right of every page header,
- * next to where the panel appears. Lit while the panel is open; desktop only.
+ * Opens the assistant from the top right of every page header: docked on the right on desktop,
+ * lit while it is open; as a sheet over the page on phones.
  */
 export function HelpChatToggle({ className }: { className?: string }) {
   const available = useHelpChatAvailable();
@@ -25,7 +25,7 @@ export function HelpChatToggle({ className }: { className?: string }) {
             aria-expanded={open}
             aria-controls={HELP_CHAT_PANEL_ID}
             onClick={toggleHelpChat}
-            className={cn("hidden lg:inline-flex", open && "border-input bg-muted", className)}
+            className={cn(open && "lg:border-input lg:bg-muted", className)}
           >
             <BotMessageSquare strokeWidth={1.8} aria-hidden="true" />
           </Button>

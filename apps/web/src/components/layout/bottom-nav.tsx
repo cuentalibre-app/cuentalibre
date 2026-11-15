@@ -49,7 +49,7 @@ interface Drag {
  * current section; dragging a finger along the bar carries the lens with it and lifting the
  * finger opens whatever is under it.
  */
-export function BottomNav({ className, helpChat = false }: { className?: string; helpChat?: boolean }) {
+export function BottomNav({ className }: { className?: string }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -229,7 +229,7 @@ export function BottomNav({ className, helpChat = false }: { className?: string;
             );
           }
           return (
-            <MoreSheet key={slot.tour} open={moreOpen} onOpenChange={setMoreOpen} helpChat={helpChat}>
+            <MoreSheet key={slot.tour} open={moreOpen} onOpenChange={setMoreOpen}>
               <button type="button" aria-label={slot.label} data-tour={slot.tour} className={tabClass}>
                 <Icon {...iconProps} />
               </button>

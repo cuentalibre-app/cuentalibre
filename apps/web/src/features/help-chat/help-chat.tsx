@@ -59,7 +59,7 @@ function Welcome() {
   return (
     <div className="flex flex-1 flex-col justify-end gap-5 pb-4">
       <div className="flex flex-col gap-2">
-        <LogoMark className="h-7 self-start text-brand-mark" />
+        <LogoMark className="h-7 self-start text-foreground" />
         <h2 className="m-0 text-lg font-semibold tracking-tight">¿En qué te ayudo?</h2>
         <p className="m-0 text-sm text-muted-foreground">Pregúntame cómo hacer cualquier cosa en cuentalibre.</p>
       </div>
