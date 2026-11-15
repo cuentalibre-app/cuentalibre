@@ -833,7 +833,7 @@ export function QuarterCards({
             className="flex flex-col gap-1 surface p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
           >
             <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-              {form} · T{quarter}
+              {form} · {quarter}T
               <Badge tone={status.tone}>{status.label}</Badge>
             </span>
             <span className={cn("amount text-lg font-semibold", v === 0 && "text-muted-foreground")}>

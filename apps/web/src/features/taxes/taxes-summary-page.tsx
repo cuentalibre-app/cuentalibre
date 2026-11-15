@@ -75,16 +75,16 @@ function useYearReturns(year: number) {
 const NEXT_FORMS: Partial<
   Record<CalendarForm, { name: (q: Quarter | null) => string; path: string; applies: true | keyof FormsInUse }>
 > = {
-  "303": { name: (q) => `IVA del ${q}.º trimestre`, path: VAT_PATH, applies: true },
-  "130": { name: (q) => `IRPF del ${q}.º trimestre`, path: INCOME_TAX_PATH, applies: true },
+  "303": { name: (q) => `IVA ${q}T`, path: VAT_PATH, applies: true },
+  "130": { name: (q) => `IRPF ${q}T`, path: INCOME_TAX_PATH, applies: true },
   "390": { name: () => "Resumen anual de IVA", path: VAT_PATH, applies: true },
   "100": { name: () => "Renta, actividad económica", path: INCOME_TAX_PATH, applies: true },
-  "111": { name: (q) => `Retenciones del ${q}.º trimestre`, path: WITHHOLDINGS_PATH, applies: "withholdings" },
+  "111": { name: (q) => `Retenciones ${q}T`, path: WITHHOLDINGS_PATH, applies: "withholdings" },
   "190": { name: () => "Resumen anual de retenciones", path: WITHHOLDINGS_PATH, applies: "withholdings" },
-  "115": { name: (q) => `Alquileres del ${q}.º trimestre`, path: RENTALS_PATH, applies: "rentals" },
+  "115": { name: (q) => `Alquileres ${q}T`, path: RENTALS_PATH, applies: "rentals" },
   "180": { name: () => "Resumen anual de alquileres", path: RENTALS_PATH, applies: "rentals" },
   "347": { name: () => "Operaciones con terceras personas", path: THIRD_PARTIES_PATH, applies: "thirdParties" },
-  "349": { name: (q) => `Intracomunitarias del ${q}.º trimestre`, path: INTRA_EU_PATH, applies: "intraEu" },
+  "349": { name: (q) => `Intracomunitarias ${q}T`, path: INTRA_EU_PATH, applies: "intraEu" },
 };
 
 /** Forms that only inform: they carry nothing to pay. */
@@ -234,7 +234,7 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
   const firstClosed = closedRows[0]?.quarter ?? 1;
   const lastClosed = closedRows.at(-1)?.quarter ?? 1;
   const closedRange = `${periodRange({ year, quarter: firstClosed }).split(" – ")[0]} – ${periodRange({ year, quarter: lastClosed }).split(" – ")[1]}`;
-  const closedName = firstClosed === lastClosed ? `T${firstClosed}` : `T${firstClosed} – T${lastClosed}`;
+  const closedName = firstClosed === lastClosed ? `${firstClosed}T` : `${firstClosed}T – ${lastClosed}T`;
   const toggleClosed = () => setShowClosed((v) => !v);
   const chevron = (
     <ChevronDown
@@ -324,7 +324,7 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
             {shown.map((r, i) => (
               <tr key={r.quarter} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>
                 <td className={td}>
-                  <span className="font-semibold">T{r.quarter}</span>{" "}
+                  <span className="font-semibold">{r.quarter}T</span>{" "}
                   <span className="text-sm text-muted-foreground">{periodRange({ year, quarter: r.quarter })}</span>
                 </td>
                 <td className={cn(td, "text-right")}>
@@ -365,20 +365,28 @@ function QuartersTable({ year, today, yearSelect }: { year: number; today: Date;
       <ul className="m-0 flex list-none flex-col gap-2 p-0 lg:hidden">
         {canFold && (
           <li>
-            <Button variant="secondary" aria-expanded={showClosed} onClick={toggleClosed}>
-              <ChevronDown
-                className={cn("transition-transform duration-150", showClosed && "rotate-180")}
-                aria-hidden="true"
-              />
-              {showClosed ? "Ocultar" : "Mostrar"} trimestres cerrados ({closedCount})
-            </Button>
+            {/* The closed quarters folded into one quiet row, like the desktop table's */}
+            <button
+              type="button"
+              aria-expanded={showClosed}
+              aria-label={`${showClosed ? "Ocultar" : "Mostrar"} ${closedLabel}`}
+              onClick={toggleClosed}
+              className="flex min-h-12 w-full cursor-pointer items-center gap-3 surface px-4 py-2 text-left text-foreground transition-opacity duration-150 active:opacity-60"
+            >
+              <span className="flex-1">
+                <span className="font-semibold">{closedName}</span>{" "}
+                <span className="text-sm text-muted-foreground">{closedRange}</span>
+              </span>
+              <span className="text-sm text-muted-foreground">{closedCount === 1 ? "Cerrado" : "Cerrados"}</span>
+              {chevron}
+            </button>
           </li>
         )}
         {shown.map((r) => (
           <li key={r.quarter} className="flex flex-col gap-3 surface p-4">
             <div className="flex items-center justify-between">
               <span>
-                <span className="font-semibold">T{r.quarter}</span>{" "}
+                <span className="font-semibold">{r.quarter}T</span>{" "}
                 <span className="text-sm text-muted-foreground">{periodRange({ year, quarter: r.quarter })}</span>
               </span>
               <QuarterStatus year={year} quarter={r.quarter} today={today} />
@@ -503,7 +511,6 @@ function OtherForms({ year }: { year: number }) {
     return { withholdings, rentals, third, intra };
   }, [books, year]);
   const quarter = quarterOf(year, new Date());
-  const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
 
   const forms = [
     {
@@ -511,7 +518,6 @@ function OtherForms({ year }: { year: number }) {
       title: "Retenciones de facturas recibidas",
       path: WITHHOLDINGS_PATH,
       figure: formatEUR(figures.withholdings.withholding),
-      caption: `retenido a ${count(figures.withholdings.perceptors.length, "perceptor", "perceptores")}`,
       applies: inUse.withholdings,
     },
     {
@@ -519,15 +525,13 @@ function OtherForms({ year }: { year: number }) {
       title: "Retenciones de alquileres",
       path: RENTALS_PATH,
       figure: formatEUR(figures.rentals.withholding),
-      caption: `retenido a ${count(figures.rentals.landlords.length, "arrendador", "arrendadores")}`,
       applies: inUse.rentals,
     },
     {
       codes: [null, "347"],
       title: "Operaciones con terceras personas",
       path: THIRD_PARTIES_PATH,
-      figure: count(figures.third.declared.length, "declarado", "declarados"),
-      caption: "con más de 3.005,06 € en el año",
+      figure: `${figures.third.declared.length} a declarar`,
       applies: inUse.thirdParties,
     },
     {
@@ -535,7 +539,6 @@ function OtherForms({ year }: { year: number }) {
       title: "Operaciones intracomunitarias",
       path: INTRA_EU_PATH,
       figure: formatEUR(figures.intra.total),
-      caption: `de base con ${count(figures.intra.operators, "operador", "operadores")}`,
       applies: inUse.intraEu,
     },
   ].sort((a, b) => Number(b.applies) - Number(a.applies));
@@ -551,43 +554,44 @@ function OtherForms({ year }: { year: number }) {
     >
       <SectionTitle id="other-forms-title">Retenciones e informativas</SectionTitle>
       {shownForms.length > 0 && (
-        <ul className="m-0 list-none overflow-hidden surface p-0">
+        <ul className="m-0 flex list-none flex-col gap-2 p-0 sm:gap-0 sm:overflow-hidden sm:surface">
           {shownForms.map((f) => {
             const [quarterly, yearly] = f.codes;
             return (
               <li
                 key={f.title}
-                className="flex flex-col gap-3 border-b border-divider px-5 py-3.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-6"
+                // A card each on phones, like the quarters; rows of one card on wider screens
+                className="flex flex-col gap-3 border-divider px-5 py-3.5 max-sm:overflow-hidden max-sm:surface sm:flex-row sm:items-center sm:gap-6 sm:border-b sm:last:border-b-0"
               >
-                <div className="flex flex-1 flex-wrap items-center gap-x-2.5 gap-y-0.5">
+                {/* Only the forms that apply show by default, so a row needs no badge to say so */}
+                <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
                   <span className={cn("font-medium", !f.applies && "text-muted-foreground")}>{f.title}</span>
-                  {!f.applies && (
-                    <span className="w-full text-sm text-muted-foreground sm:hidden">No te afecta en {year}</span>
-                  )}
-                  {f.applies && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span tabIndex={0}>
-                          <Badge tone="warning">Te afecta</Badge>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-60">
-                        Tienes documentos de {year} que lo requieren.
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-                <div className={cn("flex flex-col sm:w-52 sm:items-end", !f.applies && "hidden sm:flex")}>
                   {f.applies ? (
-                    <>
-                      <span className="amount font-semibold">{f.figure}</span>
-                      <span className="text-xs text-muted-foreground">{f.caption}</span>
-                    </>
+                    <span className="amount shrink-0 font-semibold">{f.figure}</span>
                   ) : (
-                    <span className="text-sm text-muted-foreground">No te afecta en {year}</span>
+                    <span className="shrink-0 text-sm text-muted-foreground">No te afecta</span>
                   )}
                 </div>
-                <div className="flex gap-1.5 sm:w-64 sm:justify-end">
+                {/* Phones: one tappable row per form, like the quarter cards; wider screens: buttons */}
+                <div className="-mx-5 -mb-3.5 border-t border-divider sm:hidden">
+                  {[
+                    quarterly && { code: quarterly, label: "Trimestral", to: modelPath(f.path, quarter) },
+                    yearly && { code: yearly, label: "Anual", to: modelPath(f.path, { year, quarter: null }) },
+                  ]
+                    .filter((m) => !!m)
+                    .map((m) => (
+                      <Link
+                        key={m.code}
+                        to={m.to}
+                        className="flex min-h-12 items-center gap-3 border-divider px-5 py-2 text-foreground no-underline transition-opacity duration-150 not-first:border-t active:opacity-60"
+                      >
+                        <FormCode code={m.code} />
+                        <span className={cn("flex-1", !f.applies && "text-muted-foreground")}>{m.label}</span>
+                        <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
+                      </Link>
+                    ))}
+                </div>
+                <div className="hidden gap-1.5 sm:flex sm:w-64 sm:justify-end">
                   {quarterly && (
                     <Link
                       to={modelPath(f.path, quarter)}
@@ -641,7 +645,11 @@ export function TaxesSummaryPage() {
         setPeriod(period.quarter === null ? { year: Number(y), quarter: null } : quarterOf(Number(y), today))
       }
     >
-      <SelectTrigger aria-label={`Ejercicio ${year}`} className="min-w-36">
+      <SelectTrigger
+        aria-label={`Ejercicio ${year}`}
+        // A quiet control at the end of the title on phones; a full field on desktop
+        className="min-w-36 max-lg:ml-auto max-lg:min-w-0 max-lg:border-transparent max-lg:bg-transparent max-lg:px-1 max-lg:shadow-none"
+      >
         <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
         <span className="flex-1 text-center">
           <SelectValue />
@@ -668,9 +676,9 @@ export function TaxesSummaryPage() {
               Calculados con tus facturas y gastos. Revisa cada modelo y copia sus casillas en la sede de la AEAT.
             </HelpTip>
           }
-          actionsClassName="max-lg:w-full"
           actions={
-            <nav aria-label="Atajos de impuestos" className="flex flex-1 gap-2.5 *:max-lg:flex-1">
+            // On phones these shortcuts live under Impuestos in the "Más" sheet
+            <nav aria-label="Atajos de impuestos" className="flex gap-2.5 max-lg:hidden">
               <Link to={CALENDAR_PATH} className={buttonVariants({ variant: "secondary" })}>
                 <CalendarDays strokeWidth={1.8} aria-hidden="true" />
                 Calendario fiscal
@@ -682,9 +690,7 @@ export function TaxesSummaryPage() {
                 className={buttonVariants({ variant: "secondary" })}
               >
                 <Settings strokeWidth={1.8} aria-hidden="true" />
-                <span>
-                  Configurar<span className="max-sm:hidden"> impuestos</span>
-                </span>
+                Configurar impuestos
               </SettingsLink>
             </nav>
           }

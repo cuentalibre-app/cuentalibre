@@ -45,10 +45,10 @@ export function periodCode(period: Period): string {
   return period.quarter === null ? String(period.year) : `${period.year}-${period.quarter}T`;
 }
 
-/** "T3" or "T4 2025" when it's not the reference year; "2025" for a whole year. */
+/** "3T" or "4T 2025" when it's not the reference year; "2025" for a whole year. */
 export function periodShortLabel(period: Period, referenceYear: number): string {
   if (period.quarter === null) return String(period.year);
-  return period.year === referenceYear ? `T${period.quarter}` : `T${period.quarter} ${period.year}`;
+  return period.year === referenceYear ? `${period.quarter}T` : `${period.quarter}T ${period.year}`;
 }
 
 export function periodRange(period: Period): string {
@@ -97,9 +97,9 @@ export function formatPercent(value: number): string {
 export function deadlineTitle(deadline: Deadline): string {
   switch (deadline.kind) {
     case "vat-303":
-      return `Modelo 303 · IVA T${deadline.quarter}`;
+      return `Modelo 303 · IVA ${deadline.quarter}T`;
     case "irpf-130":
-      return `Modelo 130 · IRPF T${deadline.quarter}`;
+      return `Modelo 130 · IRPF ${deadline.quarter}T`;
     case "vat-390":
       return "Modelo 390 · Resumen IVA";
     case "social-security":
