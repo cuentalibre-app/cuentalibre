@@ -11,7 +11,7 @@ import {
 } from "@cuentalibre/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { accountName, incomeTaxMethodLabel, initials } from "@/features/settings/settings-model";
+import { accountName, initials, profitTaxLabel } from "@/features/settings/settings-model";
 import { useSettings } from "@/features/settings/settings-store";
 import { LogoMark } from "@/components/logo";
 import { CreateMenu } from "./create-menu";
@@ -332,7 +332,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
                 <div className={cn("flex min-w-0 flex-col gap-0.5 whitespace-nowrap", labelClass(collapsed))}>
                   <span className="truncate font-semibold">{name || "Tu cuenta"}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {incomeTaxMethodLabel(tax.incomeTaxMethod)}
+                    {profitTaxLabel(profile.kind, tax.incomeTaxMethod)}
                   </span>
                 </div>
               </button>

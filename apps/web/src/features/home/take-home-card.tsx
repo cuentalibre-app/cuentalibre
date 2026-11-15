@@ -82,7 +82,10 @@ function TaxesHint({ data }: { data: HomeData }) {
   );
 }
 
-/** What's left of the period's income after expenses and an estimate of its yearly income tax. */
+/**
+ * What's left of the period's income after expenses and an estimate of its yearly income tax. A company's
+ * profit is shown before tax: cuentalibre doesn't estimate corporate tax.
+ */
 export function TakeHomeCard({ data, className }: { data: HomeData; className?: string }) {
   const { income } = data.totals;
   // Net VAT (the 303), the same figure as in the tax reserve card
@@ -91,8 +94,8 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
 
   const parts = [
-    { label: "Neto", value: takeHome, color: "bg-chart-income" },
-    {
+    { label: data.estimatesIncomeTax ? "Neto" : "Beneficio", value: takeHome, color: "bg-chart-income" },
+    data.estimatesIncomeTax && {
       label: "Impuestos estimados",
       hint: <TaxesHint data={data} />,
       // The self-employed fees not booked yet go here; the booked ones are already among the expenses
@@ -100,10 +103,11 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
       color: "bg-chart-tax",
     },
     { label: "Gastos", value: data.totals.expenses, color: "bg-chart-expense" },
-  ];
+  ].filter((p) => !!p);
+  const title = data.estimatesIncomeTax ? "Beneficio neto estimado" : "Beneficio antes de impuestos";
 
   return (
-    <Section id="take-home-title" icon={Wallet} title="Beneficio neto estimado" className={className}>
+    <Section id="take-home-title" icon={Wallet} title={title} className={className}>
 
       <div className="flex flex-col gap-1.5">
         <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium" />
