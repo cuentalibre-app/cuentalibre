@@ -416,7 +416,7 @@ export function useAeatFile(
     build: () => new Blob([aeatBytes(build(filer))], { type: "text/plain;charset=iso-8859-1" }),
     missing:
       !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
-        ? "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
+        ? "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos de la empresa."
         : undefined,
   };
 }
