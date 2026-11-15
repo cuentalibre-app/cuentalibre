@@ -52,20 +52,25 @@ export function filingStatus(year: number, quarter: Quarter | null, today: Date)
   return from <= filingDeadline(year, quarter) ? "open" : "closed";
 }
 
+/** Who the deadlines are for: only self-employed workers pay income tax (forms 130 and 100). */
+export interface DeadlineOptions {
+  incomeTax: boolean;
+}
+
 /**
- * Filing deadlines for a self-employed worker under direct estimation, for
- * the obligations of one fiscal year (some fall in January of the next one).
+ * Filing deadlines for the obligations of one fiscal year (some fall in January of the next one):
+ * a self-employed worker under direct estimation also files the 130, a company doesn't.
  *
  * Simplifications: weekends shift a deadline to Monday, but national and
  * regional holidays are not taken into account yet.
  */
-export function deadlinesForYear(year: number): Deadline[] {
+export function deadlinesForYear(year: number, { incomeTax }: DeadlineOptions): Deadline[] {
   const deadlines: Deadline[] = [];
 
   for (const quarter of [1, 2, 3, 4] as const) {
     const date = filingDeadline(year, quarter);
     deadlines.push({ kind: "vat-303", date, year, quarter, month: null });
-    deadlines.push({ kind: "irpf-130", date, year, quarter, month: null });
+    if (incomeTax) deadlines.push({ kind: "irpf-130", date, year, quarter, month: null });
   }
 
   deadlines.push({ kind: "vat-390", date: filingDeadline(year, null), year, quarter: null, month: null });
@@ -89,10 +94,11 @@ function startOfDay(date: Date): Date {
 }
 
 /** Deadlines due today or later, soonest first. */
-export function upcomingDeadlines(today: Date, limit: number): Deadline[] {
+export function upcomingDeadlines(today: Date, limit: number, options: DeadlineOptions): Deadline[] {
   const from = startOfDay(today);
   const year = from.getFullYear();
-  return [...deadlinesForYear(year - 1), ...deadlinesForYear(year), ...deadlinesForYear(year + 1)]
+  return [year - 1, year, year + 1]
+    .flatMap((y) => deadlinesForYear(y, options))
     .filter((d) => d.date >= from)
     .sort((a, b) => a.date.getTime() - b.date.getTime() || kindOrder(a.kind) - kindOrder(b.kind))
     .slice(0, limit);

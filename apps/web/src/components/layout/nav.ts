@@ -1,3 +1,4 @@
+import type { BusinessKind } from "@cuentalibre/contracts";
 import {
   Armchair,
   Building,
@@ -28,6 +29,8 @@ export interface NavLeaf {
   separator?: boolean;
   /** Spreadsheet tools that need a computer; left out of the phone's "Más" sheet. */
   desktopOnly?: boolean;
+  /** Only for self-employed workers: left out for a company. */
+  selfEmployedOnly?: boolean;
 }
 
 export interface NavItem extends NavLeaf {
@@ -76,7 +79,7 @@ export const mainNav: NavItem[] = [
       { label: "Resumen", to: "/impuestos" },
       { label: "Calendario fiscal", to: "/impuestos/calendario" },
       { label: "IVA (303, 390)", to: "/impuestos/iva" },
-      { label: "IRPF (130, 100)", to: "/impuestos/irpf" },
+      { label: "IRPF (130, 100)", to: "/impuestos/irpf", selfEmployedOnly: true },
       { label: "Retenciones (111, 190)", to: "/impuestos/retenciones" },
       { label: "Alquileres (115, 180)", to: "/impuestos/alquileres" },
       { label: "Terceras personas (347)", to: "/impuestos/terceras-personas" },
@@ -114,6 +117,14 @@ export const mainNav: NavItem[] = [
     ],
   },
 ];
+
+/** The main navigation for a kind of business. */
+export function mainNavFor(kind: BusinessKind): NavItem[] {
+  if (kind === "selfEmployed") return mainNav;
+  return mainNav.map((item) =>
+    item.children ? { ...item, children: item.children.filter((leaf) => !leaf.selfEmployedOnly) } : item,
+  );
+}
 
 export const secondaryNav: NavItem[] = [
   { label: "Cierre de trimestres", to: "/cierre-trimestre", icon: CalendarCheck },

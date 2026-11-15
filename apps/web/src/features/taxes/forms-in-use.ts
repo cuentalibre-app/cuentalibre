@@ -4,10 +4,13 @@ import { useExpenses } from "@/features/purchases/expenses-store";
 import { purchaseTotals } from "@/features/purchases/purchases-model";
 import { usePurchaseInvoices } from "@/features/purchases/purchases-store";
 import { useSalesDocuments } from "@/features/sales/sales-store";
+import { useSettings } from "@/features/settings/settings-store";
 import { usePartyBooks } from "./party-operations";
 
-/** Which of the forms cuentalibre doesn't prepare yet the books of a year call for. */
+/** Which of the forms that not every business files apply to a year. */
 export interface FormsInUse {
+  /** A self-employed worker: forms 130 and 100. A company pays corporate tax instead. */
+  incomeTax: boolean;
   /** Professionals' invoices with withholding: forms 111 and 190. */
   withholdings: boolean;
   /** Rented premises: forms 115 and 180. */
@@ -23,6 +26,7 @@ export function useFormsInUse(): (year: number) => FormsInUse {
   const purchases = usePurchaseInvoices();
   const expenses = useExpenses();
   const party = usePartyBooks();
+  const incomeTax = useSettings().profile.kind === "selfEmployed";
   return useMemo(() => {
     const cache = new Map<number, FormsInUse>();
     return (year: number) => {
@@ -31,6 +35,7 @@ export function useFormsInUse(): (year: number) => FormsInUse {
       const inYear = (date: string) => date.startsWith(String(year));
       const yearPurchases = purchases.filter((p) => inYear(p.bookedOn));
       const result = {
+        incomeTax,
         withholdings: yearPurchases.some((p) => !p.rental && purchaseTotals(p).withholding !== 0),
         rentals: yearPurchases.some((p) => p.rental) || expenses.some((e) => inYear(e.date) && e.rental),
         intraEu:
@@ -41,5 +46,5 @@ export function useFormsInUse(): (year: number) => FormsInUse {
       cache.set(year, result);
       return result;
     };
-  }, [documents, purchases, expenses, party]);
+  }, [documents, purchases, expenses, party, incomeTax]);
 }
