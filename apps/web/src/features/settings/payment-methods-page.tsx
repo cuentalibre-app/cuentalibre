@@ -8,7 +8,7 @@ import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { ActionsMenu, EmptyState, IconAction, type Action } from "@/features/sales/list-parts";
-import { METHOD_ICONS } from "./method-icons";
+import { MethodIcon } from "./method-icon";
 import { MethodDialog } from "./method-dialog";
 import { methodUsage } from "./method-usage";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
@@ -112,7 +112,6 @@ export function PaymentMethodsPage() {
           <>
             <ul className="m-0 flex list-none flex-col overflow-hidden surface p-0">
               {shown.map((m, i) => {
-                const Icon = METHOD_ICONS[m.type];
                 const number = m.number && displayNumber(m);
                 return (
                   <li
@@ -120,9 +119,7 @@ export function PaymentMethodsPage() {
                     className="flex animate-row-in items-center gap-3 border-t border-border px-4 py-3 first:border-t-0"
                     style={{ "--i": i } as CSSProperties}
                   >
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                      <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
-                    </span>
+                    <MethodIcon method={m} className="size-10" />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
                         <span className={cn("truncate font-semibold", !m.active && "text-muted-foreground")}>
