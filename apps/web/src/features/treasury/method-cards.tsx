@@ -3,7 +3,7 @@ import { Plus, Settings } from "lucide-react";
 import { cents, sumBy } from "@cuentalibre/core";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { METHOD_ICONS } from "@/features/settings/method-icons";
+import { MethodIcon } from "@/features/settings/method-icon";
 import { MethodDialog } from "@/features/settings/method-dialog";
 import { SettingsLink } from "@/features/settings/settings-parts";
 import {
@@ -39,7 +39,6 @@ export function MethodCards({
       </h2>
       <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2 @5xl:grid-cols-4">
         {active.map((m, i) => {
-          const Icon = METHOD_ICONS[m.type];
           const own = payments.filter((p) => p.paymentMethodId === m.id);
           const collected = sumBy(
             own.filter((p) => p.amount > 0),
@@ -64,9 +63,7 @@ export function MethodCards({
                 )}
               >
                 <span className="flex items-start gap-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                    <Icon className="size-[18px]" strokeWidth={1.8} aria-hidden="true" />
-                  </span>
+                  <MethodIcon method={m} className="size-9" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate font-semibold">{m.name}</span>
                     <span className="truncate text-xs text-muted-foreground">
