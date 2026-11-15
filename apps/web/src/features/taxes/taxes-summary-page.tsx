@@ -103,10 +103,30 @@ function NextFiling({ today }: { today: Date }) {
   const party = usePartyBooks();
   const inUse = useFormsInUse();
   const from = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  /*
+   * Withholding and intra-EU returns are only filed for a quarter that had operations: the AEAT asks
+   * for no blank 111, 115 or 349. Using them in another quarter of the year isn't enough.
+   */
+  const emptyQuarter = (form: CalendarForm, year: number, quarter: Quarter | null) => {
+    if (!quarter) return false;
+    if (form === "111") return model111(party.ops, year, quarter).boxes["30"] === 0;
+    if (form === "115") return model115(party.ops, year, quarter).boxes["05"] === 0;
+    if (form === "349") {
+      const months = [0, 1, 2].map((m) => (quarter - 1) * 3 + m);
+      const r = model349(party.ops, { year, months });
+      return r.operations.length === 0 && r.rectifications.length === 0;
+    }
+    return false;
+  };
   // The forms that apply to the books, due from today on: the soonest day's ones are next
   const upcoming = [...fiscalCalendar(today.getFullYear()), ...fiscalCalendar(today.getFullYear() + 1)].filter((e) => {
     const form = NEXT_FORMS[e.form];
-    return form && e.dueOn >= from && (form.applies === true || inUse(e.year)[form.applies]);
+    return (
+      form &&
+      e.dueOn >= from &&
+      (form.applies === true || inUse(e.year)[form.applies]) &&
+      !emptyQuarter(e.form, e.year, e.quarter)
+    );
   });
   const first = upcoming[0];
   if (!first) return null;
