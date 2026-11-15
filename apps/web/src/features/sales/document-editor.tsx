@@ -171,7 +171,7 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
               <span className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
                 Etiqueta nueva
                 <span
-                  className="tag-color min-w-0 truncate rounded-full px-2.5 leading-6 font-medium"
+                  className="min-w-0 truncate rounded-full tag-color px-2.5 leading-6 font-medium"
                   style={tagStyle(newColor)}
                 >
                   {draft.trim()}
@@ -225,10 +225,10 @@ export function TagsField({ tags, onChange }: { tags: string[]; onChange: (tags:
  */
 const lineGrid = (advanced: boolean) =>
   cn(
-    "grid grid-cols-2 gap-x-3 gap-y-2.5 wide:items-start wide:gap-y-0",
+    "grid grid-cols-2 gap-x-3 gap-y-2.5 @5xl:items-start @5xl:gap-y-0",
     advanced
-      ? "wide:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_6.5rem_5.5rem_6rem_4.5rem]"
-      : "wide:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_5.5rem_6rem_4.5rem]",
+      ? "@5xl:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_6.5rem_5.5rem_6rem_4.5rem]"
+      : "@5xl:grid-cols-[minmax(0,1fr)_6.5rem_8rem_5rem_5.5rem_6rem_4.5rem]",
   );
 
 interface LinesEditorProps {
@@ -278,12 +278,12 @@ export function LinesEditor({
     };
   };
   const head = "text-xs font-medium text-muted-foreground";
-  const label = "text-xs font-medium text-muted-foreground wide:sr-only";
+  const label = "text-xs font-medium text-muted-foreground @5xl:sr-only";
   const readOnlyBox =
     "flex h-10 items-center justify-end rounded-lg bg-muted px-3 text-sm text-muted-foreground amount";
   return (
     <div className="flex flex-col gap-3">
-      <div aria-hidden="true" className={cn(lineGrid(advanced), "hidden wide:grid")}>
+      <div aria-hidden="true" className={cn(lineGrid(advanced), "hidden @5xl:grid")}>
         <span className={head}>Concepto</span>
         <span className={cn(head, "text-right")}>Base</span>
         <span className={cn(head, "text-center")}>Cantidad</span>
@@ -293,7 +293,7 @@ export function LinesEditor({
         <span className={cn(head, "text-right")}>Cuota IVA</span>
         <span />
       </div>
-      <ul className="m-0 flex list-none flex-col gap-4 p-0 wide:gap-3">
+      <ul className="m-0 flex list-none flex-col gap-4 p-0 @5xl:gap-3">
         {lines.map((line, i) => {
           const value = parsed[i] ?? null;
           const n = i + 1;
@@ -303,12 +303,12 @@ export function LinesEditor({
               key={line.id}
               className={cn(
                 // Phones stack the lines, a divider between each
-                "flex animate-row-in flex-col gap-2.5 not-first:max-wide:border-t not-first:max-wide:border-divider not-first:max-wide:pt-4",
-                advanced && "wide:border-b wide:border-divider wide:pb-3",
+                "flex animate-row-in flex-col gap-2.5 not-first:@max-5xl:border-t not-first:@max-5xl:border-divider not-first:@max-5xl:pt-4",
+                advanced && "@5xl:border-b @5xl:border-divider @5xl:pb-3",
               )}
             >
               <div className={lineGrid(advanced)}>
-                <div className="col-span-2 flex flex-col gap-1 wide:col-span-1">
+                <div className="col-span-2 flex flex-col gap-1 @5xl:col-span-1">
                   <span className={label}>
                     Concepto <span className="sr-only">{n}</span>
                   </span>
@@ -379,7 +379,7 @@ export function LinesEditor({
                   <span className={label}>Cuota IVA</span>
                   <span className={readOnlyBox}>{vatLabel(value)}</span>
                 </div>
-                <div className="col-span-2 flex items-center justify-end gap-0.5 wide:col-span-1 wide:h-10">
+                <div className="col-span-2 flex items-center justify-end gap-0.5 @5xl:col-span-1 @5xl:h-10">
                   {reordering ? (
                     <>
                       <Button
@@ -440,8 +440,8 @@ export function LinesEditor({
               </div>
 
               {advanced && (
-                <div className="grid gap-2.5 sm:grid-cols-2 wide:grid-cols-[minmax(0,1fr)_auto_auto] wide:items-end wide:gap-3">
-                  <label className="col-span-full flex flex-col gap-1 wide:col-span-1">
+                <div className="grid gap-2.5 sm:grid-cols-2 @5xl:grid-cols-[minmax(0,1fr)_auto_auto] @5xl:items-end @5xl:gap-3">
+                  <label className="col-span-full flex flex-col gap-1 @5xl:col-span-1">
                     <span className="text-xs font-medium text-muted-foreground">Descripción detallada</span>
                     <Textarea
                       autoGrow

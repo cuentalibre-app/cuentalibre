@@ -289,6 +289,8 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar por número, cliente o NIF"
               aria-label="Buscar"
+              // Too many controls for one row beside the docked assistant: the search takes its own
+              className="@max-5xl:max-w-none! @max-5xl:basis-full!"
             />
             {statusFilter && <div className="max-lg:hidden">{statusFilter}</div>}
             <PeriodSelect
@@ -554,7 +556,7 @@ function InvoiceSummary({ rows }: { rows: Row[] }) {
   ];
   // Phones already get these figures on Inicio: the list starts right away
   return (
-    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 wide:grid-cols-4">
+    <dl className="m-0 hidden animate-rise-in gap-3 lg:grid lg:grid-cols-2 @5xl:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="flex flex-col surface">
           <dt className="border-b border-divider px-4 py-3 text-md font-semibold text-foreground lg:text-lg">

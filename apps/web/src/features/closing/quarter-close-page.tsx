@@ -420,7 +420,7 @@ function QuarterPicker({
     <div
       role="radiogroup"
       aria-label="Trimestre"
-      className="grid animate-rise-in grid-cols-2 gap-2 wide:grid-cols-4"
+      className="grid animate-rise-in grid-cols-2 gap-2 @5xl:grid-cols-4"
       style={{ "--i": 1 } as CSSProperties}
     >
       {QUARTERS.map((quarter) => {
