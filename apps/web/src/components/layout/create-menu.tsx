@@ -51,7 +51,13 @@ export function CreateMenu({
       <DropdownMenuTrigger asChild {...(openOnHover && triggerProps)}>
         {children}
       </DropdownMenuTrigger>
-      <DropdownMenuContent ref={dragRef} side={side} align={align} className={contentClassName} {...(openOnHover && contentProps)}>
+      <DropdownMenuContent
+        ref={dragRef}
+        side={side}
+        align={align}
+        className={contentClassName}
+        {...(openOnHover && contentProps)}
+      >
         {groups.map((group, i) => (
           <Fragment key={i}>
             {i > 0 && <DropdownMenuSeparator />}

@@ -14,7 +14,10 @@ export interface HelpMessage {
 }
 
 interface HelpChatState {
+  /** The panel docked on the right, on desktop; remembered across visits. */
   open: boolean;
+  /** The sheet over the page, on phones; never reopens by itself. */
+  sheetOpen: boolean;
   messages: HelpMessage[];
   /** Waiting for the answer to the last question. */
   pending: boolean;
@@ -41,7 +44,13 @@ function readMessages(): HelpMessage[] {
   }
 }
 
-let state: HelpChatState = { open: readOpen(), messages: readMessages(), pending: false, error: null };
+let state: HelpChatState = {
+  open: readOpen(),
+  sheetOpen: false,
+  messages: readMessages(),
+  pending: false,
+  error: null,
+};
 let nextId = Math.max(0, ...state.messages.map((message) => message.id)) + 1;
 const listeners = new Set<() => void>();
 
@@ -74,7 +83,16 @@ export function setHelpChatOpen(open: boolean) {
   }
 }
 
-export const toggleHelpChat = () => setHelpChatOpen(!state.open);
+export const setHelpChatSheetOpen = (sheetOpen: boolean) => set({ sheetOpen });
+
+/** The `lg` breakpoint in index.css, where the docked panel takes over from the sheet. */
+const DESKTOP = "(min-width: 48rem)";
+
+/** Docks or undocks the panel on desktop; opens the sheet on phones. */
+export function toggleHelpChat() {
+  if (window.matchMedia(DESKTOP).matches) setHelpChatOpen(!state.open);
+  else setHelpChatSheetOpen(true);
+}
 
 /** Clears the conversation, to ask about something else or before signing out. */
 export const resetHelpChat = () => set({ messages: [], pending: false, error: null });

@@ -5,6 +5,7 @@ import { ReadOnlyBanner } from "@/features/settings/read-only-banner";
 import { SubscribedNotice } from "@/features/settings/subscribed-notice";
 import { FirstRunTour } from "@/features/tour/first-run-tour";
 import { HelpChatPanel } from "@/features/help-chat/help-chat-panel";
+import { HelpChatSheet } from "@/features/help-chat/help-chat-sheet";
 import { useHelpChatAvailable } from "@/features/help-chat/help-chat-store";
 import { BottomNav } from "./bottom-nav";
 import { CommandErrorNotice } from "./command-error-notice";
@@ -41,8 +42,9 @@ export function AppLayout() {
           </div>
         </main>
         {helpChat && <HelpChatPanel className="hidden lg:block" />}
-        <BottomNav className="lg:hidden" helpChat={helpChat} />
+        <BottomNav className="lg:hidden" />
       </div>
+      {helpChat && <HelpChatSheet />}
       <FirstRunTour />
     </>
   );

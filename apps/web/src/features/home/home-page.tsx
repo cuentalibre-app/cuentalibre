@@ -68,6 +68,7 @@ export function HomePage() {
             <>
               <Notifications className="size-11 rounded-full border-glass-edge bg-glass backdrop-blur-xl hover:bg-glass" />
               <UserMenu className="size-11" />
+              <HelpChatToggle className="size-11 rounded-full border-glass-edge bg-glass backdrop-blur-xl hover:bg-glass" />
             </>
           }
         />
