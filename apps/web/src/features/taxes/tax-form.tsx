@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Check, ChevronDown, CircleHelp, Copy, Download, ExternalLink, Info, RotateCcw } from "lucide-react";
 import {
   aeatBytes,
+  aeatFiler,
   aeatFileName,
   calendarStatus,
   cents,
@@ -405,19 +406,15 @@ export function useAeatFile(
   build: (filer: AeatFiler) => string,
 ): AeatFile {
   const { profile } = useSettings();
-  const filer = {
-    taxId: profile.taxId,
-    surnames: `${profile.lastName} ${profile.secondLastName}`,
-    name: profile.firstName,
-    phone: profile.phone,
-  };
+  const filer = aeatFiler(profile);
   return {
     name: aeatFileName(form, year, period),
-    build: () => new Blob([aeatBytes(build(filer))], { type: "text/plain;charset=iso-8859-1" }),
-    missing:
-      !profile.taxId.trim() || !profile.firstName.trim() || !profile.lastName.trim()
-        ? "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales."
-        : undefined,
+    build: () => new Blob([aeatBytes(build(filer!))], { type: "text/plain;charset=iso-8859-1" }),
+    missing: filer
+      ? undefined
+      : profile.kind === "company"
+        ? "Para generar el fichero, completa el NIF y la razón social en Configuración › Datos de la empresa."
+        : "Para generar el fichero, completa tu NIF, nombre y apellidos en Configuración › Datos personales.",
   };
 }
 
@@ -821,7 +818,7 @@ export function QuarterCards({
   return (
     <section
       aria-label={`Resultados de los ${form} del año`}
-      className="grid grid-cols-2 gap-3 wide:grid-cols-4 lg:gap-4"
+      className="grid grid-cols-2 gap-3 lg:gap-4 wide:grid-cols-4"
     >
       {values.map((v, i) => {
         const quarter = (i + 1) as Quarter;
@@ -833,8 +830,7 @@ export function QuarterCards({
             className="flex flex-col gap-1 surface p-4 text-foreground no-underline transition-colors duration-150 hover:bg-muted"
           >
             <span className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-              {form} · {quarter}T
-              <Badge tone={status.tone}>{status.label}</Badge>
+              {form} · {quarter}T<Badge tone={status.tone}>{status.label}</Badge>
             </span>
             <span className={cn("amount text-lg font-semibold", v === 0 && "text-muted-foreground")}>
               {formatEUR(v)}
