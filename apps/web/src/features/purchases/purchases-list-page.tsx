@@ -32,6 +32,7 @@ import {
   ActionsMenu,
   EmptyState,
   FiltersButton,
+  ToolbarButton,
   FiltersSheet,
   IconAction,
   MoreActionsTrigger,
@@ -295,7 +296,7 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Buscar por número, proveedor, NIF o concepto"
+              placeholder="Número, proveedor o NIF"
               aria-label="Buscar"
             />
             <div className="max-lg:hidden">{statusFilter}</div>
@@ -317,15 +318,14 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
               phoneCount={extraFilters + (filters.status !== ALL ? 1 : 0)}
               onToggle={() => setShowFilters((s) => !s)}
             />
-            <Button
-              variant="secondary"
+            <ToolbarButton
+              icon={Download}
+              text="CSV"
+              label="Descargar en CSV"
               className="max-lg:hidden lg:ml-auto"
               disabled={rows.length === 0}
               onClick={() => exportCsv(rows, exportName, kind)}
-            >
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              CSV
-            </Button>
+            />
           </Toolbar>
 
           <FiltersSheet open={showFilters} onOpenChange={setShowFilters} results={rows.length}>
@@ -591,20 +591,24 @@ interface Sort {
   dir: SortDir;
 }
 
-const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
+/** Columns marked `wide` only show when the page is wide; beside the docked assistant the total is enough. */
+const COLUMNS: { key: SortKey; label: string; numeric?: boolean; wide?: boolean }[] = [
   { key: "number", label: "Nº" },
   { key: "date", label: "Fecha" },
   { key: "supplier", label: "Proveedor" },
   { key: "status", label: "Estado" },
-  { key: "base", label: "Base\nimponible", numeric: true },
-  { key: "vat", label: "IVA", numeric: true },
-  { key: "withholding", label: "Retención", numeric: true },
+  { key: "base", label: "Base\nimponible", numeric: true, wide: true },
+  { key: "vat", label: "IVA", numeric: true, wide: true },
+  { key: "withholding", label: "Retención", numeric: true, wide: true },
   { key: "total", label: "Total", numeric: true },
 ];
+const { wideOnly } = table;
 
 /** Investment goods show the period's amortization where invoices show the withholding. */
 const ASSET_COLUMNS = COLUMNS.map((c) =>
-  c.key === "withholding" ? { key: "amortization" as const, label: "Amortización\ndel periodo", numeric: true } : c,
+  c.key === "withholding"
+    ? { key: "amortization" as const, label: "Amortización\ndel periodo", numeric: true, wide: true }
+    : c,
 );
 
 const byText = (a: string, b: string) => a.localeCompare(b, "es", { numeric: true, sensitivity: "base" });
@@ -658,12 +662,12 @@ function PurchasesTable({
   onSort: (sort: Sort) => void;
   onFilterSupplier: (supplierId: string) => void;
 }) {
-  // Tighter than the default so ten columns fit on a laptop screen.
+  // Tighter than the default so ten columns fit on a laptop screen
   const th = cn(table.th, "px-2");
   const td = cn(table.td, "px-2");
   return (
     <div className="hidden overflow-x-auto lg:block">
-      <table className="w-full min-w-[1020px] border-collapse">
+      <table className="w-full border-collapse @5xl:min-w-[1020px]">
         <thead>
           <tr className={table.headRow}>
             {(kind === "asset" ? ASSET_COLUMNS : COLUMNS).map((c) => (
@@ -673,10 +677,10 @@ function PurchasesTable({
                 numeric={c.numeric}
                 dir={sort.key === c.key ? sort.dir : null}
                 onClick={() => onSort(nextSort(sort, c.key))}
-                className={th}
+                className={cn(th, c.wide && wideOnly)}
               />
             ))}
-            <th scope="col" className={cn(th, "text-right")}>
+            <th scope="col" className={cn(th, wideOnly, "text-right")}>
               Imputable
             </th>
             <th scope="col" className={cn(th, "text-center")}>
@@ -748,21 +752,21 @@ function PurchasesTable({
                 <td className={td}>
                   <StatusBadge row={r} />
                 </td>
-                <td className={cn(td, "text-right")}>
+                <td className={cn(td, wideOnly, "text-right")}>
                   <span className="amount">{formatEUR(r.base)}</span>
                 </td>
-                <td className={cn(td, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
+                <td className={cn(td, wideOnly, "text-right amount text-muted-foreground")}>{formatEUR(r.vat)}</td>
                 {kind === "asset" ? (
-                  <td className={cn(td, "text-right amount text-muted-foreground")}>
+                  <td className={cn(td, wideOnly, "text-right amount text-muted-foreground")}>
                     {r.amortization ? formatEUR(r.amortization) : "—"}
                   </td>
                 ) : (
-                  <td className={cn(td, "text-right amount text-muted-foreground")}>
+                  <td className={cn(td, wideOnly, "text-right amount text-muted-foreground")}>
                     {r.withholding ? formatEUR(cents(-r.withholding)) : "—"}
                   </td>
                 )}
                 <td className={cn(td, "text-right amount font-semibold")}>{formatEUR(r.total)}</td>
-                <td className={cn(td, "text-right")}>
+                <td className={cn(td, wideOnly, "text-right")}>
                   <Imputation row={r} />
                 </td>
                 <td className={cn(td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
@@ -778,19 +782,19 @@ function PurchasesTable({
               {rows.length}{" "}
               {kind === "asset" ? (rows.length === 1 ? "bien" : "bienes") : rows.length === 1 ? "factura" : "facturas"}
             </td>
-            <td className={cn(td, "text-right amount")}>
+            <td className={cn(td, wideOnly, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "base")} />
             </td>
-            <td className={cn(td, "text-right amount")}>
+            <td className={cn(td, wideOnly, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "vat")} />
             </td>
-            <td className={cn(td, "text-right amount")}>
+            <td className={cn(td, wideOnly, "text-right amount")}>
               <AnimatedAmount value={kind === "asset" ? sum(rows, "amortization") : cents(-sum(rows, "withholding"))} />
             </td>
             <td className={cn(td, "text-right amount")}>
               <AnimatedAmount value={sum(rows, "total")} />
             </td>
-            <td className={cn(td, "text-right")}>
+            <td className={cn(td, wideOnly, "text-right")}>
               <ImputableAmounts
                 base={kind === "asset" ? null : sum(rows, "deductibleBase")}
                 vat={sum(rows, "deductibleVat")}

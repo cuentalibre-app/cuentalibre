@@ -294,7 +294,7 @@ export function SettingsPage() {
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title} className="flex flex-col gap-3">
           <h2 className="m-0 text-lg font-semibold tracking-tight">{group.title}</h2>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 @5xl:grid-cols-3">
             {group.entries.map((entry) => (
               <EntryCard key={entry.to} entry={entry} index={index++} />
             ))}

@@ -796,7 +796,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             <Section title={infoTitle(config.noun)} index={1}>
               {summaryClient && <ClientSummary client={summaryClient} />}
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
                 <Field
                   label="Cliente"
                   required={config.clientRequired}
@@ -1093,7 +1093,7 @@ function SalesForm({ kind, existing, source, rectify, presetClient }: SalesFormP
             />
 
             <Section title="Notas" index={3}>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
                 <InvoiceNotes
                   label={`Notas en ${config.noun}`}
                   value={form.publicNotes}

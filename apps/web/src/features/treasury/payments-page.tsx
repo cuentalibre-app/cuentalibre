@@ -18,6 +18,7 @@ import {
   IconAction,
   MoreActionsTrigger,
   SortHeader,
+  ToolbarButton,
   downloadCsv,
   type Action,
 } from "@/features/sales/list-parts";
@@ -114,7 +115,7 @@ export function PaymentsPage() {
     ),
   );
 
-  const sortHeader = (key: SortKey, label: string, numeric?: boolean) => (
+  const sortHeader = (key: SortKey, label: string, numeric?: boolean, className?: string) => (
     <SortHeader
       label={label}
       numeric={numeric}
@@ -126,7 +127,7 @@ export function PaymentsPage() {
             : { key, dir: key === "method" ? "asc" : "desc" },
         )
       }
-      className={table.th}
+      className={cn(table.th, className)}
     />
   );
 
@@ -197,7 +198,7 @@ export function PaymentsPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Buscar por documento, contacto o importe"
+              placeholder="Documento, contacto o importe"
               aria-label="Buscar"
             />
             <GroupedSelect
@@ -230,15 +231,14 @@ export function PaymentsPage() {
               ]}
               className="w-auto min-w-40"
             />
-            <Button
-              variant="secondary"
+            <ToolbarButton
+              icon={Download}
+              text="CSV"
+              label="Descargar en CSV"
               className="lg:ml-auto"
               disabled={rows.length === 0}
               onClick={() => exportCsv(rows, `cobros-y-pagos-${periodCode(period)}`.toLowerCase())}
-            >
-              <Download strokeWidth={1.8} aria-hidden="true" />
-              CSV
-            </Button>
+            />
           </Toolbar>
 
           {rows.length === 0 ? (
@@ -255,7 +255,7 @@ export function PaymentsPage() {
           ) : (
             <>
               <div key={`table-${periodKey(period)}`} className="hidden overflow-x-auto lg:block">
-                <table className="w-full min-w-[1000px] border-collapse">
+                <table className="w-full border-collapse @5xl:min-w-[1000px]">
                   <thead>
                     <tr className={table.headRow}>
                       <th scope="col" className={table.th}>
@@ -266,7 +266,7 @@ export function PaymentsPage() {
                       </th>
                       {sortHeader("date", "Fecha")}
                       {sortHeader("amount", "Importe", true)}
-                      {sortHeader("method", "Método de cobro / pago")}
+                      {sortHeader("method", "Método de cobro / pago", false, table.wideOnly)}
                       <th scope="col" className={cn(table.th, "text-center")}>
                         Acciones
                       </th>
@@ -310,7 +310,7 @@ export function PaymentsPage() {
                         <td className={cn(table.td, "text-right font-semibold")}>
                           <SignedAmount value={r.payment.amount} />
                         </td>
-                        <td className={table.td}>
+                        <td className={cn(table.td, table.wideOnly)}>
                           <span className="block max-w-48 truncate">{r.method}</span>
                         </td>
                         <td className={cn(table.td, "px-1.5 first:pl-1.5 last:pr-1.5")}>
@@ -327,7 +327,8 @@ export function PaymentsPage() {
                       <td className={cn(table.td, "text-right amount")}>
                         <AnimatedAmount value={cents(collected - paid)} />
                       </td>
-                      <td colSpan={2} className={table.td} />
+                      <td className={cn(table.td, table.wideOnly)} />
+                      <td className={table.td} />
                     </tr>
                   </tfoot>
                 </table>
