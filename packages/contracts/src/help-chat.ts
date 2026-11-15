@@ -17,11 +17,11 @@ export type HelpChatMessage = z.infer<typeof helpChatMessageSchema>;
  */
 export const helpChatScreenSchema = z.object({
   device: z.enum(["phone", "desktop"]),
-  /** The app's page, without its query: "/ventas/facturas". */
+  /** The app's page, without its query, as the browser encodes it: "/ventas/facturas". */
   path: z
     .string()
     .max(200)
-    .regex(/^\/[^\s?#]*$/),
+    .regex(/^\/[^\s?#"<>]*$/),
 });
 export type HelpChatScreen = z.infer<typeof helpChatScreenSchema>;
 
