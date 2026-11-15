@@ -704,7 +704,7 @@ function PurchasesTable({
                   <TagChips tags={r.doc.tags} className="mt-1 max-w-48" />
                   {r.doc.asset && (
                     <span
-                      className="block max-w-44 truncate font-sans text-xs text-muted-foreground"
+                      className="block max-w-36 truncate font-sans text-xs text-muted-foreground"
                       title={ASSET_CATEGORY_LABELS[r.doc.asset.category]}
                     >
                       {ASSET_CATEGORY_LABELS[r.doc.asset.category]}

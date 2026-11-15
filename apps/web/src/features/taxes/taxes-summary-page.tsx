@@ -302,14 +302,8 @@ function PlainAmount({ amount }: { amount: Cents }) {
 
 function QuartersSection({ year, today, yearSelect }: { year: number; today: Date; yearSelect: ReactNode }) {
   const { rows, incomeTax, withholdings, rentals } = useQuarterRows(year, today);
-  // Desktop: quarters past their deadline start folded away, unless the whole year is past and nothing else would show
-  const closedRows = rows.filter((r) => r.closed);
-  const closedCount = closedRows.length;
-  const canFold = closedCount > 0 && closedCount < rows.length;
-  const [showClosed, setShowClosed] = useState(false);
   // Phones: every quarter is one row with its total; tapping it opens the forms behind it
   const [open, setOpen] = useState<Quarter | null>(null);
-  const shown = canFold && !showClosed ? rows.filter((r) => !r.closed) : rows;
   const sumOf = (list: QuarterRow[], pick: (r: QuarterRow) => Cents | null) =>
     sumBy(list, (r) => cents(Math.max(0, pick(r) ?? 0)));
   const sums = (list: QuarterRow[]) => ({
@@ -318,16 +312,10 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
     withheld: sumOf(list, (r) => cents((r.withholdings ?? 0) + (r.rentals ?? 0))),
     total: sumOf(list, (r) => r.total),
   });
-  const closedSum = sums(closedRows);
   const totals = sums(rows);
   const showWithheld = withholdings || rentals;
   const withheldLabel =
     withholdings && rentals ? "Retenciones (111 y 115)" : withholdings ? "Retenciones (111)" : "Alquileres (115)";
-  const closedLabel = closedCount === 1 ? "1 trimestre cerrado" : `${closedCount} trimestres cerrados`;
-  const firstClosed = closedRows[0]?.quarter ?? 1;
-  const lastClosed = closedRows.at(-1)?.quarter ?? 1;
-  const closedName = firstClosed === lastClosed ? `${firstClosed}T` : `${firstClosed}T – ${lastClosed}T`;
-  const toggleClosed = () => setShowClosed((v) => !v);
   const th = cn(table.th, "px-4");
   const td = cn(table.td, "px-4");
   const linkClass = "inline-flex items-center gap-1 text-foreground no-underline hover:text-primary";
@@ -372,45 +360,7 @@ function QuartersSection({ year, today, yearSelect }: { year: number; today: Dat
             </tr>
           </thead>
           <tbody>
-            {canFold && (
-              <tr
-                onClick={toggleClosed}
-                className={cn(table.row, "cursor-pointer text-muted-foreground hover:bg-accent")}
-              >
-                <td className={td}>
-                  <button
-                    type="button"
-                    aria-expanded={showClosed}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleClosed();
-                    }}
-                    className="cursor-pointer border-0 bg-transparent p-0 text-left text-foreground"
-                  >
-                    <span className="font-semibold">{closedName}</span>
-                  </button>
-                </td>
-                <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.vat)}</td>
-                {incomeTax && <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.irpf)}</td>}
-                {showWithheld && <td className={cn(td, "text-right amount")}>{formatEUR(closedSum.withheld)}</td>}
-                <td className={cn(td, "text-right amount font-semibold text-foreground")}>
-                  {formatEUR(closedSum.total)}
-                </td>
-                <td className={td}>
-                  <span className="flex items-center justify-between gap-3">
-                    {closedLabel}
-                    <ChevronDown
-                      className={cn(
-                        "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
-                        showClosed && "rotate-180",
-                      )}
-                      aria-hidden="true"
-                    />
-                  </span>
-                </td>
-              </tr>
-            )}
-            {shown.map((r, i) => {
+            {rows.map((r, i) => {
               const period = { year, quarter: r.quarter };
               return (
                 <tr key={r.quarter} className={cn(table.row, "animate-row-in")} style={{ "--i": i } as CSSProperties}>

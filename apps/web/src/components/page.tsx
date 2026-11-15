@@ -76,8 +76,11 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
-      {/* The title keeps a minimum width, so actions that don't fit beside it wrap below instead of squeezing it away */}
-      <div className="flex min-w-0 flex-[1_1_10rem] items-center gap-3">
+      {/*
+       * The title keeps a minimum width, so actions that don't fit beside it wrap below instead of squeezing it
+       * away; on desktop it keeps its whole line, so a long title never breaks to make room for the actions
+       */}
+      <div className="flex min-w-0 flex-[1_1_10rem] items-center gap-3 lg:basis-auto">
         {back}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {eyebrow}
@@ -91,7 +94,8 @@ export function PageHeader({
         </div>
       </div>
       {(actions || assistant) && (
-        <div className={cn("flex flex-wrap items-center gap-2.5", actionsClassName)}>
+        // Pushed right also when they wrap below the title, so the assistant's toggle keeps its corner
+        <div className={cn("flex flex-wrap items-center gap-2.5 lg:ml-auto", actionsClassName)}>
           {actions}
           {/*
            * Set apart from the page's own actions, as it belongs to the app rather than the page: last on

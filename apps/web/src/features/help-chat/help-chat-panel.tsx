@@ -15,8 +15,8 @@ export const HELP_CHAT_PANEL_ID = "help-chat-panel";
  */
 export function HelpChatPanel({ className }: { className?: string }) {
   const { open, messages } = useHelpChat();
-  // A 13-inch laptop and up
-  const docked = useMediaQuery("(min-width: 85rem)");
+  // A 13-inch laptop and up: from here every page still fits beside it without scrolling sideways
+  const docked = useMediaQuery("(min-width: 90rem)");
 
   return (
     <aside
