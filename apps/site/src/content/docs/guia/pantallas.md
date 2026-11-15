@@ -27,7 +27,7 @@ Dirección: /ventas/facturas
 
 - Botones de arriba: «Configurar facturas emitidas»; «Nueva factura».
 - Menú de tres puntos de cada fila: «Ver factura», «Ver los datos de la factura», «Crear por copia», «Gestionar el cobro», «Adjuntar documentos», «Gestionar etiquetas», «Descargar PDF», «Exportar Facturae», «Enviar factura», «Generar factura rectificativa», «Eliminar factura».
-- «Filtrar por estado», «Filtros», «CSV», «Descargar los PDF en un .zip».
+- «Filtrar por estado», «Filtros», «Descargar en CSV», «Descargar los PDF en un .zip».
 
 ## Borradores
 
@@ -35,7 +35,7 @@ Dirección: /ventas/borradores
 
 - Botones de arriba: «Configurar borradores»; «Nueva factura borrador».
 - Menú de tres puntos de cada fila: «Ver factura borrador», «Editar factura borrador», «Crear por copia», «Emitir factura», «Adjuntar documentos», «Gestionar etiquetas», «Descargar PDF», «Enviar factura borrador», «Eliminar factura borrador».
-- «Filtros», «CSV», «Descargar los PDF en un .zip».
+- «Filtros», «Descargar en CSV», «Descargar los PDF en un .zip».
 
 ## Albaranes
 
@@ -43,7 +43,7 @@ Dirección: /ventas/albaranes
 
 - Botones de arriba: «Configurar albaranes»; «Nuevo albarán».
 - Menú de tres puntos de cada fila: «Ver albarán», «Editar albarán», «Crear por copia», «Convertir en factura», «Cambiar estado», «Adjuntar documentos», «Gestionar etiquetas», «Descargar PDF», «Enviar albarán», «Eliminar albarán».
-- «Filtrar por estado», «Filtros por defecto», «Filtros», «CSV», «Descargar los PDF en un .zip».
+- «Filtrar por estado», «Filtros por defecto», «Filtros», «Descargar en CSV», «Descargar los PDF en un .zip».
 
 ## Presupuestos
 
@@ -51,7 +51,7 @@ Dirección: /ventas/presupuestos
 
 - Botones de arriba: «Configurar presupuestos»; «Nuevo presupuesto».
 - Menú de tres puntos de cada fila: «Ver presupuesto», «Editar presupuesto», «Crear por copia», «Convertir en factura», «Cambiar estado», «Adjuntar documentos», «Gestionar etiquetas», «Descargar PDF», «Enviar presupuesto», «Eliminar presupuesto».
-- «Filtrar por estado», «Filtros por defecto», «Filtros», «CSV», «Descargar los PDF en un .zip».
+- «Filtrar por estado», «Filtros por defecto», «Filtros», «Descargar en CSV», «Descargar los PDF en un .zip».
 
 ## Exportaciones
 
@@ -71,7 +71,7 @@ Dirección: /compras/facturas
 
 - Botones de arriba: «Leer factura con IA»; «Nueva factura recibida».
 - Menú de tres puntos de cada fila: «Editar factura», «Crear por copia», «Gestionar los pagos», «Adjuntar documentos», «Sin justificante adjunto», «Registrar un abono de esta factura», «Eliminar factura».
-- «Filtrar por estado», «Filtros», «CSV».
+- «Filtrar por estado», «Filtros», «Descargar en CSV».
 
 ## Bienes de inversión
 
@@ -79,7 +79,7 @@ Dirección: /compras/bienes-de-inversion
 
 - Botones de arriba: «Nuevo bien de inversión».
 - Menú de tres puntos de cada fila: «Editar factura», «Crear por copia», «Gestionar los pagos», «Adjuntar documentos», «Sin justificante adjunto», «Registrar un abono de esta factura», «Eliminar factura».
-- «Filtrar por estado», «Filtros», «CSV».
+- «Filtrar por estado», «Filtros», «Descargar en CSV».
 
 ## Gastos
 
@@ -87,7 +87,7 @@ Dirección: /compras/gastos
 
 - Botones de arriba: «Leer ticket con IA»; «Nuevo gasto».
 - Menú de tres puntos de cada fila: «Editar gasto», «Crear por copia», «Gestionar el pago», «Adjuntar documentos», «Sin justificante adjunto», «Eliminar gasto».
-- «Filtrar por estado», «Filtros», «CSV».
+- «Filtrar por estado», «Filtros», «Descargar en CSV».
 
 ## Impuestos
 
@@ -153,7 +153,7 @@ Dirección: /bancos
 - Botones de arriba: «Nuevo cobro / pago manual».
 - Menú de tres puntos de cada fila: «Ir al documento», «Se elimina desde su documento».
 - Cuentas y formas de pago: «Ingreso/Transferencia», «Cuenta principal», «Tarjeta de empresa», «PayPal», «Efectivo», «Nueva forma de pago».
-- Cobros y pagos de los últimos 12 meses: «Tipo de documento vinculado», «Método de cobro / pago», «CSV».
+- Cobros y pagos de los últimos 12 meses: «Tipo de documento vinculado», «Método de cobro / pago», «Descargar en CSV».
 
 ## Clientes
 
@@ -161,7 +161,7 @@ Dirección: /contactos/clientes
 
 - Botones de arriba: «Nuevo cliente».
 - Menú de tres puntos de cada fila: «Ver ficha», «Editar contacto», «Nueva factura», «Nuevo presupuesto», «Nuevo albarán», «Adjuntar archivos», «Gestionar etiquetas», «Descargar vCard», «Crear por copia», «Copiar como proveedor», «Eliminar contacto».
-- «Filtros», «CSV».
+- «Filtros», «Descargar en CSV».
 
 ## Proveedores
 
@@ -169,7 +169,7 @@ Dirección: /contactos/proveedores
 
 - Botones de arriba: «Nuevo proveedor».
 - Menú de tres puntos de cada fila: «Ver ficha», «Editar contacto», «Nueva factura recibida», «Nuevo gasto», «Adjuntar archivos», «Gestionar etiquetas», «Descargar vCard», «Crear por copia», «Copiar como cliente», «Eliminar contacto».
-- «Filtros», «CSV».
+- «Filtros», «Descargar en CSV».
 
 ## Catálogo de productos y servicios
 
@@ -177,7 +177,7 @@ Dirección: /catalogo/productos
 
 - Botones de arriba: «Nuevo producto o servicio»; «Opciones del catálogo»: «Importar productos», «Exportar catálogo», «Configuración del catálogo», «Borrar elementos del catálogo».
 - Menú de tres puntos de cada fila: «Editar», «Crear por copia», «Regularizar stock», «Ver movimientos de stock», «Desactivar», «Eliminar».
-- «Filtros», «Exportar».
+- «Filtros», «Exportar el catálogo».
 
 ## Regularización de stock
 
@@ -510,7 +510,6 @@ Dirección: /impuestos/iva?periodo=trimestre
 - Botones de arriba: «303 · Trimestral»; «390 · Anual».
 - «Fichero para la AEAT», «Presentar el 303».
 - Casillas del modelo 303: Mostrar casillas a cero.
-- Identificación: «NO», «SÍ».
 - Documentos del trimestre: «Cl@ve PIN».
 
 ## IRPF (un trimestre)
