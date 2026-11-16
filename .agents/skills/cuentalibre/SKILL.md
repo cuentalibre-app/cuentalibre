@@ -1,6 +1,6 @@
 ---
 name: cuentalibre
-description: Read and write a business's accounting in cuentalibre through its public API — clients and suppliers, sales invoices, drafts, quotes and delivery notes, received invoices, expenses, payments, attachments, email, tags, payment methods, treasury, catalog and settings. Use when the user asks to register an expense or a ticket, book a supplier invoice, prepare or issue an invoice, rectify one, mark an invoice as paid, list what clients owe, review a quarter's income, expenses and VAT, or change anything else in cuentalibre. Issuing, deleting, editing an issued invoice, sending email, saving settings and closing quarters are real and often irreversible: preview and wait for explicit confirmation first.
+description: "Read and write a business's accounting in cuentalibre through its public API — clients and suppliers, sales invoices, drafts, quotes and delivery notes, received invoices, expenses, payments, attachments, email, tags, payment methods, treasury, catalog and settings. Use when the user asks to register an expense or a ticket, book a supplier invoice, prepare or issue an invoice, rectify one, mark an invoice as paid, list what clients owe, review a quarter's income, expenses and VAT, or change anything else in cuentalibre. Issuing, deleting, editing an issued invoice, sending email, saving settings and closing quarters are real and often irreversible: preview and wait for explicit confirmation first."
 ---
 
 # cuentalibre API
