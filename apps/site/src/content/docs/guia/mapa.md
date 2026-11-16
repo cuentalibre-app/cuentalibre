@@ -44,6 +44,7 @@ Abajo hay una barra flotante con 5 botones de solo icono. De izquierda a derecha
 
 La hoja **Más** reúne, de arriba abajo:
 
+- **Ventas**: Borradores, Albaranes y Presupuestos.
 - **Compras**: Facturas recibidas, Bienes de inversión y Gastos.
 - **Impuestos**: Calendario fiscal y Configurar impuestos.
 - **Bancos**
@@ -52,8 +53,6 @@ La hoja **Más** reúne, de arriba abajo:
 - **Informes**: Resumen y Pérdidas y ganancias.
 - **Cierre de trimestres**
 - **Configuración**
-
-En el móvil, los menús no llevan a Borradores, Albaranes y Presupuestos: se abren desde el ordenador.
 
 Exportar e Importar no están en el móvil: se usan desde el ordenador.
 
