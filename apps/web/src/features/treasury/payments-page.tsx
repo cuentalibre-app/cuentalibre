@@ -133,8 +133,15 @@ export function PaymentsPage() {
     />
   );
 
-  const periodSelect = (className: string) => (
-    <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} className={className} />
+  const periodSelect = (className: string, compact = false) => (
+    <PeriodSelect
+      compact={compact}
+      value={period}
+      onChange={setPeriod}
+      years={availableYears}
+      today={today}
+      className={className}
+    />
   );
 
   return (
@@ -156,8 +163,8 @@ export function PaymentsPage() {
             </Button>
           }
         />
-        {/* On phones the period takes the row under the title */}
-        {periodSelect("h-12 lg:hidden")}
+        {/* On phones the period goes under the title, compact as in the lists */}
+        {periodSelect("self-start lg:hidden", true)}
 
         <dl className="m-0 grid animate-rise-in grid-cols-3 gap-3 lg:gap-4">
           {[
