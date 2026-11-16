@@ -218,16 +218,28 @@ function render(screens: Screen[], sectionOf: (path: string) => string | undefin
   const helps = new Set<string>();
   const once = (item: string) =>
     item.replace(/ \(ayuda: (.*)\)$/, (tip, text: string) => (helps.has(text) ? "" : (helps.add(text), tip)));
+  // Forms share sections, such as a document's lines: each is written in full once, where it first
+  // appears, and the screens after it point there. It keeps the help chat's prompt small.
+  const written = new Map<string, string>();
   screens.forEach((screen, i) => {
     const section = sectionOf(screen.path);
     const shared = titles.indexOf(titles[i]!) !== i || titles.lastIndexOf(titles[i]!) !== i;
-    const title = shared && section && section !== screen.title ? `${section} › ${titles[i]}` : titles[i];
+    const title = shared && section && section !== screen.title ? `${section} › ${titles[i]}` : titles[i]!;
     lines.push(`## ${title}`, "", `Dirección: ${screen.path}`, "");
     if (screen.actions.length > 0) lines.push(`- Botones de arriba: ${screen.actions.join("; ")}.`);
     if (screen.rowActions.length > 0)
       lines.push(`- Menú de tres puntos de cada fila: ${screen.rowActions.map((a) => `«${a}»`).join(", ")}.`);
-    for (const section of screen.sections)
-      lines.push(`- ${section.title ? `${section.title}: ` : ""}${joinItems(section.items.map(once))}.`);
+    for (const section of screen.sections) {
+      const items = joinItems(section.items.map(once));
+      const key = `${section.title}\n${items}`;
+      const first = section.title ? written.get(key) : undefined;
+      const pointer = first && `lo mismo que en ${first}`;
+      if (pointer && pointer.length < items.length) lines.push(`- ${section.title}: ${pointer}.`);
+      else {
+        if (section.title) written.set(key, title);
+        lines.push(`- ${section.title ? `${section.title}: ` : ""}${items}.`);
+      }
+    }
     lines.push("");
   });
   return lines.join("\n");

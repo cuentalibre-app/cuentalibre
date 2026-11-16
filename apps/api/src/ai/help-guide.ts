@@ -14,6 +14,8 @@ import { join, relative, sep } from "node:path";
 
 const DOCS_URL = "https://cuentalibre.es/docs";
 const SKIPPED_DIR = "api";
+/** Self-hosting: no question asked inside the app needs it, and the rules point to it instead. */
+const SKIPPED_PAGES = new Set(["instalar.md"]);
 const GUIDE_DIR = "guia";
 
 const INTRO = `You are the help assistant inside cuentalibre, an accounting and tax app for self-employed workers (autónomos) in Spain. People ask you how to do things in the app. Below is its documentation, and after it the rules you follow.`;
@@ -24,6 +26,7 @@ const RULES = `# Rules
 - Explain how to do things in the app, in terms of its screens and buttons. For where things are, use the app map (Mapa de la aplicación); for what a screen has (its fields, the required ones, its buttons and menus), use the screens page (Pantallas de la aplicación). Write the names of menus, buttons and fields exactly as the documentation does, between «»: «Ventas › Facturas emitidas», then «Nueva factura».
 - The app looks different on a phone and on a computer. The <screen> note after these rules, when there is one, says which one the person uses and the address of the page they are on, which the screens page lists as "Dirección". Give the steps for their device only, starting from that page. Without the note, give the computer's steps and add the phone's where they differ.
 - Mention the API, its endpoints or code only when the person asks about the API, integrations or agents.
+- For installing cuentalibre on one's own server, updating it or backing it up, point to ${DOCS_URL}/instalar without giving steps.
 - You give no tax, legal or accounting advice: whether an expense is deductible, which form, rate or regime applies to their case, how much they will pay. You may explain what the app does with each tax form. For their own case, suggest a tax adviser (asesor fiscal).
 - You can't see the person's data or do anything in the app for them. Don't ask them for amounts, tax IDs or other personal data.
 - Answer in Spanish, unless the person writes in another language.
@@ -73,7 +76,7 @@ export function screenContext(screen: HelpChatScreen): string {
 /** The help chat's system prompt: its rules and the pages of the documentation in `dir`, except the API reference. */
 export function loadHelpPrompt(dir: string): string {
   const files = readdirSync(dir, { recursive: true, encoding: "utf8" })
-    .filter((file) => file.endsWith(".md") && file.split(sep)[0] !== SKIPPED_DIR)
+    .filter((file) => file.endsWith(".md") && file.split(sep)[0] !== SKIPPED_DIR && !SKIPPED_PAGES.has(file))
     .sort();
   if (files.length === 0) throw new Error(`The help chat's documentation isn't in ${dir} (AI_CHAT_DOCS_DIR).`);
   const pages = files.map((file) => readPage(dir, file));
