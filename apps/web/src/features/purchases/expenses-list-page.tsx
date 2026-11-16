@@ -236,7 +236,7 @@ export function ExpensesListPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Concepto, proveedor o NIF"
+              placeholder={desktop ? "Concepto, proveedor o NIF" : "Buscar"}
               aria-label="Buscar"
             />
             <div className="max-lg:hidden">{statusFilter}</div>

@@ -37,6 +37,7 @@ import {
   MoreActionsTrigger,
   SortHeader,
   type Action,
+  useIsDesktop,
 } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
 import { TagChips } from "@/features/settings/tag-chip";
@@ -136,6 +137,7 @@ function matches(r: Row, f: Filters, familyIds: Set<string> | null): boolean {
 }
 
 export function CatalogListPage() {
+  const desktop = useIsDesktop();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { products, families, movements } = useCatalog();
@@ -234,7 +236,7 @@ export function CatalogListPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Nombre, código o familia"
+              placeholder={desktop ? "Nombre, código o familia" : "Buscar"}
               aria-label="Buscar"
             />
             <FiltersButton

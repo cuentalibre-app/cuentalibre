@@ -42,6 +42,7 @@ import {
   downloadCsv,
   pickFiles,
   type Action,
+  useIsDesktop,
 } from "@/features/sales/list-parts";
 import { KINDS } from "@/features/sales/sales-model";
 import { useSalesDocuments } from "@/features/sales/sales-store";
@@ -88,6 +89,7 @@ function matches(r: Row, f: Filters): boolean {
 }
 
 export function ContactsListPage({ role }: { role: ContactRole }) {
+  const desktop = useIsDesktop();
   const config = ROLES[role];
   const today = useMemo(() => new Date(), []);
   const contacts = useContacts(role);
@@ -168,7 +170,7 @@ export function ContactsListPage({ role }: { role: ContactRole }) {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Nombre, NIF, email o teléfono"
+              placeholder={desktop ? "Nombre, NIF, email o teléfono" : "Buscar"}
               aria-label="Buscar"
             />
             <FiltersButton

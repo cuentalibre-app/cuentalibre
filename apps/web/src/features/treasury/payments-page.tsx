@@ -21,6 +21,7 @@ import {
   ToolbarButton,
   downloadCsv,
   type Action,
+  useIsDesktop,
 } from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
@@ -56,6 +57,7 @@ interface Sort {
 
 /** Banks: what came in and went out over the last year, and every collection and payment. */
 export function PaymentsPage() {
+  const desktop = useIsDesktop();
   const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
@@ -198,7 +200,7 @@ export function PaymentsPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Documento, contacto o importe"
+              placeholder={desktop ? "Documento, contacto o importe" : "Buscar"}
               aria-label="Buscar"
             />
             <GroupedSelect
