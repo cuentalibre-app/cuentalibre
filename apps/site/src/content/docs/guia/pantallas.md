@@ -298,8 +298,8 @@ Dirección: /contactos/clientes/nuevo
 
 - Botones de arriba: «Volver a clientes»; «Crear cliente»; «Más formas de crear»: «Crear y añadir otro».
 - Datos de facturación: NIF (obligatorio) (ayuda: Se comprueba la letra o el dígito de control. Admite NIF, NIE y CIF, con o sin el prefijo ES.), Nombre o razón social (obligatorio), País (ayuda: Decide cómo se valida el NIF y qué tipo de operación se propone en las facturas.).
-- Dirección: Código postal, Población, Provincia, «Ver en el mapa».
-- Datos de contacto: Email, Teléfono, Móvil, Fax, Web.
+- Dirección: Código postal, Población, Provincia (ayuda: Se rellena con el código postal.), «Ver en el mapa».
+- Datos de contacto: Email (ayuda: Al que se envían las facturas.), Teléfono, Móvil, Fax, Web.
 - Condiciones por defecto: Descuento (ayuda: Se aplica a cada concepto nuevo del documento.), Retención (ayuda: IRPF que te retiene este cliente. Las empresas y autónomos retienen a los profesionales; los particulares no.), Método de cobro; Idioma y formato numérico de sus documentos: Idioma, Formato numérico.
 - Otros: Personalizado 1, Personalizado 2, Notas, Etiquetas, «Añadir etiqueta».
 
@@ -309,8 +309,8 @@ Dirección: /contactos/proveedores/nuevo
 
 - Botones de arriba: «Volver a proveedores»; «Crear proveedor»; «Más formas de crear»: «Crear y añadir otro».
 - Datos de facturación: NIF (obligatorio), Nombre o razón social (obligatorio), País.
-- Dirección: lo mismo que en Nuevo cliente.
-- Datos de contacto: lo mismo que en Nuevo cliente.
+- Dirección: Código postal, Población, Provincia, «Ver en el mapa».
+- Datos de contacto: Email, Teléfono, Móvil, Fax, Web.
 - Condiciones por defecto: Descuento, Retención (ayuda: IRPF que retienes a este proveedor, por ejemplo a un profesional como tu gestor.), Método de pago.
 - Otros: lo mismo que en Nuevo cliente.
 
@@ -391,8 +391,8 @@ Dirección: /configuracion/albaranes
 Dirección: /configuracion/filtros-de-listados
 
 - Botones de arriba: «Volver a configuración»; «Guardar cambios».
-- Filtro por defecto de los listados de albaranes: Por estado, No filtrar, Mostrar inicialmente solo albaranes pendientes, Por fecha, Mostrar inicialmente solo albaranes del mes en curso.
-- Filtro por defecto de los listados de presupuestos: Mostrar inicialmente solo presupuestos pendientes, Mostrar inicialmente solo presupuestos del mes en curso.
+- Filtro por defecto de los listados de albaranes: Por estado, No filtrar (ayuda: No se aplica ningún filtro de estado por defecto.), Mostrar inicialmente solo albaranes pendientes (ayuda: Se muestran todos los albaranes salvo los facturados y rechazados. Puedes quitar el filtro en el listado.), Por fecha, Mostrar inicialmente solo albaranes del mes en curso (ayuda: Puedes quitar el filtro en el listado o elegir otro periodo.).
+- Filtro por defecto de los listados de presupuestos: Mostrar inicialmente solo presupuestos pendientes (ayuda: Se muestran todos los presupuestos salvo los facturados y rechazados. Puedes quitar el filtro en el listado.), Mostrar inicialmente solo presupuestos del mes en curso.
 
 ## Albaranes › Detalle
 
@@ -481,8 +481,8 @@ Dirección: /configuracion/impuestos
 - Botones de arriba: «Volver a configuración»; «Guardar cambios».
 - Régimen fiscal: «Cambiar el tipo de empresa», Región fiscal, Método de estimación de IRPF (ayuda: Decide cómo se calcula el rendimiento de tu actividad en los modelos 130 y 100.), Régimen de IVA.
 - Actividades económicas: «Añadir actividad».
-- Valores por defecto en facturas: IVA de las líneas nuevas, Retención de IRPF.
-- Cuota de autónomos: Cuota mensual (RETA).
+- Valores por defecto en facturas: IVA de las líneas nuevas, Retención de IRPF (ayuda: Si el cliente tiene una retención en su ficha, se usa la suya.).
+- Cuota de autónomos: Cuota mensual (RETA) (ayuda: Se propone al registrar la cuota como gasto y se muestra en el calendario fiscal. Al año: 3.528,00 €.).
 - Facturas a clientes sin identificar: Cliente «Clientes varios, «Crear cliente «Clientes varios»».
 
 ## Retenciones de alquileres (un trimestre)
@@ -648,7 +648,7 @@ Dirección: /configuracion/catalogo
 
 - Botones de arriba: «Volver a configuración»; «Guardar cambios».
 - Campos personalizados: Nombre del campo personalizado 1, Nombre del campo personalizado 2, Nombre del campo personalizado 3, Nombre del campo personalizado 4.
-- Productos en facturas, presupuestos y albaranes: Copiar el nombre del producto, Copiar el código y el nombre del producto, Copiar la descripción del producto en la descripción detallada del concepto.
+- Productos en facturas, presupuestos y albaranes: Copiar el nombre del producto, Copiar el código y el nombre del producto (ayuda: Por ejemplo: «WEB-LAND - Landing page».), Copiar la descripción del producto en la descripción detallada del concepto.
 - Control de stock: Descontar stock en facturas, Descontar stock en albaranes; Valores por defecto: Activar control de stock.
 - Borrar catálogo: Borrar también todas las familias y subfamilias, «Borrar elementos».
 
@@ -682,8 +682,8 @@ Dirección: /contactos/clientes/:id/editar
 
 - Botones de arriba: «Volver a la ficha»; «Guardar cambios».
 - Datos de facturación: lo mismo que en Nuevo proveedor.
-- Dirección: lo mismo que en Nuevo cliente.
-- Datos de contacto: lo mismo que en Nuevo cliente.
+- Dirección: lo mismo que en Nuevo proveedor.
+- Datos de contacto: lo mismo que en Nuevo proveedor.
 - Condiciones por defecto: Descuento, Retención, Método de cobro; Idioma y formato numérico de sus documentos: Idioma, Formato numérico.
 - Otros: lo mismo que en Nuevo cliente.
 
@@ -693,7 +693,7 @@ Dirección: /contactos/proveedores/:id/editar
 
 - Botones de arriba: «Volver a la ficha»; «Guardar cambios».
 - Datos de facturación: NIF (obligatorio) (ayuda: El número de identificación fiscal del país; en la UE, el NIF-IVA con el código del país delante.), Nombre o razón social (obligatorio), País, Inscrito en el VIES (ayuda: Si el proveedor es empresa o autónomo con NIF-IVA válido en el censo europeo. Sus facturas se proponen como operaciones intracomunitarias, sin IVA.).
-- Dirección: lo mismo que en Nuevo cliente.
-- Datos de contacto: lo mismo que en Nuevo cliente.
+- Dirección: lo mismo que en Nuevo proveedor.
+- Datos de contacto: lo mismo que en Nuevo proveedor.
 - Condiciones por defecto: Descuento, Retención, Método de pago.
 - Otros: lo mismo que en Nuevo cliente.

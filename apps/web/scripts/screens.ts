@@ -97,6 +97,9 @@ function readScreen(): Omit<Screen, "path" | "rowActions"> {
     // A help tip explains the field before it; one on its own, such as beside a heading, is a button to open
     if (el.hasAttribute("data-help-tip")) {
       const last = current.items.length - 1;
+      // One inside a label, such as a radio option's, explains that label: none if it was a repeat
+      const owner = el.parentElement?.closest("label");
+      if (owner && !current.items[last]?.startsWith(text(owner))) continue;
       if (last >= 0 && !current.items[last]!.startsWith("«")) current.items[last] += ` (ayuda: ${value})`;
       else add(current.items, `«${value}»`);
       continue;
