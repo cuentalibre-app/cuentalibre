@@ -126,9 +126,13 @@ export function StockPage() {
             </HelpTip>
           }
           actions={
-            <Button onClick={() => setCreating(true)} disabled={stocked.length === 0}>
+            <Button
+              onClick={() => setCreating(true)}
+              disabled={stocked.length === 0}
+              className="max-lg:size-10 max-lg:px-0"
+            >
               <Plus strokeWidth={2} aria-hidden="true" />
-              Nueva regularización
+              <span className="max-lg:sr-only">Nueva regularización</span>
             </Button>
           }
         />

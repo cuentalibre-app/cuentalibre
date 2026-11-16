@@ -102,7 +102,10 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
             className={buttonVariants({ variant: "primary" })}
           >
             <Calculator strokeWidth={1.8} aria-hidden="true" />
-            Calcular datos modelo {f.code}
+            {/* Short on phones, so both forms' buttons share the row under the title */}
+            <span>
+              Calcular<span className="max-sm:hidden"> datos modelo</span> {f.code}
+            </span>
           </Link>
         ))}
       />

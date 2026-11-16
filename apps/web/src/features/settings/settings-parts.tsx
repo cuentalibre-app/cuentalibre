@@ -44,7 +44,6 @@ export function SettingsHeader({
   children?: ReactNode;
 }) {
   const origin = (useLocation().state as { from?: Origin } | null)?.from;
-  // On phones the actions take their own row, so the title isn't squeezed into a narrow column
   return (
     <PageHeader
       title={title}
@@ -57,7 +56,6 @@ export function SettingsHeader({
       }
       back={<BackLink to={origin?.path ?? back} label={`Volver a ${origin?.label ?? "configuración"}`} />}
       actions={children}
-      actionsClassName="max-sm:basis-full"
     />
   );
 }

@@ -75,9 +75,9 @@ export function PaymentMethodsPage() {
           title="Formas de cobro y pago"
           description="Cuentas, tarjetas, PayPal o efectivo con los que cobras y pagas."
         >
-          <Button onClick={() => setEditing("new")}>
+          <Button className="max-lg:size-10 max-lg:px-0" onClick={() => setEditing("new")}>
             <Plus aria-hidden="true" />
-            Nueva forma de pago
+            <span className="max-lg:sr-only">Nueva forma de pago</span>
           </Button>
         </SettingsHeader>
 
