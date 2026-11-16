@@ -184,6 +184,7 @@ export function DocumentSettingsPage({ kind }: { kind: DocumentKind }) {
             </ul>
           </Section>
         )}
+        <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} bottom />
       </Page>
     </TooltipProvider>
   );
