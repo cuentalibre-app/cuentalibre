@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
-import { Check, ImageUp, Trash2 } from "lucide-react";
+import { ImageUp, Trash2 } from "lucide-react";
 import { LOGO_MAX_SIZE, type InvoiceSettings } from "@cuentalibre/contracts";
 import { Button } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { Page } from "@/components/page";
-import { SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
+import { SaveButton, SettingsHeader, UnsavedChangesGuard } from "@/features/settings/settings-parts";
 import { sameValue } from "@/lib/same-value";
 import { LookFields } from "./document-look";
 import { CheckField, Field, Section } from "./form-fields";
@@ -44,15 +44,7 @@ export function InvoiceSettingsPage() {
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
         <SettingsHeader title="Configuración de facturas">
-          {justSaved && !dirty && (
-            <span role="status" className="flex items-center gap-1.5 text-sm text-success">
-              <Check className="size-4" aria-hidden="true" />
-              Cambios guardados
-            </span>
-          )}
-          <Button onClick={save} disabled={!dirty}>
-            Guardar cambios
-          </Button>
+          <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />
         </SettingsHeader>
         <UnsavedChangesGuard dirty={dirty} />
 
@@ -114,6 +106,7 @@ export function InvoiceSettingsPage() {
             {(p) => <Textarea {...p} rows={3} value={draft.footer} onChange={(e) => set("footer", e.target.value)} />}
           </Field>
         </Section>
+        <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} bottom />
       </Page>
     </TooltipProvider>
   );

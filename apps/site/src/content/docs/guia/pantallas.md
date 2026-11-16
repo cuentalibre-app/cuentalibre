@@ -607,8 +607,8 @@ Dirección: /catalogo/productos/:id
 
 Dirección: /configuracion/datos-personales
 
-- Botones de arriba: «Volver a configuración».
-- Datos personales: «Guardar cambios», «Elegir imagen de perfil», Nombre (obligatorio), Apellidos, Fecha de nacimiento, Teléfono, Género.
+- Botones de arriba: «Volver a configuración»; «Guardar cambios».
+- Datos personales: «Elegir imagen de perfil», Nombre (obligatorio), Apellidos, Fecha de nacimiento, Teléfono, Género.
 - Notificaciones y avisos: Notificaciones de la aplicación, Deseo recibir las enviadas por correo electrónico, Deseo recibir las enviadas mediante notificación push, Mensajes promocionales, Deseo recibir los enviados por correo electrónico, Deseo recibir los enviados mediante notificación push.
 
 ## Credenciales de acceso

@@ -402,6 +402,7 @@ export function TaxSettingsPage() {
         <Section title="Facturas a clientes sin identificar" index={4}>
           <VariousClients value={draft.variousClientsId} onChange={(id) => set("variousClientsId", id)} />
         </Section>
+        <SaveButton dirty={dirty && !feeError} justSaved={justSaved} onSave={save} bottom />
       </Page>
     </TooltipProvider>
   );

@@ -37,6 +37,7 @@ export function PreferencesPage() {
             />
           </Section>
         ))}
+        <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} bottom />
       </Page>
     </TooltipProvider>
   );

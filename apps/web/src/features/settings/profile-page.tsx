@@ -37,16 +37,41 @@ const GENDERS: Option<Exclude<Gender, "">>[] = [
 
 export function ProfilePage() {
   const connected = sessionState() === "connected";
+  const settings = useUserSettings();
+  const profile = useDraft<UserProfile>(settings.profile);
+  const notifications = useDraft<NotificationPrefs>(settings.notifications);
+  const [showErrors, setShowErrors] = useState(false);
+  const errors: ProfileErrors = {
+    firstName: profile.draft.firstName.trim() ? undefined : "Introduce tu nombre.",
+  };
+
+  const save = () => {
+    if (errors.firstName) return setShowErrors(true);
+    if (profile.dirty) userStore.updateProfile(profile.draft);
+    if (notifications.dirty) userStore.updateNotifications(notifications.draft);
+    setShowErrors(false);
+    profile.markSaved();
+    notifications.markSaved();
+  };
+  const saveProps = {
+    dirty: profile.dirty || notifications.dirty,
+    justSaved: profile.justSaved || notifications.justSaved,
+    onSave: save,
+  };
+
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
         <SettingsHeader
           title="Datos personales"
           description="Tus datos como usuario de cuentalibre, no los de tu empresa."
-        />
-        <PersonalSection />
+        >
+          <SaveButton {...saveProps} />
+        </SettingsHeader>
+        <PersonalSection draft={profile.draft} set={profile.set} errors={showErrors ? errors : {}} />
         {/* Nothing sends these notifications yet: only the demo shows them */}
-        {!connected && <NotificationsSection />}
+        {!connected && <NotificationsSection draft={notifications.draft} set={notifications.set} />}
+        <SaveButton {...saveProps} bottom />
         {/* The demo has no account to delete */}
         {connected && <DeleteAccountSection />}
       </Page>
@@ -54,29 +79,19 @@ export function ProfilePage() {
   );
 }
 
-/* Each section saves on its own, so a change to the notifications doesn't wait on the profile. */
+interface ProfileErrors {
+  firstName?: string;
+}
 
-function PersonalSection() {
-  const saved = useUserSettings().profile;
-  const { draft, set, dirty, justSaved, markSaved } = useDraft<UserProfile>(saved);
-  const [showErrors, setShowErrors] = useState(false);
-  const errors = {
-    firstName: draft.firstName.trim() ? undefined : "Introduce tu nombre.",
-  };
+/** A section's slice of the page's draft. */
+interface DraftProps<T> {
+  draft: T;
+  set: <K extends keyof T>(key: K, value: T[K]) => void;
+}
 
-  const save = () => {
-    if (errors.firstName) return setShowErrors(true);
-    userStore.updateProfile(draft);
-    setShowErrors(false);
-    markSaved();
-  };
-
+function PersonalSection({ draft, set, errors }: DraftProps<UserProfile> & { errors: ProfileErrors }) {
   return (
-    <Section
-      title="Datos personales"
-      index={0}
-      action={<SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />}
-    >
+    <Section title="Datos personales" index={0}>
       <p className="m-0 text-sm">
         <span className="text-muted-foreground">Email de contacto: </span>
         <span className="font-medium">{draft.email}</span>
@@ -86,7 +101,7 @@ function PersonalSection() {
         <AvatarField name={userFullName(draft)} url={draft.avatarUrl} onChange={(url) => set("avatarUrl", url)} />
       )}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Nombre" required error={showErrors ? errors.firstName : undefined}>
+        <Field label="Nombre" required error={errors.firstName}>
           {(p) => (
             <Input
               {...p}
@@ -203,20 +218,9 @@ function AvatarField({
   );
 }
 
-function NotificationsSection() {
-  const saved = useUserSettings().notifications;
-  const { draft, set, dirty, justSaved, markSaved } = useDraft<NotificationPrefs>(saved);
-  const save = () => {
-    userStore.updateNotifications(draft);
-    markSaved();
-  };
-
+function NotificationsSection({ draft, set }: DraftProps<NotificationPrefs>) {
   return (
-    <Section
-      title="Notificaciones y avisos"
-      index={1}
-      action={<SaveButton dirty={dirty} justSaved={justSaved} onSave={save} />}
-    >
+    <Section title="Notificaciones y avisos" index={1}>
       <p className="m-0 max-w-3xl text-muted-foreground">
         cuentalibre se toma muy en serio tu privacidad: no comercia con los correos electrónicos ni con los datos de sus
         usuarios. Todas las notificaciones que recibas las envía directamente el equipo de cuentalibre.

@@ -76,7 +76,7 @@ export function CatalogSettingsPage() {
     markSaved();
   };
 
-  const saveButton = <SaveButton dirty={dirty || minDirty} justSaved={justSaved} onSave={save} />;
+  const saveProps = { dirty: dirty || minDirty, justSaved, onSave: save };
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
@@ -85,7 +85,7 @@ export function CatalogSettingsPage() {
           title="Configuración del catálogo"
           description="Campos personalizados, cómo pasan los productos a las facturas y el control de stock."
         >
-          {saveButton}
+          <SaveButton {...saveProps} />
         </SettingsHeader>
 
         <Card
@@ -216,7 +216,7 @@ export function CatalogSettingsPage() {
           </div>
         </Card>
 
-        <div className="flex justify-end gap-3 lg:hidden">{saveButton}</div>
+        <SaveButton {...saveProps} bottom />
 
         <Card
           id="borrar-catalogo"
