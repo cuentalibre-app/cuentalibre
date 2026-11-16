@@ -52,11 +52,20 @@ https://cuentalibre.es/docs/api.md.
 
 ### Agentes de terminal
 
-Claude Code, Codex y similares hacen peticiones con `curl` o con código. Guarda la clave en el entorno y pon las reglas en el archivo de instrucciones del proyecto (`CLAUDE.md`, `AGENTS.md`…):
+Claude Code, Codex, Cursor y similares pueden usar la skill de cuentalibre: un paquete con las reglas de arriba, la referencia de cada ruta y un script que añade la clave a las peticiones. Instálala con la [CLI de skills](https://github.com/vercel-labs/skills), que detecta tus agentes y la añade a cada uno (con `-g`, para todos tus proyectos):
+
+```sh
+npx skills add cuentalibre-app/cuentalibre
+```
+
+Después guarda la clave en el entorno. Si usas cuentalibre en tu propio servidor, indica también la dirección de tu API:
 
 ```sh
 export CUENTALIBRE_API_KEY="fsk_…"
+export CUENTALIBRE_API_URL="https://api.tudominio.es/v1"   # solo en tu servidor
 ```
+
+Con la skill no hace falta darle la documentación ni las reglas: ya las trae. Sin ella, pon las reglas en el archivo de instrucciones del proyecto (`CLAUDE.md`, `AGENTS.md`…).
 
 ### Asistentes con acciones
 
