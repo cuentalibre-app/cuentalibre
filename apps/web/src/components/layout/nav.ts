@@ -159,6 +159,17 @@ export type MoreEntry =
  */
 export const moreNav: MoreEntry[] = [
   ...mainNav.flatMap((item): MoreEntry[] => {
+    // Sales has a tab, but it opens the issued invoices; the other sales lists live here
+    if (item.to === "/ventas")
+      return [
+        {
+          kind: "group",
+          to: item.to,
+          title: item.label,
+          icon: item.icon,
+          links: (item.children ?? []).filter((leaf) => !leaf.desktopOnly && leaf.to !== "/ventas/facturas"),
+        },
+      ];
     // Taxes has a tab, but its summary leaves the calendar and settings out on phones; they live here
     if (item.to === "/impuestos")
       return [
