@@ -98,10 +98,7 @@ function TagDialog({ tag, onOpenChange }: { tag: Tag | null; onOpenChange: (open
           </Field>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             Vista previa:
-            <span
-              className="tag-color rounded-full px-2.5 text-sm leading-7 font-medium"
-              style={tagStyle(color)}
-            >
+            <span className="rounded-full tag-color px-2.5 text-sm leading-7 font-medium" style={tagStyle(color)}>
               {name.trim() || "Etiqueta"}
             </span>
           </div>
@@ -147,9 +144,9 @@ export function TagsPage() {
           title="Gestión de etiquetas"
           description="Etiquetas para clasificar facturas, presupuestos, albaranes y gastos."
         >
-          <Button onClick={() => setEditing("new")}>
+          <Button className="max-lg:size-10 max-lg:px-0" onClick={() => setEditing("new")}>
             <Plus aria-hidden="true" />
-            Nueva etiqueta
+            <span className="max-lg:sr-only">Nueva etiqueta</span>
           </Button>
         </SettingsHeader>
 

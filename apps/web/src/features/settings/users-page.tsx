@@ -438,9 +438,9 @@ function DemoUsersPage() {
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
         <SettingsHeader title="Gestión de usuarios" description="Las personas que tienen acceso a tu empresa.">
-          <Button onClick={() => setEditing({ user: null, kind: "member" })}>
+          <Button onClick={() => setEditing({ user: null, kind: "member" })} className="max-lg:size-10 max-lg:px-0">
             <Plus aria-hidden="true" />
-            Nuevo usuario
+            <span className="max-lg:sr-only">Nuevo usuario</span>
           </Button>
         </SettingsHeader>
 

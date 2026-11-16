@@ -217,10 +217,11 @@ export function ProfitLossPage() {
                   { value: "extended", label: "Extendida" },
                 ]}
               />
-              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-              <Button variant="secondary" onClick={exportPdf}>
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} compact />
+              {/* An icon on phones, so the version, the period and the export share the row under the title */}
+              <Button variant="secondary" onClick={exportPdf} className="max-lg:size-10 max-lg:px-0">
                 <Download strokeWidth={1.8} aria-hidden="true" />
-                Exportar PDF
+                <span className="max-lg:sr-only">Exportar PDF</span>
               </Button>
             </>
           }

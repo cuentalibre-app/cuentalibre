@@ -218,10 +218,9 @@ export function CatalogListPage() {
                   </DropdownMenuTrigger>
                 }
               />
-              <Link to={NEW_PRODUCT_PATH} className={buttonVariants()}>
+              <Link to={NEW_PRODUCT_PATH} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
                 <Plus strokeWidth={2} aria-hidden="true" />
-                <span className="hidden sm:inline">Nuevo producto o servicio</span>
-                <span className="sm:hidden">Nuevo</span>
+                <span className="max-lg:sr-only">Nuevo producto o servicio</span>
               </Link>
             </>
           }
