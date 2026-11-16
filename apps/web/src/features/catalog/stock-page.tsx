@@ -375,8 +375,9 @@ export function StockPage() {
                     <li key={m.id} className="flex items-center gap-3 border-b border-divider py-3">
                       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span className="truncate font-medium">{nameOf(m.productId)?.name}</span>
+                        {/* Without the type's group (Manual/Automático), so the date and the type fit one line */}
                         <span className="truncate text-sm text-muted-foreground">
-                          {type.group}/{type.label} · {dateTime(m.at)}
+                          <span className="tabular-nums">{dateTime(m.at)}</span> · {type.label}
                         </span>
                       </div>
                       <div className="flex flex-col items-end">
