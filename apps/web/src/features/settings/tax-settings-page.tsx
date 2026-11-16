@@ -353,7 +353,7 @@ export function TaxSettingsPage() {
                 />
               )}
             </Field>
-            <Field label="Retención de IRPF" hint="Si el cliente tiene una retención en su ficha, se usa la suya.">
+            <Field label="Retención de IRPF" help="Si el cliente tiene una retención en su ficha, se usa la suya.">
               {(p) => (
                 <GroupedSelect
                   {...p}
@@ -370,11 +370,7 @@ export function TaxSettingsPage() {
           <Field
             label="Cuota mensual (RETA)"
             error={feeError}
-            hint={
-              feeError
-                ? undefined
-                : `Se propone al registrar la cuota como gasto y se muestra en el calendario fiscal. Al año: ${formatEUR(cents((parsedFee ?? 0) * 12))}.`
-            }
+            help={`Se propone al registrar la cuota como gasto y se muestra en el calendario fiscal. Al año: ${formatEUR(cents((parsedFee ?? 0) * 12))}.`}
             className="max-w-sm"
           >
             {(p) => (

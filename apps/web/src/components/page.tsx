@@ -182,6 +182,25 @@ export function HelpTip({
   );
 }
 
+/**
+ * Text followed by a HelpTip that wraps together with the last word, so the icon never ends up
+ * alone on a line. Goes inside the heading or label it explains.
+ */
+export function WithHelpTip({ text, help, label }: { text: string; help: ReactNode; label?: string }) {
+  const cut = text.lastIndexOf(" ") + 1;
+  return (
+    <>
+      {text.slice(0, cut)}
+      <span className="whitespace-nowrap">
+        {text.slice(cut)}
+        <HelpTip label={label} className="ml-1.5 align-[-0.25em]">
+          {help}
+        </HelpTip>
+      </span>
+    </>
+  );
+}
+
 interface SectionProps {
   /** Id of the heading, for aria-labelledby. */
   id: string;
