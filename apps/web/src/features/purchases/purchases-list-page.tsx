@@ -296,7 +296,7 @@ export function PurchasesListPage({ kind = "invoice" }: { kind?: PurchaseListKin
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Número, proveedor o NIF"
+              placeholder={desktop ? "Número, proveedor o NIF" : "Buscar"}
               aria-label="Buscar"
             />
             <div className="max-lg:hidden">{statusFilter}</div>

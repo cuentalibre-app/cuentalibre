@@ -120,7 +120,7 @@ export function Toolbar({ className, ...props }: ComponentProps<"div">) {
         "*:first:max-lg:min-w-0 *:first:max-lg:flex-[1_1_8rem]",
         "[&>label:first-child]:lg:max-w-80 [&>label:first-child]:lg:flex-[1_1_220px]",
         // Beside the docked assistant the search starts smaller, so the controls keep to one row
-        "[&>label:first-child]:@max-5xl:basis-48!",
+        "[&>label:first-child]:lg:@max-5xl:basis-48!",
         className,
       )}
       {...props}

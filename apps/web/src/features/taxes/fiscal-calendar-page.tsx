@@ -27,6 +27,7 @@ import { useSettings } from "@/features/settings/settings-store";
 import { useAvailableYears } from "@/lib/use-available-years";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
 import { usePartyBooks } from "./party-operations";
+import { FormCode } from "./form-code";
 import { TaxesBackLink } from "./tax-intro";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
 import {
@@ -121,6 +122,14 @@ function entryTitle(entry: CalendarEntry, calendarYear: number): string {
   if (form === "reta") return `${FORMS.reta.name} · ${MONTHS[month!]!.toLowerCase()}`;
   const period = quarter === null ? String(year) : year === calendarYear ? `${quarter}T` : `${quarter}T ${year}`;
   return `Modelo ${form} · ${FORMS[form].name} ${period}`;
+}
+
+/** "IVA 3T", "Resumen anual de IVA 2025" or "Cuota de autónomos": the form's chip and the month say the rest. */
+function shortTitle(entry: CalendarEntry, calendarYear: number): string {
+  const { form, year, quarter } = entry;
+  if (form === "reta") return FORMS.reta.name;
+  const period = quarter === null ? String(year) : year === calendarYear ? `${quarter}T` : `${quarter}T ${year}`;
+  return `${FORMS[form].name} ${period}`;
 }
 
 /** "Del 1 al 20 oct", "Del 1 ene al 2 feb", or how the fee and the income tax campaign work. */
@@ -414,28 +423,34 @@ function AgendaItem({
   const info = FORMS[entry.form];
   const body = (
     <>
-      <div className={cn("flex w-11 shrink-0 flex-col items-center", closed && "text-muted-foreground")}>
-        <span className="text-xl font-semibold">{entry.dueOn.getDate()}</span>
+      <div className={cn("flex w-9 shrink-0 flex-col items-center", closed && "text-muted-foreground")}>
+        <span className="text-lg leading-tight font-semibold tabular-nums">{entry.dueOn.getDate()}</span>
         <span className="text-2xs text-muted-foreground uppercase">{MONTHS_SHORT[entry.dueOn.getMonth()]}</span>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className={cn("font-medium", closed && "text-muted-foreground")}>{entryTitle(entry, calendarYear)}</span>
-        <span className="text-xs text-muted-foreground">
-          {windowLabel(entry)}
-          {!to && entry.form !== "reta" && (
-            <span className="hidden sm:inline"> · Se prepara en la sede de la AEAT</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className={cn("font-medium", closed && "text-muted-foreground")}>
+          {shortTitle(entry, calendarYear)}
+        </span>
+        <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+          {entry.form !== "reta" && <FormCode code={entry.form} muted={applies !== true || closed} />}
+          {/* On phones the date column already says when the fee is charged */}
+          {entry.form === "reta" ? (
+            <>
+              <span className="sm:hidden">Domiciliada</span>
+              <span className="max-sm:hidden">{windowLabel(entry)}</span>
+            </>
+          ) : (
+            <span>
+              {windowLabel(entry)}
+              {!to && <span className="hidden sm:inline"> · Se prepara en la sede de la AEAT</span>}
+            </span>
           )}
         </span>
         {applies !== true && info.condition && <span className="text-xs text-muted-foreground">{info.condition}</span>}
-        <span className="pt-1 sm:hidden">
-          <StatusBadge entry={entry} today={today} />
-        </span>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         <Amount amount={amount} form={entry.form} />
-        <span className="hidden sm:inline-flex">
-          <StatusBadge entry={entry} today={today} />
-        </span>
+        <StatusBadge entry={entry} today={today} />
       </div>
       {to ? (
         <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -444,7 +459,7 @@ function AgendaItem({
       )}
     </>
   );
-  const className = "flex items-center gap-3.5 px-3 py-3 text-foreground no-underline lg:px-4";
+  const className = "flex min-h-14 items-center gap-3 px-4 py-2.5 text-foreground no-underline";
 
   return (
     <li className="border-b border-divider last:border-b-0">
@@ -487,8 +502,9 @@ function CalendarList({
     <div className={cn("flex animate-rise-in flex-col gap-4", className)} style={{ "--i": 1 } as CSSProperties}>
       {pastCount > 0 && (
         <Button
-          variant="secondary"
-          className="self-start"
+          variant="ghost"
+          size="sm"
+          className="-ml-3 self-start text-muted-foreground hover:text-foreground"
           aria-expanded={showPast}
           onClick={() => setShowPast((shown) => !shown)}
         >
@@ -501,7 +517,7 @@ function CalendarList({
       )}
       {months.map(({ month, entries: monthEntries }) => (
         <section key={month} aria-labelledby={`month-${month}`} className="flex flex-col gap-2">
-          <h2 id={`month-${month}`} className="m-0 flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <h2 id={`month-${month}`} className="m-0 flex items-center gap-2 text-sm font-medium text-muted-foreground">
             {MONTHS[month]} {calendarYear}
             {isCurrentYear && month === today.getMonth() && <Badge tone="primary">Este mes</Badge>}
           </h2>
@@ -544,6 +560,29 @@ export function FiscalCalendarPage() {
   );
   const entries = scope === "all" ? calendar : calendar.filter((e) => appliesTo(e) === true);
 
+  const yearSelect = (
+    <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}>
+      <SelectTrigger
+        aria-label={`Año ${year}`}
+        // A quiet control at the end of the row on phones, so it fits beside the models; a full field on desktop
+        className="ml-auto min-w-32 max-lg:min-w-0 max-lg:border-transparent max-lg:bg-transparent max-lg:px-0 max-lg:shadow-none lg:ml-0"
+      >
+        <Calendar className="size-4 text-muted-foreground max-lg:hidden" strokeWidth={1.8} aria-hidden="true" />
+        <span className="flex-1 text-center">
+          <SelectValue />
+        </span>
+        <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+      </SelectTrigger>
+      <SelectContent>
+        {years.map((y) => (
+          <SelectItem key={y} value={String(y)}>
+            {y}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
@@ -553,27 +592,9 @@ export function FiscalCalendarPage() {
           inline={
             <HelpTip side="bottom">{`Plazos de cada modelo en ${year}. Si un plazo acaba en fin de semana, pasa al lunes; los festivos aún no se tienen en cuenta.`}</HelpTip>
           }
-          actions={
-            <Select value={String(year)} onValueChange={(y) => setPeriod({ year: Number(y), quarter: period.quarter })}>
-              <SelectTrigger aria-label={`Año ${year}`} className="min-w-32">
-                <Calendar className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
-                <span className="flex-1 text-center">
-                  <SelectValue />
-                </span>
-                <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((y) => (
-                  <SelectItem key={y} value={String(y)}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          }
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 lg:flex-wrap lg:gap-3">
           <SegmentedControl<Scope>
             label="Modelos"
             options={[
@@ -585,7 +606,7 @@ export function FiscalCalendarPage() {
           />
           <SegmentedControl<View>
             label="Vista"
-            className="hidden lg:flex"
+            className="hidden lg:ml-auto lg:flex"
             options={[
               { value: "grid", label: "Cuadrícula" },
               { value: "list", label: "Lista" },
@@ -593,6 +614,7 @@ export function FiscalCalendarPage() {
             value={view}
             onChange={setView}
           />
+          {yearSelect}
         </div>
 
         {view === "grid" && <CalendarGrid entries={entries} calendarYear={year} today={today} scope={scope} />}

@@ -32,6 +32,7 @@ import { usePeriod } from "@/lib/use-period";
 import { useAvailableYears } from "@/lib/use-available-years";
 import { useFormsInUse, type FormsInUse } from "./forms-in-use";
 import { TAX_OPTIONS, useTaxBooks } from "./tax-books";
+import { FormCode } from "./form-code";
 import { usePartyBooks } from "./party-operations";
 import {
   CALENDAR_PATH,
@@ -83,14 +84,6 @@ const NEXT_FORMS: Partial<
 
 /** Forms that only inform: they carry nothing to pay. */
 const INFORMATIVE: CalendarForm[] = ["390", "190", "180", "347", "349"];
-
-function FormCode({ code }: { code: string }) {
-  return (
-    <span className="inline-flex w-10 shrink-0 justify-center rounded-sm bg-primary-soft py-0.5 text-xs font-semibold text-primary tabular-nums">
-      {code}
-    </span>
-  );
-}
 
 function NextFiling({ today }: { today: Date }) {
   const books = useTaxBooks();
