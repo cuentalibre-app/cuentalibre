@@ -257,7 +257,9 @@ export function ProfitLossPage() {
               No hay facturas ni gastos entre el 1 de enero y el final del periodo, ni en {year} ni en {year - 1}.
             </p>
           ) : (
-            <div className="-mx-3 overflow-x-auto sm:mx-0">
+            // Scrolls only sideways: the rows' entrance slides them up from below, and Chrome keeps that overflow
+            // after the animation, which left the box a few pixels of vertical scroll
+            <div className="-mx-3 overflow-x-auto overflow-y-hidden sm:mx-0">
               <ReportTable rows={rows} years={years} />
             </div>
           )}
