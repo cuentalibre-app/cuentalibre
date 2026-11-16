@@ -1,10 +1,10 @@
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
-import { Calculator, ChevronRight } from "lucide-react";
+import { Calculator, ChevronDown, ChevronRight } from "lucide-react";
 import type { Period } from "@cuentalibre/core";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
-import { cn } from "@cuentalibre/ui/lib/cn";
 import { BackLink, Page, PageHeader, cardTitleClass } from "@/components/page";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { usePeriod } from "@/lib/use-period";
 import { FACTS, FormFactsList } from "./form-info";
 import {
@@ -21,7 +21,7 @@ import {
 } from "./taxes-model";
 
 /*
- * Each tax module opens on what its forms are, who files them and when;
+ * Each tax module opens on what its forms are, who files them and when (folded on phones);
  * "Calcular datos" opens the calculation on the selected period (?periodo=…).
  */
 
@@ -88,6 +88,7 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
   const today = useMemo(() => new Date(), []);
   const [period] = usePeriod(today);
   const { title, path, forms } = TAX_MODULES[module];
+  const phone = useMediaQuery("(max-width: 639.98px)");
 
   return (
     <Page>
@@ -110,19 +111,30 @@ function TaxIntro({ module }: { module: TaxModuleKey }) {
         ))}
       />
       {forms.map((f, i) => (
-        <section
+        <details
           key={f.code}
-          aria-labelledby={`modelo-${f.code}`}
-          className="flex animate-rise-in flex-col surface"
+          // Phones open on the forms' names and the buttons; the explanation unfolds on demand
+          open={!phone}
+          className="group flex animate-rise-in flex-col surface"
           style={{ "--i": i } as CSSProperties}
         >
-          <h2 id={`modelo-${f.code}`} className={cn(cardTitleClass, "border-b border-divider px-5 py-3")}>
-            {FACTS[f.code].title}
-          </h2>
+          <summary className="flex cursor-pointer list-none items-center gap-3 border-divider px-5 py-3 group-open:border-b [&::-webkit-details-marker]:hidden">
+            <span className="flex min-w-0 flex-col">
+              <h2 className={cardTitleClass}>{FACTS[f.code].title}</h2>
+              <span className="text-sm text-muted-foreground group-open:hidden">
+                {FACTS[f.code].kind}
+              </span>
+            </span>
+            <ChevronDown
+              className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-open:rotate-180"
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
+          </summary>
           <div className="p-5">
             <FormFactsList form={f.code} />
           </div>
-        </section>
+        </details>
       ))}
     </Page>
   );
