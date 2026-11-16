@@ -364,7 +364,10 @@ export function CatalogListPage() {
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
                     <Link to={NEW_PRODUCT_PATH} className={buttonVariants({ variant: "secondary" })}>
                       <Plus strokeWidth={2} aria-hidden="true" />
-                      Nuevo producto o servicio
+                      {/* Short on phones, so both buttons share one row */}
+                      <span>
+                        Nuevo producto<span className="max-sm:hidden"> o servicio</span>
+                      </span>
                     </Link>
                     <Link to={CATALOG_IMPORT_PATH} className={buttonVariants({ variant: "secondary" })}>
                       <FileUp strokeWidth={1.8} aria-hidden="true" />
