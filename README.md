@@ -208,11 +208,13 @@ export CUENTALIBRE_API_URL="http://localhost:3000/v1"   # only for a local or se
 The skill lives in [`.agents/skills/cuentalibre`](.agents/skills/cuentalibre): `SKILL.md` with the rules and workflows, `references/` with every route and field, and `scripts/cuentalibre.sh`, a `curl` wrapper that adds the key.
 
 - **Inside this repository** it's already there: Claude Code loads it from [`.claude/skills/cuentalibre`](.claude/skills/cuentalibre) (a link to the same folder), and agents that read `.agents/skills` load it from there.
-- **Anywhere else**, link or copy the folder into your agent's skills directory. For Claude Code, for every project:
+- **Anywhere else**, install it with the [skills CLI](https://github.com/vercel-labs/skills), which detects your agents (Claude Code, Codex, Cursor…) and links the skill into each one. Add `-g` to install it for every project:
 
   ```sh
-  ln -s "$PWD/.agents/skills/cuentalibre" ~/.claude/skills/cuentalibre
+  npx skills add cuentalibre-app/cuentalibre
   ```
+
+  Or link the folder into your agent's skills directory yourself. For Claude Code: `ln -s "$PWD/.agents/skills/cuentalibre" ~/.claude/skills/cuentalibre`.
 
 Agents without skills can read the whole reference as one Markdown file, [`cuentalibre.es/docs/api.md`](https://cuentalibre.es/docs/api.md), or import the [OpenAPI document](https://api.cuentalibre.es/v1/openapi.json) as actions. The [agent guide](https://cuentalibre.es/docs/agentes) has the setup for each kind of tool.
 
