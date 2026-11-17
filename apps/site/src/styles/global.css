@@ -42,7 +42,34 @@
   --shadow-screen: 0 -1px 3px rgb(17 18 20 / 0.06), -10px -10px 36px -14px rgb(17 18 20 / 0.28);
   --shadow-shot: 0 20px 40px -24px rgb(17 18 20 / 0.25);
   --shadow-plan: 0 30px 60px -36px rgb(47 69 201 / 0.45);
+  /* Launch offer (Three Kings): night sky, gold lettering; the same in both themes */
+  --color-offer-sky-top: #0a2470;
+  --color-offer-sky-bottom: #2a5cbf;
+  --color-offer-silhouette: #050b1f;
+  --color-offer-star: #fff8e1;
+  --color-offer-gold-light: #fbeeb0;
+  --color-offer-gold: #e8c15a;
+  --color-offer-gold-deep: #c4932e;
 
+}
+
+/* The launch offer bar: a night sky with gold, gradient lettering. */
+@utility offer-sky {
+  background: linear-gradient(to bottom, var(--color-offer-sky-top), var(--color-offer-sky-bottom));
+}
+
+@utility offer-gold {
+  background: linear-gradient(
+    100deg,
+    var(--color-offer-gold-deep),
+    var(--color-offer-gold-light) 35%,
+    var(--color-offer-gold) 60%,
+    var(--color-offer-gold-light) 85%,
+    var(--color-offer-gold-deep)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /*
@@ -78,6 +105,9 @@
   /* Anchored sections land below the sticky header, not under it */
   html {
     scroll-padding-top: 5rem;
+    &:has([data-launch-banner]):not(.offer-dismissed) {
+      scroll-padding-top: 8rem;
+    }
     @media (prefers-reduced-motion: no-preference) {
       scroll-behavior: smooth;
     }

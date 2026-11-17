@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import GitHubIcon from "../components/GitHubIcon.astro";
 import Icon from "../components/Icon.astro";
+import LaunchBanner from "../components/LaunchBanner.astro";
 import Logo from "../components/Logo.astro";
 import { appLinks, demoLinkAttrs, externalLinkAttrs, legalPages, sourceUrl } from "../site";
 
@@ -10,9 +11,11 @@ interface Props {
   description: string;
   /** Keeps the page out of search results. */
   noindex?: boolean;
+  /** Shows the launch offer bar above the header, linking to the page's price section. */
+  launchBanner?: boolean;
 }
 
-const { title, description, noindex = false } = Astro.props;
+const { title, description, noindex = false, launchBanner = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 
 const sections = [
@@ -76,6 +79,7 @@ const year = new Date().getFullYear();
         var theme = null;
         try {
           theme = localStorage.getItem("cuentalibre:site-theme");
+          if (localStorage.getItem("cuentalibre:offer-dismissed")) root.classList.add("offer-dismissed");
         } catch (e) {}
         var dark = theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
         if (dark) {
@@ -90,6 +94,7 @@ const year = new Date().getFullYear();
       data-site-header
       class="sticky top-0 z-50 border-b border-transparent bg-background/80 backdrop-blur-md transition-colors duration-300 data-scrolled:border-divider"
     >
+    {launchBanner && <LaunchBanner />}
     <header class="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
       <a
         href="/"
