@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { ArrowUp, LoaderCircle } from "lucide-react";
-import { Button } from "@cuentalibre/ui/components/button";
+import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
 import { Textarea } from "@cuentalibre/ui/components/input";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { LogoMark } from "@/components/logo";
 import { Notice } from "@/components/page";
+import { API_URL, SIGN_UP_PATH, leaveDemo, sessionState } from "@/features/auth/session";
 import { askHelpChat, useHelpChat, type HelpMessage } from "./help-chat-store";
 import { splitLinks } from "./links";
 
@@ -43,17 +44,28 @@ export function HelpChat({ className }: { className?: string }) {
                 Buscando en la guía…
               </li>
             )}
-            {error && (
-              <li>
-                <Notice tone="warning">{error}</Notice>
-              </li>
-            )}
+            {error && <li>{sessionState() === "demo" ? <DemoNotice /> : <Notice tone="warning">{error}</Notice>}</li>}
           </ol>
         )}
         <div ref={end} />
       </div>
       <Composer disabled={pending} />
     </div>
+  );
+}
+
+/** The demo runs without a server, so the assistant can't answer there: it points to an account instead. */
+function DemoNotice() {
+  return (
+    <Notice>
+      <p className="m-0">En la demo el asistente no responde. Crea una cuenta para preguntarle lo que necesites.</p>
+      {API_URL && (
+        // A plain link: it loads the app outside /demo, on the API
+        <a href={SIGN_UP_PATH} onClick={leaveDemo} className={cn(buttonVariants({ size: "sm" }), "mt-2.5")}>
+          Crear cuenta
+        </a>
+      )}
+    </Notice>
   );
 }
 
