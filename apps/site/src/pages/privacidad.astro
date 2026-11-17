@@ -41,12 +41,12 @@ const mail = `mailto:${owner.email}`;
 
   <h2>Qué datos tratamos</h2>
   <ul>
-    <li><strong>Cuenta:</strong> nombre, correo electrónico y contraseña. La contraseña se guarda cifrada con un hash; nadie puede leerla, tampoco nosotros.</li>
+    <li><strong>Cuenta:</strong> nombre, correo electrónico y contraseña. La contraseña se guarda cifrada con un hash.</li>
     <li><strong>Sesiones:</strong> dirección IP, navegador y fecha de cada inicio de sesión, para mantenerla abierta y detectar accesos extraños.</li>
     <li><strong>Perfil y preferencias:</strong> los datos que añadas en tu perfil y tus preferencias de notificaciones.</li>
     <li><strong>Registros técnicos:</strong> los servidores anotan cada petición (IP, fecha, ruta y resultado) para detectar errores y ataques.</li>
     <li><strong>Comunicaciones:</strong> los mensajes que nos envíes al pedir ayuda.</li>
-    <li><strong>Preguntas al asistente:</strong> lo que escribes en el asistente de ayuda de la aplicación, que responde con inteligencia artificial. No lo guardamos: solo contamos cuántas preguntas hace cada empresa al día.</li>
+    <li><strong>Preguntas al asistente:</strong> lo que escribes en el asistente de ayuda de la aplicación, que responde con inteligencia artificial.</li>
     <li><strong>Pago:</strong> cuando activemos los cobros, los datos de facturación que nos des. Los datos de la tarjeta los gestiona directamente el proveedor de pagos; nosotros no los vemos.</li>
   </ul>
   <p>
@@ -88,19 +88,18 @@ const mail = `mailto:${owner.email}`;
   <ul>
     <li><strong>Mientras tengas cuenta,</strong> conservamos sus datos y los de tu negocio.</li>
     <li>
-      <strong>Si eliminas tu cuenta,</strong> borramos al momento sus datos y los de las empresas de las que eras el único
-      miembro. Las copias de seguridad, que no se pueden modificar, y los documentos que habías subido, que guardamos
-      para poder recuperarlos, desaparecen en un máximo de 31 días.
+      <strong>Si eliminas tu cuenta,</strong> borramos sus datos y los de las empresas de las que eras el único miembro.
+      Las copias de seguridad que los contengan se eliminan después, en su ciclo normal.
     </li>
-    <li><strong>Las sesiones</strong> caducan a los 7 días sin uso.</li>
+    <li><strong>Las sesiones,</strong> hasta que cierras sesión o caducan por falta de uso.</li>
     <li>
-      <strong>Las preguntas al asistente</strong> no las conservamos. El proveedor de inteligencia artificial puede
-      guardarlas, igual que los documentos que le pides leer, hasta 30 días para detectar abusos y después las borra.
+      <strong>Las preguntas al asistente</strong> no las guardamos. El proveedor de inteligencia artificial las conserva,
+      igual que los documentos que le pides leer, un tiempo limitado para detectar abusos y después las borra.
     </li>
-    <li><strong>Los registros técnicos</strong> se sobrescriben automáticamente por tamaño, normalmente en pocas semanas.</li>
+    <li><strong>Los registros técnicos,</strong> hasta que se sobrescriben automáticamente por tamaño.</li>
     <li>
-      <strong>Las facturas que te emitamos</strong> y sus datos de cobro, durante los 6 años que exige el Código de
-      Comercio, aunque elimines tu cuenta.
+      <strong>Las facturas que te emitamos</strong> y sus datos de cobro, durante los plazos que exige la ley, aunque
+      elimines tu cuenta.
     </li>
   </ul>
   <p>
@@ -125,7 +124,7 @@ const mail = `mailto:${owner.email}`;
       </tr>
       <tr>
         <td>Cloudflare, Inc.</td>
-        <td>Red de distribución, DNS y protección frente a ataques; el tráfico pasa cifrado por su red</td>
+        <td>Red de distribución, DNS y protección frente a ataques</td>
         <td>Global, con sede en EE. UU.</td>
       </tr>
       <tr>
@@ -135,16 +134,14 @@ const mail = `mailto:${owner.email}`;
       </tr>
       <tr>
         <td>Functional Software, Inc. (Sentry)</td>
-        <td>Informes de errores del servidor: el error y dónde ocurrió, sin el contenido de tus datos</td>
+        <td>Informes de errores del servidor</td>
         <td>Alemania (UE), con sede en EE. UU.</td>
       </tr>
       <tr>
         <td>OpenAI Ireland Ltd.</td>
         <td>
-          Leer con inteligencia artificial las facturas recibidas y los tickets que subes, cuando lo pides: recibe el
-          documento y devuelve sus datos para que los revises. Y el asistente de ayuda: recibe tus preguntas, la
-          conversación y la documentación de cuentalibre, nunca los datos de tu contabilidad. No usa nada de ello para
-          entrenar sus modelos
+          Leer con inteligencia artificial los documentos que subes, cuando lo pides, y responder a las preguntas del
+          asistente de ayuda
         </td>
         <td>Irlanda (UE), con sede en EE. UU.</td>
       </tr>
@@ -161,26 +158,15 @@ const mail = `mailto:${owner.email}`;
 
   <h2>Transferencias fuera de la Unión Europea</h2>
   <p>
-    Tus datos se almacenan en la Unión Europea. Cloudflare es una empresa estadounidense y el tráfico puede pasar por
-    servidores fuera de la UE. Está adherida al Marco de Privacidad de Datos UE-EE. UU. y, además, hemos suscrito con
-    ella las cláusulas contractuales tipo de la Comisión Europea. Sentry también es estadounidense: guarda los informes
-    de errores en Alemania y su contrato de encargo incluye esas mismas cláusulas. OpenAI puede procesar en EE. UU. los
-    documentos que lee y las preguntas al asistente; su contrato de encargo también incluye las cláusulas
-    contractuales tipo.
+    Tus datos se almacenan en la Unión Europea. Cloudflare, Sentry y OpenAI son empresas estadounidenses y pueden
+    tratar datos fuera de la UE. Esas transferencias se amparan en las cláusulas contractuales tipo de la Comisión
+    Europea y, cuando el proveedor está adherido, en el Marco de Privacidad de Datos UE-EE. UU.
   </p>
 
-  <h2>Cómo protegemos tus datos</h2>
-  <ul>
-    <li>Todas las conexiones van cifradas (HTTPS).</li>
-    <li>Las contraseñas se guardan con hash y nunca en claro.</li>
-    <li>Los datos de cada empresa están separados de los de las demás.</li>
-    <li>El acceso a los servidores está restringido y solo es posible con clave criptográfica.</li>
-    <li>Hacemos copias de seguridad cada noche, protegidas contra el borrado durante 30 días.</li>
-    <li>Si borras un documento por error, podemos recuperarlo durante 31 días.</li>
-  </ul>
+  <h2>Seguridad</h2>
   <p>
-    Si sufriéramos una brecha de seguridad que afecte a tus datos, lo notificaremos a la Agencia Española de Protección
-    de Datos en un máximo de 72 horas y te avisaremos si supone un riesgo alto para ti.
+    Aplicamos medidas técnicas y organizativas adecuadas al riesgo, conforme al artículo 32 del RGPD. Si sufriéramos
+    una brecha de seguridad, actuaremos como establecen los artículos 33 y 34 del RGPD.
   </p>
 
   <h2>Tus derechos</h2>
@@ -195,7 +181,7 @@ const mail = `mailto:${owner.email}`;
   </ul>
   <p>
     Para lo que no puedas hacer desde la aplicación, escríbenos a <a href={mail}>{owner.email}</a> desde el correo de
-    tu cuenta. Te responderemos en un plazo máximo de un mes. Si crees que no hemos atendido bien tu solicitud, puedes
+    tu cuenta. Te responderemos en los plazos que fija el RGPD. Si crees que no hemos atendido bien tu solicitud, puedes
     reclamar ante la <a href="https://www.aepd.es">Agencia Española de Protección de Datos</a>.
   </p>
 
