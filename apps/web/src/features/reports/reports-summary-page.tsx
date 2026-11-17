@@ -210,8 +210,11 @@ function MonthsTable({ months }: { months: MonthResult[] }) {
     profit: sumBy(months, (m) => m.profit),
   };
   const margin = (m: { income: Cents; profit: Cents }) => (m.income ? formatPercent((m.profit / m.income) * 100) : "—");
-  const th = cn(table.th, "text-right first:text-left");
-  const td = cn(table.td, "text-right amount");
+  // Phones: tighter cells, so six-figure amounts still fit the four columns
+  const phone = "max-sm:px-1.5 max-sm:first:pl-4 max-sm:last:pr-4";
+  const th = cn(table.th, phone, "text-right first:text-left");
+  const td = cn(table.td, phone, "text-right amount");
+  const rowHead = cn(table.td, phone, "text-left");
 
   return (
     <section
@@ -246,7 +249,7 @@ function MonthsTable({ months }: { months: MonthResult[] }) {
           <tbody>
             {months.map((m) => (
               <tr key={m.month} className={table.row}>
-                <th scope="row" className={cn(table.td, "text-left font-medium")}>
+                <th scope="row" className={cn(rowHead, "font-medium")}>
                   <span className="sm:hidden">{MONTHS_SHORT[m.month]}</span>
                   <span className="hidden sm:inline">{MONTHS[m.month]}</span>
                 </th>
@@ -259,7 +262,7 @@ function MonthsTable({ months }: { months: MonthResult[] }) {
           </tbody>
           <tfoot>
             <tr className="border-t border-border bg-muted/50 font-semibold">
-              <th scope="row" className={cn(table.td, "text-left")}>
+              <th scope="row" className={rowHead}>
                 Total
               </th>
               <td className={td}>{formatEUR(totals.income)}</td>

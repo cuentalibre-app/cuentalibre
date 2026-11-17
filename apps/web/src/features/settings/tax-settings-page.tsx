@@ -115,10 +115,13 @@ function ActivitiesTable({
         <>
           <ol className="m-0 flex list-none flex-col rounded-lg border border-border px-3 py-0 md:hidden">
             {activities.map((a, i) => (
-              <li key={a.id} className="flex items-center gap-2 border-t border-divider py-2.5 first:border-t-0">
-                <span className="w-5 shrink-0 amount text-muted-foreground">{i + 1}</span>
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm">
+              <li key={a.id} className="flex flex-col border-t border-divider py-1.5 first:border-t-0">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 shrink-0 amount text-sm text-muted-foreground">{i + 1}</span>
                   {i === 0 && principal}
+                  <span className="ml-auto">{rowActions(a, i)}</span>
+                </div>
+                <div className="flex flex-col gap-0.5 pb-1 pl-7 text-sm">
                   {(a.code || a.name) && (
                     <span>
                       {a.code && <span className="text-muted-foreground tabular-nums">{a.code}</span>} {a.name}
@@ -128,7 +131,6 @@ function ActivitiesTable({
                     <span className="tabular-nums">{a.type}</span> {typeLabel(a.type)}
                   </span>
                 </div>
-                {rowActions(a, i)}
               </li>
             ))}
           </ol>
@@ -353,7 +355,7 @@ export function TaxSettingsPage() {
                 />
               )}
             </Field>
-            <Field label="Retención de IRPF" hint="Si el cliente tiene una retención en su ficha, se usa la suya.">
+            <Field label="Retención de IRPF" help="Si el cliente tiene una retención en su ficha, se usa la suya.">
               {(p) => (
                 <GroupedSelect
                   {...p}
@@ -370,11 +372,7 @@ export function TaxSettingsPage() {
           <Field
             label="Cuota mensual (RETA)"
             error={feeError}
-            hint={
-              feeError
-                ? undefined
-                : `Se propone al registrar la cuota como gasto y se muestra en el calendario fiscal. Al año: ${formatEUR(cents((parsedFee ?? 0) * 12))}.`
-            }
+            help={`Se propone al registrar la cuota como gasto y se muestra en el calendario fiscal. Al año: ${formatEUR(cents((parsedFee ?? 0) * 12))}.`}
             className="max-w-sm"
           >
             {(p) => (
@@ -402,6 +400,7 @@ export function TaxSettingsPage() {
         <Section title="Facturas a clientes sin identificar" index={4}>
           <VariousClients value={draft.variousClientsId} onChange={(id) => set("variousClientsId", id)} />
         </Section>
+        <SaveButton dirty={dirty && !feeError} justSaved={justSaved} onSave={save} bottom />
       </Page>
     </TooltipProvider>
   );

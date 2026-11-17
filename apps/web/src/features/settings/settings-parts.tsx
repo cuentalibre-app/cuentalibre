@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@cuentalibre/ui/components/dialog";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
+import { cn } from "@cuentalibre/ui/lib/cn";
 import { BackLink, HelpTip, PageHeader } from "@/components/page";
 import { sameValue } from "@/lib/same-value";
 import { SETTINGS_PATH } from "./settings-model";
@@ -44,7 +45,6 @@ export function SettingsHeader({
   children?: ReactNode;
 }) {
   const origin = (useLocation().state as { from?: Origin } | null)?.from;
-  // On phones the actions take their own row, so the title isn't squeezed into a narrow column
   return (
     <PageHeader
       title={title}
@@ -57,7 +57,6 @@ export function SettingsHeader({
       }
       back={<BackLink to={origin?.path ?? back} label={`Volver a ${origin?.label ?? "configuración"}`} />}
       actions={children}
-      actionsClassName="max-sm:basis-full"
     />
   );
 }
@@ -83,19 +82,30 @@ export function useDraft<T>(saved: T) {
   };
 }
 
-export function SaveButton({ dirty, justSaved, onSave }: { dirty: boolean; justSaved: boolean; onSave: () => void }) {
+interface SaveProps {
+  dirty: boolean;
+  justSaved: boolean;
+  onSave: () => void;
+}
+
+/**
+ * The page's one save action, where the forms put theirs: in the header on desktop, full width at
+ * the end of the page on phones. Render it in the header and again with `bottom` where the
+ * saved fields end.
+ */
+export function SaveButton({ dirty, justSaved, onSave, bottom }: SaveProps & { bottom?: boolean }) {
   return (
-    <>
+    <div className={cn("items-center gap-x-3 gap-y-2", bottom ? "flex flex-wrap lg:hidden" : "hidden lg:flex")}>
       {justSaved && !dirty && (
         <span role="status" className="flex items-center gap-1.5 text-sm text-success">
           <Check className="size-4" aria-hidden="true" />
           Cambios guardados
         </span>
       )}
-      <Button onClick={onSave} disabled={!dirty}>
+      <Button onClick={onSave} disabled={!dirty} className={cn(bottom && "flex-1")}>
         Guardar cambios
       </Button>
-    </>
+    </div>
   );
 }
 

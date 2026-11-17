@@ -117,7 +117,8 @@ function ContactSheet({ role, contact }: { role: ContactRole; contact: Contact }
                   </DropdownMenuTrigger>
                 }
               />
-              <Button variant="secondary" onClick={newDocument.run}>
+              {/* Phones reach it through the ⋯ menu, which lists it too */}
+              <Button variant="secondary" className="max-sm:hidden" onClick={newDocument.run}>
                 {newDocument.label}
               </Button>
               <Link to={editContactPath(role, contact.id)} className={buttonVariants()}>

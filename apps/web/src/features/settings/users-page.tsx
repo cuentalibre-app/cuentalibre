@@ -26,7 +26,7 @@ import { formatDate } from "@/lib/format";
 import { ConfirmDialog, SettingsHeader } from "./settings-parts";
 import { useUserSettings } from "./user-store";
 import { isExpired, ROLES, roleLabel, toCompanyUser, useUsers, usersStore } from "./users-store";
-import { Page } from "@/components/page";
+import { Page, WithHelpTip } from "@/components/page";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -227,7 +227,8 @@ function UsersTable({
   readOnly = false,
 }: {
   title: string;
-  description: string;
+  /** Explanation behind a help icon beside the title. */
+  description?: string;
   users: CompanyUser[];
   empty: { message: string; hint: string; action?: ReactNode };
   actions: (user: CompanyUser) => Action[][];
@@ -257,10 +258,9 @@ function UsersTable({
       className="flex animate-rise-in flex-col gap-3"
       style={{ "--i": index } as CSSProperties}
     >
-      <div className="flex flex-col gap-0.5">
-        <h2 className="m-0 text-lg font-semibold tracking-tight">{title}</h2>
-        <p className="m-0 text-sm text-muted-foreground">{description}</p>
-      </div>
+      <h2 className="m-0 text-lg font-semibold tracking-tight">
+        {description ? <WithHelpTip text={title} help={description} /> : title}
+      </h2>
 
       {users.length === 0 ? (
         <div className="surface">
@@ -397,7 +397,6 @@ function MembersPage() {
           index={0}
           readOnly
           title="Usuarios con acceso a la empresa"
-          description="Quién tiene acceso a tu empresa."
           users={members}
           actions={() => []}
           onEdit={() => {}}
@@ -438,9 +437,9 @@ function DemoUsersPage() {
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
         <SettingsHeader title="Gestión de usuarios" description="Las personas que tienen acceso a tu empresa.">
-          <Button onClick={() => setEditing({ user: null, kind: "member" })}>
+          <Button onClick={() => setEditing({ user: null, kind: "member" })} className="max-lg:size-10 max-lg:px-0">
             <Plus aria-hidden="true" />
-            Nuevo usuario
+            <span className="max-lg:sr-only">Nuevo usuario</span>
           </Button>
         </SettingsHeader>
 
@@ -454,7 +453,6 @@ function DemoUsersPage() {
         <UsersTable
           index={0}
           title="Usuarios con acceso a la empresa"
-          description="Quién tiene acceso a tu empresa."
           users={members}
           actions={actions}
           onEdit={(u) => setEditing({ user: u, kind: u.kind })}

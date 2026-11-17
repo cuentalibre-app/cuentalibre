@@ -51,19 +51,34 @@ function Variation({ current, previous }: { current: number; previous: number })
   );
 }
 
+/**
+ * Phones lay each row out as a grid: the label across the full width and the two years under it, so long labels
+ * ("68. Dotaciones para amortizaciones") keep one line instead of wrapping beside the amounts.
+ */
+const phoneRow = "max-sm:grid max-sm:grid-cols-2";
+const phoneLabel = "max-sm:col-span-2 max-sm:border-l-0";
+/** No column rules on phones: the years sit right under their label. */
+const phoneYear = "max-sm:border-l-0";
+
 function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] }) {
   return (
-    <table className="w-full border-collapse text-sm sm:text-base">
-      <thead>
-        <tr className="bg-foreground text-background">
-          <th scope="col" className="border-l border-border px-3 py-2 text-left font-semibold first:border-l-0">
+    <table className="w-full border-collapse text-sm max-sm:block sm:text-base">
+      <thead className="max-sm:block">
+        <tr className={cn("bg-foreground text-background", phoneRow)}>
+          <th
+            scope="col"
+            className="border-l border-border px-3 py-2 text-left font-semibold first:border-l-0 max-sm:hidden"
+          >
             <span className="sr-only">Concepto</span>
           </th>
           {years.map((y) => (
             <th
               key={y}
               scope="col"
-              className="border-l border-border px-3 py-2 text-right amount font-semibold first:border-l-0"
+              className={cn(
+                "border-l border-border px-3 py-2 text-right amount font-semibold first:border-l-0",
+                "max-sm:border-l-0",
+              )}
             >
               {y}
             </th>
@@ -76,7 +91,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
           </th>
         </tr>
       </thead>
-      <tbody>
+      <tbody className="max-sm:block">
         {rows.map((row, i) => {
           const [current, previous] = row.values;
           const isTotal = row.kind === "section" || row.kind === "result";
@@ -85,8 +100,11 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
               key={`${row.kind}-${row.label}`}
               className={cn(
                 "animate-row-in",
+                phoneRow,
                 row.kind === "section" && "border-b border-border [&>*]:pt-5",
                 row.kind === "result" && "[&>*]:py-3.5",
+                // Phones: the section and result spacing goes above the label, not between it and its amounts
+                "max-sm:[&>td]:pt-0.5 max-sm:[&>th]:pb-0",
                 row.kind === "result" && row.final && "border-t-2 border-foreground",
               )}
               style={{ "--i": i } as CSSProperties}
@@ -95,6 +113,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
                 scope="row"
                 className={cn(
                   "border-l border-border px-3 py-1.5 text-left font-normal first:border-l-0",
+                  phoneLabel,
                   row.kind === "section" && "text-md font-medium",
                   row.kind === "line" && "pl-6",
                   row.kind === "account" && "pl-10 text-sm text-muted-foreground",
@@ -108,6 +127,7 @@ function ReportTable({ rows, years }: { rows: PnlRow[]; years: [number, number] 
                   key={j}
                   className={cn(
                     "border-l border-border px-3 py-1.5 text-right amount whitespace-nowrap first:border-l-0",
+                    phoneYear,
                     isTotal ? "font-semibold" : "pr-5",
                     row.kind === "account" && "text-sm text-muted-foreground",
                     v === 0 && row.kind === "line" && "text-muted-foreground",
@@ -217,10 +237,11 @@ export function ProfitLossPage() {
                   { value: "extended", label: "Extendida" },
                 ]}
               />
-              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} />
-              <Button variant="secondary" onClick={exportPdf}>
+              <PeriodSelect value={period} onChange={setPeriod} years={availableYears} today={today} compact />
+              {/* An icon on phones, so the version, the period and the export share the row under the title */}
+              <Button variant="secondary" onClick={exportPdf} className="max-lg:size-10 max-lg:px-0">
                 <Download strokeWidth={1.8} aria-hidden="true" />
-                Exportar PDF
+                <span className="max-lg:sr-only">Exportar PDF</span>
               </Button>
             </>
           }
@@ -256,7 +277,9 @@ export function ProfitLossPage() {
               No hay facturas ni gastos entre el 1 de enero y el final del periodo, ni en {year} ni en {year - 1}.
             </p>
           ) : (
-            <div className="-mx-3 overflow-x-auto sm:mx-0">
+            // Scrolls only sideways: the rows' entrance slides them up from below, and Chrome keeps that overflow
+            // after the animation, which left the box a few pixels of vertical scroll
+            <div className="-mx-3 overflow-x-auto overflow-y-hidden sm:mx-0">
               <ReportTable rows={rows} years={years} />
             </div>
           )}

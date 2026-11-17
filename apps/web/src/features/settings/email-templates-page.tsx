@@ -235,9 +235,9 @@ export function EmailTemplatesPage() {
           title="Plantillas de correo"
           description="El asunto y el mensaje con los que envías facturas, presupuestos y albaranes."
         >
-          <Button onClick={() => setEditing("new")}>
+          <Button className="max-lg:size-10 max-lg:px-0" onClick={() => setEditing("new")}>
             <Plus aria-hidden="true" />
-            Nueva plantilla
+            <span className="max-lg:sr-only">Nueva plantilla</span>
           </Button>
         </SettingsHeader>
 

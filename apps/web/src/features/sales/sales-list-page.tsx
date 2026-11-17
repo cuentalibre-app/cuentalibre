@@ -289,7 +289,7 @@ export function SalesListPage({ kind }: { kind: SalesKind }) {
             <SearchField
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Número, cliente o NIF"
+              placeholder={desktop ? "Número, cliente o NIF" : "Buscar"}
               aria-label="Buscar"
             />
             {statusFilter && <div className="max-lg:hidden">{statusFilter}</div>}

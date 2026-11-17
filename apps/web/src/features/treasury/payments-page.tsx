@@ -21,6 +21,7 @@ import {
   ToolbarButton,
   downloadCsv,
   type Action,
+  useIsDesktop,
 } from "@/features/sales/list-parts";
 import { ConfirmDialog } from "@/features/settings/settings-parts";
 import { useSettings } from "@/features/settings/settings-store";
@@ -56,6 +57,7 @@ interface Sort {
 
 /** Banks: what came in and went out over the last year, and every collection and payment. */
 export function PaymentsPage() {
+  const desktop = useIsDesktop();
   const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
@@ -131,6 +133,17 @@ export function PaymentsPage() {
     />
   );
 
+  const periodSelect = (className: string, compact = false) => (
+    <PeriodSelect
+      compact={compact}
+      value={period}
+      onChange={setPeriod}
+      years={availableYears}
+      today={today}
+      className={className}
+    />
+  );
+
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
       <Page>
@@ -139,33 +152,19 @@ export function PaymentsPage() {
           inline={
             <>
               <HelpTip side="bottom">Los cobros y pagos del periodo, por cuenta, tarjeta o caja.</HelpTip>
-              {/* Below lg the new-payment action is an icon beside the period, so both share one row */}
-              <div className="flex w-full items-center gap-2 sm:w-auto">
-                <PeriodSelect
-                  value={period}
-                  onChange={setPeriod}
-                  years={availableYears}
-                  today={today}
-                  className="h-12 min-w-0 flex-1 sm:h-10 sm:w-auto sm:flex-none"
-                />
-                <Button
-                  aria-label="Nuevo cobro / pago manual"
-                  onClick={() => setCreating(true)}
-                  className="size-12 shrink-0 px-0 sm:size-10 lg:hidden"
-                >
-                  <Plus strokeWidth={2} aria-hidden="true" />
-                </Button>
-              </div>
+              {periodSelect("max-lg:hidden")}
             </>
           }
-          actionsClassName="max-lg:hidden"
           actions={
-            <Button onClick={() => setCreating(true)}>
+            // An icon on phones, beside the title like the lists' new-document button
+            <Button onClick={() => setCreating(true)} className="max-lg:size-10 max-lg:px-0">
               <Plus strokeWidth={2} aria-hidden="true" />
-              Nuevo cobro / pago manual
+              <span className="max-lg:sr-only">Nuevo cobro / pago manual</span>
             </Button>
           }
         />
+        {/* On phones the period goes under the title, compact as in the lists */}
+        {periodSelect("self-start lg:hidden", true)}
 
         <dl className="m-0 grid animate-rise-in grid-cols-3 gap-3 lg:gap-4">
           {[
@@ -198,7 +197,7 @@ export function PaymentsPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Documento, contacto o importe"
+              placeholder={desktop ? "Documento, contacto o importe" : "Buscar"}
               aria-label="Buscar"
             />
             <GroupedSelect
