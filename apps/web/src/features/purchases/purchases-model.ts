@@ -35,7 +35,7 @@ export const purchasePath = (doc: Pick<PurchaseInvoice, "id" | "asset">) =>
 export type PurchaseStatus = "pending" | "partial" | "paid" | "overdue";
 
 export const PURCHASE_STATUS: Record<PurchaseStatus, { label: string; tone: BadgeProps["tone"]; hint: string }> = {
-  pending: { label: "Pendiente", tone: "neutral", hint: "Sin pagos registrados." },
+  pending: { label: "Pendiente", tone: "primary", hint: "Sin pagos registrados." },
   partial: { label: "Pago parcial", tone: "warning", hint: "Se ha pagado una parte del total." },
   paid: { label: "Pagada", tone: "success", hint: "Los pagos cubren el total de la factura." },
   overdue: { label: "Vencida", tone: "danger", hint: "Ha pasado el vencimiento y no está pagada del todo." },
