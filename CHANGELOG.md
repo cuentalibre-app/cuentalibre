@@ -4,6 +4,15 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.2.0 (2026-11-17)
+
+* Announce the Three Kings launch offer on the site by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/125
+* Update hono, @hono/node-server and nodemailer by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/126
+* Trim fixed deadlines and guarantees from the legal pages by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/127
+* Draw the site in the app's ink and cobalt by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/128
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v1.1.0...v1.2.0
+
 ## 1.1.0 (2026-11-17)
 
 * Answer the help chat from the docs, streamed from the API by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/105
