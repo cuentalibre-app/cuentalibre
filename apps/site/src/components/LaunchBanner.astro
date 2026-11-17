@@ -1,0 +1,82 @@
+---
+import { launchOffer } from "../site";
+
+/*
+ * The launch offer bar: a Three Kings night sky, with the caravan walking toward
+ * the star on wide screens. Drawn inline so it stays sharp and weighs nothing.
+ */
+---
+
+<div data-launch-banner class="offer-sky relative overflow-hidden [.offer-dismissed_&]:hidden">
+<a href="#precio" class="block px-11 py-2.5 text-center no-underline sm:py-3">
+  <svg aria-hidden="true" class="pointer-events-none absolute inset-0 size-full" preserveAspectRatio="none">
+    <circle cx="8%" cy="30%" r="0.8" class="fill-offer-star opacity-70" />
+    <circle cx="22%" cy="70%" r="0.6" class="fill-offer-star opacity-50" />
+    <circle cx="41%" cy="18%" r="0.7" class="fill-offer-star opacity-60" />
+    <circle cx="63%" cy="80%" r="0.6" class="fill-offer-star opacity-50" />
+    <circle cx="77%" cy="25%" r="0.8" class="fill-offer-star opacity-70" />
+    <circle cx="93%" cy="65%" r="0.6" class="fill-offer-star opacity-50" />
+  </svg>
+
+  <!-- The caravan, heading right toward the star -->
+  <svg
+    aria-hidden="true"
+    viewBox="0 -8 176 46"
+    class="pointer-events-none absolute bottom-0 left-[max(16px,calc(50%-600px))] hidden h-[34px] fill-offer-silhouette xl:block"
+  >
+    {
+      [0, 60, 120].map((x) => (
+        <g transform={`translate(${x} 0)`}>
+          <path d="M4 22C6 14 14 12 18 14C22 8 30 8 33 15C36 17 38 16 40 12L44 6C45 4 49 4 50 6L52 8L49 9L46 9L42 18C41 22 39 24 37 25L38 38L36 38L35 26L33 26L33 38L31 38L31 26C27 27 20 27 16 26L15 38L13 38L13 25L11 25L10 38L8 38L9 23C7 23 5 26 4 30L3 30Z" />
+          <path d="M22 12C22 4 30 4 30 12Z" />
+          <circle cx="26" cy="1" r="2.6" />
+          <path d="M23.5 -0.5L24 -4L25.2 -2L26 -5L26.8 -2L28 -4L28.5 -0.5Z" />
+        </g>
+      ))
+    }
+  </svg>
+
+  <!-- The star and its tail -->
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 120 24"
+    class="pointer-events-none absolute top-1/2 right-[max(56px,calc(50%-560px))] hidden h-6 -translate-y-1/2 drop-shadow-[0_0_6px_var(--color-offer-star)] xl:block"
+  >
+    <defs>
+      <linearGradient id="offer-tail" x1="0" x2="1">
+        <stop offset="0" stop-color="var(--color-offer-star)" stop-opacity="0" />
+        <stop offset="1" stop-color="var(--color-offer-star)" stop-opacity="0.7" />
+      </linearGradient>
+    </defs>
+    <path d="M10 10.5L100 11.2L100 12.8L10 13.5Z" fill="url(#offer-tail)" />
+    <path d="M108 2L110 10L118 12L110 14L108 22L106 14L98 12L106 10Z" class="fill-offer-star" />
+  </svg>
+
+  <span class="offer-gold relative text-[13px] font-semibold sm:text-[14px]">
+    <span class="sm:hidden">Precio de lanzamiento hasta Reyes</span>
+    <span class="hidden sm:inline">
+      Oferta de Reyes: date de alta en Cloud antes del {launchOffer.untilShort} y conserva el precio de lanzamiento para
+      siempre.
+    </span>
+    <span class="ml-2 hidden underline decoration-offer-gold-deep underline-offset-2 sm:inline">Ver precios</span>
+  </span>
+</a>
+<button
+  type="button"
+  data-launch-banner-close
+  aria-label="Cerrar"
+  class="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-offer-gold-light hover:bg-white/10 sm:right-3"
+>
+  <svg aria-hidden="true" viewBox="0 0 24 24" class="size-4 fill-none stroke-current [stroke-linecap:round] [stroke-width:2]"><path d="M6 6l12 12M18 6L6 18" /></svg>
+</button>
+</div>
+
+<script>
+  // Closing the bar hides it on this device for the rest of the offer
+  document.querySelector("[data-launch-banner-close]")?.addEventListener("click", () => {
+    document.documentElement.classList.add("offer-dismissed");
+    try {
+      localStorage.setItem("cuentalibre:offer-dismissed", "1");
+    } catch {}
+  });
+</script>
