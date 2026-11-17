@@ -105,6 +105,9 @@
   /* Anchored sections land below the sticky header, not under it */
   html {
     scroll-padding-top: 5rem;
+    &:has([data-launch-banner]):not(.offer-dismissed) {
+      scroll-padding-top: 8rem;
+    }
     @media (prefers-reduced-motion: no-preference) {
       scroll-behavior: smooth;
     }
