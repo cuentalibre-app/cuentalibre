@@ -19,7 +19,7 @@ export interface TourStep {
 
 export const TOUR_STEPS: TourStep[] = [
   {
-    title: "Te damos la bienvenida",
+    title: "¡Te damos la bienvenida!",
     body: "Lo básico en un minuto. Puedes saltarlo cuando quieras.",
     targets: [],
   },
