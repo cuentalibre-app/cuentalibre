@@ -12,9 +12,6 @@ allowBuilds:
 
 auditConfig:
   ignoreGhsas:
-    # undici, through astro > unifont, only fetches fonts while the site builds. The fix
-    # (8.12.2) is younger than minimumReleaseAge; drop this once it installs (from 2026-10-29).
-    - GHSA-xjj6-f33q-929c
-    - GHSA-4w7w-5xrc-9h26
-    - GHSA-2m5v-pch6-74hx
-    - GHSA-qrxm-fqhp-jwvm
+    # picomatch, through the site's build tooling (astro, vite), only matches our own globs while
+    # the site builds. No patched version yet; drop this once one installs (from 2026-11-17).
+    - GHSA-fc5q-39xc-vjpf
