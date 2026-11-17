@@ -57,8 +57,8 @@
   background-color: var(--tag);
   color: var(--tag-text);
   &:where(.dark *) {
-    background-color: oklch(from var(--tag) 0.33 min(calc(c* 1.8), 0.09) h);
-    color: oklch(from var(--tag) 0.9 min(calc(c* 1.6), 0.08) h);
+    background-color: oklch(from var(--tag) 0.33 min(calc(c * 1.8), 0.09) h);
+    color: oklch(from var(--tag) 0.9 min(calc(c * 1.6), 0.08) h);
   }
 }
 
