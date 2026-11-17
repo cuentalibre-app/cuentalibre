@@ -24,6 +24,7 @@ packages/ui         Design tokens, base styles, components
 - Public API change (route, field, rule, error code): update `apps/api/README.md`, `apps/site/src/content/docs/api/` and `.agents/skills/cuentalibre/references/` in the same change.
 - Schema change: edit `apps/api/src/db/schema/`, run `pnpm --filter @cuentalibre/api db:generate --name <what_changed>`, review the SQL.
 - UI: no captions under fields or page titles (use `HelpTip`); check touched screens on desktop and phone, light and dark.
+- Phone (390 px): no horizontal scroll, no cut or wrapped labels. Headers use `PageHeader` (the assistant stays beside the title; only the page's controls wrap); create actions become a `+` icon; one «Guardar cambios» per page (header on desktop, full width at the end on phones); search placeholders say «Buscar»; long explanations start folded; tables fit without breaking labels.
 - Never name commercial accounting software anywhere.
 - Commits: imperative subject saying what changes; body says why.
 - Before changing Turborepo config, read the docs bundled in the installed `turbo` package (`node_modules/turbo/docs/`).
