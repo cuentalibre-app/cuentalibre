@@ -150,7 +150,7 @@ export type StatusKey = SalesDocument["status"] | "partial" | "overdue" | "draft
 
 export const STATUS: Record<StatusKey, { label: string; tone: BadgeProps["tone"] }> = {
   draft: { label: "Borrador", tone: "neutral" },
-  pending: { label: "Pendiente", tone: "neutral" },
+  pending: { label: "Pendiente", tone: "primary" },
   partial: { label: "Cobro parcial", tone: "warning" },
   overdue: { label: "Vencida", tone: "danger" },
   paid: { label: "Cobrada", tone: "success" },
