@@ -47,6 +47,12 @@ export const cloudBilling = [
   { id: "yearly", label: "Anual", perMonth: "3,99", charged: "47,88 € al año", saving: "20 %" },
 ] as const;
 
+/**
+ * Launch offer: organizations created before this date keep the current Cloud prices
+ * for as long as they stay subscribed. Remove the banner once the date has passed.
+ */
+export const launchOffer = { until: "6 de enero de 2027", untilShort: "6 de enero" };
+
 /** The legal pages, in the order the footers list them. */
 export const legalPages = [
   { path: "/aviso-legal", label: "Aviso legal" },
