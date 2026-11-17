@@ -51,7 +51,7 @@ export const cloudBilling = [
  * Launch offer: organizations created before this date keep the current Cloud prices
  * for as long as they stay subscribed. Remove the banner once the date has passed.
  */
-export const launchOffer = { until: "31 de enero de 2027", untilShort: "31 de enero" };
+export const launchOffer = { until: "6 de enero de 2027", untilShort: "6 de enero" };
 
 /** The legal pages, in the order the footers list them. */
 export const legalPages = [
