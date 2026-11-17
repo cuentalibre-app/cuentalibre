@@ -28,10 +28,10 @@
   --primary-soft: var(--cobalt-50); /* highlighted period, pending status, info notes */
   --primary-soft-foreground: var(--cobalt-700); /* icons and labels on primary-soft */
   --selection: var(--cobalt-200); /* selected text */
-  /* Brand gradient: calls to action and plan cards on the public site */
-  --brand-violet: var(--violet-500);
-  --brand-teal: var(--teal-600);
-  --brand-gradient: linear-gradient(90deg, var(--primary) 0%, var(--brand-violet) 55%, var(--brand-teal) 100%);
+  /* The site's accent: the cobalt the app gives income, in washes behind the hero and the chat */
+  --brand-cobalt: var(--cobalt-600);
+  /* Plan cards on the public site: the logo's ink columns into cobalt and its slate head */
+  --brand-gradient: linear-gradient(90deg, var(--primary) 0%, var(--brand-cobalt) 60%, var(--brand-mark) 100%);
   /* Frosted surfaces floating over the page: the tab bar and its sheets */
   --glass: color-mix(in oklab, var(--popover) 30%, transparent);
   --glass-edge: color-mix(in oklab, var(--neutral-0) 70%, transparent);
@@ -110,8 +110,7 @@
   --primary-soft: #1a2538;
   --primary-soft-foreground: #9fbbef;
   --selection: #2c4470;
-  --brand-violet: #a08cf4;
-  --brand-teal: #4fc0db;
+  --brand-cobalt: #6f9ae6;
   --glass: color-mix(in oklab, #26272b 40%, transparent);
   --glass-edge: color-mix(in oklab, #ffffff 12%, transparent);
   --modal: color-mix(in oklab, #232429 97%, transparent);
