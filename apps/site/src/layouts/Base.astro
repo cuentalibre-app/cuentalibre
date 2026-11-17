@@ -2,8 +2,9 @@
 import "../styles/global.css";
 import GitHubIcon from "../components/GitHubIcon.astro";
 import Icon from "../components/Icon.astro";
+import LaunchBanner from "../components/LaunchBanner.astro";
 import Logo from "../components/Logo.astro";
-import { appLinks, demoLinkAttrs, externalLinkAttrs, launchOffer, legalPages, sourceUrl } from "../site";
+import { appLinks, demoLinkAttrs, externalLinkAttrs, legalPages, sourceUrl } from "../site";
 
 interface Props {
   title: string;
@@ -88,20 +89,7 @@ const year = new Date().getFullYear();
     </script>
   </head>
   <body>
-    {
-      launchBanner && (
-        <a
-          href="#precio"
-          class="block bg-primary px-4 py-2 text-center text-[13px] font-medium text-primary-foreground no-underline sm:text-[14px]"
-        >
-          <span class="sm:hidden">Cloud a precio de lanzamiento hasta el {launchOffer.untilShort}</span>
-          <span class="hidden sm:inline">
-            cuentalibre Cloud a precio de lanzamiento: date de alta antes del {launchOffer.untilShort} y lo mantienes para siempre.
-          </span>
-          <span class="ml-2 hidden font-semibold underline underline-offset-2 sm:inline">Ver precios</span>
-        </a>
-      )
-    }
+    {launchBanner && <LaunchBanner />}
     <div
       data-site-header
       class="sticky top-0 z-50 border-b border-transparent bg-background/80 backdrop-blur-md transition-colors duration-300 data-scrolled:border-divider"
