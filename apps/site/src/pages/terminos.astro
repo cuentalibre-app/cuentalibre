@@ -42,16 +42,17 @@ const mail = `mailto:${owner.email}`;
     Se paga por adelantado al principio de cada periodo y te enviaremos la factura de cada cobro.
   </p>
   <p>
-    <strong>Todavía no cobramos.</strong> Antes de empezar a hacerlo te avisaremos por correo con al menos 30 días de
-    antelación. Hasta entonces puedes usar el servicio sin coste. Si cuando llegue el momento no quieres pagar, podrás
-    exportar tus datos y eliminar tu cuenta sin ningún cargo.
+    <strong>Prueba gratuita.</strong> Cada empresa nueva tiene 30 días gratis con todas las funciones, sin tarjeta. Si
+    te suscribes durante la prueba, el primer cobro llega cuando termina. Si al acabar no te has suscrito, o si un cobro
+    falla y no se resuelve, la empresa pasa a modo lectura: puedes ver y exportar tus datos, pero no crear ni cambiar
+    nada hasta que te suscribas.
   </p>
   <p>
     <strong>Precio de lanzamiento.</strong> Si creaste tu cuenta antes del {launchOffer.until}, mantendrás estos
     precios mientras sigas suscrito, aunque los cambiemos para las cuentas nuevas.
   </p>
   <p>
-    Si cambiamos el precio, también te avisaremos con 30 días de antelación; el nuevo precio se aplicará a partir del
+    Si cambiamos el precio, también te avisaremos con antelación; el nuevo precio se aplicará a partir del
     siguiente periodo. Puedes darte de baja cuando quieras: conservarás el acceso hasta el final del periodo pagado y no
     devolvemos los periodos empezados.
   </p>
@@ -64,21 +65,24 @@ const mail = `mailto:${owner.email}`;
   <ul>
     <li>Eres responsable de la exactitud de los datos que introduces y de las facturas que emites.</li>
     <li>Revisa siempre los modelos calculados antes de presentarlos. La presentación ante la Agencia Tributaria y sus consecuencias te corresponden a ti.</li>
-    <li>Ponemos todo el cuidado en que los cálculos sigan la normativa vigente y corregimos los errores en cuanto los conocemos, pero no podemos garantizar que no los haya.</li>
+    <li>Procuramos que los cálculos sigan la normativa vigente, pero no garantizamos que estén libres de errores ni al día en todo momento.</li>
+    <li>Las funciones de inteligencia artificial, como la lectura de documentos o el asistente de ayuda, pueden equivocarse y no son asesoramiento: revisa siempre lo que proponen.</li>
   </ul>
 
   <h2>5. Tus datos son tuyos</h2>
   <p>
     Todo lo que introduces en cuentalibre te pertenece. Puedes <a href={appLinks.export}>exportarlo</a> en cualquier
-    momento en formatos abiertos, y llevarlo a otra aplicación o a una instalación propia de cuentalibre. No usamos tus
-    datos para nada distinto de prestarte el servicio.
+    momento. No usamos tus datos para nada distinto de prestarte el servicio.
   </p>
 
   <h2>6. Disponibilidad y copias de seguridad</h2>
   <p>
-    Trabajamos para que el servicio esté disponible siempre, pero no garantizamos un nivel concreto: puede haber
-    interrupciones por mantenimiento, actualizaciones o causas ajenas a nosotros. Hacemos una copia de seguridad cada
-    noche y la conservamos 30 días. Aun así, te recomendamos exportar tus datos de vez en cuando.
+    Procuramos que el servicio esté disponible, pero no garantizamos su disponibilidad ni un nivel concreto: puede haber
+    interrupciones por mantenimiento, actualizaciones o causas ajenas a nosotros. Hacemos copias de seguridad
+    periódicas, pero no garantizan que siempre se pueda recuperar todo: exporta tus datos de vez en cuando.
+  </p>
+  <p>
+    El servicio evoluciona: podemos cambiar, añadir o retirar funciones. Si retiramos una relevante, te avisaremos antes.
   </p>
 
   <h2>7. Uso aceptable</h2>
@@ -89,31 +93,36 @@ const mail = `mailto:${owner.email}`;
     <li>Sobrecargar el servicio, por ejemplo con peticiones automáticas que superen los límites de la API.</li>
     <li>Revender el acceso al servicio sin nuestro permiso.</li>
   </ul>
+  <p>
+    Si incumples este apartado y un tercero o una administración nos reclama por ello, responderás frente a nosotros de
+    los daños y gastos que nos cause.
+  </p>
 
   <h2>8. Responsabilidad</h2>
-  <p>
-    Respondemos de los daños que te causemos por incumplir estos términos. Salvo en caso de dolo o culpa grave, nuestra
-    responsabilidad total se limita a lo que nos hayas pagado en los 12 meses anteriores al hecho que la cause, y no
-    cubre el lucro cesante, la pérdida de negocio ni las sanciones derivadas de datos o declaraciones que no hayas
-    revisado.
-  </p>
+  <p>Respondemos de los daños que te causemos por incumplir estos términos con estos límites, salvo dolo o culpa grave:</p>
+  <ul>
+    <li>Nuestra responsabilidad total se limita a lo que nos hayas pagado en los 12 meses anteriores al hecho que la cause.</li>
+    <li>No respondemos del lucro cesante, la pérdida de negocio ni los daños indirectos.</li>
+    <li>No respondemos de las cuotas, sanciones, recargos ni intereses que te reclame la Administración tributaria: presentar tus declaraciones y revisarlas antes te corresponde a ti.</li>
+    <li>No respondemos de los fallos causados por terceros ajenos a nuestro control, como proveedores de infraestructura o las administraciones públicas, ni por fuerza mayor.</li>
+  </ul>
+  <p>Mientras uses el servicio sin pagar, lo ofrecemos tal cual, sin garantías de ningún tipo.</p>
 
   <h2>9. Baja y fin del servicio</h2>
   <ul>
     <li>
       <strong>Puedes darte de baja cuando quieras</strong> eliminando tu cuenta desde tu perfil. Se borrarán tus datos y
-      los de las empresas de las que eres el único miembro; las copias de seguridad desaparecen en un máximo de 31 días.
-      Exporta antes lo que necesites conservar.
+      los de las empresas de las que eres el único miembro; las copias de seguridad se eliminan después, en su ciclo
+      normal. Exporta antes lo que necesites conservar.
     </li>
     <li>
       <strong>Podemos suspender o cerrar tu cuenta</strong> si incumples gravemente estos términos o dejas de pagar,
-      avisándote antes salvo que haya un riesgo para la seguridad del servicio. Siempre te daremos al menos 30 días para
+      avisándote antes salvo que haya un riesgo para la seguridad del servicio. Te daremos un plazo razonable para
       exportar tus datos, salvo que una ley o una autoridad lo impidan.
     </li>
     <li>
-      <strong>Si dejamos de prestar el servicio,</strong> te avisaremos con al menos 60 días de antelación para que
-      puedas exportar tus datos. Como cuentalibre es software libre, siempre podrás seguir usándolo en tu propio
-      servidor.
+      <strong>Si dejamos de prestar el servicio,</strong> te avisaremos con antelación razonable para que puedas exportar
+      tus datos. Como cuentalibre es software libre, podrás seguir usándolo en tu propio servidor.
     </li>
   </ul>
 
@@ -136,17 +145,17 @@ const mail = `mailto:${owner.email}`;
     <li>Tratar los datos solo siguiendo tus instrucciones, que son estos términos y lo que hagas en la aplicación. Si una instrucción nos parece contraria a la normativa de protección de datos, te lo diremos.</li>
     <li>No usar los datos para fines propios ni comunicarlos a terceros, salvo a los subencargados indicados más abajo o cuando una ley nos obligue.</li>
     <li>Garantizar que quien acceda a los datos se ha comprometido a guardar confidencialidad.</li>
-    <li>Aplicar las medidas de seguridad del artículo 32 del RGPD descritas en la <a href="/privacidad">política de privacidad</a>.</li>
+    <li>Aplicar medidas de seguridad adecuadas al riesgo, conforme al artículo 32 del RGPD.</li>
     <li>Ayudarte a atender los derechos de los interesados, a evaluar el impacto de los tratamientos y a cumplir tus obligaciones de seguridad, en la medida en que la naturaleza del servicio lo permita.</li>
-    <li>Avisarte sin dilación indebida, y en todo caso en un plazo de 48 horas desde que la conozcamos, de cualquier brecha de seguridad que afecte a tus datos, con la información necesaria para que puedas notificarla.</li>
+    <li>Avisarte sin dilación indebida desde que la conozcamos de cualquier brecha de seguridad que afecte a tus datos, con la información necesaria para que puedas notificarla.</li>
     <li>Ponerte a disposición la información necesaria para demostrar que cumplimos esta cláusula y permitir auditorías razonables, con preaviso y a tu cargo.</li>
     <li>Al terminar el servicio, permitirte exportar los datos y suprimirlos después, incluidas las copias, salvo que una ley nos obligue a conservarlos.</li>
   </ul>
   <h3>Subencargados</h3>
   <p>
     Nos autorizas a recurrir a los proveedores enumerados en la <a href="/privacidad">política de privacidad</a>, con
-    los que hemos firmado contratos que les imponen las mismas obligaciones que esta cláusula. Te avisaremos con 30 días
-    de antelación de cualquier cambio; si no estás de acuerdo, puedes darte de baja antes de que entre en vigor.
+    los que hemos firmado contratos que les imponen las mismas obligaciones que esta cláusula. Te informaremos antes de
+    cualquier cambio; si no estás de acuerdo, puedes oponerte o darte de baja.
   </p>
   <h3>Tus obligaciones</h3>
   <p>
@@ -163,9 +172,9 @@ const mail = `mailto:${owner.email}`;
 
   <h2>12. Cambios en estos términos</h2>
   <p>
-    Si cambiamos estos términos de forma relevante, te avisaremos por correo al menos 30 días antes de que el cambio
-    entre en vigor. Si no estás de acuerdo, puedes darte de baja antes de esa fecha; si sigues usando el servicio, se
-    entenderá que aceptas los nuevos términos.
+    Si cambiamos estos términos de forma relevante, te avisaremos por correo con antelación razonable antes de que el
+    cambio entre en vigor. Si no estás de acuerdo, puedes darte de baja antes de esa fecha; si sigues usando el
+    servicio, se entenderá que aceptas los nuevos términos.
   </p>
 
   <h2>13. Ley aplicable y jurisdicción</h2>

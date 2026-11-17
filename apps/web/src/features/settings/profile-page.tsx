@@ -317,7 +317,7 @@ function DeleteAccountSection() {
           antes.
         </p>
         <p className="m-0">
-          De las empresas compartidas solo sales tú. Las copias de seguridad con tus datos se borran en 31 días.
+          De las empresas compartidas solo sales tú. Las copias de seguridad con tus datos se borran después, en su ciclo normal.
         </p>
       </div>
       <Button variant="destructive" className="self-start" onClick={() => setOpen(true)}>

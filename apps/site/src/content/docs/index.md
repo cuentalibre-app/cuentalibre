@@ -41,7 +41,7 @@ Es el mismo programa, con las mismas funciones. Cambia quién lo instala y lo ma
     <ul>
       <li>Sin instalar nada, desde cualquier navegador</li>
       <li>Actualizaciones automáticas</li>
-      <li>Copia de seguridad diaria</li>
+      <li>Copias de seguridad automáticas</li>
     </ul>
     <a class="doc-option-link" href="/#precio">Ver el precio →</a>
   </div>
