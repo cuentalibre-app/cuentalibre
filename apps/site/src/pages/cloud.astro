@@ -5,7 +5,7 @@ import Icon from "../components/Icon.astro";
 import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
 import { buttonRow, euroSign, eyebrow, indicator, primaryButton, secondaryButton, sectionTitle } from "../classes";
-import { appLinks, cloudBilling, demoLinkAttrs } from "../site";
+import { appLinks, cloudBilling, demoLinkAttrs, launchOffer } from "../site";
 import inicioMovilOscuro from "../assets/screens/inicio-movil-oscuro.jpg";
 import inicioMovil from "../assets/screens/inicio-movil.jpg";
 import inicioOscuro from "../assets/screens/inicio-oscuro.jpg";
@@ -68,7 +68,7 @@ const phoneShot =
   "mx-auto w-[min(260px,72vw)] md:absolute md:right-[-12px] md:bottom-0 md:mx-0 md:w-[21%] md:max-w-[250px]";
 ---
 
-<Base title={title} description={description}>
+<Base title={title} description={description} launchBanner>
   <main>
     <section class="mx-auto max-w-[1200px] px-4 pt-8 text-center sm:px-6 sm:pt-14 md:pt-22">
       <div class:list={[eyebrow, "animate-rise-in"]}>cuentalibre Cloud</div>
@@ -172,6 +172,10 @@ const phoneShot =
             </div>
           ))
         }
+        <div class="mt-4 flex items-start gap-2 rounded-lg bg-primary-soft px-3 py-2 text-[14px] text-foreground">
+          <Icon name="lock-keyhole" class="mt-[2px] size-4 shrink-0 text-primary" />
+          <span>Precio de lanzamiento: si te das de alta antes del {launchOffer.untilShort}, lo mantienes para siempre.</span>
+        </div>
         <ul class="m-0 mt-7 flex list-none flex-col gap-3 border-t border-primary-soft p-0 pt-6">
           {
             included.map((item) => (
