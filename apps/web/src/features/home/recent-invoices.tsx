@@ -11,7 +11,7 @@ import type { HomeData, InvoiceStatus } from "./home-data";
 
 const STATUS: Record<InvoiceStatus, { label: string; tone: BadgeProps["tone"] }> = {
   paid: { label: "Cobrada", tone: "success" },
-  pending: { label: "Pendiente", tone: "neutral" },
+  pending: { label: "Pendiente", tone: "primary" },
   overdue: { label: "Vencida", tone: "danger" },
 };
 

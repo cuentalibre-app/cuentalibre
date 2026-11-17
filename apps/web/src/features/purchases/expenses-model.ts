@@ -10,7 +10,7 @@ export const expensePath = (expense: Pick<Expense, "id">) => `${EXPENSES_PATH}/$
 export type ExpenseStatus = "pending" | "paid";
 
 export const EXPENSE_STATUS: Record<ExpenseStatus, { label: string; tone: BadgeProps["tone"]; hint: string }> = {
-  pending: { label: "Pendiente", tone: "neutral", hint: "Todavía no lo has pagado." },
+  pending: { label: "Pendiente", tone: "primary", hint: "Todavía no lo has pagado." },
   paid: { label: "Pagado", tone: "success", hint: "Pagado de una vez." },
 };
 

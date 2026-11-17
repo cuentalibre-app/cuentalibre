@@ -49,7 +49,7 @@ const radii = [
 ] as const;
 
 const invoices: { n: string; c: string; d: string; t: number; s: string; tone: BadgeProps["tone"] }[] = [
-  { n: "2026-0047", c: "Estudio Norte S.L.", d: "28 sep 2026", t: 4876, s: "Pendiente", tone: "neutral" },
+  { n: "2026-0047", c: "Estudio Norte S.L.", d: "28 sep 2026", t: 4876, s: "Pendiente", tone: "primary" },
   { n: "2026-0046", c: "Agencia Brisa", d: "15 sep 2026", t: 2120, s: "Cobrada", tone: "success" },
   { n: "2026-0045", c: "Talleres Ruiz S.C.", d: "02 sep 2026", t: 1060, s: "Vencida", tone: "danger" },
 ];
@@ -198,7 +198,7 @@ export function DesignSystemPage() {
       <Section title="Estados">
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="success">Cobrada</Badge>
-          <Badge tone="neutral">Pendiente</Badge>
+          <Badge tone="primary">Pendiente</Badge>
           <Badge tone="danger">Vencida</Badge>
           <Badge tone="warning">Borrador</Badge>
           <Badge tone="primary">Recurrente</Badge>
