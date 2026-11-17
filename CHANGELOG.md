@@ -4,6 +4,27 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.1.0 (2026-11-17)
+
+* Answer the help chat from the docs, streamed from the API by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/105
+* List OpenAI as a processor: document reading and help chat by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/106
+* Let companies download the AEAT file of their tax forms by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/109
+* Leave the income tax forms out for companies by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/111
+* User guide, and the help chat answers from it by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/107
+* Tell the help chat where everything is and what each screen has by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/112
+* Show bank logos for payment methods, read from the IBAN by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/114
+* Trim the help chat's prompt by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/115
+* Refresh the app screenshots and install the skill with npx skills by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/117
+* Trim AGENTS.md and stop turbo from injecting its agent block by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/116
+* List the other sales lists in the phone's "Más" sheet by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/118
+* Polish phone headers, save buttons and field help by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/119
+* Give income, statuses and table headers more color by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/122
+* Add the phone layout conventions to AGENTS.md by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/121
+* Refresh the screenshots, fold the plan features on phones and explain the assistant in the demo by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/123
+* Celebrate the welcome with an animated logo and confetti by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/124
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v1.0.0...v1.1.0
+
 ## 1.0.0 (2026-11-15)
 
 * Generate the changelog in English from merged PRs by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/87
