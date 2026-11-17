@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Download } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
-import { BackLink, HelpTip, Page, PageHeader } from "@/components/page";
+import { BackLink, HelpTip, Page, PageHeader, WithHelpTip } from "@/components/page";
 import { Field, GroupedSelect } from "@/features/sales/form-fields";
 import type { SpreadsheetFormat } from "@/lib/xlsx";
 import { FORMAT_OPTIONS } from "./transfer-model";
@@ -98,18 +98,19 @@ export function ExportButton({ onClick, disabled }: { onClick: () => void; disab
   );
 }
 
-/** Radio option with a label and an optional hint underneath. */
+/** Radio option with a label and an optional help icon after it. */
 export function RadioOption({
   name,
   checked,
   label,
-  hint,
+  help,
   onChange,
 }: {
   name: string;
   checked: boolean;
   label: string;
-  hint?: string;
+  /** Explanation behind a help icon after the label. Needs a TooltipProvider around the page. */
+  help?: string;
   onChange: () => void;
 }) {
   return (
@@ -119,11 +120,12 @@ export function RadioOption({
         name={name}
         checked={checked}
         onChange={onChange}
+        // Named by the label alone, without the help text
+        aria-label={label}
         className="mt-0.5 size-[18px] shrink-0 cursor-pointer accent-primary"
       />
-      <span className="flex flex-col">
-        <span className="font-medium">{label}</span>
-        {hint && <span className="text-sm text-muted-foreground">{hint}</span>}
+      <span className="font-medium">
+        {help ? <WithHelpTip text={label} help={help} label={help} /> : label}
       </span>
     </label>
   );

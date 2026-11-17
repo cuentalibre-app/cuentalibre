@@ -126,9 +126,13 @@ export function StockPage() {
             </HelpTip>
           }
           actions={
-            <Button onClick={() => setCreating(true)} disabled={stocked.length === 0}>
+            <Button
+              onClick={() => setCreating(true)}
+              disabled={stocked.length === 0}
+              className="max-lg:size-10 max-lg:px-0"
+            >
               <Plus strokeWidth={2} aria-hidden="true" />
-              Nueva regularización
+              <span className="max-lg:sr-only">Nueva regularización</span>
             </Button>
           }
         />
@@ -371,8 +375,9 @@ export function StockPage() {
                     <li key={m.id} className="flex items-center gap-3 border-b border-divider py-3">
                       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span className="truncate font-medium">{nameOf(m.productId)?.name}</span>
+                        {/* Without the type's group (Manual/Automático), so the date and the type fit one line */}
                         <span className="truncate text-sm text-muted-foreground">
-                          {type.group}/{type.label} · {dateTime(m.at)}
+                          <span className="tabular-nums">{dateTime(m.at)}</span> · {type.label}
                         </span>
                       </div>
                       <div className="flex flex-col items-end">

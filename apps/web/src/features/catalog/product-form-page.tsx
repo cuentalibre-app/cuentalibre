@@ -323,9 +323,15 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 @5xl:grid-cols-3">
-                <Field label="Nombre" required error={errors.name} hint="Ej.: ordenador, programación…">
+                <Field label="Nombre" required error={errors.name}>
                   {(p) => (
-                    <Input {...p} autoFocus={isNew} value={draft.name} onChange={(e) => set("name", e.target.value)} />
+                    <Input
+                      {...p}
+                      autoFocus={isNew}
+                      placeholder="Ej.: ordenador, programación…"
+                      value={draft.name}
+                      onChange={(e) => set("name", e.target.value)}
+                    />
                   )}
                 </Field>
                 <Field label="Descripción">
@@ -406,7 +412,7 @@ function ProductForm({ existing, source, justSaved }: { existing?: Product; sour
               })}
             >
               <div className={cn("grid gap-4 sm:grid-cols-2", advancedSale ? "@5xl:grid-cols-4" : "@5xl:grid-cols-3")}>
-                <Field label="Precio unitario (base imponible)" required error={errors.price} hint="Ej.: 198,50 €">
+                <Field label="Precio unitario (base imponible)" required error={errors.price}>
                   {(p) => <MoneyInput {...p} value={draft.price} onChange={(v) => set("price", v)} />}
                 </Field>
                 <Field

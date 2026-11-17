@@ -318,29 +318,43 @@ export function FormFactsList({ form }: { form: FormCode }) {
         <dt className="font-semibold">Plazos</dt>
         <dd className="m-0 text-foreground/85">
           {Array.isArray(facts.deadlines) ? (
-            <div className="overflow-hidden rounded-lg border border-border">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className={table.headRow}>
-                    <th className={table.th}>Trimestre</th>
-                    <th className={table.th}>Plazos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {facts.deadlines.map(([quarter, deadline]) => (
-                    <tr key={quarter} className={table.row}>
-                      <td className={cn(table.td, "lg:whitespace-nowrap")}>{quarter}</td>
-                      <td className={table.td}>{deadline}</td>
+            <>
+              {/* Phones: one line per quarter instead of a two-column table */}
+              <ul className="m-0 flex list-none flex-col gap-1.5 p-0 sm:hidden">
+                {facts.deadlines.map(([quarter, deadline]) => (
+                  <li key={quarter} className="flex gap-3">
+                    <span className="w-6 shrink-0 font-medium text-foreground">{quarter.split(" ")[0]}</span>
+                    {deadline}
+                  </li>
+                ))}
+                <li className="pt-1">
+                  <Calendar />
+                </li>
+              </ul>
+              <div className="overflow-hidden rounded-lg border border-border max-sm:hidden">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className={table.headRow}>
+                      <th className={table.th}>Trimestre</th>
+                      <th className={table.th}>Plazos</th>
                     </tr>
-                  ))}
-                  <tr className={table.row}>
-                    <td colSpan={2} className={table.td}>
-                      <Calendar />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {facts.deadlines.map(([quarter, deadline]) => (
+                      <tr key={quarter} className={table.row}>
+                        <td className={cn(table.td, "lg:whitespace-nowrap")}>{quarter}</td>
+                        <td className={table.td}>{deadline}</td>
+                      </tr>
+                    ))}
+                    <tr className={table.row}>
+                      <td colSpan={2} className={table.td}>
+                        <Calendar />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             facts.deadlines
           )}

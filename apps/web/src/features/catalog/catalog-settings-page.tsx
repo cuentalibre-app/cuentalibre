@@ -6,7 +6,7 @@ import { Button } from "@cuentalibre/ui/components/button";
 import { Checkbox, Input } from "@cuentalibre/ui/components/input";
 import { TooltipProvider } from "@cuentalibre/ui/components/tooltip";
 import { CheckField, Field, GroupedSelect } from "@/features/sales/form-fields";
-import { Page } from "@/components/page";
+import { Page, WithHelpTip } from "@/components/page";
 import { ConfirmDialog, SaveButton, SettingsHeader, useDraft } from "@/features/settings/settings-parts";
 import { RadioOption } from "@/features/transfer/transfer-parts";
 import { formatDecimalInput, parseDecimal } from "@/lib/format";
@@ -22,6 +22,7 @@ function Card({
 }: {
   id?: string;
   title: string;
+  /** Explanation behind a help icon beside the title. */
   description?: ReactNode;
   index: number;
   children: ReactNode;
@@ -32,10 +33,9 @@ function Card({
       className="flex animate-rise-in scroll-mt-6 flex-col gap-4 surface p-5 text-card-foreground"
       style={{ "--i": index } as CSSProperties}
     >
-      <div className="flex flex-col gap-1">
-        <h2 className="m-0 text-lg font-semibold tracking-tight">{title}</h2>
-        {description && <p className="m-0 max-w-3xl text-sm text-muted-foreground">{description}</p>}
-      </div>
+      <h2 className="m-0 text-lg font-semibold tracking-tight">
+        {description ? <WithHelpTip text={title} help={description} /> : title}
+      </h2>
       {children}
     </section>
   );
@@ -76,7 +76,7 @@ export function CatalogSettingsPage() {
     markSaved();
   };
 
-  const saveButton = <SaveButton dirty={dirty || minDirty} justSaved={justSaved} onSave={save} />;
+  const saveProps = { dirty: dirty || minDirty, justSaved, onSave: save };
 
   return (
     <TooltipProvider delayDuration={300} skipDelayDuration={300}>
@@ -85,7 +85,7 @@ export function CatalogSettingsPage() {
           title="Configuración del catálogo"
           description="Campos personalizados, cómo pasan los productos a las facturas y el control de stock."
         >
-          {saveButton}
+          <SaveButton {...saveProps} />
         </SettingsHeader>
 
         <Card
@@ -128,7 +128,7 @@ export function CatalogSettingsPage() {
               name="concept-text"
               checked={draft.conceptText === "codeAndName"}
               label="Copiar el código y el nombre del producto"
-              hint="Por ejemplo: «WEB-LAND - Landing page»."
+              help="Por ejemplo: «WEB-LAND - Landing page»."
               onChange={() => set("conceptText", "codeAndName")}
             />
           </div>
@@ -170,12 +170,9 @@ export function CatalogSettingsPage() {
           </div>
 
           <div className="flex flex-col gap-3 border-t border-divider pt-4">
-            <div className="flex flex-col gap-0.5">
-              <h3 className="m-0 text-sm font-semibold">Valores por defecto</h3>
-              <p className="m-0 text-sm text-muted-foreground">
-                Para productos nuevos e importaciones sin columnas de stock.
-              </p>
-            </div>
+            <h3 className="m-0 text-sm font-semibold">
+              <WithHelpTip text="Valores por defecto" help="Para productos nuevos e importaciones sin columnas de stock." />
+            </h3>
             <CheckField
               label="Activar control de stock"
               checked={draft.defaults.enabled}
@@ -216,7 +213,7 @@ export function CatalogSettingsPage() {
           </div>
         </Card>
 
-        <div className="flex justify-end gap-3 lg:hidden">{saveButton}</div>
+        <SaveButton {...saveProps} bottom />
 
         <Card
           id="borrar-catalogo"

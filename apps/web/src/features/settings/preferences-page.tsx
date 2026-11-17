@@ -37,6 +37,7 @@ export function PreferencesPage() {
             />
           </Section>
         ))}
+        <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} bottom />
       </Page>
     </TooltipProvider>
   );
@@ -60,14 +61,14 @@ function FilterChoices({
           name={`${name}-status`}
           checked={value.status === "all"}
           label="No filtrar"
-          hint="No se aplica ningún filtro de estado por defecto."
+          help="No se aplica ningún filtro de estado por defecto."
           onChange={() => onChange({ status: "all" })}
         />
         <RadioOption
           name={`${name}-status`}
           checked={value.status === "open"}
           label={`Mostrar inicialmente solo ${plural} pendientes`}
-          hint={`Se muestran todos los ${plural} salvo los facturados y rechazados. Puedes quitar el filtro en el listado.`}
+          help={`Se muestran todos los ${plural} salvo los facturados y rechazados. Puedes quitar el filtro en el listado.`}
           onChange={() => onChange({ status: "open" })}
         />
       </fieldset>
@@ -77,14 +78,14 @@ function FilterChoices({
           name={`${name}-date`}
           checked={value.date === "all"}
           label="No filtrar"
-          hint="Se muestra el periodo elegido en el listado."
+          help="Se muestra el periodo elegido en el listado."
           onChange={() => onChange({ date: "all" })}
         />
         <RadioOption
           name={`${name}-date`}
           checked={value.date === "month"}
           label={`Mostrar inicialmente solo ${plural} del mes en curso`}
-          hint="Puedes quitar el filtro en el listado o elegir otro periodo."
+          help="Puedes quitar el filtro en el listado o elegir otro periodo."
           onChange={() => onChange({ date: "month" })}
         />
       </fieldset>

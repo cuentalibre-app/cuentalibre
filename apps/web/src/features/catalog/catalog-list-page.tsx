@@ -37,6 +37,7 @@ import {
   MoreActionsTrigger,
   SortHeader,
   type Action,
+  useIsDesktop,
 } from "@/features/sales/list-parts";
 import { VAT_RATE_OPTIONS, ratePercent } from "@/features/sales/sales-model";
 import { TagChips } from "@/features/settings/tag-chip";
@@ -136,6 +137,7 @@ function matches(r: Row, f: Filters, familyIds: Set<string> | null): boolean {
 }
 
 export function CatalogListPage() {
+  const desktop = useIsDesktop();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { products, families, movements } = useCatalog();
@@ -216,10 +218,9 @@ export function CatalogListPage() {
                   </DropdownMenuTrigger>
                 }
               />
-              <Link to={NEW_PRODUCT_PATH} className={buttonVariants()}>
+              <Link to={NEW_PRODUCT_PATH} className={cn(buttonVariants(), "max-lg:size-10 max-lg:px-0")}>
                 <Plus strokeWidth={2} aria-hidden="true" />
-                <span className="hidden sm:inline">Nuevo producto o servicio</span>
-                <span className="sm:hidden">Nuevo</span>
+                <span className="max-lg:sr-only">Nuevo producto o servicio</span>
               </Link>
             </>
           }
@@ -234,7 +235,7 @@ export function CatalogListPage() {
             <SearchField
               value={filters.query}
               onChange={(e) => set("query", e.target.value)}
-              placeholder="Nombre, código o familia"
+              placeholder={desktop ? "Nombre, código o familia" : "Buscar"}
               aria-label="Buscar"
             />
             <FiltersButton
@@ -363,7 +364,10 @@ export function CatalogListPage() {
                   <div className="mt-3 flex flex-wrap justify-center gap-2">
                     <Link to={NEW_PRODUCT_PATH} className={buttonVariants({ variant: "secondary" })}>
                       <Plus strokeWidth={2} aria-hidden="true" />
-                      Nuevo producto o servicio
+                      {/* Short on phones, so both buttons share one row */}
+                      <span>
+                        Nuevo producto<span className="max-sm:hidden"> o servicio</span>
+                      </span>
                     </Link>
                     <Link to={CATALOG_IMPORT_PATH} className={buttonVariants({ variant: "secondary" })}>
                       <FileUp strokeWidth={1.8} aria-hidden="true" />

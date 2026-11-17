@@ -218,6 +218,7 @@ export function BusinessPage() {
 
           <InvoicePreview profile={draft} />
         </div>
+        <SaveButton dirty={dirty} justSaved={justSaved} onSave={save} bottom />
       </Page>
     </TooltipProvider>
   );

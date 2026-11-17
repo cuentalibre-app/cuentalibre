@@ -237,7 +237,7 @@ export function AddressFields({
         <Field label="Población" required={required}>
           {(p) => <Input {...p} value={draft.city} onChange={(e) => set("city", e.target.value)} />}
         </Field>
-        <Field label="Provincia" hint={draft.country === SPAIN ? "Se rellena con el código postal." : undefined}>
+        <Field label="Provincia" help={draft.country === SPAIN ? "Se rellena con el código postal." : undefined}>
           {(p) => <Input {...p} value={draft.province} onChange={(e) => set("province", e.target.value)} />}
         </Field>
       </div>

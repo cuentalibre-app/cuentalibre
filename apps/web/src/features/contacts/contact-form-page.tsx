@@ -222,7 +222,7 @@ function ContactForm({
                 <Field
                   label="Email"
                   error={errors.email}
-                  hint={isClient ? "Al que se envían las facturas." : undefined}
+                  help={isClient ? "Al que se envían las facturas." : undefined}
                 >
                   {(p) => (
                     <Input

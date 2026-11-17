@@ -77,31 +77,47 @@ export function PageHeader({
   return (
     <header className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
       {/*
-       * The title keeps a minimum width, so actions that don't fit beside it wrap below instead of squeezing it
-       * away; on desktop it keeps its whole line, so a long title never breaks to make room for the actions
+       * The title keeps a minimum width (with the back link and, on phones, the assistant's toggle), so actions
+       * that don't fit beside it wrap below instead of squeezing it away; on desktop it keeps its whole line, so
+       * a long title never breaks to make room for the actions
        */}
-      <div className="flex min-w-0 flex-[1_1_10rem] items-center gap-3 lg:basis-auto">
+      <div className="flex min-w-0 flex-[1_1_14rem] items-center gap-3 lg:basis-auto">
         {back}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {eyebrow}
           <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-3">
-            <h1 className="m-0 min-w-0 text-xl font-semibold tracking-tight text-balance lg:text-title">{title}</h1>
+            <h1
+              className={cn(
+                "m-0 min-w-0 text-xl font-semibold tracking-tight text-balance lg:text-title",
+                // A title that breaks leaves room for a help tip beside it, rather than pushing it to a line alone
+                inline && "max-lg:max-w-[calc(100%-2.25rem)]",
+              )}
+            >
+              {title}
+            </h1>
             {inline}
           </div>
           {description && (
             <p className={cn("m-0 max-w-[72ch] text-sm text-muted-foreground", descriptionClassName)}>{description}</p>
           )}
         </div>
+        {/*
+         * On phones the assistant's toggle stays on the title's line: actions that don't fit beside the title
+         * wrap to a row of their own below, as the page's controls, instead of taking the toggle with them
+         */}
+        {assistant && <HelpChatToggle className="ml-auto lg:hidden" />}
       </div>
       {(actions || assistant) && (
-        // Pushed right also when they wrap below the title, so the assistant's toggle keeps its corner
-        <div className={cn("flex flex-wrap items-center gap-2.5 lg:ml-auto", actionsClassName)}>
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-2.5 lg:ml-auto",
+            !actions && "max-lg:hidden",
+            actionsClassName,
+          )}
+        >
           {actions}
-          {/*
-           * Set apart from the page's own actions, as it belongs to the app rather than the page: last on
-           * desktop; first on phones, so the page's main action keeps the corner
-           */}
-          {assistant && <HelpChatToggle className={cn("max-lg:order-first", actions && "max-lg:mr-1 lg:ml-1")} />}
+          {/* Set apart from the page's own actions, as it belongs to the app rather than the page */}
+          {assistant && <HelpChatToggle className={cn("max-lg:hidden", actions && "ml-1")} />}
         </div>
       )}
     </header>
@@ -120,7 +136,7 @@ export function Toolbar({ className, ...props }: ComponentProps<"div">) {
         "*:first:max-lg:min-w-0 *:first:max-lg:flex-[1_1_8rem]",
         "[&>label:first-child]:lg:max-w-80 [&>label:first-child]:lg:flex-[1_1_220px]",
         // Beside the docked assistant the search starts smaller, so the controls keep to one row
-        "[&>label:first-child]:@max-5xl:basis-48!",
+        "[&>label:first-child]:lg:@max-5xl:basis-48!",
         className,
       )}
       {...props}
@@ -163,6 +179,25 @@ export function HelpTip({
         {children}
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * Text followed by a HelpTip that wraps together with the last word, so the icon never ends up
+ * alone on a line. Goes inside the heading or label it explains.
+ */
+export function WithHelpTip({ text, help, label }: { text: string; help: ReactNode; label?: string }) {
+  const cut = text.lastIndexOf(" ") + 1;
+  return (
+    <>
+      {text.slice(0, cut)}
+      <span className="whitespace-nowrap">
+        {text.slice(cut)}
+        <HelpTip label={label} className="ml-1.5 align-[-0.25em]">
+          {help}
+        </HelpTip>
+      </span>
+    </>
   );
 }
 
