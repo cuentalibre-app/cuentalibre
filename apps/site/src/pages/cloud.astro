@@ -5,7 +5,7 @@ import Icon from "../components/Icon.astro";
 import Phone from "../components/Phone.astro";
 import Base from "../layouts/Base.astro";
 import { buttonRow, euroSign, eyebrow, indicator, primaryButton, secondaryButton, sectionTitle } from "../classes";
-import { appLinks, cloudBilling, demoLinkAttrs, launchOffer } from "../site";
+import { appLinks, cloudBilling, demoLinkAttrs } from "../site";
 import inicioMovilOscuro from "../assets/screens/inicio-movil-oscuro.jpg";
 import inicioMovil from "../assets/screens/inicio-movil.jpg";
 import inicioOscuro from "../assets/screens/inicio-oscuro.jpg";
@@ -172,10 +172,6 @@ const phoneShot =
             </div>
           ))
         }
-        <div class="offer-sky mt-4 flex items-start gap-2 rounded-lg px-3 py-2.5 text-[14px] font-medium">
-          <svg aria-hidden="true" viewBox="0 0 24 24" class="mt-[2px] size-4 shrink-0 fill-offer-gold"><path d="M12 2L14 10L22 12L14 14L12 22L10 14L2 12L10 10Z" /></svg>
-          <span class="offer-gold">Oferta de Reyes: date de alta antes del {launchOffer.untilShort} y mantienes este precio para siempre.</span>
-        </div>
         <ul class="m-0 mt-7 flex list-none flex-col gap-3 border-t border-primary-soft p-0 pt-6">
           {
             included.map((item) => (

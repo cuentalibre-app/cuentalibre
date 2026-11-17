@@ -79,6 +79,7 @@ const year = new Date().getFullYear();
         var theme = null;
         try {
           theme = localStorage.getItem("cuentalibre:site-theme");
+          if (localStorage.getItem("cuentalibre:offer-dismissed")) root.classList.add("offer-dismissed");
         } catch (e) {}
         var dark = theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
         if (dark) {
@@ -89,11 +90,11 @@ const year = new Date().getFullYear();
     </script>
   </head>
   <body>
-    {launchBanner && <LaunchBanner />}
     <div
       data-site-header
       class="sticky top-0 z-50 border-b border-transparent bg-background/80 backdrop-blur-md transition-colors duration-300 data-scrolled:border-divider"
     >
+    {launchBanner && <LaunchBanner />}
     <header class="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
       <a
         href="/"
