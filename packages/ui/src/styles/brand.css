@@ -1,6 +1,6 @@
 /*
- * The brand's louder voice on the public site: gradient borders and the main
- * call to action. The app and its sign-in screens stay flat.
+ * The brand's louder voice on the public site: the plan card's gradient border
+ * and the main call to action. The app and its sign-in screens stay flat.
  */
 @utility border-gradient-brand {
   border: 2px solid transparent;
@@ -11,27 +11,22 @@
 }
 
 /*
- * Main call to action: the brand gradient instead of flat blue. It is drawn
- * wider than the button so hovering slides it from blue-violet to violet-teal.
+ * Main call to action: the app's solid ink with a lit top edge, so the site's
+ * button is the one people meet inside the app.
  */
 @utility button-brand {
   color: var(--primary-foreground);
-  background: linear-gradient(110deg, var(--primary) 0%, var(--brand-violet) 50%, var(--brand-teal) 100%);
-  background-size: 200% 100%;
-  background-position: 0% 50%;
+  background: linear-gradient(180deg, var(--primary-top), var(--primary) 60%);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.2),
-    0 10px 24px -12px color-mix(in srgb, var(--brand-violet) 70%, transparent);
+    inset 0 1px 0 rgb(255 255 255 / 0.14),
+    0 8px 20px -12px color-mix(in srgb, var(--foreground) 60%, transparent);
   transition:
-    background-position 500ms var(--ease-out),
+    background-color 150ms var(--ease-out),
     box-shadow 200ms var(--ease-out),
     transform 150ms var(--ease-out);
   &:hover {
     color: var(--primary-foreground);
-    background-position: 100% 50%;
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.2),
-      0 14px 28px -12px color-mix(in srgb, var(--brand-teal) 70%, transparent);
+    background: var(--primary-hover);
   }
   &:active {
     transform: scale(0.98);
