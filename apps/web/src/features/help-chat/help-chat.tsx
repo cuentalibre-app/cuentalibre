@@ -130,20 +130,20 @@ function Composer({ disabled }: { disabled: boolean }) {
       <div className="relative">
         <Textarea
           autoGrow
-          rows={2}
+          rows={1}
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Escribe tu pregunta"
           aria-label="Tu pregunta"
-          className="max-h-40 [overflow-y:auto] pr-12"
+          className="block max-h-40 [overflow-y:auto] pr-12"
         />
         <Button
           type="submit"
           size="icon-sm"
           disabled={!canSend}
           aria-label="Enviar pregunta"
-          className="absolute right-2 bottom-2 bg-primary text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground pointer-coarse:size-8"
+          className="absolute right-1.25 bottom-1.25 size-8 rounded-full bg-primary text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100"
         >
           <ArrowUp strokeWidth={2.2} aria-hidden="true" />
         </Button>

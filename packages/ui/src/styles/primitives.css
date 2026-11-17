@@ -30,24 +30,27 @@
   --ink-900: #1d2024;
   --ink-700: #3a3e44;
 
-  /* Slate: soft highlights, and the chart series for income and taxes (peach for expenses) */
-  --slate-50: #edf1f5;
-  --slate-200: #cdd8e3;
-  --slate-300: #a9bccf;
+  /* Slate: the head on the logo mark; peach: expenses in charts */
   --slate-500: #6f8aa6;
-  --slate-700: #3e5c7a;
   --peach-400: #e39a6b;
+
+  /* Cobalt: income in charts, and soft highlights (pending, current period, info notes) */
+  --cobalt-50: #e6edf9;
+  --cobalt-200: #b3c6ea;
+  --cobalt-300: #8da9de;
+  --cobalt-600: #2d5fb4;
+  --cobalt-700: #234d95;
 
   /* Brand gradient: blue into violet and teal */
   --violet-500: #6a4fe0;
   --teal-600: #0e8fae;
 
   /* Status */
-  --green-50: #e3f1e8;
+  --green-50: #d9efe1;
   --green-700: #1a6340;
-  --red-50: #fbe4e1;
+  --red-50: #fadbd6;
   --red-700: #9c2318;
-  --amber-50: #fbefdc; /* provisional: not in the design */
+  --amber-50: #f9e6c6;
   --amber-700: #a15c00;
   --orange-500: #e08a3c;
 }
