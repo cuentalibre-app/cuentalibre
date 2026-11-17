@@ -76,6 +76,14 @@
   --chart-grid: var(--neutral-200);
   --chart-axis: var(--neutral-300);
   --chart-highlight: var(--neutral-50);
+
+  /* Confetti for celebrations (the welcome): bright and light, outside the sober palette, same in dark */
+  --confetti-1: #7cc4ff;
+  --confetti-2: #ff8fc7;
+  --confetti-3: #ffd84d;
+  --confetti-4: #6ee7b7;
+  --confetti-5: #b9a2ff;
+  --confetti-6: #ffad7a;
 }
 
 /*

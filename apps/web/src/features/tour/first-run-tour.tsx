@@ -6,6 +6,8 @@ import { Dialog, DialogDescription, DialogPanel, DialogPortal, DialogTitle } fro
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { sessionState } from "@/features/auth/session";
 import { useUserSettings } from "@/features/settings/user-store";
+import { Confetti } from "./confetti";
+import { WelcomeMark } from "./welcome-mark";
 import { TOUR_STEPS, endTour, goToStep, placeCard, shouldStartTour, startTour, useTour, type Box } from "./tour-model";
 
 /** Room around what a step points at, so the highlight doesn't touch it. */
@@ -42,8 +44,10 @@ export function FirstRunTour() {
   const [panel, setPanel] = useState<HTMLDivElement | null>(null);
   const next = useRef<HTMLButtonElement>(null);
   const [layout, setLayout] = useState<Layout>({ target: null, card: null });
+  const [burst, setBurst] = useState<{ x: number; y: number; id: number } | null>(null);
   const current = TOUR_STEPS[step]!;
   const last = step === TOUR_STEPS.length - 1;
+  const welcome = step === 0;
 
   // Only when the app opens: finishing it, or a later change, doesn't bring it back
   useEffect(() => {
@@ -137,8 +141,15 @@ export function FirstRunTour() {
               <X strokeWidth={2} aria-hidden="true" />
             </Button>
           </div>
-          <div key={step} className="flex animate-fade-in flex-col gap-1.5">
-            <DialogTitle className="min-h-0 pr-0">{current.title}</DialogTitle>
+          <div
+            key={step}
+            className={cn(
+              "flex animate-fade-in flex-col gap-1.5",
+              welcome && "items-center pb-1 text-center text-balance",
+            )}
+          >
+            {welcome && card && <WelcomeMark onLand={(point) => setBurst({ ...point, id: performance.now() })} />}
+            <DialogTitle className={cn("min-h-0 pr-0", welcome && "mt-3 text-xl")}>{current.title}</DialogTitle>
             <DialogDescription className="mt-0 text-base leading-relaxed">{current.body}</DialogDescription>
             {current.action && (
               <Link
@@ -178,6 +189,7 @@ export function FirstRunTour() {
             </Button>
           </div>
         </DialogPanel>
+        {burst && <Confetti key={burst.id} origin={burst} onDone={() => setBurst(null)} />}
       </DialogPortal>
     </Dialog>
   );
