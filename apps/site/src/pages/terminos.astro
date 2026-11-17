@@ -1,6 +1,6 @@
 ---
 import Legal from "../layouts/Legal.astro";
-import { appLinks, cloudBilling, cloudPrice, legalUpdated, owner, sourceUrl, externalLinkAttrs } from "../site";
+import { appLinks, cloudBilling, cloudPrice, launchOffer, legalUpdated, owner, sourceUrl, externalLinkAttrs } from "../site";
 
 const mail = `mailto:${owner.email}`;
 ---
@@ -45,6 +45,10 @@ const mail = `mailto:${owner.email}`;
     <strong>Todavía no cobramos.</strong> Antes de empezar a hacerlo te avisaremos por correo con al menos 30 días de
     antelación. Hasta entonces puedes usar el servicio sin coste. Si cuando llegue el momento no quieres pagar, podrás
     exportar tus datos y eliminar tu cuenta sin ningún cargo.
+  </p>
+  <p>
+    <strong>Precio de lanzamiento.</strong> Si creaste tu cuenta antes del {launchOffer.until}, mantendrás estos
+    precios mientras sigas suscrito, aunque los cambiemos para las cuentas nuevas.
   </p>
   <p>
     Si cambiamos el precio, también te avisaremos con 30 días de antelación; el nuevo precio se aplicará a partir del

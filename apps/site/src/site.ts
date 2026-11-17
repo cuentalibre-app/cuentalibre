@@ -47,6 +47,12 @@ export const cloudBilling = [
   { id: "yearly", label: "Anual", perMonth: "3,99", charged: "47,88 € al año", saving: "20 %" },
 ] as const;
 
+/**
+ * Launch offer: organizations created before this date keep the current Cloud prices
+ * for as long as they stay subscribed. Remove the banner once the date has passed.
+ */
+export const launchOffer = { until: "31 de enero de 2027", untilShort: "31 de enero" };
+
 /** The legal pages, in the order the footers list them. */
 export const legalPages = [
   { path: "/aviso-legal", label: "Aviso legal" },
@@ -56,7 +62,7 @@ export const legalPages = [
 ] as const;
 
 /** Date of the last change to the legal pages. */
-export const legalUpdated = "15 de noviembre de 2026";
+export const legalUpdated = "17 de noviembre de 2026";
 
 /** The groups of the documentation's index, in the order it shows them. */
 export const docSections = [
