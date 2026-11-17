@@ -3,27 +3,6 @@
 @import "@fontsource-variable/source-serif-4/wght-italic.css";
 
 /*
- * The site keeps the blue brand and its gradient; the app inside is drawn in ink.
- * The dark block comes second so it wins over the light one on <html class="dark">.
- */
-:root {
-  --primary: var(--blue-600);
-  --primary-hover: var(--blue-800);
-  --primary-soft: var(--blue-50);
-  --selection: var(--blue-200);
-  --ring: var(--blue-600);
-}
-
-.dark {
-  --primary: #7f8ff2;
-  --primary-foreground: #0e1440;
-  --primary-hover: #9aa7f5;
-  --primary-soft: #1f2440;
-  --selection: #34407f;
-  --ring: #7f8ff2;
-}
-
-/*
  * The site speaks louder than the app but in the same voice: the app's sans for
  * text, the serif for headlines and the wordmark's monospace for section labels.
  */
@@ -41,7 +20,7 @@
   /* App screenshot peeking out of a feature card: lifted toward its open top-left corner */
   --shadow-screen: 0 -1px 3px rgb(17 18 20 / 0.06), -10px -10px 36px -14px rgb(17 18 20 / 0.28);
   --shadow-shot: 0 20px 40px -24px rgb(17 18 20 / 0.25);
-  --shadow-plan: 0 30px 60px -36px rgb(47 69 201 / 0.45);
+  --shadow-plan: 0 30px 60px -36px rgb(17 18 20 / 0.35);
   /* Launch offer (Three Kings): night sky, gold lettering; the same in both themes */
   --color-offer-sky-top: #0a2470;
   --color-offer-sky-bottom: #2a5cbf;
@@ -73,14 +52,13 @@
 }
 
 /*
- * A soft wash of the brand colors behind the hero headline. It fades in from the
+ * A soft wash of cobalt and the logo's slate behind the hero headline. It fades in from the
  * top so it never meets the sticky header's edge, and out before the screenshots.
  */
 @utility bg-hero-glow {
   background:
-    radial-gradient(45% 55% at 50% 40%, color-mix(in oklab, var(--primary) 16%, transparent), transparent 70%),
-    radial-gradient(30% 40% at 70% 30%, color-mix(in oklab, var(--brand-violet) 14%, transparent), transparent 70%),
-    radial-gradient(30% 40% at 30% 50%, color-mix(in oklab, var(--brand-teal) 12%, transparent), transparent 70%);
+    radial-gradient(45% 55% at 50% 40%, color-mix(in oklab, var(--brand-cobalt) 12%, transparent), transparent 70%),
+    radial-gradient(30% 40% at 70% 30%, color-mix(in oklab, var(--brand-mark) 14%, transparent), transparent 70%);
   mask-image: linear-gradient(to bottom, transparent, black 30%, black 60%, transparent);
 }
 

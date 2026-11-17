@@ -50,7 +50,7 @@ const editUrl = `${sourceUrl}/edit/main/apps/site/${entry.filePath}`;
                     <a
                       href={docHref(page)}
                       aria-current={page.id === entry.id ? "page" : undefined}
-                      class="block rounded-lg px-2 py-1.5 text-sm text-foreground no-underline hover:bg-muted aria-[current=page]:bg-primary-soft aria-[current=page]:font-medium aria-[current=page]:text-primary"
+                      class="block rounded-lg px-2 py-1.5 text-sm text-foreground no-underline hover:bg-muted aria-[current=page]:bg-primary-soft aria-[current=page]:font-medium aria-[current=page]:text-primary-soft-foreground"
                     >
                       {page.data.label ?? page.data.title}
                     </a>
@@ -75,7 +75,7 @@ const editUrl = `${sourceUrl}/edit/main/apps/site/${entry.filePath}`;
                     <a
                       href={docHref(page)}
                       aria-current={page.id === entry.id ? "page" : undefined}
-                      class="block rounded-lg px-3 py-1.5 text-sm text-muted-foreground no-underline hover:bg-muted hover:text-foreground aria-[current=page]:bg-primary-soft aria-[current=page]:font-medium aria-[current=page]:text-primary"
+                      class="block rounded-lg px-3 py-1.5 text-sm text-muted-foreground no-underline hover:bg-muted hover:text-foreground aria-[current=page]:bg-primary-soft aria-[current=page]:font-medium aria-[current=page]:text-primary-soft-foreground"
                     >
                       {page.data.label ?? page.data.title}
                     </a>

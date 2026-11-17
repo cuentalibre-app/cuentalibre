@@ -3,7 +3,7 @@
 /** White tab that slides under the chosen tab; the script places it and marks the group ready */
 export const indicator =
   "pointer-events-none absolute top-0 left-0 rounded-full bg-background opacity-0 shadow-tab transition-[transform,width,height] duration-300 ease-out in-data-ready:opacity-100";
-export const eyebrow = "font-brand text-[14px] font-semibold text-primary";
+export const eyebrow = "font-brand text-[14px] font-semibold text-primary-soft-foreground";
 export const sectionTitle =
   "font-display text-[clamp(32px,4vw,44px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance";
 /** Call-to-action pair: compact pill buttons, stacked and centered on phones, side by side from sm */
