@@ -19,7 +19,7 @@
   background: linear-gradient(180deg, var(--primary-top), var(--primary) 60%);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.14),
-    0 8px 20px -12px color-mix(in srgb, var(--foreground) 60%, transparent);
+    0 8px 20px -12px rgb(17 18 20 / 0.5);
   transition:
     background-color 150ms var(--ease-out),
     box-shadow 200ms var(--ease-out),
