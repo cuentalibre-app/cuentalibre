@@ -1,5 +1,6 @@
 import type { BillingPeriod } from "@cuentalibre/contracts";
-import { boolean, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import type { DeletionNotice } from "../../billing/retention";
+import { boolean, pgTable, primaryKey, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { organization } from "./auth";
 import { createdAt, updatedAt } from "./columns";
 
@@ -29,3 +30,21 @@ export const stripeEvent = pgTable("stripe_event", {
   type: text().notNull(),
   createdAt: createdAt(),
 });
+
+/**
+ * The emails sent to an organization's owners before deleting it for being read-only
+ * too long (`src/billing/retention.ts`), one per notice and read-only spell: subscribing
+ * and lapsing again starts a new spell, with its own notices.
+ */
+export const deletionNotice = pgTable(
+  "deletion_notice",
+  {
+    organizationId: uuid()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    readOnlySince: timestamp({ withTimezone: true }).notNull(),
+    notice: text().$type<DeletionNotice>().notNull(),
+    sentAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.organizationId, table.readOnlySince, table.notice] })],
+);

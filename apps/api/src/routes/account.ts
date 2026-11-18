@@ -13,24 +13,21 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { newId } from "@cuentalibre/core";
 import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
-import { isLive } from "../billing/plan";
 import { BREACHED_PASSWORD, BREACHED_PASSWORD_MESSAGE, isBreachedPassword } from "../breached-passwords";
 import type { AppEnv } from "../context";
 import type { Db } from "../db/client";
 import {
   account,
-  file,
   invitation,
   membership,
   organization,
-  subscription,
   user as userTable,
   userSetting,
   verification,
 } from "../db/schema";
 import { ApiError, errorContent, errorResponse } from "../errors";
-import { reportError } from "../error-reporting";
 import { requireOrganization, requireSession, requireUser } from "../middleware";
+import { cleanUpDeleted, deleteOrganizations } from "../organization-deletion";
 import { parseOr } from "../sync/records";
 
 const me = createRoute({
@@ -307,7 +304,7 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
       return errorResponse(c, 403, "session_not_fresh", "Sign in again to confirm it's you, then delete the account.");
     }
 
-    const { storageKeys, subscriptionIds } = await db.transaction(async (tx) => {
+    const deleted = await db.transaction(async (tx) => {
       // Lock the user's memberships so nobody joins or leaves their organizations meanwhile
       const mine = await tx
         .select({ organizationId: membership.organizationId, role: membership.role })
@@ -332,42 +329,17 @@ export const accountRoutes = new OpenAPIHono<AppEnv>()
           "You are the only owner of an organization with other members. Remove them or make one of them an owner first.",
         );
 
-      const solo = ids.filter((id) => !shared.has(id));
-      const keys = solo.length
-        ? (await tx.select({ key: file.storageKey }).from(file).where(inArray(file.organizationId, solo))).map(
-            (row) => row.key,
-          )
-        : [];
-      const subscriptions = solo.length
-        ? await tx
-            .select({ id: subscription.stripeSubscriptionId, status: subscription.status })
-            .from(subscription)
-            .where(inArray(subscription.organizationId, solo))
-        : [];
-      // Everything an organization holds cascades from it: records, settings, files, outbox…
-      if (solo.length) await tx.delete(organization).where(inArray(organization.id, solo));
+      const removed = await deleteOrganizations(
+        tx,
+        ids.filter((id) => !shared.has(id)),
+      );
       await tx.delete(invitation).where(sql`lower(${invitation.email}) = lower(${email})`);
       await tx.delete(verification).where(eq(verification.value, userId));
       // Sessions, sign-in accounts, memberships, API keys and sent invitations cascade from the user.
       await tx.delete(userTable).where(eq(userTable.id, userId));
-      return {
-        storageKeys: keys,
-        subscriptionIds: subscriptions.filter((row) => row.id && isLive(row.status)).map((row) => row.id!),
-      };
+      return removed;
     });
 
-    // After the commit: a file left behind by a failure here is unreachable, never a dangling row.
-    const storage = c.get("storage");
-    for (const key of storageKeys) {
-      await storage.delete(key).catch((error: unknown) => console.error(`Couldn't delete file ${key}`, error));
-    }
-    // Nobody is left to use what they would pay for. A failure must reach someone, who cancels it by hand.
-    const billing = c.get("billing");
-    for (const id of subscriptionIds) {
-      await billing?.stripe.cancelSubscription(id).catch((error: unknown) => {
-        console.error(`Couldn't cancel subscription ${id}`, error);
-        reportError(error, { method: c.req.method, route: c.req.routePath });
-      });
-    }
+    await cleanUpDeleted(deleted, c.get("storage"), c.get("billing"), { method: c.req.method, route: c.req.routePath });
     return c.body(null, 204);
   });

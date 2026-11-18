@@ -75,13 +75,16 @@ async function fakeStripe(input: string | URL | Request, init?: RequestInit) {
   return reply({ error: { message: `Unrecognized request URL (${method}: ${url.pathname})` } }, 404);
 }
 
+/** Billing against the Stripe above. */
+export const testBilling = createBilling(billingEnv, fakeStripe)!;
+
 export const billingApp = createApp({
   db,
   auth: createAuth(db, billingEnv, accountMailer),
   env: billingEnv,
   storage,
   mailer,
-  billing: createBilling(billingEnv, fakeStripe),
+  billing: testBilling,
 });
 
 /** A subscription in Stripe, as a checkout for the customer leaves it. */
