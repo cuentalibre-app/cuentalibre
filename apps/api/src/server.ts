@@ -4,6 +4,7 @@ import { loadHelpPrompt } from "./ai/help-guide";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { createBilling } from "./billing";
+import { startRetention } from "./billing/retention-job";
 import { createDb } from "./db/client";
 import { createAccountMailer, createMailer } from "./email/mailer";
 import { emailHandler } from "./email/messages";
@@ -17,14 +18,16 @@ startErrorReporting(env);
 const db = createDb(env.DATABASE_URL);
 const storage = createStorage(env);
 const mailer = createMailer(env);
+const accountMailer = createAccountMailer(env);
+const billing = createBilling(env);
 const chatProvider = createChatProvider(env);
 const app = createApp({
   db,
-  auth: createAuth(db, env, createAccountMailer(env)),
+  auth: createAuth(db, env, accountMailer),
   env,
   storage,
   mailer,
-  billing: createBilling(env),
+  billing,
   ai: createAiProvider(env),
   chat: chatProvider && {
     provider: chatProvider,
@@ -37,12 +40,19 @@ const stopWorker = startWorker(db, {
   email: emailHandler(db, storage, mailer),
 });
 
+// Only Cloud deletes organizations left read-only too long: self-hosted ones never go read-only
+const stopRetention = billing
+  ? startRetention({ db, storage, billing, mailer: accountMailer, webOrigin: env.WEB_ORIGIN })
+  : async () => {};
+
 const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
   console.log(`API listening on http://localhost:${info.port}/v1`);
 });
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () =>
-    server.close(() => void Promise.all([stopWorker(), stopErrorReporting()]).then(() => process.exit(0))),
+    server.close(
+      () => void Promise.all([stopWorker(), stopRetention(), stopErrorReporting()]).then(() => process.exit(0)),
+    ),
   );
 }
