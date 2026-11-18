@@ -47,6 +47,8 @@ export interface AppEnv {
     activeOrganizationId: string | null;
     /** Set when the request authenticates with an API key. */
     apiKeyId: string | null;
+    /** The client's IP address, set by `identifyClient`. */
+    clientIp: string;
     /** Set by `requireOrganization`. */
     organizationId: string;
     role: MembershipRole;

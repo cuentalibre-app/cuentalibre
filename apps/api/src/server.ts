@@ -45,9 +45,18 @@ const stopRetention = billing
   ? startRetention({ db, storage, billing, mailer: accountMailer, webOrigin: env.WEB_ORIGIN })
   : async () => {};
 
-const server = serve({ fetch: app.fetch, port: env.PORT }, (info) => {
-  console.log(`API listening on http://localhost:${info.port}/v1`);
-});
+const server = serve(
+  {
+    fetch: app.fetch,
+    port: env.PORT,
+    // A slow client can't hold a connection: its headers must arrive within 15 seconds and
+    // the whole request, a 10 MB upload included, within two minutes.
+    serverOptions: { headersTimeout: 15_000, requestTimeout: 120_000 },
+  },
+  (info) => {
+    console.log(`API listening on http://localhost:${info.port}/v1`);
+  },
+);
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () =>

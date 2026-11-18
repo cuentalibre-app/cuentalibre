@@ -197,6 +197,13 @@
       "when": 1794991335332,
       "tag": "0027_deletion_notice",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1795004931448,
+      "tag": "0028_rate_limit",
+      "breakpoints": true
     }
   ]
 }
