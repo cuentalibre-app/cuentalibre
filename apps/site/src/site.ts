@@ -2,7 +2,6 @@ const env = import.meta.env;
 const appUrl = (env.PUBLIC_APP_URL ?? "http://localhost:5173").replace(/\/$/, "");
 
 export const appLinks = {
-  signIn: `${appUrl}/entrar`,
   signUp: `${appUrl}/registro`,
   demo: `${appUrl}/demo`,
   export: `${appUrl}/exportar`,
@@ -12,10 +11,12 @@ export const appLinks = {
 /**
  * On a computer the demo opens in its own tab, so leaving it brings people back to the page they were reading.
  * The layout's script opens it in the same tab on touch screens (Chrome on iPhone lays a tab opened with
- * target="_blank" out under its top toolbar, hiding the demo banner) and adds the theme the visitor picked
- * here to these links, so the demo opens in it.
+ * target="_blank" out under its top toolbar, hiding the demo banner).
  */
-export const demoLinkAttrs = { target: "_blank", rel: "noopener", "data-demo-link": "" } as const;
+export const demoLinkAttrs = { target: "_blank", rel: "noopener", "data-demo-link": "", "data-app-link": "" } as const;
+
+/** Links into the app (sign-in, sign-up): the layout's script adds the theme picked here, so the app opens in it. */
+export const appLinkAttrs = { "data-app-link": "" } as const;
 
 /** Links that leave the site open in a new tab, so the page stays where it was. */
 export const externalLinkAttrs = { target: "_blank", rel: "noopener noreferrer" } as const;
