@@ -1,8 +1,10 @@
-import type { ComponentProps, FormEvent, ReactNode } from "react";
+import { useEffect, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { Check } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { LegalLinks, SITE_URL } from "@/components/legal-links";
 import { LogoMark } from "@/components/logo";
+import { signInMethods } from "./auth-api";
 import appScreen from "./assets/inicio.webp";
 
 interface AuthLayoutProps {
@@ -23,10 +25,11 @@ interface AuthLayoutProps {
  * a sans headline and the form on a card.
  */
 export function AuthLayout({ title, description, children, footer, eyebrow, wide = false }: AuthLayoutProps) {
+  const cloud = useCloud();
   return (
     <div className="relative isolate grid min-h-dvh bg-canvas lg:grid-cols-2 lg:bg-background">
       <main className="flex flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-10 sm:py-8">
-        <Brand />
+        <Brand cloud={cloud} />
         <div className="flex flex-1 justify-center pt-6 pb-2 lg:items-center lg:py-10">
           <div
             className={cn(
@@ -49,42 +52,84 @@ export function AuthLayout({ title, description, children, footer, eyebrow, wide
         {/* Phones reach these from the consent line and from the app's menu */}
         <LegalLinks className="hidden lg:flex" />
       </main>
-      <BrandPanel />
+      <BrandPanel cloud={cloud} />
     </div>
   );
 }
 
+/** Whether this instance is cuentalibre Cloud: the one that charges for a plan. */
+function useCloud() {
+  const [cloud, setCloud] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void signInMethods().then(({ billing }) => active && setCloud(billing));
+    return () => {
+      active = false;
+    };
+  }, []);
+  return cloud;
+}
+
 /** Logo and name: back to the public site, or to the app's start on instances without one. */
-function Brand() {
+function Brand({ cloud }: { cloud: boolean }) {
+  const name = cloud ? "cuentalibre Cloud" : "cuentalibre";
   return (
     <a
       href={SITE_URL ?? "/"}
-      aria-label="cuentalibre, página de inicio"
+      aria-label={`${name}, página de inicio`}
       className="flex items-baseline gap-2.5 self-start rounded-lg text-foreground"
     >
       <LogoMark className="h-6" />
-      <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
+      <span className="font-brand text-xl font-semibold tracking-[-0.01em]">
+        cuentalibre
+        {cloud && <span className="text-muted-foreground"> Cloud</span>}
+      </span>
     </a>
   );
 }
 
-/** A glimpse of the app beside the form, the same on every instance. Only on wide screens. */
-function BrandPanel() {
+/** What Cloud takes care of, as the Cloud page tells it. */
+const cloudFacts = [
+  "Servidores en la Unión Europea",
+  "Copias y actualizaciones incluidas",
+  "Exporta tus datos cuando quieras",
+  "30 días gratis, sin tarjeta",
+];
+
+/**
+ * A glimpse of the app beside the form; on Cloud, over what the hosting includes, so whoever signs up
+ * knows it's the paid service. Only on wide screens.
+ */
+function BrandPanel({ cloud }: { cloud: boolean }) {
   return (
-    <aside
-      aria-hidden
-      className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-canvas lg:block"
-    >
-      {/* The app's home screen, peeking in from the bottom-right corner */}
-      <img
-        src={appScreen}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        width={1400}
-        height={875}
-        className="pointer-events-none absolute top-[18%] left-12 w-[1400px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
-      />
+    <aside className="relative m-3 hidden flex-col overflow-hidden rounded-[24px] border border-border bg-canvas lg:flex">
+      {cloud && (
+        <div className="flex animate-rise-in flex-col gap-7 px-12 pt-12 xl:px-16 xl:pt-16">
+          <p className="m-0 font-display text-[clamp(32px,3.2vw,46px)] leading-[1.06] font-semibold tracking-[-0.025em] text-balance">
+            Nosotros cuidamos del servidor.
+          </p>
+          <ul className="m-0 grid list-none gap-x-6 gap-y-3 p-0 text-md xl:grid-cols-2">
+            {cloudFacts.map((fact) => (
+              <li key={fact} className="flex items-center gap-2.5">
+                <Check className="size-4 shrink-0 text-primary" aria-hidden />
+                {fact}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {/* Decorative: the app's home screen, peeking in from the bottom-right corner */}
+      <div className={cn("relative flex-1", cloud ? "mt-12 min-h-[320px]" : "mt-[18vh]")}>
+        <img
+          src={appScreen}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          width={1400}
+          height={875}
+          className="pointer-events-none absolute top-0 left-12 w-[1400px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
+        />
+      </div>
     </aside>
   );
 }
