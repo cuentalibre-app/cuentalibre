@@ -1,5 +1,4 @@
 import type { ComponentProps, FormEvent, ReactNode } from "react";
-import { Code, HandCoins, LockKeyhole, type LucideIcon } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { LegalLinks, SITE_URL } from "@/components/legal-links";
@@ -20,7 +19,7 @@ interface AuthLayoutProps {
 
 /**
  * The screens around the app (sign-in, sign-up, onboarding). On wide screens they speak like the public
- * site: serif headline and a brand panel that shows the app. On phones they look like the app itself:
+ * site: serif headline and a panel that shows the app. On phones they look like the app itself:
  * a sans headline and the form on a card.
  */
 export function AuthLayout({ title, description, children, footer, eyebrow, wide = false }: AuthLayoutProps) {
@@ -69,37 +68,14 @@ function Brand() {
   );
 }
 
-const reasons: { icon: LucideIcon; title: string; text: string }[] = [
-  { icon: Code, title: "Código abierto", text: "Cada cálculo de IVA e IRPF, a la vista." },
-  { icon: LockKeyhole, title: "Privado por defecto", text: "Tus datos fiscales no son nuestro negocio." },
-  { icon: HandCoins, title: "Gratis de verdad", text: "Facturas y gastos ilimitados." },
-];
-
-/** The site's promise beside the form, over a glimpse of the app. Only on wide screens. */
+/** A glimpse of the app beside the form, the same on every instance. Only on wide screens. */
 function BrandPanel() {
   return (
-    <aside className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-canvas lg:flex lg:flex-col">
-      <div className="relative z-10 flex flex-col gap-8 p-12 xl:p-16">
-        <p className="m-0 font-display text-[clamp(36px,3.6vw,52px)] leading-[1.04] font-semibold tracking-[-0.025em] text-balance">
-          Impuestos al día.
-          <br />
-          <span className="text-muted-foreground">100&nbsp;% código abierto.</span>
-        </p>
-        <ul className="m-0 flex list-none flex-col gap-4 p-0">
-          {reasons.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex items-center gap-3.5">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-primary">
-                <Icon className="size-[18px]" aria-hidden />
-              </span>
-              <span className="flex flex-col">
-                <span className="text-md font-semibold">{title}</span>
-                <span className="text-base text-muted-foreground">{text}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      {/* Decorative: the app's home screen, peeking in from the bottom-right corner */}
+    <aside
+      aria-hidden
+      className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-canvas lg:block"
+    >
+      {/* The app's home screen, peeking in from the bottom-right corner */}
       <img
         src={appScreen}
         alt=""
@@ -107,7 +83,7 @@ function BrandPanel() {
         decoding="async"
         width={1400}
         height={875}
-        className="pointer-events-none absolute top-[min(60%,420px)] left-12 w-[1100px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
+        className="pointer-events-none absolute top-[18%] left-12 w-[1400px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
       />
     </aside>
   );
