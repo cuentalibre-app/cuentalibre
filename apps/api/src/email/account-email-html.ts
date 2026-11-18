@@ -23,19 +23,23 @@ export const escapeHtml = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 /**
- * `LogoMark` at 24 px, drawn with cells: three ink columns, the slate head over the last
- * one, all standing on the wordmark's baseline.
+ * `LogoMark` at 24 px beside the wordmark: three ink columns and the slate head over the
+ * last one, standing on the wordmark's baseline. Drawn with table cells and `bgcolor`,
+ * which every client paints, because many block images and Gmail drops empty divs.
  */
 function logo() {
-  const block = (width: number, height: number, color: string, radius: string, after = 0) =>
-    `<div style="width:${width}px;height:${height}px;background:${color};border-radius:${radius};${after ? `margin-bottom:${after}px;` : ""}font-size:0;line-height:0">&nbsp;</div>`;
-  const column = (height: number) => block(6, height, INK, "2px");
-  const gap = `<td width="2" style="font-size:0">&nbsp;</td>`;
+  const cell = (width: number, height: number, color: string, radius: string) =>
+    `<td width="${width}" height="${height}" bgcolor="${color}" style="width:${width}px;height:${height}px;background:${color};border-radius:${radius};font-size:1px;line-height:1px">&nbsp;</td>`;
+  const space = (height: number) =>
+    `<tr><td height="${height}" style="height:${height}px;font-size:1px;line-height:1px">&nbsp;</td></tr>`;
+  const column = (height: number, head = false) =>
+    `<td valign="bottom"><table role="presentation" cellpadding="0" cellspacing="0" border="0">${
+      head ? `<tr>${cell(6, 6, MARK, "50%")}</tr>${space(2)}` : ""
+    }<tr>${cell(6, height, INK, "2px")}</tr></table></td>`;
+  const gap = `<td width="2" style="width:2px;font-size:1px;line-height:1px">&nbsp;</td>`;
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td valign="bottom">${column(9)}</td>${gap}
-<td valign="bottom">${column(14)}</td>${gap}
-<td valign="bottom">${block(6, 6, MARK, "50%", 2)}${column(16)}</td>
-<td width="10" style="font-size:0">&nbsp;</td>
+${column(9)}${gap}${column(14)}${gap}${column(16, true)}
+<td width="10" style="width:10px;font-size:1px;line-height:1px">&nbsp;</td>
 <td valign="bottom" style="font-family:${BRAND};font-size:19px;font-weight:600;letter-spacing:-0.01em;line-height:15px;color:${INK}">cuentalibre</td>
 </tr></table>`;
 }
@@ -66,8 +70,7 @@ export function button(url: string, label: string) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px"><tr>
 <td bgcolor="${PRIMARY}" style="border-radius:999px;background:${PRIMARY};background-image:linear-gradient(180deg, ${PRIMARY_TOP}, ${PRIMARY} 60%)">
 <a href="${href}" style="display:inline-block;padding:14px 28px;font-family:${SANS};font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:999px">${escapeHtml(label)}</a>
-</td></tr></table>
-${note(`Si el botón no funciona, copia este enlace en el navegador:<br><a href="${href}" style="color:${MUTED};word-break:break-all">${href}</a>`)}`;
+</td></tr></table>`;
 }
 
 interface Layout {
