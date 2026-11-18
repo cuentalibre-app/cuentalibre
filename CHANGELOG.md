@@ -4,6 +4,12 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.2.1 (2026-11-18)
+
+* Rework the panel beside the sign-in and sign-up forms by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/130
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v1.2.0...v1.2.1
+
 ## 1.2.0 (2026-11-17)
 
 * Announce the Three Kings launch offer on the site by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/125
