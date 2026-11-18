@@ -28,6 +28,15 @@ const envSchema = z
      * fallback to `index.html`. Self-hosting sets it; without it the API serves only `/v1`.
      */
     WEB_DIR: z.string().min(1).optional(),
+    /**
+     * The header the proxy in front sets to the client's IP, which rate limits count by. Its
+     * last address is taken; without the header, the connection's own address.
+     */
+    CLIENT_IP_HEADER: z
+      .string()
+      .min(1)
+      .default("x-forwarded-for")
+      .transform((name) => name.toLowerCase()),
     /** Google sign-in, from an OAuth client in Google Cloud. Without them it is off. */
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),

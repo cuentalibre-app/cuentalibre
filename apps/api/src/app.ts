@@ -12,6 +12,7 @@ import type { Env } from "./env";
 import { reportError } from "./error-reporting";
 import { ApiError, describeIssues, errorResponse } from "./errors";
 import { loadSession } from "./middleware";
+import { identifyClient, limitBody, rateLimit } from "./rate-limit";
 import { accountRoutes } from "./routes/account";
 import { apiKeyRoutes } from "./routes/api-keys";
 import { billingRoutes } from "./routes/billing";
@@ -64,6 +65,8 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
   );
   // Preflights are remembered: the web app's background syncs send a header that needs one
   app.use("/v1/*", cors({ origin: env.WEB_ORIGIN, credentials: true, maxAge: 600 }));
+  app.use("/v1/*", identifyClient(env.CLIENT_IP_HEADER));
+  app.use("/v1/*", limitBody);
   app.use("/v1/*", async (c, next) => {
     c.set("db", db);
     c.set("storage", storage);
@@ -85,6 +88,7 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
   });
   app.on(["GET", "POST"], "/v1/auth/*", (c) => auth.handler(c.req.raw));
   app.use("/v1/*", loadSession(auth));
+  app.use("/v1/*", rateLimit());
 
   if (env.WEB_DIR) app.use("*", serveWeb(env.WEB_DIR));
 

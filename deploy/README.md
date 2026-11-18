@@ -2,7 +2,7 @@
 
 How cuentalibre Cloud (`app.cuentalibre.es`) is run: maintainer documentation. To run cuentalibre on your own server, follow the [self-hosting guide](https://cuentalibre.es/docs/instalar) and `selfhost/` instead; nothing here applies to it.
 
-This folder runs the API's `api` image (see [apps/api/README.md](../apps/api/README.md)) on one server: Caddy with a Cloudflare origin certificate in front, the API and Postgres. Caddy only takes the client's IP from Cloudflare's addresses and passes it on as `X-Forwarded-For`, which Better Auth rate-limits by. `cloud-init.yml` prepares a new server.
+This folder runs the API's `api` image (see [apps/api/README.md](../apps/api/README.md)) on one server: Caddy with a Cloudflare origin certificate in front, the API and Postgres. Caddy only takes the client's IP from Cloudflare's addresses and passes it on as `X-Forwarded-For`, which the API's rate limits count by (`CLIENT_IP_HEADER`, its default). `cloud-init.yml` prepares a new server.
 
 ```
 compose.yml            Caddy, the API and Postgres
