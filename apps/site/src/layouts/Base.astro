@@ -4,7 +4,7 @@ import GitHubIcon from "../components/GitHubIcon.astro";
 import Icon from "../components/Icon.astro";
 import LaunchBanner from "../components/LaunchBanner.astro";
 import Logo from "../components/Logo.astro";
-import { appLinks, demoLinkAttrs, externalLinkAttrs, legalPages, sourceUrl } from "../site";
+import { appLinkAttrs, appLinks, demoLinkAttrs, externalLinkAttrs, legalPages, sourceUrl } from "../site";
 
 interface Props {
   title: string;
@@ -31,7 +31,7 @@ const navLinks = [...sections, { href: "/docs", label: "Docs" }];
 const footerColumns = [
   {
     title: "Producto",
-    links: [...navLinks, { href: appLinks.demo, label: "Probar la demo" }, { href: appLinks.signIn, label: "Entrar" }],
+    links: [...navLinks, { href: appLinks.demo, label: "Probar la demo" }, { href: appLinks.signUp, label: "Entrar" }],
   },
   {
     title: "Proyecto",
@@ -135,7 +135,8 @@ const year = new Date().getFullYear();
           <GitHubIcon class="size-[18px]" />GitHub
         </a>
         <a
-          href={appLinks.signIn}
+          href={appLinks.signUp}
+          {...appLinkAttrs}
           class="rounded-lg px-2.5 py-2 text-[14px] font-medium text-foreground no-underline hover:bg-muted sm:px-3.5 sm:text-[15px]"
         >
           Entrar
@@ -174,7 +175,13 @@ const year = new Date().getFullYear();
                   <li>
                     <a
                       href={link.href}
-                      {...(link.href === appLinks.demo ? demoLinkAttrs : link.href.startsWith(sourceUrl) ? externalLinkAttrs : {})}
+                      {...(link.href === appLinks.demo
+                        ? demoLinkAttrs
+                        : link.href === appLinks.signUp
+                          ? appLinkAttrs
+                          : link.href.startsWith(sourceUrl)
+                            ? externalLinkAttrs
+                            : {})}
                       class="inline-block py-1.5 text-[15px] text-muted-foreground no-underline hover:text-foreground"
                     >
                       {link.label}
@@ -196,6 +203,7 @@ const year = new Date().getFullYear();
       const root = document.documentElement;
       const toggle = document.querySelector<HTMLButtonElement>("[data-theme-toggle]")!;
       const demoLinks = document.querySelectorAll<HTMLAnchorElement>("[data-demo-link]");
+      const appLinks = document.querySelectorAll<HTMLAnchorElement>("[data-app-link]");
       // Phones open the demo in the same tab: Chrome on iPhone hides the top of a tab opened with target="_blank"
       if (matchMedia("(pointer: coarse)").matches) for (const link of demoLinks) link.removeAttribute("target");
       const storedTheme = () => {
@@ -209,9 +217,9 @@ const year = new Date().getFullYear();
         const dark = root.classList.contains("dark");
         toggle.setAttribute("aria-pressed", String(dark));
         document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#131416" : "#ffffff");
-        // A theme picked here travels to the demo, which lives on another domain and can't read it
+        // A theme picked here travels to the app and its demo, which live on another domain and can't read it
         const picked = storedTheme();
-        for (const link of demoLinks) {
+        for (const link of appLinks) {
           const url = new URL(link.href);
           if (picked) url.searchParams.set("tema", picked === "dark" ? "oscuro" : "claro");
           else url.searchParams.delete("tema");
