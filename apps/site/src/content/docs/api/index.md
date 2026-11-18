@@ -54,7 +54,9 @@ Una clave pertenece a la persona que la creó y a la empresa que tenía activa e
 
 ## Límite de peticiones
 
-Cada clave admite **600 peticiones por minuto**. Por encima responde `429 rate_limited`; espera unos segundos y repite.
+Cada clave admite **600 peticiones por minuto**. Las que más cuestan (enviar comandos de sincronización, subir archivos, enviar correos, leer documentos con IA y el chat de ayuda) tienen además un límite de **60 por minuto** por usuario. Por encima responde `429 rate_limited` con la cabecera `Retry-After`, los segundos que hay que esperar antes de repetir.
+
+El cuerpo de una petición puede ocupar hasta **1 MB**, salvo al subir archivos; por encima responde `413 payload_too_large`.
 
 ## Formato de los datos
 
@@ -105,8 +107,9 @@ Los errores responden con un código HTTP y este cuerpo:
 | 409  | `quarter_closed`                                             | El trimestre está cerrado. Reábrelo en la aplicación para cambiar sus registros.                                                                                                       |
 | 409  | `in_use`                                                     | No se puede borrar porque otro registro lo usa (una forma de pago, un producto…).                                                                                                      |
 | 413  | `file_too_large`                                             | El archivo pasa del límite (25 MB por defecto).                                                                                                                                        |
+| 413  | `payload_too_large`                                          | El cuerpo de la petición pasa de 1 MB.                                                                                                                                                 |
 | 415  | `invalid_request`                                            | El `Content-Type` del cuerpo no es el que admite la operación (casi siempre `application/json`).                                                                                       |
-| 429  | `rate_limited`                                               | Demasiadas peticiones con esta clave.                                                                                                                                                  |
+| 429  | `rate_limited`                                               | Demasiadas peticiones; espera lo que diga `Retry-After`.                                                                                                                                        |
 | 429  | `email_quota_exceeded`                                       | La empresa ha llegado a su límite de destinatarios de correo del día o del mes. |
 | 503  | `email_unavailable`                                          | Este servidor no tiene configurado el envío de correo.                                                                                                                                 |
 

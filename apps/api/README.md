@@ -134,6 +134,10 @@ The `outbox` table holds work written in the same transaction as the change that
 
 Scripts and agents authenticate with an API key (Better Auth's api-key plugin), sent as `Authorization: Bearer fsk_…` or `x-api-key`. A key acts as the user who created it, in the organization that was active then (kept in its metadata), and only while the user still belongs to it; `requireOrganization` checks the membership on every request, as for sessions. Keys are created in the app (Configuración › API y agentes) or with `POST /v1/api-keys`, only by a signed-in person; only a hash is stored, each key takes up to 600 requests a minute, and a user can have up to 10 active keys per organization (409 `too_many_api_keys` beyond that). The public routes write through the same commands as the web app (`src/routes/records.ts`), so they follow the same rules. The OpenAPI document declares the key as bearer auth.
 
+### Limits
+
+`src/rate-limit.ts` counts requests per minute in the process's memory: 600 per signed-in user, or per IP address signed out (API keys have their own 600), and 60 per user to the costly routes (`POST /v1/commands`, `/v1/files`, `/v1/emails`, `/v1/purchases/extract`, `/v1/help-chat`), API keys included. Past them it answers `429 rate_limited` with `Retry-After`. Better Auth limits its own routes per IP address in production (`AUTH_RATE_LIMITS` in `src/auth.ts`: sign-in, sign-up, password resets and email codes), with its counters in the `rate_limit` table so deploys don't reset them. The client's IP is the last address in `CLIENT_IP_HEADER` (default `x-forwarded-for`), which proxies append to, or the connection's own address without one; `identifyClient` hands it to Better Auth. Bodies are capped at 1 MB (`413 payload_too_large`), except uploads, and the server drops clients that take over 15 seconds to send their headers or two minutes to send the whole request.
+
 Not done yet: an MCP server over these routes, and tax returns (forms 303 and 130) computed on the server, which needs the conversion from documents to tax books moved from the web app into `core`.
 
 ## Tenancy

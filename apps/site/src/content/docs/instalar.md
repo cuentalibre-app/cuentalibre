@@ -84,6 +84,8 @@ cuentalibre escucha en HTTP en el puerto 3000. Para usarlo desde fuera de casa, 
 
 Pon en `PUBLIC_URL` la dirección `https://` que hayas elegido y aplica el cambio con `docker compose up -d`.
 
+cuentalibre limita los intentos de inicio de sesión y las peticiones por dirección IP, que toma de la cabecera `X-Forwarded-For` que añaden estos proxies. Si el tuyo la pone en otra, indícala en el `.env` con `CLIENT_IP_HEADER` (por ejemplo, `CLIENT_IP_HEADER=cf-connecting-ip`).
+
 Si el proxy está en el mismo servidor, puedes hacer que cuentalibre solo escuche ahí, sin dejar el puerto 3000 a la vista de tu red: añade `PORT=127.0.0.1:3000` al `.env`.
 
 Sin HTTPS, por la IP en tu red, cuentalibre funciona igual, pero los datos viajan sin cifrar: hazlo solo en una red de confianza. El navegador tampoco deja mostrar notificaciones fuera de HTTPS.

@@ -63,7 +63,7 @@ The OpenAPI 3.1 document at `<API URL>/openapi.json` is the source of truth for 
 - An invoice's `status` follows its payments: to mark it paid, add a payment covering the total. Only invoices take payments; drafts and quotes don't.
 - Payment method IDs come from `GET /workspace` (`paymentMethods`), which returns everything: read it once and reuse it.
 - A record's quarter is decided by `issuedOn` (invoices), `bookedOn` (received invoices) or `date` (expenses). In a closed quarter they only take changes to payments, tags, attachments and private notes.
-- On an error, read `error.code` and explain it. Don't work around `quarter_closed`, `date_out_of_order` or `number_taken`: they protect the books. On `429 rate_limited`, wait a few seconds and retry.
+- On an error, read `error.code` and explain it. Don't work around `quarter_closed`, `date_out_of_order` or `number_taken`: they protect the books. On `429 rate_limited`, wait the seconds in `Retry-After` and retry.
 - Before reporting amounts back, convert cents to euros (`127200` → 1.272,00 €).
 
 ## Ask before you act
