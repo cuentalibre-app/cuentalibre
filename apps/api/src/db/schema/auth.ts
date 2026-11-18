@@ -7,7 +7,7 @@
  * and port the differences here.
  */
 import { relations } from "drizzle-orm";
-import { boolean, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { createdAt, updatedAt } from "./columns";
 
 export const user = pgTable("user", {
@@ -117,6 +117,21 @@ export const verification = pgTable(
     updatedAt: updatedAt(),
   },
   (table) => [index().on(table.identifier)],
+);
+
+/**
+ * Better Auth's rate limit counters, one per IP address and path, so they survive
+ * deploys. `lastRequest` is in milliseconds since the epoch; old rows are pruned as it goes.
+ */
+export const rateLimit = pgTable(
+  "rate_limit",
+  {
+    id: uuid().primaryKey(),
+    key: text().notNull().unique(),
+    count: integer().notNull(),
+    lastRequest: bigint({ mode: "number" }).notNull(),
+  },
+  (table) => [index().on(table.lastRequest)],
 );
 
 /**

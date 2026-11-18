@@ -16,6 +16,7 @@ import {
 } from "./email/account-emails";
 import type { Mailer } from "./email/mailer";
 import type { Env } from "./env";
+import { CLIENT_IP_HEADER } from "./rate-limit";
 
 /** Every API key starts with it, so leaked keys are easy to spot. */
 export const API_KEY_PREFIX = "fsk_";
@@ -68,6 +69,20 @@ export const CLOSED_EMAIL_OTP_PATHS = [
  */
 export const SESSION_EXPIRES_IN = 8 * 60 * 60;
 export const SESSION_UPDATE_AGE = 5 * 60;
+
+/**
+ * Better Auth's limits per IP address for what guesses passwords or codes, or sends email.
+ * The rest of its routes allow 100 requests a minute.
+ */
+export const AUTH_RATE_LIMITS = {
+  "/sign-in/*": { window: 60, max: 10 },
+  "/sign-up/*": { window: 60 * 60, max: 10 },
+  "/change-password": { window: 60, max: 5 },
+  "/request-password-reset": { window: 15 * 60, max: 3 },
+  "/reset-password": { window: 15 * 60, max: 5 },
+  "/send-verification-email": { window: 15 * 60, max: 5 },
+  "/email-otp/*": { window: 15 * 60, max: 10 },
+};
 
 /**
  * Authentication with Better Auth: email and password sign-in, Google when
@@ -133,9 +148,20 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
         },
       },
     },
+    rateLimit: {
+      // Off in development and tests, where one address signs up many users
+      enabled: env.NODE_ENV === "production",
+      // In Postgres, so a deploy doesn't reset them
+      storage: "database",
+      window: 60,
+      max: 100,
+      customRules: AUTH_RATE_LIMITS,
+    },
     advanced: {
       // UUIDv7, like the records the web app creates.
       database: { generateId: () => newId() },
+      // Set by `identifyClient` from the proxy's header or the connection
+      ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
     },
     telemetry: { enabled: false },
   });
