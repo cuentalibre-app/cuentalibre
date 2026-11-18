@@ -140,8 +140,6 @@ ${subscribeUrl}
 
 Para llevarte los datos, expórtalos antes de esa fecha:
 ${exportUrl}
-
-Si tienes más de una empresa, abre «${name}» antes de seguir el enlace.
 `,
     html: layout({
       title: `Tu empresa se borrará el ${date}`,
@@ -156,7 +154,6 @@ Si tienes más de una empresa, abre «${name}» antes de seguir el enlace.
         ),
         button(subscribeUrl, "Suscribirme"),
         paragraph(`Para llevarte los datos, ${link(exportUrl, "expórtalos")} antes de esa fecha.`),
-        note(`Si tienes más de una empresa, abre «${escapeHtml(name)}» antes de seguir los enlaces.`),
       ].join("\n"),
       footer: `Te llega porque eres propietario de «${escapeHtml(name)}» en cuentalibre.`,
     }),
