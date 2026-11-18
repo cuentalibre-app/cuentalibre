@@ -1,6 +1,7 @@
 /*
  * The brand's louder voice on the public site: the plan card's gradient border
- * and the main call to action. The app and its sign-in screens stay flat.
+ * and the main call to action. The app stays flat; its sign-in screens only
+ * carry the Cloud tag.
  */
 @utility border-gradient-brand {
   border: 2px solid transparent;
@@ -31,4 +32,13 @@
   &:active {
     transform: scale(0.98);
   }
+}
+
+/* The "Cloud" tag after the wordmark: white type on the cobalt-to-violet wash. */
+@utility tag-cloud {
+  color: white;
+  background: var(--brand-cloud);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 6px 16px -8px color-mix(in srgb, var(--violet-500) 70%, transparent);
 }
