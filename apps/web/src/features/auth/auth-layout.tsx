@@ -1,9 +1,10 @@
-import type { ComponentProps, FormEvent, ReactNode } from "react";
-import { Code, HandCoins, LockKeyhole, type LucideIcon } from "lucide-react";
+import { useEffect, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
+import { Bot, CalendarCheck, ChartColumn, FileText, Percent, ScanText, type LucideIcon } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { LegalLinks, SITE_URL } from "@/components/legal-links";
 import { LogoMark } from "@/components/logo";
+import { signInMethods } from "./auth-api";
 import appScreen from "./assets/inicio.webp";
 
 interface AuthLayoutProps {
@@ -20,14 +21,15 @@ interface AuthLayoutProps {
 
 /**
  * The screens around the app (sign-in, sign-up, onboarding). On wide screens they speak like the public
- * site: serif headline and a brand panel that shows the app. On phones they look like the app itself:
+ * site: serif headline and a panel that shows the app. On phones they look like the app itself:
  * a sans headline and the form on a card.
  */
 export function AuthLayout({ title, description, children, footer, eyebrow, wide = false }: AuthLayoutProps) {
+  const cloud = useCloud();
   return (
     <div className="relative isolate grid min-h-dvh bg-canvas lg:grid-cols-2 lg:bg-background">
       <main className="flex flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-10 sm:py-8">
-        <Brand />
+        <Brand cloud={cloud} />
         <div className="flex flex-1 justify-center pt-6 pb-2 lg:items-center lg:py-10">
           <div
             className={cn(
@@ -50,65 +52,90 @@ export function AuthLayout({ title, description, children, footer, eyebrow, wide
         {/* Phones reach these from the consent line and from the app's menu */}
         <LegalLinks className="hidden lg:flex" />
       </main>
-      <BrandPanel />
+      <BrandPanel cloud={cloud} />
     </div>
   );
 }
 
+/** Whether this instance is cuentalibre Cloud: the one that charges for a plan. */
+function useCloud() {
+  const [cloud, setCloud] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void signInMethods().then(({ billing }) => active && setCloud(billing));
+    return () => {
+      active = false;
+    };
+  }, []);
+  return cloud;
+}
+
 /** Logo and name: back to the public site, or to the app's start on instances without one. */
-function Brand() {
+function Brand({ cloud }: { cloud: boolean }) {
+  const name = cloud ? "cuentalibre Cloud" : "cuentalibre";
   return (
     <a
       href={SITE_URL ?? "/"}
-      aria-label="cuentalibre, página de inicio"
-      className="flex items-baseline gap-2.5 self-start rounded-lg text-foreground"
+      aria-label={`${name}, página de inicio`}
+      className="flex items-center gap-2.5 self-start rounded-lg text-foreground"
     >
       <LogoMark className="h-6" />
       <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
+      {cloud && (
+        <span className="animate-rise-in rounded-full px-2.5 py-0.5 text-sm font-semibold tracking-[0.01em] tag-cloud">
+          Cloud
+        </span>
+      )}
     </a>
   );
 }
 
-const reasons: { icon: LucideIcon; title: string; text: string }[] = [
-  { icon: Code, title: "Código abierto", text: "Cada cálculo de IVA e IRPF, a la vista." },
-  { icon: LockKeyhole, title: "Privado por defecto", text: "Tus datos fiscales no son nuestro negocio." },
-  { icon: HandCoins, title: "Gratis de verdad", text: "Facturas y gastos ilimitados." },
+/** What the app does for whoever signs up, in the site's own claims. */
+const highlights: { icon: LucideIcon; text: string }[] = [
+  { icon: FileText, text: "Facturas, presupuestos y albaranes ilimitados" },
+  { icon: ScanText, text: "Escáner de tickets y facturas recibidas" },
+  { icon: Percent, text: "IVA e IRPF de cada trimestre, ya calculados" },
+  { icon: Bot, text: "API para conectar tus agentes de IA" },
+  { icon: CalendarCheck, text: "Calendario fiscal y cierre de trimestre" },
+  { icon: ChartColumn, text: "Cobros, pagos e informes" },
 ];
 
-/** The site's promise beside the form, over a glimpse of the app. Only on wide screens. */
-function BrandPanel() {
+/**
+ * A glimpse of the app beside the form; on Cloud, under what the app does, to sell the plan people
+ * are signing up for. Only on wide screens.
+ */
+function BrandPanel({ cloud }: { cloud: boolean }) {
   return (
-    <aside className="relative m-3 hidden overflow-hidden rounded-[24px] border border-border bg-canvas lg:flex lg:flex-col">
-      <div className="relative z-10 flex flex-col gap-8 p-12 xl:p-16">
-        <p className="m-0 font-display text-[clamp(36px,3.6vw,52px)] leading-[1.04] font-semibold tracking-[-0.025em] text-balance">
-          Impuestos al día.
-          <br />
-          <span className="text-muted-foreground">100&nbsp;% código abierto.</span>
-        </p>
-        <ul className="m-0 flex list-none flex-col gap-4 p-0">
-          {reasons.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex items-center gap-3.5">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-primary">
-                <Icon className="size-[18px]" aria-hidden />
-              </span>
-              <span className="flex flex-col">
-                <span className="text-md font-semibold">{title}</span>
-                <span className="text-base text-muted-foreground">{text}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <aside className="relative m-3 hidden flex-col overflow-hidden rounded-[24px] border border-border bg-canvas lg:flex">
+      {cloud && (
+        <div className="flex animate-rise-in flex-col gap-7 px-12 pt-12 xl:px-16 xl:pt-16">
+          <p className="m-0 font-display text-[clamp(32px,3.2vw,46px)] leading-[1.06] font-semibold tracking-[-0.025em] text-balance">
+            Todo tu negocio, en una sola app.
+          </p>
+          <ul className="m-0 grid list-none gap-y-3 p-0 text-md">
+            {highlights.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
+                  <Icon className="size-4" aria-hidden />
+                </span>
+                {text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {/* Decorative: the app's home screen, peeking in from the bottom-right corner */}
-      <img
-        src={appScreen}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        width={1400}
-        height={875}
-        className="pointer-events-none absolute top-[min(60%,420px)] left-12 w-[1100px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
-      />
+      <div className={cn("relative flex-1", cloud ? "mt-12 min-h-[280px]" : "mt-[18vh]")}>
+        <img
+          src={appScreen}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          width={1400}
+          height={875}
+          className="pointer-events-none absolute top-0 left-12 w-[1400px] max-w-none rounded-tl-[14px] border border-border bg-background shadow-[-10px_-10px_36px_-14px_rgb(17_18_20/0.28)] select-none xl:left-16"
+        />
+      </div>
     </aside>
   );
 }
