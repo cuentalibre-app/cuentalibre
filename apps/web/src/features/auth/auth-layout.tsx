@@ -1,5 +1,5 @@
 import { useEffect, useState, type ComponentProps, type FormEvent, type ReactNode } from "react";
-import { Check } from "lucide-react";
+import { Bot, CalendarCheck, ChartColumn, FileText, Percent, ScanText, type LucideIcon } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { LegalLinks, SITE_URL } from "@/components/legal-links";
@@ -77,28 +77,32 @@ function Brand({ cloud }: { cloud: boolean }) {
     <a
       href={SITE_URL ?? "/"}
       aria-label={`${name}, página de inicio`}
-      className="flex items-baseline gap-2.5 self-start rounded-lg text-foreground"
+      className="flex items-center gap-2.5 self-start rounded-lg text-foreground"
     >
       <LogoMark className="h-6" />
-      <span className="font-brand text-xl font-semibold tracking-[-0.01em]">
-        cuentalibre
-        {cloud && <span className="text-muted-foreground"> Cloud</span>}
-      </span>
+      <span className="font-brand text-xl font-semibold tracking-[-0.01em]">cuentalibre</span>
+      {cloud && (
+        <span className="animate-rise-in rounded-full px-2.5 py-0.5 text-sm font-semibold tracking-[0.01em] tag-cloud">
+          Cloud
+        </span>
+      )}
     </a>
   );
 }
 
-/** What Cloud takes care of, as the Cloud page tells it. */
-const cloudFacts = [
-  "Servidores en la Unión Europea",
-  "Copias y actualizaciones incluidas",
-  "Exporta tus datos cuando quieras",
-  "30 días gratis, sin tarjeta",
+/** What the app does for whoever signs up, in the site's own claims. */
+const highlights: { icon: LucideIcon; text: string }[] = [
+  { icon: FileText, text: "Facturas, presupuestos y albaranes ilimitados" },
+  { icon: ScanText, text: "Escáner de tickets y facturas recibidas" },
+  { icon: Percent, text: "IVA e IRPF de cada trimestre, ya calculados" },
+  { icon: Bot, text: "API para conectar tus agentes de IA" },
+  { icon: CalendarCheck, text: "Calendario fiscal y cierre de trimestre" },
+  { icon: ChartColumn, text: "Cobros, pagos e informes" },
 ];
 
 /**
- * A glimpse of the app beside the form; on Cloud, over what the hosting includes, so whoever signs up
- * knows it's the paid service. Only on wide screens.
+ * A glimpse of the app beside the form; on Cloud, under what the app does, to sell the plan people
+ * are signing up for. Only on wide screens.
  */
 function BrandPanel({ cloud }: { cloud: boolean }) {
   return (
@@ -106,20 +110,22 @@ function BrandPanel({ cloud }: { cloud: boolean }) {
       {cloud && (
         <div className="flex animate-rise-in flex-col gap-7 px-12 pt-12 xl:px-16 xl:pt-16">
           <p className="m-0 font-display text-[clamp(32px,3.2vw,46px)] leading-[1.06] font-semibold tracking-[-0.025em] text-balance">
-            Nosotros cuidamos del servidor.
+            Todo tu negocio, en una sola app.
           </p>
-          <ul className="m-0 grid list-none gap-x-6 gap-y-3 p-0 text-md xl:grid-cols-2">
-            {cloudFacts.map((fact) => (
-              <li key={fact} className="flex items-center gap-2.5">
-                <Check className="size-4 shrink-0 text-primary" aria-hidden />
-                {fact}
+          <ul className="m-0 grid list-none gap-y-3 p-0 text-md">
+            {highlights.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-soft-foreground">
+                  <Icon className="size-4" aria-hidden />
+                </span>
+                {text}
               </li>
             ))}
           </ul>
         </div>
       )}
       {/* Decorative: the app's home screen, peeking in from the bottom-right corner */}
-      <div className={cn("relative flex-1", cloud ? "mt-12 min-h-[320px]" : "mt-[18vh]")}>
+      <div className={cn("relative flex-1", cloud ? "mt-12 min-h-[280px]" : "mt-[18vh]")}>
         <img
           src={appScreen}
           alt=""

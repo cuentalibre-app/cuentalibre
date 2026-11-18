@@ -32,6 +32,8 @@
   --brand-cobalt: var(--cobalt-600);
   /* Plan cards on the public site: the logo's ink columns into cobalt and its slate head */
   --brand-gradient: linear-gradient(90deg, var(--primary) 0%, var(--brand-cobalt) 60%, var(--brand-mark) 100%);
+  /* The "Cloud" tag beside the wordmark on the hosted service: cobalt into violet, the same in dark */
+  --brand-cloud: linear-gradient(120deg, var(--cobalt-600), var(--violet-500));
   /* Frosted surfaces floating over the page: the tab bar and its sheets */
   --glass: color-mix(in oklab, var(--popover) 30%, transparent);
   --glass-edge: color-mix(in oklab, var(--neutral-0) 70%, transparent);
