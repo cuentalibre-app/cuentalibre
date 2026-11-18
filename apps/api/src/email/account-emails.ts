@@ -1,4 +1,4 @@
-import { button, codeBlock, escapeHtml, layout, note, paragraph } from "./account-email-html";
+import { button, codeBlock, escapeHtml, layout, link, note, paragraph } from "./account-email-html";
 import type { Mailer, OutgoingEmail } from "./mailer";
 
 /** How long a code to verify an email works: long enough to read the mail on another device. */
@@ -100,6 +100,69 @@ Caduca en una hora. Si no lo has pedido tú, ignora este mensaje: tu contraseña
         "Te llega porque alguien ha pedido cambiar la contraseña de tu cuenta. Si no has sido tú, ignóralo: tu contraseña no cambia.",
     }),
   );
+
+/** A day as people say it in Spain, such as «18 de noviembre de 2027». */
+const spanishDate = (date: Date) =>
+  new Intl.DateTimeFormat("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Madrid",
+  }).format(date);
+
+/**
+ * Warns an organization's owners, in one email, that it will be deleted for being
+ * read-only too long, with the way to keep it (subscribing) and to take the data away.
+ */
+export function deletionNoticeEmail(
+  owners: string[],
+  organization: { name: string; readOnlySince: Date; deleteAt: Date },
+  webOrigin: string,
+): OutgoingEmail {
+  const name = organization.name;
+  const since = spanishDate(organization.readOnlySince);
+  const date = spanishDate(organization.deleteAt);
+  const subscribeUrl = `${webOrigin}/configuracion/plan`;
+  const exportUrl = `${webOrigin}/exportar`;
+  return {
+    fromName: "cuentalibre",
+    to: owners,
+    cc: [],
+    subject: `«${name}» se borrará el ${date}`,
+    text: `Hola:
+
+«${name}» no tiene suscripción desde el ${since}, así que está en modo lectura: puedes ver y exportar sus datos, pero no cambiarlos.
+
+Si sigue así, el ${date} borraremos la empresa con todas sus facturas, gastos y archivos, y no podremos recuperarlos.
+
+Para conservarla, suscríbete:
+${subscribeUrl}
+
+Para llevarte los datos, expórtalos antes de esa fecha:
+${exportUrl}
+
+Si tienes más de una empresa, abre «${name}» antes de seguir el enlace.
+`,
+    html: layout({
+      title: `Tu empresa se borrará el ${date}`,
+      preheader: `Suscríbete antes del ${date} para conservar «${name}», o exporta sus datos.`,
+      body: [
+        paragraph("Hola:"),
+        paragraph(
+          `«${escapeHtml(name)}» no tiene suscripción desde el ${since}, así que está en modo lectura: puedes ver y exportar sus datos, pero no cambiarlos.`,
+        ),
+        paragraph(
+          `Si sigue así, el <strong>${date}</strong> borraremos la empresa con todas sus facturas, gastos y archivos, y no podremos recuperarlos.`,
+        ),
+        button(subscribeUrl, "Suscribirme"),
+        paragraph(`Para llevarte los datos, ${link(exportUrl, "expórtalos")} antes de esa fecha.`),
+        note(`Si tienes más de una empresa, abre «${escapeHtml(name)}» antes de seguir los enlaces.`),
+      ].join("\n"),
+      footer: `Te llega porque eres propietario de «${escapeHtml(name)}» en cuentalibre.`,
+    }),
+    attachments: [],
+  };
+}
 
 /**
  * Sends an email about the user's account without waiting for it, so how long

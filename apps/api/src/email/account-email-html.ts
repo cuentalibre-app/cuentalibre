@@ -41,6 +41,10 @@ export const paragraph = (html: string) =>
 export const note = (html: string) =>
   `<p style="margin:0 0 16px;font-family:${SANS};font-size:14px;line-height:1.5;color:${MUTED}">${html}</p>`;
 
+/** A link inside text, in the brand's blue. */
+export const link = (url: string, label: string) =>
+  `<a href="${escapeHtml(url)}" style="color:${BLUE};font-weight:600">${escapeHtml(label)}</a>`;
+
 /** The code to type, large, on a soft panel under a stripe of the brand gradient. */
 export function codeBlock(code: string) {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px">

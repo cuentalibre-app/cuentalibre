@@ -47,6 +47,6 @@ Si olvidas la contraseña, pulsa **¿La has olvidado?** en la pantalla de entrad
 
 En cuentalibre Cloud, **Configuración › Plan y facturación** muestra tu plan: los días de prueba que te quedan, tu suscripción, los documentos leídos con IA este mes y las facturas de cuentalibre. **Suscribirte** abre el pago con tarjeta, y **Gestionar suscripción** te deja cambiar el periodo o la tarjeta, actualizar tus datos de facturación o cancelarla. Solo quien administra la empresa puede cambiar su plan.
 
-Si la prueba acaba o cancelas la suscripción, tu empresa pasa a solo lectura: tus datos siguen ahí y puedes consultarlos y exportarlos, pero para emitir facturas y registrar gastos tienes que suscribirte.
+Si la prueba acaba o cancelas la suscripción, tu empresa pasa a solo lectura: tus datos siguen ahí y puedes consultarlos y exportarlos, pero para emitir facturas y registrar gastos tienes que suscribirte. Si sigue en solo lectura 12 meses, la borramos con todos sus datos; antes te avisamos por email seis meses, un mes y una semana antes, para que puedas suscribirte o exportarlos.
 
 Si usas cuentalibre en tu propio servidor, no hay planes de pago: lo usas gratis.
