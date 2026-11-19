@@ -1,7 +1,6 @@
-# cuentalibre Cloud: Caddy (TLS), the API and Postgres on one server.
+# cuentalibre Cloud: a Cloudflare Tunnel, the API and Postgres on one server.
 # Production and staging each run it on their own server, with their own `.env`.
-# Copy this folder to the server, fill in `.env` from `.env.example`, put the
-# Cloudflare origin certificate in `certs/`, then `docker compose up -d`.
+# The tunnel connects out to Cloudflare, so the server opens no port for HTTP.
 
 x-logging: &logging
   driver: json-file
@@ -10,18 +9,12 @@ x-logging: &logging
     max-file: "5"
 
 services:
-  caddy:
-    image: caddy:2.10-alpine
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.7
     restart: unless-stopped
-    ports:
-      - "443:443"
+    command: tunnel --no-autoupdate run
     environment:
-      API_DOMAIN: ${API_DOMAIN}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./origin-pull-ca.pem:/etc/caddy/origin-pull-ca.pem:ro
-      - ./certs:/etc/caddy/certs:ro
-      - caddy-data:/data
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
     depends_on:
       - api
     logging: *logging
@@ -34,6 +27,8 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgres://cuentalibre:${POSTGRES_PASSWORD}@postgres:5432/cuentalibre
       BETTER_AUTH_URL: https://${API_DOMAIN}
+      # Cloudflare sets it to the client's address; nothing else can reach the API.
+      CLIENT_IP_HEADER: cf-connecting-ip
     volumes:
       - files:/app/data/files
     depends_on:
@@ -58,6 +53,5 @@ services:
     logging: *logging
 
 volumes:
-  caddy-data:
   files:
   postgres:
