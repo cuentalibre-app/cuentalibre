@@ -241,7 +241,7 @@ apps/site              Public site and documentation (Astro, static)
 packages/core          Domain logic shared by front and back: periods, tax calculations, filing calendar
 packages/contracts     zod schemas of the stored data; types are inferred from them
 packages/ui            Design system: tokens, base styles and components
-deploy/                How cuentalibre online runs, for its maintainers: Caddy, the API and PostgreSQL on one server
+deploy/                How cuentalibre online runs, for its maintainers: a Cloudflare Tunnel, the API and PostgreSQL on one server
 selfhost/              Self-hosting: one image with the app and the API, plus PostgreSQL
 .agents/skills/        The cuentalibre skill for AI agents (.claude/skills links to it)
 ```

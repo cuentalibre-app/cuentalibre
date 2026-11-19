@@ -131,7 +131,7 @@ jobs:
       - name: Send the image, the server config and the staging settings
         run: |
           docker save "$IMAGE" | gzip | ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load'
-          scp deploy/compose.yml deploy/Caddyfile deploy/origin-pull-ca.pem deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          scp deploy/compose.yml deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
           # .env, and backup.env when staging has a backups bucket
           find "$RUNNER_TEMP/staging" -type f -exec scp -p {} "deploy@$DEPLOY_HOST:/opt/cuentalibre/" \;
           rm -r "$RUNNER_TEMP/staging"
@@ -141,7 +141,6 @@ jobs:
         run: |
           ssh "deploy@$DEPLOY_HOST" "cd /opt/cuentalibre \
             && docker compose up -d --remove-orphans \
-            && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile \
             && docker image prune -af --filter 'until=168h'"
       - name: Check it answers
         run: |

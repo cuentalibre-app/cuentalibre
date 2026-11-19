@@ -3,7 +3,7 @@
 # It creates the `deploy` user with the SSH keys chosen in the console, turns off
 # password and root logins, enables automatic security updates and installs Docker
 # and age (backup encryption).
-# The Hetzner Cloud Firewall in front of it allows 22 and, from Cloudflare only, 443.
+# The Hetzner Cloud Firewall in front of it only allows 22: HTTP comes through the Cloudflare Tunnel.
 
 users:
   - name: deploy
@@ -40,7 +40,6 @@ runcmd:
   - usermod -aG docker deploy
   - ufw default deny incoming
   - ufw allow 22/tcp
-  - ufw allow 443/tcp
   - ufw --force enable
-  - mkdir -p /opt/cuentalibre/certs && chown -R deploy:deploy /opt/cuentalibre
+  - mkdir -p /opt/cuentalibre && chown -R deploy:deploy /opt/cuentalibre
   - systemctl restart ssh
