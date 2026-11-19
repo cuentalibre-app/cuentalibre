@@ -4,6 +4,16 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.3.0 (2026-11-20)
+
+* Explain read-only deletion and period switches in the terms by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/131
+* Delete organizations left read-only for 12 months, after reminder emails by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/132
+* Rate-limit every API request, cap bodies and time out slow clients by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/133
+* Charge VAT through Stripe Tax instead of a fixed 21 % rate by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/134
+* Serve the Cloud API through a Cloudflare Tunnel instead of Caddy by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/136
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v1.2.1...v1.3.0
+
 ## 1.2.1 (2026-11-18)
 
 * Rework the panel beside the sign-in and sign-up forms by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/130
