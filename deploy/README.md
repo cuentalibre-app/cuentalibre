@@ -2,12 +2,10 @@
 
 How cuentalibre Cloud (`app.cuentalibre.es`) is run: maintainer documentation. To run cuentalibre on your own server, follow the [self-hosting guide](https://cuentalibre.es/docs/instalar) and `selfhost/` instead; nothing here applies to it.
 
-This folder runs the API's `api` image (see [apps/api/README.md](../apps/api/README.md)) on one server: Caddy with a Cloudflare origin certificate in front, the API and Postgres. Caddy only takes the client's IP from Cloudflare's addresses and passes it on as `X-Forwarded-For`, which the API's rate limits count by (`CLIENT_IP_HEADER`, its default). `cloud-init.yml` prepares a new server.
+This folder runs the API's `api` image (see [apps/api/README.md](../apps/api/README.md)) on one server: a Cloudflare Tunnel in front, the API and Postgres. The API's rate limits count by the client's IP in `CF-Connecting-IP` (`CLIENT_IP_HEADER`), which only Cloudflare can set, since the tunnel is the only way in. `cloud-init.yml` prepares a new server.
 
 ```
-compose.yml            Caddy, the API and Postgres
-Caddyfile              TLS with the origin certificate, Authenticated Origin Pulls, the client's IP
-origin-pull-ca.pem     The CAs whose client certificates Caddy accepts, one per zone
+compose.yml            cloudflared, the API and Postgres
 cloud-init.yml         Prepares a new server
 server-env.sh          Writes the server's .env and backup.env from its GitHub environment
 .env.example           The settings compose hands to the API
@@ -19,20 +17,23 @@ cuentalibre-backup.*   The systemd timer and service that run backup.sh
 
 ## Cloudflare
 
-### Authenticated Origin Pulls
+### Tunnel
 
-Cloudflare's addresses are shared by every Cloudflare customer, so the firewall alone would let anyone point a zone of their own at the server and skip our WAF and rate limits. Caddy therefore requires a client certificate signed by one of the CAs in `origin-pull-ca.pem`, which only our zones present: Authenticated Origin Pulls with a zone-level certificate on `jesuspb.dev`, the zone that holds `app` and `api.cuentalibre.es` as custom hostnames, and another on `cuentalibre.es`, which serves staging. Each zone has its own CA. Cloudflare's global AOP certificate wouldn't do, since every account can present it. Each CA's private key was thrown away once it signed its client certificate, which lives only in Cloudflare (until 2036). To set it up for another zone, or to rotate one:
+Each environment has a remotely managed Cloudflare Tunnel, `cuentalibre-production` and `cuentalibre-staging`. The `cloudflared` container connects out to Cloudflare with the environment's `TUNNEL_TOKEN`, so the server opens no port for HTTP: the Hetzner Cloud Firewall and ufw only let SSH in. The tunnel's one ingress rule sends every hostname to `http://api:3000`. It matches no hostname on purpose: production's requests arrive with the custom hostname (`api.cuentalibre.es`), not the fallback origin's name.
+
+The only DNS records that lead to a server are proxied CNAMEs to `<tunnel id>.cfargotunnel.com`: production's fallback origin `cuentalibre-edge.jesuspb.dev` and staging's `api-staging.cuentalibre.es`. Nobody else can route to a tunnel, so no other account's zone can skip our WAF and rate limits. The token is what has to stay secret: whoever holds it can run a connector of their own and take part of the environment's traffic. If it leaks, rotate it (`POST /accounts/{account}/cfd_tunnel/{tunnel}/token` with a new `tunnel_secret`, or *Refresh token* in the dashboard), update `TUNNEL_TOKEN` in the GitHub environment and redeploy.
+
+To create a tunnel for a new environment:
 
 ```sh
-openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -days 3650 \
-  -keyout ca.key -out origin-pull-ca.pem -subj "/CN=cuentalibre origin pull CA" \
-  -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign"
-openssl req -newkey ec -pkeyopt ec_paramgen_curve:P-256 -nodes -keyout client.key -out client.csr -subj "/CN=cuentalibre origin pull"
-openssl x509 -req -in client.csr -CA origin-pull-ca.pem -CAkey ca.key -days 3650 -out client.pem \
-  -extfile <(printf 'basicConstraints=CA:FALSE\nextendedKeyUsage=clientAuth\n')
+curl -X POST "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel" -H "Authorization: Bearer $TOKEN" \
+  --json '{"name": "cuentalibre-<environment>", "config_src": "cloudflare"}'
+curl -X PUT "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL/configurations" -H "Authorization: Bearer $TOKEN" \
+  --json '{"config": {"ingress": [{"service": "http://api:3000"}]}}'
+curl "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/cfd_tunnel/$TUNNEL/token" -H "Authorization: Bearer $TOKEN"
 ```
 
-Upload `client.pem` and `client.key` in the zone's SSL/TLS › Origin Server › Authenticated Origin Pulls (or `POST /zones/{zone}/origin_tls_client_auth`), turn it on, and add the new CA to `origin-pull-ca.pem` (replacing the old one when rotating) before deploying it; delete `ca.key` and `client.key` afterwards. The servers' IPs stay out of public DNS: the only records with them are proxied, production's fallback origin `cuentalibre-edge.jesuspb.dev` and staging's `api-staging.cuentalibre.es`.
+and put the token in the environment's `TUNNEL_TOKEN` secret.
 
 ### WAF
 
@@ -48,9 +49,9 @@ The API caps active keys per user and organization at 10 (`MAX_API_KEYS`), so th
 
 ## Staging and production
 
-Every push to `main` that passes CI deploys to **staging**, never to production (`deploy-staging-api` and `deploy-staging-web` in `ci.yml`). Only the site skips staging and goes straight to production. Staging is a server of its own, in its own Hetzner project (`cuentalibre-staging`), so its keys, buckets and SSH access can't reach production. It runs the same `compose.yml` and `Caddyfile`, with its own `.env`, at `api-staging.cuentalibre.es` and `app-staging.cuentalibre.es`, with the app behind Cloudflare Access. Unlike production they aren't Cloudflare for SaaS hostnames on `jesuspb.dev`, but plain hostnames on `cuentalibre.es`: Access skips SaaS hostnames whose zone is in the same account as the SaaS zone, and a SaaS hostname with its own origin would reach the server under that origin's name (only Enterprise rewrites it). So staging shares `cuentalibre.es`'s LaLiga blocks, and its names have a single level, which the zone's free certificate covers. The API is a proxied record with its own origin certificate; the app is a custom domain of its Worker. The API sends `X-Robots-Tag: noindex` everywhere, and the staging app does too.
+Every push to `main` that passes CI deploys to **staging**, never to production (`deploy-staging-api` and `deploy-staging-web` in `ci.yml`). Only the site skips staging and goes straight to production. Staging is a server of its own, in its own Hetzner project (`cuentalibre-staging`), so its keys, buckets and SSH access can't reach production. It runs the same `compose.yml`, with its own `.env` and tunnel, at `api-staging.cuentalibre.es` and `app-staging.cuentalibre.es`, with the app behind Cloudflare Access. Unlike production they aren't Cloudflare for SaaS hostnames on `jesuspb.dev`, but plain hostnames on `cuentalibre.es`: Access skips SaaS hostnames whose zone is in the same account as the SaaS zone, and a SaaS hostname with its own origin would reach the server under that origin's name (only Enterprise rewrites it). So staging shares `cuentalibre.es`'s LaLiga blocks, and its names have a single level, which the zone's free certificate covers. The API is a proxied CNAME to its tunnel; the app is a custom domain of its Worker. The API sends `X-Robots-Tag: noindex` everywhere, and the staging app does too.
 
-- The `api` image is built on the runner, labelled with its commit, and sent over SSH (`docker save | docker load`), so the server needs no registry credentials. `compose.yml`, the `Caddyfile` and the backup script go with it, and the whole stack restarts.
+- The `api` image is built on the runner, labelled with its commit, and sent over SSH (`docker save | docker load`), so the server needs no registry credentials. `compose.yml` and the backup script go with it, and the whole stack restarts.
 - Its settings come from the `staging` GitHub environment, like production's from `production` (see [Settings](#settings)). `server-env.sh` refuses a live Stripe key there, or SMTP without `EMAIL_REDIRECT_TO`, which sends every email to the owner instead.
 - Its data is made up: on an empty database, `apps/api/src/db/seed.ts` creates the account in `SEED_EMAIL` and `SEED_PASSWORD` with a few invoices and expenses. Never copy production data into it.
 - The app is built with `VITE_API_URL=https://api-staging.cuentalibre.es` and deployed as its own Worker, `cuentalibre-app-staging` (`wrangler deploy --env staging`).
@@ -59,7 +60,7 @@ Every push to `main` that passes CI deploys to **staging**, never to production 
 
 Production changes only through the _Promote to production_ workflow (`promote.yml`), run by hand from `main`. It always promotes both apps, so the app never runs against an API from another commit, and every promotion is a version for self-hosters (see [Versions](#versions)):
 
-- API: the image staging runs, as it is (no rebuild). Each environment only holds the SSH key of its own server, so one job takes the image from staging and hands it as an artifact to another, which loads it on production with that commit's `compose.yml` and `Caddyfile`, writes the server's settings with it as `API_IMAGE`, and restarts the stack.
+- API: the image staging runs, as it is (no rebuild). Each environment only holds the SSH key of its own server, so one job takes the image from staging and hands it as an artifact to another, which loads it on production with that commit's `compose.yml`, writes the server's settings with it as `API_IMAGE`, and restarts the stack.
 - Web app: built again from `main` with `VITE_API_URL=https://api.cuentalibre.es`, since the address is baked in; it refuses to run until CI has passed on `main`'s last commit, so staging shows the same code.
 - Then it publishes the commit as the next version, `v0.4.2`: `git tag -l 'v*'` lists what ran in production, and the releases page says when. Older promotions left `prod-api-*` and `prod-web-*` tags instead.
 
@@ -73,7 +74,7 @@ git log --oneline <production's revision>..<staging's revision>
 
 ### Rolling back
 
-Run the same workflow from a `v*` tag instead of `main` (_Use workflow from_ › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It publishes no version, and self-hosters stay on theirs: fix forward with a new one. The `production` environment only accepts runs from `main` and from `v*` and `prod-*` tags. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it.
+Run the same workflow from a `v*` tag instead of `main` (_Use workflow from_ › Tags). The API goes back to that commit's image, taken from staging or built again if staging pruned it (images go after a week); the web app is built from the tag. It publishes no version, and self-hosters stay on theirs: fix forward with a new one. The `production` environment only accepts runs from `main` and from `v*` and `prod-*` tags. Migrations don't roll back: the older API runs on the newer schema, so a migration that drops or renames something must ship after the code that stops using it. Nor does the tunnel: `v1.2.1` and older ran Caddy, and rolling back to them would start a `compose.yml` whose `Caddyfile` and certificates are gone.
 
 ### Versions
 
@@ -88,7 +89,7 @@ Every promotion is a SemVer version for self-hosters, so they run exactly what p
 
 The `staging` and `production` environments each hold `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `DEPLOY_HOST`, each for its own server. `DEPLOY_HOST` is a secret so the logs mask the server's address, which Cloudflare otherwise keeps hidden.
 
-Nobody edits `.env` or `backup.env` on a server. Each deploy writes them from the server's GitHub environment with the names `.env.example` and `backup.env.example` list, leaving out the empty ones so the code's defaults apply: secrets for credentials and personal data such as email addresses, variables for the rest. `server-env.sh` does it, and stops the deploy before touching the server when `API_DOMAIN`, `WEB_ORIGIN`, `POSTGRES_PASSWORD` or `BETTER_AUTH_SECRET` is missing. So a PR that adds a setting says which secret or variable to create in each environment, and creating them is part of merging it; production takes them at its next promotion. GitHub can't show a secret again, so keep a copy of each one elsewhere.
+Nobody edits `.env` or `backup.env` on a server. Each deploy writes them from the server's GitHub environment with the names `.env.example` and `backup.env.example` list, leaving out the empty ones so the code's defaults apply: secrets for credentials and personal data such as email addresses, variables for the rest. `server-env.sh` does it, and stops the deploy before touching the server when `API_DOMAIN`, `TUNNEL_TOKEN`, `WEB_ORIGIN`, `POSTGRES_PASSWORD` or `BETTER_AUTH_SECRET` is missing. So a PR that adds a setting says which secret or variable to create in each environment, and creating them is part of merging it; production takes them at its next promotion. GitHub can't show a secret again, so keep a copy of each one elsewhere.
 
 ## Backups
 
