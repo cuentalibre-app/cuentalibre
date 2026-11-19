@@ -29,7 +29,7 @@ backup=$(pick "$here/backup.env.example")
 get() { jq -r --arg name "$1" '.[$name] // empty' <<<"$settings"; }
 fail() { echo "server-env: $*" >&2; exit 1; }
 
-for name in API_DOMAIN WEB_ORIGIN POSTGRES_PASSWORD BETTER_AUTH_SECRET; do
+for name in API_DOMAIN TUNNEL_TOKEN WEB_ORIGIN POSTGRES_PASSWORD BETTER_AUTH_SECRET; do
   [ -n "$(get "$name")" ] || fail "$name is missing from the $environment environment"
 done
 if [ "$environment" = staging ]; then

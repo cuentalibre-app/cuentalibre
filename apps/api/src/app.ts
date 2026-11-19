@@ -63,6 +63,11 @@ export function createApp({ db, auth, env, storage, mailer, billing = null, ai =
       strictTransportSecurity: "max-age=31536000; includeSubDomains",
     }),
   );
+  // Nothing the API serves belongs in a search engine.
+  app.use("/v1/*", async (c, next) => {
+    await next();
+    c.header("X-Robots-Tag", "noindex, nofollow");
+  });
   // Preflights are remembered: the web app's background syncs send a header that needs one
   app.use("/v1/*", cors({ origin: env.WEB_ORIGIN, credentials: true, maxAge: 600 }));
   app.use("/v1/*", identifyClient(env.CLIENT_IP_HEADER));
