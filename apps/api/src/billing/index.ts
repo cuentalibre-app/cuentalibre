@@ -12,8 +12,6 @@ export interface Billing {
   stripe: StripeClient;
   webhookSecret: string;
   prices: Record<BillingPeriod, string>;
-  /** The VAT rate added on top of the prices. */
-  taxRate: string;
 }
 
 export function createBilling(env: Env, fetchImpl: typeof fetch = fetch): Billing | null {
@@ -26,7 +24,6 @@ export function createBilling(env: Env, fetchImpl: typeof fetch = fetch): Billin
       quarterly: env.STRIPE_PRICE_QUARTERLY!,
       yearly: env.STRIPE_PRICE_YEARLY!,
     },
-    taxRate: env.STRIPE_TAX_RATE!,
   };
 }
 

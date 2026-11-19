@@ -15,7 +15,6 @@ export const billingEnv: Env = {
   STRIPE_PRICE_MONTHLY: prices.monthly,
   STRIPE_PRICE_QUARTERLY: prices.quarterly,
   STRIPE_PRICE_YEARLY: prices.yearly,
-  STRIPE_TAX_RATE: "txr_vat21",
 };
 
 /**
