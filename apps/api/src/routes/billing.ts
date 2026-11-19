@@ -184,8 +184,10 @@ export const billingRoutes = (billing: Billing, webOrigin: string) => {
         customer,
         client_reference_id: organizationId,
         line_items: [{ price: billing.prices[period], quantity: 1 }],
+        // Stripe Tax picks the VAT from the address: 21 % in Spain, none in Canarias, Ceuta
+        // and Melilla, reverse charge for EU businesses with a VAT number
+        automatic_tax: { enabled: true },
         subscription_data: {
-          default_tax_rates: [billing.taxRate],
           metadata: { organization_id: organizationId },
           // Subscribing during the trial keeps its remaining days
           trial_end: firstCharge ? Math.floor(firstCharge.getTime() / 1000) : undefined,
