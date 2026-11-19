@@ -149,7 +149,7 @@ describe("billing", () => {
       customer: row!.stripeCustomerId,
       client_reference_id: ana.organizationId,
       "line_items[0][price]": prices.yearly,
-      "subscription_data[default_tax_rates][0]": "txr_vat21",
+      "automatic_tax[enabled]": "true",
       "subscription_data[metadata][organization_id]": ana.organizationId,
       "tax_id_collection[enabled]": "true",
       success_url: `${billingEnv.WEB_ORIGIN}/configuracion/plan?suscripcion=ok`,

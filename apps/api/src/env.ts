@@ -9,7 +9,6 @@ const STRIPE_VARIABLES = [
   "STRIPE_PRICE_MONTHLY",
   "STRIPE_PRICE_QUARTERLY",
   "STRIPE_PRICE_YEARLY",
-  "STRIPE_TAX_RATE",
 ] as const;
 
 const envSchema = z
@@ -125,14 +124,13 @@ const envSchema = z
     AI_CHAT_DOCS_DIR: z.string().min(1).default("../site/src/content/docs"),
     /**
      * Charging for Cloud with Stripe: all of them, or none and billing is off. The prices are
-     * the product's three periods; the tax rate, the VAT added on top of them.
+     * the product's three periods, VAT not included; Stripe Tax adds it from the customer's address.
      */
     STRIPE_SECRET_KEY: z.string().min(1).optional(),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
     STRIPE_PRICE_MONTHLY: z.string().min(1).optional(),
     STRIPE_PRICE_QUARTERLY: z.string().min(1).optional(),
     STRIPE_PRICE_YEARLY: z.string().min(1).optional(),
-    STRIPE_TAX_RATE: z.string().min(1).optional(),
   })
   .refine((env) => env.NODE_ENV !== "production" || env.BETTER_AUTH_SECRET !== devSecret, {
     message: "BETTER_AUTH_SECRET must be set in production",
