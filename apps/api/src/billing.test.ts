@@ -152,6 +152,7 @@ describe("billing", () => {
       "automatic_tax[enabled]": "true",
       "subscription_data[metadata][organization_id]": ana.organizationId,
       "tax_id_collection[enabled]": "true",
+      "tax_id_collection[required]": "if_supported",
       success_url: `${billingEnv.WEB_ORIGIN}/configuracion/plan?suscripcion=ok`,
       cancel_url: `${billingEnv.WEB_ORIGIN}/configuracion/plan`,
     });
