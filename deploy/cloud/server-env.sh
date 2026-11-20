@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Writes a server's settings from its GitHub environment (`staging` or `production`), so
-# nobody edits them on the server: `.env` with the names `deploy/.env.example` lists, and
-# `backup.env` with those in `deploy/backup.env.example` (only when BACKUP_BUCKET is set).
+# nobody edits them on the server: `.env` with the names `deploy/cloud/.env.example` lists, and
+# `backup.env` with those in `deploy/cloud/backup.env.example` (only when BACKUP_BUCKET is set).
 # Takes the environment's variables and secrets as JSON (`toJSON(vars)`, `toJSON(secrets)`)
 # in SETTINGS and SECRETS, and the image the server runs as its third argument.
 #
-#   SETTINGS='{...}' SECRETS='{...}' deploy/server-env.sh <environment> <output directory> <image>
+#   SETTINGS='{...}' SECRETS='{...}' deploy/cloud/server-env.sh <environment> <output directory> <image>
 set -euo pipefail
 
 usage='usage: server-env.sh <staging|production> <output directory> <image>'

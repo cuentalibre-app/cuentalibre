@@ -241,12 +241,12 @@ apps/site              Public site and documentation (Astro, static)
 packages/core          Domain logic shared by front and back: periods, tax calculations, filing calendar
 packages/contracts     zod schemas of the stored data; types are inferred from them
 packages/ui            Design system: tokens, base styles and components
-deploy/                How cuentalibre online runs, for its maintainers: a Cloudflare Tunnel, the API and PostgreSQL on one server
-selfhost/              Self-hosting: one image with the app and the API, plus PostgreSQL
+deploy/selfhost/       Run cuentalibre on your own server: one image with the app and the API, plus PostgreSQL
+deploy/cloud/          How cuentalibre Cloud runs, for its maintainers only: a Cloudflare Tunnel, the API and PostgreSQL
 .agents/skills/        The cuentalibre skill for AI agents (.claude/skills links to it)
 ```
 
-More in [apps/api/README.md](apps/api/README.md) (endpoints, sync, building the images), [deploy/README.md](deploy/README.md) (how cuentalibre online is operated) and [AGENTS.md](AGENTS.md) (conventions for contributors and coding agents).
+More in [apps/api/README.md](apps/api/README.md) (endpoints, sync, building the images), [deploy/cloud/README.md](deploy/cloud/README.md) (how cuentalibre Cloud is operated; not needed to self-host) and [AGENTS.md](AGENTS.md) (conventions for contributors and coding agents).
 
 The web app's design system reference page is at `/sistema-visual`.
 

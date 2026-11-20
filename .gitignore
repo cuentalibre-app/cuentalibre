@@ -9,8 +9,5 @@ dist/
 .astro/
 .idea
 
-# Production secrets on the server
-deploy/certs/
-
 # Local Archify diagrams
 .archify/
