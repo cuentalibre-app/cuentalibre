@@ -192,10 +192,11 @@ export const billingRoutes = (billing: Billing, webOrigin: string) => {
           // Subscribing during the trial keeps its remaining days
           trial_end: firstCharge ? Math.floor(firstCharge.getTime() / 1000) : undefined,
         },
-        // Our invoices need the customer's address and tax ID: customers are self-employed and
-        // can't deduct the VAT without their tax ID on the invoice
+        // Our invoices need the customer's address. The tax ID stays optional («Estoy comprando
+        // como empresa»): a required one confused self-employed customers outside the ROI, who
+        // must switch from ES VAT to NIF. They can add it later in the portal.
         billing_address_collection: "required",
-        tax_id_collection: { enabled: true, required: "if_supported" },
+        tax_id_collection: { enabled: true },
         customer_update: { name: "auto", address: "auto" },
         locale: "es",
         success_url: `${back}?suscripcion=ok`,
