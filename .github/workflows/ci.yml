@@ -113,7 +113,7 @@ jobs:
         env:
           SETTINGS: ${{ toJSON(vars) }}
           SECRETS: ${{ toJSON(secrets) }}
-        run: deploy/server-env.sh staging "$RUNNER_TEMP/staging" "$IMAGE"
+        run: deploy/cloud/server-env.sh staging "$RUNNER_TEMP/staging" "$IMAGE"
       # The revision label tells the promote workflow which commit staging runs.
       - name: Build the API image
         run: |
@@ -131,7 +131,7 @@ jobs:
       - name: Send the image, the server config and the staging settings
         run: |
           docker save "$IMAGE" | gzip | ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load'
-          scp deploy/compose.yml deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          scp deploy/cloud/compose.yml deploy/cloud/backup.sh deploy/cloud/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
           # .env, and backup.env when staging has a backups bucket
           find "$RUNNER_TEMP/staging" -type f -exec scp -p {} "deploy@$DEPLOY_HOST:/opt/cuentalibre/" \;
           rm -r "$RUNNER_TEMP/staging"

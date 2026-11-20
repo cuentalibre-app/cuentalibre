@@ -8,7 +8,7 @@
 services:
   cuentalibre:
     build:
-      context: ..
+      context: ../..
       dockerfile: apps/api/Dockerfile
     image: cuentalibre
     restart: unless-stopped
