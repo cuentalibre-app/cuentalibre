@@ -22,10 +22,10 @@ To point the web app at the API, set `VITE_API_URL=http://localhost:3000` in `ap
 
 `pnpm build` bundles the server and the migration script into `dist/` with esbuild, dependencies included; `pnpm start` runs it. `Dockerfile`, built from the repository root, makes two images that apply pending migrations and then serve on port 3000:
 
-- the default target, for self-hosting: the API plus the web app, built with `VITE_API_URL=/` and served from `WEB_DIR` on every path outside `/v1` (`src/web.ts`). Pages fall back to `index.html`, sent with `no-cache`; the hashed files in `/assets/` are cached for good. One origin needs one URL, `PUBLIC_URL`, which stands for both `BETTER_AUTH_URL` and `WEB_ORIGIN`. `selfhost/` at the repository root runs it with Postgres and no web server in front; HTTPS is left to whatever the owner already uses (guide: `apps/site/src/content/docs/instalar.md`).
+- the default target, for self-hosting: the API plus the web app, built with `VITE_API_URL=/` and served from `WEB_DIR` on every path outside `/v1` (`src/web.ts`). Pages fall back to `index.html`, sent with `no-cache`; the hashed files in `/assets/` are cached for good. One origin needs one URL, `PUBLIC_URL`, which stands for both `BETTER_AUTH_URL` and `WEB_ORIGIN`. `deploy/selfhost/` runs it with Postgres and no web server in front; HTTPS is left to whatever the owner already uses (guide: `apps/site/src/content/docs/instalar.md`).
 - `--target api`: the API alone, as cuentalibre online runs it, with the web app on Cloudflare.
 
-How cuentalibre Cloud runs the `api` image (its server, Cloudflare, staging, promotions and backups) is in [deploy/README.md](../../deploy/README.md).
+How cuentalibre Cloud runs the `api` image (its server, Cloudflare, staging, promotions and backups) is in [deploy/cloud/README.md](../../deploy/cloud/README.md).
 
 ## Layout
 

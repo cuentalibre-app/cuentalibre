@@ -12,7 +12,7 @@ Esta guía es para quien sabe manejar un servidor Linux por SSH. El código y su
 
 ## Qué vas a instalar
 
-Dos contenedores, definidos en [`selfhost/compose.yml`](https://github.com/cuentalibre-app/cuentalibre/blob/main/selfhost/compose.yml):
+Dos contenedores, definidos en [`deploy/selfhost/compose.yml`](https://github.com/cuentalibre-app/cuentalibre/blob/main/deploy/selfhost/compose.yml):
 
 | Contenedor    | Qué es                                                                                                                                                         |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,7 +34,7 @@ No hace falta abrir puertos en el router ni instalar Node.js.
 git clone https://github.com/cuentalibre-app/cuentalibre.git
 cd cuentalibre
 git checkout "$(git tag -l 'v*' --sort=-v:refname | head -n1)"
-cd selfhost
+cd deploy/selfhost
 ```
 
 El `git checkout` te deja en la última [versión publicada](https://github.com/cuentalibre-app/cuentalibre/releases), que ya ha funcionado en cuentalibre Cloud. La rama `main` puede llevar cambios que aún no han llegado allí.
@@ -107,7 +107,7 @@ Después de cambiar el `.env`, aplica los cambios con `docker compose up -d`.
 Tus datos están en dos volúmenes: la base de datos (`postgres`) y los archivos subidos (`files`). Copia los dos, a diario y fuera del servidor:
 
 ```sh
-cd cuentalibre/selfhost
+cd cuentalibre/deploy/selfhost
 docker compose exec -T postgres pg_dump -U cuentalibre --format=custom cuentalibre > cuentalibre.dump
 docker run --rm -v selfhost_files:/files -v "$PWD":/backup alpine tar czf /backup/files.tar.gz -C /files .
 ```
@@ -118,7 +118,7 @@ Para restaurar la base de datos:
 docker compose exec -T postgres pg_restore -U cuentalibre -d cuentalibre --clean --if-exists < cuentalibre.dump
 ```
 
-El nombre del volumen lleva delante el de la carpeta (`selfhost_files` si no la has cambiado); compruébalo con `docker volume ls`. Como ejemplo de copia automática a un bucket, mira el script que usa cuentalibre Cloud, [`deploy/backup.sh`](https://github.com/cuentalibre-app/cuentalibre/blob/main/deploy/backup.sh).
+El nombre del volumen lleva delante el de la carpeta (`selfhost_files` si no la has cambiado); compruébalo con `docker volume ls`. Como ejemplo de copia automática a un bucket, mira el script que usa cuentalibre Cloud, [`deploy/cloud/backup.sh`](https://github.com/cuentalibre-app/cuentalibre/blob/main/deploy/cloud/backup.sh).
 
 ## Actualizar
 
@@ -130,7 +130,7 @@ Haz una copia de seguridad, pasa a la última versión y vuelve a construir la i
 cd cuentalibre
 git fetch --tags
 git checkout "$(git tag -l 'v*' --sort=-v:refname | head -n1)"
-cd selfhost
+cd deploy/selfhost
 docker compose up -d --build
 ```
 

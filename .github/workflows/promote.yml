@@ -1,7 +1,7 @@
 name: Promote to production
 
 # Sends what runs on staging to production, API and web app together, and publishes that commit
-# as the next version for self-hosters (`v<version>`, see deploy/README.md).
+# as the next version for self-hosters (`v<version>`, see deploy/cloud/README.md).
 # Run from `main` to promote; run from an older `v*` tag to roll back to it, which publishes nothing.
 on:
   workflow_dispatch:
@@ -100,7 +100,7 @@ jobs:
         env:
           SETTINGS: ${{ toJSON(vars) }}
           SECRETS: ${{ toJSON(secrets) }}
-        run: deploy/server-env.sh production "$RUNNER_TEMP/production" "$IMAGE"
+        run: deploy/cloud/server-env.sh production "$RUNNER_TEMP/production" "$IMAGE"
       - name: Set up SSH
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -115,7 +115,7 @@ jobs:
         run: |
           ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load' < "$RUNNER_TEMP/api.tar.gz"
           git checkout "$REVISION"
-          scp deploy/compose.yml deploy/backup.sh deploy/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          scp deploy/cloud/compose.yml deploy/cloud/backup.sh deploy/cloud/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
           git checkout -
           # .env, and backup.env when production has a backups bucket
           find "$RUNNER_TEMP/production" -type f -exec scp -p {} "deploy@$DEPLOY_HOST:/opt/cuentalibre/" \;
