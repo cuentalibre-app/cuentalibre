@@ -37,6 +37,8 @@ if [ "$environment" = staging ]; then
   case $(get STRIPE_SECRET_KEY) in sk_live_* | rk_live_*) fail "STRIPE_SECRET_KEY is a live key" ;; esac
   [ -z "$(get SMTP_URL)" ] || [ -n "$(get EMAIL_REDIRECT_TO)" ] || fail "SMTP_URL needs EMAIL_REDIRECT_TO in staging"
 else
+  # Real customers would sign up and never be charged
+  case $(get STRIPE_SECRET_KEY) in sk_test_* | rk_test_*) fail "STRIPE_SECRET_KEY is a test key" ;; esac
   # Users' email would all go to one address
   [ -z "$(get EMAIL_REDIRECT_TO)" ] || fail "EMAIL_REDIRECT_TO is for staging only"
 fi
