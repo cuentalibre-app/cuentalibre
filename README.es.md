@@ -239,12 +239,12 @@ apps/site              Web pública y documentación (Astro, estática)
 packages/core          Lógica de dominio compartida por front y back: periodos, cálculo de impuestos, calendario fiscal
 packages/contracts     Esquemas zod de los datos guardados; los tipos se infieren de ellos
 packages/ui            Sistema de diseño: tokens, estilos base y componentes
-deploy/                Cómo funciona cuentalibre online, para quien lo mantiene: un túnel de Cloudflare, la API y PostgreSQL en un servidor
-selfhost/              Para instalarlo en tu servidor: una imagen con la aplicación y la API, más PostgreSQL
+deploy/selfhost/       Para instalarlo en tu servidor: una imagen con la aplicación y la API, más PostgreSQL
+deploy/cloud/          Cómo funciona cuentalibre Cloud, solo para quien lo mantiene: un túnel de Cloudflare, la API y PostgreSQL
 .agents/skills/        La skill de cuentalibre para agentes de IA (.claude/skills enlaza a ella)
 ```
 
-Más en [apps/api/README.md](apps/api/README.md) (rutas, sincronización, cómo se construyen las imágenes, en inglés), en [deploy/README.md](deploy/README.md) (cómo se opera cuentalibre online, en inglés) y en [AGENTS.md](AGENTS.md) (convenciones para quien contribuye y para agentes de programación).
+Más en [apps/api/README.md](apps/api/README.md) (rutas, sincronización, cómo se construyen las imágenes, en inglés), en [deploy/cloud/README.md](deploy/cloud/README.md) (cómo se opera cuentalibre Cloud, en inglés; no hace falta para instalarlo en tu servidor) y en [AGENTS.md](AGENTS.md) (convenciones para quien contribuye y para agentes de programación).
 
 La página de referencia del sistema de diseño de la aplicación está en `/sistema-visual`.
 
