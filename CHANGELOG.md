@@ -4,6 +4,12 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.3.2 (2026-11-20)
+
+* Prepare billing for live Stripe by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/137
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v1.3.1...v1.3.2
+
 ## 1.3.1 (2026-11-20)
 
 * Group self-hosting and Cloud under deploy/selfhost and deploy/cloud by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/138
