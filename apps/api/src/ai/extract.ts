@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { PurchaseExtraction } from "@cuentalibre/contracts";
 import { checkPurchaseDraft, findSupplierByTaxId } from "@cuentalibre/core";
-import { extractText } from "unpdf";
+import { getDocumentProxy } from "unpdf";
 import type { Db } from "../db/client";
 import { ApiError } from "../errors";
 import type { FileStorage } from "../storage";
@@ -16,6 +16,8 @@ import { cachedReading, recordReading, releaseReading, reserveReading, type AiLi
 const MIN_TEXT_CHARACTERS = 40;
 /** An invoice's text fits easily; anything longer is cut, so a huge PDF can't run up the bill. */
 const MAX_TEXT_CHARACTERS = 20_000;
+/** Pages whose text is read; an invoice's text is in its first ones, and each page costs parsing time. */
+const MAX_PDF_PAGES = 10;
 
 /** Major brands of HEIF files, HEIC (iPhone photos) among them. */
 const HEIF_BRANDS = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"]);
@@ -53,8 +55,23 @@ export function readableText(text: string): string | null {
 async function pdfText(bytes: Uint8Array): Promise<string | null> {
   try {
     // pdf.js takes ownership of the buffer it reads, so it gets a copy
-    const { text } = await extractText(bytes.slice(), { mergePages: true });
-    return readableText(text);
+    const pdf = await getDocumentProxy(bytes.slice());
+    try {
+      const pages: string[] = [];
+      for (let number = 1; number <= Math.min(pdf.numPages, MAX_PDF_PAGES); number++) {
+        const { items } = await (await pdf.getPage(number)).getTextContent();
+        pages.push(items.map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : "") : "")).join(""));
+      }
+      // Spaces collapsed, line breaks kept, at most one blank line
+      const text = pages
+        .join("\n")
+        .replace(/[^\S\n]+/g, " ")
+        .replace(/ ?\n ?/g, "\n")
+        .replace(/\n{3,}/g, "\n\n");
+      return readableText(text);
+    } finally {
+      await pdf.loadingTask.destroy();
+    }
   } catch {
     return null;
   }
@@ -120,10 +137,10 @@ async function readFile(
   const cachedAnswer = cached && modelAnswerSchema.safeParse(cached.answer);
   if (cached && cachedAnswer?.success) return { answer: cachedAnswer.data, source: cached.source };
 
-  // Before reserving, so a file that can't be read doesn't count
-  const input = await modelInput(bytes);
+  // Before preparing the file, so an organization over its limit can't make the server decode files
   const readingId = await reserveReading(db, key, limits);
   try {
+    const input = await modelInput(bytes);
     const { answer, usage } = await askModel(provider, input, fileId);
     await recordReading(db, organizationId, readingId, { answer, source: input.kind, usage, limits });
     return { answer, source: input.kind };

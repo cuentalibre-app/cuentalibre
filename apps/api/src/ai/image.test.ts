@@ -6,6 +6,7 @@ import {
   ImageError,
   jpegOrientation,
   MAX_IMAGE_BYTES,
+  MAX_IMAGE_PIXELS,
   MAX_IMAGE_SIDE,
   orient,
   prepareImage,
@@ -147,6 +148,39 @@ describe("prepareImage", () => {
     expect(bytes.length).toBeGreaterThan(MAX_IMAGE_BYTES);
     const image = decode((await prepareImage("image/png", bytes)).data);
     expect(colourAt(image, 10, 10)).toBe("white");
+  });
+
+  describe("refuses an image declaring more than the maximum pixels, before decoding it", () => {
+    const side = Math.ceil(Math.sqrt(MAX_IMAGE_PIXELS)) + 1;
+    const tooLarge = /too large|maxResolutionInMP/;
+    const setUint16 = (bytes: Uint8Array, at: number, value: number) => bytes.set([value >> 8, value & 0xff], at);
+    const setUint32 = (bytes: Uint8Array, at: number, value: number) =>
+      new DataView(bytes.buffer, bytes.byteOffset).setUint32(at, value);
+
+    it("PNG", async () => {
+      // Only the header: past the size that gets decoded, and declaring a huge image
+      const bytes = new Uint8Array(MAX_IMAGE_BYTES + 1);
+      bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+      setUint32(bytes, 16, side);
+      setUint32(bytes, 20, side);
+      await expect(prepareImage("image/png", bytes)).rejects.toThrow(tooLarge);
+    });
+
+    it("JPEG", async () => {
+      const bytes = withOrientation(encode(pattern()), 6);
+      const sof = bytes.findIndex((byte, i) => byte === 0xff && bytes[i + 1] === 0xc0);
+      setUint16(bytes, sof + 5, side);
+      setUint16(bytes, sof + 7, side);
+      await expect(prepareImage("image/jpeg", bytes)).rejects.toThrow(tooLarge);
+    });
+
+    it("HEIC", async () => {
+      const bytes = HEIC.slice();
+      const ispe = bytes.findIndex((_, i) => new TextDecoder().decode(bytes.subarray(i, i + 4)) === "ispe");
+      setUint32(bytes, ispe + 8, side);
+      setUint32(bytes, ispe + 12, side);
+      await expect(prepareImage("image/heic", bytes)).rejects.toThrow(tooLarge);
+    });
   });
 
   it("fails on an image it can't decode", async () => {

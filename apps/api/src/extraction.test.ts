@@ -372,6 +372,8 @@ describe("reading each file once", () => {
     expect((await extract(ana, fileId)).status).toBe(502);
     provider.reply = openAiReply({ total: "ciento veintiuno" });
     expect((await extract(ana, fileId)).status).toBe(502);
+    const text = await upload(ana, new TextEncoder().encode("hola"), "text/plain");
+    expect((await extract(ana, text)).status).toBe(415);
     expect(await usage(ana)).toMatchObject({ used: 0 });
 
     provider.reply = openAiReply(answer());
@@ -393,6 +395,9 @@ describe("reading each file once", () => {
     expect(await response.json()).toMatchObject({ error: { code: "ai_quota_exceeded" } });
     expect((await extract(ana, read)).status).toBe(200);
     expect(provider.requests).toHaveLength(2);
+    // Over the limit a file isn't even looked at, so it can't make the server decode it
+    const text = await upload(ana, new TextEncoder().encode("hola"), "text/plain");
+    expect((await extract(ana, text)).status).toBe(429);
 
     // Another organization has its own count
     const bea = await memberOf(limitedApp);
