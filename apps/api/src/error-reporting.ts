@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node";
 import type { Env } from "./env";
+import { redactError } from "./errors";
 
 /**
  * Sends unexpected errors to Sentry when `SENTRY_DSN` is set; without it, nothing
@@ -46,9 +47,9 @@ export function startErrorReporting(env: Env) {
   });
 }
 
-/** Reports an error a request ended in. Does nothing when reporting is off. */
+/** Reports an error a request or job ended in, without a failed query's data. Does nothing when reporting is off. */
 export function reportError(error: unknown, request: { method: string; route: string }) {
-  Sentry.captureException(error, { tags: { method: request.method, route: request.route } });
+  Sentry.captureException(redactError(error), { tags: { method: request.method, route: request.route } });
 }
 
 /** Sends what's still queued before the process exits. */
