@@ -42,6 +42,20 @@ else
   # Users' email would all go to one address
   [ -z "$(get EMAIL_REDIRECT_TO)" ] || fail "EMAIL_REDIRECT_TO is for staging only"
 fi
+
+get_backup() { jq -r --arg name "$1" '.[$name] // empty' <<<"$backup"; }
+if jq -e 'keys | any(startswith("BACKUP_FILES_"))' <<<"$backup" >/dev/null; then
+  for name in BACKUP_BUCKET BACKUP_ENDPOINT BACKUP_REGION BACKUP_ACCESS_KEY_ID BACKUP_SECRET_ACCESS_KEY \
+    BACKUP_FILES_BUCKET BACKUP_FILES_ENDPOINT BACKUP_FILES_REGION BACKUP_FILES_ACCESS_KEY_ID BACKUP_FILES_SECRET_ACCESS_KEY; do
+    [ -n "$(get_backup "$name")" ] || fail "$name is required for files backups"
+  done
+  [ "$(get_backup BACKUP_FILES_BUCKET)" != "$(get_backup BACKUP_BUCKET)" ] ||
+    fail "files backups need different source and destination buckets"
+  [ "$(get_backup BACKUP_FILES_ACCESS_KEY_ID)" != "$(get_backup BACKUP_ACCESS_KEY_ID)" ] &&
+    [ "$(get_backup BACKUP_FILES_ACCESS_KEY_ID)" != "$(get S3_ACCESS_KEY_ID)" ] ||
+    fail "files backups need a separate read-only key"
+fi
+
 # Compose and sh read single-quoted values as they are, with no way to escape a quote
 jq -e -s 'add | all(.[]; (contains("'"'"'") or contains("\n")) | not)' <<<"$settings $backup" >/dev/null ||
   fail "a value holds a single quote or a line break"

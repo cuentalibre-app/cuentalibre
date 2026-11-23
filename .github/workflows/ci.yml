@@ -130,12 +130,12 @@ jobs:
       # The image goes over SSH, so the server needs no registry credentials.
       - name: Send the image, the server config and the staging settings
         run: |
+          ssh "deploy@$DEPLOY_HOST" 'command -v age >/dev/null && python3 -c "import boto3" || { sudo apt-get update -q && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q age python3-boto3; }'
           docker save "$IMAGE" | gzip | ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load'
-          scp deploy/cloud/compose.yml deploy/cloud/backup.sh deploy/cloud/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          scp deploy/cloud/compose.yml deploy/cloud/backup.sh deploy/cloud/backup-files.py deploy/cloud/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
           # .env, and backup.env when staging has a backups bucket
           find "$RUNNER_TEMP/staging" -type f -exec scp -p {} "deploy@$DEPLOY_HOST:/opt/cuentalibre/" \;
           rm -r "$RUNNER_TEMP/staging"
-          ssh "deploy@$DEPLOY_HOST" 'command -v age >/dev/null || { sudo apt-get update -q && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q age; }'
       # Staging has a server of its own, so the whole stack restarts as production's would.
       - name: Restart the API
         run: |
