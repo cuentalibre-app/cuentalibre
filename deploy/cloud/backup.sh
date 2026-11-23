@@ -1,12 +1,12 @@
 #!/bin/sh
-# Dumps the database to the backups bucket. Run daily by cuentalibre-backup.timer.
-# The bucket keeps each dump for 30 days (object lock and a lifecycle rule).
+# Backs up Postgres and, when configured, all uploaded file versions each night.
+# The production bucket keeps each backup for 30 days under object lock.
 #
-# The dump is encrypted with age to the public keys in backup-recipients.txt
+# Backups are encrypted with age to the public keys in backup-recipients.txt
 # before it leaves the server. The private key is kept off the server, so the
 # bucket keys alone can't read the backups.
 #
-# With BACKUP_HEARTBEAT_URL set, it pings that URL when the dump is uploaded and
+# With BACKUP_HEARTBEAT_URL set, it pings that URL after all uploads succeed and
 # `<url>/fail` when something fails, so a missed or failed night raises an alert.
 #
 # Restore: with a key that can read the bucket and the private key at hand,
@@ -15,27 +15,40 @@
 set -eu
 cd "$(dirname "$0")"
 set -a
+# shellcheck source=/dev/null
 . ./backup.env
 set +a
 
 heartbeat() {
   [ -z "${BACKUP_HEARTBEAT_URL:-}" ] || curl -fsS -m 10 --retry 3 -o /dev/null "$BACKUP_HEARTBEAT_URL$1" || true
 }
-trap 'heartbeat /fail' EXIT
+work=
+trap 'if [ -n "$work" ]; then rm -rf "$work"; fi; heartbeat /fail' EXIT
 
 if ! grep -q '^age1' backup-recipients.txt 2>/dev/null; then
-  echo "backup-recipients.txt has no age public key; refusing to upload an unencrypted dump" >&2
+  echo "backup-recipients.txt has no age public key; refusing to run backups" >&2
   exit 1
 fi
 
-name="postgres/cuentalibre-$(date -u +%Y-%m-%dT%H%M%SZ).dump.age"
+timestamp=$(date -u +%Y-%m-%dT%H%M%SZ)
+work=$(mktemp -d)
 
-# sh has no pipefail: a failed step is noted in a file, or rclone would upload an empty dump.
-# The bucket key can only write, so rclone mustn't check the bucket or read the object back.
-failed=$(mktemp)
-{ docker compose exec -T postgres pg_dump -U cuentalibre --format=custom cuentalibre || echo pg_dump >> "$failed"; } |
-  { age -R backup-recipients.txt || echo age >> "$failed"; } |
-  docker run --rm -i \
+backup() {
+  name=$1
+  shift
+
+  # Check the producer and age before uploading anything to the locked bucket.
+  # Only ciphertext is staged on disk. POSIX sh tracks the producer with a marker.
+  touch "$work/incomplete"
+  { "$@" && rm "$work/incomplete"; } | age -R backup-recipients.txt > "$work/encrypted"
+  if [ -e "$work/incomplete" ]; then
+    echo "Could not create $name" >&2
+    exit 1
+  fi
+
+  # The bucket key can only write, so skip checking the bucket and reading the object back.
+  docker run --rm \
+    -v "$work/encrypted:/backup.age:ro" \
     -e RCLONE_CONFIG_S3_TYPE=s3 \
     -e RCLONE_CONFIG_S3_PROVIDER=Other \
     -e RCLONE_CONFIG_S3_ENDPOINT="$BACKUP_ENDPOINT" \
@@ -44,15 +57,17 @@ failed=$(mktemp)
     -e RCLONE_CONFIG_S3_SECRET_ACCESS_KEY="$BACKUP_SECRET_ACCESS_KEY" \
     -e RCLONE_S3_NO_CHECK_BUCKET=true \
     -e RCLONE_S3_NO_HEAD=true \
-    rclone/rclone:1.71.2 rcat "s3:$BACKUP_BUCKET/$name"
+    rclone/rclone:1.71.2 copyto --no-check-dest /backup.age "s3:$BACKUP_BUCKET/$name"
+  rm -f "$work/encrypted"
+  echo "Backed up to $BACKUP_BUCKET/$name"
+}
 
-if [ -s "$failed" ]; then
-  echo "$(tr '\n' ' ' < "$failed")failed; $BACKUP_BUCKET/$name is incomplete" >&2
-  rm -f "$failed"
-  exit 1
+backup "postgres/cuentalibre-$timestamp.dump.age" \
+  docker compose exec -T postgres pg_dump -U cuentalibre --format=custom cuentalibre
+if [ -n "${BACKUP_FILES_BUCKET:-}" ]; then
+  backup "files/cuentalibre-$timestamp.tar.age" python3 ./backup-files.py
 fi
-rm -f "$failed"
 
+rm -rf "$work"
 trap - EXIT
 heartbeat ""
-echo "Backed up to $BACKUP_BUCKET/$name"

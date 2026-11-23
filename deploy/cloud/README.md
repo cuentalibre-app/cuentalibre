@@ -9,7 +9,8 @@ compose.yml            cloudflared, the API and Postgres
 cloud-init.yml         Prepares a new server
 server-env.sh          Writes the server's .env and backup.env from its GitHub environment
 .env.example           The settings compose hands to the API
-backup.sh              The nightly encrypted Postgres dump
+backup.sh              The nightly encrypted backups
+backup-files.py        Archives the files bucket, including previous versions
 backup.env.example     The backup's settings
 backup-recipients.txt  The age public keys backups are encrypted to
 cuentalibre-backup.*   The systemd timer and service that run backup.sh
@@ -21,7 +22,7 @@ cuentalibre-backup.*   The systemd timer and service that run backup.sh
 
 Each environment has a remotely managed Cloudflare Tunnel, `cuentalibre-production` and `cuentalibre-staging`. The `cloudflared` container connects out to Cloudflare with the environment's `TUNNEL_TOKEN`, so the server opens no port for HTTP: the Hetzner Cloud Firewall and ufw only let SSH in. The tunnel's one ingress rule sends every hostname to `http://api:3000`. It matches no hostname on purpose: production's requests arrive with the custom hostname (`api.cuentalibre.es`), not the fallback origin's name.
 
-The only DNS records that lead to a server are proxied CNAMEs to `<tunnel id>.cfargotunnel.com`: production's fallback origin `cuentalibre-edge.jesuspb.dev` and staging's `api-staging.cuentalibre.es`. Nobody else can route to a tunnel, so no other account's zone can skip our WAF and rate limits. The token is what has to stay secret: whoever holds it can run a connector of their own and take part of the environment's traffic. If it leaks, rotate it (`POST /accounts/{account}/cfd_tunnel/{tunnel}/token` with a new `tunnel_secret`, or *Refresh token* in the dashboard), update `TUNNEL_TOKEN` in the GitHub environment and redeploy.
+The only DNS records that lead to a server are proxied CNAMEs to `<tunnel id>.cfargotunnel.com`: production's fallback origin `cuentalibre-edge.jesuspb.dev` and staging's `api-staging.cuentalibre.es`. Nobody else can route to a tunnel, so no other account's zone can skip our WAF and rate limits. The token is what has to stay secret: whoever holds it can run a connector of their own and take part of the environment's traffic. If it leaks, rotate it (`POST /accounts/{account}/cfd_tunnel/{tunnel}/token` with a new `tunnel_secret`, or _Refresh token_ in the dashboard), update `TUNNEL_TOKEN` in the GitHub environment and redeploy.
 
 To create a tunnel for a new environment:
 
@@ -93,13 +94,13 @@ Nobody edits `.env` or `backup.env` on a server. Each deploy writes them from th
 
 ## Backups
 
-`backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) to a bucket with object lock: each dump can't be deleted for 30 days and expires after 31. Staging runs the same backups to its own bucket, without object lock and kept for 7 days, so changes to them and restores can be tried there first. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
+`backup.sh` dumps Postgres every night (`cuentalibre-backup.timer`, installed by hand in `/etc/systemd/system`) and, when configured, archives the files bucket. Both uploads share a UTC timestamp. The production backups bucket uses object lock for 30 days and expires backups after 31 days. Staging uses its own backups bucket, without object lock and kept for 7 days. The heartbeat reports success after all configured uploads succeed. Its credentials live in `backup.env`, apart from the `.env` that compose hands to the API.
 
-Each dump is encrypted with [age](https://age-encryption.org) to the public keys in `backup-recipients.txt` before it leaves the server. The private key never goes to the server: it lives in the password manager with an offline copy. The bucket key in `backup.env` can only write to the bucket; restoring uses a separate read key, and the bucket stays private with access logging on. To restore, fetch the dump with the read key and decrypt it (`age -d -i backup.key`), as the header of `backup.sh` shows.
+Each backup is encrypted with [age](https://age-encryption.org) to the public keys in `backup-recipients.txt` before it leaves the server. The private key lives in the password manager with an offline copy. The destination key in `backup.env` can only write to the bucket; restoring uses a separate read key, and the bucket stays private with access logging on. To restore Postgres, fetch the dump with the read key and decrypt it (`age -d -i backup.key`), as the header of `backup.sh` shows.
 
 ### Uploaded files
 
-The files buckets (`cuentalibre-files`, and `cuentalibre-files-staging` in staging) have versioning on, so deleting an object only hides it behind a delete marker. The lifecycle rule in `files-lifecycle.json` removes those hidden versions after 31 days, and the delete markers once nothing is left under them. That matches the dumps, so a file deleted by a bug of ours or by hand can be brought back whole within the same window. It doesn't protect against a leaked key, which can delete versions too. To set it up on a new bucket, with a key of its Hetzner project:
+The files buckets (`cuentalibre-files`, and `cuentalibre-files-staging` in staging) have versioning on, so deleting an object only hides it behind a delete marker. The lifecycle rule in `files-lifecycle.json` removes those hidden versions after 31 days, and the delete markers once nothing is left under them. A nightly archive copies every version still present, including versions hidden by delete markers, to the isolated backups bucket. To set up versioning on a new files bucket, with a key of its Hetzner project:
 
 ```sh
 export AWS_ENDPOINT_URL=https://fsn1.your-objectstorage.com AWS_REGION=fsn1
@@ -107,7 +108,28 @@ aws s3api put-bucket-versioning --bucket <bucket> --versioning-configuration Sta
 aws s3api put-bucket-lifecycle-configuration --bucket <bucket> --lifecycle-configuration file://files-lifecycle.json
 ```
 
-Deleting a file in the app also deletes its `file` row (name, type, size), so bringing the bytes back isn't enough. To restore one by hand:
+#### Enable the nightly archive
+
+1. Grant a separate [Hetzner S3 key](https://docs.hetzner.com/storage/object-storage/faq/s3-credentials/) read access to the source only: `s3:ListBucketVersions` on the bucket ARN and `s3:GetObjectVersion` on its object ARN. Use a key from a separate project to avoid the source project's default access. Keep the destination and its write credentials isolated from the API's S3 key.
+2. In each GitHub environment, set `BACKUP_FILES_BUCKET`, `BACKUP_FILES_ENDPOINT` and `BACKUP_FILES_REGION` to the source settings. Add `BACKUP_FILES_ACCESS_KEY_ID` and `BACKUP_FILES_SECRET_ACCESS_KEY` as secrets. The next deploy installs the required tools and writes the settings. The archive is a full copy each night. The server's temporary directory needs space for the larger of the encrypted database dump and the encrypted archive, and the destination needs space for a full copy per retained night.
+3. Test in staging first. Run `sudo systemctl start cuentalibre-backup.service`, check `journalctl -u cuentalibre-backup.service` for both uploaded objects, and decrypt and inspect a staging archive. Include a file with two versions and a delete marker in the check. In production, verify that the destination's default object-lock retention applies to both `postgres/` and `files/`, and that its lifecycle rules expire the archives too. Verify retention on an uploaded archive version with `aws s3api get-object-retention` and a key allowed to inspect it.
+
+#### Restore from an archive
+
+Use the separate backup read key and the offline age identity. In a private working directory, decrypt the archive from the same night as the database dump:
+
+```sh
+rclone cat "s3:$BACKUP_BUCKET/files/cuentalibre-$timestamp.tar.age" > files.tar.age
+age -d -i backup.key -o files.tar files.tar.age
+tar -xOf files.tar manifest.json > manifest.json
+jq --arg key "$key" '{versions: [.versions[] | select(.key == $key)], deleteMarkers: [.deleteMarkers[] | select(.key == $key)]}' manifest.json
+```
+
+The manifest maps each S3 key and version ID to an archive member such as `objects/42`. Select the version that matches the restored database, extract it with `tar -xOf files.tar objects/42 > restored-file`, and upload it to the original key with `aws s3api put-object --bucket "$FILES_BUCKET" --key "$key" --body restored-file --content-type "$content_type"`, using the manifest's `contentType`. S3 assigns a new version ID. To reconstruct which keys were visible in the bucket when it was listed, use the entries marked `isLatest` and check the delete markers. The files listing follows the database dump, so live changes can occur between the two.
+
+#### Restore from source bucket versioning
+
+Deleting a file in the app also deletes its `file` row (name, type, size). To restore a file while the version still exists in the source bucket:
 
 1. Find its object. The key is `<organizationId>/<fileId>/<uuid>`, and the delete marker is the version on top:
 
