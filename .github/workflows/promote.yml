@@ -115,7 +115,12 @@ jobs:
         run: |
           ssh "deploy@$DEPLOY_HOST" 'gunzip | docker load' < "$RUNNER_TEMP/api.tar.gz"
           git checkout "$REVISION"
-          scp deploy/cloud/compose.yml deploy/cloud/backup.sh deploy/cloud/backup-recipients.txt "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
+          files=(deploy/cloud/compose.yml deploy/cloud/backup.sh deploy/cloud/backup-recipients.txt)
+          if [ -f deploy/cloud/backup-files.py ]; then
+            ssh "deploy@$DEPLOY_HOST" 'command -v age >/dev/null && python3 -c "import boto3" || { sudo apt-get update -q && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q age python3-boto3; }'
+            files+=(deploy/cloud/backup-files.py)
+          fi
+          scp "${files[@]}" "deploy@$DEPLOY_HOST:/opt/cuentalibre/"
           git checkout -
           # .env, and backup.env when production has a backups bucket
           find "$RUNNER_TEMP/production" -type f -exec scp -p {} "deploy@$DEPLOY_HOST:/opt/cuentalibre/" \;
