@@ -168,6 +168,7 @@ ${exportUrl}
  */
 export function sendInBackground(mailer: Mailer, email: OutgoingEmail) {
   mailer.send(email).catch((error: unknown) => {
-    console.warn(`Account email "${email.subject}" failed:`, error instanceof Error ? error.message : error);
+    // Not the subject: it may carry a sign-in code
+    console.warn("Account email failed:", error instanceof Error ? error.message : error);
   });
 }
