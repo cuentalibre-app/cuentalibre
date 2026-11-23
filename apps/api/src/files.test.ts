@@ -62,6 +62,7 @@ describe("files", () => {
     // Shown in a tab, a file runs nothing and can't be framed
     expect(download.headers.get("content-security-policy")).toBe("default-src 'none'; frame-ancestors 'none'; sandbox");
     expect(download.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(download.headers.get("cache-control")).toBe("private, no-store");
     expect(new Uint8Array(await download.arrayBuffer())).toEqual(pdf);
   });
 

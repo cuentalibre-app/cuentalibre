@@ -152,7 +152,7 @@ export const fileRoutes = new OpenAPIHono<AppEnv>()
       "content-length": String(row.size),
       "content-disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(row.name)}`,
       "x-content-type-options": "nosniff",
-      // A file never changes, but only the organization's members may read it
-      "cache-control": "private, max-age=31536000, immutable",
+      // Not kept in the browser: it would outlive the session, or the person's access
+      "cache-control": "private, no-store",
     }) as never;
   });
