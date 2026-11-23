@@ -120,6 +120,8 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
     // The email OTP plugin sends the verification email, with a code instead of a link
     ...(mailer && { emailVerification: { sendOnSignUp: true } }),
     socialProviders: googleProvider(env),
+    // Google's access and refresh tokens, encrypted with `BETTER_AUTH_SECRET`
+    account: { encryptOAuthTokens: true },
     ...(env.PASSWORD_BREACH_CHECK === "on" && { hooks: { before: rejectBreachedPasswords() } }),
     plugins: [
       // One organization per user until the web app can switch between them (#33)
