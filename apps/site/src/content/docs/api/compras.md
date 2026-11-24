@@ -17,6 +17,12 @@ Las facturas que te envían tus proveedores. Su trimestre lo decide `bookedOn`, 
 | `PATCH /v1/purchase-invoices/{id}`    | Cambia algunos campos.                                                                                    |
 | `DELETE /v1/purchase-invoices/{id}`   | La borra.                                                                                                 |
 
+## Leer un justificante con IA
+
+`POST /v1/purchases/extract` recibe `{ "fileId": "…" }` con el id de un [PDF o una foto que hayas subido](/docs/api/archivos). Devuelve una propuesta de factura o ticket y los campos que conviene revisar, sin registrar la compra.
+
+Si el PDF tiene más de 10 páginas o se extraen más de 50.000 caracteres de texto, la API responde `413 document_too_long`. El intento no consume cuota de lectura.
+
 ## Campos
 
 | Campo                            | Tipo                                                      |                                                                                                                                                                                                                                                     |

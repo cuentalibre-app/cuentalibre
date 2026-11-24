@@ -56,16 +56,16 @@ const UNMAPPED_GLYPHS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFD]/;
  * scan) or has unmapped glyphs, and then the model reads the file itself.
  */
 export function readableText(text: string): string | null {
+  if (text.length > MAX_TEXT_CHARACTERS) throw tooLong();
   if (UNMAPPED_GLYPHS.test(text)) return null;
   const characters = text.replace(/[^\p{L}\p{N}]/gu, "").length;
   if (characters < MIN_TEXT_CHARACTERS) return null;
-  if (text.length > MAX_TEXT_CHARACTERS) throw tooLong();
   return text;
 }
 
 /**
  * The PDF's text layer, or null when it isn't worth reading or can't be parsed.
- * Throws `document_too_long` past `MAX_PDF_PAGES`, scans included.
+ * Throws `document_too_long` past the page or text limit, even with an unreadable text layer.
  */
 async function pdfText(bytes: Uint8Array): Promise<string | null> {
   let pdf: Awaited<ReturnType<typeof getDocumentProxy>>;
@@ -117,7 +117,7 @@ export async function modelInput(bytes: Uint8Array): Promise<ModelInput> {
 const sha256 = (data: Uint8Array | string) => createHash("sha256").update(data).digest("hex");
 
 /** Raise when `modelInput` changes what the model is given for a file. */
-const INPUT_VERSION = 2;
+const INPUT_VERSION = 3;
 
 /**
  * Changes with the prompt, the answer's schema or `INPUT_VERSION`, so files are read

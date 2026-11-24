@@ -1,10 +1,10 @@
+import { createHash } from "node:crypto";
 import type { PurchaseExtraction } from "@cuentalibre/contracts";
 import { newId, readingMonth } from "@cuentalibre/core";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { aiProtocol, createAiProvider } from "./ai";
-import type { ModelAnswer } from "./ai/answer";
-import { toDraft } from "./ai/answer";
+import { EXTRACTION_PROMPT, modelAnswerJsonSchema, toDraft, type ModelAnswer } from "./ai/answer";
 import { MAX_PDF_PAGES, MAX_TEXT_CHARACTERS, readableText, sniffType } from "./ai/extract";
 import { parseJsonMessage } from "./ai/openai";
 import { createApp } from "./app";
@@ -201,9 +201,14 @@ describe("the model's answer", () => {
     expect(readableText(line)).toBe(line);
     expect(readableText(line.replace("-", "\u0000"))).toBeNull();
     expect(readableText("Total 121")).toBeNull();
-    expect(() => readableText(line.repeat(Math.ceil(MAX_TEXT_CHARACTERS / line.length) + 1))).toThrow(
-      expect.objectContaining({ code: "document_too_long" }),
-    );
+  });
+
+  it("enforces the text limit even when a text layer is unreadable", () => {
+    const text = "A".repeat(MAX_TEXT_CHARACTERS);
+    expect(readableText(text)).toBe(text);
+    for (const tooLong of [text + "A", text + "\uFFFD", ".".repeat(MAX_TEXT_CHARACTERS + 1)]) {
+      expect(() => readableText(tooLong)).toThrow(expect.objectContaining({ status: 413, code: "document_too_long" }));
+    }
   });
 
   it("tells files by their bytes", () => {
@@ -411,6 +416,32 @@ describe("reading each file once", () => {
       200,
     );
     expect(JSON.stringify(provider.requests[0]!.body)).toContain("Total 121,00 EUR");
+  });
+
+  it("validates a PDF again when its cached answer predates the document limits", async () => {
+    const ana = await signUp("Ana", openAiApp);
+    const { id: organizationId } = await createOrganization(ana, "Ana SL");
+    const long = pdf(...Array.from({ length: MAX_PDF_PAGES + 1 }, () => INVOICE_TEXT));
+    const legacyVersion = createHash("sha256")
+      .update(EXTRACTION_PROMPT + JSON.stringify(modelAnswerJsonSchema))
+      .digest("hex")
+      .slice(0, 16);
+    await db.insert(aiReading).values({
+      id: newId(),
+      organizationId,
+      month: readingMonth(new Date()),
+      model: ollama.AI_SCAN_MODEL,
+      fileHash: createHash("sha256").update(long).digest("hex"),
+      promptVersion: legacyVersion,
+      source: "text",
+      answer: answer(),
+    });
+
+    const response = await extract(ana, await upload(ana, long));
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({ error: { code: "document_too_long" } });
+    expect(provider.requests).toHaveLength(0);
+    expect(await usage(ana)).toMatchObject({ used: 1 });
   });
 
   it("stops at the monthly limit, still serving files already read", async () => {

@@ -21,7 +21,7 @@ export const aiReading = pgTable(
     /** SHA-256 of the file's bytes, in hex: the cache key along with the model and the prompt. */
     fileHash: text().notNull(),
     model: text().notNull(),
-    /** A hash of the prompt and the answer's schema: changing either reads files afresh. */
+    /** A hash of the prompt, answer schema and document preparation version. */
     promptVersion: text().notNull(),
     /** What the model read: the PDF's text layer, an image or the PDF itself. */
     source: text().$type<"text" | "image" | "pdf">(),

@@ -175,7 +175,8 @@ export function createApiBackend(
 
     upload,
 
-    fileUrl: (id) => `${baseUrl}/v1/files/${id}`,
+    // Bypass attachments cached under the old immutable policy.
+    fileUrl: (id) => `${baseUrl}/v1/files/${id}?v=2`,
 
     files: {
       list: () => request<FileListing>("/v1/files"),

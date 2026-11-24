@@ -304,7 +304,7 @@ describe("api backend", () => {
       ["POST", "http://api/v1/commands"],
       ["POST", "http://api/v1/commands"],
     ]);
-    expect(attachmentUrl({ ...attachment, url: undefined })).toBe(`http://api/v1/files/${attachment.id}`);
+    expect(attachmentUrl({ ...attachment, url: undefined })).toBe(`http://api/v1/files/${attachment.id}?v=2`);
   });
 
   it("uploads nothing for a file left out before saving, and lets it go", async () => {
