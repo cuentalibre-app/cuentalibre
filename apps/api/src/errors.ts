@@ -31,7 +31,11 @@ export function redactError(error: unknown): unknown {
     .join(", ");
   const redacted = new Error(`Failed query: ${error.query}${where ? ` (${where})` : ""}`);
   redacted.name = "DrizzleQueryError";
-  const frames = (error.stack ?? "").split("\n").filter((line) => line.startsWith("    at "));
+  // The stack starts with the message, which holds the parameters and may span lines
+  const stack = error.stack ?? "";
+  const messageAt = stack.indexOf(error.message);
+  const afterMessage = messageAt === -1 ? "" : stack.slice(messageAt + error.message.length);
+  const frames = afterMessage.split("\n").filter((line) => line.startsWith("    at "));
   redacted.stack = [`${redacted.name}: ${redacted.message}`, ...frames].join("\n");
   return redacted;
 }

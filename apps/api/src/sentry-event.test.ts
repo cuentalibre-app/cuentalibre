@@ -26,4 +26,15 @@ describe("what Sentry is sent", () => {
     );
     expect(sent[0]).not.toContain("B12345678");
   });
+
+  it("keeps no line of a multiline parameter, even one shaped like a stack frame", async () => {
+    sent.length = 0;
+    const param = "first line\n    at leaked (B87654321.js:1:1)";
+    reportError(new DrizzleQueryError('update "contact" set "notes" = $1', [param], new Error("failed")));
+    await Sentry.flush(1000);
+
+    const event = sent.find((envelope) => envelope.includes('update \\"contact\\"'));
+    expect(event).toBeDefined();
+    expect(event).not.toContain("B87654321");
+  });
 });
