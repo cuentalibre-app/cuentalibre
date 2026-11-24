@@ -2,6 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import type { Db } from "../db/client";
 import { outbox, type OutboxTopic } from "../db/schema";
 import { complete, type Job } from "./outbox";
+import { logError, redactError } from "../errors";
 
 /** Runs one job. Throwing retries it later; `RetryLater` says when. */
 export type Handler = (job: Job) => Promise<void>;
@@ -57,7 +58,8 @@ export async function runDueJobs(db: Db, handlers: Handlers, limit = 50): Promis
       await handlers[job.topic](job);
       await complete(db, job.id);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const safe = redactError(error);
+      const message = safe instanceof Error ? safe.message : String(safe);
       const failed = job.attempts >= MAX_ATTEMPTS;
       if (!(error instanceof RetryLater)) console.warn(`Outbox job ${job.id} (${job.topic}) failed:`, message);
       await db
@@ -85,7 +87,7 @@ export function startWorker(db: Db, handlers: Handlers, intervalMs = 2_000): () 
     if (stopped) return;
     running = runDueJobs(db, handlers)
       .then(() => undefined)
-      .catch((error: unknown) => console.error("Outbox worker:", error))
+      .catch((error: unknown) => logError("Outbox worker:", error))
       .finally(() => {
         if (!stopped) timer = setTimeout(tick, intervalMs);
       });

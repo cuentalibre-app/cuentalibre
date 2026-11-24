@@ -6,7 +6,7 @@ import { screenContext } from "../ai/help-guide";
 import { recordQuestion, releaseQuestion, reserveQuestion } from "../ai/questions";
 import type { AppEnv } from "../context";
 import { reportError } from "../error-reporting";
-import { ApiError, errorContent } from "../errors";
+import { ApiError, errorContent, logError } from "../errors";
 import { requireOrganization } from "../middleware";
 
 const ask = createRoute({
@@ -69,7 +69,7 @@ export const helpChatRoutes = new OpenAPIHono<AppEnv>().openapi(ask, async (c) =
       if (c.req.raw.signal.aborted) return;
       if (error instanceof AiError) console.error(`The help chat failed while answering: ${error.message}`);
       else {
-        console.error(error);
+        logError("The help chat failed while answering:", error);
         reportError(error, { method: "POST", route: "/v1/help-chat" });
       }
       const { code, message } = providerFailed();

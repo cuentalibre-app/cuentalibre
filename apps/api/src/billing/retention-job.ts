@@ -9,6 +9,7 @@ import type { FileStorage } from "../storage";
 import type { Billing } from ".";
 import { TRIAL_DAYS } from "./plan";
 import { addMonths, READ_ONLY_MONTHS, readOnlySince, retentionStep, type DeletionNotice } from "./retention";
+import { logError } from "../errors";
 
 export interface RetentionDeps {
   db: Db;
@@ -43,7 +44,7 @@ export async function runRetention(deps: RetentionDeps, now = new Date()) {
     );
   for (const { id } of candidates) {
     await handle(deps, id, now).catch((error: unknown) => {
-      console.error(`Retention of organization ${id} failed:`, error);
+      logError(`Retention of organization ${id} failed:`, error);
       reportError(error, REQUEST);
     });
   }
@@ -113,7 +114,7 @@ export function startRetention(deps: RetentionDeps, intervalMs = 60 * 60 * 1000)
     if (stopped) return;
     running = runRetention(deps)
       .catch((error: unknown) => {
-        console.error("Retention:", error);
+        logError("Retention:", error);
         reportError(error, REQUEST);
       })
       .finally(() => {
