@@ -116,8 +116,16 @@ export async function modelInput(bytes: Uint8Array): Promise<ModelInput> {
 
 const sha256 = (data: Uint8Array | string) => createHash("sha256").update(data).digest("hex");
 
-/** Changes with the prompt or the answer's schema, so files are read afresh after either changes. */
-export const PROMPT_VERSION = sha256(EXTRACTION_PROMPT + JSON.stringify(modelAnswerJsonSchema)).slice(0, 16);
+/** Raise when `modelInput` changes what the model is given for a file. */
+const INPUT_VERSION = 2;
+
+/**
+ * Changes with the prompt, the answer's schema or `INPUT_VERSION`, so files are read
+ * afresh after any of them changes.
+ */
+export const PROMPT_VERSION = sha256(
+  `${INPUT_VERSION}\n${EXTRACTION_PROMPT}${JSON.stringify(modelAnswerJsonSchema)}`,
+).slice(0, 16);
 
 /** Calls the model and checks its answer, throwing a 502 for the user when either fails. */
 async function askModel(provider: AiProvider, input: ModelInput, fileId: string) {
