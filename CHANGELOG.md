@@ -4,6 +4,15 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.3.4 (2026-11-24)
+
+* Back up uploaded file versions nightly by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/156
+* Encrypt Google OAuth tokens at rest by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/157
+* State how long backups keep a deleted account's data by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/158
+* Harden document reading, attachment caching and error logging by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/159
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v1.3.3...v1.3.4
+
 ## 1.3.3 (2026-11-20)
 
 * Make the tax ID optional at checkout by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/141
