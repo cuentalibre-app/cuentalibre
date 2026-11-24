@@ -1,9 +1,10 @@
 import { DrizzleQueryError } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
+import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { reportError } from "./error-reporting";
 import { ApiError } from "./errors";
-import { app, db, env } from "./test/harness";
+import { app, db, env, mailer, storage } from "./test/harness";
 
 vi.mock("./error-reporting", () => ({ reportError: vi.fn() }));
 
@@ -68,6 +69,38 @@ describe("error reporting", () => {
       expect(logged.stack).not.toContain(token);
       expect(logged.cause).toBeUndefined();
     } finally {
+      log.mockRestore();
+    }
+  });
+
+  it("redacts database errors from Better Auth's HTTP router", async () => {
+    const auth = createAuth(db, env, null);
+    const authApp = createApp({ db, auth, env, storage, mailer });
+    const { internalAdapter } = await auth.$context;
+    const email = "test@example.com";
+    const query = 'select "table_column" from "user" where "email" = $1';
+    const findUser = vi.spyOn(internalAdapter, "findUserByEmail").mockRejectedValueOnce(
+      new DrizzleQueryError(query, [email], new Error("Failed to look up " + email)),
+    );
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.mocked(reportError).mockClear();
+    try {
+      const response = await authApp.request(new URL("/v1/auth/sign-in/email", env.BETTER_AUTH_URL).href, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: env.WEB_ORIGIN },
+        body: JSON.stringify({ email, password: "a-long-password" }),
+      });
+
+      expect(findUser).toHaveBeenCalledOnce();
+      expect(response.status).toBe(500);
+      expect(await response.json()).toMatchObject({ error: { code: "internal_error" } });
+      expect(log).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ message: `Failed query: ${query}` }));
+      const [logged] = log.mock.calls[0]!;
+      expect(logged.stack).not.toContain(email);
+      expect(logged.cause).toBeUndefined();
+      expect(reportError).toHaveBeenCalledWith(logged, { method: "POST", route: "/v1/auth/*" });
+    } finally {
+      findUser.mockRestore();
       log.mockRestore();
     }
   });

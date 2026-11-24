@@ -110,6 +110,8 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
         console[level](`[Better Auth] ${message}`, ...args.map(redactError));
       },
     },
+    // Let the app handle unexpected errors before the auth router can log them.
+    onAPIError: { throw: true },
     session: { expiresIn: SESSION_EXPIRES_IN, updateAge: SESSION_UPDATE_AGE },
     emailAndPassword: {
       enabled: true,
