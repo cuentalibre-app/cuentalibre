@@ -36,6 +36,11 @@ export function redactError(error: unknown): unknown {
   return redacted;
 }
 
+/** Logs an error after `message`, redacted as `redactError` does. */
+export function logError(message: string, error: unknown) {
+  console.error(message, redactError(error));
+}
+
 type Issue = z.core.$ZodIssue;
 
 /**

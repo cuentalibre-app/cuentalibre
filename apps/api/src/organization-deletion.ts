@@ -5,6 +5,7 @@ import type { Tx } from "./db/client";
 import { file, organization, subscription } from "./db/schema";
 import { reportError } from "./error-reporting";
 import type { FileStorage } from "./storage";
+import { logError } from "./errors";
 
 /** What outlives a deleted organization's rows, to clean up once its transaction commits. */
 export interface DeletedOrganizations {
@@ -47,7 +48,7 @@ export async function cleanUpDeleted(
   }
   for (const id of subscriptionIds) {
     await billing?.stripe.cancelSubscription(id).catch((error: unknown) => {
-      console.error(`Couldn't cancel subscription ${id}`, error);
+      logError(`Couldn't cancel subscription ${id}`, error);
       reportError(error, request);
     });
   }
