@@ -1,8 +1,9 @@
 import { DrizzleQueryError } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
-import { ApiError } from "./errors";
+import { createAuth } from "./auth";
 import { reportError } from "./error-reporting";
-import { app } from "./test/harness";
+import { ApiError } from "./errors";
+import { app, db, env } from "./test/harness";
 
 vi.mock("./error-reporting", () => ({ reportError: vi.fn() }));
 
@@ -48,6 +49,27 @@ describe("error reporting", () => {
     expect(logged.join(" ")).not.toContain("B12345678");
     expect(JSON.stringify(reported) + (reported as Error).stack).not.toContain("B12345678");
     log.mockRestore();
+  });
+
+  it("redacts failed queries logged by Better Auth", async () => {
+    const auth = createAuth(db, env, null);
+    const { logger } = await auth.$context;
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const query = 'select * from "session" where "token" = $1';
+      const token = "test-session-token";
+      const cause = Object.assign(new Error("query failed for " + token), { code: "XX000" });
+      logger.error("INTERNAL_SERVER_ERROR", new DrizzleQueryError(query, [token], cause));
+      expect(log).toHaveBeenCalledWith(
+        "[Better Auth] INTERNAL_SERVER_ERROR",
+        expect.objectContaining({ message: `Failed query: ${query} (code XX000)` }),
+      );
+      const logged = log.mock.calls[0]![1] as Error;
+      expect(logged.stack).not.toContain(token);
+      expect(logged.cause).toBeUndefined();
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it("doesn't report the errors the API answers on purpose", async () => {

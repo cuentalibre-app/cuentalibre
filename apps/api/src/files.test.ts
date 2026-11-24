@@ -55,7 +55,7 @@ describe("files", () => {
       contentType: "application/pdf",
     });
 
-    const download = await ana.request(`/v1/files/${id}`);
+    const download = await ana.request(`/v1/files/${id}?v=2`);
     expect(download.status).toBe(200);
     expect(download.headers.get("content-type")).toBe("application/pdf");
     expect(download.headers.get("content-disposition")).toBe("inline; filename*=UTF-8''Factura%20Brisa%20118.pdf");
