@@ -87,11 +87,14 @@ const PNG_IHDR = 0x49484452;
 
 /**
  * The width and height a PNG's header declares. `pngjs` takes the last `IHDR` chunk
- * it meets as the size to allocate, so a file with more than one is refused.
+ * it meets as the size to allocate, so a file with more than one is refused, and it
+ * walks chunks by their declared length, so the first `IHDR` must have the 13 bytes
+ * the format sets for this walk to find the chunks it finds.
  */
 function pngSize(bytes: Uint8Array): [number, number] {
   if (bytes.length < 33 || readUint32(bytes, 12, false) !== PNG_IHDR)
     throw new Error("The PNG doesn't start with IHDR");
+  if (readUint32(bytes, 8, false) !== 13) throw new Error("The PNG's IHDR isn't 13 bytes long");
   // Chunks are length, type, data and CRC; only their headers are read
   for (let offset = 33; offset + 8 <= bytes.length; offset += 12 + readUint32(bytes, offset, false)) {
     if (readUint32(bytes, offset + 4, false) === PNG_IHDR) throw new Error("The PNG has more than one IHDR");

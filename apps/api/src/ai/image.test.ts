@@ -180,6 +180,14 @@ describe("prepareImage", () => {
       await expect(prepareImage("image/png", bytes)).rejects.toThrow(/more than one IHDR/);
     }, 1_000);
 
+    it("PNG whose first header declares a length other than 13, hiding the next chunk", async () => {
+      const bytes = new Uint8Array(MAX_IMAGE_BYTES + 1);
+      bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 25, 0x49, 0x48, 0x44, 0x52]);
+      setUint32(bytes, 16, 1);
+      setUint32(bytes, 20, 1);
+      await expect(prepareImage("image/png", bytes)).rejects.toThrow(/isn't 13 bytes/);
+    }, 1_000);
+
     it("JPEG", async () => {
       const bytes = withOrientation(encode(pattern()), 6);
       const sof = bytes.findIndex((byte, i) => byte === 0xff && bytes[i + 1] === 0xc0);
