@@ -14,10 +14,20 @@ import { cachedReading, recordReading, releaseReading, reserveReading, type AiLi
 
 /** Below this many letters and digits, a PDF's text layer is empty or noise: it is read as a scan. */
 const MIN_TEXT_CHARACTERS = 40;
-/** An invoice's text fits easily; anything longer is cut, so a huge PDF can't run up the bill. */
-const MAX_TEXT_CHARACTERS = 20_000;
-/** Pages whose text is read; an invoice's text is in its first ones, and each page costs parsing time. */
-const MAX_PDF_PAGES = 10;
+/**
+ * Longest PDF read: invoices are far shorter, and each page costs parsing time and
+ * tokens. A longer one is refused rather than read in part, as its totals may be past the cut.
+ */
+export const MAX_PDF_PAGES = 10;
+/** Ten dense pages of text fit; more is refused, for the same reason. */
+export const MAX_TEXT_CHARACTERS = 50_000;
+
+const tooLong = () =>
+  new ApiError(
+    413,
+    "document_too_long",
+    `Only PDFs of up to ${MAX_PDF_PAGES} pages and ${MAX_TEXT_CHARACTERS} characters can be read.`,
+  );
 
 /** Major brands of HEIF files, HEIC (iPhone photos) among them. */
 const HEIF_BRANDS = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"]);
@@ -48,32 +58,42 @@ const UNMAPPED_GLYPHS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFD]/;
 export function readableText(text: string): string | null {
   if (UNMAPPED_GLYPHS.test(text)) return null;
   const characters = text.replace(/[^\p{L}\p{N}]/gu, "").length;
-  return characters >= MIN_TEXT_CHARACTERS ? text.slice(0, MAX_TEXT_CHARACTERS) : null;
+  if (characters < MIN_TEXT_CHARACTERS) return null;
+  if (text.length > MAX_TEXT_CHARACTERS) throw tooLong();
+  return text;
 }
 
-/** The PDF's text layer, or null when it isn't worth reading or can't be parsed. */
+/**
+ * The PDF's text layer, or null when it isn't worth reading or can't be parsed.
+ * Throws `document_too_long` past `MAX_PDF_PAGES`, scans included.
+ */
 async function pdfText(bytes: Uint8Array): Promise<string | null> {
+  let pdf: Awaited<ReturnType<typeof getDocumentProxy>>;
   try {
     // pdf.js takes ownership of the buffer it reads, so it gets a copy
-    const pdf = await getDocumentProxy(bytes.slice());
-    try {
-      const pages: string[] = [];
-      for (let number = 1; number <= Math.min(pdf.numPages, MAX_PDF_PAGES); number++) {
-        const { items } = await (await pdf.getPage(number)).getTextContent();
-        pages.push(items.map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : "") : "")).join(""));
-      }
-      // Spaces collapsed, line breaks kept, at most one blank line
-      const text = pages
-        .join("\n")
-        .replace(/[^\S\n]+/g, " ")
-        .replace(/ ?\n ?/g, "\n")
-        .replace(/\n{3,}/g, "\n\n");
-      return readableText(text);
-    } finally {
-      await pdf.loadingTask.destroy();
-    }
+    pdf = await getDocumentProxy(bytes.slice());
   } catch {
     return null;
+  }
+  try {
+    if (pdf.numPages > MAX_PDF_PAGES) throw tooLong();
+    const pages: string[] = [];
+    for (let number = 1; number <= pdf.numPages; number++) {
+      const { items } = await (await pdf.getPage(number)).getTextContent();
+      pages.push(items.map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : "") : "")).join(""));
+    }
+    // Spaces collapsed, line breaks kept, at most one blank line
+    const text = pages
+      .join("\n")
+      .replace(/[^\S\n]+/g, " ")
+      .replace(/ ?\n ?/g, "\n")
+      .replace(/\n{3,}/g, "\n\n");
+    return readableText(text);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    return null;
+  } finally {
+    await pdf.loadingTask.destroy();
   }
 }
 

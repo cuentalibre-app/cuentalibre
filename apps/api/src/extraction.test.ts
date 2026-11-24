@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { aiProtocol, createAiProvider } from "./ai";
 import type { ModelAnswer } from "./ai/answer";
 import { toDraft } from "./ai/answer";
-import { readableText, sniffType } from "./ai/extract";
+import { MAX_PDF_PAGES, MAX_TEXT_CHARACTERS, readableText, sniffType } from "./ai/extract";
 import { parseJsonMessage } from "./ai/openai";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
@@ -14,17 +14,22 @@ import { aiReading } from "./db/schema";
 import { accountMailer, createOrganization, db, env, mailer, signUp, storage, type Client } from "./test/harness";
 import { send } from "./test/sync";
 
-/** A one-page PDF whose text layer holds these lines (ASCII), or none, like a scan. */
-function pdf(lines: string[]): Uint8Array<ArrayBuffer> {
-  const content = lines.length
-    ? `BT /F1 12 Tf 50 780 Td ${lines.map((line, i) => `${i ? "0 -16 Td " : ""}(${line}) Tj`).join(" ")} ET`
-    : "";
+/** A PDF whose pages' text layers hold these lines (ASCII); a page without lines has none, like a scan. */
+function pdf(...pages: string[][]): Uint8Array<ArrayBuffer> {
+  const content = (lines: string[]) =>
+    lines.length
+      ? `BT /F1 12 Tf 50 780 Td ${lines.map((line, i) => `${i ? "0 -16 Td " : ""}(${line}) Tj`).join(" ")} ET`
+      : "";
+  // Catalog, page tree and font, then each page and its content
+  const pageRef = (i: number) => `${4 + i * 2} 0 R`;
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
-    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
-    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+    `<< /Type /Pages /Kids [${pages.map((_, i) => pageRef(i)).join(" ")}] /Count ${pages.length} >>`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ...pages.flatMap((lines, i) => [
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents ${5 + i * 2} 0 R >>`,
+      `<< /Length ${content(lines).length} >>\nstream\n${content(lines)}\nendstream`,
+    ]),
   ];
   let out = "%PDF-1.4\n";
   const offsets: number[] = [];
@@ -196,6 +201,9 @@ describe("the model's answer", () => {
     expect(readableText(line)).toBe(line);
     expect(readableText(line.replace("-", "\u0000"))).toBeNull();
     expect(readableText("Total 121")).toBeNull();
+    expect(() => readableText(line.repeat(Math.ceil(MAX_TEXT_CHARACTERS / line.length) + 1))).toThrow(
+      expect.objectContaining({ code: "document_too_long" }),
+    );
   });
 
   it("tells files by their bytes", () => {
@@ -380,6 +388,29 @@ describe("reading each file once", () => {
     expect((await extract(ana, fileId)).status).toBe(200);
     expect(provider.requests).toHaveLength(3);
     expect(await usage(ana)).toMatchObject({ used: 1 });
+  });
+
+  it("refuses a PDF longer than it reads, rather than draft from part of it", async () => {
+    const ana = await memberOf(openAiApp);
+    provider.reply = openAiReply(answer());
+    // The supplier and number up front, the VAT and total on the page past the limit
+    const header = INVOICE_TEXT.slice(0, 2);
+    const detail = Array.from({ length: MAX_PDF_PAGES - 1 }, (_, i) => [`Detalle de consumos, hoja ${i + 2}`]);
+    const long = pdf(header, ...detail, INVOICE_TEXT.slice(2));
+    const response = await extract(ana, await upload(ana, long));
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({ error: { code: "document_too_long" } });
+    // A long scan too
+    const scan = pdf(...Array.from({ length: MAX_PDF_PAGES + 1 }, () => []));
+    expect((await extract(ana, await upload(ana, scan))).status).toBe(413);
+    expect(provider.requests).toHaveLength(0);
+    expect(await usage(ana)).toMatchObject({ used: 0 });
+
+    // Up to the limit, every page is read
+    expect((await extract(ana, await upload(ana, pdf(header, ...detail.slice(1), INVOICE_TEXT.slice(2))))).status).toBe(
+      200,
+    );
+    expect(JSON.stringify(provider.requests[0]!.body)).toContain("Total 121,00 EUR");
   });
 
   it("stops at the monthly limit, still serving files already read", async () => {
