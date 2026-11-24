@@ -23,8 +23,9 @@ export function nextMonthName(today = new Date()): string {
   return next.toLocaleDateString("es-ES", { month: "long" });
 }
 
-/** Whether trying the same reading again may work: not when the month's limit is reached. */
-export const canRetryReading = (error: unknown) => !(error instanceof ApiError && error.code === "ai_quota_exceeded");
+/** Whether trying the same reading again may work: not when the month's limit is reached, nor for a document too long. */
+export const canRetryReading = (error: unknown) =>
+  !(error instanceof ApiError && (error.code === "ai_quota_exceeded" || error.code === "document_too_long"));
 
 /** Why a reading failed, for the user. */
 export function readingError(error: unknown): string {
@@ -34,6 +35,8 @@ export function readingError(error: unknown): string {
       return `Has leído con IA todos los documentos de este mes. Podrás leer más desde el 1 de ${nextMonthName()}; mientras, rellena los datos a mano.`;
     case "unsupported_file":
       return "No se puede leer este archivo: tiene que ser un PDF o una foto.";
+    case "document_too_long":
+      return "El documento es demasiado largo para leerlo con IA. Rellena los datos a mano.";
     case "file_too_large":
       return "El archivo es demasiado grande para guardarlo.";
     case "ai_unavailable":
