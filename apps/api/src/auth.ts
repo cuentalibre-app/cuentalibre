@@ -16,6 +16,7 @@ import {
 } from "./email/account-emails";
 import type { Mailer } from "./email/mailer";
 import type { Env } from "./env";
+import { redactError } from "./errors";
 import { CLIENT_IP_HEADER } from "./rate-limit";
 
 /** Every API key starts with it, so leaked keys are easy to spot. */
@@ -104,6 +105,13 @@ export function createAuth(db: Db, env: Env, mailer: Mailer | null) {
     trustedOrigins: [env.WEB_ORIGIN],
     disabledPaths: [...CLOSED_ORGANIZATION_PATHS, ...CLOSED_EMAIL_OTP_PATHS],
     database: drizzleAdapter(db, { provider: "pg", schema }),
+    logger: {
+      log(level, message, ...args: unknown[]) {
+        console[level](`[Better Auth] ${message}`, ...args.map(redactError));
+      },
+    },
+    // Let the app handle unexpected errors before the auth router can log them.
+    onAPIError: { throw: true },
     session: { expiresIn: SESSION_EXPIRES_IN, updateAge: SESSION_UPDATE_AGE },
     emailAndPassword: {
       enabled: true,

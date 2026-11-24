@@ -18,7 +18,8 @@ const extract = createRoute({
     "received invoice (`kind: invoice`) or an expense (`kind: ticket`): nothing is saved. `issues` lists the fields " +
     "to check before saving: missing ones, impossible values (a tax ID with a wrong check digit, a VAT rate Spain " +
     "doesn't use) and amounts that don't add up. `supplierId` is the saved supplier with the draft's tax ID. " +
-    "PDFs with a text layer send their text to the model; photos and scans send the file itself. Photos over 1.5 MB, " +
+    "PDFs with a text layer send their text to the model; photos and scans send the file itself. PDFs of " +
+    "more than 10 pages are refused, rather than read in part. Photos over 1.5 MB, " +
     "HEIC ones and those stored sideways are sent as an upright JPEG of at most 2400 px. A file read before " +
     "(the same bytes) isn't sent to the model again, and doesn't count towards the monthly limit, if the " +
     "server has one (`GET /v1/purchases/extract/usage`); readings that fail don't count either.",
@@ -30,6 +31,7 @@ const extract = createRoute({
     415: errorContent(
       "The file isn't a PDF or a JPEG, PNG, HEIC, WebP or GIF image, or can't be read (`unsupported_file`)",
     ),
+    413: errorContent("The PDF has more than 10 pages or 50 000 characters of text (`document_too_long`)"),
     429: errorContent("The organization has read this month's documents (`ai_quota_exceeded`)"),
     502: errorContent("The AI provider failed, or its answer couldn't be read (`ai_failed`)"),
     503: errorContent("This server has no AI model set up (`ai_unavailable`)"),

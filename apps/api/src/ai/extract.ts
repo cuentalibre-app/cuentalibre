@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { PurchaseExtraction } from "@cuentalibre/contracts";
 import { checkPurchaseDraft, findSupplierByTaxId } from "@cuentalibre/core";
-import { extractText } from "unpdf";
+import { getDocumentProxy } from "unpdf";
 import type { Db } from "../db/client";
 import { ApiError } from "../errors";
 import type { FileStorage } from "../storage";
@@ -14,8 +14,20 @@ import { cachedReading, recordReading, releaseReading, reserveReading, type AiLi
 
 /** Below this many letters and digits, a PDF's text layer is empty or noise: it is read as a scan. */
 const MIN_TEXT_CHARACTERS = 40;
-/** An invoice's text fits easily; anything longer is cut, so a huge PDF can't run up the bill. */
-const MAX_TEXT_CHARACTERS = 20_000;
+/**
+ * Longest PDF read: invoices are far shorter, and each page costs parsing time and
+ * tokens. A longer one is refused rather than read in part, as its totals may be past the cut.
+ */
+export const MAX_PDF_PAGES = 10;
+/** Ten dense pages of text fit; more is refused, for the same reason. */
+export const MAX_TEXT_CHARACTERS = 50_000;
+
+const tooLong = () =>
+  new ApiError(
+    413,
+    "document_too_long",
+    `Only PDFs of up to ${MAX_PDF_PAGES} pages and ${MAX_TEXT_CHARACTERS} characters can be read.`,
+  );
 
 /** Major brands of HEIF files, HEIC (iPhone photos) among them. */
 const HEIF_BRANDS = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis", "mif1", "msf1"]);
@@ -44,19 +56,44 @@ const UNMAPPED_GLYPHS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFD]/;
  * scan) or has unmapped glyphs, and then the model reads the file itself.
  */
 export function readableText(text: string): string | null {
+  if (text.length > MAX_TEXT_CHARACTERS) throw tooLong();
   if (UNMAPPED_GLYPHS.test(text)) return null;
   const characters = text.replace(/[^\p{L}\p{N}]/gu, "").length;
-  return characters >= MIN_TEXT_CHARACTERS ? text.slice(0, MAX_TEXT_CHARACTERS) : null;
+  if (characters < MIN_TEXT_CHARACTERS) return null;
+  return text;
 }
 
-/** The PDF's text layer, or null when it isn't worth reading or can't be parsed. */
+/**
+ * The PDF's text layer, or null when it isn't worth reading or can't be parsed.
+ * Throws `document_too_long` past the page or text limit, even with an unreadable text layer.
+ */
 async function pdfText(bytes: Uint8Array): Promise<string | null> {
+  let pdf: Awaited<ReturnType<typeof getDocumentProxy>>;
   try {
     // pdf.js takes ownership of the buffer it reads, so it gets a copy
-    const { text } = await extractText(bytes.slice(), { mergePages: true });
-    return readableText(text);
+    pdf = await getDocumentProxy(bytes.slice());
   } catch {
     return null;
+  }
+  try {
+    if (pdf.numPages > MAX_PDF_PAGES) throw tooLong();
+    const pages: string[] = [];
+    for (let number = 1; number <= pdf.numPages; number++) {
+      const { items } = await (await pdf.getPage(number)).getTextContent();
+      pages.push(items.map((item) => ("str" in item ? item.str + (item.hasEOL ? "\n" : "") : "")).join(""));
+    }
+    // Spaces collapsed, line breaks kept, at most one blank line
+    const text = pages
+      .join("\n")
+      .replace(/[^\S\n]+/g, " ")
+      .replace(/ ?\n ?/g, "\n")
+      .replace(/\n{3,}/g, "\n\n");
+    return readableText(text);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    return null;
+  } finally {
+    await pdf.loadingTask.destroy();
   }
 }
 
@@ -79,8 +116,16 @@ export async function modelInput(bytes: Uint8Array): Promise<ModelInput> {
 
 const sha256 = (data: Uint8Array | string) => createHash("sha256").update(data).digest("hex");
 
-/** Changes with the prompt or the answer's schema, so files are read afresh after either changes. */
-export const PROMPT_VERSION = sha256(EXTRACTION_PROMPT + JSON.stringify(modelAnswerJsonSchema)).slice(0, 16);
+/** Raise when `modelInput` changes what the model is given for a file. */
+const INPUT_VERSION = 3;
+
+/**
+ * Changes with the prompt, the answer's schema or `INPUT_VERSION`, so files are read
+ * afresh after any of them changes.
+ */
+export const PROMPT_VERSION = sha256(
+  `${INPUT_VERSION}\n${EXTRACTION_PROMPT}${JSON.stringify(modelAnswerJsonSchema)}`,
+).slice(0, 16);
 
 /** Calls the model and checks its answer, throwing a 502 for the user when either fails. */
 async function askModel(provider: AiProvider, input: ModelInput, fileId: string) {
@@ -120,10 +165,10 @@ async function readFile(
   const cachedAnswer = cached && modelAnswerSchema.safeParse(cached.answer);
   if (cached && cachedAnswer?.success) return { answer: cachedAnswer.data, source: cached.source };
 
-  // Before reserving, so a file that can't be read doesn't count
-  const input = await modelInput(bytes);
+  // Before preparing the file, so an organization over its limit can't make the server decode files
   const readingId = await reserveReading(db, key, limits);
   try {
+    const input = await modelInput(bytes);
     const { answer, usage } = await askModel(provider, input, fileId);
     await recordReading(db, organizationId, readingId, { answer, source: input.kind, usage, limits });
     return { answer, source: input.kind };

@@ -55,13 +55,14 @@ describe("files", () => {
       contentType: "application/pdf",
     });
 
-    const download = await ana.request(`/v1/files/${id}`);
+    const download = await ana.request(`/v1/files/${id}?v=2`);
     expect(download.status).toBe(200);
     expect(download.headers.get("content-type")).toBe("application/pdf");
     expect(download.headers.get("content-disposition")).toBe("inline; filename*=UTF-8''Factura%20Brisa%20118.pdf");
     // Shown in a tab, a file runs nothing and can't be framed
     expect(download.headers.get("content-security-policy")).toBe("default-src 'none'; frame-ancestors 'none'; sandbox");
     expect(download.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(download.headers.get("cache-control")).toBe("private, no-store");
     expect(new Uint8Array(await download.arrayBuffer())).toEqual(pdf);
   });
 

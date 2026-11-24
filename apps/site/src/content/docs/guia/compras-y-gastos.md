@@ -50,7 +50,7 @@ La cuota de autónomos que indicas en **Configuración › Impuestos** se propon
 
 ## Leer una factura o un ticket con IA
 
-En vez de teclearla, puedes arrastrar la factura del proveedor (PDF o foto) al formulario, o pulsar **Leer factura con IA** en el listado (**Leer ticket con IA** en gastos). La IA rellena el proveedor, el número, las fechas, los conceptos y el IVA, y marca los campos que conviene revisar. Revísalos y registra la factura como siempre. El documento queda adjunto como justificante.
+En vez de teclearla, puedes arrastrar la factura del proveedor (PDF o foto) al formulario, o pulsar **Leer factura con IA** en el listado (**Leer ticket con IA** en gastos). La IA rellena el proveedor, el número, las fechas, los conceptos y el IVA, y marca los campos que conviene revisar. Revísalos y registra la factura como siempre. Los PDF de más de 10 páginas no se leen. El documento queda adjunto como justificante.
 
 Si lo que subes parece un ticket sin IVA desglosado, se te propone registrarlo como gasto; si en gastos subes una factura con IVA, se te propone registrarla como factura recibida.
 

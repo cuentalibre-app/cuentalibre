@@ -9,12 +9,13 @@ import { createDb } from "./db/client";
 import { createAccountMailer, createMailer } from "./email/mailer";
 import { emailHandler } from "./email/messages";
 import { loadEnv } from "./env";
-import { startErrorReporting, stopErrorReporting } from "./error-reporting";
+import { handleUncaughtErrors, startErrorReporting, stopErrorReporting } from "./error-reporting";
 import { startWorker } from "./outbox/worker";
 import { createStorage } from "./storage";
 
 const env = loadEnv();
 startErrorReporting(env);
+handleUncaughtErrors();
 const db = createDb(env.DATABASE_URL);
 const storage = createStorage(env);
 const mailer = createMailer(env);

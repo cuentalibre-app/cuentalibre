@@ -19,6 +19,11 @@ export const MAX_IMAGE_BYTES = 1.5 * 1024 * 1024;
  */
 export const MAX_IMAGE_SIDE = 2400;
 const JPEG_QUALITY = 85;
+/**
+ * Largest image decoded: 50 MP, what the biggest phone sensors give by default, takes
+ * 200 MB as RGBA. A few kilobytes can declare far more, so the size is checked first.
+ */
+export const MAX_IMAGE_PIXELS = 50_000_000;
 
 export type ImageType = "image/jpeg" | "image/png" | "image/webp" | "image/gif" | "image/heic";
 
@@ -76,6 +81,47 @@ export function jpegOrientation(bytes: Uint8Array): number {
     offset += 2 + length;
   }
   return 1;
+}
+
+const PNG_IHDR = 0x49484452;
+
+/**
+ * The width and height a PNG's header declares. `pngjs` takes the last `IHDR` chunk
+ * it meets as the size to allocate, so a file with more than one is refused, and it
+ * walks chunks by their declared length, so the first `IHDR` must have the 13 bytes
+ * the format sets for this walk to find the chunks it finds.
+ */
+function pngSize(bytes: Uint8Array): [number, number] {
+  if (bytes.length < 33 || readUint32(bytes, 12, false) !== PNG_IHDR)
+    throw new Error("The PNG doesn't start with IHDR");
+  if (readUint32(bytes, 8, false) !== 13) throw new Error("The PNG's IHDR isn't 13 bytes long");
+  // Chunks are length, type, data and CRC; only their headers are read
+  for (let offset = 33; offset + 8 <= bytes.length; offset += 12 + readUint32(bytes, offset, false)) {
+    if (readUint32(bytes, offset + 4, false) === PNG_IHDR) throw new Error("The PNG has more than one IHDR");
+  }
+  return [readUint32(bytes, 16, false), readUint32(bytes, 20, false)];
+}
+
+/**
+ * The largest width and height a HEIC declares in its `ispe` boxes, one per image or
+ * tile; libheif allocates for those. Throws when there is none, as libheif can't decode it.
+ */
+function heicSize(bytes: Uint8Array): [number, number] {
+  let size: [number, number] | null = null;
+  for (let i = 4; i + 16 <= bytes.length; i++) {
+    // "ispe", then version and flags, width and height
+    if (bytes[i] !== 0x69 || bytes[i + 1] !== 0x73 || bytes[i + 2] !== 0x70 || bytes[i + 3] !== 0x65) continue;
+    const width = readUint32(bytes, i + 8, false);
+    const height = readUint32(bytes, i + 12, false);
+    if (!size || width * height > size[0] * size[1]) size = [width, height];
+  }
+  if (!size) throw new Error("The HEIC declares no size");
+  return size;
+}
+
+/** Refuses an image larger than `MAX_IMAGE_PIXELS` before anything is allocated for it. */
+function checkSize([width, height]: [number, number]) {
+  if (width * height > MAX_IMAGE_PIXELS) throw new Error(`The image is too large: ${width}×${height}`);
 }
 
 /** The bitmap shrunk so its longest side is at most `maxSide`, each pixel the average of those it covers. */
@@ -166,13 +212,20 @@ function encodeJpeg(bitmap: Bitmap): Uint8Array {
 
 async function decode(type: "image/jpeg" | "image/png" | "image/heic", bytes: Uint8Array): Promise<Bitmap> {
   if (type === "image/jpeg") {
-    const image = jpeg.decode(bytes, { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 1024 });
+    const image = jpeg.decode(bytes, {
+      useTArray: true,
+      formatAsRGBA: true,
+      maxResolutionInMP: MAX_IMAGE_PIXELS / 1_000_000,
+      maxMemoryUsageInMB: 1024,
+    });
     return { width: image.width, height: image.height, data: image.data };
   }
   if (type === "image/png") {
+    checkSize(pngSize(bytes));
     const image = PNG.sync.read(Buffer.from(bytes));
     return { width: image.width, height: image.height, data: image.data };
   }
+  checkSize(heicSize(bytes));
   // libheif applies the image's own rotation while decoding
   const { default: decodeHeic } = await import("heic-decode");
   const image = await decodeHeic({ buffer: bytes });

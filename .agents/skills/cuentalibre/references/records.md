@@ -207,6 +207,10 @@ Invoices from suppliers. `bookedOn` decides the quarter.
 }
 ```
 
+### Extract a purchase draft
+
+`POST /purchases/extract` with `{ "fileId": "…" }` reads an uploaded PDF or photo and returns an invoice or ticket draft with any fields to review. It does not save a purchase. A PDF with more than 10 pages or more than 50,000 characters of extracted text returns `413 document_too_long` without consuming quota.
+
 ## Expenses
 
 Tickets, the autónomo fee, fees and anything without a full invoice. The amount includes taxes and no VAT is deducted. `date` decides the quarter.
