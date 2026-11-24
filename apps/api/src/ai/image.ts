@@ -83,8 +83,19 @@ export function jpegOrientation(bytes: Uint8Array): number {
   return 1;
 }
 
-/** The width and height a PNG's header declares. */
+const PNG_IHDR = 0x49484452;
+
+/**
+ * The width and height a PNG's header declares. `pngjs` takes the last `IHDR` chunk
+ * it meets as the size to allocate, so a file with more than one is refused.
+ */
 function pngSize(bytes: Uint8Array): [number, number] {
+  if (bytes.length < 33 || readUint32(bytes, 12, false) !== PNG_IHDR)
+    throw new Error("The PNG doesn't start with IHDR");
+  // Chunks are length, type, data and CRC; only their headers are read
+  for (let offset = 33; offset + 8 <= bytes.length; offset += 12 + readUint32(bytes, offset, false)) {
+    if (readUint32(bytes, offset + 4, false) === PNG_IHDR) throw new Error("The PNG has more than one IHDR");
+  }
   return [readUint32(bytes, 16, false), readUint32(bytes, 20, false)];
 }
 

@@ -166,6 +166,20 @@ describe("prepareImage", () => {
       await expect(prepareImage("image/png", bytes)).rejects.toThrow(tooLarge);
     });
 
+    it("PNG with a small header followed by a huge one, the size pngjs would decode", async () => {
+      const bytes = new Uint8Array(MAX_IMAGE_BYTES + 1);
+      const ihdr = (at: number, width: number, height: number) => {
+        bytes.set([0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52], at);
+        setUint32(bytes, at + 8, width);
+        setUint32(bytes, at + 12, height);
+        bytes.set([8, 6, 0, 0, 0], at + 16);
+      };
+      bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      ihdr(8, 1, 1);
+      ihdr(33, side, side);
+      await expect(prepareImage("image/png", bytes)).rejects.toThrow(/more than one IHDR/);
+    }, 1_000);
+
     it("JPEG", async () => {
       const bytes = withOrientation(encode(pattern()), 6);
       const sof = bytes.findIndex((byte, i) => byte === 0xff && bytes[i + 1] === 0xc0);
