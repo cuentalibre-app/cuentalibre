@@ -4,6 +4,13 @@ What changes in each version of cuentalibre for people who run it on their own s
 
 <!-- Generated on release from the PRs merged since the previous version; don't edit by hand. -->
 
+## 1.3.5 (2026-11-25)
+
+* Ask contributors to accept a CLA in the pull request template by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/1
+* Publish versions with a deploy key by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/161
+
+**Full Changelog**: https://github.com/cuentalibre-app/cuentalibre/compare/v1.3.4...v1.3.5
+
 ## 1.3.4 (2026-11-24)
 
 * Back up uploaded file versions nightly by @jesuspb2 in https://github.com/cuentalibre-app/cuentalibre/pull/156
