@@ -2,6 +2,8 @@
 # Publishes the commit production now runs as the next version for self-hosters: tags it
 # `v<version>`, creates a GitHub Release with notes GitHub generates from the PRs merged since
 # the last version, and commits those notes to main as the version's section in CHANGELOG.md.
+# Pushes go through the release deploy key the checkout set up, the only actor besides the owner
+# that the rulesets on `main` and on version tags let through.
 #
 #   .github/scripts/publish-version.sh <patch|minor|major> <commit>
 set -euo pipefail
@@ -32,17 +34,20 @@ gh api "repos/{owner}/{repo}/releases/generate-notes" \
   -f tag_name="v$version" -f target_commitish="$commit" -f previous_tag_name="$last" \
   --jq .body > "$tmp/notes.md"
 
-gh release create "v$version" --target "$commit" --title "v$version" --notes-file "$tmp/notes.md"
-echo "Published v$version (was $last)"
-
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+git tag "v$version" "$commit"
+git push --quiet origin "refs/tags/v$version"
+gh release create "v$version" --verify-tag --title "v$version" --notes-file "$tmp/notes.md"
+echo "Published v$version (was $last)"
+
 date=$(TZ=Europe/Madrid date +%Y-%m-%d)
 for attempt in 1 2 3; do
   git fetch --quiet origin main
   git checkout --quiet -B release-changelog origin/main
   node "$scripts/changelog.mjs" release CHANGELOG.md "$version" "$date" "$tmp/notes.md"
-  git commit --quiet -am "Release v$version"
+  git commit --quiet -am "Release v$version [skip ci]"
   git push --quiet origin HEAD:main && exit 0
   echo "main moved while releasing, trying again ($attempt)" >&2
 done
