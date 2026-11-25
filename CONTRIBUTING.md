@@ -98,4 +98,6 @@ Don't open a public issue for a vulnerability. Report it privately through GitHu
 
 ## License
 
-cuentalibre is licensed under the [AGPL-3.0](LICENSE) and, as the license says, is provided as is, without any warranty. By contributing, you agree that your contribution is licensed under it too.
+cuentalibre is licensed under the [AGPL-3.0](LICENSE) and, as the license says, is provided as is, without any warranty.
+
+By opening a pull request, you accept our [Contributor License Agreement](CLA.md). You keep the copyright of your work; the CLA lets the project offer other licenses in the future, and every contribution stays available under the AGPL-3.0 or another open source license.
