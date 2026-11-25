@@ -153,8 +153,8 @@ jobs:
           fetch-depth: 0
           filter: blob:none
       # Every merge deploys the app to staging, so main's last commit is what staging shows,
-      # as long as its CI run got that far. A release's changelog commit doesn't run CI (pushes
-      # with the workflow token start no workflows) and changes no app, so it looks past those.
+      # as long as its CI run got that far. A release's changelog commit skips CI (`[skip ci]`)
+      # and changes no app, so it looks past those.
       - name: Check staging runs this commit
         if: github.ref == 'refs/heads/main'
         env:
@@ -192,6 +192,8 @@ jobs:
         with:
           fetch-depth: 0
           filter: blob:none
+          # Rulesets don't let the workflow token push to main or create version tags
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
       - name: Publish the version
         env:
           GH_TOKEN: ${{ github.token }}
