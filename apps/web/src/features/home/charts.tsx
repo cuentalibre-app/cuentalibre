@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useRef, useState, type CSSProperties } from "react";
 import { ChartColumn } from "lucide-react";
 import { cents, eurosToCents, type Cents } from "@cuentalibre/core";
@@ -60,6 +61,7 @@ type View = "monthly" | "cumulative";
  * the header shows the period's totals.
  */
 export function CashFlowChart({ data, className }: { data: HomeData; className?: string }) {
+  const { t } = useTranslation();
   const [view, setView] = useState<View>("monthly");
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState<number | null>(null);
@@ -96,15 +98,15 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
       <div className={cn("flex flex-wrap items-center justify-between gap-3 lg:py-2", cardHeaderClass)}>
         <h2 id="cash-flow-title" className={cardTitleClass}>
           <ChartColumn className={cardIconClass} strokeWidth={1.8} aria-hidden="true" />
-          Ingresos y gastos {period.year}
+          {t("home.chart.title", { year: period.year })}
         </h2>
         <SegmentedControl
-          label="Vista"
+          label={t("home.chart.view")}
           value={view}
           onChange={setView}
           options={[
-            { value: "monthly", label: "Mensual" },
-            { value: "cumulative", label: "Beneficio acumulado" },
+            { value: "monthly", label: t("home.chart.monthly") },
+            { value: "cumulative", label: t("home.chart.cumulative") },
           ]}
         />
       </div>
@@ -113,12 +115,14 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         {selected === null ? (
           view === "monthly" ? (
             <>
-              <span className="font-semibold">{periodLabel(period)}</span>
+              <span className="font-semibold">
+                {period.quarter === null ? t("period.yearLabel", { year: period.year }) : periodLabel(period)}
+              </span>
               {(
                 [
-                  ["Ingresos", data.totals.income, "bg-chart-income"],
-                  ["Gastos", data.totals.expenses, "bg-chart-expense"],
-                  ["Beneficio", data.profit, "bg-success"],
+                  [t("home.metrics.income"), data.totals.income, "bg-chart-income"],
+                  [t("home.metrics.expenses"), data.totals.expenses, "bg-chart-expense"],
+                  [t("home.metrics.profit"), data.profit, "bg-success"],
                 ] as const
               ).map(([label, value, dot]) => (
                 <span key={label} className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -130,11 +134,14 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
           ) : (
             <>
               <span className="font-semibold">
-                Hasta {MONTHS[data.lastMonthWithData]!.toLowerCase()} {period.year}
+                {t("home.chart.throughMonth", {
+                  month: MONTHS[data.lastMonthWithData]!.toLowerCase(),
+                  year: period.year,
+                })}
               </span>
               <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                 <Dot className="bg-chart-income" />
-                Beneficio acumulado{" "}
+                {t("home.chart.cumulative")}{" "}
                 <span className="amount text-foreground">{formatEUR(lastPoint?.cumulativeProfit ?? cents(0))}</span>
               </span>
             </>
@@ -144,7 +151,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
             <span className="font-semibold">
               {MONTHS[selected]} {period.year}
             </span>
-            <span className="text-muted-foreground">Sin datos todavía</span>
+            <span className="text-muted-foreground">{t("home.chart.empty")}</span>
           </>
         ) : view === "monthly" ? (
           <>
@@ -153,9 +160,9 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
             </span>
             {(
               [
-                ["Ingresos", current.income, "bg-chart-income"],
-                ["Gastos", current.expenses, "bg-chart-expense"],
-                ["Beneficio", current.profit, "bg-success"],
+                [t("home.metrics.income"), current.income, "bg-chart-income"],
+                [t("home.metrics.expenses"), current.expenses, "bg-chart-expense"],
+                [t("home.metrics.profit"), current.profit, "bg-success"],
               ] as const
             ).map(([label, value, dot]) => (
               <span key={label} className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -167,11 +174,12 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         ) : (
           <>
             <span className="font-semibold">
-              Hasta {MONTHS[selected]!.toLowerCase()} {period.year}
+              {t("home.chart.throughMonth", { month: MONTHS[selected]!.toLowerCase(), year: period.year })}
             </span>
             <span className="inline-flex items-center gap-1.5 text-muted-foreground">
               <Dot className="bg-chart-income" />
-              Beneficio acumulado <span className="amount text-foreground">{formatEUR(current.cumulativeProfit)}</span>
+              {t("home.chart.cumulative")}{" "}
+              <span className="amount text-foreground">{formatEUR(current.cumulativeProfit)}</span>
             </span>
           </>
         )}
@@ -197,8 +205,12 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                     type="button"
                     aria-label={
                       m
-                        ? `${MONTHS[i]}: ingresos ${formatEUR(m.income)}, gastos ${formatEUR(m.expenses)}`
-                        : `${MONTHS[i]}: sin datos`
+                        ? t("home.chart.monthActivity", {
+                            month: MONTHS[i],
+                            income: formatEUR(m.income),
+                            expenses: formatEUR(m.expenses),
+                          })
+                        : t("home.chart.monthEmpty", { month: MONTHS[i] })
                     }
                     {...monthHandlers(i)}
                     className={cn(
@@ -263,8 +275,8 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                       type="button"
                       aria-label={
                         m
-                          ? `${MONTHS[i]}: beneficio acumulado ${formatEUR(m.cumulativeProfit)}`
-                          : `${MONTHS[i]}: sin datos`
+                          ? t("home.chart.monthCumulative", { month: MONTHS[i], profit: formatEUR(m.cumulativeProfit) })
+                          : t("home.chart.monthEmpty", { month: MONTHS[i] })
                       }
                       {...monthHandlers(i)}
                       className="flex-1 cursor-pointer"

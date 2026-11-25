@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { Button, buttonVariants } from "@cuentalibre/ui/components/button";
@@ -50,6 +51,7 @@ export function GuestOnly({ children }: { children: ReactNode }) {
  * scroll and publishes its height as --demo-banner-h, so sticky things (the sidebar) sit below it.
  */
 export function DemoBanner() {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const demo = sessionState() === "demo";
 
@@ -71,17 +73,17 @@ export function DemoBanner() {
       ref={ref}
       className="sticky top-0 z-30 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-primary-soft px-4 py-2 text-center text-sm text-foreground"
     >
-      <span>Estás en la demo: los datos son de ejemplo y los cambios no se guardan.</span>
+      <span>{t("demo.banner")}</span>
       <span className="flex gap-2">
         {API_URL && (
           // A plain link: it loads the app outside /demo, on the API
           <a href={SIGN_UP_PATH} onClick={leaveDemo} className={buttonVariants({ size: "sm" })}>
-            Crear cuenta
+            {t("demo.createAccount")}
           </a>
         )}
         {canExitDemo() && (
           <Button variant="secondary" size="sm" onClick={exitDemo}>
-            Salir de la demo
+            {t("userMenu.exitDemo")}
           </Button>
         )}
       </span>

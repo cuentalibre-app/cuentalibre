@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Bell, Check, PackageX } from "lucide-react";
@@ -14,7 +15,8 @@ interface Notice {
   id: string;
   productId: string;
   title: string;
-  detail: string;
+  stock: number;
+  minimum: number;
   out: boolean;
 }
 
@@ -45,7 +47,8 @@ function useNotices() {
             id: `stock:${p.id}:${s.alarm}`,
             productId: p.id,
             title: p.name,
-            detail: out ? "Agotado" : `Quedan ${formatQuantity(s.stock)} (mínimo ${formatQuantity(alarm.minUnits)})`,
+            stock: s.stock,
+            minimum: alarm.minUnits,
             out,
           },
         ];
@@ -74,6 +77,7 @@ function useNotices() {
 
 /** Bell that opens the pending notices; each one stays until the user marks it as read. */
 export function Notifications({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const { unread, markRead } = useNotices();
   const count = unread.length;
 
@@ -83,7 +87,7 @@ export function Notifications({ className }: { className?: string }) {
         <Button
           variant="secondary"
           size="icon"
-          aria-label={count ? `Avisos, ${count} sin leer` : "Avisos"}
+          aria-label={count ? t("home.notices.unread", { count }) : t("home.notices.title")}
           className={cn("relative", className)}
         >
           <Bell strokeWidth={1.8} aria-hidden="true" />
@@ -96,16 +100,16 @@ export function Notifications({ className }: { className?: string }) {
       </PopoverTrigger>
       <PopoverContent align="end" className="flex w-[min(24rem,calc(100vw-2rem))] flex-col">
         <div className="flex items-center justify-between gap-3 border-b border-divider px-4 py-3">
-          <h2 className="m-0 text-base font-semibold">Avisos</h2>
+          <h2 className="m-0 text-base font-semibold">{t("home.notices.title")}</h2>
           {count > 1 && (
             <Button variant="link" className="text-sm" onClick={() => markRead(unread.map((n) => n.id))}>
-              Marcar todos como leídos
+              {t("home.notices.readAll")}
             </Button>
           )}
         </div>
 
         {count === 0 ? (
-          <p className="m-0 px-4 py-8 text-center text-sm text-muted-foreground">No tienes avisos pendientes.</p>
+          <p className="m-0 px-4 py-8 text-center text-sm text-muted-foreground">{t("home.notices.empty")}</p>
         ) : (
           <ul className="m-0 flex max-h-[60vh] list-none flex-col overflow-y-auto p-1.5">
             {unread.map((n) => (
@@ -115,7 +119,7 @@ export function Notifications({ className }: { className?: string }) {
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5 text-sm">
                   <span className="text-xs font-medium text-muted-foreground">
-                    {n.out ? "Producto agotado" : "Poco stock"}
+                    {n.out ? t("home.notices.outHeading") : t("home.notices.lowHeading")}
                   </span>
                   <PopoverClose asChild>
                     <Link
@@ -125,13 +129,20 @@ export function Notifications({ className }: { className?: string }) {
                       {n.title}
                     </Link>
                   </PopoverClose>
-                  <span className={n.out ? "text-destructive" : "text-muted-foreground"}>{n.detail}</span>
+                  <span className={n.out ? "text-destructive" : "text-muted-foreground"}>
+                    {n.out
+                      ? t("home.notices.out")
+                      : t("home.notices.remaining", {
+                          stock: formatQuantity(n.stock),
+                          minimum: formatQuantity(n.minimum),
+                        })}
+                  </span>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label={`Marcar como leído: ${n.title}`}
-                  title="Marcar como leído"
+                  aria-label={t("home.notices.readNamed", { name: n.title })}
+                  title={t("home.notices.read")}
                   onClick={() => markRead([n.id])}
                 >
                   <Check strokeWidth={2} aria-hidden="true" />
@@ -144,7 +155,7 @@ export function Notifications({ className }: { className?: string }) {
         <div className="border-t border-divider px-4 py-2.5">
           <PopoverClose asChild>
             <Link to={`${PRODUCTS_PATH}?alarma=1`} className={cn(buttonVariants({ variant: "link" }), "text-sm")}>
-              Ver el stock en el catálogo
+              {t("home.notices.viewStock")}
             </Link>
           </PopoverClose>
         </div>

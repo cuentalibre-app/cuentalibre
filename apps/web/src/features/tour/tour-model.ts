@@ -3,10 +3,10 @@ import { createStore } from "@/data/store";
 import type { SessionState } from "@/features/auth/session";
 import { BUSINESS_PATH } from "@/features/settings/settings-model";
 import { userStore } from "@/features/settings/user-store";
+import type es from "../../i18n/locales/es.json";
 
 export interface TourStep {
-  title: string;
-  body: string;
+  copy: keyof typeof es.tour.steps;
   /**
    * The elements the step points at, by their `data-tour` attribute: the first
    * one on screen wins, so a step can name the sidebar's entry and the bottom
@@ -14,40 +14,34 @@ export interface TourStep {
    */
   targets: string[];
   /** A link that ends the tour and takes the user somewhere. */
-  action?: { label: string; to: string };
+  action?: { to: string };
 }
 
 export const TOUR_STEPS: TourStep[] = [
   {
-    title: "¡Te damos la bienvenida!",
-    body: "Lo básico en un minuto. Puedes saltarlo cuando quieras.",
+    copy: "welcome",
     targets: [],
   },
   {
-    title: "Inicio",
-    body: "Tu negocio de un vistazo: lo que facturas y gastas, lo que te queda limpio y los próximos plazos de impuestos.",
+    copy: "home",
     targets: ["/"],
   },
   {
-    title: "Ventas",
-    body: "Crea facturas, presupuestos y albaranes. Un borrador lo cambias cuanto quieras; al emitir la factura recibe su número y ya cuenta para tus impuestos.",
+    copy: "sales",
     targets: ["/ventas"],
   },
   {
-    title: "Compras y gastos",
-    body: "Registra un gasto o una factura recibida con el botón Crear en cuanto te llegue: resta de tu beneficio y su IVA se deduce.",
+    copy: "purchases",
     targets: ["/compras", "crear"],
   },
   {
-    title: "Impuestos",
-    body: "El IVA y el IRPF del trimestre, calculados con lo que registras, y el calendario de cada modelo que te toca presentar.",
+    copy: "taxes",
     targets: ["/impuestos"],
   },
   {
-    title: "Configuración",
-    body: "Antes de facturar, completa tu NIF y tu dirección.",
+    copy: "settings",
     targets: ["/configuracion", "/mas"],
-    action: { label: "Completar los datos de la empresa", to: BUSINESS_PATH },
+    action: { to: BUSINESS_PATH },
   },
 ];
 

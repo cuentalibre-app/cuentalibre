@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Fragment, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -36,6 +37,7 @@ export function CreateMenu({
   actions,
   ...controlled
 }: CreateMenuProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const hover = useHoverMenu();
   const { triggerProps, contentProps } = hover;
@@ -61,14 +63,14 @@ export function CreateMenu({
         {groups.map((group, i) => (
           <Fragment key={i}>
             {i > 0 && <DropdownMenuSeparator />}
-            {group.map(({ label, to, icon: Icon }) => (
+            {group.map(({ labelKey, to, icon: Icon }) => (
               <DropdownMenuItem
                 key={to}
                 onSelect={() => navigate(to)}
                 className={phone ? "h-12 gap-3.5 pr-5 text-base [&_svg]:size-5" : undefined}
               >
                 <Icon strokeWidth={1.8} aria-hidden="true" />
-                {label}
+                {t(labelKey)}
               </DropdownMenuItem>
             ))}
           </Fragment>

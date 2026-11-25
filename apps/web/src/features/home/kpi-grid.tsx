@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { CSSProperties } from "react";
 import { cents, type Cents } from "@cuentalibre/core";
 import { ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, type LucideIcon } from "lucide-react";
@@ -25,8 +26,9 @@ function tone(change: number, upIsGood: boolean | null) {
 const TONE_TEXT = { success: "text-success", danger: "text-destructive", neutral: "text-muted-foreground" } as const;
 
 function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string; index: number }) {
+  const { t } = useTranslation();
   const change = kpi.change;
-  const t = change === null ? null : tone(change, kpi.upIsGood);
+  const changeTone = change === null ? null : tone(change, kpi.upIsGood);
   const changeText = change === null ? null : `${change >= 0 ? "↑" : "↓"} ${formatPercent(Math.abs(change))}`;
   const Icon = kpi.icon;
 
@@ -42,9 +44,10 @@ function KpiCard({ kpi, compareLabel, index }: { kpi: Kpi; compareLabel: string;
           value={kpi.value}
           className="amount text-xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium @[52rem]:text-[1.625rem] @[64rem]:text-[2rem]"
         />
-        {changeText && t ? (
+        {changeText && changeTone ? (
           <span className="text-xs text-muted-foreground lg:text-sm">
-            <span className={cn("amount font-medium", TONE_TEXT[t])}>{changeText}</span> respecto al {compareLabel}
+            <span className={cn("amount font-medium", TONE_TEXT[changeTone])}>{changeText}</span>{" "}
+            {t("home.metrics.change", { period: compareLabel })}
           </span>
         ) : (
           <span className="text-xs text-muted-foreground lg:text-sm">{"\u00a0"}</span>
@@ -77,11 +80,12 @@ export function taxReserve(data: HomeData, previous: HomeData): TaxReserve {
 }
 
 export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve: TaxReserve; className?: string }) {
+  const { t } = useTranslation();
   const compareLabel = periodShortLabel(data.previous, data.period.year);
 
   const kpis: Kpi[] = [
     {
-      label: "Ingresos",
+      label: t("home.metrics.income"),
       icon: ArrowDownLeft,
       tint: "text-chart-income",
       value: data.totals.income,
@@ -89,7 +93,7 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
       upIsGood: true,
     },
     {
-      label: "Gastos",
+      label: t("home.metrics.expenses"),
       icon: ArrowUpRight,
       tint: "text-chart-expense",
       value: data.totals.expenses,
@@ -97,7 +101,7 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
       upIsGood: false,
     },
     {
-      label: "Beneficio",
+      label: t("home.metrics.profit"),
       icon: TrendingUp,
       tint: "text-success",
       value: data.profit,
@@ -105,7 +109,7 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
       upIsGood: true,
     },
     {
-      label: "Reserva para impuestos",
+      label: t("home.metrics.taxReserve"),
       icon: PiggyBank,
       tint: "text-chart-tax",
       value: reserve.value,
@@ -117,7 +121,7 @@ export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve:
 
   return (
     <section
-      aria-label="Resumen del periodo"
+      aria-label={t("home.metrics.summary")}
       className={cn("grid grid-cols-2 gap-2.5 lg:gap-3 @[52rem]:grid-cols-4", className)}
     >
       {kpis.map((kpi, i) => (

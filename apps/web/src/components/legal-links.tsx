@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@cuentalibre/ui/lib/cn";
 
 /**
@@ -10,20 +11,21 @@ export const legalUrl = (path: "aviso-legal" | "privacidad" | "cookies" | "termi
   SITE_URL ? `${SITE_URL}/${path}` : undefined;
 
 const pages = [
-  { path: "aviso-legal", label: "Aviso legal" },
-  { path: "privacidad", label: "Privacidad" },
-  { path: "cookies", label: "Cookies" },
-  { path: "terminos", label: "Términos" },
+  { path: "aviso-legal", label: "common.legal.notice" },
+  { path: "privacidad", label: "common.legal.privacy" },
+  { path: "cookies", label: "common.legal.cookies" },
+  { path: "terminos", label: "common.legal.terms" },
 ] as const;
 
 /** A row of links to the legal pages; renders nothing without a site URL. */
 export function LegalLinks({ className }: { className?: string }) {
+  const { t } = useTranslation();
   if (!SITE_URL) return null;
   return (
-    <nav aria-label="Información legal" className={cn("flex flex-wrap gap-x-4 gap-y-1 text-sm", className)}>
+    <nav aria-label={t("common.legal.label")} className={cn("flex flex-wrap gap-x-4 gap-y-1 text-sm", className)}>
       {pages.map((page) => (
         <a key={page.path} href={legalUrl(page.path)} className="text-muted-foreground hover:text-foreground">
-          {page.label}
+          {t(page.label)}
         </a>
       ))}
     </nav>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ComponentProps, ReactNode } from "react";
 import { Link, type LinkProps } from "react-router";
 import {
@@ -146,7 +147,7 @@ export function Toolbar({ className, ...props }: ComponentProps<"div">) {
 
 /** The question mark next to a label that explains it on hover or tap. */
 export function HelpTip({
-  label = "Más información",
+  label,
   side,
   contentClassName,
   children,
@@ -159,12 +160,13 @@ export function HelpTip({
   children: ReactNode;
   className?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
-          aria-label={label}
+          aria-label={label ?? t("common.moreInformation")}
           // Marks the button as an explanation, not an action, for the guide's screen inventory
           data-help-tip=""
           className={cn(
@@ -317,6 +319,7 @@ export function Notice({
   children,
   ...props
 }: ComponentProps<"div"> & { tone?: keyof typeof NOTICE_TONES; icon?: LucideIcon; onDismiss?: () => void }) {
+  const { t } = useTranslation();
   const { box, icon: iconClass, Icon: DefaultIcon } = NOTICE_TONES[tone];
   const Icon = icon ?? DefaultIcon;
   return (
@@ -327,7 +330,7 @@ export function Notice({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Cerrar el aviso"
+          aria-label={t("common.dismissNotice")}
           onClick={onDismiss}
           className="-my-1.5 -mr-1.5"
         >

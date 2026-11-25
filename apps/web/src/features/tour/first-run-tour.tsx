@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Link } from "react-router";
 import { ArrowRight, X } from "lucide-react";
@@ -37,6 +38,7 @@ interface Layout {
  * the user menu. Esc or "Saltar" skip it; either way it won't start by itself again.
  */
 export function FirstRunTour() {
+  const { t } = useTranslation();
   const { open, step } = useTour();
   const { tour } = useUserSettings();
   const session = sessionState();
@@ -129,12 +131,12 @@ export function FirstRunTour() {
         >
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs font-medium text-muted-foreground">
-              {`Paso ${step + 1} de ${TOUR_STEPS.length}`}
+              {t("tour.progress", { step: step + 1, total: TOUR_STEPS.length })}
             </span>
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label="Cerrar el recorrido"
+              aria-label={t("tour.close")}
               onClick={() => finish("skipped")}
               className="-my-1.5 -mr-1.5"
             >
@@ -149,15 +151,19 @@ export function FirstRunTour() {
             )}
           >
             {welcome && card && <WelcomeMark onLand={(point) => setBurst({ ...point, id: performance.now() })} />}
-            <DialogTitle className={cn("min-h-0 pr-0", welcome && "mt-3 text-xl")}>{current.title}</DialogTitle>
-            <DialogDescription className="mt-0 text-base leading-relaxed">{current.body}</DialogDescription>
+            <DialogTitle className={cn("min-h-0 pr-0", welcome && "mt-3 text-xl")}>
+              {t(`tour.steps.${current.copy}.title`)}
+            </DialogTitle>
+            <DialogDescription className="mt-0 text-base leading-relaxed">
+              {t(`tour.steps.${current.copy}.body`)}
+            </DialogDescription>
             {current.action && (
               <Link
                 to={current.action.to}
                 onClick={() => finish("finished")}
                 className={cn(buttonVariants({ variant: "link" }), "gap-1 self-start")}
               >
-                {current.action.label}
+                {t("tour.completeBusiness")}
                 <ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
               </Link>
             )}
@@ -176,16 +182,16 @@ export function FirstRunTour() {
           <div className="flex items-center gap-2 pt-1">
             {step === 0 ? (
               <Button variant="secondary" className="text-muted-foreground" onClick={() => finish("skipped")}>
-                Saltar
+                {t("tour.skip")}
               </Button>
             ) : (
               <Button variant="secondary" className="-ml-2" onClick={() => goToStep(step - 1)}>
-                Anterior
+                {t("tour.previous")}
               </Button>
             )}
             <div className="flex-1" />
             <Button ref={next} onClick={() => (last ? finish("finished") : goToStep(step + 1))}>
-              {last ? "Terminar" : step === 0 ? "Empezar" : "Siguiente"}
+              {last ? t("tour.finish") : step === 0 ? t("tour.start") : t("tour.next")}
             </Button>
           </div>
         </DialogPanel>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -35,6 +36,7 @@ interface Drag {
  * finger opens whatever is under it.
  */
 export function BottomNav({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -129,7 +131,7 @@ export function BottomNav({ className }: { className?: string }) {
 
   return (
     <nav
-      aria-label="Principal"
+      aria-label={t("navigation.primary")}
       className={cn(
         "pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center px-4 pb-[max(16px,calc(env(safe-area-inset-bottom)+4px))]",
         className,
@@ -179,7 +181,7 @@ export function BottomNav({ className }: { className?: string }) {
               <Link
                 key={slot.tour}
                 to={slot.to}
-                aria-label={slot.label}
+                aria-label={t(slot.labelKey)}
                 aria-current={i === selected && !moreOpen ? "page" : undefined}
                 data-tour={slot.tour}
                 className={tabClass}
@@ -201,7 +203,7 @@ export function BottomNav({ className }: { className?: string }) {
               >
                 <button
                   type="button"
-                  aria-label={slot.label}
+                  aria-label={t(slot.labelKey)}
                   data-tour={slot.tour}
                   className={cn(tabClass, "[&[data-state=open]]:text-foreground")}
                   // Radix opens the menu on press; a press here may be the start of a drag, so open on tap instead
@@ -215,7 +217,7 @@ export function BottomNav({ className }: { className?: string }) {
           }
           return (
             <MoreSheet key={slot.tour} open={moreOpen} onOpenChange={setMoreOpen}>
-              <button type="button" aria-label={slot.label} data-tour={slot.tour} className={tabClass}>
+              <button type="button" aria-label={t(slot.labelKey)} data-tour={slot.tour} className={tabClass}>
                 <Icon {...iconProps} />
               </button>
             </MoreSheet>

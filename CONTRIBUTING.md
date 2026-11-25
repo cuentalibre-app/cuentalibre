@@ -55,8 +55,9 @@ The app's texts live in `apps/web/src/i18n/locales/`, one JSON file per language
 
 - `es.json` is the source. Every new text goes there first, under a key named after where it appears (`userMenu.signOut`), and the component reads it with `t()` from `useTranslation()`. A key that isn't in `es.json` fails to typecheck.
 - To translate, edit `<language>.json` with the same keys. Any key you leave out shows in Spanish, so a language can be translated a screen at a time.
-- Keep the `{{variables}}` of each text as they are; a test checks it.
+- Keep `{{variables}}` and component tags such as `<settings>…</settings>` or `<amount/>`. You can move them within the sentence. Run `pnpm --filter @cuentalibre/web test src/i18n/locales.test.ts` to check the catalog.
 - To start a language, create its JSON file. Add it to `LANGUAGES` in `apps/web/src/i18n/index.ts` when the translation is ready to publish.
+- To preview a draft locally, temporarily add it to `LANGUAGES`, open `/demo` in the dev server, skip the tour, and pick the language in the account menu under **Idioma**. Open the demo URL directly in a fresh tab to see the tour in the selected language. Leave the temporary entry out of the translation PR.
 - Don't translate the names of tax forms and boxes (_modelo 303_, _casilla 28_) or anything with a legal meaning; invoices follow the language chosen for each document, not the app's.
 
 ### Where things go

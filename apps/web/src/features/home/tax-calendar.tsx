@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { CalendarClock } from "lucide-react";
 import { buttonVariants } from "@cuentalibre/ui/components/button";
@@ -6,7 +7,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { closingPath, quarterToClose, useQuarterChecks, useQuarterIsEmpty } from "@/features/closing/closing-model";
 import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
-import { daysLeftLabel, deadlineTitle, MONTHS_SHORT } from "@/lib/format";
+import { MONTHS_SHORT } from "@/lib/format";
 import type { DeadlineItem, HomeData } from "./home-data";
 import { cardHeaderClass, cardIconClass, cardTitleClass, ListGroup, listRowClass, SeeAllLink } from "@/components/page";
 
@@ -20,12 +21,41 @@ function DateBlock({ date, className }: { date: Date; className?: string }) {
 }
 
 function Amount({ item }: { item: DeadlineItem }) {
-  if (item.amount === null) return <span className="text-xs text-muted-foreground">Informativo</span>;
+  const { t } = useTranslation();
+  if (item.amount === null)
+    return <span className="text-xs text-muted-foreground">{t("home.calendar.informative")}</span>;
   return <span className="amount">{formatEUR(item.amount)}</span>;
 }
 
 export function TaxCalendar({ data, today, className }: { data: HomeData; today: Date; className?: string }) {
+  const { t } = useTranslation();
   const daysLeft = data.nextFilingDays;
+  const deadlineDetails = (item: DeadlineItem) => {
+    const { kind, quarter, year } = item.deadline;
+    switch (kind) {
+      case "vat-303":
+        return {
+          title: t("home.calendar.vat", { quarter }),
+          detail: item.amount !== null && item.amount < 0 ? t("home.calendar.carryForward") : t("home.calendar.pay"),
+        };
+      case "irpf-130":
+        return {
+          title: t("home.calendar.incomeTax", { quarter }),
+          detail: t("home.calendar.advance"),
+        };
+      case "social-security":
+        return {
+          title: t("home.calendar.fee"),
+          detail: t("home.calendar.socialSecurity"),
+        };
+      case "vat-390":
+        return {
+          title: t("home.calendar.annualVat"),
+          detail: t("home.calendar.annual", { year }),
+        };
+    }
+  };
+  const deadlines = data.deadlines.map((item) => ({ item, ...deadlineDetails(item) }));
   const toClose = quarterToClose(today, useClosedQuarters());
   const checks = useQuarterChecks(toClose);
   // An untouched quarter has nothing to review yet: it shouldn't read as done
@@ -42,25 +72,29 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 id="tax-calendar-title" className={cn(cardTitleClass, "whitespace-nowrap")}>
             <CalendarClock className={cardIconClass} strokeWidth={1.8} aria-hidden="true" />
-            <span className="lg:hidden">Próximos vencimientos</span>
-            <span className="hidden lg:inline">Calendario fiscal</span>
+            <span className="lg:hidden">{t("home.calendar.mobileTitle")}</span>
+            <span className="hidden lg:inline">{t("home.calendar.title")}</span>
           </h2>
-          {daysLeft !== null && <span className="text-sm font-semibold text-warning">{daysLeftLabel(daysLeft)}</span>}
+          {daysLeft !== null && (
+            <span className="text-sm font-semibold text-warning">
+              {t("home.calendar.daysLeft", { count: daysLeft })}
+            </span>
+          )}
         </div>
-        <SeeAllLink to={CALENDAR_PATH}>Ver calendario</SeeAllLink>
+        <SeeAllLink to={CALENDAR_PATH}>{t("home.calendar.view")}</SeeAllLink>
       </div>
 
       {/* Desktop: full list */}
       <ul className="m-0 hidden list-none flex-col gap-1 p-0 lg:flex">
-        {data.deadlines.map((item) => (
+        {deadlines.map(({ item, title, detail }) => (
           <li
             key={`${item.deadline.kind}-${item.deadline.date.toISOString()}`}
             className="flex items-center gap-3.5 border-b border-divider py-2 last:border-b-0"
           >
             <DateBlock date={item.deadline.date} />
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="font-medium">{deadlineTitle(item.deadline)}</span>
-              <span className="text-xs text-muted-foreground">{item.detail}</span>
+              <span className="font-medium">{title}</span>
+              <span className="text-xs text-muted-foreground">{detail}</span>
             </div>
             <Amount item={item} />
           </li>
@@ -69,14 +103,14 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
 
       <div className="hidden flex-col gap-2 pt-1 lg:flex">
         <div className="flex justify-between text-sm">
-          <span className="font-medium">Cierre del {toClose.quarter}T</span>
+          <span className="font-medium">{t("home.calendar.closing", { quarter: toClose.quarter })}</span>
           <span className="text-muted-foreground">
-            {empty ? "Sin movimientos" : `${reviewed} de ${checks.length} revisados`}
+            {empty ? t("home.calendar.noMovements") : t("home.calendar.reviewed", { reviewed, total: checks.length })}
           </span>
         </div>
         <div
           role="progressbar"
-          aria-label={`Cierre del ${toClose.quarter}T`}
+          aria-label={t("home.calendar.closing", { quarter: toClose.quarter })}
           aria-valuemin={0}
           aria-valuemax={checks.length}
           aria-valuenow={reviewed}
@@ -89,18 +123,18 @@ export function TaxCalendar({ data, today, className }: { data: HomeData; today:
         to={closingPath(toClose)}
         className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "hidden no-underline lg:inline-flex")}
       >
-        Continuar cierre de trimestre
+        {t("home.calendar.continueClosing")}
       </Link>
 
       {/* Mobile: the next two, grouped */}
       <ListGroup className="lg:hidden">
-        {data.deadlines.slice(0, 2).map((item) => (
+        {deadlines.slice(0, 2).map(({ item, title, detail }) => (
           <li key={`${item.deadline.kind}-${item.deadline.date.toISOString()}`}>
             <Link to="/impuestos" className={cn(listRowClass, "gap-3.5")}>
               <DateBlock date={item.deadline.date} className="w-10" />
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="font-medium">{deadlineTitle(item.deadline)}</span>
-                <span className="text-sm text-muted-foreground">{item.detail}</span>
+                <span className="font-medium">{title}</span>
+                <span className="text-sm text-muted-foreground">{detail}</span>
               </div>
               <Amount item={item} />
             </Link>

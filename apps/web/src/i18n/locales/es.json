@@ -13,5 +13,255 @@
     "language": "Idioma",
     "signOut": "Cerrar sesión",
     "exitDemo": "Salir de la demo"
+  },
+  "navigation": {
+    "labels": {
+      "home": "Inicio",
+      "export": "Exportar",
+      "import": "Importar",
+      "sales": "Ventas",
+      "issuedInvoices": "Facturas emitidas",
+      "drafts": "Borradores",
+      "deliveryNotes": "Albaranes",
+      "quotes": "Presupuestos",
+      "purchases": "Compras",
+      "receivedInvoices": "Facturas recibidas",
+      "assets": "Bienes de inversión",
+      "expenses": "Gastos",
+      "taxes": "Impuestos",
+      "summary": "Resumen",
+      "taxCalendar": "Calendario fiscal",
+      "vat": "IVA (303, 390)",
+      "incomeTax": "IRPF (130, 100)",
+      "withholding": "Retenciones (111, 190)",
+      "rent": "Alquileres (115, 180)",
+      "thirdParties": "Terceras personas (347)",
+      "intraCommunity": "Intracomunitarias (349)",
+      "banks": "Bancos",
+      "contacts": "Contactos",
+      "clients": "Clientes",
+      "suppliers": "Proveedores",
+      "catalog": "Catálogo",
+      "products": "Productos",
+      "adjustStock": "Regularizar stock",
+      "reports": "Informes",
+      "profitAndLoss": "Pérdidas y ganancias",
+      "quarterClosing": "Cierre de trimestres",
+      "settings": "Configuración",
+      "shortcuts": "Accesos rápidos",
+      "more": "Más",
+      "taxSettings": "Configurar impuestos",
+      "issuedInvoice": "Factura emitida",
+      "receivedInvoice": "Factura recibida",
+      "expense": "Gasto",
+      "asset": "Bien de inversión",
+      "deliveryNote": "Albarán",
+      "quote": "Presupuesto",
+      "client": "Cliente",
+      "supplier": "Proveedor",
+      "product": "Producto"
+    },
+    "primary": "Principal",
+    "goHome": "Ir a inicio",
+    "create": "Crear",
+    "expandMenu": "Expandir menú",
+    "collapseMenu": "Contraer menú",
+    "expandSidebar": "Expandir menú lateral",
+    "collapseSidebar": "Contraer menú lateral",
+    "filingsSoon": "presentaciones próximas",
+    "moreSections": "Más secciones"
+  },
+  "home": {
+    "clients": {
+      "title": "Principales clientes",
+      "empty": "No hay ingresos en este periodo.",
+      "dependencyWarning": "El {{share}} de tus ingresos viene de {{name}}. Desde el {{threshold}} podrías ser autónomo económicamente dependiente (TRADE)."
+    },
+    "suppliers": {
+      "title": "Principales proveedores",
+      "empty": "No hay gastos en este periodo."
+    },
+    "overviewHint": "Cómo va tu negocio en el periodo: lo facturado, lo gastado y lo que apartar para impuestos.",
+    "uploadExpense": "Subir gasto",
+    "newInvoice": "Nueva factura",
+    "metrics": {
+      "change": "respecto al {{period}}",
+      "income": "Ingresos",
+      "expenses": "Gastos",
+      "profit": "Beneficio",
+      "taxReserve": "Reserva para impuestos",
+      "summary": "Resumen del periodo",
+      "versus": "vs. {{period}}",
+      "margin": "Margen del {{percent}}"
+    },
+    "invoices": {
+      "status": {
+        "paid": "Cobrada",
+        "pending": "Pendiente",
+        "overdue": "Vencida"
+      },
+      "columns": {
+        "number": "Nº",
+        "client": "Cliente",
+        "date": "Fecha",
+        "total": "Total",
+        "status": "Estado"
+      },
+      "mobileTitle": "Últimas facturas",
+      "title": "Últimas facturas emitidas",
+      "seeAll": "Ver todas"
+    },
+    "collection": {
+      "status": {
+        "paid": "Cobrado",
+        "pending": "Pendiente",
+        "overdue": "Vencido"
+      },
+      "total_one": "{{count}} factura · <amount/> con IVA",
+      "total_other": "{{count}} facturas · <amount/> con IVA",
+      "title": "Cobro del periodo",
+      "empty": "No hay facturas emitidas en este periodo."
+    },
+    "notices": {
+      "unread": "Avisos, {{count}} sin leer",
+      "title": "Avisos",
+      "empty": "No tienes avisos pendientes.",
+      "readAll": "Marcar todos como leídos",
+      "viewStock": "Ver el stock en el catálogo",
+      "outHeading": "Producto agotado",
+      "lowHeading": "Poco stock",
+      "out": "Agotado",
+      "remaining": "Quedan {{stock}} (mínimo {{minimum}})",
+      "readNamed": "Marcar como leído: {{name}}",
+      "read": "Marcar como leído"
+    },
+    "counterparties": {
+      "other": "Otros",
+      "seeAll": "Ver todos",
+      "withoutVat": "sin IVA"
+    },
+    "takeHome": {
+      "estimatedTaxes": "Impuestos estimados",
+      "estimatedNet": "Beneficio neto estimado",
+      "beforeTaxes": "Beneficio antes de impuestos",
+      "percentOfInvoiced": "{{percent}} de lo facturado",
+      "missingFee": "No incluye tu cuota de autónomos. <settings>Indícala en Configuración</settings>",
+      "net": "Neto",
+      "vatDue": "IVA a pagar",
+      "hint": {
+        "title": "Cómo se estiman los impuestos",
+        "unrecordedFee": "Cuota de autónomos sin registrar",
+        "annualIncome": "Rendimiento anual",
+        "rate": "Tipo",
+        "over": "Más de {{amount}}",
+        "incomeTaxRate": "IRPF (~{{rate}})",
+        "progressive": "El IRPF es <strong>progresivo</strong>: cada tramo de tu rendimiento anual paga su tipo, así que el tipo medio sube cuanto más ganas. Los primeros {{allowance}} (mínimo personal) no tributan.",
+        "result": "Rendimiento neto de {{year}}, proyectado a todo el año: <net/>. IRPF del año: <tax/>, un <rate/> de tu beneficio, que se aplica al del periodo.",
+        "adjustedResult": "Rendimiento neto de {{year}}, tras los gastos de difícil justificación, proyectado a todo el año: <net/>. IRPF del año: <tax/>, un <rate/> de tu beneficio, que se aplica al del periodo.",
+        "approximation": "Es una aproximación: usa la escala estatal más una autonómica media (cada comunidad varía uno o dos puntos) y no tiene en cuenta deducciones, otros ingresos ni tu situación familiar. El modelo 130 adelanta un 20 %; la diferencia se paga o devuelve en la renta."
+      },
+      "remaining": "Te queda",
+      "invoiced": "Facturado"
+    },
+    "chart": {
+      "title": "Ingresos y gastos {{year}}",
+      "view": "Vista",
+      "cumulative": "Beneficio acumulado",
+      "monthly": "Mensual",
+      "empty": "Sin datos todavía",
+      "throughMonth": "Hasta {{month}} {{year}}",
+      "monthActivity": "{{month}}: ingresos {{income}}, gastos {{expenses}}",
+      "monthEmpty": "{{month}}: sin datos",
+      "monthCumulative": "{{month}}: beneficio acumulado {{profit}}",
+      "monthlyActivity": "Ingresos y gastos por mes",
+      "label": "Gráfica",
+      "periodCumulative": "Beneficio acumulado en {{period}}: {{profit}}",
+      "periodProfit": "Beneficio, {{period}}",
+      "profitThrough": "Beneficio acumulado hasta {{month}}",
+      "monthProfit": "Beneficio de {{month}}"
+    },
+    "calendar": {
+      "vat": "Modelo 303 · IVA {{quarter}}T",
+      "carryForward": "A compensar",
+      "pay": "A ingresar",
+      "incomeTax": "Modelo 130 · IRPF {{quarter}}T",
+      "advance": "Pago fraccionado",
+      "fee": "Cuota de autónomos",
+      "socialSecurity": "Seguridad Social · RETA",
+      "annualVat": "Modelo 390 · Resumen IVA",
+      "annual": "Anual {{year}}",
+      "informative": "Informativo",
+      "mobileTitle": "Próximos vencimientos",
+      "title": "Calendario fiscal",
+      "view": "Ver calendario",
+      "continueClosing": "Continuar cierre de trimestre",
+      "closing": "Cierre del {{quarter}}T",
+      "reviewed": "{{reviewed}} de {{total}} revisados",
+      "noMovements": "Sin movimientos",
+      "daysLeft_zero": "Vence hoy",
+      "daysLeft_one": "Queda {{count}} día",
+      "daysLeft_other": "Quedan {{count}} días"
+    }
+  },
+  "period": {
+    "yearLabel": "Año {{year}}",
+    "year": "Año",
+    "ofYear": "Periodo de {{year}}",
+    "chooseYear": "Año: {{year}}",
+    "yearInSentence": "año {{year}}",
+    "choose": "Periodo: {{period}}"
+  },
+  "demo": {
+    "banner": "Estás en la demo: los datos son de ejemplo y los cambios no se guardan.",
+    "createAccount": "Crear cuenta"
+  },
+  "common": {
+    "assistant": "Asistente",
+    "moreInformation": "Más información",
+    "dismissNotice": "Cerrar el aviso",
+    "legal": {
+      "label": "Información legal",
+      "notice": "Aviso legal",
+      "privacy": "Privacidad",
+      "cookies": "Cookies",
+      "terms": "Términos"
+    }
+  },
+  "tour": {
+    "steps": {
+      "welcome": {
+        "title": "¡Te damos la bienvenida!",
+        "body": "Lo básico en un minuto. Puedes saltarlo cuando quieras."
+      },
+      "home": {
+        "title": "Inicio",
+        "body": "Tu negocio de un vistazo: lo que facturas y gastas, lo que te queda limpio y los próximos plazos de impuestos."
+      },
+      "sales": {
+        "title": "Ventas",
+        "body": "Crea facturas, presupuestos y albaranes. Un borrador lo cambias cuanto quieras; al emitir la factura recibe su número y ya cuenta para tus impuestos."
+      },
+      "purchases": {
+        "title": "Compras y gastos",
+        "body": "Registra un gasto o una factura recibida con el botón Crear en cuanto te llegue: resta de tu beneficio y su IVA se deduce."
+      },
+      "taxes": {
+        "title": "Impuestos",
+        "body": "El IVA y el IRPF del trimestre, calculados con lo que registras, y el calendario de cada modelo que te toca presentar."
+      },
+      "settings": {
+        "title": "Configuración",
+        "body": "Antes de facturar, completa tu NIF y tu dirección."
+      }
+    },
+    "completeBusiness": "Completar los datos de la empresa",
+    "progress": "Paso {{step}} de {{total}}",
+    "close": "Cerrar el recorrido",
+    "skip": "Saltar",
+    "previous": "Anterior",
+    "finish": "Terminar",
+    "start": "Empezar",
+    "next": "Siguiente",
+    "replay": "Repetir la animación"
   }
 }

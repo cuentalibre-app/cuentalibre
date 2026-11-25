@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from "react-i18next";
 import { INCOME_TAX_BRACKETS, PERSONAL_ALLOWANCE, cents, centsToEuros, type Cents } from "@cuentalibre/core";
 import { Link } from "react-router";
 import { Wallet } from "lucide-react";
@@ -15,68 +16,80 @@ const euros = (amount: Cents) => `${centsToEuros(amount).toLocaleString("es-ES",
 
 /** What the estimated taxes add up to, and how the income tax is worked out: the scale and the figures of the year. */
 function TaxesHint({ data }: { data: HomeData }) {
+  const { t } = useTranslation();
   const estimate = data.incomeTax;
   const year = data.period.year;
   let from = 0 as Cents;
   const brackets = INCOME_TAX_BRACKETS.map(({ upTo, rate }) => {
-    const label = upTo === null ? `Más de ${euros(from)}` : `${euros(from)} – ${euros(upTo)}`;
+    const label =
+      upTo === null ? t("home.takeHome.hint.over", { amount: euros(from) }) : `${euros(from)} – ${euros(upTo)}`;
     from = upTo ?? from;
     return { label, rate: formatPercent(rate * 100) };
   });
 
   return (
     <TooltipProvider delayDuration={300}>
-      <HelpTip label="Cómo se estiman los impuestos" side="left" contentClassName="max-w-80 px-3.5 py-3">
-          <p className="m-0 mb-1.5 text-center font-semibold">Impuestos estimados</p>
-          <div className="flex flex-col gap-2">
-            {data.socialSecurityEstimate > 0 && (
-              <table className="w-full border-collapse">
-                <tbody>
-                  <tr>
-                    <td className="py-0.5">IRPF (~{formatPercent(estimate.rate * 100)})</td>
-                    <td className="py-0.5 text-right font-semibold">{formatEUR(data.takeHome.incomeTax)}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-0.5">Cuota de autónomos sin registrar</td>
-                    <td className="py-0.5 text-right font-semibold">{formatEUR(data.socialSecurityEstimate)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            )}
-            <p className="m-0">
-              El IRPF es <strong>progresivo</strong>: cada tramo de tu rendimiento anual paga su tipo, así que el tipo
-              medio sube cuanto más ganas. Los primeros {euros(PERSONAL_ALLOWANCE)} (mínimo personal) no tributan.
-            </p>
-            <table className="w-full border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-background/30">
-                  <th className="py-1 text-left font-semibold">Rendimiento anual</th>
-                  <th className="py-1 text-right font-semibold">Tipo</th>
-                </tr>
-              </thead>
+      <HelpTip label={t("home.takeHome.hint.title")} side="left" contentClassName="max-w-80 px-3.5 py-3">
+        <p className="m-0 mb-1.5 text-center font-semibold">{t("home.takeHome.estimatedTaxes")}</p>
+        <div className="flex flex-col gap-2">
+          {data.socialSecurityEstimate > 0 && (
+            <table className="w-full border-collapse">
               <tbody>
-                {brackets.map((b) => (
-                  <tr key={b.label}>
-                    <td className="py-0.5">{b.label}</td>
-                    <td className="py-0.5 text-right font-semibold">{b.rate}</td>
-                  </tr>
-                ))}
+                <tr>
+                  <td className="py-0.5">
+                    {t("home.takeHome.hint.incomeTaxRate", { rate: formatPercent(estimate.rate * 100) })}
+                  </td>
+                  <td className="py-0.5 text-right font-semibold">{formatEUR(data.takeHome.incomeTax)}</td>
+                </tr>
+                <tr>
+                  <td className="py-0.5">{t("home.takeHome.hint.unrecordedFee")}</td>
+                  <td className="py-0.5 text-right font-semibold">{formatEUR(data.socialSecurityEstimate)}</td>
+                </tr>
               </tbody>
             </table>
-            <p className="m-0">
-              Rendimiento neto de {year}
-              {estimate.projectedNet !== estimate.projectedProfit && ", tras los gastos de difícil justificación"}
-              {", proyectado a todo el año"}: <strong>{formatEUR(estimate.projectedNet)}</strong>. IRPF del año:{" "}
-              <strong>{formatEUR(estimate.tax)}</strong>, un{" "}
-              <strong className="whitespace-nowrap">{formatPercent(estimate.rate * 100)}</strong> de tu beneficio, que
-              se aplica al del periodo.
-            </p>
-            <p className="m-0">
-              Es una aproximación: usa la escala estatal más una autonómica media (cada comunidad varía uno o dos
-              puntos) y no tiene en cuenta deducciones, otros ingresos ni tu situación familiar. El modelo 130 adelanta
-              un 20 %; la diferencia se paga o devuelve en la renta.
-            </p>
-          </div>
+          )}
+          <p className="m-0">
+            <Trans
+              t={t}
+              i18nKey="home.takeHome.hint.progressive"
+              values={{ allowance: euros(PERSONAL_ALLOWANCE) }}
+              components={{ strong: <strong /> }}
+            />
+          </p>
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr className="border-b border-background/30">
+                <th className="py-1 text-left font-semibold">{t("home.takeHome.hint.annualIncome")}</th>
+                <th className="py-1 text-right font-semibold">{t("home.takeHome.hint.rate")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {brackets.map((b) => (
+                <tr key={b.label}>
+                  <td className="py-0.5">{b.label}</td>
+                  <td className="py-0.5 text-right font-semibold">{b.rate}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="m-0">
+            <Trans
+              t={t}
+              i18nKey={
+                estimate.projectedNet !== estimate.projectedProfit
+                  ? "home.takeHome.hint.adjustedResult"
+                  : "home.takeHome.hint.result"
+              }
+              values={{ year }}
+              components={{
+                net: <strong>{formatEUR(estimate.projectedNet)}</strong>,
+                tax: <strong>{formatEUR(estimate.tax)}</strong>,
+                rate: <strong className="whitespace-nowrap">{formatPercent(estimate.rate * 100)}</strong>,
+              }}
+            />
+          </p>
+          <p className="m-0">{t("home.takeHome.hint.approximation")}</p>
+        </div>
       </HelpTip>
     </TooltipProvider>
   );
@@ -87,6 +100,7 @@ function TaxesHint({ data }: { data: HomeData }) {
  * profit is shown before tax: cuentalibre doesn't estimate corporate tax.
  */
 export function TakeHomeCard({ data, className }: { data: HomeData; className?: string }) {
+  const { t } = useTranslation();
   const { income } = data.totals;
   // Net VAT (the 303), the same figure as in the tax reserve card
   const vatDue = data.taxes.vat;
@@ -94,24 +108,32 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
   const share = (v: number) => (income ? Math.max(0, (v / income) * 100) : 0);
 
   const parts = [
-    { label: data.estimatesIncomeTax ? "Neto" : "Beneficio", value: takeHome, color: "bg-chart-income" },
+    {
+      label: data.estimatesIncomeTax ? t("home.takeHome.net") : t("home.metrics.profit"),
+      value: takeHome,
+      color: "bg-chart-income",
+    },
     data.estimatesIncomeTax && {
-      label: "Impuestos estimados",
+      label: t("home.takeHome.estimatedTaxes"),
       hint: <TaxesHint data={data} />,
       // The self-employed fees not booked yet go here; the booked ones are already among the expenses
       value: cents(incomeTax + data.socialSecurityEstimate),
       color: "bg-chart-tax",
     },
-    { label: "Gastos", value: data.totals.expenses, color: "bg-chart-expense" },
+    { label: t("home.metrics.expenses"), value: data.totals.expenses, color: "bg-chart-expense" },
   ].filter((p) => !!p);
-  const title = data.estimatesIncomeTax ? "Beneficio neto estimado" : "Beneficio antes de impuestos";
+  const title = data.estimatesIncomeTax ? t("home.takeHome.estimatedNet") : t("home.takeHome.beforeTaxes");
 
   return (
     <Section id="take-home-title" icon={Wallet} title={title} className={className}>
-
       <div className="flex flex-col gap-1.5">
-        <AnimatedAmount value={takeHome} className="amount text-2xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium" />
-        <span className="text-sm font-medium text-success">{formatPercent(share(takeHome))} de lo facturado</span>
+        <AnimatedAmount
+          value={takeHome}
+          className="amount text-2xl font-semibold lg:text-[2rem] lg:leading-10 lg:font-medium"
+        />
+        <span className="text-sm font-medium text-success">
+          {t("home.takeHome.percentOfInvoiced", { percent: formatPercent(share(takeHome)) })}
+        </span>
       </div>
 
       <div
@@ -145,17 +167,18 @@ export function TakeHomeCard({ data, className }: { data: HomeData; className?: 
       {vatDue > 0 && (
         <div className="flex items-center gap-2.5 border-t border-divider pt-3 lg:pt-4">
           <span className="size-2.5 shrink-0 rounded-full border-2 border-muted-foreground" aria-hidden="true" />
-          <span className="flex-1">IVA a pagar</span>
+          <span className="flex-1">{t("home.takeHome.vatDue")}</span>
           <span className="amount">{formatEUR(vatDue)}</span>
         </div>
       )}
 
       {data.socialSecurityFeeMissing && (
         <p className="m-0 mt-auto text-xs text-muted-foreground">
-          No incluye tu cuota de autónomos.{" "}
-          <Link to={TAX_SETTINGS_PATH} className="font-medium text-foreground">
-            Indícala en Configuración
-          </Link>
+          <Trans
+            t={t}
+            i18nKey="home.takeHome.missingFee"
+            components={{ settings: <Link to={TAX_SETTINGS_PATH} className="font-medium text-foreground" /> }}
+          />
         </p>
       )}
     </Section>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useRef, useState } from "react";
 
 /**
@@ -7,6 +8,7 @@ import { useRef, useState } from "react";
  * it plays it again.
  */
 export function WelcomeMark({ onLand }: { onLand: (point: { x: number; y: number }) => void }) {
+  const { t } = useTranslation();
   const head = useRef<SVGCircleElement>(null);
   const [plays, setPlays] = useState(0);
   const touchdown = useRef(0);
@@ -19,7 +21,7 @@ export function WelcomeMark({ onLand }: { onLand: (point: { x: number; y: number
   return (
     <button
       type="button"
-      aria-label="Repetir la animación"
+      aria-label={t("tour.replay")}
       onClick={() => setPlays((count) => count + 1)}
       className="mx-auto grid size-24 cursor-pointer place-items-center rounded-full bg-muted text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:transition-transform motion-safe:active:scale-95"
     >
