@@ -56,7 +56,7 @@ Los textos de la aplicación están en `apps/web/src/i18n/locales/`, un JSON por
 - `es.json` es el original. Cada texto nuevo va primero ahí, con una clave según dónde aparece (`userMenu.signOut`), y el componente lo lee con `t()` de `useTranslation()`. Una clave que no esté en `es.json` no pasa el typecheck.
 - Para traducir, edita `<idioma>.json` con las mismas claves. Lo que no traduzcas se muestra en español, así que un idioma se puede traducir pantalla a pantalla.
 - Deja las `{{variables}}` de cada texto tal cual; un test lo comprueba.
-- Para añadir un idioma, crea su archivo y añádelo a `LANGUAGES` en `apps/web/src/i18n/index.ts`.
+- Para empezar a traducir un idioma, crea su archivo JSON. Añádelo a `LANGUAGES` en `apps/web/src/i18n/index.ts` cuando la traducción esté lista para publicar.
 - No traduzcas los nombres de modelos y casillas (_modelo 303_, _casilla 28_) ni nada con sentido legal; las facturas siguen el idioma elegido en cada documento, no el de la aplicación.
 
 ### Dónde va cada cosa

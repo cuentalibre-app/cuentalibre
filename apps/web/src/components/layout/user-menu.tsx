@@ -74,7 +74,7 @@ export function UserMenu({ children, side = "bottom", align = "end", className }
           <Settings strokeWidth={1.8} aria-hidden="true" />
           {t("userMenu.settings")}
         </DropdownMenuItem>
-        <LanguageOptions />
+        {LANGUAGES.length > 1 && <LanguageOptions />}
         <DropdownMenuSeparator />
         <AppearanceOptions />
         <DropdownMenuSeparator />

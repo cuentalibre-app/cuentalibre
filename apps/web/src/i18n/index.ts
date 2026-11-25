@@ -8,10 +8,9 @@ import es from "./locales/es.json";
  * theme, so it lives in localStorage rather than the account.
  */
 
-/** The languages people can pick, each named in itself. Add one here and in `locales/<code>.json`. */
+/** Published languages, each named in itself. Draft translations live in `locales/`. */
 export const LANGUAGES = [
   { code: "es", name: "Español" },
-  { code: "en", name: "English" },
 ] as const;
 
 export type Language = (typeof LANGUAGES)[number]["code"];
