@@ -262,7 +262,9 @@ Names follow shadcn/ui conventions. Note that `accent` is the hover surface; the
 
 ## Contributing
 
-Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: how to report bugs and tax rule errors, how to set up, and how to open a pull request.
+Issues and pull requests are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: how to report bugs and tax rule errors, how to set up, and how to open a pull request. Please follow the [code of conduct](CODE_OF_CONDUCT.md), and report vulnerabilities as [SECURITY.md](SECURITY.md) explains.
+
+If cuentalibre is useful to you, a ⭐ on GitHub helps other autónomos find it.
 
 ## License
 

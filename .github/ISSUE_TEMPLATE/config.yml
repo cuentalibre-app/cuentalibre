@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or idea
+    url: https://github.com/cuentalibre-app/cuentalibre/discussions
+    about: Ask how to use or self-host cuentalibre, or share an idea before opening an issue.
+  - name: Security vulnerability
+    url: https://github.com/cuentalibre-app/cuentalibre/security/advisories/new
+    about: Report it privately, never in a public issue.
