@@ -55,8 +55,9 @@ Los textos de la aplicación están en `apps/web/src/i18n/locales/`, un JSON por
 
 - `es.json` es el original. Cada texto nuevo va primero ahí, con una clave según dónde aparece (`userMenu.signOut`), y el componente lo lee con `t()` de `useTranslation()`. Una clave que no esté en `es.json` no pasa el typecheck.
 - Para traducir, edita `<idioma>.json` con las mismas claves. Lo que no traduzcas se muestra en español, así que un idioma se puede traducir pantalla a pantalla.
-- Deja las `{{variables}}` de cada texto tal cual; un test lo comprueba.
+- Conserva las `{{variables}}` y las etiquetas como `<settings>…</settings>` o `<amount/>`. Puedes moverlas dentro de la frase. Ejecuta `pnpm --filter @cuentalibre/web test src/i18n/locales.test.ts` para comprobar el catálogo.
 - Para empezar a traducir un idioma, crea su archivo JSON. Añádelo a `LANGUAGES` en `apps/web/src/i18n/index.ts` cuando la traducción esté lista para publicar.
+- Para probar un borrador en local, añádelo temporalmente a `LANGUAGES`, abre `/demo` en el servidor de desarrollo, salta el recorrido y elige el idioma en el menú de cuenta, en **Idioma**. Abre la URL de la demo directamente en una pestaña nueva para ver el recorrido en el idioma seleccionado. Deja la entrada temporal fuera del PR de traducción.
 - No traduzcas los nombres de modelos y casillas (_modelo 303_, _casilla 28_) ni nada con sentido legal; las facturas siguen el idioma elegido en cada documento, no el de la aplicación.
 
 ### Dónde va cada cosa

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { ReceiptText } from "lucide-react";
 import { Badge, type BadgeProps } from "@cuentalibre/ui/components/badge";
@@ -9,15 +10,16 @@ import { cardHeaderClass, cardIconClass, cardTitleClass, ListGroup, listRowClass
 import { CollectionSummary } from "./collection-summary";
 import type { HomeData, InvoiceStatus } from "./home-data";
 
-const STATUS: Record<InvoiceStatus, { label: string; tone: BadgeProps["tone"] }> = {
-  paid: { label: "Cobrada", tone: "success" },
-  pending: { label: "Pendiente", tone: "primary" },
-  overdue: { label: "Vencida", tone: "danger" },
+const STATUS: Record<InvoiceStatus, BadgeProps["tone"]> = {
+  paid: "success",
+  pending: "primary",
+  overdue: "danger",
 };
 
-const headers = ["Nº", "Cliente", "Fecha", "Total", "Estado"];
+const headers = ["number", "client", "date", "total", "status"] as const;
 
 export function RecentInvoices({ data, className }: { data: HomeData; className?: string }) {
+  const { t } = useTranslation();
   return (
     <section
       aria-labelledby="recent-invoices-title"
@@ -26,10 +28,10 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
       <div className={cn("flex items-baseline justify-between gap-3 pb-2.5", cardHeaderClass)}>
         <h2 id="recent-invoices-title" className={cardTitleClass}>
           <ReceiptText className={cardIconClass} strokeWidth={1.8} aria-hidden="true" />
-          <span className="lg:hidden">Últimas facturas</span>
-          <span className="hidden lg:inline">Últimas facturas emitidas</span>
+          <span className="lg:hidden">{t("home.invoices.mobileTitle")}</span>
+          <span className="hidden lg:inline">{t("home.invoices.title")}</span>
         </h2>
-        <SeeAllLink to="/ventas/facturas">Ver todas</SeeAllLink>
+        <SeeAllLink to="/ventas/facturas">{t("home.invoices.seeAll")}</SeeAllLink>
       </div>
 
       {/* Desktop: table */}
@@ -38,8 +40,8 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
           <thead>
             <tr className={table.headRow}>
               {headers.map((h) => (
-                <th key={h} scope="col" className={cn(table.th, h === "Total" && "text-right")}>
-                  {h}
+                <th key={h} scope="col" className={cn(table.th, h === "total" && "text-right")}>
+                  {t(`home.invoices.columns.${h}`)}
                 </th>
               ))}
             </tr>
@@ -56,9 +58,9 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
                 <td className={cn(table.td, "text-muted-foreground")}>{formatDate(inv.issuedOn)}</td>
                 <td className={cn(table.td, "text-right amount")}>{formatEUR(inv.total)}</td>
                 <td className={table.td}>
-                  <Badge tone={STATUS[inv.status].tone}>
+                  <Badge tone={STATUS[inv.status]}>
                     <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
-                    {STATUS[inv.status].label}
+                    {t(`home.invoices.status.${inv.status}`)}
                   </Badge>
                 </td>
               </tr>
@@ -80,7 +82,7 @@ export function RecentInvoices({ data, className }: { data: HomeData; className?
               </div>
               <div className="flex flex-col items-end gap-1">
                 <span className="amount text-base">{formatEUR(inv.total)}</span>
-                <Badge tone={STATUS[inv.status].tone}>{STATUS[inv.status].label}</Badge>
+                <Badge tone={STATUS[inv.status]}>{t(`home.invoices.status.${inv.status}`)}</Badge>
               </div>
             </Link>
           </li>

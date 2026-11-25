@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { ChevronRight, UserRound } from "lucide-react";
@@ -21,20 +22,21 @@ interface MoreSheetProps {
 
 /** Everything that doesn't fit in the mobile tab bar: the account first, then the sections as in the sidebar. */
 export function MoreSheet({ children, open, onOpenChange }: MoreSheetProps) {
+  const { t } = useTranslation();
   const { profile } = useSettings();
   const name = accountName(profile);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent title="Más">
-        <nav aria-label="Más secciones" className="flex flex-col">
+      <SheetContent title={t("navigation.labels.more")}>
+        <nav aria-label={t("navigation.moreSections")} className="flex flex-col">
           <SheetClose asChild>
             <Link to={PROFILE_PATH} className={cn(row, "border-b border-divider py-2")}>
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
                 {name ? initials(name) : <UserRound className="size-4.5" strokeWidth={1.8} aria-hidden="true" />}
               </span>
-              <span className="min-w-0 flex-1 truncate">{name || "Tu cuenta"}</span>
+              <span className="min-w-0 flex-1 truncate">{name || t("userMenu.account")}</span>
               <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
             </Link>
           </SheetClose>
@@ -44,7 +46,7 @@ export function MoreSheet({ children, open, onOpenChange }: MoreSheetProps) {
               <SheetClose key={entry.item.to} asChild>
                 <Link to={entry.item.to} className={cn(row, "border-b border-divider")}>
                   <entry.item.icon className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="flex-1">{entry.item.label}</span>
+                  <span className="flex-1">{t(entry.item.labelKey)}</span>
                   <ChevronRight className="size-4.5 text-muted-foreground" aria-hidden="true" />
                 </Link>
               </SheetClose>
@@ -61,11 +63,12 @@ export function MoreSheet({ children, open, onOpenChange }: MoreSheetProps) {
 
 /** A section folded by default, like the sidebar's groups; remembered per browser once toggled. */
 function MoreGroup({ group }: { group: Extract<MoreEntry, { kind: "group" }> }) {
+  const { t } = useTranslation();
   const [open, toggle] = useNavGroupOpen(`more:${group.to}`, false);
   const id = `more-group-${group.to.slice(1)}`;
 
   return (
-    <section aria-label={group.title} className="flex flex-col border-b border-divider">
+    <section aria-label={t(group.titleKey)} className="flex flex-col border-b border-divider">
       <button
         type="button"
         aria-expanded={open}
@@ -74,7 +77,7 @@ function MoreGroup({ group }: { group: Extract<MoreEntry, { kind: "group" }> }) 
         className={cn(row, "w-full cursor-pointer text-left")}
       >
         <group.icon className="size-5.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-        <span className="flex-1">{group.title}</span>
+        <span className="flex-1">{t(group.titleKey)}</span>
         <ChevronRight
           className={cn(
             "size-4.5 text-muted-foreground transition-transform duration-200 ease-out",
@@ -98,7 +101,7 @@ function MoreGroup({ group }: { group: Extract<MoreEntry, { kind: "group" }> }) 
               <li key={link.to}>
                 <SheetClose asChild>
                   <Link to={link.to} className={cn(row, "min-h-11 font-normal")}>
-                    <span className="flex-1">{link.label}</span>
+                    <span className="flex-1">{t(link.labelKey)}</span>
                     <ChevronRight className="size-4 text-muted-foreground" aria-hidden="true" />
                   </Link>
                 </SheetClose>

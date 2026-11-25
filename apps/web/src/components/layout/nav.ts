@@ -20,11 +20,22 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
+import es from "../../i18n/locales/es.json";
 
 export type BadgeKey = "drafts" | "filingsSoon";
 
-export interface NavLeaf {
+type LabelName = keyof typeof es.navigation.labels;
+
+interface NavLabel {
   label: string;
+  labelKey: `navigation.labels.${LabelName}`;
+}
+
+function navLabel(name: LabelName): NavLabel {
+  return { label: es.navigation.labels[name], labelKey: `navigation.labels.${name}` };
+}
+
+export interface NavLeaf extends NavLabel {
   to: string;
   badge?: BadgeKey;
   /** Draws a divider above the leaf, splitting a group's records from its tools. */
@@ -43,79 +54,79 @@ export interface NavItem extends NavLeaf {
 
 /** Export and import cover sales and purchases alike, so both groups list them. */
 const transferLeaves: NavLeaf[] = [
-  { label: "Exportar", to: "/exportar", separator: true, desktopOnly: true },
-  { label: "Importar", to: "/importar", desktopOnly: true },
+  { ...navLabel("export"), to: "/exportar", separator: true, desktopOnly: true },
+  { ...navLabel("import"), to: "/importar", desktopOnly: true },
 ];
 
 export const mainNav: NavItem[] = [
-  { label: "Inicio", to: "/", icon: LayoutGrid },
+  { ...navLabel("home"), to: "/", icon: LayoutGrid },
   {
-    label: "Ventas",
+    ...navLabel("sales"),
     to: "/ventas",
     icon: ReceiptText,
     children: [
-      { label: "Facturas emitidas", to: "/ventas/facturas" },
-      { label: "Borradores", to: "/ventas/borradores", badge: "drafts" },
-      { label: "Albaranes", to: "/ventas/albaranes" },
-      { label: "Presupuestos", to: "/ventas/presupuestos" },
+      { ...navLabel("issuedInvoices"), to: "/ventas/facturas" },
+      { ...navLabel("drafts"), to: "/ventas/borradores", badge: "drafts" },
+      { ...navLabel("deliveryNotes"), to: "/ventas/albaranes" },
+      { ...navLabel("quotes"), to: "/ventas/presupuestos" },
       ...transferLeaves,
     ],
   },
   {
-    label: "Compras",
+    ...navLabel("purchases"),
     to: "/compras",
     icon: ShoppingBag,
     children: [
-      { label: "Facturas recibidas", to: "/compras/facturas" },
-      { label: "Bienes de inversión", to: "/compras/bienes-de-inversion" },
-      { label: "Gastos", to: "/compras/gastos" },
+      { ...navLabel("receivedInvoices"), to: "/compras/facturas" },
+      { ...navLabel("assets"), to: "/compras/bienes-de-inversion" },
+      { ...navLabel("expenses"), to: "/compras/gastos" },
       ...transferLeaves,
     ],
   },
   {
-    label: "Impuestos",
+    ...navLabel("taxes"),
     to: "/impuestos",
     icon: Percent,
     badge: "filingsSoon",
     children: [
-      { label: "Resumen", to: "/impuestos" },
-      { label: "Calendario fiscal", to: "/impuestos/calendario" },
-      { label: "IVA (303, 390)", to: "/impuestos/iva" },
-      { label: "IRPF (130, 100)", to: "/impuestos/irpf", selfEmployedOnly: true },
-      { label: "Retenciones (111, 190)", to: "/impuestos/retenciones" },
-      { label: "Alquileres (115, 180)", to: "/impuestos/alquileres" },
-      { label: "Terceras personas (347)", to: "/impuestos/terceras-personas" },
-      { label: "Intracomunitarias (349)", to: "/impuestos/intracomunitarias" },
+      { ...navLabel("summary"), to: "/impuestos" },
+      { ...navLabel("taxCalendar"), to: "/impuestos/calendario" },
+      { ...navLabel("vat"), to: "/impuestos/iva" },
+      { ...navLabel("incomeTax"), to: "/impuestos/irpf", selfEmployedOnly: true },
+      { ...navLabel("withholding"), to: "/impuestos/retenciones" },
+      { ...navLabel("rent"), to: "/impuestos/alquileres" },
+      { ...navLabel("thirdParties"), to: "/impuestos/terceras-personas" },
+      { ...navLabel("intraCommunity"), to: "/impuestos/intracomunitarias" },
     ],
   },
-  { label: "Bancos", to: "/bancos", icon: Landmark },
+  { ...navLabel("banks"), to: "/bancos", icon: Landmark },
   {
-    label: "Contactos",
+    ...navLabel("contacts"),
     to: "/contactos",
     icon: UserRound,
     children: [
-      { label: "Clientes", to: "/contactos/clientes" },
-      { label: "Proveedores", to: "/contactos/proveedores" },
+      { ...navLabel("clients"), to: "/contactos/clientes" },
+      { ...navLabel("suppliers"), to: "/contactos/proveedores" },
     ],
   },
   {
-    label: "Catálogo",
+    ...navLabel("catalog"),
     to: "/catalogo",
     icon: Package,
     children: [
-      { label: "Productos", to: "/catalogo/productos" },
-      { label: "Regularizar stock", to: "/catalogo/regularizar-stock" },
-      { label: "Importar", to: "/catalogo/importar", separator: true, desktopOnly: true },
-      { label: "Exportar", to: "/catalogo/exportar", desktopOnly: true },
+      { ...navLabel("products"), to: "/catalogo/productos" },
+      { ...navLabel("adjustStock"), to: "/catalogo/regularizar-stock" },
+      { ...navLabel("import"), to: "/catalogo/importar", separator: true, desktopOnly: true },
+      { ...navLabel("export"), to: "/catalogo/exportar", desktopOnly: true },
     ],
   },
   {
-    label: "Informes",
+    ...navLabel("reports"),
     to: "/informes",
     icon: ChartColumn,
     children: [
-      { label: "Resumen", to: "/informes" },
-      { label: "Pérdidas y ganancias", to: "/informes/perdidas-y-ganancias" },
+      { ...navLabel("summary"), to: "/informes" },
+      { ...navLabel("profitAndLoss"), to: "/informes/perdidas-y-ganancias" },
     ],
   },
 ];
@@ -129,29 +140,32 @@ export function mainNavFor(kind: BusinessKind): NavItem[] {
 }
 
 export const secondaryNav: NavItem[] = [
-  { label: "Cierre de trimestres", to: "/cierre-trimestre", icon: CalendarCheck },
-  { label: "Configuración", to: "/configuracion", icon: Settings },
+  { ...navLabel("quarterClosing"), to: "/cierre-trimestre", icon: CalendarCheck },
+  { ...navLabel("settings"), to: "/configuracion", icon: Settings },
 ];
 
-export type PhoneTab =
-  | { kind: "link"; label: string; to: string; icon: LucideIcon; tour: string }
-  | { kind: "create"; label: string; icon: LucideIcon; tour: string }
-  | { kind: "more"; label: string; icon: LucideIcon; tour: string };
+export type PhoneTab = NavLabel &
+  (
+    | { kind: "link"; to: string; icon: LucideIcon; tour: string }
+    | { kind: "create"; icon: LucideIcon; tour: string }
+    | { kind: "more"; icon: LucideIcon; tour: string }
+  );
 
 /** The phone's tab bar, left to right as drawn: three sections, the shortcuts menu and "Más". */
 export const phoneTabs: PhoneTab[] = [
-  { kind: "link", label: "Inicio", to: "/", icon: LayoutGrid, tour: "/" },
-  { kind: "link", label: "Ventas", to: "/ventas", icon: ReceiptText, tour: "/ventas" },
-  { kind: "create", label: "Accesos rápidos", icon: Layers, tour: "/compras" },
-  { kind: "link", label: "Impuestos", to: "/impuestos", icon: Percent, tour: "/impuestos" },
-  { kind: "more", label: "Más", icon: Menu, tour: "/mas" },
+  { kind: "link", ...navLabel("home"), to: "/", icon: LayoutGrid, tour: "/" },
+  { kind: "link", ...navLabel("sales"), to: "/ventas", icon: ReceiptText, tour: "/ventas" },
+  { kind: "create", ...navLabel("shortcuts"), icon: Layers, tour: "/compras" },
+  { kind: "link", ...navLabel("taxes"), to: "/impuestos", icon: Percent, tour: "/impuestos" },
+  { kind: "more", ...navLabel("more"), icon: Menu, tour: "/mas" },
 ];
 
 /** Paths with a tab of their own in the mobile tab bar. */
 export const tabPaths = phoneTabs.flatMap((tab) => (tab.kind === "link" ? [tab.to] : []));
 
 export type MoreEntry =
-  { kind: "link"; item: NavItem } | { kind: "group"; to: string; title: string; icon: LucideIcon; links: NavLeaf[] };
+  | { kind: "link"; item: NavItem }
+  | { kind: "group"; to: string; title: string; titleKey: NavLabel["labelKey"]; icon: LucideIcon; links: NavLeaf[] };
 
 /**
  * Sections that don't fit in the mobile tab bar, in sidebar order, listed under "Más": a section with
@@ -166,6 +180,7 @@ export const moreNav: MoreEntry[] = [
           kind: "group",
           to: item.to,
           title: item.label,
+          titleKey: item.labelKey,
           icon: item.icon,
           links: (item.children ?? []).filter((leaf) => !leaf.desktopOnly && leaf.to !== "/ventas/facturas"),
         },
@@ -177,10 +192,11 @@ export const moreNav: MoreEntry[] = [
           kind: "group",
           to: item.to,
           title: item.label,
+          titleKey: item.labelKey,
           icon: item.icon,
           links: [
-            { label: "Calendario fiscal", to: "/impuestos/calendario" },
-            { label: "Configurar impuestos", to: "/configuracion/impuestos" },
+            { ...navLabel("taxCalendar"), to: "/impuestos/calendario" },
+            { ...navLabel("taxSettings"), to: "/configuracion/impuestos" },
           ],
         },
       ];
@@ -191,6 +207,7 @@ export const moreNav: MoreEntry[] = [
             kind: "group",
             to: item.to,
             title: item.label,
+            titleKey: item.labelKey,
             icon: item.icon,
             links: item.children.filter((leaf) => !leaf.desktopOnly),
           }
@@ -207,8 +224,7 @@ export const allNavLeaves: NavLeaf[] = [
   ).values(),
 ];
 
-export interface CreateAction {
-  label: string;
+export interface CreateAction extends NavLabel {
   to: string;
   icon: LucideIcon;
 }
@@ -216,17 +232,17 @@ export interface CreateAction {
 /** Shortcuts in the "Crear" menu, split into documents and records. */
 export const createActions: CreateAction[][] = [
   [
-    { label: "Factura emitida", to: "/ventas/facturas/nueva", icon: ReceiptText },
-    { label: "Factura recibida", to: "/compras/facturas/nueva", icon: Receipt },
-    { label: "Gasto", to: "/compras/gastos/nuevo", icon: Camera },
-    { label: "Bien de inversión", to: "/compras/bienes-de-inversion/nuevo", icon: Armchair },
-    { label: "Albarán", to: "/ventas/albaranes/nuevo", icon: ClipboardList },
-    { label: "Presupuesto", to: "/ventas/presupuestos/nuevo", icon: FileText },
+    { ...navLabel("issuedInvoice"), to: "/ventas/facturas/nueva", icon: ReceiptText },
+    { ...navLabel("receivedInvoice"), to: "/compras/facturas/nueva", icon: Receipt },
+    { ...navLabel("expense"), to: "/compras/gastos/nuevo", icon: Camera },
+    { ...navLabel("asset"), to: "/compras/bienes-de-inversion/nuevo", icon: Armchair },
+    { ...navLabel("deliveryNote"), to: "/ventas/albaranes/nuevo", icon: ClipboardList },
+    { ...navLabel("quote"), to: "/ventas/presupuestos/nuevo", icon: FileText },
   ],
   [
-    { label: "Cliente", to: "/contactos/clientes/nuevo", icon: UserRound },
-    { label: "Proveedor", to: "/contactos/proveedores/nuevo", icon: Building },
-    { label: "Producto", to: "/catalogo/productos/nuevo", icon: Package },
+    { ...navLabel("client"), to: "/contactos/clientes/nuevo", icon: UserRound },
+    { ...navLabel("supplier"), to: "/contactos/proveedores/nuevo", icon: Building },
+    { ...navLabel("product"), to: "/catalogo/productos/nuevo", icon: Package },
   ],
 ];
 
@@ -236,7 +252,7 @@ export const createActions: CreateAction[][] = [
  * already have their own tab, Ventas.
  */
 export const phoneShortcuts: CreateAction[] = [
-  { label: "Facturas recibidas", to: "/compras/facturas", icon: Receipt },
-  { label: "Gastos", to: "/compras/gastos", icon: Camera },
-  { label: "Clientes", to: "/contactos/clientes", icon: UserRound },
+  { ...navLabel("receivedInvoices"), to: "/compras/facturas", icon: Receipt },
+  { ...navLabel("expenses"), to: "/compras/gastos", icon: Camera },
+  { ...navLabel("clients"), to: "/contactos/clientes", icon: UserRound },
 ];

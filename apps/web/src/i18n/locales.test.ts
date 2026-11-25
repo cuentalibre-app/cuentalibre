@@ -17,6 +17,7 @@ function flatten(messages: Messages, prefix = ""): Map<string, string> {
 /** Languages split plurals into different forms (`_one`, `_few`…), so keys compare without them. */
 const base = (key: string) => key.replace(/_(zero|one|two|few|many|other)$/, "");
 const variables = (text: string) => [...text.matchAll(/{{\s*(\w+)\s*}}/g)].map((match) => match[1]).sort();
+const tags = (text: string) => (text.match(/<[^<>]+>/g) ?? []).sort();
 
 const source = flatten(read("es.json"));
 const sourceKeys = new Set([...source.keys()].map(base));
@@ -39,9 +40,11 @@ describe("translations", () => {
       expect([...translation.keys()].filter((key) => !sourceKeys.has(base(key)))).toEqual([]);
     });
 
-    it("keeps the variables of each text", () => {
+    it("keeps the variables and component tags of each text", () => {
       for (const [key, text] of translation) {
-        expect(variables(text), key).toEqual(variables(source.get(key) ?? source.get(`${base(key)}_other`) ?? ""));
+        const original = source.get(key) ?? source.get(`${base(key)}_other`) ?? "";
+        expect(variables(text), key).toEqual(variables(original));
+        expect(tags(text), key).toEqual(tags(original));
       }
     });
   });

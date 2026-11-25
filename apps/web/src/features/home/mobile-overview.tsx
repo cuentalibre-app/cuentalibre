@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from "react-i18next";
 import { useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import { Link } from "react-router";
 import { CalendarDays, ChartColumn, ChevronRight, TrendingUp } from "lucide-react";
@@ -8,7 +9,7 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { listRowClass } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
-import { MONTHS, MONTHS_SHORT, formatCompactEUR, formatPercent, periodInSentence, periodLabel, periodShortLabel } from "@/lib/format";
+import { MONTHS, MONTHS_SHORT, formatCompactEUR, formatPercent, periodLabel, periodShortLabel } from "@/lib/format";
 import { useDismiss } from "@/lib/use-dismiss";
 import type { HomeData } from "./home-data";
 
@@ -62,12 +63,17 @@ function storeView(view: ChartView) {
 
 /** Line or bars, as a pill of two icons. */
 function ViewToggle({ view, onChange }: { view: ChartView; onChange: (v: ChartView) => void }) {
+  const { t } = useTranslation();
   const options = [
-    { value: "line", label: "Beneficio acumulado", icon: TrendingUp },
-    { value: "bars", label: "Ingresos y gastos por mes", icon: ChartColumn },
+    { value: "line", label: t("home.chart.cumulative"), icon: TrendingUp },
+    { value: "bars", label: t("home.chart.monthlyActivity"), icon: ChartColumn },
   ] as const;
   return (
-    <div role="radiogroup" aria-label="Gráfica" className="flex items-center gap-0.5 rounded-full border border-glass-edge bg-glass p-1 backdrop-blur-xl">
+    <div
+      role="radiogroup"
+      aria-label={t("home.chart.label")}
+      className="flex items-center gap-0.5 rounded-full border border-glass-edge bg-glass p-1 backdrop-blur-xl"
+    >
       {options.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
@@ -106,6 +112,7 @@ interface ChartProps {
  * else on the screen, clears it.
  */
 function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const toggling = useRef(false);
   useDismiss(ref, selected !== null, () => onSelect(null));
@@ -142,10 +149,22 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
 
   const summary =
     view === "line"
-      ? `Beneficio acumulado en ${periodInSentence(data.period)}: ${formatEUR(cents(running))}`
+      ? t("home.chart.periodCumulative", {
+          period:
+            data.period.quarter === null
+              ? t("period.yearInSentence", { year: data.period.year })
+              : periodLabel(data.period),
+          profit: formatEUR(cents(running)),
+        })
       : slots
           .map((s, i) =>
-            s ? `${MONTHS[months[i]!]}: ingresos ${formatEUR(s.income)}, gastos ${formatEUR(s.expenses)}` : null,
+            s
+              ? t("home.chart.monthActivity", {
+                  month: MONTHS[months[i]!],
+                  income: formatEUR(s.income),
+                  expenses: formatEUR(s.expenses),
+                })
+              : null,
           )
           .filter(Boolean)
           .join("; ");
@@ -156,7 +175,7 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
       <div
         ref={ref}
         role="img"
-        aria-label={summary || "Sin datos todavía"}
+        aria-label={summary || t("home.chart.empty")}
         onPointerDown={onDown}
         onPointerMove={onMove}
         onPointerUp={() => (toggling.current = false)}
@@ -310,15 +329,16 @@ function PeriodChips({
   years: number[];
   today: Date;
 }) {
+  const { t } = useTranslation();
   const lastQuarter = period.year === today.getFullYear() ? quarterOfMonth(today.getMonth()) : 4;
   const options: { quarter: Period["quarter"]; label: string }[] = [
     ...([1, 2, 3, 4] as const).map((q) => ({ quarter: q, label: `${q}T` })),
-    { quarter: null, label: "Año" },
+    { quarter: null, label: t("period.year") },
   ];
 
   return (
     <div className="flex items-center justify-between gap-1">
-      <div role="radiogroup" aria-label={`Periodo de ${period.year}`} className="flex items-center gap-1">
+      <div role="radiogroup" aria-label={t("period.ofYear", { year: period.year })} className="flex items-center gap-1">
         {options.map(({ quarter, label }) => {
           const active = period.quarter === quarter;
           return (
@@ -327,7 +347,11 @@ function PeriodChips({
               type="button"
               role="radio"
               aria-checked={active}
-              aria-label={periodLabel({ year: period.year, quarter })}
+              aria-label={
+                quarter === null
+                  ? t("period.yearLabel", { year: period.year })
+                  : periodLabel({ year: period.year, quarter })
+              }
               disabled={quarter !== null && quarter > lastQuarter}
               onClick={() => onChange({ year: period.year, quarter })}
               className={cn(chip, active && "bg-card font-semibold text-foreground shadow-card")}
@@ -346,7 +370,7 @@ function PeriodChips({
         }}
       >
         <SelectTrigger
-          aria-label={`Año: ${period.year}`}
+          aria-label={t("period.chooseYear", { year: period.year })}
           className="h-10 gap-1.5 rounded-full border-0 bg-card px-3.5 font-medium shadow-card hover:bg-card"
         >
           <CalendarDays className="size-4 text-muted-foreground" strokeWidth={1.8} aria-hidden="true" />
@@ -377,6 +401,7 @@ interface Line {
  * then each part as a row leading to its page. VAT is charged on top of the invoices, so it stays out of the bar.
  */
 function TakeHomeSummary({ data }: { data: HomeData }) {
+  const { t } = useTranslation();
   const { income, expenses } = data.totals;
   const { takeHome, incomeTax } = data.takeHome;
   const taxes = cents(incomeTax + data.socialSecurityEstimate);
@@ -386,30 +411,38 @@ function TakeHomeSummary({ data }: { data: HomeData }) {
   const estimates = data.estimatesIncomeTax;
 
   const parts = [
-    { label: estimates ? "Te queda" : "Beneficio", value: takeHome, color: "bg-chart-income" },
-    estimates && { label: "Impuestos estimados", value: taxes, color: "bg-chart-tax" },
-    { label: "Gastos", value: expenses, color: "bg-chart-expense" },
+    {
+      label: estimates ? t("home.takeHome.remaining") : t("home.metrics.profit"),
+      value: takeHome,
+      color: "bg-chart-income",
+    },
+    estimates && { label: t("home.takeHome.estimatedTaxes"), value: taxes, color: "bg-chart-tax" },
+    { label: t("home.metrics.expenses"), value: expenses, color: "bg-chart-expense" },
   ].filter((p) => !!p);
 
   const lines: Line[] = [
-    { label: "Facturado", to: "/ventas/facturas", value: income, dot: "bg-chart-income" },
-    { label: "Gastos", to: "/compras/facturas", value: expenses, dot: "bg-chart-expense" },
-    ...(estimates ? [{ label: "Impuestos estimados", to: "/impuestos", value: taxes, dot: "bg-chart-tax" }] : []),
+    { label: t("home.takeHome.invoiced"), to: "/ventas/facturas", value: income, dot: "bg-chart-income" },
+    { label: t("home.metrics.expenses"), to: "/compras/facturas", value: expenses, dot: "bg-chart-expense" },
+    ...(estimates
+      ? [{ label: t("home.takeHome.estimatedTaxes"), to: "/impuestos", value: taxes, dot: "bg-chart-tax" }]
+      : []),
     ...(data.taxes.vat > 0
-      ? [{ label: "IVA a pagar", to: "/impuestos", value: data.taxes.vat, dot: "outline" }]
+      ? [{ label: t("home.takeHome.vatDue"), to: "/impuestos", value: data.taxes.vat, dot: "outline" }]
       : []),
   ];
 
   return (
     <section aria-labelledby="mobile-take-home-title" className="flex flex-col gap-2.5 pt-2">
       <h2 id="mobile-take-home-title" className="m-0 text-lg font-semibold tracking-tight">
-        {estimates ? "Beneficio neto estimado" : "Beneficio antes de impuestos"}
+        {estimates ? t("home.takeHome.estimatedNet") : t("home.takeHome.beforeTaxes")}
       </h2>
       <div className="surface flex flex-col overflow-hidden">
         <div className="flex flex-col gap-3.5 px-4 pt-4 pb-3">
           <div className="flex items-baseline justify-between gap-3">
             <AnimatedAmount value={takeHome} className="amount text-3xl font-semibold" />
-            <span className="text-sm font-medium text-success">{formatPercent(share(takeHome))} de lo facturado</span>
+            <span className="text-sm font-medium text-success">
+              {t("home.takeHome.percentOfInvoiced", { percent: formatPercent(share(takeHome)) })}
+            </span>
           </div>
           <div
             role="img"
@@ -445,10 +478,11 @@ function TakeHomeSummary({ data }: { data: HomeData }) {
         </ul>
         {data.socialSecurityFeeMissing && (
           <p className="m-0 border-t border-divider px-4 py-3 text-xs text-muted-foreground">
-            No incluye tu cuota de autónomos.{" "}
-            <Link to={TAX_SETTINGS_PATH} className="font-medium text-foreground">
-              Indícala en Configuración
-            </Link>
+            <Trans
+              t={t}
+              i18nKey="home.takeHome.missingFee"
+              components={{ settings: <Link to={TAX_SETTINGS_PATH} className="font-medium text-foreground" /> }}
+            />
           </p>
         )}
       </div>
@@ -468,6 +502,7 @@ interface MobileOverviewProps {
 
 /** The phone's home: the period's profit large, a chart of its months, and the figures behind it. */
 export function MobileOverview({ data, period, onPeriodChange, years, today, actions }: MobileOverviewProps) {
+  const { t } = useTranslation();
   const [view, setView] = useState(readView);
   // The selection belongs to one period and view; changing either clears it
   const key = `${periodKey(period)}:${view}`;
@@ -494,19 +529,22 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, act
   return (
     <div className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
-        <h1 className="sr-only">Inicio</h1>
+        <h1 className="sr-only">{t("navigation.labels.home")}</h1>
         <ViewToggle view={view} onChange={changeView} />
         <div className="flex items-center gap-2">{actions}</div>
       </header>
 
-      <section aria-label="Beneficio" className="flex flex-col gap-4">
+      <section aria-label={t("home.metrics.profit")} className="flex flex-col gap-4">
         <div aria-live="polite" className="flex flex-col gap-1.5">
           <span className="text-sm text-muted-foreground">
             {month === null
-              ? `Beneficio, ${periodInSentence(period)}`
+              ? t("home.chart.periodProfit", {
+                  period:
+                    period.quarter === null ? t("period.yearInSentence", { year: period.year }) : periodLabel(period),
+                })
               : view === "line" && slot! > 0
-                ? `Beneficio acumulado hasta ${MONTHS[month]!.toLowerCase()}`
-                : `Beneficio de ${MONTHS[month]!.toLowerCase()}`}
+                ? t("home.chart.profitThrough", { month: MONTHS[month]!.toLowerCase() })
+                : t("home.chart.monthProfit", { month: MONTHS[month]!.toLowerCase() })}
           </span>
           <AnimatedAmount
             value={point ? cents(view === "line" ? upTo : point.profit) : data.profit}
@@ -516,8 +554,8 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, act
             <span className="flex items-center gap-4 text-sm text-muted-foreground">
               {(
                 [
-                  ["Ingresos", point.income, view === "line" ? "bg-chart-income" : null],
-                  ["Gastos", point.expenses, "bg-chart-expense"],
+                  [t("home.metrics.income"), point.income, view === "line" ? "bg-chart-income" : null],
+                  [t("home.metrics.expenses"), point.expenses, "bg-chart-expense"],
                 ] as const
               ).map(([label, value, dot]) => (
                 <span key={label} className="inline-flex items-center gap-1.5">
@@ -537,7 +575,9 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, act
                 </>
               )}
               <span className="text-muted-foreground">
-                {change !== null ? `vs. ${compare}` : `Margen del ${formatPercent(data.margin)}`}
+                {change !== null
+                  ? t("home.metrics.versus", { period: compare })
+                  : t("home.metrics.margin", { percent: formatPercent(data.margin) })}
               </span>
             </span>
           )}

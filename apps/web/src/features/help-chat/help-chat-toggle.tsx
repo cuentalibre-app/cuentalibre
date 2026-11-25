@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { BotMessageSquare } from "lucide-react";
 import { Button } from "@cuentalibre/ui/components/button";
 import { cn } from "@cuentalibre/ui/lib/cn";
@@ -9,6 +10,7 @@ import { toggleHelpChat, useHelpChat, useHelpChatAvailable } from "./help-chat-s
  * lit while it is open; as a sheet over the page on phones.
  */
 export function HelpChatToggle({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const available = useHelpChatAvailable();
   const { open } = useHelpChat();
   if (!available) return null;
@@ -17,7 +19,7 @@ export function HelpChatToggle({ className }: { className?: string }) {
     <Button
       variant="secondary"
       size="icon"
-      aria-label="Asistente"
+      aria-label={t("common.assistant")}
       aria-expanded={open}
       aria-controls={HELP_CHAT_PANEL_ID}
       onClick={toggleHelpChat}

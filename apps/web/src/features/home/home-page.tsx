@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useMemo, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { Camera, Plus, Store, Users } from "lucide-react";
@@ -29,6 +30,7 @@ const sheet = "@container flex flex-col gap-5 lg:gap-3";
 const row = "flex animate-rise-in flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-stretch lg:gap-3";
 
 export function HomePage() {
+  const { t } = useTranslation();
   const availableYears = useAvailableYears();
   const today = useMemo(() => new Date(), []);
   const [period, setPeriod] = usePeriod(today);
@@ -77,14 +79,12 @@ export function HomePage() {
       {/* Desktop header */}
       <PageHeader
         className="hidden lg:flex"
-        title="Inicio"
+        title={t("navigation.labels.home")}
         assistant={false}
         inline={
           <>
             <TooltipProvider delayDuration={300}>
-              <HelpTip side="bottom">
-                Cómo va tu negocio en el periodo: lo facturado, lo gastado y lo que apartar para impuestos.
-              </HelpTip>
+              <HelpTip side="bottom">{t("home.overviewHint")}</HelpTip>
             </TooltipProvider>
             {periodSelect()}
           </>
@@ -93,11 +93,11 @@ export function HomePage() {
           <>
             <Link to="/compras/gastos/nuevo" className={buttonVariants({ variant: "secondary", size: "sm" })}>
               <Camera strokeWidth={1.8} aria-hidden="true" />
-              Subir gasto
+              {t("home.uploadExpense")}
             </Link>
             <Link to="/ventas/facturas/nueva" className={buttonVariants({ variant: "primary", size: "sm" })}>
               <Plus strokeWidth={2} aria-hidden="true" />
-              Nueva factura
+              {t("home.newInvoice")}
             </Link>
             <div className="ml-1 flex items-center gap-2 border-l border-divider pl-3">
               <Notifications className="size-8" />
@@ -125,23 +125,23 @@ export function HomePage() {
         <div className={row} style={{ "--i": 7 } as CSSProperties}>
           <TopCounterparties
             id="top-clients"
-            title="Principales clientes"
+            title={t("home.clients.title")}
             icon={Users}
             ranking={data.clients}
             barClass="bg-chart-income"
             href="/contactos/clientes"
-            empty="No hay ingresos en este periodo."
+            empty={t("home.clients.empty")}
             warning={data.economicallyDependent ? dependencyWarning(data.clients) : undefined}
             className="min-w-0 lg:flex-[1_1_320px]"
           />
           <TopCounterparties
             id="top-suppliers"
-            title="Principales proveedores"
+            title={t("home.suppliers.title")}
             icon={Store}
             ranking={data.suppliers}
             barClass="bg-chart-expense"
             href="/contactos/proveedores"
-            empty="No hay gastos en este periodo."
+            empty={t("home.suppliers.empty")}
             className="min-w-0 lg:flex-[1_1_320px]"
           />
         </div>

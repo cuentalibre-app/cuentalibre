@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, type CSSProperties } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ECONOMIC_DEPENDENCY_THRESHOLD, type CounterpartyRanking } from "@cuentalibre/core";
@@ -9,7 +10,8 @@ import { formatPercent } from "@/lib/format";
 interface Warning {
   /** What the user closes: a new id (say, another client) shows it again. */
   id: string;
-  text: string;
+  name: string;
+  share: number;
 }
 
 const DISMISSED_KEY = "cuentalibre:dismissed-warnings";
@@ -42,6 +44,7 @@ interface Props {
 
 /** Ranked bars: who makes up most of the period's income or expenses (tax base). */
 export function TopCounterparties({ id, title, noun, ranking, barClass, href, empty, warning, icon, className }: Props) {
+  const { t } = useTranslation();
   const titleId = `${id}-title`;
   const [dismissed, setDismissed] = useState(readDismissed);
   const dismiss = (warningId: string) => {
@@ -62,20 +65,21 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
       subtitle={
         noun && (
           <span className="text-sm text-muted-foreground">
-            {ranking.count} {noun} · <span className="amount">{formatEUR(ranking.total)}</span> sin IVA
+            {ranking.count} {noun} · <span className="amount">{formatEUR(ranking.total)}</span>{" "}
+            {t("home.counterparties.withoutVat")}
           </span>
         )
       }
-      action={
-        href && (
-          <SeeAllLink to={href}>Ver todos</SeeAllLink>
-        )
-      }
+      action={href && <SeeAllLink to={href}>{t("home.counterparties.seeAll")}</SeeAllLink>}
       className={className}
     >
       {warning && !dismissed.includes(warning.id) && (
         <Notice tone="warning" onDismiss={() => dismiss(warning.id)}>
-          {warning.text}
+          {t("home.clients.dependencyWarning", {
+            name: warning.name,
+            share: formatPercent(warning.share * 100),
+            threshold: formatPercent(ECONOMIC_DEPENDENCY_THRESHOLD * 100),
+          })}
         </Notice>
       )}
 
@@ -84,10 +88,10 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
       ) : (
         <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
           {ranking.items.map((item, i) => (
-            <li key={item.name} className="flex flex-col gap-1.5">
+            <li key={item.isOther ? t("home.counterparties.other") : item.name} className="flex flex-col gap-1.5">
               <div className="flex items-baseline gap-3">
                 <span className={cn("min-w-0 flex-1 truncate", item.isOther ? "text-muted-foreground" : "font-medium")}>
-                  {item.name}
+                  {item.isOther ? t("home.counterparties.other") : item.name}
                 </span>
                 <span className="amount">{formatEUR(item.amount)}</span>
                 <span className="w-11 text-right amount text-sm text-muted-foreground">
@@ -114,8 +118,5 @@ export function TopCounterparties({ id, title, noun, ranking, barClass, href, em
 /** Warning for the clients card when one client reaches the TRADE threshold. */
 export function dependencyWarning(ranking: CounterpartyRanking): Warning {
   const top = ranking.items[0]!;
-  const text = `El ${formatPercent(top.share * 100)} de tus ingresos viene de ${top.name}. Desde el ${formatPercent(
-    ECONOMIC_DEPENDENCY_THRESHOLD * 100,
-  )} podrías ser autónomo económicamente dependiente (TRADE).`;
-  return { id: `trade:${top.name}`, text };
+  return { id: `trade:${top.name}`, name: top.name, share: top.share };
 }

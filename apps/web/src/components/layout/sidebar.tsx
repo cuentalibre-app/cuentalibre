@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { ChevronRight, PanelLeftClose, PanelLeftOpen, Plus, UserRound } from "lucide-react";
@@ -68,10 +69,11 @@ function RailTooltip({ label, enabled, side = "right", children, ...props }: Rai
 
 /** Count of filings due soon, next to an item or group label. */
 function FilingsPill({ count }: { count: number }) {
+  const { t } = useTranslation();
   return (
     <span className="rounded-sm bg-warning px-2 py-0.5 text-2xs font-semibold text-warning-foreground">
       {count}
-      <span className="sr-only"> presentaciones próximas</span>
+      <span className="sr-only"> {t("navigation.filingsSoon")}</span>
     </span>
   );
 }
@@ -82,6 +84,7 @@ const isChildCurrent = (item: NavItem, child: NavLeaf, pathname: string) =>
 
 /** In the icon rail, a group opens its sections in a flyout menu instead of expanding inline. */
 function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const isCurrent = pathname.startsWith(item.to);
@@ -97,11 +100,11 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
           className={cn(itemClass, "w-full cursor-pointer text-left", isCurrent && activeClass)}
         >
           <NavIcon item={item} dot={count > 0} />
-          <span className={labelClass(true)}>{item.label}</span>
+          <span className={labelClass(true)}>{t(item.labelKey)}</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent side="right" align="start" sideOffset={12} {...contentProps}>
-        <div className="px-3 pt-1.5 pb-1 text-xs font-semibold text-muted-foreground">{item.label}</div>
+        <div className="px-3 pt-1.5 pb-1 text-xs font-semibold text-muted-foreground">{t(item.labelKey)}</div>
         {item.children!.map((child) => (
           <Fragment key={child.to}>
             {child.separator && <DropdownMenuSeparator />}
@@ -109,7 +112,7 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
               onSelect={() => navigate(child.to)}
               className={cn("justify-between", isChildCurrent(item, child, pathname) && "bg-muted")}
             >
-              {child.label}
+              {t(child.labelKey)}
               {child.badge && badges[child.badge] > 0 && (
                 <span className="text-xs text-muted-foreground tabular-nums">{badges[child.badge]}</span>
               )}
@@ -122,6 +125,7 @@ function NavGroupFlyout({ item, badges }: { item: NavItem; badges: Badges }) {
 }
 
 function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; collapsed: boolean }) {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
   const isCurrent = pathname.startsWith(item.to);
   const [open, toggle] = useNavGroupOpen(item.to, isCurrent || item.to === "/ventas");
@@ -143,7 +147,7 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
       >
         <NavIcon item={item} />
         <span className={cn("flex flex-1 items-center justify-between gap-2", labelClass(false))}>
-          <span className="flex-1">{item.label}</span>
+          <span className="flex-1">{t(item.labelKey)}</span>
           {count > 0 && <FilingsPill count={count} />}
           <ChevronRight
             className={cn("size-4 transition-transform duration-200 ease-out", open && "rotate-90")}
@@ -170,7 +174,7 @@ function NavGroup({ item, badges, collapsed }: { item: NavItem; badges: Badges; 
                   end={child.to === item.to}
                   className={({ isActive }) => cn(subItemClass, isActive && activeClass)}
                 >
-                  {child.label}
+                  {t(child.labelKey)}
                   {child.badge && badges[child.badge] > 0 && (
                     <span className="text-xs text-muted-foreground tabular-nums">{badges[child.badge]}</span>
                   )}
@@ -193,6 +197,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
+  const { t } = useTranslation();
   const badges = useNavBadges();
   const { profile, tax } = useSettings();
   const name = accountName(profile);
@@ -201,7 +206,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
   return (
     <TooltipProvider delayDuration={200} skipDelayDuration={400}>
       <nav
-        aria-label="Principal"
+        aria-label={t("navigation.primary")}
         className={cn(
           "sticky top-(--demo-banner-h,0px) h-[calc(100dvh-var(--demo-banner-h,0px))] shrink-0 flex-col gap-0.5 overflow-x-hidden overflow-y-auto bg-sidebar px-3 py-4 transition-[width] duration-300 ease-out",
           collapsed ? "w-16" : "w-60",
@@ -215,7 +220,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
               <span className="flex flex-1 items-baseline">
                 <NavLink
                   to="/"
-                  aria-label="Ir a inicio"
+                  aria-label={t("navigation.goHome")}
                   className="flex items-baseline gap-3 rounded-md text-sidebar-foreground no-underline"
                 >
                   <LogoMark className="h-6" />
@@ -230,7 +235,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
               side={collapsed ? "right" : "bottom"}
               label={
                 <>
-                  {collapsed ? "Expandir menú" : "Contraer menú"}
+                  {collapsed ? t("navigation.expandMenu") : t("navigation.collapseMenu")}
                   <kbd className="font-sans text-xs opacity-60">⌘B</kbd>
                 </>
               }
@@ -238,7 +243,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
               <button
                 type="button"
                 onClick={onToggle}
-                aria-label={collapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
+                aria-label={collapsed ? t("navigation.expandSidebar") : t("navigation.collapseSidebar")}
                 aria-keyshortcuts="Meta+B Control+B"
                 className={cn(
                   "group grid size-8 shrink-0 cursor-pointer place-items-center rounded-md text-muted-foreground transition-[color,background-color,scale] duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground active:scale-[0.94]",
@@ -263,7 +268,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           ) : (
             <NavLink
               to="/"
-              aria-label="Ir a inicio"
+              aria-label={t("navigation.goHome")}
               className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-sidebar-foreground no-underline"
             >
               <LogoMark className="h-5" />
@@ -282,7 +287,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
             className={cn("mb-3 w-full overflow-hidden font-medium", collapsed && "px-0")}
           >
             <Plus strokeWidth={2} aria-hidden="true" />
-            <span className={collapsed ? "sr-only" : undefined}>Crear</span>
+            <span className={collapsed ? "sr-only" : undefined}>{t("navigation.create")}</span>
           </Button>
         </CreateMenu>
 
@@ -290,11 +295,11 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
           if (item.children) return <NavGroup key={item.to} item={item} badges={badges} collapsed={collapsed} />;
           const count = item.badge ? badges[item.badge] : 0;
           return (
-            <RailTooltip key={item.to} enabled={collapsed} label={item.label}>
+            <RailTooltip key={item.to} enabled={collapsed} label={t(item.labelKey)}>
               <NavLink to={item.to} end data-tour={item.to} className={cn(itemClass, currentClass)}>
                 <NavIcon item={item} dot={collapsed && count > 0} />
                 <span className={cn("flex flex-1 items-center justify-between", labelClass(collapsed))}>
-                  {item.label}
+                  {t(item.labelKey)}
                   {count > 0 && <FilingsPill count={count} />}
                 </span>
               </NavLink>
@@ -305,10 +310,10 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
         <div className="mx-2 my-3 h-px shrink-0 bg-sidebar-border" />
 
         {secondaryNav.map((item) => (
-          <RailTooltip key={item.to} enabled={collapsed} label={item.label}>
+          <RailTooltip key={item.to} enabled={collapsed} label={t(item.labelKey)}>
             <NavLink to={item.to} data-tour={item.to} className={cn(itemClass, currentClass, "h-8 font-normal")}>
               <NavIcon item={item} />
-              <span className={labelClass(collapsed)}>{item.label}</span>
+              <span className={labelClass(collapsed)}>{t(item.labelKey)}</span>
             </NavLink>
           </RailTooltip>
         ))}
@@ -317,10 +322,10 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
 
         <div className="shrink-0 border-t border-sidebar-border pt-3">
           <UserMenu side={collapsed ? "right" : "top"} align={collapsed ? "end" : "start"}>
-            <RailTooltip enabled={collapsed} label={name || "Tu cuenta"}>
+            <RailTooltip enabled={collapsed} label={name || t("userMenu.account")}>
               <button
                 type="button"
-                aria-label={name ? `Cuenta de ${name}` : "Tu cuenta"}
+                aria-label={name ? t("userMenu.accountOf", { name }) : t("userMenu.account")}
                 className="flex w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-lg p-1.5 text-left transition-[background-color,scale] duration-150 hover:bg-sidebar-accent active:scale-[0.98] data-[state=open]:bg-sidebar-accent"
               >
                 <div
@@ -330,7 +335,7 @@ export function Sidebar({ className, collapsed, onToggle }: SidebarProps) {
                   {name ? initials(name) : <UserRound className="size-4" strokeWidth={1.8} />}
                 </div>
                 <div className={cn("flex min-w-0 flex-col gap-0.5 whitespace-nowrap", labelClass(collapsed))}>
-                  <span className="truncate font-semibold">{name || "Tu cuenta"}</span>
+                  <span className="truncate font-semibold">{name || t("userMenu.account")}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {profitTaxLabel(profile.kind, tax.incomeTaxMethod)}
                   </span>

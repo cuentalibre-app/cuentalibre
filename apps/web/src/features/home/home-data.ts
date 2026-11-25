@@ -57,7 +57,6 @@ export interface DeadlineItem {
   deadline: Deadline;
   /** Amount to pay, or null when it's an informative return. */
   amount: Cents | null;
-  detail: string;
 }
 
 /** Percentage change, or null when there is nothing to compare with. */
@@ -85,18 +84,17 @@ function deadlineItem(deadline: Deadline, returns: ReturnType<typeof yearReturns
   switch (kind) {
     case "vat-303": {
       const amount = quarter ? returns(year).vat[quarter - 1]! : cents(0);
-      return { deadline, amount, detail: amount < 0 ? "A compensar" : "A ingresar" };
+      return { deadline, amount };
     }
     case "irpf-130":
       return {
         deadline,
         amount: quarter ? cents(Math.max(0, returns(year).irpf[quarter - 1]!)) : null,
-        detail: "Pago fraccionado",
       };
     case "social-security":
-      return { deadline, amount: settingsStore.get().tax.socialSecurityFee, detail: "Seguridad Social · RETA" };
+      return { deadline, amount: settingsStore.get().tax.socialSecurityFee };
     case "vat-390":
-      return { deadline, amount: null, detail: `Anual ${year}` };
+      return { deadline, amount: null };
   }
 }
 

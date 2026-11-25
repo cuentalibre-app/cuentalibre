@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Calendar, ChevronDown } from "lucide-react";
 import { parsePeriod, periodKey, quarterOfMonth, type Period } from "@cuentalibre/core";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
@@ -24,6 +25,9 @@ function periodOptions(years: number[], today: Date): Period[] {
 }
 
 export function PeriodSelect({ value, onChange, years, today, className, compact = false }: PeriodSelectProps) {
+  const { t } = useTranslation();
+  const label = (period: Period) =>
+    period.quarter === null ? t("period.yearLabel", { year: period.year }) : periodLabel(period);
   return (
     <Select
       value={periodKey(value)}
@@ -33,7 +37,7 @@ export function PeriodSelect({ value, onChange, years, today, className, compact
       }}
     >
       <SelectTrigger
-        aria-label={`Periodo: ${periodLabel(value)}`}
+        aria-label={t("period.choose", { period: label(value) })}
         className={cn("min-w-40", compact && "@max-5xl:min-w-0", className)}
       >
         <Calendar
@@ -48,7 +52,7 @@ export function PeriodSelect({ value, onChange, years, today, className, compact
       </SelectTrigger>
       <SelectContent>
         {periodOptions(years, today).map((p) => (
-          <SelectItem key={periodKey(p)} value={periodKey(p)} aria-label={periodLabel(p)}>
+          <SelectItem key={periodKey(p)} value={periodKey(p)} aria-label={label(p)}>
             {periodCode(p)}
           </SelectItem>
         ))}
