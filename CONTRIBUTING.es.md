@@ -10,6 +10,7 @@ Gracias por echar una mano. Esta guía explica cómo avisar de un problema y có
 - **Corrige una regla fiscal.** Si un cálculo, un plazo o una casilla de un modelo está mal, di cuál y enlaza la fuente (el BOE, las instrucciones del modelo de la AEAT, la ley y el artículo). Una regla sin fuente es difícil de revisar.
 - **Propón una funcionalidad.** Abre antes un issue y cuenta qué problema le resuelve a un autónomo: así no construyes algo que luego no encaja.
 - **Coge un issue.** Los que tienen la etiqueta `good first issue` son buenos para empezar. Comenta en él antes de ponerte, para que no lo hagan dos personas a la vez.
+- **Traduce la aplicación.** Mira [Traducciones](#traducciones): no hace falta saber React, solo el JSON de tu idioma.
 - **Mejora la documentación.** La del sitio está en `apps/site/src/content/docs` (en español).
 
 ## Prepara tu entorno
@@ -46,7 +47,17 @@ La integración continua también falla cuando un fichero generado no está al d
 ### Idioma
 
 - El código, los comentarios, la documentación técnica y los mensajes de commit van en **inglés**.
-- Todo lo que lee el usuario va en **español**: la aplicación, la web pública y su documentación.
+- Todo lo que lee el usuario se escribe primero en **español**: la web pública, su documentación y la aplicación, que se puede traducir (ver abajo).
+
+### Traducciones
+
+Los textos de la aplicación están en `apps/web/src/i18n/locales/`, un JSON por idioma, que se lee con [i18next](https://www.i18next.com).
+
+- `es.json` es el original. Cada texto nuevo va primero ahí, con una clave según dónde aparece (`userMenu.signOut`), y el componente lo lee con `t()` de `useTranslation()`. Una clave que no esté en `es.json` no pasa el typecheck.
+- Para traducir, edita `<idioma>.json` con las mismas claves. Lo que no traduzcas se muestra en español, así que un idioma se puede traducir pantalla a pantalla.
+- Deja las `{{variables}}` de cada texto tal cual; un test lo comprueba.
+- Para empezar a traducir un idioma, crea su archivo JSON. Añádelo a `LANGUAGES` en `apps/web/src/i18n/index.ts` cuando la traducción esté lista para publicar.
+- No traduzcas los nombres de modelos y casillas (_modelo 303_, _casilla 28_) ni nada con sentido legal; las facturas siguen el idioma elegido en cada documento, no el de la aplicación.
 
 ### Dónde va cada cosa
 

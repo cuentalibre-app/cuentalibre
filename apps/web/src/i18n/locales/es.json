@@ -1,0 +1,17 @@
+{
+  "userMenu": {
+    "account": "Tu cuenta",
+    "accountOf": "Cuenta de {{name}}",
+    "completeBusiness": "Completa los datos de tu negocio",
+    "settings": "Configuración",
+    "theme": "Tema",
+    "themes": {
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Auto"
+    },
+    "language": "Idioma",
+    "signOut": "Cerrar sesión",
+    "exitDemo": "Salir de la demo"
+  }
+}
