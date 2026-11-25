@@ -6,6 +6,7 @@ Gracias por echar una mano. Esta guía explica cómo avisar de un problema y có
 
 ## Cómo ayudar
 
+- **Pregunta.** Usa [Discussions](https://github.com/cuentalibre-app/cuentalibre/discussions) para dudas sobre cómo usar o autoalojar cuentalibre, y para ideas que quieras comentar antes.
 - **Avisa de un error.** Abre un [issue](https://github.com/cuentalibre-app/cuentalibre/issues) con lo que hiciste, lo que esperabas y lo que pasó. Las capturas ayudan, pero quita antes cualquier NIF, nombre o importe real.
 - **Corrige una regla fiscal.** Si un cálculo, un plazo o una casilla de un modelo está mal, di cuál y enlaza la fuente (el BOE, las instrucciones del modelo de la AEAT, la ley y el artículo). Una regla sin fuente es difícil de revisar.
 - **Propón una funcionalidad.** Abre antes un issue y cuenta qué problema le resuelve a un autónomo: así no construyes algo que luego no encaja.

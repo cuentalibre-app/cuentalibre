@@ -6,6 +6,7 @@ Thanks for helping. This guide explains how to report a problem and how to propo
 
 ## Ways to help
 
+- **Ask a question.** Use [Discussions](https://github.com/cuentalibre-app/cuentalibre/discussions) for questions about using or self-hosting cuentalibre, and for ideas you want to talk over first.
 - **Report a bug.** Open an [issue](https://github.com/cuentalibre-app/cuentalibre/issues) with what you did, what you expected and what happened. Screenshots help, but remove any real tax ID, name or amount first.
 - **Fix a tax rule.** If a calculation, a deadline or a form box is wrong, say which one and link the source (BOE, AEAT instructions for the form, the law and article). Rules without a source are hard to review.
 - **Suggest a feature.** Open an issue first and describe the problem it solves for an autónomo; it saves building something that won't fit.
