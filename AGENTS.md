@@ -15,6 +15,7 @@ packages/ui         Design tokens, base styles, components
 ## Rules
 
 - English for code, comments, docs and commits; Spanish for everything users read.
+- New app text goes in `apps/web/src/i18n/locales/es.json` and is read with `t()`; other languages may lag behind.
 - Tax, money and date rules go in `packages/core` as tested pure functions, never in components or routes.
 - Entity types are inferred from the zod schemas in `packages/contracts`; don't declare them elsewhere.
 - Money is integer `Cents` (`@cuentalibre/core`), formatted with `formatEUR()` (`@cuentalibre/ui/lib/format`) and rendered with the `amount` class.

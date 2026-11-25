@@ -5,6 +5,7 @@ import "./index.css";
 import "@/lib/appearance";
 import { router } from "@/app/router";
 import { startSession } from "@/features/auth/session";
+import { startI18n } from "@/i18n";
 
 // The app never zooms on a phone, as a native app wouldn't. The viewport forbids it (index.html), and
 // Safari, which ignores that for a pinch, has the gesture cancelled here; it fires only on iOS and macOS.
@@ -14,7 +15,7 @@ for (const type of ["gesturestart", "gesturechange"]) {
 
 // Signed in, the app runs on the API; in the demo, or without VITE_API_URL, on the sample data in memory.
 // `VITE_API_URL=/` means the API serves the app from its own origin.
-await startSession();
+await Promise.all([startI18n(), startSession()]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

@@ -10,6 +10,7 @@ Thanks for helping. This guide explains how to report a problem and how to propo
 - **Fix a tax rule.** If a calculation, a deadline or a form box is wrong, say which one and link the source (BOE, AEAT instructions for the form, the law and article). Rules without a source are hard to review.
 - **Suggest a feature.** Open an issue first and describe the problem it solves for an autónomo; it saves building something that won't fit.
 - **Pick up an issue.** Those labelled `good first issue` are a good start; comment on one before you begin so two people don't work on it at once.
+- **Translate the app.** See [Translations](#translations): no React needed, only the JSON of your language.
 - **Improve the docs.** The site's documentation is in `apps/site/src/content/docs` (in Spanish).
 
 ## Getting set up
@@ -46,7 +47,17 @@ CI also fails when a generated file is out of date. Before you open a pull reque
 ### Language
 
 - Code, comments, technical documentation and commit messages are in **English**.
-- Everything the user reads is in **Spanish**: the app, the site and its documentation.
+- Everything the user reads is written in **Spanish** first: the site, its documentation and the app, which can be translated (see below).
+
+### Translations
+
+The app's texts live in `apps/web/src/i18n/locales/`, one JSON file per language, read with [i18next](https://www.i18next.com).
+
+- `es.json` is the source. Every new text goes there first, under a key named after where it appears (`userMenu.signOut`), and the component reads it with `t()` from `useTranslation()`. A key that isn't in `es.json` fails to typecheck.
+- To translate, edit `<language>.json` with the same keys. Any key you leave out shows in Spanish, so a language can be translated a screen at a time.
+- Keep the `{{variables}}` of each text as they are; a test checks it.
+- To add a language, create its file and add it to `LANGUAGES` in `apps/web/src/i18n/index.ts`.
+- Don't translate the names of tax forms and boxes (_modelo 303_, _casilla 28_) or anything with a legal meaning; invoices follow the language chosen for each document, not the app's.
 
 ### Where things go
 

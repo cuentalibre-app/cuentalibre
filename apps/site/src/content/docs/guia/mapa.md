@@ -30,7 +30,7 @@ El botón **Crear**, arriba del menú, abre los atajos para crear:
 - **Factura emitida**, **Factura recibida**, **Gasto**, **Bien de inversión**, **Albarán**, **Presupuesto**.
 - **Cliente**, **Proveedor**, **Producto**.
 
-Abajo del todo, el botón con tus iniciales abre tu cuenta: **Configuración**, el tema claro u oscuro y **Cerrar sesión**.
+Abajo del todo, el botón con tus iniciales abre tu cuenta: **Configuración**, el **Idioma**, el tema claro u oscuro y **Cerrar sesión**.
 
 ## En el móvil
 
@@ -56,7 +56,7 @@ La hoja **Más** reúne, de arriba abajo:
 
 Exportar e Importar no están en el móvil: se usan desde el ordenador.
 
-Tu cuenta (**Configuración**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.
+Tu cuenta (**Configuración**, el **Idioma**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.
 
 ## En todas las pantallas
 

@@ -33,7 +33,7 @@ function desktop(): string[] {
     "",
     ...createActions.map((group) => `- ${group.map((action) => `**${action.label}**`).join(", ")}.`),
     "",
-    "Abajo del todo, el botón con tus iniciales abre tu cuenta: **Configuración**, el tema claro u oscuro y **Cerrar sesión**.",
+    "Abajo del todo, el botón con tus iniciales abre tu cuenta: **Configuración**, el **Idioma**, el tema claro u oscuro y **Cerrar sesión**.",
   );
   return lines;
 }
@@ -89,7 +89,7 @@ function phone(): string[] {
           "",
         ]
       : []),
-    "Tu cuenta (**Configuración**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.",
+    "Tu cuenta (**Configuración**, el **Idioma**, el tema y **Cerrar sesión**) se abre con el botón de tus iniciales, arriba en **Inicio**.",
   ];
 }
 
