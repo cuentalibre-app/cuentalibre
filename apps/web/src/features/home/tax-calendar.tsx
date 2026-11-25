@@ -7,15 +7,16 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { closingPath, quarterToClose, useQuarterChecks, useQuarterIsEmpty } from "@/features/closing/closing-model";
 import { useClosedQuarters } from "@/features/closing/closing-store";
 import { CALENDAR_PATH } from "@/features/taxes/taxes-model";
-import { MONTHS_SHORT } from "@/lib/format";
+import { useDateLabels } from "@/i18n/dates";
 import type { DeadlineItem, HomeData } from "./home-data";
 import { cardHeaderClass, cardIconClass, cardTitleClass, ListGroup, listRowClass, SeeAllLink } from "@/components/page";
 
 function DateBlock({ date, className }: { date: Date; className?: string }) {
+  const { monthShort } = useDateLabels();
   return (
     <div className={cn("flex w-11 shrink-0 flex-col items-center", className)}>
       <span className="amount text-xl font-medium">{date.getDate()}</span>
-      <span className="font-mono text-2xs text-muted-foreground uppercase">{MONTHS_SHORT[date.getMonth()]}</span>
+      <span className="font-mono text-2xs text-muted-foreground uppercase">{monthShort(date.getMonth())}</span>
     </div>
   );
 }

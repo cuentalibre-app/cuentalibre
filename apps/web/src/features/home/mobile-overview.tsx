@@ -9,7 +9,8 @@ import { formatEUR } from "@cuentalibre/ui/lib/format";
 import { AnimatedAmount } from "@/components/animated-amount";
 import { listRowClass } from "@/components/page";
 import { TAX_SETTINGS_PATH } from "@/features/settings/settings-model";
-import { MONTHS, MONTHS_SHORT, formatCompactEUR, formatPercent, periodLabel, periodShortLabel } from "@/lib/format";
+import { formatCompactEUR, formatPercent } from "@/lib/format";
+import { useDateLabels } from "@/i18n/dates";
 import { useDismiss } from "@/lib/use-dismiss";
 import type { HomeData } from "./home-data";
 
@@ -113,6 +114,7 @@ interface ChartProps {
  */
 function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
   const { t } = useTranslation();
+  const { month: monthName, monthShort, periodInSentence } = useDateLabels();
   const ref = useRef<HTMLDivElement>(null);
   const toggling = useRef(false);
   useDismiss(ref, selected !== null, () => onSelect(null));
@@ -150,17 +152,14 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
   const summary =
     view === "line"
       ? t("home.chart.periodCumulative", {
-          period:
-            data.period.quarter === null
-              ? t("period.yearInSentence", { year: data.period.year })
-              : periodLabel(data.period),
+          period: periodInSentence(data.period),
           profit: formatEUR(cents(running)),
         })
       : slots
           .map((s, i) =>
             s
               ? t("home.chart.monthActivity", {
-                  month: MONTHS[months[i]!],
+                  month: monthName(months[i]!),
                   income: formatEUR(s.income),
                   expenses: formatEUR(s.expenses),
                 })
@@ -212,7 +211,7 @@ function PeriodChart({ data, view, selected, onSelect }: ChartProps) {
               !slots[i] && "opacity-40",
             )}
           >
-            {n > 6 ? MONTHS_SHORT[m] : MONTHS[m]}
+            {n > 6 ? monthShort(m) : monthName(m)}
           </span>
         ))}
       </div>
@@ -330,9 +329,10 @@ function PeriodChips({
   today: Date;
 }) {
   const { t } = useTranslation();
+  const { periodLabel, quarter: quarterLabel } = useDateLabels();
   const lastQuarter = period.year === today.getFullYear() ? quarterOfMonth(today.getMonth()) : 4;
   const options: { quarter: Period["quarter"]; label: string }[] = [
-    ...([1, 2, 3, 4] as const).map((q) => ({ quarter: q, label: `${q}T` })),
+    ...([1, 2, 3, 4] as const).map((q) => ({ quarter: q, label: quarterLabel(q) })),
     { quarter: null, label: t("period.year") },
   ];
 
@@ -347,11 +347,7 @@ function PeriodChips({
               type="button"
               role="radio"
               aria-checked={active}
-              aria-label={
-                quarter === null
-                  ? t("period.yearLabel", { year: period.year })
-                  : periodLabel({ year: period.year, quarter })
-              }
+              aria-label={periodLabel({ year: period.year, quarter })}
               disabled={quarter !== null && quarter > lastQuarter}
               onClick={() => onChange({ year: period.year, quarter })}
               className={cn(chip, active && "bg-card font-semibold text-foreground shadow-card")}
@@ -503,6 +499,7 @@ interface MobileOverviewProps {
 /** The phone's home: the period's profit large, a chart of its months, and the figures behind it. */
 export function MobileOverview({ data, period, onPeriodChange, years, today, actions }: MobileOverviewProps) {
   const { t } = useTranslation();
+  const { monthInSentence, periodInSentence, periodShortLabel } = useDateLabels();
   const [view, setView] = useState(readView);
   // The selection belongs to one period and view; changing either clears it
   const key = `${periodKey(period)}:${view}`;
@@ -539,12 +536,11 @@ export function MobileOverview({ data, period, onPeriodChange, years, today, act
           <span className="text-sm text-muted-foreground">
             {month === null
               ? t("home.chart.periodProfit", {
-                  period:
-                    period.quarter === null ? t("period.yearInSentence", { year: period.year }) : periodLabel(period),
+                  period: periodInSentence(period),
                 })
               : view === "line" && slot! > 0
-                ? t("home.chart.profitThrough", { month: MONTHS[month]!.toLowerCase() })
-                : t("home.chart.monthProfit", { month: MONTHS[month]!.toLowerCase() })}
+                ? t("home.chart.profitThrough", { month: monthInSentence(month) })
+                : t("home.chart.monthProfit", { month: monthInSentence(month) })}
           </span>
           <AnimatedAmount
             value={point ? cents(view === "line" ? upTo : point.profit) : data.profit}
