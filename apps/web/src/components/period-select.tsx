@@ -3,7 +3,7 @@ import { Calendar, ChevronDown } from "lucide-react";
 import { parsePeriod, periodKey, quarterOfMonth, type Period } from "@cuentalibre/core";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@cuentalibre/ui/components/select";
 import { cn } from "@cuentalibre/ui/lib/cn";
-import { periodCode, periodLabel } from "@/lib/format";
+import { useDateLabels } from "@/i18n/dates";
 
 interface PeriodSelectProps {
   value: Period;
@@ -26,8 +26,7 @@ function periodOptions(years: number[], today: Date): Period[] {
 
 export function PeriodSelect({ value, onChange, years, today, className, compact = false }: PeriodSelectProps) {
   const { t } = useTranslation();
-  const label = (period: Period) =>
-    period.quarter === null ? t("period.yearLabel", { year: period.year }) : periodLabel(period);
+  const { periodCode, periodLabel: label } = useDateLabels();
   return (
     <Select
       value={periodKey(value)}

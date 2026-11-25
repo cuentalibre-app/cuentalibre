@@ -209,7 +209,10 @@
     "ofYear": "Periodo de {{year}}",
     "chooseYear": "Año: {{year}}",
     "yearInSentence": "año {{year}}",
-    "choose": "Periodo: {{period}}"
+    "choose": "Periodo: {{period}}",
+    "quarter": "{{quarter}}T",
+    "quarterLabel": "{{quarter}}T {{year}}",
+    "quarterCode": "{{year}}-{{quarter}}T"
   },
   "demo": {
     "banner": "Estás en la demo: los datos son de ejemplo y los cambios no se guardan.",
@@ -263,5 +266,49 @@
     "start": "Empezar",
     "next": "Siguiente",
     "replay": "Repetir la animación"
+  },
+  "date": {
+    "months": {
+      "january": "Enero",
+      "february": "Febrero",
+      "march": "Marzo",
+      "april": "Abril",
+      "may": "Mayo",
+      "june": "Junio",
+      "july": "Julio",
+      "august": "Agosto",
+      "september": "Septiembre",
+      "october": "Octubre",
+      "november": "Noviembre",
+      "december": "Diciembre"
+    },
+    "monthsShort": {
+      "january": "Ene",
+      "february": "Feb",
+      "march": "Mar",
+      "april": "Abr",
+      "may": "May",
+      "june": "Jun",
+      "july": "Jul",
+      "august": "Ago",
+      "september": "Sep",
+      "october": "Oct",
+      "november": "Nov",
+      "december": "Dic"
+    },
+    "monthsInSentence": {
+      "january": "enero",
+      "february": "febrero",
+      "march": "marzo",
+      "april": "abril",
+      "may": "mayo",
+      "june": "junio",
+      "july": "julio",
+      "august": "agosto",
+      "september": "septiembre",
+      "october": "octubre",
+      "november": "noviembre",
+      "december": "diciembre"
+    }
   }
 }

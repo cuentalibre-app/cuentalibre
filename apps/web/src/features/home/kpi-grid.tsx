@@ -4,7 +4,8 @@ import { cents, type Cents } from "@cuentalibre/core";
 import { ArrowDownLeft, ArrowUpRight, PiggyBank, TrendingUp, type LucideIcon } from "lucide-react";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { AnimatedAmount } from "@/components/animated-amount";
-import { formatPercent, periodShortLabel } from "@/lib/format";
+import { formatPercent } from "@/lib/format";
+import { useDateLabels } from "@/i18n/dates";
 import type { HomeData } from "./home-data";
 
 interface Kpi {
@@ -81,6 +82,7 @@ export function taxReserve(data: HomeData, previous: HomeData): TaxReserve {
 
 export function KpiGrid({ data, reserve, className }: { data: HomeData; reserve: TaxReserve; className?: string }) {
   const { t } = useTranslation();
+  const { periodShortLabel } = useDateLabels();
   const compareLabel = periodShortLabel(data.previous, data.period.year);
 
   const kpis: Kpi[] = [

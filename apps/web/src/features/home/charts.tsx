@@ -7,7 +7,8 @@ import { cardHeaderClass, cardIconClass, cardTitleClass } from "@/components/pag
 import { SegmentedControl } from "@cuentalibre/ui/components/segmented-control";
 import { cn } from "@cuentalibre/ui/lib/cn";
 import { formatEUR } from "@cuentalibre/ui/lib/format";
-import { formatThousands, MONTHS, MONTHS_SHORT, periodLabel } from "@/lib/format";
+import { formatThousands } from "@/lib/format";
+import { MONTH_KEYS, useDateLabels } from "@/i18n/dates";
 import { useDismiss } from "@/lib/use-dismiss";
 import type { HomeData } from "./home-data";
 
@@ -30,7 +31,7 @@ function Gridlines({ columns = false }: { columns?: boolean }) {
         <div className="border-t border-chart-axis" />
       </div>
       {columns &&
-        MONTHS_SHORT.map((_, i) => (
+        MONTH_KEYS.map((_, i) => (
           <div
             key={i}
             className="absolute inset-y-0 border-l border-dashed border-chart-grid"
@@ -62,6 +63,7 @@ type View = "monthly" | "cumulative";
  */
 export function CashFlowChart({ data, className }: { data: HomeData; className?: string }) {
   const { t } = useTranslation();
+  const { month: monthName, monthShort, monthInSentence, periodLabel } = useDateLabels();
   const [view, setView] = useState<View>("monthly");
   const [hovered, setHovered] = useState<number | null>(null);
   const [pinned, setPinned] = useState<number | null>(null);
@@ -115,9 +117,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         {selected === null ? (
           view === "monthly" ? (
             <>
-              <span className="font-semibold">
-                {period.quarter === null ? t("period.yearLabel", { year: period.year }) : periodLabel(period)}
-              </span>
+              <span className="font-semibold">{periodLabel(period)}</span>
               {(
                 [
                   [t("home.metrics.income"), data.totals.income, "bg-chart-income"],
@@ -135,7 +135,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
             <>
               <span className="font-semibold">
                 {t("home.chart.throughMonth", {
-                  month: MONTHS[data.lastMonthWithData]!.toLowerCase(),
+                  month: monthInSentence(data.lastMonthWithData),
                   year: period.year,
                 })}
               </span>
@@ -149,14 +149,14 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         ) : !current ? (
           <>
             <span className="font-semibold">
-              {MONTHS[selected]} {period.year}
+              {monthName(selected)} {period.year}
             </span>
             <span className="text-muted-foreground">{t("home.chart.empty")}</span>
           </>
         ) : view === "monthly" ? (
           <>
             <span className="font-semibold">
-              {MONTHS[selected]} {period.year}
+              {monthName(selected)} {period.year}
             </span>
             {(
               [
@@ -174,7 +174,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
         ) : (
           <>
             <span className="font-semibold">
-              {t("home.chart.throughMonth", { month: MONTHS[selected]!.toLowerCase(), year: period.year })}
+              {t("home.chart.throughMonth", { month: monthInSentence(selected), year: period.year })}
             </span>
             <span className="inline-flex items-center gap-1.5 text-muted-foreground">
               <Dot className="bg-chart-income" />
@@ -206,11 +206,11 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                     aria-label={
                       m
                         ? t("home.chart.monthActivity", {
-                            month: MONTHS[i],
+                            month: monthName(i),
                             income: formatEUR(m.income),
                             expenses: formatEUR(m.expenses),
                           })
-                        : t("home.chart.monthEmpty", { month: MONTHS[i] })
+                        : t("home.chart.monthEmpty", { month: monthName(i) })
                     }
                     {...monthHandlers(i)}
                     className={cn(
@@ -275,8 +275,8 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                       type="button"
                       aria-label={
                         m
-                          ? t("home.chart.monthCumulative", { month: MONTHS[i], profit: formatEUR(m.cumulativeProfit) })
-                          : t("home.chart.monthEmpty", { month: MONTHS[i] })
+                          ? t("home.chart.monthCumulative", { month: monthName(i), profit: formatEUR(m.cumulativeProfit) })
+                          : t("home.chart.monthEmpty", { month: monthName(i) })
                       }
                       {...monthHandlers(i)}
                       className="flex-1 cursor-pointer"
@@ -287,7 +287,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
             )}
           </div>
           <div aria-hidden="true" className="flex gap-1.5">
-            {MONTHS_SHORT.map((label, i) => (
+            {MONTH_KEYS.map((_, i) => (
               <span
                 key={i}
                 className={cn(
@@ -295,7 +295,7 @@ export function CashFlowChart({ data, className }: { data: HomeData; className?:
                   months.includes(i) ? "font-semibold text-foreground" : "text-muted-foreground",
                 )}
               >
-                {label}
+                {monthShort(i)}
               </span>
             ))}
           </div>
