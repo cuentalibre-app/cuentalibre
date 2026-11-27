@@ -42,6 +42,12 @@ CI fails unless these pass; run what applies:
 - New or upgraded dependency: `pnpm audit --prod --audit-level high`.
 - Build config, env variables or the site: `pnpm build`.
 
+## Git and GitHub
+
+- Branch off an up-to-date `main` (`fix/123-box-28`, `feat/recurring-invoices`); never push to `main`.
+- One fix or feature per pull request against `main`: say what changes and why, link the issue (`Fixes #123`), add desktop and phone screenshots for UI changes.
+- The CI `check` job must pass before merging.
+
 ## Architecture
 
 The app must feel instant:
